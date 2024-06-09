@@ -1,5 +1,5 @@
 # cloelite imports
-from cloelite.cosmology.cosmology import Cosmology
+from cloelite.cosmology.cosmology import Background
 
 # General imports
 import jax.numpy as np
@@ -15,7 +15,7 @@ import jax.numpy as np
 
 """
 
-class JAXCosmology(Cosmology):
+class JAXBackground(Background):
     def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, As: float, ns: float,
                  w: float, wa: float, gamma_MG: float):
         r"""
@@ -131,7 +131,7 @@ class JAXCosmology(Cosmology):
             The comoving distance as a function of redshift.
         """
         c_0 = 2.99792458e5 #please, put all the constanst in a single place
-        fun = lambda x: 1/self.hubble_parameter(zs)
+        fun = lambda x: 1/self.hubble_parameter(x)
         y = simps(fun, 0, zs, N=512) * c_0
         return y
 

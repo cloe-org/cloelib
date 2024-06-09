@@ -28,7 +28,7 @@ class Background(ABC):
         self.gamma_MG = float(gamma_MG)
 
     @abstractmethod
-    def hubble_parameter(self):
+    def hubble_parameter(self, zs):
         r"""
         Retrieves the hubble parameter as
         a function of redshift
@@ -48,6 +48,11 @@ class Background(ABC):
 
         """
         pass
+
+    @abstractmethod
+    def comoving_distance(self, zs):
+        pass
+
 
 class Perturbations(ABC):
     def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, As: float, ns: float,
@@ -86,7 +91,7 @@ class Perturbations(ABC):
 
 
 
-class Cosmology(self):
+class Cosmology:
     """
     A general parent class that collects cosmological background quantities
     and the linear matter power spectrum from different backends.
@@ -158,7 +163,7 @@ class Cosmology(self):
             from cloelite.cosmology.jax import JAXBackground
             self.background_backend = JAXBackground(H0, Omb, Omc, Omk, As, ns, w, wa, gamma_MG)
         else:
-            raise ValueError(f"Unsupported background backend: {self.backend["background"]}. Choose between: CAMB, JAX")
+            raise ValueError(f"Unsupported background backend: {background_backend}. Choose between: CAMB, JAX")
 
         if self.backend["perturbations"] == 'CAMB':
             from camb_cosmology import CAMBPerturbations
@@ -167,4 +172,4 @@ class Cosmology(self):
             from cloelite.cosmology.jax import JAXPerturbations
             self.perturbations_backend = JAXPerturbations(H0, Omb, Omc, Omk, As, ns, w, wa, gamma_MG)
         else:
-            raise ValueError(f"Unsupported perturbations backend: {self.backend["perturbations"]}. Choose between: CAMB, JAX")
+            raise ValueError(f"Unsupported perturbations backend: {perturbations_backend}. Choose between: CAMB, JAX")

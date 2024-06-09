@@ -53,7 +53,7 @@ class JAXBackground(Background):
 
         """
         return self.H0 * np.sqrt((self.Omb+self.Omc)*np.power(1+zs, 3) + (self.Omk)*np.power(1+zs, 2) +
-                                 (1-self.Omb-self.Omc-self.Omk)*np.power(1+zs, 3*(1+self.w+self.wa))*np.exp(3*self.wa*zs/(1+zs)))
+                                 (1-self.Omb-self.Omc-self.Omk)*np.power(1+zs, 3*(1+self.w+self.wa))*np.exp(-3*self.wa*zs/(1+zs)))
 
     ##@property
     def matter_density(self, zs) -> np.ndarray:

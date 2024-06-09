@@ -52,10 +52,30 @@ class JAXBackground(Background):
             hubble parameter as a function of redshift
 
         """
-        return self.H0 * np.sqrt((self.Omb+self.Omc)*np.power(1+zs, 3) + (self.Omk)*np.power(1+zs, 2) +
-                                 (1-self.Omb-self.Omc-self.Omk)*np.power(1+zs, 3*(1+self.w+self.wa))*np.exp(-3*self.wa*zs/(1+zs)))
+        return self.H0 * np.sqrt((self.Omb+self.Omc)*np.power(1+zs, 3) +
+                                 (self.Omk)*np.power(1+zs, 2) +
+                                 (1-self.Omb-self.Omc-self.Omk) * np.power(1+zs, 3*(1+self.w+self.wa))*np.exp(-3*self.wa*zs/(1+zs)))
 
-    ##@property
+    #@property
+    def comoving_distance(self, zs) -> np.ndarray:
+        """
+        Calculates the comoving distance for given redshifts.
+
+        Parameters:
+        -----------
+        zs : array_like
+            Redshifts at which to calculate the comoving distance.
+
+        Returns:
+        --------
+        np.ndarray
+            The comoving distance as a function of redshift.
+        """
+        c_0 = 2.99792458e5 #please, put all the constanst in a single place
+        fun = lambda x: 1/self.hubble_parameter(x)
+        y = simps(fun, 0, zs, N=512) * c_0
+        return y
+
     def matter_density(self, zs) -> np.ndarray:
         r"""
         Computes the matter density as
@@ -78,64 +98,6 @@ class JAXBackground(Background):
         return
 
     #@property
-    def growth_factor(self, zs, ks) -> np.ndarray:
-        """
-        Calculates the growth factor for given redshifts and wavenumbers.
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
-
-        Returns:
-        --------
-        np.ndarray
-            The growth factor as a function of redshift and wavenumber.
-        """
-        return
-
-    #@property
-    def growth_rate(self, zs, ks) -> np.ndarray:
-        """
-        Calculates the growth rate for given redshifts and wavenumbers.
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth rate.
-        ks : array_like
-            Wavenumbers at which to calculate the growth rate.
-
-        Returns:
-        --------
-        np.ndarray
-            The growth rate as a function of redshift and wavenumber.
-        """
-        return
-
-    #@property
-    def comoving_distance(self, zs) -> np.ndarray:
-        """
-        Calculates the comoving distance for given redshifts.
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the comoving distance.
-
-        Returns:
-        --------
-        np.ndarray
-            The comoving distance as a function of redshift.
-        """
-        c_0 = 2.99792458e5 #please, put all the constanst in a single place
-        fun = lambda x: 1/self.hubble_parameter(x)
-        y = simps(fun, 0, zs, N=512) * c_0
-        return y
-
-    #@property
     def transverse_comoving_distance(self, zs) -> np.ndarray:
         """
         Calculates the transverse comoving distance for given redshifts.
@@ -150,7 +112,8 @@ class JAXBackground(Background):
         np.ndarray
             The transverse comoving distance as a function of redshift.
         """
-        return
+        return self.comoving_distance(zs)
+    #TODO add the lax conditionals to account for the curvature!
 
     #@property
     def angular_diameter_distance(self, zs) -> np.ndarray:
@@ -167,7 +130,7 @@ class JAXBackground(Background):
         np.ndarray
             The angular diameter distance as a function of redshift.
         """
-        return
+        return self.transverse_comoving_distance(zs)/(1+zs)
 
 #function takes from JAXCosmo. Should likely be moved to an utils.py
 def simps(f, a, b, N=128):

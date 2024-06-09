@@ -167,8 +167,7 @@ class JAXPerturbations(Perturbations):
         Omm = self.Omb + self.Omc
         OmDE = 1. - Omm - self.Omk
         return (Omm * np.power(a, -3) + self.Omk * np.power(a, -2)
-                + OmDE * np.exp(self.f_de(a))
-    )
+                + OmDE * np.exp(self.f_de(a)))
 
     def Omega_m_a(self, a):
         Omm = self.Omb + self.Omc
@@ -199,8 +198,22 @@ class JAXPerturbations(Perturbations):
 
         return result
 
-    def growth_rate(self, zs, ks) -> np.ndarray:
-        return
+    def growth_rate(self, zs):
+
+        atab = np.logspace(-3., 0.0, 256)
+
+        a_s = a_z(zs)
+
+        y0 = np.array([atab[0], 1.0])
+        fn = lambda x, y : self.D_derivs(x,y)
+        y = odeint(fn, y0, atab)
+        y1 = y[:, 0]
+        gtab = y1 / y1[-1]
+
+        ftab = y[:, 1] / y1[-1] * atab / gtab
+
+        result = interp(a_s, atab, ftab)
+        return result
 
     def linear_matter_power_spectrum(self):
         return

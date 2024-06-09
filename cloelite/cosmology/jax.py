@@ -1,5 +1,5 @@
 # cloelite imports
-from cosmology import Cosmology
+from cloelite.cosmology.cosmology import Cosmology
 
 # General imports
 import jax.numpy as np
@@ -16,12 +16,23 @@ import jax.numpy as np
 """
 
 class JAXCosmology(Cosmology):
-    """
-    A class to define background cosmology using JAX
-    and inheriting from Cosmology parent class
+    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, As: float, ns: float,
+                 w: float, wa: float, gamma_MG: float):
+        r"""
+        A class to define background cosmology using JAX
+        and inheriting from Cosmology parent class
 
-    """
-    @property
+        """
+        self.H0 = float(H0)
+        self.Omb = float(Omb)
+        self.Omc = float(Omc)
+        self.Omk = float(Omk)
+        self.As = float(As)
+        self.ns = float(ns)
+        self.w = float(w)
+        self.wa = float(wa)
+        self.gamma_MG = float(gamma_MG)
+
     def hubble_parameter(self, zs) -> np.ndarray:
         r"""
         Retrieves the hubble parameter as
@@ -41,10 +52,10 @@ class JAXCosmology(Cosmology):
             hubble parameter as a function of redshift
 
         """
+        return self.H0 * np.sqrt((self.Omb+self.Omc)*np.power(1+zs, 3) + (self.Omk)*np.power(1+zs, 2) +
+                                 (1-self.Omb-self.Omc-self.Omk)*np.power(1+zs, 3*(1+self.w+self.wa))*np.exp(3*self.wa*zs/(1+zs)))
 
-        return 
-
-    @property
+    ##@property
     def matter_density(self, zs) -> np.ndarray:
         r"""
         Computes the matter density as
@@ -64,9 +75,9 @@ class JAXCosmology(Cosmology):
 
         """
 
-        return 
-    
-    @property
+        return
+
+    #@property
     def growth_factor(self, zs, ks) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
@@ -83,9 +94,9 @@ class JAXCosmology(Cosmology):
         np.ndarray
             The growth factor as a function of redshift and wavenumber.
         """
-        return 
-    
-    @property
+        return
+
+    #@property
     def growth_rate(self, zs, ks) -> np.ndarray:
         """
         Calculates the growth rate for given redshifts and wavenumbers.
@@ -102,9 +113,9 @@ class JAXCosmology(Cosmology):
         np.ndarray
             The growth rate as a function of redshift and wavenumber.
         """
-        return 
-    
-    @property
+        return
+
+    #@property
     def comoving_distance(self, zs) -> np.ndarray:
         """
         Calculates the comoving distance for given redshifts.
@@ -119,9 +130,12 @@ class JAXCosmology(Cosmology):
         np.ndarray
             The comoving distance as a function of redshift.
         """
-        return 
+        c_0 = 2.99792458e5 #please, put all the constanst in a single place
+        fun = lambda x: 1/self.hubble_parameter(zs)
+        y = simps(fun, 0, zs, N=512) * c_0
+        return y
 
-    @property
+    #@property
     def transverse_comoving_distance(self, zs) -> np.ndarray:
         """
         Calculates the transverse comoving distance for given redshifts.
@@ -136,9 +150,9 @@ class JAXCosmology(Cosmology):
         np.ndarray
             The transverse comoving distance as a function of redshift.
         """
-        return 
+        return
 
-    @property
+    #@property
     def angular_diameter_distance(self, zs) -> np.ndarray:
         """
         Calculates the angular diameter distance for given redshifts.
@@ -153,4 +167,14 @@ class JAXCosmology(Cosmology):
         np.ndarray
             The angular diameter distance as a function of redshift.
         """
-        return 
+        return
+
+#function takes from JAXCosmo. Should likely be moved to an utils.py
+def simps(f, a, b, N=128):
+    if N % 2 == 1:
+        raise ValueError("N must be an even integer.")
+    dx = (b - a) / N
+    x = np.linspace(a, b, N + 1)
+    y = f(x)
+    S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
+    return S

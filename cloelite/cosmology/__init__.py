@@ -1,4 +1,4 @@
-__all__ = ['cosmology', 'jax']
+__all__ = ['cosmology', 'jax_cosmology']
 
 from cloelite.cosmology import *
-from cloelite.cosmology.jax import *
+from cloelite.cosmology.jax_cosmology import *

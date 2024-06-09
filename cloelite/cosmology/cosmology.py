@@ -266,7 +266,7 @@ class Cosmology:
             from camb_cosmology import CAMBBackground
             self.background_backend = CAMBBackground(H0, Omb, Omc, Omk, As, ns, w, wa, gamma_MG)
         elif self.backend["background"] == 'JAX':
-            from cloelite.cosmology.jax import JAXBackground
+            from cloelite.cosmology.jax_cosmology import JAXBackground
             self.background_backend = JAXBackground(H0, Omb, Omc, Omk, As, ns, w, wa, gamma_MG)
         else:
             raise ValueError(f"Unsupported background backend: {background_backend}. Choose between: CAMB, JAX")
@@ -275,7 +275,7 @@ class Cosmology:
             from camb_cosmology import CAMBPerturbations
             self.perturbations_backend = CAMBPerturbations(H0, Omb, Omc, Omk, As, ns, w, wa, gamma_MG)
         elif self.backend["perturbations"] == 'JAX':
-            from cloelite.cosmology.jax import JAXPerturbations
+            from cloelite.cosmology.jax_cosmology import JAXPerturbations
             self.perturbations_backend = JAXPerturbations(H0, Omb, Omc, Omk, As, ns, w, wa, gamma_MG)
         else:
             raise ValueError(f"Unsupported perturbations backend: {perturbations_backend}. Choose between: CAMB, JAX")

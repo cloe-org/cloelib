@@ -239,7 +239,7 @@ def interp(x, xp, fp):
     We are not doing any checks, so make sure your query points are lying
     inside the array.
 
-    TODO: Implement proper interpolation!
+    TODO: Implement proper interpolation, like in interpolations.jl
 
     x, xp, fp need to be 1d arrays
     """

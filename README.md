@@ -1,8 +1,5 @@
 # cloelite
 
-![License](https://img.shields.io/github/license/gcanasherrera/cloelite)
-![Version](https://img.shields.io/github/v/release/gcanasherrera/cloelite)
-
 ## Table of Contents
 - [Introduction](#introduction)
 - [Features](#features)

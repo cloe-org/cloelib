@@ -1,7 +1,7 @@
 # cloelite imports
 from numpy import ndarray
 from cloelite.cosmology.cosmology import Background
-from cloelite.cosmology.cosmology import Perturbations
+from cloelite.cosmology.cosmology import LinearPerturbations
 
 # General imports
 import jax.numpy as np
@@ -21,7 +21,7 @@ import functools
 """
 
 class JAXBackground(Background):
-    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, As: float, ns: float,
+    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, sigma8: float, ns: float,
                  w: float, wa: float, gamma_MG: float):
         r"""
         A class to define background cosmology using JAX
@@ -32,7 +32,7 @@ class JAXBackground(Background):
         self.Omb = float(Omb)
         self.Omc = float(Omc)
         self.Omk = float(Omk)
-        self.As = float(As)
+        self.sigma8 = float(sigma8)
         self.ns = float(ns)
         self.w = float(w)
         self.wa = float(wa)
@@ -137,44 +137,35 @@ class JAXBackground(Background):
         """
         return self.transverse_comoving_distance(zs)/(1+zs)
 
-class JAXPerturbations(Perturbations):
-    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, As: float, ns: float,
-                 w: float, wa: float, gamma_MG: float):
+class JAXLinearPerturbations(LinearPerturbations):
+    def __init__(self, background : Background):
         r"""
         A class to define perturbations cosmology using JAX
         and inheriting from Cosmology parent class
 
         """
-        self.H0 = float(H0)
-        self.Omb = float(Omb)
-        self.Omc = float(Omc)
-        self.Omk = float(Omk)
-        self.As = float(As)
-        self.ns = float(ns)
-        self.w = float(w)
-        self.wa = float(wa)
-        self.gamma_MG = float(gamma_MG)
+        self.background = background
 
     def w_a(self, a):
-        return self.w + (1.0 - a) * self.wa  # Equation (6) in Linder (2003)
+        return self.background.w + (1.0 - a) * self.background.wa  # Equation (6) in Linder (2003)
 
 
 
     def f_de(self, a):
-        return -3.0 * (1.0 + self.w + self.wa) * np.log(a) + 3.0 * self.wa * (a - 1.0)
+        return -3.0 * (1.0 + self.background.w + self.background.wa) * np.log(a) + 3.0 * self.background.wa * (a - 1.0)
 
     def Esqr(self, a):
-        Omm = self.Omb + self.Omc
-        OmDE = 1. - Omm - self.Omk
-        return (Omm * np.power(a, -3) + self.Omk * np.power(a, -2)
+        Omm = self.background.Omb + self.background.Omc
+        OmDE = 1. - Omm - self.background.Omk
+        return (Omm * np.power(a, -3) + self.background.Omk * np.power(a, -2)
                 + OmDE * np.exp(self.f_de(a)))
 
     def Omega_m_a(self, a):
-        Omm = self.Omb + self.Omc
+        Omm = self.background.Omb + self.background.Omc
         return Omm * np.power(a, -3) / self.Esqr(a)
 
     def Omega_de_a(self, a):
-        OmDE = 1. - self.Omb - self.Omc - self.Omk
+        OmDE = 1. - self.background.Omb - self.background.Omc - self.background.Omk
         return OmDE * np.exp(self.f_de(a)) / self.Esqr(a)
 
     def D_derivs(self, y, x):
@@ -215,10 +206,207 @@ class JAXPerturbations(Perturbations):
         result = interp(a_s, atab, ftab)
         return result
 
-    def linear_matter_power_spectrum(self):
-        return
+    def transfer_Eisenstein_Hu(self, ks):
+        """Computes the Eisenstein & Hu matter transfer function.
 
-#function takesnfrom JAXCosmo. Should likely be moved to an utils.py
+        Parameters
+        ----------
+        cosmo: Background
+        Background cosmology
+
+        k: array_like
+        Wave number in h Mpc^{-1}
+
+        type: str, optional
+        Type of transfer function. Either 'eisenhu' or 'eisenhu_osc'
+        (def: 'eisenhu_osc')
+
+        Returns
+        -------
+        T: array_like
+        Value of the transfer function at the requested wave number
+
+        Notes
+        -----
+        The Eisenstein & Hu transfer functions are computed using the fitting
+        formulae of :cite:`1998:EisensteinHu`
+
+        """
+        #############################################
+        # Quantities computed from 1998:EisensteinHu
+        # Provides : - k_eq   : scale of the particle horizon at equality epoch
+        #            - z_eq   : redshift of equality epoch
+        #            - R_eq   : ratio of the baryon to photon momentum density
+        #                       at z_eq
+        #            - z_d    : redshift of drag epoch
+        #            - R_d    : ratio of the baryon to photon momentum density
+        #                       at z_d
+        #            - sh_d   : sound horizon at drag epoch
+        #            - k_silk : Silk damping scale
+        T_2_7_sqr = (2.726 / 2.7) ** 2
+        h2 = (self.background.H0/100) ** 2
+
+        w_m = (self.background.Omc + self.background.Omb) * h2
+        w_b = self.background.Omb * h2
+        fb = self.background.Omb / (self.background.Omc + self.background.Omb)
+        fc = self.background.Omc / (self.background.Omc + self.background.Omb)
+
+        k_eq = 7.46e-2 * w_m / T_2_7_sqr / (self.background.H0/100)  # Eq. (3) [h/Mpc]
+        z_eq = 2.50e4 * w_m / (T_2_7_sqr) ** 2  # Eq. (2)
+
+        # z drag from Eq. (4)
+        b1 = 0.313 * np.power(w_m, -0.419) * (1.0 + 0.607 * np.power(w_m, 0.674))
+        b2 = 0.238 * np.power(w_m, 0.223)
+        z_d = (
+            1291.0
+            * np.power(w_m, 0.251)
+            / (1.0 + 0.659 * np.power(w_m, 0.828))
+            * (1.0 + b1 * np.power(w_b, b2))
+        )
+
+        # Ratio of the baryon to photon momentum density at z_d  Eq. (5)
+        R_d = 31.5 * w_b / (T_2_7_sqr) ** 2 * (1.0e3 / z_d)
+        # Ratio of the baryon to photon momentum density at z_eq Eq. (5)
+        R_eq = 31.5 * w_b / (T_2_7_sqr) ** 2 * (1.0e3 / z_eq)
+        # Sound horizon at drag epoch in h^-1 Mpc Eq. (6)
+        sh_d = (
+            2.0
+            / (3.0 * k_eq)
+            * np.sqrt(6.0 / R_eq)
+            * np.log((np.sqrt(1.0 + R_d) + np.sqrt(R_eq + R_d)) / (1.0 + np.sqrt(R_eq)))
+        )
+        # Eq. (7) but in [hMpc^{-1}]
+        k_silk = (
+            1.6
+            * np.power(w_b, 0.52)
+            * np.power(w_m, 0.73)
+            * (1.0 + np.power(10.4 * w_m, -0.95))
+            / (self.background.H0/100)
+        )
+        #############################################
+
+        alpha_gamma = (
+            1.0
+            - 0.328 * np.log(431.0 * w_m) * w_b / w_m
+            + 0.38 * np.log(22.3 * w_m) * (self.background.Omb/ (self.background.Omc + self.background.Omb)) ** 2
+        )
+        gamma_eff = ((self.background.Omc + self.background.Omb)
+            * (self.background.H0/100)
+            * (alpha_gamma + (1.0 - alpha_gamma) / (1.0 + (0.43 * ks * sh_d) ** 4))
+        )
+
+
+        a1 = np.power(46.9 * w_m, 0.670) * (1.0 + np.power(32.1 * w_m, -0.532))
+        a2 = np.power(12.0 * w_m, 0.424) * (1.0 + np.power(45.0 * w_m, -0.582))
+        alpha_c = np.power(a1, -fb) * np.power(a2, -(fb**3))
+        b1 = 0.944 / (1.0 + np.power(458.0 * w_m, -0.708))
+        b2 = np.power(0.395 * w_m, -0.0266)
+        beta_c = 1.0 + b1 * (np.power(fc, b2) - 1.0)
+        beta_c = 1.0 / beta_c
+
+        # EH98 (19). [k] = h/Mpc
+        def T_tilde(k1, alpha, beta):
+            # EH98 (10); [q] = 1 BUT [k] = h/Mpc
+            q = k1 / (13.41 * k_eq)
+            L = np.log(np.exp(1.0) + 1.8 * beta * q)
+            C = 14.2 / alpha + 386.0 / (1.0 + 69.9 * np.power(q, 1.08))
+            T0 = L / (L + C * q * q)
+            return T0
+
+        # EH98 (17, 18)
+        f = 1.0 / (1.0 + (ks * sh_d / 5.4) ** 4)
+        Tc = f * T_tilde(ks, 1.0, beta_c) + (1.0 - f) * T_tilde(ks, alpha_c, beta_c)
+
+        # Baryon transfer function
+        # EH98 (19, 14, 21)
+        y = (1.0 + z_eq) / (1.0 + z_d)
+        x = np.sqrt(1.0 + y)
+        G_EH98 = y * (-6.0 * x + (2.0 + 3.0 * y) * np.log((x + 1.0) / (x - 1.0)))
+        alpha_b = 2.07 * k_eq * sh_d * np.power(1.0 + R_d, -0.75) * G_EH98
+
+        beta_node = 8.41 * np.power(w_m, 0.435)
+        tilde_s = sh_d / np.power(1.0 + (beta_node / (ks * sh_d)) ** 3, 1.0 / 3.0)
+
+        beta_b = 0.5 + fb + (3.0 - 2.0 * fb) * np.sqrt((17.2 * w_m) ** 2 + 1.0)
+
+        # [tilde_s] = Mpc/h
+        Tb = (
+            T_tilde(ks, 1.0, 1.0) / (1.0 + (ks * sh_d / 5.2) ** 2)
+            + alpha_b
+            / (1.0 + (beta_b / (ks * sh_d)) ** 3)
+            * np.exp(-np.power(ks / k_silk, 1.4))
+        ) * np.sinc(ks * tilde_s / np.pi)
+
+        # Total transfer function
+        res = fb * Tb + fc * Tc
+
+        return res
+
+    def primordial_matter_power(self, ks):
+        """Primordial power spectrum
+        Pk = k^n
+        """
+        return ks ** self.background.ns
+
+    def sigmasqr(self, R, kmin=0.0001, kmax=1000.0, ksteps=5):
+        """Computes the energy of the fluctuations within a sphere of R h^{-1} Mpc
+
+        .. math::
+
+        \\sigma^2(R)= \\frac{1}{2 \\pi^2} \\int_0^\\infty \\frac{dk}{k} k^3 P(k,z) W^2(kR)
+
+        where
+
+        .. math::
+
+        W(kR) = \\frac{3j_1(kR)}{kR}
+        """
+
+        def int_sigma(logk):
+            k = np.exp(logk)
+            x = k * R
+            w = 3.0 * (np.sin(x) - x * np.cos(x)) / (x * x * x)
+            pk = self.transfer_Eisenstein_Hu(k) ** 2 * self.primordial_matter_power(k)
+            return k * (k * w) ** 2 * pk
+
+        y = romb(int_sigma, np.log10(kmin), np.log10(kmax), divmax=7)
+        return 1.0 / (2.0 * np.pi**2.0) * y
+
+    def linear_matter_power_spectrum(self, ks, zs, **kwargs):
+        r"""Computes the linear matter power spectrum.
+
+        Parameters
+        ----------
+        k: array_like
+            Wave number in h Mpc^{-1}
+
+        a: array_like, optional
+            Scale factor (def: 1.0)
+
+        transfer_fn: transfer_fn(cosmo, k, **kwargs)
+            Transfer function
+
+        Returns
+        -------
+        pk: array_like
+            Linear matter power spectrum at the specified scale
+            and scale factor.
+
+        """
+        ks = np.atleast_1d(ks)
+        zs = np.atleast_1d(zs)
+        g = self.growth_factor(zs)
+        t = self.transfer_Eisenstein_Hu(ks)
+
+        pknorm = self.background.sigma8**2 / self.sigmasqr(8.0)
+
+        pk =  np.outer(self.primordial_matter_power(ks) * t**2,  g**2)
+
+        # Apply normalisation
+        pk = pk * pknorm
+        return pk.squeeze()
+
+#function takenfrom JAXCosmo. Should likely be moved to an utils.py
 def simps(f, a, b, N=128):
     if N % 2 == 1:
         raise ValueError("N must be an even integer.")
@@ -274,3 +462,142 @@ def interp(x, xp, fp):
 @jax.jit
 def a_z(z):
     return 1/(1+z)
+
+#function from jaxcosmo
+def _romberg_diff(b, c, k):
+    """
+    Compute the differences for the Romberg quadrature corrections.
+    See Forman Acton's "Real Computing Made Real," p 143.
+    """
+    tmp = 4.0**k
+    return (tmp * c - b) / (tmp - 1.0)
+
+#function from jaxcosmo
+def romb(function, a, b, args=(), divmax=6, return_error=False):
+    """
+    Romberg integration of a callable function or method.
+    Returns the integral of `function` (a function of one variable)
+    over the interval (`a`, `b`).
+    If `show` is 1, the triangular array of the intermediate results
+    will be printed.  If `vec_func` is True (default is False), then
+    `function` is assumed to support vector arguments.
+    Parameters
+    ----------
+    function : callable
+        Function to be integrated.
+    a : float
+        Lower limit of integration.
+    b : float
+        Upper limit of integration.
+    Returns
+    -------
+    results  : float
+        Result of the integration.
+    Other Parameters
+    ----------------
+    args : tuple, optional
+        Extra arguments to pass to function. Each element of `args` will
+        be passed as a single argument to `func`. Default is to pass no
+        extra arguments.
+    divmax : int, optional
+        Maximum order of extrapolation. Default is 10.
+    See Also
+    --------
+    fixed_quad : Fixed-order Gaussian quadrature.
+    quad : Adaptive quadrature using QUADPACK.
+    dblquad : Double integrals.
+    tplquad : Triple integrals.
+    romb : Integrators for sampled data.
+    simps : Integrators for sampled data.
+    cumtrapz : Cumulative integration for sampled data.
+    ode : ODE integrator.
+    odeint : ODE integrator.
+    References
+    ----------
+    .. [1] 'Romberg's method' http://en.wikipedia.org/wiki/Romberg%27s_method
+    Examples
+    --------
+    Integrate a gaussian from 0 to 1 and compare to the error function.
+    >>> from scipy import integrate
+    >>> from scipy.special import erf
+    >>> gaussian = lambda x: 1/np.sqrt(np.pi) * np.exp(-x**2)
+    >>> result = integrate.romberg(gaussian, 0, 1, show=True)
+    Romberg integration of <function vfunc at ...> from [0, 1]
+    ::
+       Steps  StepSize  Results
+           1  1.000000  0.385872
+           2  0.500000  0.412631  0.421551
+           4  0.250000  0.419184  0.421368  0.421356
+           8  0.125000  0.420810  0.421352  0.421350  0.421350
+          16  0.062500  0.421215  0.421350  0.421350  0.421350  0.421350
+          32  0.031250  0.421317  0.421350  0.421350  0.421350  0.421350  0.421350
+    The final result is 0.421350396475 after 33 function evaluations.
+    >>> print("%g %g" % (2*result, erf(1)))
+    0.842701 0.842701
+    """
+    vfunc = jax.jit(lambda x: function(x, *args))
+
+    n = 1
+    interval = [a, b]
+    intrange = b - a
+    ordsum = _difftrap1(vfunc, interval)
+    result = intrange * ordsum
+    state = np.repeat(np.atleast_1d(result), divmax + 1, axis=-1)
+    err = np.inf
+
+    def scan_fn(carry, y):
+        x, k = carry
+        x = _romberg_diff(y, x, k + 1)
+        return (x, k + 1), x
+
+    for i in range(1, divmax + 1):
+        n = 2**i
+        ordsum = ordsum + _difftrapn(vfunc, interval, n)
+
+        x = intrange * ordsum / n
+        _, new_state = jax.lax.scan(scan_fn, (x, 0), state[:-1])
+
+        new_state = np.concatenate([np.atleast_1d(x), new_state])
+
+        err = np.abs(state[i - 1] - new_state[i])
+        state = new_state
+
+    if return_error:
+        return state[i], err
+    else:
+        return state[i]
+
+def _difftrap1(function, interval):
+    """
+    Perform part of the trapezoidal rule to integrate a function.
+    Assume that we had called difftrap with all lower powers-of-2
+    starting with 1.  Calling difftrap only returns the summation
+    of the new ordinates.  It does _not_ multiply by the width
+    of the trapezoids.  This must be performed by the caller.
+        'function' is the function to evaluate (must accept vector arguments).
+        'interval' is a sequence with lower and upper limits
+                   of integration.
+        'numtraps' is the number of trapezoids to use (must be a
+                   power-of-2).
+    """
+    return 0.5 * (function(interval[0]) + function(interval[1]))
+
+def _difftrapn(function, interval, numtraps):
+    """
+    Perform part of the trapezoidal rule to integrate a function.
+    Assume that we had called difftrap with all lower powers-of-2
+    starting with 1.  Calling difftrap only returns the summation
+    of the new ordinates.  It does _not_ multiply by the width
+    of the trapezoids.  This must be performed by the caller.
+        'function' is the function to evaluate (must accept vector arguments).
+        'interval' is a sequence with lower and upper limits
+                   of integration.
+        'numtraps' is the number of trapezoids to use (must be a
+                   power-of-2).
+    """
+    numtosum = numtraps // 2
+    h = (1.0 * interval[1] - 1.0 * interval[0]) / numtosum
+    lox = interval[0] + 0.5 * h
+    points = lox + h * np.arange(0, numtosum)
+    s = np.sum(function(points))
+    return s

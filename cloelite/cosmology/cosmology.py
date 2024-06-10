@@ -15,13 +15,13 @@ approach to link to other codes and make it Cobaya independent
 """
 
 class Background(ABC):
-    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, As: float, ns: float,
+    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, sigma8: float, ns: float,
                  w: float, wa: float, gamma_MG: float):
         self.H0 = float(H0)
         self.Omb = float(Omb)
         self.Omc = float(Omc)
         self.Omk = float(Omk)
-        self.As = float(As)
+        self.sigma8 = float(sigma8)
         self.ns = float(ns)
         self.w = float(w)
         self.wa = float(wa)
@@ -122,18 +122,9 @@ class Background(ABC):
 
         return
 
-class Perturbations(ABC):
-    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, As: float, ns: float,
-                 w: float, wa: float, gamma_MG: float):
-        self.H0 = float(H0)
-        self.Omb = float(Omb)
-        self.Omc = float(Omc)
-        self.Omk = float(Omk)
-        self.As = float(As)
-        self.ns = float(ns)
-        self.w = float(w)
-        self.wa = float(wa)
-        self.gamma_MG = float(gamma_MG)
+class LinearPerturbations(ABC):
+    def __init__(self, background : Background):
+        self.background = background
 
     @abstractmethod
     def growth_factor(self, zs, ks) -> np.ndarray:
@@ -273,9 +264,9 @@ class Cosmology:
 
         if self.backend["perturbations"] == 'CAMB':
             from camb_cosmology import CAMBPerturbations
-            self.perturbations_backend = CAMBPerturbations(H0, Omb, Omc, Omk, As, ns, w, wa, gamma_MG)
+            self.perturbations_backend = CAMBPerturbations(self.background_backend)
         elif self.backend["perturbations"] == 'JAX':
             from cloelite.cosmology.jax_cosmology import JAXPerturbations
-            self.perturbations_backend = JAXPerturbations(H0, Omb, Omc, Omk, As, ns, w, wa, gamma_MG)
+            self.perturbations_backend = JAXPerturbations(self.background_backend)
         else:
             raise ValueError(f"Unsupported perturbations backend: {perturbations_backend}. Choose between: CAMB, JAX")

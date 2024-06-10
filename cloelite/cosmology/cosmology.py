@@ -28,7 +28,7 @@ class Background(ABC):
         self.gamma_MG = float(gamma_MG)
 
     @abstractmethod
-    def hubble_parameter(self, zs):
+    def hubble_parameter(self, zs, units = '1/Mpc'):
         r"""
         Retrieves the hubble parameter as
         a function of redshift

@@ -1,4 +1,4 @@
-# CLOELITE
+# cloelite
 
 ![License](https://img.shields.io/github/license/gcanasherrera/cloelite)
 ![Version](https://img.shields.io/github/v/release/gcanasherrera/cloelite)
@@ -14,7 +14,9 @@
 
 ## Introduction
 Proof of concept of how to make CLOE (Cosmology Likelihood for Observables in Euclid) more efficient and user-friendly by transforming it into the Cosmology Library for Observables in Euclid (compatible with classic Boltzmann Solvers and JAX).
-This is a work in progress, and will benefit from the feedback of the Euclid community (and the whole cosmology community) 
+This is a work in progress, and will benefit from the feedback of the Euclid community (and the whole cosmology community in general). 
+
+`cloelite` does not contain all the main features actual `cloe` has, and it should be seen as a toy repository to test further functionalities currently not implemented in `cloe` (and that would be painful to get with its current architecture).
 
 ## Features
 The main features of `cloelite` vs. `cloe` are:
@@ -30,46 +32,26 @@ The main differences with respect to `cloe` are:
 
 ## Installation
 Clone the repository `main` branch and pip install it:
-   \`\`\`sh
+   ```sh
    pip install .
-   \`\`\`
-
+   ```
 
 ### Prerequisites
 - TBA
 
 ### Steps
 1. Clone the repository:
-   \`\`\`sh
-   git clone https://github.com/your-username/your-repo-name.git
-   \`\`\`
+   ```sh
+   git clone https://github.com/gcanasherrera/cloelite.git
+   ```
 2. Navigate to the project directory:
-   \`\`\`sh
-   cd your-repo-name
-   \`\`\`
-3. Install dependencies:
-   \`\`\`sh
-   npm install
-   \`\`\`
-   or
-   \`\`\`sh
-   pip install -r requirements.txt
-   \`\`\`
-4. Additional setup steps, if any.
+   ```sh
+   cd cloelite
+   ```
 
 ## Usage
-Explain how to use your project. Provide examples and code snippets if applicable.
+TBA
 
-\`\`\`sh
-# Example command
-command to run your project
-
-# Example usage
-import your_module
-
-result = your_module.function()
-print(result)
-\`\`\`
 
 ## Contributing
 If you would like to contribute, follow the steps below:
@@ -77,17 +59,17 @@ If you would like to contribute, follow the steps below:
 1. Open an issue to let the `cloelite` maintainers know about your contribution plans
 2. Fork the repository
 3. Create a new branch:
-   \`\`\`sh
+   ```sh
    git checkout -b feature/your-feature-name
-   \`\`\`
+   ```
 4. Commit your changes:
-   \`\`\`sh
+   ```sh
    git commit -m 'Add some feature'
-   \`\`\`
+   ```
 5. Push to the branch:
-   \`\`\`sh
+   ```sh
    git push origin feature/your-feature-name
-   \`\`\`
+   ```
 6. Open a pull request
 
 See the [CONTRIBUTING.md](CONTRIBUTING.md) for more details.

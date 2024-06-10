@@ -2,6 +2,7 @@
 from numpy import ndarray
 from cloelite.cosmology.cosmology import Background
 from cloelite.cosmology.cosmology import LinearPerturbations
+from cloelite.cosmology.cosmology import NonLinearPerturbations
 
 # General imports
 import jax.numpy as np
@@ -405,6 +406,156 @@ class JAXLinearPerturbations(LinearPerturbations):
         # Apply normalisation
         pk = pk * pknorm
         return pk.squeeze()
+
+class JAXNonLinearPerturbations(NonLinearPerturbations):
+    def __init__(self, linearperturbations : LinearPerturbations):
+        r"""
+        A class to define perturbations cosmology using JAX
+        and inheriting from Cosmology parent class
+
+        """
+        self.linearperturbations = linearperturbations
+
+    def _halofit_parameters(self, zs):
+        r"""Computes the non linear scale,
+        effective spectral index,
+        spectral curvature
+        """
+        # Step 1: Finding the non linear scale for which sigma(R)=1
+        # That's our search range for the non linear scale
+        logr = np.linspace(np.log(1e-4), np.log(1e1), 256)
+
+        # TODO: implement a better root finding algorithm to compute the non linear scale
+        @jax.vmap
+        def R_nl(zs):
+            def int_sigma(logk):
+                k = np.exp(logk)
+                r = np.exp(logr)
+                y = np.outer(k, r)
+                pk = self.linearperturbations.linear_matter_power_spectrum(k, 0.)
+                g = self.linearperturbations.growth_factor(np.atleast_1d(zs))
+                return (
+                    np.expand_dims(pk * k**3, axis=1)
+                    * np.exp(-(y**2))
+                    / (2.0 * np.pi**2)
+                    * g**2
+                )
+
+            sigma = simps(int_sigma, np.log(1e-4), np.log(1e4), 256)
+            root = interp(np.atleast_1d(1.0), sigma, logr)
+            return np.exp(root).clip(
+                1e-6
+            )  # To ensure that the root is not too close to zero
+
+        # Compute non linear scale
+        k_nl = 1.0 / R_nl(np.atleast_1d(zs)).squeeze()
+
+        # Step 2: Retrieve the spectral index and spectral curvature
+        def integrand(logk):
+            k = np.exp(logk)
+            y = np.outer(k, 1.0 / k_nl)
+            pk = self.linearperturbations.linear_matter_power_spectrum(k, 0.)
+            g = np.expand_dims(self.linearperturbations.growth_factor(np.atleast_1d(zs)), 0)
+            res = (
+                np.expand_dims(pk * k**3, axis=1)
+                * np.exp(-(y**2))
+                * g**2
+                / (2.0 * np.pi**2)
+            )
+            dneff_dlogk = 2 * res * y**2
+            dC_dlogk = 4 * res * (y**2 - y**4)
+            return np.stack([dneff_dlogk, dC_dlogk], axis=1)
+
+        res = simps(integrand, np.log(1e-4), np.log(1e4), 256)
+
+        n_eff = res[0] - 3.0
+        C = res[0] ** 2 + res[1]
+
+        return k_nl, n_eff, C
+
+    def halofit(self, ks, zs):
+        zs = np.atleast_1d(zs)
+        a_s = a_z(zs)
+
+        # Compute the linear power spectrum
+        pklin = self.linearperturbations.linear_matter_power_spectrum(ks, zs)
+
+        # Compute non linear scale, effective spectral index and curvature
+        k_nl, n, C = self._halofit_parameters(zs)
+
+        om_m = self.linearperturbations.Omega_m_a(a_s)
+        om_de = self.linearperturbations.Omega_de_a(a_s)
+        w = self.linearperturbations.w_a(a_s)
+        frac = om_de / (1.0 - om_m)
+
+        a_n = 10 ** (
+            1.5222
+            + 2.8553 * n
+            + 2.3706 * n**2
+            + 0.9903 * n**3
+            + 0.2250 * n**4
+            - 0.6038 * C
+            + 0.1749 * om_de * (1 + w)
+        )
+        b_n = 10 ** (
+            -0.5642
+            + 0.5864 * n
+            + 0.5716 * n**2
+            - 1.5474 * C
+            + 0.2279 * om_de * (1 + w)
+        )
+        c_n = 10 ** (0.3698 + 2.0404 * n + 0.8161 * n**2 + 0.5869 * C)
+        gamma_n = 0.1971 - 0.0843 * n + 0.8460 * C
+        alpha_n = np.abs(6.0835 + 1.3373 * n - 0.1959 * n**2 - 5.5274 * C)
+        beta_n = (
+            2.0379
+            - 0.7354 * n
+            + 0.3157 * n**2
+            + 1.2490 * n**3
+            + 0.3980 * n**4
+            - 0.1682 * C
+        )
+        mu_n = 0.0
+        nu_n = 10 ** (5.2105 + 3.6902 * n)
+
+
+        f1a = om_m ** (-0.0732)
+        f2a = om_m ** (-0.1423)
+        f3a = om_m**0.0725
+        f1b = om_m ** (-0.0307)
+        f2b = om_m ** (-0.0585)
+        f3b = om_m ** (0.0743)
+
+
+        f1 = f1b
+        f2 = f2b
+        f3 = f3b
+
+
+        f = lambda x: x / 4.0 + x**2 / 8.0
+
+        d2l = np.outer(ks**3, pklin) / (2.0 * np.pi**2)
+
+        y = np.outer(ks, 1. / k_nl)
+
+        # Eq C2
+        d2q = d2l * ((1.0 + d2l) ** beta_n / (1 + alpha_n * d2l)) * np.exp(-f(y))
+        d2hprime = (
+            a_n * y ** (3 * f1) / (1.0 + b_n * y**f2 + (c_n * f3 * y) ** (3.0 - gamma_n))
+        )
+        d2h = d2hprime / (1.0 + mu_n / y + nu_n / y**2)
+        # Eq. C1
+        d2nl = d2q + d2h
+        pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
+
+        return pk_nl.squeeze()
+
+    def nonlinear_matter_power_spectrum(self, ks, zs):
+        """Computes the non-linear matter power spectrum.
+
+        This function is just a wrapper over several nonlinear power spectra.
+        """
+        return self.halofit(ks, zs)
 
 #function takenfrom JAXCosmo. Should likely be moved to an utils.py
 def simps(f, a, b, N=128):

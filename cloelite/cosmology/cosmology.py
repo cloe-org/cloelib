@@ -186,6 +186,31 @@ class LinearPerturbations(ABC):
         """
     pass
 
+class NonLinearPerturbations(ABC):
+    def __init__(self, linearperturbations : LinearPerturbations):
+        self.linearperturbations = linearperturbations
+
+    @abstractmethod
+    def nonlinear_matter_power_spectrum(self):
+        r"""
+        Retrieves the hubble parameter as
+        a function of redshift
+
+        .. math::
+            H(z) = \sqrt
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            Redshifts for the matter density
+
+        Returns
+        -------
+        Hubble parameter: numpy.ndarray
+            hubble parameter as a function of redshift
+
+        """
+    pass
 
 
 class Cosmology:

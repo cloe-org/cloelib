@@ -20,7 +20,7 @@ class CAMBBackground(Background):
     def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, sigma8: float, ns: float,
                  w: float, wa: float, gamma_MG: float):
         r"""
-        A class to define background cosmology using JAX
+        A class to define background cosmology using CAMB
         and inheriting from Cosmology parent class
         """
         
@@ -39,7 +39,7 @@ class CAMBBackground(Background):
 
         # Define CAMB params
         self.CAMBparams = camb.CAMBparams()
-        self.CAMBparams.set_cosmology(H0=H0, ombh2=self.ombh2, omch2=self.omch2, 
+        self.CAMBparams.set_cosmology(H0=H0, ombh2=self.ombh2, omch2=self.omch2, sigma8 = self.sigma8,
                                       mnu=0.0, neutrino_hierarchy='degenerate', num_massive_neutrinos=0.0, YHe=0.2454 , nnu=0.0)
         self.CAMBparams.set_dark_energy(w=self.w, wa=self.wa) #re-set defaults
         
@@ -165,3 +165,4 @@ class CAMBBackground(Background):
         y_int *= (self.cosmo_dic['c'] / self.H0)
 
         return y_int
+    

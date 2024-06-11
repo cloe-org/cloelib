@@ -11,9 +11,6 @@ import jax.lax as lx
 import functools
 
 """
-## Author:
-    **Name**: M. Bonici & G. Canas-Herrea
-    **Date**: June 9, 2024
 
 ## Notes:
 
@@ -22,22 +19,14 @@ import functools
 """
 
 class JAXBackground(Background):
-    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, sigma8: float, ns: float,
-                 w: float, wa: float, gamma_MG: float):
+    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, ns: float,
+                 w: float, wa: float, sigma8: float, gamma_MG: float):
         r"""
         A class to define background cosmology using JAX
         and inheriting from Cosmology parent class
 
         """
-        self.H0 = float(H0)
-        self.Omb = float(Omb)
-        self.Omc = float(Omc)
-        self.Omk = float(Omk)
-        self.sigma8 = float(sigma8)
-        self.ns = float(ns)
-        self.w = float(w)
-        self.wa = float(wa)
-        self.gamma_MG = float(gamma_MG)
+        super().__init__(H0, Omb, Omc, Omk, ns, w, wa, sigma8, gamma_MG)
 
     def hubble_parameter(self, zs) -> np.ndarray:
         r"""
@@ -444,6 +433,7 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
 
         """
         self.linearperturbations = linearperturbations
+        self.background = linearperturbations.background
 
     def _halofit_parameters(self, zs):
         r"""Computes the non linear scale,

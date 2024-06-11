@@ -40,7 +40,7 @@ class CAMBBackground(Background):
         # Define CAMB params
         self.CAMBparams = camb.CAMBparams()
         self.CAMBparams.set_cosmology(H0=H0, ombh2=self.ombh2, omch2=self.omch2, 
-                                      mnu=0.0, neutrino_hierarchy='degenerate', num_massive_neutrinos=0.0, YHe=0.2454 , nnu=3.046)
+                                      mnu=0.0, neutrino_hierarchy='degenerate', num_massive_neutrinos=0.0, YHe=0.2454 , nnu=0.0)
         self.CAMBparams.set_dark_energy(w=self.w, wa=self.wa) #re-set defaults
         
         # Get background cosmology

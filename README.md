@@ -76,5 +76,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgements
 - This project highly benefits from all the contributions of the amazing members of the Euclid Consortium IST:Likelihood and IST:Nonlinear (if you are Euclidean and you are playing with this, do not panic! we don't aim to take credit whatsoever about this, as we just wanted to demostrate that better times can actually be ahead of us!)
-- Thi project builds on top of Key-Project Galaxy-Clustering 6 Paper 3, "Emulators and differentiable likelihoods to accelerate Galaxy Clustering analysis", from Work-Package Likelihood of Galaxy-Clustering
+- This project builds on top of Key-Project Galaxy-Clustering 6 Paper 3, "Emulators and differentiable likelihoods to accelerate Galaxy Clustering analysis", from Work-Package Likelihood of Galaxy-Clustering
 - This project is partially inspired by the great work of [`jax-cosmo`](https://jax-cosmo.readthedocs.io/en/latest/) people (in particular, the `Background` and `Perturbations` classes)

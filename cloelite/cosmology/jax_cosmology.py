@@ -374,7 +374,7 @@ class JAXLinearPerturbations(LinearPerturbations):
 
         return 1.0 / (2.0 * np.pi**2.0) * y
 
-    def sigma8sqr(self):
+    def sigma8sqr(self, kmin=0.0001, kmax=100.0):
         """Computes the energy of the fluctuations within a sphere of R h^{-1} Mpc
 
         .. math::
@@ -388,8 +388,6 @@ class JAXLinearPerturbations(LinearPerturbations):
         W(kR) = \\frac{3j_1(kR)}{kR}
         """
         R = 8
-        kmin=0.0001
-        kmax=100.0
 
         def int_sigma(logk):
             k = np.exp(logk)

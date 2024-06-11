@@ -11,7 +11,7 @@
 
 ## Introduction
 Proof of concept of how to make CLOE (Cosmology Likelihood for Observables in Euclid) more efficient and user-friendly by transforming it into the Cosmology Library for Observables in Euclid (compatible with classic Boltzmann Solvers and JAX).
-This is a work in progress, and will benefit from the feedback of the Euclid community (and the whole cosmology community in general). 
+This is a work in progress, and will benefit from the feedback of the Euclid community (and the whole cosmology community in general).
 
 `cloelite` does not contain all the main features actual `cloe` has, and it should be seen as a toy repository to test further functionalities currently not implemented in `cloe` (and that would be difficult to include given its current architecture).
 
@@ -75,5 +75,6 @@ See the [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgements
-- This project highly benefits from all the contributions of the amazing members of Euclid Consortium IST:Likelihood and IST:Nonlinear (if you are Euclidean and you are playing with this, do not panic! we don't aim to take credit whatsoever about this, as we just wanted to demostrate that better times can actually be ahead of us!)
+- This project highly benefits from all the contributions of the amazing members of the Euclid Consortium IST:Likelihood and IST:Nonlinear (if you are Euclidean and you are playing with this, do not panic! we don't aim to take credit whatsoever about this, as we just wanted to demostrate that better times can actually be ahead of us!)
+- Thi project builds on top of Key-Project Galaxy-Clustering 6 Paper 3, "Emulators and differentiable likelihoods to accelerate Galaxy Clustering analysis", from Work-Package Likelihood of Galaxy-Clustering
 - This project is partially inspired by the great work of [`jax-cosmo`](https://jax-cosmo.readthedocs.io/en/latest/) people (in particular, the `Background` and `Perturbations` classes)

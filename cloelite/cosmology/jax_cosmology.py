@@ -371,6 +371,35 @@ class JAXLinearPerturbations(LinearPerturbations):
             return k * (k * w) ** 2 * pk
 
         y = romb(int_sigma, np.log10(kmin), np.log10(kmax), divmax=7)
+
+        return 1.0 / (2.0 * np.pi**2.0) * y
+
+    def sigma8sqr(self):
+        """Computes the energy of the fluctuations within a sphere of R h^{-1} Mpc
+
+        .. math::
+
+        \\sigma^2(R)= \\frac{1}{2 \\pi^2} \\int_0^\\infty \\frac{dk}{k} k^3 P(k,z) W^2(kR)
+
+        where
+
+        .. math::
+
+        W(kR) = \\frac{3j_1(kR)}{kR}
+        """
+        R = 8
+        kmin=0.0001
+        kmax=100.0
+
+        def int_sigma(logk):
+            k = np.exp(logk)
+            x = k * R
+            w = 3.0 * (np.sin(x) - x * np.cos(x)) / (x * x * x)
+            pk = self.transfer_Eisenstein_Hu(k) ** 2 * self.primordial_matter_power(k)
+            return k * (k * w) ** 2 * pk
+
+        #y = romb(int_sigma, np.log10(kmin), np.log10(kmax), divmax=7)
+        y = simps(int_sigma, np.log10(kmin), np.log10(kmax), N = 256)
         return 1.0 / (2.0 * np.pi**2.0) * y
 
     def linear_matter_power_spectrum(self, ks, zs, **kwargs):
@@ -399,7 +428,9 @@ class JAXLinearPerturbations(LinearPerturbations):
         g = self.growth_factor(zs)
         t = self.transfer_Eisenstein_Hu(ks)
 
-        pknorm = self.background.sigma8**2 / self.sigmasqr(8.0)
+        pknorm = self.background.sigma8**2 / self.sigma8sqr()#previously self.sigmasqr(8.0)
+        # this means we have a 0.01% difference compared to the romberg calculation,
+        # but it is much faster
 
         pk =  np.outer(self.primordial_matter_power(ks) * t**2,  g**2)
 

@@ -16,19 +16,35 @@ import jax.numpy as np
 """
 
 class ShearTracer(Tracer):
-    def __init__(self, perturbations: object, dndz: np.ndarray,
+    def __init__(self, perturbations: object, dndz: np.ndarray, z: np.ndarray,
                  intrinsic_aligment_model: str, nuisance_params: dict):
         r"""
-        A class to define background cosmology using JAX
-        and inheriting from Cosmology parent class
+        A class to define the kernel for Cosmic Shear.
+
+        Initialize the class with given perturbations, redshift distribution, 
+        intrinsic aligment models, and nuisance parameters.
+
+        Parameters
+        ----------
+        perturbations : object
+            An object from NonLinearPerturbations class
+        dndz : np.ndarray
+            A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
+            It is expected to be normalised.
+        z : np.ndarray
+            A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
+        intrinsic_aligment_model : str
+            A string specifying the model used to describe intrinsic aligments   
+        nuisance_params : dict
+            A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
         """
         
         super().__init__(perturbations)
         self.dndz = np.vstack(list(dndz.values()))
+        self.z = z
         self.nuisance_params = nuisance_params
         self.flags = {'intrinsic_aligment_model': intrinsic_aligment_model}
-
-
+        
     def get_window_IA(self, z):
         r"""Window integrand.
 
@@ -112,16 +128,35 @@ class ShearTracer(Tracer):
         pass
 
 class PositionsTracer(Tracer):
-    def __init__(self, perturbations: object, dndz: np.ndarray,
+    def __init__(self, perturbations: object, dndz: np.ndarray, z: np.ndarray,
                  galaxy_bias_model: str, magnification_bias_model: str,
                  nuisance_params: dict):
         r"""
-        A class to define background cosmology using JAX
-        and inheriting from Cosmology parent class
+        A class to define the kernel for angular (galaxy) clustering
+
+        Initialize the cosmology class with given perturbations, redshift distribution, 
+        galaxy and magnification bias models, and nuisance parameters.
+
+        Parameters
+        ----------
+        perturbations : object
+            An object from NonLinearPerturbations class
+        dndz : np.ndarray
+            A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
+            It is expected to be normalised.
+        z : np.ndarray
+            A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
+        galaxy_bias_model : str
+            A string specifying the model used to describe the galaxy bias
+        magnification_bias_model : str
+            A string specifying the model used to describe the magnification bias   
+        nuisance_params : dict
+            A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
         """
 
         super().__init__(perturbations)
         self.dndz = np.vstack(list(dndz.values()))
+        self.z = z
         self.nuisance_params = nuisance_params
         self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}
 
@@ -129,7 +164,7 @@ class PositionsTracer(Tracer):
         pass
 
     def get_window_positions(self, z):
-        r"""GC window.
+        r"""Galaxy Position window.
 
         Implements the galaxy clustering photometric window function.
 
@@ -144,7 +179,7 @@ class PositionsTracer(Tracer):
         Returns
         -------
         GCphot window function: float
-           Window function for photometric galaxy clustering
+           Window function for angular photometric galaxy clustering
         """
 
         # check how we normalize

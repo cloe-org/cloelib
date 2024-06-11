@@ -450,6 +450,7 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
         # Compute non linear scale
         k_nl = 1.0 / R_nl(np.atleast_1d(zs)).squeeze()
 
+
         # Step 2: Retrieve the spectral index and spectral curvature
         def integrand(logk):
             k = np.exp(logk)
@@ -521,7 +522,7 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
 
         f1a = om_m ** (-0.0732)
         f2a = om_m ** (-0.1423)
-        f3a = om_m**0.0725
+        f3a = om_m ** (0.0725)
         f1b = om_m ** (-0.0307)
         f2b = om_m ** (-0.0585)
         f3b = om_m ** (0.0743)
@@ -534,9 +535,9 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
 
         f = lambda x: x / 4.0 + x**2 / 8.0
 
-        d2l = np.outer(ks**3, pklin) / (2.0 * np.pi**2)
+        d2l = ks**3 * pklin / (2.0 * np.pi**2)
 
-        y = np.outer(ks, 1. / k_nl)
+        y = ks / k_nl
 
         # Eq C2
         d2q = d2l * ((1.0 + d2l) ** beta_n / (1 + alpha_n * d2l)) * np.exp(-f(y))
@@ -547,7 +548,6 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
         # Eq. C1
         d2nl = d2q + d2h
         pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
-
         return pk_nl.squeeze()
 
     def nonlinear_matter_power_spectrum(self, ks, zs):
@@ -615,6 +615,7 @@ def a_z(z):
     return 1/(1+z)
 
 #function from jaxcosmo
+@jax.jit
 def _romberg_diff(b, c, k):
     """
     Compute the differences for the Romberg quadrature corrections.

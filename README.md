@@ -13,7 +13,7 @@
 Proof of concept of how to make CLOE (Cosmology Likelihood for Observables in Euclid) more efficient and user-friendly by transforming it into the Cosmology Library for Observables in Euclid (compatible with classic Boltzmann Solvers and JAX).
 This is a work in progress, and will benefit from the feedback of the Euclid community (and the whole cosmology community in general). 
 
-`cloelite` does not contain all the main features actual `cloe` has, and it should be seen as a toy repository to test further functionalities currently not implemented in `cloe` (and that would be painful to get with its current architecture).
+`cloelite` does not contain all the main features actual `cloe` has, and it should be seen as a toy repository to test further functionalities currently not implemented in `cloe` (and that would be difficult to include given its current architecture).
 
 ## Features
 The main features of `cloelite` vs. `cloe` are:

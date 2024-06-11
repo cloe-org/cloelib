@@ -25,7 +25,9 @@ class Tracer(ABC):
         # args should be whatever n(z)
 
         self.perturbations = perturbations
+        self.background = perturbations.background
 
+    @abstractmethod
     def _window_integrad(self, z, zprime):
         r"""Window integrand.
 
@@ -53,7 +55,25 @@ class Tracer(ABC):
         """
 
         pass
+    
+    @abstractmethod
+    def _get_prefactor(self, ell):
+        r"""Computes the needed prefactor in Limber approximation.
 
+        Parameters
+        ----------
+        ell: float or numpy.ndarray of float
+           :math:`\ell`-mode(s) at which the prefactor is evaluated
+
+        Returns
+        -------
+        Pre-factor: float or numpy.ndarray of float
+           Value(s) of the prefactor at the given :math:`\ell`
+        """
+
+        pass
+
+    @abstractmethod
     def get_window(self, z):
         r"""Window
 

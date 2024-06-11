@@ -371,6 +371,33 @@ class JAXLinearPerturbations(LinearPerturbations):
             return k * (k * w) ** 2 * pk
 
         y = romb(int_sigma, np.log10(kmin), np.log10(kmax), divmax=7)
+
+        return 1.0 / (2.0 * np.pi**2.0) * y
+
+    def sigma8sqr(self, kmin=0.0001, kmax=100.0):
+        """Computes the energy of the fluctuations within a sphere of R h^{-1} Mpc
+
+        .. math::
+
+        \\sigma^2(R)= \\frac{1}{2 \\pi^2} \\int_0^\\infty \\frac{dk}{k} k^3 P(k,z) W^2(kR)
+
+        where
+
+        .. math::
+
+        W(kR) = \\frac{3j_1(kR)}{kR}
+        """
+        R = 8
+
+        def int_sigma(logk):
+            k = np.exp(logk)
+            x = k * R
+            w = 3.0 * (np.sin(x) - x * np.cos(x)) / (x * x * x)
+            pk = self.transfer_Eisenstein_Hu(k) ** 2 * self.primordial_matter_power(k)
+            return k * (k * w) ** 2 * pk
+
+        #y = romb(int_sigma, np.log10(kmin), np.log10(kmax), divmax=7)
+        y = simps(int_sigma, np.log10(kmin), np.log10(kmax), N = 256)
         return 1.0 / (2.0 * np.pi**2.0) * y
 
     def linear_matter_power_spectrum(self, ks, zs, **kwargs):
@@ -399,7 +426,9 @@ class JAXLinearPerturbations(LinearPerturbations):
         g = self.growth_factor(zs)
         t = self.transfer_Eisenstein_Hu(ks)
 
-        pknorm = self.background.sigma8**2 / self.sigmasqr(8.0)
+        pknorm = self.background.sigma8**2 / self.sigma8sqr()#previously self.sigmasqr(8.0)
+        # this means we have a 0.01% difference compared to the romberg calculation,
+        # but it is much faster
 
         pk =  np.outer(self.primordial_matter_power(ks) * t**2,  g**2)
 
@@ -449,6 +478,7 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
 
         # Compute non linear scale
         k_nl = 1.0 / R_nl(np.atleast_1d(zs)).squeeze()
+
 
         # Step 2: Retrieve the spectral index and spectral curvature
         def integrand(logk):
@@ -521,7 +551,7 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
 
         f1a = om_m ** (-0.0732)
         f2a = om_m ** (-0.1423)
-        f3a = om_m**0.0725
+        f3a = om_m ** (0.0725)
         f1b = om_m ** (-0.0307)
         f2b = om_m ** (-0.0585)
         f3b = om_m ** (0.0743)
@@ -534,9 +564,9 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
 
         f = lambda x: x / 4.0 + x**2 / 8.0
 
-        d2l = np.outer(ks**3, pklin) / (2.0 * np.pi**2)
+        d2l = ks**3 * pklin / (2.0 * np.pi**2)
 
-        y = np.outer(ks, 1. / k_nl)
+        y = ks / k_nl
 
         # Eq C2
         d2q = d2l * ((1.0 + d2l) ** beta_n / (1 + alpha_n * d2l)) * np.exp(-f(y))
@@ -547,7 +577,6 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
         # Eq. C1
         d2nl = d2q + d2h
         pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
-
         return pk_nl.squeeze()
 
     def nonlinear_matter_power_spectrum(self, ks, zs):
@@ -615,6 +644,7 @@ def a_z(z):
     return 1/(1+z)
 
 #function from jaxcosmo
+@jax.jit
 def _romberg_diff(b, c, k):
     """
     Compute the differences for the Romberg quadrature corrections.

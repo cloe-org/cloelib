@@ -7,27 +7,21 @@ from cloelite.cosmology.cosmology import LinearPerturbations
 from cloelite.cosmology.cosmology import NonLinearPerturbations
 
 """
-## Author:
-    **Name**: G. Canas-Herrera & M. Bonici
-    **Date**: June 11, 2024
 
 ## Notes:
 
-- Introducing the Tracer abstract class to implement different window functions
-- Idea behind: Tracer should be sufficiently generic to have flexibility (!)
-- SPIRIT: we do not classify among probes. All probes have their reason & place to be
-- Lesson learnt: the cosmological analysis is a common endevaour
+- Tracer abstract class to implement different window functions
 
 """
 
 class Tracer(ABC):
-    def __init__(self, perturbations: NonLinearPerturbations):
-        # The only common ingredient to all the tracers is 
+    def __init__(self, perturbations: {LinearPerturbations, NonLinearPerturbations}):
+        # The only common ingredients to all the tracers are 
         # perturbations and cosmological background 
-        # (inherited on perturbations too)
+        # (inherited from perturbations too)
         
         self.perturbations = perturbations
-        self.background = perturbations.linearperturbations.background
+        self.background = perturbations.background
 
     @abstractmethod
     def _window_integrad(self, z, zprime):

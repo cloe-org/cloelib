@@ -11,9 +11,6 @@ import jax.lax as lx
 import functools
 
 """
-## Author:
-    **Name**: M. Bonici & G. Canas-Herrea
-    **Date**: June 9, 2024
 
 ## Notes:
 
@@ -436,6 +433,7 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
 
         """
         self.linearperturbations = linearperturbations
+        self.background = linearperturbations.background
 
     def _halofit_parameters(self, zs):
         r"""Computes the non linear scale,

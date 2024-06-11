@@ -1,5 +1,7 @@
 # cloelite imports
 from cloelite.observables.tracer import Tracer
+from cloelite.cosmology.cosmology import LinearPerturbations
+from cloelite.cosmology.cosmology import NonLinearPerturbations
 
 # General imports
 import jax.numpy as np
@@ -16,7 +18,7 @@ import jax.numpy as np
 """
 
 class ShearTracer(Tracer):
-    def __init__(self, perturbations: object, dndz: np.ndarray, z: np.ndarray,
+    def __init__(self, perturbations: {LinearPerturbations, NonLinearPerturbations}, dndz: np.ndarray, z: np.ndarray,
                  intrinsic_aligment_model: str, nuisance_params: dict):
         r"""
         A class to define the kernel for Cosmic Shear.
@@ -44,7 +46,7 @@ class ShearTracer(Tracer):
         self.z = z
         self.nuisance_params = nuisance_params
         self.flags = {'intrinsic_aligment_model': intrinsic_aligment_model}
-        
+
     def get_window_IA(self, z):
         r"""Window integrand.
 
@@ -128,7 +130,7 @@ class ShearTracer(Tracer):
         pass
 
 class PositionsTracer(Tracer):
-    def __init__(self, perturbations: object, dndz: np.ndarray, z: np.ndarray,
+    def __init__(self, perturbations: {LinearPerturbations, NonLinearPerturbations}, dndz: np.ndarray, z: np.ndarray,
                  galaxy_bias_model: str, magnification_bias_model: str,
                  nuisance_params: dict):
         r"""
@@ -139,7 +141,7 @@ class PositionsTracer(Tracer):
 
         Parameters
         ----------
-        perturbations : object
+        perturbations : :class:`LinearPerturbations` or :class:`NonLinearPerturbations`
             An object from NonLinearPerturbations class
         dndz : np.ndarray
             A n-dimensional array representing the number density distribution of galaxies as a function of redshift.

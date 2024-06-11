@@ -2,6 +2,10 @@
 import numpy as np
 from abc import ABC, abstractmethod
 
+# cloelite imports
+from cloelite.cosmology.cosmology import LinearPerturbations
+from cloelite.cosmology.cosmology import NonLinearPerturbations
+
 """
 ## Author:
     **Name**: G. Canas-Herrera & M. Bonici
@@ -17,15 +21,13 @@ from abc import ABC, abstractmethod
 """
 
 class Tracer(ABC):
-    def __init__(self, perturbations: object, **args):
+    def __init__(self, perturbations: NonLinearPerturbations):
         # The only common ingredient to all the tracers is 
         # perturbations and cosmological background 
         # (inherited on perturbations too)
         
-        # args should be whatever n(z)
-
         self.perturbations = perturbations
-        self.background = perturbations.background
+        self.background = perturbations.linearperturbations.background
 
     @abstractmethod
     def _window_integrad(self, z, zprime):

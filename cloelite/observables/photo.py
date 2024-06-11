@@ -23,10 +23,11 @@ class ShearTracer(Tracer):
         and inheriting from Cosmology parent class
         """
         
-        super().__init__(self)
-        self.dndz = dndz
-        self.flags = {'intrinsic_aligment_model': intrinsic_aligment_model}
+        super().__init__(perturbations)
+        self.dndz = np.vstack(list(dndz.values()))
         self.nuisance_params = nuisance_params
+        self.flags = {'intrinsic_aligment_model': intrinsic_aligment_model}
+
 
     def get_window_IA(self, z):
         r"""Window integrand.
@@ -43,6 +44,9 @@ class ShearTracer(Tracer):
         window_IA: np.ndarray
         """
 
+        pass
+
+    def _get_prefactor(self, ell):
         pass
 
     def get_window_shear(self, z):
@@ -116,11 +120,10 @@ class PositionsTracer(Tracer):
         and inheriting from Cosmology parent class
         """
 
-        super().__init__(self)
-        self.dndz_pos = dndz
-        self.flags = {'galaxy_bias_model': galaxy_bias_model,
-                      'magnification_bias_model': magnification_bias_model}
+        super().__init__(perturbations)
+        self.dndz = np.vstack(list(dndz.values()))
         self.nuisance_params = nuisance_params
+        self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}
 
     def _get_prefactor(self, ell):
         pass
@@ -147,9 +150,10 @@ class PositionsTracer(Tracer):
         # check how we normalize
         # Think on interpolators for dndz
 
-        window_GC = self.dndz * self.theory['H_z_func_Mpc'](z)
+        window_positions = self.dndz * \
+            self.background.hubble_parameter(z)
 
-        return window_GC
+        return window_positions
 
 
     def get_window_RSD(self, z):

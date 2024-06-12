@@ -39,19 +39,17 @@ class AngularTwoPoint(TwoPoint):
 
         chi2 = chi**2
 
-        Pk = jax.vmap(self.tracer1.perturbations.nonlinear_matter_power_spectrum,
-                      in_axes = (0, None))(ks, zs_calc)
-        k_lz = np.expand_dims((ells + 0.5), 1) / chi
-        Pkl = Pkl_interp_vmap(k_lz, zs_calc, ks, zs_calc, Pk)
+        Pkl = self.tracer1.perturbations.nonlinear_matter_power_spectrum_limber_grid(zs_calc, ks, zs_calc, ells)
 
         WT1 = self.tracer1.get_window_positions(zs_calc)
-        WT2 = self.tracer1.get_window_positions(zs_calc)
+        WT2 = self.tracer2.get_window_positions(zs_calc)
         result = np.einsum('iz,jz,lz,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2)
+        #still have to include weights, basically we are doing unnormalized trapz
         return result
 
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
-    return 10**interpax.interp2d(jax.numpy.log10(k_l), z_l, jax.numpy.log10(ks), zs, jax.numpy.log10(Pk),
-                                 method="cubic")
+    return 10**interpax.interp2d(jax.numpy.log10(k_l), z_l, jax.numpy.log10(ks), zs,
+                                 jax.numpy.log10(Pk), method="cubic")
 
-Pkl_interp_vmap = jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None))
+Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))

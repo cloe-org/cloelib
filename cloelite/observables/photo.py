@@ -8,7 +8,7 @@ import jax.numpy as np
 
 """
 ## Author:
-    **Name**: G. Canas-Herrera & M. Bonici  
+    **Name**: G. Canas-Herrera & M. Bonici
     **Date**: June 11, 2024
 
 ## Notes:
@@ -23,7 +23,7 @@ class ShearTracer(Tracer):
         r"""
         A class to define the kernel for Cosmic Shear.
 
-        Initialize the class with given perturbations, redshift distribution, 
+        Initialize the class with given perturbations, redshift distribution,
         intrinsic aligment models, and nuisance parameters.
 
         Parameters
@@ -36,13 +36,13 @@ class ShearTracer(Tracer):
         z : np.ndarray
             A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
         intrinsic_aligment_model : str
-            A string specifying the model used to describe intrinsic aligments   
+            A string specifying the model used to describe intrinsic aligments
         nuisance_params : dict
             A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
         """
-        
+
         super().__init__(perturbations)
-        self.dndz = np.vstack(list(dndz.values()))
+        self.dndz = dndz#np.vstack(list(dndz.values()))
         self.z = z
         self.nuisance_params = nuisance_params
         self.flags = {'intrinsic_aligment_model': intrinsic_aligment_model}
@@ -136,7 +136,7 @@ class PositionsTracer(Tracer):
         r"""
         A class to define the kernel for angular (galaxy) clustering
 
-        Initialize the cosmology class with given perturbations, redshift distribution, 
+        Initialize the cosmology class with given perturbations, redshift distribution,
         galaxy and magnification bias models, and nuisance parameters.
 
         Parameters
@@ -151,13 +151,13 @@ class PositionsTracer(Tracer):
         galaxy_bias_model : str
             A string specifying the model used to describe the galaxy bias
         magnification_bias_model : str
-            A string specifying the model used to describe the magnification bias   
+            A string specifying the model used to describe the magnification bias
         nuisance_params : dict
             A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
         """
 
         super().__init__(perturbations)
-        self.dndz = np.vstack(list(dndz.values()))
+        self.dndz = dndz#np.vstack(list(dndz.values()))
         self.z = z
         self.nuisance_params = nuisance_params
         self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}

@@ -84,7 +84,7 @@ class ShearTracer(Tracer):
 
         pass
 
-    def _window_integrad(self, z, zprime):
+    def _window_integrand(self, z, zprime):
         r"""Window integrand.
 
         Calculates generic integrand for windows such as
@@ -244,7 +244,7 @@ class PositionsTracer(Tracer):
 
         #return Hzm_arr * fzm_arr * nzm_arr / bias
 
-    def _window_integrad(self, z, zprime):
+    def _window_integrand(self, z, zprime):
         r"""Window integrand.
 
         Calculates generic integrand for windows such as
@@ -273,18 +273,5 @@ class PositionsTracer(Tracer):
         pass
 
     def get_window(self, z):
-        r"""Window
-
-        Computes general window given the selected tracer
-
-        Parameters
-        ----------
-        z: float
-            Redshift at which window kernel is being evaluated
-
-        Returns
-        -------
-        window: np.ndarray
-        """
-
-        pass
+        return self.get_window_positions(z)
+    #gonna add the other contributes here!

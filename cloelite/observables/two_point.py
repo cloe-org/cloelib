@@ -41,11 +41,15 @@ class AngularTwoPoint(TwoPoint):
 
         Pkl = self.tracer1.perturbations.nonlinear_matter_power_spectrum_limber_grid(zs_calc, ks, zs_calc, ells)
 
-        WT1 = self.tracer1.get_window_positions(zs_calc)
-        WT2 = self.tracer2.get_window_positions(zs_calc)
-        result = np.einsum('iz,jz,lz,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2)
+        WT1 = self.tracer1.get_window(zs_calc)
+        WT2 = self.tracer2.get_window(zs_calc)
+        result = Cl_integration(WT1, WT2, Pkl, H, chi2)
         #still have to include weights, basically we are doing unnormalized trapz
         return result
+
+@jax.jit
+def Cl_integration(WT1, WT2, Pkl, H, chi2):
+    return np.einsum('iz,jz,lz,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2)
 
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):

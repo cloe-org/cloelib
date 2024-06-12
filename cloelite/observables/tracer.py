@@ -24,7 +24,7 @@ class Tracer(ABC):
         self.background = perturbations.background
 
     @abstractmethod
-    def _window_integrad(self, z, zprime):
+    def _window_integrand(self, z, zprime):
         r"""Window integrand.
 
         Calculates generic integrand for windows such as

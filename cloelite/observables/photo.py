@@ -5,6 +5,10 @@ from cloelite.cosmology.cosmology import NonLinearPerturbations
 
 # General imports
 import jax.numpy as np
+from scipy.interpolate import RectBivariateSpline
+import jax
+import interpax
+
 
 """
 **Date**: June 11, 2024
@@ -40,10 +44,97 @@ class ShearTracer(Tracer):
         """
 
         super().__init__(perturbations)
-        self.dndz = dndz#np.vstack(list(dndz.values()))
+        self.dndz = dndz
         self.z = z
         self.nuisance_params = nuisance_params
         self.flags = {'intrinsic_aligment_model': intrinsic_aligment_model}
+
+    def _get_prefactor(self, ell):
+        return 0
+
+    @jax.jit
+    def _window_integrand(self, z, n_z):
+        r"""Window integrand.
+
+        Calculates generic integrand for windows such as
+        lensing or magnification bias kernels
+
+        .. math::
+            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm A}(z^{\prime})
+            \frac{f_{K}\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
+            {f_K\left[\tilde{r}(z^{\prime})\right]}
+            }
+
+        This method is private. Not recommended to call directly, but possible
+
+        Parameters
+        ----------
+        zprime: float or numpy.ndarray
+            Redshift parameter that will be integrated over
+        z: float
+            Redshift at which kernel is being evaluated
+        n_z: numpy.ndarray
+            Redshift bin distribution
+
+        Returns
+        -------
+        window_integrand: np.ndarray
+        """
+
+        chi = self.background.comoving_distance(z)
+        weights = np.ones(len(chi))
+
+        mat_jax = jax.vmap(get_simpsons_weights_jit, in_axes=(0,))
+
+
+        for i, redshift in enumerate(z):
+            np.einsum('ij, j, j, jz -> iz', n_z, 1 - chi[i]/chi, mat_jax)
+
+        return
+
+    def get_window_shear(self, z):
+        r"""Weak Lensing shear kernel.
+
+        Calculates the weak lensing shear kernel for a given tomographic bin
+        distribution.
+        Uses broadcasting to compute a 2D-array of integrands and then applies
+        :obj:`np.trapz` on the array along one axis.
+
+        .. math::
+            W_{i}^{\gamma}(\ell, z, k) =
+            \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
+            \Omega_{{\rm m},0} (1 + z) \Sigma(z, k)
+            f_K\left[\tilde{r}(z)\right]
+            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
+            \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
+            {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
+
+        Parameters
+        ----------
+        z: numpy.ndarray of float
+            Redshift at which weight is evaluated.
+        bin_i: int
+            Index of desired tomographic bin.
+            Tomographic bin indices start from 1
+        k: float
+            Wavenumber at which to evaluate the Modified Gravity
+            :math:`\Sigma(z,k)` function
+
+        Returns
+        -------
+        Shear kernel: numpy.ndarray
+            1-D Numpy array of shear kernel values for specified bin
+            at specified scale for the redshifts defined in z
+        """
+
+        c_0 = 2.99792458e5
+        win_int = self._window_integrand(z, self.dndz)
+
+        W_val = (1.5 * self.background.H0 * self.background.Omm * \
+                 (1.0 + z) * self.background.comoving_distance(z) *
+                  ( c_0/ self.background.H0)) * win_int
+
+        return W_val
 
     def get_window_IA(self, z):
         r"""Window integrand.
@@ -62,53 +153,23 @@ class ShearTracer(Tracer):
 
         pass
 
-    def _get_prefactor(self, ell):
-        pass
+    def lensing_efficiency_bin(self, z, bin_idx):
+        interpolator = interpax.Akima1DInterpolator(self.z, self.dndz[bin_idx,:])
+        #f1 = lambda x, y: interpolator(x)*(1-tracer_she.background.comoving_distance(y)/tracer_she.background.comoving_distance(x))
+        f1 = jax.jit(lambda x: interpolator(x))
+        f2 = jax.jit(lambda x: interpolator(x)/self.background.comoving_distance(x))
+        integral_1 =  simps(f1, z, 3.)
+        integral_2 =  simps(f2, z, 3.)
+        efficiency = integral_1 - integral_2*self.background.comoving_distance(z)
+        return efficiency
 
-    def get_window_shear(self, z):
-        r"""Window integrand.
+    def lensing_efficiency(self, z):
+        n_bins = self.dndz.shape[0]
+        efficiency = self.lensing_efficiency_bin(z, 0)
+        for i in np.arange(1,n_bins):
+            efficiency = np.vstack([efficiency, self.lensing_efficiency_bin(z, i)])
 
-        Calculates shear window
-
-        Parameters
-        ----------
-        z: float
-            Redshift at which kernel is being evaluated
-
-        Returns
-        -------
-        window_shear: np.ndarray
-        """
-
-        pass
-
-    def _window_integrand(self, z, zprime):
-        r"""Window integrand.
-
-        Calculates generic integrand for windows such as
-        cosmic shear or magnification bias kernels
-
-        .. math::
-            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm A}(z^{\prime})
-            \frac{f_{K}\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}
-            }
-
-        This method is private. Not recommended to call directly, but possible
-
-        Parameters
-        ----------
-        zprime: float or numpy.ndarray
-            Redshift parameter that will be integrated over
-        z: float
-            Redshift at which kernel is being evaluated
-
-        Returns
-        -------
-        window_integrand: np.ndarray
-        """
-
-        pass
+        return efficiency
 
     def get_window(self, z):
         r"""Window
@@ -273,3 +334,13 @@ class PositionsTracer(Tracer):
     def get_window(self, z):
         # keep adding contributions here!
         return self.get_window_positions(z)
+    #gonna add the other contributes here!
+
+def simps(f, a, b, N=128):
+    if N % 2 == 1:
+        raise ValueError("N must be an even integer.")
+    dx = (b - a) / N
+    x = np.linspace(a, b, N + 1)
+    y = f(x)
+    S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
+    return S

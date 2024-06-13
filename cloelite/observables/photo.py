@@ -7,9 +7,7 @@ from cloelite.cosmology.cosmology import NonLinearPerturbations
 import jax.numpy as np
 
 """
-## Author:
-    **Name**: G. Canas-Herrera & M. Bonici
-    **Date**: June 11, 2024
+**Date**: June 11, 2024
 
 ## Notes:
 

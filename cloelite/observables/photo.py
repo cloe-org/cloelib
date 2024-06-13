@@ -155,12 +155,13 @@ class PositionsTracer(Tracer):
         """
 
         super().__init__(perturbations)
-        self.dndz = dndz#np.vstack(list(dndz.values()))
+        self.dndz = dndz
         self.z = z
         self.nuisance_params = nuisance_params
         self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}
 
     def _get_prefactor(self, ell):
+
         pass
 
     def get_window_positions(self, z):
@@ -182,11 +183,10 @@ class PositionsTracer(Tracer):
            Window function for angular photometric galaxy clustering
         """
 
-        # check how we normalize
-        # Think on interpolators for dndz
-
+        # 
+        c_0 = 2.99792458e5 #please, put all the constanst in a single place
         window_positions = self.dndz * \
-            self.background.hubble_parameter(z)
+            self.background.hubble_parameter(z)/c_0
 
         return window_positions
 
@@ -271,5 +271,5 @@ class PositionsTracer(Tracer):
         pass
 
     def get_window(self, z):
+        # keep adding contributions here!
         return self.get_window_positions(z)
-    #gonna add the other contributes here!

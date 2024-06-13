@@ -32,8 +32,9 @@ class AngularTwoPoint(TwoPoint):
         nl = 100
         ells = np.logspace(1., np.log10(3000), nl)
         ks = np.logspace(-5, 3, 500)
-
+        c_0 = 2.99792458e5
         zs_calc = self.tracer1.z
+        dz = self.tracer1.z[1]-self.tracer1.z[0]
         H = self.tracer1.background.comoving_distance(zs_calc)
         chi = self.tracer1.background.comoving_distance(zs_calc)
 
@@ -45,7 +46,7 @@ class AngularTwoPoint(TwoPoint):
         WT2 = self.tracer2.get_window(zs_calc)
         result = Cl_integration(WT1, WT2, Pkl, H, chi2)
         #still have to include weights, basically we are doing unnormalized trapz
-        return result
+        return c_0*result*dz
 
 @jax.jit
 def Cl_integration(WT1, WT2, Pkl, H, chi2):
@@ -53,7 +54,7 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2):
 
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
-    return 10**interpax.interp2d(jax.numpy.log10(k_l), z_l, jax.numpy.log10(ks), zs,
+    return 10**interpax.interp2d(jax.numpy.log10(k_l), z_l, jax.numpy.log10(ks),  zs,
                                  jax.numpy.log10(Pk), method="cubic")
 
 Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))

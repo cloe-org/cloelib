@@ -16,15 +16,15 @@ from cloelite.cosmology.cosmology import NonLinearPerturbations
 
 class Tracer(ABC):
     def __init__(self, perturbations: {LinearPerturbations, NonLinearPerturbations}):
-        # The only common ingredients to all the tracers are 
-        # perturbations and cosmological background 
+        # The only common ingredients to all the tracers are
+        # perturbations and cosmological background
         # (inherited from perturbations too)
-        
+
         self.perturbations = perturbations
         self.background = perturbations.background
 
     @abstractmethod
-    def _window_integrad(self, z, zprime):
+    def _window_integrand(self, z, zprime):
         r"""Window integrand.
 
         Calculates generic integrand for windows such as
@@ -51,7 +51,7 @@ class Tracer(ABC):
         """
 
         pass
-    
+
     @abstractmethod
     def _get_prefactor(self, ell):
         r"""Computes the needed prefactor in Limber approximation.
@@ -87,4 +87,3 @@ class Tracer(ABC):
         """
 
         pass
-

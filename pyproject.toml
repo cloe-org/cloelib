@@ -10,7 +10,7 @@ readme = "README.md"
 python = "^3.9"
 jax = "^0.4"
 jaxlib = "^0.4"
-euclidlib = "0.0.5"
+interpax = "^0.3.2"
 
 
 [build-system]

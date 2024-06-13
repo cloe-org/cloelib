@@ -9,6 +9,7 @@ import jax.numpy as np
 import jax
 import jax.lax as lx
 import functools
+import interpax
 
 """
 
@@ -574,6 +575,14 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
         """
         return self.halofit(ks, zs)
 
+    def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):
+        Pk = jax.vmap(self.nonlinear_matter_power_spectrum,
+                      in_axes = (0, None))(ks, zs)
+        chi = self.background.comoving_distance(zs)
+        k_lz = np.expand_dims((ells + 0.5), 1) / chi
+        Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
+        return Pkl
+
 #function takenfrom JAXCosmo. Should likely be moved to an utils.py
 def simps(f, a, b, N=128):
     if N % 2 == 1:
@@ -770,3 +779,10 @@ def _difftrapn(function, interval, numtraps):
     points = lox + h * np.arange(0, numtosum)
     s = np.sum(function(points))
     return s
+
+@jax.jit
+def Pkl_interp(k_l, z_l, ks, zs, Pk):
+    return 10**interpax.interp2d(np.log10(k_l), z_l, np.log10(ks), zs, np.log10(Pk),
+                                 method="cubic")
+
+Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))

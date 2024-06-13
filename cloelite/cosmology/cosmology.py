@@ -15,12 +15,13 @@ approach to link to other codes and make it Cobaya independent
 """
 
 class Background(ABC):
-    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, sigma8: float, ns: float,
-                 w: float, wa: float, gamma_MG: float):
+    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, As: float, ns: float,
+                 w: float, wa: float, sigma8 : float, gamma_MG: float):
         self.H0 = float(H0)
         self.Omb = float(Omb)
         self.Omc = float(Omc)
         self.Omk = float(Omk)
+        self.As = float(As)
         self.sigma8 = float(sigma8)
         self.ns = float(ns)
         self.w = float(w)

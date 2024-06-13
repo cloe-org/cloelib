@@ -4,7 +4,7 @@ from cloelite.cosmology.cosmology import LinearPerturbations
 from cloelite.cosmology.cosmology import NonLinearPerturbations
 
 # General imports
-import jax.numpy as jnp
+import jax.numpy as np
 from scipy.interpolate import RectBivariateSpline
 import jax
 import interpax
@@ -50,7 +50,7 @@ class ShearTracer(Tracer):
         self.flags = {'intrinsic_aligment_model': intrinsic_aligment_model}
 
     def _get_prefactor(self, ell):
-        pass
+        return 0
 
     @jax.jit
     def _window_integrand(self, z, n_z):
@@ -86,11 +86,11 @@ class ShearTracer(Tracer):
 
         mat_jax = jax.vmap(get_simpsons_weights_jit, in_axes=(0,))
 
-        
+
         for i, redshift in enumerate(z):
             np.einsum('ij, j, j, jz -> iz', n_z, 1 - chi[i]/chi, mat_jax)
 
-        return 
+        return
 
     def get_window_shear(self, z):
         r"""Weak Lensing shear kernel.
@@ -131,7 +131,7 @@ class ShearTracer(Tracer):
         win_int = self._window_integrand(z, self.dndz)
 
         W_val = (1.5 * self.background.H0 * self.background.Omm * \
-                 (1.0 + z) * self.background.comoving_distance(z) * 
+                 (1.0 + z) * self.background.comoving_distance(z) *
                   ( c_0/ self.background.H0)) * win_int
 
         return W_val
@@ -152,6 +152,24 @@ class ShearTracer(Tracer):
         """
 
         pass
+
+    def lensing_efficiency_bin(self, z, bin_idx):
+        interpolator = interpax.Akima1DInterpolator(self.z, self.dndz[bin_idx,:])
+        #f1 = lambda x, y: interpolator(x)*(1-tracer_she.background.comoving_distance(y)/tracer_she.background.comoving_distance(x))
+        f1 = jax.jit(lambda x: interpolator(x))
+        f2 = jax.jit(lambda x: interpolator(x)/self.background.comoving_distance(x))
+        integral_1 =  simps(f1, z, 3.)
+        integral_2 =  simps(f2, z, 3.)
+        efficiency = integral_1 - integral_2*self.background.comoving_distance(z)
+        return efficiency
+
+    def lensing_efficiency(self, z):
+        n_bins = self.dndz.shape[0]
+        efficiency = self.lensing_efficiency_bin(z, 0)
+        for i in np.arange(1,n_bins):
+            efficiency = np.vstack([efficiency, self.lensing_efficiency_bin(z, i)])
+
+        return efficiency
 
     def get_window(self, z):
         r"""Window
@@ -316,3 +334,12 @@ class PositionsTracer(Tracer):
     def get_window(self, z):
         return self.get_window_positions(z)
     #gonna add the other contributes here!
+
+def simps(f, a, b, N=128):
+    if N % 2 == 1:
+        raise ValueError("N must be an even integer.")
+    dx = (b - a) / N
+    x = np.linspace(a, b, N + 1)
+    y = f(x)
+    S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
+    return S

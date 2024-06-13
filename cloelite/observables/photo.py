@@ -153,7 +153,7 @@ class ShearTracer(Tracer):
 
         pass
 
-    def lensing_efficiency_bin(self, z, bin_idx):
+    def get_lensing_efficiency_bin(self, z, bin_idx):
         interpolator = interpax.Akima1DInterpolator(self.z, self.dndz[bin_idx,:])
         #f1 = lambda x, y: interpolator(x)*(1-tracer_she.background.comoving_distance(y)/tracer_she.background.comoving_distance(x))
         f1 = jax.jit(lambda x: interpolator(x))
@@ -163,13 +163,22 @@ class ShearTracer(Tracer):
         efficiency = integral_1 - integral_2*self.background.comoving_distance(z)
         return efficiency
 
-    def lensing_efficiency(self, z):
+    def get_lensing_efficiency(self, z):
         n_bins = self.dndz.shape[0]
-        efficiency = self.lensing_efficiency_bin(z, 0)
+        efficiency = self.get_lensing_efficiency_bin(z, 0)
         for i in np.arange(1,n_bins):
-            efficiency = np.vstack([efficiency, self.lensing_efficiency_bin(z, i)])
+            efficiency = np.vstack([efficiency, self.get_lensing_efficiency_bin(z, i)])
 
         return efficiency
+
+    def get_lensing_window(self, z):
+        c_0 = 2.99792458e5
+
+        factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omb+self.background.Omc)\
+        *(1+z)*self.background.comoving_distance(z)
+        efficiency = self.get_lensing_efficiency(z)
+        return np.einsum('ij, j->ij', efficiency, factor)
+
 
     def get_window(self, z):
         r"""Window
@@ -185,8 +194,7 @@ class ShearTracer(Tracer):
         -------
         window: np.ndarray
         """
-
-        pass
+        return self.get_lensing_window(z)
 
 class PositionsTracer(Tracer):
     def __init__(self, perturbations: {LinearPerturbations, NonLinearPerturbations}, dndz: np.ndarray, z: np.ndarray,
@@ -244,7 +252,7 @@ class PositionsTracer(Tracer):
            Window function for angular photometric galaxy clustering
         """
 
-        # 
+        #
         c_0 = 2.99792458e5 #please, put all the constanst in a single place
         window_positions = self.dndz * \
             self.background.hubble_parameter(z)/c_0

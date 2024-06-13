@@ -1,10 +1,10 @@
 # cloelite imports
-from numpy import ndarray
 from cloelite.cosmology.cosmology import Background
 from cloelite.cosmology.cosmology import LinearPerturbations
 from cloelite.cosmology.cosmology import NonLinearPerturbations
 
 # General imports
+from numpy import ndarray
 import jax.numpy as np
 import jax
 import jax.lax as lx
@@ -20,14 +20,14 @@ import interpax
 """
 
 class JAXBackground(Background):
-    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, ns: float,
+    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, As: float, ns: float,
                  w: float, wa: float, sigma8: float, gamma_MG: float):
         r"""
         A class to define background cosmology using JAX
         and inheriting from Cosmology parent class
 
         """
-        super().__init__(H0, Omb, Omc, Omk, ns, w, wa, sigma8, gamma_MG)
+        super().__init__(H0, Omb, Omc, Omk, As, ns, w, wa, sigma8, gamma_MG)
 
     def hubble_parameter(self, zs) -> np.ndarray:
         r"""
@@ -139,8 +139,6 @@ class JAXLinearPerturbations(LinearPerturbations):
 
     def w_a(self, a):
         return self.background.w + (1.0 - a) * self.background.wa  # Equation (6) in Linder (2003)
-
-
 
     def f_de(self, a):
         return -3.0 * (1.0 + self.background.w + self.background.wa) * np.log(a) + 3.0 * self.background.wa * (a - 1.0)
@@ -398,8 +396,8 @@ class JAXLinearPerturbations(LinearPerturbations):
         k: array_like
             Wave number in h Mpc^{-1}
 
-        a: array_like, optional
-            Scale factor (def: 1.0)
+        zs: array_like, optional
+            Redshifts 
 
         transfer_fn: transfer_fn(cosmo, k, **kwargs)
             Transfer function

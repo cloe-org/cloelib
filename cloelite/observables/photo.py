@@ -150,8 +150,14 @@ class ShearTracer(Tracer):
         -------
         window_IA: np.ndarray
         """
-
-        pass
+        c_0 = 2.99792458e5
+        Hz = self.background.hubble_parameter(z)
+        Dz = self.perturbations.linearperturbations.growth_factor(z)
+        AIA = self.nuisance_params["AIA"]
+        CIA = self.nuisance_params["CIA"]
+        EtaIA = self.nuisance_params["EtaIA"]
+        factor = -Hz/c_0*AIA*CIA*(self.background.Omb+self.background.Omc)*(1+z)**EtaIA/Dz
+        return np.einsum('ij, j->ij', self.dndz, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
         interpolator = interpax.Akima1DInterpolator(self.z, self.dndz[bin_idx,:])
@@ -179,7 +185,6 @@ class ShearTracer(Tracer):
         efficiency = self.get_lensing_efficiency(z)
         return np.einsum('ij, j->ij', efficiency, factor)
 
-
     def get_window(self, z):
         r"""Window
 
@@ -194,7 +199,7 @@ class ShearTracer(Tracer):
         -------
         window: np.ndarray
         """
-        return self.get_lensing_window(z)
+        return self.get_lensing_window(z) + self.get_window_IA(z)
 
 class PositionsTracer(Tracer):
     def __init__(self, perturbations: {LinearPerturbations, NonLinearPerturbations}, dndz: np.ndarray, z: np.ndarray,

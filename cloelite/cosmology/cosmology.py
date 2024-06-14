@@ -3,9 +3,6 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 """
-## Author:
-    **Name**: G. Canas-Herrera & M. Bonici
-    **Date**: June 9, 2024
 
 ## Notes:
 

@@ -11,9 +11,9 @@
 
 ## Introduction
 Proof of concept of how to make CLOE (Cosmology Likelihood for Observables in Euclid) more efficient and user-friendly by transforming it into the Cosmology Library for Observables in Euclid (compatible with classic Boltzmann Solvers and JAX).
-This is a work in progress, and will benefit from the feedback of the Euclid community (and the whole cosmology community in general). 
+This is a work in progress, and will benefit from the feedback of the Euclid community (and the whole cosmology community in general).
 
-`cloelite` does not contain all the main features actual `cloe` has, and it should be seen as a toy repository to test further functionalities currently not implemented in `cloe` (and that would be painful to get with its current architecture).
+`cloelite` does not contain all the main features actual `cloe` has, and it should be seen as a toy repository to test further functionalities currently not implemented in `cloe` (and that would be difficult to include given its current architecture).
 
 ## Features
 The main features of `cloelite` vs. `cloe` are:
@@ -34,7 +34,7 @@ Clone the repository `main` branch and pip install it:
    ```
 
 ### Prerequisites
-- TBA
+- `jax`, aditionally `euclidlib` and `camb`
 
 ### Steps
 1. Clone the repository:
@@ -47,8 +47,7 @@ Clone the repository `main` branch and pip install it:
    ```
 
 ## Usage
-TBA
-
+Check out the `notebooks` folder to see how to compute observables.
 
 ## Contributing
 If you would like to contribute, follow the steps below:
@@ -69,11 +68,11 @@ If you would like to contribute, follow the steps below:
    ```
 6. Open a pull request
 
-See the [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
-
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgements
-- This project highly benefits from all the contributions of the amazing members of Euclid Consortium IST:Likelihood and IST:Nonlinear (if you are Euclidean and you are playing with this, do not panic! we don't aim to take credit whatsoever about this, as we just wanted to demostrate that better times can actually be ahead of us!)
+- This project highly benefits from all the contributions of the amazing members of the Euclid Consortium IST:Likelihood and IST:Nonlinear (if you are Euclidean and you are playing with this, do not panic! we don't aim to take credit whatsoever about this, as we just wanted to demostrate that better times can actually be ahead of us!)
+- This project builds on top of Key-Project Galaxy-Clustering 6 Paper 3, "Emulators and differentiable likelihoods to accelerate Galaxy Clustering analysis", from Work-Package Likelihood of Galaxy-Clustering
+- This project keeps present the list of action points and lessons learnt from the Theory Science Working Group Likelihood meeting, where it was indentified the need of having a modular pipeline that still interfaces with `CAMB`/`CLASS` (and `Cobaya`). The pipeline needs to be user-friendly and modular enough to include modifications and inclusion of other codes (`pybird`, `PBJ` and other emulators)
 - This project is partially inspired by the great work of [`jax-cosmo`](https://jax-cosmo.readthedocs.io/en/latest/) people (in particular, the `Background` and `Perturbations` classes)

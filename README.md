@@ -76,7 +76,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - This project builds on top of Key-Project Galaxy-Clustering 6 Paper 3, "Emulators and differentiable likelihoods to accelerate Galaxy Clustering analysis", from Work-Package Likelihood of Galaxy-Clustering
 - This project keeps present the list of action points and lessons learnt from the Theory Science Working Group Likelihood meeting, where it was indentified the need of having a modular pipeline that still interfaces with `CAMB`/`CLASS` (and `Cobaya`). The pipeline needs to be user-friendly and modular enough to include modifications and inclusion of other codes (`pybird`)
 - This project is partially inspired by the great work of [`jax-cosmo`](https://jax-cosmo.readthedocs.io/en/latest/) people (in particular, the `Background` and `Perturbations` classes)
-
-## Architecture & class inheritance
-
-[Check out the schema here](https://files.fm/f/qb33gwzcxc)

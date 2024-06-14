@@ -1,0 +1,60 @@
+import jax.numpy as np
+from abc import ABC, abstractmethod
+from scipy.interpolate import RectBivariateSpline
+import jax
+import interpax
+
+# cloelite imports
+from cloelite.observables.tracer import Tracer
+
+"""
+
+## Notes:
+
+- Two point asbtract class to compute two point functions
+
+"""
+
+class TwoPoint(ABC):
+    def __init__(self, tracer1 : Tracer, tracer2 : Tracer):
+        if type(tracer1.perturbations) != type(tracer2.perturbations):
+            TypeError("The types of the perturbations of the two tracers is not compatible!")
+
+        self.tracer1 = tracer1
+        self.tracer2 = tracer2
+
+class AngularTwoPoint(TwoPoint):
+    def __init__(self, tracer1 : Tracer, tracer2 : Tracer):
+        super().__init__(tracer1, tracer2)
+
+    def get_Cl(self):
+        #now hardcoded, later probably some hyper parameters to pass to the constructor
+        nl = 100
+        ells = np.logspace(1., np.log10(3000), nl)
+        ks = np.logspace(-5, 3, 500)
+        c_0 = 2.99792458e5
+        zs_calc = self.tracer1.z
+        dz = self.tracer1.z[1]-self.tracer1.z[0]
+        H = self.tracer1.background.comoving_distance(zs_calc)
+        chi = self.tracer1.background.comoving_distance(zs_calc)
+
+        chi2 = chi**2
+
+        Pkl = self.tracer1.perturbations.nonlinear_matter_power_spectrum_limber_grid(zs_calc, ks, zs_calc, ells)
+
+        WT1 = self.tracer1.get_window(zs_calc)
+        WT2 = self.tracer2.get_window(zs_calc)
+        result = Cl_integration(WT1, WT2, Pkl, H, chi2)
+        #still have to include weights, basically we are doing unnormalized trapz
+        return c_0*result*dz
+
+@jax.jit
+def Cl_integration(WT1, WT2, Pkl, H, chi2):
+    return np.einsum('iz,jz,lz,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2)
+
+@jax.jit
+def Pkl_interp(k_l, z_l, ks, zs, Pk):
+    return 10**interpax.interp2d(jax.numpy.log10(k_l), z_l, jax.numpy.log10(ks),  zs,
+                                 jax.numpy.log10(Pk), method="cubic")
+
+Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))

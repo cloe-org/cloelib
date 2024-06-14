@@ -34,7 +34,7 @@ Clone the repository `main` branch and pip install it:
    ```
 
 ### Prerequisites
-- TBA
+- `jax`, aditionally `euclidlib` and `camb`
 
 ### Steps
 1. Clone the repository:
@@ -47,8 +47,7 @@ Clone the repository `main` branch and pip install it:
    ```
 
 ## Usage
-TBA
-
+Check out the `notebooks` folder to see how to compute observables.
 
 ## Contributing
 If you would like to contribute, follow the steps below:

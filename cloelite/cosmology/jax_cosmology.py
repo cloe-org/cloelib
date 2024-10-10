@@ -2,11 +2,13 @@
 from cloelite.cosmology.cosmology import Background
 from cloelite.cosmology.cosmology import LinearPerturbations
 from cloelite.cosmology.cosmology import NonLinearPerturbations
+from cloelite.auxiliary.jaxy import jax_atleast_1d
 
 # General imports
 from numpy import ndarray
 import jax.numpy as np
 import jax
+from jax import jit
 import jax.lax as lx
 import functools
 import interpax
@@ -68,8 +70,9 @@ class JAXBackground(Background):
             The comoving distance as a function of redshift.
         """
         c_0 = 2.99792458e5 #please, put all the constanst in a single place
-        fun = lambda x: 1/self.hubble_parameter(x)
-        y = simps(fun, 0, zs, N=512) * c_0
+        def inverse_H(x):
+            return 1/self.hubble_parameter(x)
+        y = simps(inverse_H, 0., zs, N=512) * c_0
         return y
 
     def matter_density(self, zs) -> np.ndarray:
@@ -162,15 +165,15 @@ class JAXLinearPerturbations(LinearPerturbations):
                              self.Omega_de_a(x))) / x
             r = 1.5 * self.Omega_m_a(x) / x / x
             return np.array([y[1], -q * y[1] + r * y[0]])
-
+    
     def growth_factor(self, zs):
         atab = np.logspace(-3., 0.0, 128)
 
         a_s = a_z(zs)
 
         y0 = np.array([atab[0], 1.0])
-        fn = lambda x, y : self.D_derivs(x,y)
-        y = odeint(fn, y0, atab)
+        #fn = lambda x, y : self.D_derivs(x,y)
+        y = odeint(self.D_derivs, y0, atab)
         y1 = y[:, 0]
         gtab = y1 / y1[-1]
 
@@ -185,8 +188,8 @@ class JAXLinearPerturbations(LinearPerturbations):
         a_s = a_z(zs)
 
         y0 = np.array([atab[0], 1.0])
-        fn = lambda x, y : self.D_derivs(x,y)
-        y = odeint(fn, y0, atab)
+        #fn = lambda x, y : self.D_derivs(x,y)
+        y = odeint(self.D_derivs, y0, atab)
         y1 = y[:, 0]
         gtab = y1 / y1[-1]
 
@@ -409,8 +412,8 @@ class JAXLinearPerturbations(LinearPerturbations):
             and scale factor.
 
         """
-        ks = np.atleast_1d(ks)
-        zs = np.atleast_1d(zs)
+        ks = jax_atleast_1d(ks)
+        zs = jax_atleast_1d(zs)
         g = self.growth_factor(zs)
         t = self.transfer_Eisenstein_Hu(ks)
 
@@ -451,7 +454,7 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
                 r = np.exp(logr)
                 y = np.outer(k, r)
                 pk = self.linearperturbations.linear_matter_power_spectrum(k, 0.)
-                g = self.linearperturbations.growth_factor(np.atleast_1d(zs))
+                g = self.linearperturbations.growth_factor(jax_atleast_1d(zs))
                 return (
                     np.expand_dims(pk * k**3, axis=1)
                     * np.exp(-(y**2))
@@ -460,21 +463,21 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
                 )
 
             sigma = simps(int_sigma, np.log(1e-4), np.log(1e4), 256)
-            root = interp(np.atleast_1d(1.0), sigma, logr)
+            root = interp(jax_atleast_1d(1.0), sigma, logr)
             return np.exp(root).clip(
                 1e-6
             )  # To ensure that the root is not too close to zero
 
         # Compute non linear scale
-        k_nl = 1.0 / R_nl(np.atleast_1d(zs)).squeeze()
+        k_nl = 1.0 / R_nl(jax_atleast_1d(zs)).squeeze()
 
 
         # Step 2: Retrieve the spectral index and spectral curvature
         def integrand(logk):
             k = np.exp(logk)
             y = np.outer(k, 1.0 / k_nl)
-            pk = self.linearperturbations.linear_matter_power_spectrum(k, 0.)
-            g = np.expand_dims(self.linearperturbations.growth_factor(np.atleast_1d(zs)), 0)
+            pk = self.linearperturbations.linear_matter_power_spectrum(k, jax_atleast_1d(0.))
+            g = np.expand_dims(self.linearperturbations.growth_factor(jax_atleast_1d(zs)), jax_atleast_1d(0.))
             res = (
                 np.expand_dims(pk * k**3, axis=1)
                 * np.exp(-(y**2))
@@ -493,7 +496,7 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
         return k_nl, n_eff, C
 
     def halofit(self, ks, zs):
-        zs = np.atleast_1d(zs)
+        zs = jax_atleast_1d(zs)
         a_s = a_z(zs)
 
         # Compute the linear power spectrum
@@ -551,14 +554,15 @@ class JAXNonLinearPerturbations(NonLinearPerturbations):
         f3 = f3b
 
 
-        f = lambda x: x / 4.0 + x**2 / 8.0
+        def fuun(x):
+            return x / 4.0 + x**2 / 8.0
 
         d2l = ks**3 * pklin / (2.0 * np.pi**2)
 
         y = ks / k_nl
 
         # Eq C2
-        d2q = d2l * ((1.0 + d2l) ** beta_n / (1 + alpha_n * d2l)) * np.exp(-f(y))
+        d2q = d2l * ((1.0 + d2l) ** beta_n / (1 + alpha_n * d2l)) * np.exp(-fuun(y))
         d2hprime = (
             a_n * y ** (3 * f1) / (1.0 + b_n * y**f2 + (c_n * f3 * y) ** (3.0 - gamma_n))
         )
@@ -636,12 +640,12 @@ def interp(x, xp, fp):
     b = fp[ind] - a * xp[ind]
     return a * x + b
 
-@jax.jit
+#@jax.jit
 def a_z(z):
     return 1/(1+z)
 
 #function from jaxcosmo
-@jax.jit
+#@jax.jit
 def _romberg_diff(b, c, k):
     """
     Compute the differences for the Romberg quadrature corrections.
@@ -713,7 +717,9 @@ def romb(function, a, b, args=(), divmax=6, return_error=False):
     >>> print("%g %g" % (2*result, erf(1)))
     0.842701 0.842701
     """
-    vfunc = jax.jit(lambda x: function(x, *args))
+    def vfunc(x):
+        ret = jit(function(x, *args))
+        return ret
 
     n = 1
     interval = [a, b]
@@ -780,9 +786,10 @@ def _difftrapn(function, interval, numtraps):
     s = np.sum(function(points))
     return s
 
-@jax.jit
+#@jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
     return 10**interpax.interp2d(np.log10(k_l), z_l, np.log10(ks), zs, np.log10(Pk),
                                  method="cubic")
 
-Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))
+#Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))
+Pkl_interp_vmap = jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None))

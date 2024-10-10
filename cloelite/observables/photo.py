@@ -52,7 +52,7 @@ class ShearTracer(Tracer):
     def _get_prefactor(self, ell):
         return 0
 
-    @jax.jit
+    #@jax.jit
     def _window_integrand(self, z, n_z):
         r"""Window integrand.
 
@@ -84,7 +84,7 @@ class ShearTracer(Tracer):
         chi = self.background.comoving_distance(z)
         weights = np.ones(len(chi))
 
-        mat_jax = jax.vmap(get_simpsons_weights_jit, in_axes=(0,))
+        mat_jax = jax.vmap(get_simpsons_weights, in_axes=(0,))
 
 
         for i, redshift in enumerate(z):
@@ -162,10 +162,15 @@ class ShearTracer(Tracer):
     def get_lensing_efficiency_bin(self, z, bin_idx):
         interpolator = interpax.Akima1DInterpolator(self.z, self.dndz[bin_idx,:])
         #f1 = lambda x, y: interpolator(x)*(1-tracer_she.background.comoving_distance(y)/tracer_she.background.comoving_distance(x))
-        f1 = jax.jit(lambda x: interpolator(x))
-        f2 = jax.jit(lambda x: interpolator(x)/self.background.comoving_distance(x))
-        integral_1 =  simps(f1, z, 3.)
-        integral_2 =  simps(f2, z, 3.)
+        #f1 = jax.jit(lambda x: interpolator(x))
+        #f2 = jax.jit(lambda x: interpolator(x)/self.background.comoving_distance(x))
+        def f1(x):
+            return interpolator(x)
+        def f2(x): 
+            intb = interpolator(x)/self.background.comoving_distance(x)
+            return intb
+        integral_1 =  psimps(f1, z, 3.)
+        integral_2 =  psimps(f2, z, 3.)
         efficiency = integral_1 - integral_2*self.background.comoving_distance(z)
         return efficiency
 
@@ -349,7 +354,7 @@ class PositionsTracer(Tracer):
         return self.get_window_positions(z)
     #gonna add the other contributes here!
 
-def simps(f, a, b, N=128):
+def psimps(f, a, b, N=128):
     if N % 2 == 1:
         raise ValueError("N must be an even integer.")
     dx = (b - a) / N

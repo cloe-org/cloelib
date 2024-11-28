@@ -1,6 +1,6 @@
 # cloelite imports
 from cloelite.auxiliary.units import SPEED_OF_LIGHT
-from cloelite.cosmology.cosmology import Background, LinearPerturbations
+from cloelite.cosmology.cosmology import Background
 
 # General imports
 import numpy as np
@@ -165,7 +165,7 @@ class CAMBLinearPerturbations:
         self.background.interface_args.set_matter_power(redshifts=redshifts, kmax=self.kmax)
         self.results = camb.get_results(self.background.interface_args)
 
-    def linear_matter_power_spectrum(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def matter_power_spectrum(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Calculates the linear matter power spectrum.
 
@@ -182,7 +182,7 @@ class CAMBNonLinearPerturbations:
     A wrapper for CAMB nonlinear perturbation calculations.
     """
 
-    def __init__(self, linear_perturbations: LinearPerturbations, redshifts: np.ndarray, 
+    def __init__(self, background: Background, redshifts: np.ndarray, 
                  nonlinear_model: Optional[str] = None) -> None:
         """
         Initializes the CAMBNonLinearPerturbations class with linear perturbation data.
@@ -193,8 +193,7 @@ class CAMBNonLinearPerturbations:
             nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
                 Defaults to None, which uses the CAMB default model.
         """
-        self.linear_perturbations = linear_perturbations
-        self.background = self.linear_perturbations.background
+        self.background = background
         self.kmax = 50
 
         # Configure CAMB parameters for nonlinear calculations
@@ -208,7 +207,7 @@ class CAMBNonLinearPerturbations:
         # Compute nonlinear perturbations
         self.results = camb.get_results(self.background.interface_args)
 
-    def nonlinear_matter_power_spectrum(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def matter_power_spectrum(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Calculates the nonlinear matter power spectrum.
 

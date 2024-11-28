@@ -63,8 +63,7 @@ class Background(Protocol):
         """
         ...
 
-
-class LinearPerturbations(Protocol):
+class Perturbations(Protocol):
     background: Background
 
     def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
@@ -79,28 +78,7 @@ class LinearPerturbations(Protocol):
         """
         ...
 
-    def linear_matter_power_spectrum(self) -> np.ndarray:
-        """
-        Retrieves the linear matter power spectrum.
-        """
-        ...
-
-class NonLinearPerturbations(Protocol):
-    linear_perturbation: LinearPerturbations
-
-    def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
-        """
-        Calculates the growth factor for given redshifts and wavenumbers.
-        """
-        ...
-
-    def growth_rate(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
-        """
-        Calculates the growth rate for given redshifts and wavenumbers.
-        """
-        ...
-
-    def nonlinear_matter_power_spectrum(self) -> np.ndarray:
+    def matter_power_spectrum(self) -> np.ndarray:
         """
         Retrieves the linear matter power spectrum.
         """

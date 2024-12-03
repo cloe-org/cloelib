@@ -3,7 +3,8 @@ from cloelite.cosmology.cosmology import Background
 from cloelite.cosmology.cosmology import LinearPerturbations
 from cloelite.cosmology.cosmology import NonLinearPerturbations
 # General imports
-import numpy as np 
+import numpy as np
+from scipy.interpolate import interp1d
 # Cosmology imports
 try:
     import camb
@@ -21,26 +22,28 @@ except ImportError:
 """
 
 class CAMBBackground(Background):
-    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, sigma8: float, ns: float,
-                 As: float, w: float, wa: float, gamma_MG: float):
+    def __init__(self, H0: float, ombh2: float, omch2: float, Omk: float,
+                 sigma8: float, ns: float, As: float, w: float, wa: float,
+                 gamma_MG: float):
         r"""
         A class to define background cosmology using CAMB
         and inheriting from Cosmology parent class
         """
-        
-        super().__init__(H0, Omb, Omc, Omk, sigma8, As, ns, w, wa, gamma_MG)
-        self.h = float(self.H0 / 100)
-        self.ombh2 = float(self.Omb * self.h**2)
-        self.omch2 = float(self.Omc * self.h**2)
+
+        super().__init__(H0=H0, ombh2=ombh2, omch2=omch2, Omk=Omk,
+                         sigma8=sigma8, As=As, ns=ns, w=w, wa=wa,
+                         gamma_MG=gamma_MG)
 
         # Define CAMB params
         self.CAMBparams = camb.CAMBparams()
         # For the moment, ignore neutrinos
-        self.CAMBparams.set_cosmology(H0=H0, ombh2=self.ombh2, omch2=self.omch2, mnu=0.0, 
-                                      neutrino_hierarchy='degenerate', num_massive_neutrinos=0.0, YHe=0.2454 , nnu=0.0)
+        self.CAMBparams.set_cosmology(H0=H0, ombh2=self.ombh2,
+                                      omch2=self.omch2, mnu=0.0,
+                                      neutrino_hierarchy='degenerate',
+                                      num_massive_neutrinos=0.0,
+                                      YHe=0.2454 , nnu=0.0)
         self.CAMBparams.set_dark_energy(w=self.w, wa=self.wa) #re-set defaults
-        self.CAMBparams.InitPower.set_params(As = self.As, 
-                                                        ns = self.ns)
+        self.CAMBparams.InitPower.set_params(As = self.As, ns = self.ns)
         # Get background cosmology
         self.CAMBresults = camb.get_background(self.CAMBparams)
 
@@ -134,7 +137,7 @@ class CAMBBackground(Background):
             self.CAMBresults.get_Omega('neutrino', z=zs) + \
             self.CAMBresults.get_Omega('nu', z=zs)
         return self.CAMBresults.get_Omega('tot', z=zs)
-    
+
     def transverse_comoving_distance(self, zs) -> np.ndarray:
         """
         Calculates the transverse comoving distance beetween two redshifts.
@@ -163,7 +166,7 @@ class CAMBBackground(Background):
         y_int *= (self.cosmo_dic['c'] / self.H0)
 
         return y_int
-    
+
 class CAMBLinearPerturbations(LinearPerturbations):
     def __init__(self, background : CAMBBackground, redshifts: np.ndarray):
         r"""
@@ -174,11 +177,13 @@ class CAMBLinearPerturbations(LinearPerturbations):
 
         self.background = background
         self.background.CAMBparams.NonLinear = model.NonLinear_none
-        self.background.CAMBparams.set_matter_power(redshifts=redshifts, 
+        self.background.CAMBparams.set_matter_power(redshifts=redshifts,
                                                     kmax=50)
         self.CAMBdata = camb.get_results(self.background.CAMBparams)
+        self.redshifts= redshifts
 
-    def linear_matter_power_spectrum(self, zs, ks, kmax: float, extrap_kmax: float):
+    def linear_matter_power_spectrum(self, zs, ks, kmax: float,
+                                     extrap_kmax: float):
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -196,20 +201,21 @@ class CAMBLinearPerturbations(LinearPerturbations):
             and redshift
 
         """
-        
-        #Get the matter power spectrum interpolation object (based on RectBivariateSpline). 
+
+        #Get the matter power spectrum interpolation object (based on RectBivariateSpline).
         #Here for lensing we want the power spectrum of the Weyl potential.
-        pk_linear = camb.get_matter_power_interpolator(self.background.CAMBparams, 
-                                                nonlinear=False, hubble_units=False, k_hunit=False, 
-                                                kmax=kmax, extrap_kmax = extrap_kmax,
-                                                var1='delta_tot',var2='delta_tot', 
-                                                zmax=zs)
-        
+        pk_linear = camb.get_matter_power_interpolator(
+            self.background.CAMBparams, nonlinear=False,
+            hubble_units=False, k_hunit=False,
+            kmax=kmax, extrap_kmax = extrap_kmax,
+            var1='delta_tot',var2='delta_tot', zmax=zs)
+
         self.Pk_linear = pk_linear
-        
+
         return pk_linear.P(zs, ks)
-    
-    def growth_factor(self, zs, ks, kmax: float, extrap_kmax: float) -> np.ndarray:
+
+    def growth_factor(self, zs, ks, kmax: float,
+                      extrap_kmax: float) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
 
@@ -233,10 +239,12 @@ class CAMBLinearPerturbations(LinearPerturbations):
             The growth factor as a function of redshift and wavenumber.
         """
         if hasattr(self, 'Pk_linear') and self.Pk_linear is not None:
-            D_z_k = np.sqrt(self.Pk_linear.P(zs, ks) / self.Pk_linear.P(0.0, ks))
+            D_z_k = (np.sqrt(self.Pk_linear.P(zs, ks) /
+                     self.Pk_linear.P(0.0, ks)))
         else:
-            self.linear_matter_power_spectrum(zs, ks)
-            D_z_k = np.sqrt(self.Pk_linear.P(zs, ks) / self.Pk_linear.P(0.0, ks))
+            self.linear_matter_power_spectrum(zs, ks, kmax, extrap_kmax)
+            D_z_k = (np.sqrt(self.Pk_linear.P(zs, ks) /
+                     self.Pk_linear.P(0.0, ks)))
 
         return D_z_k
 
@@ -252,9 +260,9 @@ class CAMBLinearPerturbations(LinearPerturbations):
         Returns:
         --------
         np.ndarray
-            The sigma8 as a function of redshift 
+            The sigma8 as a function of redshift
         """
-        
+
         # This could be catch
         s8 = np.array(self.CAMBdata.get_sigma8())
         return s8[::-1]
@@ -271,7 +279,7 @@ class CAMBLinearPerturbations(LinearPerturbations):
         Returns:
         --------
         np.ndarray
-            The sigma8 as a function of redshift 
+            The sigma8 as a function of redshift
         """
 
         fs8 = np.array(self.CAMBdata.get_fsigma8())
@@ -293,21 +301,24 @@ class CAMBLinearPerturbations(LinearPerturbations):
         np.ndarray
             The growth rate as a function of redshift and wavenumber.
         """
-        
+
         return self.fsigma8()/self.sigma8()
+
+    def growth_rate_interpolator(self):
+        return interp1d(self.redshifts, self.growth_rate(), kind='cubic')
 
 class CAMBNonLinearPerturbations(NonLinearPerturbations):
     def __init__(self, linearperturbations : CAMBLinearPerturbations, redshifts: np.ndarray,
                   nonlinear_model = 'mead2020'):
-        
+
         self.linearperturbations = linearperturbations
         self.background = linearperturbations.background
         self.background.CAMBparams.NonLinear = model.NonLinear_both
         self.background.CAMBparams.NonLinearModel.set_params(halofit_version=nonlinear_model)
-        self.background.CAMBparams.set_matter_power(redshifts=redshifts, 
+        self.background.CAMBparams.set_matter_power(redshifts=redshifts,
                                                     kmax=2)
         self.CAMBdata = camb.get_results(self.background.CAMBparams)
-        
+
     def nonlinear_matter_power_spectrum(self, zs, ks, kmax: float, extrap_kmax: float):
         r"""Computes the linear matter power spectrum.
 
@@ -326,19 +337,19 @@ class CAMBNonLinearPerturbations(NonLinearPerturbations):
             and redshift
 
         """
-        
-        #Get the matter power spectrum interpolation object (based on RectBivariateSpline). 
+
+        #Get the matter power spectrum interpolation object (based on RectBivariateSpline).
         #Here for lensing we want the power spectrum of the Weyl potential.
-        pk_nonlinear = camb.get_matter_power_interpolator(self.background.CAMBparams, 
-                                                nonlinear=True, hubble_units=False, k_hunit=False, 
+        pk_nonlinear = camb.get_matter_power_interpolator(self.background.CAMBparams,
+                                                nonlinear=True, hubble_units=False, k_hunit=False,
                                                 kmax=kmax, extrap_kmax = extrap_kmax,
-                                                var1='delta_tot',var2='delta_tot', 
+                                                var1='delta_tot',var2='delta_tot',
                                                 zmax=zs)
-        
+
         self.Pk_nonlinear = pk_nonlinear
 
         return pk_nonlinear.P(zs, ks)
-    
+
     def growth_factor(self, zs, ks, kmax: float, extrap_kmax: float) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
@@ -382,9 +393,9 @@ class CAMBNonLinearPerturbations(NonLinearPerturbations):
         Returns:
         --------
         np.ndarray
-            The sigma8 as a function of redshift 
+            The sigma8 as a function of redshift
         """
-        
+
         s8 = np.array(self.CAMBdata.get_sigma8())
         return s8[::-1]
 
@@ -401,9 +412,9 @@ class CAMBNonLinearPerturbations(NonLinearPerturbations):
         Returns:
         --------
         np.ndarray
-            The sigma8 as a function of redshift 
+            The sigma8 as a function of redshift
         """
-        
+
         fs8 = np.array(self.CAMBdata.get_fsigma8())
         return fs8[::-1]
 
@@ -423,5 +434,5 @@ class CAMBNonLinearPerturbations(NonLinearPerturbations):
         np.ndarray
             The growth rate as a function of redshift and wavenumber.
         """
-        
+
         return self.fsigma8()/self.sigma8()

@@ -1,0 +1,22 @@
+cosmology:
+  wb: 0.0219961
+  wc: 0.121203
+  ns: 0.96
+  h: 0.67
+  As: 2.1e-9
+GCsp:
+  theory:
+    b1: 1.412
+    b2: 0.695
+    bG2: -0.156
+    bGam3: 0.323
+    c0: 30.948
+    c2: 46.233
+    c4: 10.057
+    cnlo: 0.0
+    NP0: 1.056
+    NP20: 0.0
+    NP22: 0.0
+  systematics:
+    fout: 0.0
+    sigmaz: 0.0

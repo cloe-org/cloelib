@@ -12,11 +12,11 @@ approach to link to other codes and make it Cobaya independent
 """
 
 class Background(ABC):
-    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, As: float, ns: float,
+    def __init__(self, H0: float, ombh2: float, omch2: float, Omk: float, As: float, ns: float,
                  w: float, wa: float, sigma8 : float, gamma_MG: float):
         self.H0 = float(H0)
-        self.Omb = float(Omb)
-        self.Omc = float(Omc)
+        self.ombh2 = float(ombh2)
+        self.omch2 = float(omch2)
         self.Omk = float(Omk)
         self.As = float(As)
         self.sigma8 = float(sigma8)
@@ -24,6 +24,10 @@ class Background(ABC):
         self.w = float(w)
         self.wa = float(wa)
         self.gamma_MG = float(gamma_MG)
+
+        self.h = H0 / 100.0
+        self.Omb = ombh2 / self.h**2
+        self.Omc = omch2 / self.h**2
 
     @abstractmethod
     def hubble_parameter(self, zs, units = '1/Mpc'):

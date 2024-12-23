@@ -1,8 +1,8 @@
 cosmology:
-  wb: 0.0219961
-  wc: 0.121203
+  ombh2: 0.0219961
+  omch2: 0.121203
   ns: 0.96
-  h: 0.67
+  H0: 67.0
   As: 2.1e-9
 GCsp:
   theory:

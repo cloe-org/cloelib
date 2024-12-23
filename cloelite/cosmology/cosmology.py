@@ -29,6 +29,21 @@ class Background(ABC):
         self.Omb = ombh2 / self.h**2
         self.Omc = omch2 / self.h**2
 
+    def update(self, **kwargs):
+        # If e.g. h is passed instead of H) this could lead to problems
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+        if 'h' in kwargs.keys(): self.H0 = self.h * 100.0
+        if 'H0' in kwargs.keys(): self.h = self.H0 / 100.0
+        self.Omb = self.ombh2 / self.h**2
+        self.Omc = self.omch2 / self.h**2
+        self._update()
+
+    @abstractmethod
+    def _update(self):
+        pass
+
     @abstractmethod
     def hubble_parameter(self, zs, units = '1/Mpc'):
         r"""
@@ -127,6 +142,14 @@ class Background(ABC):
 class LinearPerturbations(ABC):
     def __init__(self, background : Background):
         self.background = background
+
+    def update(self, **kwargs):
+        self.background.update(**kwargs)
+        self._update()
+
+    @abstractmethod
+    def _update(self):
+        pass
 
     @abstractmethod
     def growth_factor(self, zs, ks) -> np.ndarray:

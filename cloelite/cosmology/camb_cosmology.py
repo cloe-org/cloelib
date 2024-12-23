@@ -34,20 +34,25 @@ class CAMBBackground(Background):
                          sigma8=sigma8, As=As, ns=ns, w=w, wa=wa,
                          gamma_MG=gamma_MG)
 
+        self.CAMBparams = None
+        self.CAMBresults = None
+        self._update()
+
+    def _update(self):
         # Define CAMB params
         self.CAMBparams = camb.CAMBparams()
         # For the moment, ignore neutrinos
-        self.CAMBparams.set_cosmology(H0=H0, ombh2=self.ombh2,
+        self.CAMBparams.set_cosmology(H0=self.H0, ombh2=self.ombh2,
                                       omch2=self.omch2, mnu=0.0,
                                       neutrino_hierarchy='degenerate',
                                       num_massive_neutrinos=0.0,
-                                      YHe=0.2454 , nnu=0.0)
-        self.CAMBparams.set_dark_energy(w=self.w, wa=self.wa) #re-set defaults
-        self.CAMBparams.InitPower.set_params(As = self.As, ns = self.ns)
+                                      YHe=0.2454, nnu=0.0)
+        self.CAMBparams.set_dark_energy(w=self.w, wa=self.wa)
+        self.CAMBparams.InitPower.set_params(As=self.As, ns=self.ns)
         # Get background cosmology
         self.CAMBresults = camb.get_background(self.CAMBparams)
 
-        # Update attributes with derived parameters
+        # Update derived parameters
         self.Omm = self.CAMBparams.omegam
         self.Omnu = self.CAMBparams.omeganu
 
@@ -182,6 +187,12 @@ class CAMBLinearPerturbations(LinearPerturbations):
         self.CAMBdata = camb.get_results(self.background.CAMBparams)
         self.redshifts= redshifts
 
+    def _update(self):
+        self.background.CAMBparams.NonLinear = model.NonLinear_none
+        self.background.CAMBparams.set_matter_power(redshifts=self.redshifts,
+                                                    kmax=50)
+        self.CAMBdata = camb.get_results(self.background.CAMBparams)
+
     def linear_matter_power_spectrum(self, zs, ks, kmax: float,
                                      extrap_kmax: float):
         r"""Computes the linear matter power spectrum.
@@ -238,13 +249,13 @@ class CAMBLinearPerturbations(LinearPerturbations):
         np.ndarray
             The growth factor as a function of redshift and wavenumber.
         """
-        if hasattr(self, 'Pk_linear') and self.Pk_linear is not None:
-            D_z_k = (np.sqrt(self.Pk_linear.P(zs, ks) /
-                     self.Pk_linear.P(0.0, ks)))
-        else:
-            self.linear_matter_power_spectrum(zs, ks, kmax, extrap_kmax)
-            D_z_k = (np.sqrt(self.Pk_linear.P(zs, ks) /
-                     self.Pk_linear.P(0.0, ks)))
+        #if hasattr(self, 'Pk_linear') and self.Pk_linear is not None:
+        #    D_z_k = (np.sqrt(self.Pk_linear.P(zs, ks) /
+        #             self.Pk_linear.P(0.0, ks)))
+        #else:
+        self.linear_matter_power_spectrum(zs, ks, kmax, extrap_kmax)
+        D_z_k = (np.sqrt(self.Pk_linear.P(zs, ks) /
+                 self.Pk_linear.P(0.0, ks)))
 
         return D_z_k
 

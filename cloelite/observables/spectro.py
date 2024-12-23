@@ -7,8 +7,6 @@ from typing import Optional
 
 from cloelite.cosmology.cosmology import Background
 from cloelite.cosmology.cosmology import LinearPerturbations
-from cloelite.cosmology.camb_cosmology import CAMBBackground
-from cloelite.cosmology.camb_cosmology import CAMBLinearPerturbations
 
 class LegendreMultipoles():
 
@@ -45,33 +43,45 @@ class LegendreMultipoles():
             from comet import comet
             self.comet_inst = comet(model=NLmodel, use_Mpc=True,
                                     bias_basis='AssBauGre')
-            if linear_perturbations:
-                # needed for COMET internal rescaling
-                background = \
-                    CAMBBackground(H0=69.5, ombh2=self.background.ombh2,
-                                   omch2=self.background.omch2,
-                                   Omk=self.background.Omk,
-                                   sigma8=self.background.sigma8,
-                                   As=self.background.As,
-                                   ns=self.background.ns,
-                                   w=self.background.w,
-                                   wa=self.background.wa,
-                                   gamma_MG=self.background.gamma_MG)
-                linear_perturbations_comet = \
-                    CAMBLinearPerturbations(background=background,
-                                            redshifts=np.linspace(0.0, 4.0, 256))
-                self.Dfid_camb = linear_perturbations_comet.growth_factor(
-                    1.0, 0.005, 20.0, 20.0)
+            ##if linear_perturbations:
+            ##    # needed for COMET internal rescaling
+            ##    background = \
+            ##        type(self.background)(
+            ##            H0=69.5, ombh2=self.background.ombh2,
+            ##            omch2=self.background.omch2, Omk=self.background.Omk,
+            ##            sigma8=self.background.sigma8, As=self.background.As,
+            ##            ns=self.background.ns, w=self.background.w,
+            ##            wa=self.background.wa,
+            ##            gamma_MG=self.background.gamma_MG)
+            ##    linear_perturbations_comet = \
+            ##        type(self.linear_perturbations)(
+            ##            background=background,
+            ##            redshifts=np.linspace(0.0, 4.0, 256))
+            ##    self.Dfid_camb = linear_perturbations_comet.growth_factor(
+            ##        1.0, 0.005, 20.0, 20.0)
 
-    def update(self, linear_perturbations: LinearPerturbations):
+        ##self.NLcode = NLcode
+
+    def update(self, **kwargs):
         r"""Update method
-        Parameters
-        ----------
-        linear_perturbations: LinearPerturbations
-            Linear perturbations
         """
-        self.linear_perturbations = linear_perturbations
-        self.background = linear_perturbations.background
+        self.linear_perturbations.update(**kwargs)
+        self.background = self.linear_perturbations.background
+        ##if self.NLcode=='COMET':
+        ##    background = \
+        ##        type(self.background)(
+        ##            H0=69.5, ombh2=self.background.ombh2,
+        ##            omch2=self.background.omch2, Omk=self.background.Omk,
+        ##            sigma8=self.background.sigma8, As=self.background.As,
+        ##            ns=self.background.ns, w=self.background.w,
+        ##            wa=self.background.wa,
+        ##            gamma_MG=self.background.gamma_MG)
+        ##    linear_perturbations_comet = \
+        ##        type(self.linear_perturbations)(
+        ##            background=background,
+        ##            redshifts=np.linspace(0.0, 4.0, 256))
+        ##    self.Dfid_camb = linear_perturbations_comet.growth_factor(
+        ##        1.0, 0.005, 20.0, 20.0)
 
     ######### FOR TESTING #########
     def set_fiducial_cosmology(self, parameters: dict):
@@ -80,7 +90,9 @@ class LegendreMultipoles():
     def power_multipoles(self, k: np.ndarray, parameters: dict,
                          q_tr_lo: Optional[list] = None) -> dict:
         #self.comet_inst.define_fiducial_cosmology(params_fid=parameters)
-        return self.comet_inst.Pell(k=k, params=parameters, ell=[0,2,4],
+        params = parameters.copy()
+        if params['As']<1e-7: params['As'] *= 1e9
+        return self.comet_inst.Pell(k=k, params=params, ell=[0,2,4],
                                     de_model='lambda', q_tr_lo=q_tr_lo)
     ###############################
 
@@ -198,7 +210,8 @@ class LegendreMultipoles():
         """
         return self.comet_inst.Pk2d(k=k, mu=mu, params=parameters,
                                     linear_perturbations=self.linear_perturbations,
-                                    Dfid_camb=self.Dfid_camb)
+                                    ##Dfid_camb=self.Dfid_camb)
+                                    Dfid_camb=None)
 
     def _Pk2d_noise(self, k: np.ndarray, mu: np.ndarray,
                     parameters: dict) -> np.ndarray:
@@ -283,6 +296,12 @@ class LegendreMultipoles():
         multipoles: dict
             Power spectrum Legendre multipoles
         """
+        self.update(**parameters)
+        params = parameters.copy()
+        if params['As']<1e-7: params['As'] *= 1e9
+        if 'H0' in params.keys(): params['h'] = params.pop('H0') / 100.0
+        if 'omch2' in params.keys(): params['wc'] = params.pop('omch2')
+        if 'ombh2' in params.keys(): params['wb'] = params.pop('ombh2')
         ells = self._ensure_array(ells) if ells else np.array([0,2,4])
         AP_factor = (self._q_AP_tr(parameters['z'])**2 *
                      self._q_AP_lo(parameters['z']) if use_AP else 1.0)
@@ -297,7 +316,7 @@ class LegendreMultipoles():
                                                self._mu_AP(self.mu_grid,
                                                            parameters['z'],
                                                            use_AP=use_AP),
-                                               parameters) *
+                                               params) *
                                 legendre(ell)(self.mu_grid),
                                 self.mu_grid, axis=1)
             #multipoles[f'ell{ell}'] = \

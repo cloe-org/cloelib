@@ -29,8 +29,6 @@ class LegendreMultipoles():
         mu_max = 1.0
         mu_samp = 101
         self.mu_grid = np.linspace(mu_min, mu_max, mu_samp)
-        #self.gl_x, self.gl_weights = numpy.polynomial.legendre.leggauss(10)
-        #self.gl_x = 0.5 * self.gl_x + 0.5
 
         if linear_perturbations:
             self.linear_perturbations = linear_perturbations
@@ -38,6 +36,8 @@ class LegendreMultipoles():
 
         if background_fiducial:
             self.background_fiducial = background_fiducial
+
+        self.NLcode = NLcode
 
         if NLcode=='COMET':
             from comet import comet
@@ -59,8 +59,6 @@ class LegendreMultipoles():
             ##            redshifts=np.linspace(0.0, 4.0, 256))
             ##    self.Dfid_camb = linear_perturbations_comet.growth_factor(
             ##        1.0, 0.005, 20.0, 20.0)
-
-        ##self.NLcode = NLcode
 
     def update(self, **kwargs):
         r"""Update method
@@ -84,10 +82,10 @@ class LegendreMultipoles():
         ##        1.0, 0.005, 20.0, 20.0)
 
     ######### FOR TESTING #########
-    def set_fiducial_cosmology(self, parameters: dict):
+    def set_fiducial_cosmology_comet(self, parameters: dict):
         self.comet_inst.define_fiducial_cosmology(params_fid=parameters)
 
-    def power_multipoles(self, k: np.ndarray, parameters: dict,
+    def power_multipoles_comet(self, k: np.ndarray, parameters: dict,
                          q_tr_lo: Optional[list] = None) -> dict:
         #self.comet_inst.define_fiducial_cosmology(params_fid=parameters)
         params = parameters.copy()
@@ -277,9 +275,9 @@ class LegendreMultipoles():
                 (1.0 - parameters['fout'])**2 +
                 self._Pk2d_noise(k, mu, parameters))
 
-    def power_multipoles_1(self, k: np.ndarray, parameters: dict,
-                           ells: Optional[np.ndarray] = None,
-                           use_AP: Optional[bool] = True) -> dict:
+    def power_multipoles(self, k: np.ndarray, parameters: dict,
+                         ells: Optional[np.ndarray] = None,
+                         use_AP: Optional[bool] = True) -> dict:
         r"""Power spectrum Legendre multipoles
         Parameters
         ----------
@@ -319,10 +317,5 @@ class LegendreMultipoles():
                                                params) *
                                 legendre(ell)(self.mu_grid),
                                 self.mu_grid, axis=1)
-            #multipoles[f'ell{ell}'] = \
-            #    np.dot(self._Pk2d(self._k_AP(k, self.gl_x, parameters['z'])[0],
-            #                      self._mu_AP(self.gl_x, parameters['z'])[0],
-            #                      parameters) * legendre(ell)(self.gl_x),
-            #                      self.gl_weights)
             multipoles[f'ell{ell}'] *= prefactors[i]
         return multipoles

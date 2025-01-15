@@ -3,14 +3,16 @@ import jax.numpy as np
 from scipy import integrate
 from scipy.special import legendre
 
+from abc import ABC, abstractmethod
+
 from typing import Optional
 
 from cloelite.cosmology.cosmology import Background
 from cloelite.cosmology.cosmology import LinearPerturbations
 
-class LegendreMultipoles():
+class LegendreMultipoles(ABC):
 
-    def __init__(self, NLcode: str, NLmodel: Optional[str] = 'EFT',
+    def __init__(self, NLmodel: Optional[str] = 'EFT',
                  linear_perturbations: Optional[LinearPerturbations] = None,
                  background_fiducial: Optional[Background] = None):
         r"""Class constructor
@@ -37,62 +39,11 @@ class LegendreMultipoles():
         if background_fiducial:
             self.background_fiducial = background_fiducial
 
-        self.NLcode = NLcode
-
-        if NLcode=='COMET':
-            from comet import comet
-            self.comet_inst = comet(model=NLmodel, use_Mpc=True,
-                                    bias_basis='AssBauGre')
-            ##if linear_perturbations:
-            ##    # needed for COMET internal rescaling
-            ##    background = \
-            ##        type(self.background)(
-            ##            H0=69.5, ombh2=self.background.ombh2,
-            ##            omch2=self.background.omch2, Omk=self.background.Omk,
-            ##            sigma8=self.background.sigma8, As=self.background.As,
-            ##            ns=self.background.ns, w=self.background.w,
-            ##            wa=self.background.wa,
-            ##            gamma_MG=self.background.gamma_MG)
-            ##    linear_perturbations_comet = \
-            ##        type(self.linear_perturbations)(
-            ##            background=background,
-            ##            redshifts=np.linspace(0.0, 4.0, 256))
-            ##    self.Dfid_camb = linear_perturbations_comet.growth_factor(
-            ##        1.0, 0.005, 20.0, 20.0)
-
     def update(self, **kwargs):
         r"""Update method
         """
         self.linear_perturbations.update(**kwargs)
         self.background = self.linear_perturbations.background
-        ##if self.NLcode=='COMET':
-        ##    background = \
-        ##        type(self.background)(
-        ##            H0=69.5, ombh2=self.background.ombh2,
-        ##            omch2=self.background.omch2, Omk=self.background.Omk,
-        ##            sigma8=self.background.sigma8, As=self.background.As,
-        ##            ns=self.background.ns, w=self.background.w,
-        ##            wa=self.background.wa,
-        ##            gamma_MG=self.background.gamma_MG)
-        ##    linear_perturbations_comet = \
-        ##        type(self.linear_perturbations)(
-        ##            background=background,
-        ##            redshifts=np.linspace(0.0, 4.0, 256))
-        ##    self.Dfid_camb = linear_perturbations_comet.growth_factor(
-        ##        1.0, 0.005, 20.0, 20.0)
-
-    ######### FOR TESTING #########
-    def set_fiducial_cosmology_comet(self, parameters: dict):
-        self.comet_inst.define_fiducial_cosmology(params_fid=parameters)
-
-    def power_multipoles_comet(self, k: np.ndarray, parameters: dict,
-                         q_tr_lo: Optional[list] = None) -> dict:
-        #self.comet_inst.define_fiducial_cosmology(params_fid=parameters)
-        params = parameters.copy()
-        if params['As']<1e-7: params['As'] *= 1e9
-        return self.comet_inst.Pell(k=k, params=params, ell=[0,2,4],
-                                    de_model='lambda', q_tr_lo=q_tr_lo)
-    ###############################
 
     def set_number_density(self, nbar: float):
         r"""Setter of the number density
@@ -190,6 +141,7 @@ class LegendreMultipoles():
         q_lo = self._q_AP_lo(zs) if use_AP else 1.0
         return mu / q_lo / np.sqrt(mu**2 / q_lo**2 + (1.0-mu**2) / q_tr**2)
 
+    @abstractmethod
     def _Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray,
                   parameters: dict) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields
@@ -206,10 +158,7 @@ class LegendreMultipoles():
         Pk2d_rsd: np.ndarray
             2D power spectrum from couplings of density and velocity fields
         """
-        return self.comet_inst.Pk2d(k=k, mu=mu, params=parameters,
-                                    linear_perturbations=self.linear_perturbations,
-                                    ##Dfid_camb=self.Dfid_camb)
-                                    Dfid_camb=None)
+        pass
 
     def _Pk2d_noise(self, k: np.ndarray, mu: np.ndarray,
                     parameters: dict) -> np.ndarray:
@@ -319,3 +268,60 @@ class LegendreMultipoles():
                                 self.mu_grid, axis=1)
             multipoles[f'ell{ell}'] *= prefactors[i]
         return multipoles
+
+
+class LegendreMultipolesComet(LegendreMultipoles):
+
+    def __init__(self, NLmodel: Optional[str] = 'EFT',
+                 linear_perturbations: Optional[LinearPerturbations] = None,
+                 background_fiducial: Optional[Background] = None):
+        r"""Class constructor
+        Parameters
+        ----------
+        NLcode: str
+            Non-linear code used to compute the power spectrum
+        NLmodel: str
+            Non-linear model (only EFT supported for now)
+        linear_perturbations: LinearPerturbations
+            Linear perturbations
+        background_fiducial: Background
+            Fiducial background (for AP corrections)
+        """
+        super().__init__(NLmodel=NLmodel,
+                         linear_perturbations=linear_perturbations,
+                         background_fiducial=background_fiducial)
+
+        from comet import comet
+        self.comet_inst = comet(model=NLmodel, use_Mpc=True,
+                                bias_basis='AssBauGre')
+
+    ######### FOR TESTING #########
+    def set_fiducial_cosmology_comet(self, parameters: dict):
+        self.comet_inst.define_fiducial_cosmology(params_fid=parameters)
+
+    def power_multipoles_comet(self, k: np.ndarray, parameters: dict,
+                               q_tr_lo: Optional[list] = None) -> dict:
+        #self.comet_inst.define_fiducial_cosmology(params_fid=parameters)
+        params = parameters.copy()
+        if params['As']<1e-7: params['As'] *= 1e9
+        return self.comet_inst.Pell(k=k, params=params, ell=[0,2,4],
+                                    de_model='lambda', q_tr_lo=q_tr_lo)
+    ###############################
+
+    def _Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray,
+                  parameters: dict) -> np.ndarray:
+        r"""2D power spectrum from couplings of density and velocity fields
+        Parameters
+        ----------
+        k: np.ndarray
+            Wavenumber
+        mu: np.ndarray
+            Angle (cosinus) to the line of sight
+        parameters: dict
+            Ensemble of cosmological and nuisance parameters
+        Returns
+        -------
+        Pk2d_rsd: np.ndarray
+            2D power spectrum from couplings of density and velocity fields
+        """
+        return self.comet_inst.Pk2d(k=k, mu=mu, params=parameters)

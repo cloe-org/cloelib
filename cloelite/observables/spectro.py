@@ -14,12 +14,11 @@ class LegendreMultipoles(ABC):
 
     def __init__(self, NLmodel: Optional[str] = 'EFT',
                  linear_perturbations: Optional[LinearPerturbations] = None,
-                 background_fiducial: Optional[Background] = None):
+                 background_fiducial: Optional[Background] = None,
+                 mixing_matrix_dict: Optional[dict] = None):
         r"""Class constructor
         Parameters
         ----------
-        NLcode: str
-            Non-linear code used to compute the power spectrum
         NLmodel: str
             Non-linear model (only EFT supported for now)
         linear_perturbations: LinearPerturbations
@@ -27,7 +26,7 @@ class LegendreMultipoles(ABC):
         background_fiducial: Background
             Fiducial background (for AP corrections)
         """
-        mu_min = -1.0
+        mu_min = 0.0
         mu_max = 1.0
         mu_samp = 101
         self.mu_grid = np.linspace(mu_min, mu_max, mu_samp)
@@ -38,6 +37,9 @@ class LegendreMultipoles(ABC):
 
         if background_fiducial:
             self.background_fiducial = background_fiducial
+
+        if mixing_matrix_dict:
+            self.mixing_matrix_dict = mixing_matrix_dict
 
     def update(self, **kwargs):
         r"""Update method
@@ -266,20 +268,66 @@ class LegendreMultipoles(ABC):
                                                params) *
                                 legendre(ell)(self.mu_grid),
                                 self.mu_grid, axis=1)
-            multipoles[f'ell{ell}'] *= prefactors[i]
+            multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
         return multipoles
+
+    def convolved_power_multipoles(self, parameters: dict):
+        r"""Power spectrum Legendre multipoles convolved with the mixing matrix
+        Parameters
+        ----------
+        parameters: dict
+            Ensemble of cosmological and nuisance parameters
+        Returns
+        -------
+        multipoles_out: dict
+            Convolved power spectrum Legendre multipoles
+        """
+        for key in self.mixing_matrix_dict:
+            self.mixing_matrix_dict[key] = \
+                np.asarray(self.mixing_matrix_dict[key], dtype=np.float32)
+
+        kin0 = self.mixing_matrix_dict['kin0']
+        kin2 = self.mixing_matrix_dict['kin2']
+        kin4 = self.mixing_matrix_dict['kin4']
+        kout = self.mixing_matrix_dict['kout']
+
+        multipoles_in = {}
+        if np.all(kin0 == kin2) and np.all(kin2 == kin4):
+            multipoles_in = self.power_multipoles(k=kin0,
+                                                  parameters=parameters,
+                                                  ells=[0,2,4])
+        else:
+            for ell in [0,2,4]:
+                multipoles_in[f'ell{ell}'] = \
+                    self.power_multipoles(
+                        k=self.mixing_matrix_dict[f'kin{ell}'],
+                        parameters=parameters, ells=[ell])
+
+        for key in multipoles_in:
+            multipoles_in[key] = \
+                np.asarray(multipoles_in[key], dtype=np.float32)
+
+        multipoles_out = {}
+        multipoles_out['k'] = kout
+        for ell in [0, 2, 4]:
+            multipoles_out[f'ell{ell}'] = np.zeros(kout.shape)
+            for ell_prime in [0, 2, 4]:
+                multipoles_out[f'ell{ell}'] += \
+                    np.dot(self.mixing_matrix_dict[f'W{ell}{ell_prime}'],
+                           multipoles_in[f'ell{ell_prime}'])
+
+        return multipoles_out
 
 
 class LegendreMultipolesComet(LegendreMultipoles):
 
     def __init__(self, NLmodel: Optional[str] = 'EFT',
                  linear_perturbations: Optional[LinearPerturbations] = None,
-                 background_fiducial: Optional[Background] = None):
+                 background_fiducial: Optional[Background] = None,
+                 mixing_matrix_dict: Optional[Background] = None):
         r"""Class constructor
         Parameters
         ----------
-        NLcode: str
-            Non-linear code used to compute the power spectrum
         NLmodel: str
             Non-linear model (only EFT supported for now)
         linear_perturbations: LinearPerturbations
@@ -289,7 +337,8 @@ class LegendreMultipolesComet(LegendreMultipoles):
         """
         super().__init__(NLmodel=NLmodel,
                          linear_perturbations=linear_perturbations,
-                         background_fiducial=background_fiducial)
+                         background_fiducial=background_fiducial,
+                         mixing_matrix_dict=mixing_matrix_dict)
 
         from comet import comet
         self.comet_inst = comet(model=NLmodel, use_Mpc=True,

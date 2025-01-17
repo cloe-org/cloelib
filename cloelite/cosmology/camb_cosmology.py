@@ -188,10 +188,11 @@ class CAMBLinearPerturbations(LinearPerturbations):
         self.redshifts= redshifts
 
     def _update(self):
-        self.background.CAMBparams.NonLinear = model.NonLinear_none
-        self.background.CAMBparams.set_matter_power(redshifts=self.redshifts,
-                                                    kmax=50)
-        self.CAMBdata = camb.get_results(self.background.CAMBparams)
+        #self.background.CAMBparams.NonLinear = model.NonLinear_none
+        #self.background.CAMBparams.set_matter_power(redshifts=self.redshifts,
+        #                                            kmax=50)
+        #self.CAMBdata = camb.get_results(self.background.CAMBparams)
+        pass
 
     def linear_matter_power_spectrum(self, zs, ks, kmax: float,
                                      extrap_kmax: float):

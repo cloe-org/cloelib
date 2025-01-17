@@ -103,7 +103,7 @@ class DataReader(Reader):
         full_path = Path(self.dat_dir_main, 'GCspectro', cur_fname)
         fid_cosmo_file = fits.open(full_path)
         try:
-            omnuh2 = 0.0006451438915397982
+            omnuh2 = 0.0#0.0006451438915397982
             self.data_spectro_fiducial_cosmo = {
                 'H0': fid_cosmo_file[1].header['HUBBLE'] * 100.0,
                 'omch2': ((fid_cosmo_file[1].header['OMEGA_M'] -
@@ -169,4 +169,37 @@ class DataReader(Reader):
                 fits_file.close()
 
         self.data_dict['GCspectro'] = GCspectro_dict
+        return
+
+    def read_GCspectro_mixing_matrix(self):
+
+        root = self.data['GCspectro']['root_mixing_matrix']
+        redshifts = self.data['GCspectro']['redshifts']
+
+        self.mixing_matrix_dict = {}
+
+        for z_label in redshifts:
+            cur_it_fname = root.format(z_label)
+            cur_full_path = Path(self.dat_dir_main, 'GCspectro',
+                                 cur_it_fname)
+            fits_file = fits.open(cur_full_path)
+
+            k_fac = self.data_spectro_fiducial_cosmo['H0'] / 100.0
+            kin0 = fits_file['BINS_INPUT'].data['kp0'] * k_fac
+            kin2 = fits_file['BINS_INPUT'].data['kp2'] * k_fac
+            kin4 = fits_file['BINS_INPUT'].data['kp4'] * k_fac
+            kout = fits_file['BINS_OUTPUT'].data['k'] * k_fac
+            mixing_matrix = fits_file['MIXING_MATRIX'].data
+
+            self.mixing_matrix_dict[z_label] = {}
+
+            self.mixing_matrix_dict[z_label]['kout'] = kout
+            self.mixing_matrix_dict[z_label]['kin0'] = kin0
+            self.mixing_matrix_dict[z_label]['kin2'] = kin2
+            self.mixing_matrix_dict[z_label]['kin4'] = kin4
+            for i in [0, 2, 4]:
+                for j in [0, 2, 4]:
+                    mm = f'W{i}{j}'
+                    self.mixing_matrix_dict[z_label][mm] = mixing_matrix[mm]
+
         return

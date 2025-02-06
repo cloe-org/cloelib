@@ -45,7 +45,8 @@ class AngularTwoPoint:
             raise ValueError("Mismatch: cosmological background not compatible for both tracers.")
         chi = self.tracer1.perturbations.background.comoving_distance(zs)
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
-        Pk = 
+        # Note for myself, change matter_power_spectrum
+        Pk = self.tracer1.perturbations.matter_power_spectrum()
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
         return Pkl
 

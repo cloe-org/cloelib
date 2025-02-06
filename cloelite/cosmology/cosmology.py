@@ -25,6 +25,7 @@ class Background(Protocol):
     # Variable to be able to keep args from background codes to perturbations
     # in reality, will we use it beyond CAMB/CLASS?
     # If it is not an array, not auto-diff
+    # double check if there is a better option than this
     interface_args: None
 
     def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, ns: float, As: float, w: float, wa: float, gamma_MG: float):
@@ -80,6 +81,7 @@ class Perturbations(Protocol):
 
     def matter_power_spectrum(self) -> np.ndarray:
         """
-        Retrieves the linear matter power spectrum.
+        Retrieves the matter power spectrum.
         """
         ...
+        

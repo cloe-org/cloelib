@@ -177,6 +177,7 @@ class CAMBLinearPerturbations:
         """
         return self.results.get_linear_matter_power_spectrum(hubble_units=False, k_hunit=False)
 
+
 class CAMBNonLinearPerturbations:
     """
     A wrapper for CAMB nonlinear perturbation calculations.

@@ -1,6 +1,8 @@
 # General imports
-from typing import Protocol
+from typing import Protocol, Union, TypeVar
 import numpy as np  # type: ignore
+import jax.numpy as jnp
+
 
 """
 ## Notes:
@@ -11,6 +13,9 @@ import numpy as np  # type: ignore
 - Introduced the use of protocols to standardize external code interfaces,
   providing a unified and extensible template for interaction.
 """
+
+T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
+
 
 class Background(Protocol):
     H0: float
@@ -34,31 +39,31 @@ class Background(Protocol):
         """
         ...
 
-    def hubble_parameter(self, zs: np.ndarray, units: str = '1/Mpc') -> np.ndarray:
+    def hubble_parameter(self, zs: T, units: str = '1/Mpc') -> T:
         """
         Retrieves the hubble parameter as a function of redshift.
         """
         ...
 
-    def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
+    def comoving_distance(self, zs: T) -> T:
         """
         Calculates the comoving distance for given redshifts.
         """
         ...
 
-    def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
+    def transverse_comoving_distance(self, zs: T) -> T:
         """
         Calculates the transverse comoving distance for given redshifts.
         """
         ...
 
-    def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
+    def angular_diameter_distance(self, zs: T) -> T:
         """
         Calculates the angular diameter distance for given redshifts.
         """
         ...
 
-    def matter_density(self, zs: np.ndarray) -> np.ndarray:
+    def matter_density(self, zs: T) -> T:
         """
         Computes the matter density as a function of redshift.
         """
@@ -67,21 +72,20 @@ class Background(Protocol):
 class Perturbations(Protocol):
     background: Background
 
-    def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+    def growth_factor(self, zs: T, ks: T) -> T:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
         """
         ...
 
-    def growth_rate(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+    def growth_rate(self, zs: T, ks: T) -> T:
         """
         Calculates the growth rate for given redshifts and wavenumbers.
         """
         ...
 
-    def matter_power_spectrum(self) -> np.ndarray:
+    def matter_power_spectrum(self, zs: T, ks: T) -> T:
         """
         Retrieves the matter power spectrum.
         """
         ...
-        

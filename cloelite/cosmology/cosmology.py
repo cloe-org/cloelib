@@ -38,6 +38,18 @@ class Background(Protocol):
         A protocol to define background cosmology
         """
         ...
+    
+    def Omega_b(self, zs: T) -> T:
+        """
+        Computes the matter density as a function of redshift.
+        """
+        ...
+
+    def Omega_m(self, zs: T) -> T:
+        """
+        Computes the matter density as a function of redshift.
+        """
+        ...
 
     def hubble_parameter(self, zs: T, units: str = '1/Mpc') -> T:
         """
@@ -60,12 +72,6 @@ class Background(Protocol):
     def angular_diameter_distance(self, zs: T) -> T:
         """
         Calculates the angular diameter distance for given redshifts.
-        """
-        ...
-
-    def matter_density(self, zs: T) -> T:
-        """
-        Computes the matter density as a function of redshift.
         """
         ...
 

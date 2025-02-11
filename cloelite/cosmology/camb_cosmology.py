@@ -130,7 +130,7 @@ class CAMBBackground:
         """
         return self.results.angular_diameter_distance(zs)
 
-    def matter_density(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
         Returns the matter density as a function of redshift.
 
@@ -195,7 +195,8 @@ class CAMBNonLinearPerturbations:
                 Defaults to None, which uses the CAMB default model.
         """
         self.background = background
-        self.kmax = 50
+        self.kmax = 100
+        self.z = redshifts
 
         # Configure CAMB parameters for nonlinear calculations
         self.background.interface_args.NonLinear = model.NonLinear_both
@@ -215,15 +216,15 @@ class CAMBNonLinearPerturbations:
         This function uses CAMB to compute the nonlinear matter power spectrum \( P(k) \) 
         as a function of wavenumber \( k \) and redshift \( z \).
 
+        Units of 1/Mpc
+
         Returns:
-            Tuple[np.ndarray, np.ndarray, np.ndarray]:
-                - np.ndarray: Wavenumber values \( k \) (in units of \( 1/\mathrm{Mpc} \)).
-                - np.ndarray: Redshift values \( z \).
-                - np.ndarray: Nonlinear power spectrum values \( P(k) \).
+            np.ndarray: Nonlinear power spectrum values \( P(k) \).
         """
         k_values, z_values, pk_values = self.results.get_nonlinear_matter_power_spectrum(
             hubble_units=False, k_hunit=False
         )
+        self.k = k_values
         return k_values, z_values, pk_values
 
       

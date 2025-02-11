@@ -20,7 +20,7 @@ import jax
 def Cl_integration(WT1, WT2, Pkl, H, chi2):
     # To be updated
     # still have to include weights, basically we are doing unnormalized trapz
-    return np.einsum('iz,jz,lz,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2)
+    return np.einsum('iz,jz,lz,z,z->lij', WT1[:, 1:], WT2[:, 1:], Pkl[1:, 1:], 1/H[1:], 1/chi2[1:])
 
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
@@ -41,20 +41,16 @@ class AngularTwoPoint:
         Prepares the matter power spectrum to calculate two-point angular 
         statistics following Limber
         """
-        if self.tracer1.perturbations.background.comoving_distance(zs) != self.tracer2.perturbations.background.comoving_distance(zs):
-            raise ValueError("Mismatch: cosmological background not compatible for both tracers.")
         chi = self.tracer1.perturbations.background.comoving_distance(zs)
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
         # Note for myself, change matter_power_spectrum
-        Pk = self.tracer1.perturbations.matter_power_spectrum()
-        Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
+        Pk = self.tracer1.perturbations.matter_power_spectrum()[2]
+        Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
         return Pkl
 
     def get_Cl(self, ells, nl, ks)  -> np.ndarray:
 
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s 
-        if self.tracer1.z != self.tracer2.z:
-            raise ValueError("Mismatch: redshift ranges for Tracer 1 and Tracer 2 must be equal.")
         zs_calc = self.tracer1.z
         dz = self.tracer1.z[1]-self.tracer1.z[0]
         H = self.tracer1.perturbations.background.hubble_parameter(zs_calc)
@@ -62,7 +58,7 @@ class AngularTwoPoint:
         chi2 = chi**2
         WT1 = self.tracer1.get_window(zs_calc)
         WT2 = self.tracer2.get_window(zs_calc)
-        Pkl = self.tracer1.perturbations._matter_power_spectrum_limber_grid(zs_calc, ks, zs_calc, ells)
+        Pkl = self._matter_power_spectrum_limber_grid(zs_calc, ks, zs_calc, ells)
 
         return c_0*Cl_integration(WT1, WT2, Pkl, H, chi2)*dz
     

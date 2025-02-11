@@ -18,9 +18,12 @@ import interpax
 
 """
 
+# UNITS
+c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s 
+
 class ShearTracer:
-    def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray):#,
-                 #intrinsic_aligment_model: str, nuisance_params: dict):
+    def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray,
+                 nuisance_params: dict):
         r"""
         A class to define the kernel for Cosmic Shear.
 
@@ -41,8 +44,7 @@ class ShearTracer:
         self.background = self.perturbations.background
         self.dndz = dndz
         self.z = z
-        #self.nuisance_params = nuisance_params
-        #self.flags = {'intrinsic_aligment_model': intrinsic_aligment_model}
+        self.nuisance_params = nuisance_params
 
     def _get_prefactor(self, ell):
         return 0
@@ -120,7 +122,6 @@ class ShearTracer:
             at specified scale for the redshifts defined in z
         """
 
-        c_0 = 2.99792458e5
         win_int = self._window_integrand(z, self.dndz)
 
         W_val = (1.5 * self.background.H0 * self.background.Omm * \
@@ -143,13 +144,12 @@ class ShearTracer:
         -------
         window_IA: np.ndarray
         """
-        c_0 = 2.99792458e5
-        Hz = self.background.hubble_parameter(z)
-        Dz = self.perturbations.linearperturbations.growth_factor(z)
-        AIA = self.nuisance_params["AIA"]
-        CIA = self.nuisance_params["CIA"]
-        EtaIA = self.nuisance_params["EtaIA"]
-        factor = -Hz/c_0*AIA*CIA*(self.background.Omb+self.background.Omc)*(1+z)**EtaIA/Dz
+        Hz = self.perturbations.background.hubble_parameter(z)
+        Dz = self.perturbations.growth_factor(z)
+        A_IA = self.nuisance_params["AIA"]
+        C_IA = self.nuisance_params["CIA"]
+        Eta_IA = self.nuisance_params["EtaIA"]
+        factor = -Hz/c_0*A_IA*C_IA*(self.background.Omb+self.background.Omc)*(1+z)**Eta_IA/Dz
         return np.einsum('ij, j->ij', self.dndz, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
@@ -171,8 +171,6 @@ class ShearTracer:
         return efficiency
 
     def get_lensing_window(self, z):
-        c_0 = 2.99792458e5
-
         factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omb+self.background.Omc)\
         *(1+z)*self.background.comoving_distance(z)
         efficiency = self.get_lensing_efficiency(z)
@@ -245,8 +243,6 @@ class PositionsTracer:
            Window function for angular photometric galaxy clustering
         """
 
-        
-        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s 
         window_positions = self.dndz * \
             self.perturbations.background.hubble_parameter(z)/c_0
 

@@ -2,8 +2,11 @@
 from cloelite.cosmology.cosmology import Perturbations
 
 # General imports
-from typing import Protocol, Union
-import numpy as np # type: ignore
+from typing import Protocol, Union, TypeVar
+import numpy as np  # type: ignore
+import jax.numpy as jnp
+
+T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 """
 
@@ -16,7 +19,7 @@ import numpy as np # type: ignore
 class Tracer(Protocol):
     perturbations: Perturbations
 
-    def _window_integrand(self, z: float, zprime: Union[float, np.ndarray]) -> np.ndarray:
+    def _window_integrand(self, z: T, zprime: T) -> T:
         """
         Window integrand method.
 
@@ -33,7 +36,7 @@ class Tracer(Protocol):
         """
         ...
 
-    def _get_prefactor(self, ell: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def _get_prefactor(self, ell: T) -> T:
         """
         Computes the needed prefactor in Limber approximation.
 
@@ -49,7 +52,7 @@ class Tracer(Protocol):
         """
         ...
 
-    def get_window(self, z: float) -> np.ndarray:
+    def get_window(self, z: T) -> T:
         """
         Computes general window(s) given the selected tracer.
 

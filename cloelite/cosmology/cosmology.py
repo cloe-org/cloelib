@@ -18,24 +18,81 @@ T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 
 class Background(Protocol):
-    H0: float
-    Omb: float
-    Omc: float
-    Omk: float
-    As: float
-    ns: float
-    w: float
-    wa: float
-    gamma_MG: float
-    # Variable to be able to keep args from background codes to perturbations
-    # in reality, will we use it beyond CAMB/CLASS?
-    # If it is not an array, not auto-diff
-    # double check if there is a better option than this
-    interface_args: None
 
-    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, ns: float, As: float, w: float, wa: float, gamma_MG: float):
+    @property
+    def H0(self) -> float:
         """
-        A protocol to define background cosmology
+        Hubble parameter at redshift 0 in km s-1 Mpc-1.
+        """
+        ...
+    
+    @property
+    def Omega_b0(self) -> float:
+        """
+        Omega baryon; the baryon density/critical density at z=0.
+        """
+        ...
+
+    @property
+    def Omega_cdm0(self) -> float:
+        """
+        Omega cold dark matter; the cold dark matter density/critical density at z=0.
+        """
+        ...
+
+    @property
+    def Omega_nu0(self) -> float:
+        """
+        Omega neutrino; the neutrino density/critical density at z=0.
+        """
+        ...
+
+    @property
+    def Omega_k0(self) -> float:
+        """
+        Omega curvature; the effective curvature density/critical density at z=0.
+        """
+        ...
+
+    @property
+    def As(self) -> float:
+        """
+        Amplitude of the primordial power spectrum
+        """
+        ...
+
+    @property
+    def ns(self) -> float:
+        """
+        scalar index of the primordial power spectrum
+        """
+        ...
+
+    @property
+    def w0(self) -> float:
+        """
+        dark energy parameter
+        """
+        ...
+
+    @property
+    def wa(self) -> float:
+        """
+        dark energy parameter
+        """
+        ...
+
+    @property
+    def gamma_MG(self) -> float:
+        """
+        Modified gravity Linder parameter
+        """
+        ...
+
+    @property
+    def _interface_args(self) -> dict:
+        """
+        Save internal structure format of possible interface codes
         """
         ...
     
@@ -76,7 +133,13 @@ class Background(Protocol):
         ...
 
 class Perturbations(Protocol):
-    background: Background
+
+    @property
+    def background(self) -> Background:
+        """
+        Stores background obj
+        """
+        ...
 
     def growth_factor(self, zs: T, ks: T) -> T:
         """

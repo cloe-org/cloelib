@@ -17,7 +17,12 @@ T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 """
 
 class Tracer(Protocol):
-    perturbations: Perturbations
+    @property
+    def perturbations(self) -> Perturbations:
+        """
+        Stores perturbations obj
+        """
+        ...
 
     def _window_integrand(self, z: T, zprime: T) -> T:
         """

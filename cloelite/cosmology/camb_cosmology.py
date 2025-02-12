@@ -161,13 +161,13 @@ class CAMBLinearPerturbations:
             background (Background): A CAMBBackground instance.
             redshifts (np.ndarray): Array of redshifts for the calculations.
         """
-        self._background = background
+        self.background = background
         
         self.kmax = 100
         self.z = redshifts
 
-        self._background.interface_args['CAMBparams'].set_matter_power(redshifts=redshifts, kmax=self.kmax)
-        self.results = camb.get_results(self._background.interface_args['CAMBparams'])
+        self.background.interface_args['CAMBparams'].set_matter_power(redshifts=redshifts, kmax=self.kmax)
+        self.results = camb.get_results(self.background.interface_args['CAMBparams'])
 
     def matter_power_spectrum(self) -> np.ndarray:
         """
@@ -200,20 +200,20 @@ class CAMBNonLinearPerturbations:
                 Defaults to None, which uses the CAMB default model.
         """
 
-        self._background = background
+        self.background = background
         self.kmax = 100
         self.z = redshifts
 
         # Configure CAMB parameters for nonlinear calculations
-        self._background.interface_args['CAMBparams'].NonLinear = model.NonLinear_both
+        self.background.interface_args['CAMBparams'].NonLinear = model.NonLinear_both
 
         if nonlinear_model:
-            self._background.interface_args['CAMBparams'].NonLinearModel.set_params(halofit_version=nonlinear_model)
+            self.background.interface_args['CAMBparams'].NonLinearModel.set_params(halofit_version=nonlinear_model)
 
-        self._background.interface_args['CAMBparams'].set_matter_power(redshifts=redshifts, kmax=self.kmax)
+        self.background.interface_args['CAMBparams'].set_matter_power(redshifts=redshifts, kmax=self.kmax)
 
         # Compute nonlinear perturbations
-        self.results = camb.get_results(self._background.interface_args['CAMBparams'])
+        self.results = camb.get_results(self.background.interface_args['CAMBparams'])
 
 
     def matter_power_spectrum(self) -> np.ndarray:

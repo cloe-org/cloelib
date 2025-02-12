@@ -3,7 +3,6 @@ from typing import Protocol, Union, TypeVar
 import numpy as np  # type: ignore
 import jax.numpy as jnp
 
-
 """
 ## Notes:
  
@@ -23,6 +22,13 @@ class Background(Protocol):
     def H0(self) -> float:
         """
         Hubble parameter at redshift 0 in km s-1 Mpc-1.
+        """
+        ...
+    
+    @property
+    def h(self) -> float:
+        """
+        Dimensionless Hubble constant
         """
         ...
     

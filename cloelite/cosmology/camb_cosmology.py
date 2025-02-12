@@ -44,6 +44,7 @@ class CAMBBackground:
             gamma_MG (float): Modified gravity growth parameter.
         """
         self.H0 = H0
+        self.h = self.H0 / 100
         self.Omega_b0 = Omega_b0
         self.Omega_cdm0 = Omega_cdm0
         self.Omega_k0 = Omega_k0
@@ -57,8 +58,8 @@ class CAMBBackground:
         self.interface_args = {'CAMBparams': camb.CAMBparams()}
         self.interface_args['CAMBparams'].set_cosmology(
             H0=self.H0,
-            ombh2=self.Omega_b0 * (self.H0 / 100) ** 2,
-            omch2=self.Omega_cdm0 * (self.H0 / 100) ** 2,
+            ombh2=self.Omega_b0 * (self.h) ** 2,
+            omch2=self.Omega_cdm0 * (self.h) ** 2,
             omk=self.Omega_k0
         )
         self.interface_args['CAMBparams'].set_dark_energy(w=self.w0, wa=self.wa)
@@ -147,6 +148,20 @@ class CAMBBackground:
             + self.results.get_Omega("nu", z=zs)
         )
 
+    def Omega_b(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the matter density as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values.
+        """
+        return (
+            self.results.get_Omega("baryon", z=zs)
+        )
+
 
 class CAMBLinearPerturbations:
     """
@@ -181,7 +196,41 @@ class CAMBLinearPerturbations:
         )
         self.k = k_values
         self.z = z_values
+        self.Pk_linear = pk_values
         return pk_values
+    
+    def growth_rate(self) -> np.ndarray:
+        """
+        Calculates growth rate.
+
+        Returns:
+            np.ndarray: growth rate.
+        """
+
+        return self.results.get_fsigma8()/self.results.get_sigma8()
+    
+    def growth_factor(self) -> np.ndarray:
+        """
+        Calculates the growth factor for given redshifts and wavenumbers.
+
+        .. math::
+            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+            /P_{\rm \delta\delta}(z=0, k)}\\
+
+        and normalizes as for :math:`D(z)/D(0)`.
+
+        Returns:
+        --------
+        np.ndarray
+            The growth factor as a function of redshift and wavenumber.
+        """
+        if hasattr(self, 'Pk_linear') and self.Pk_linear is not None:
+            D_z_k = np.sqrt(self.Pk_linear / self.Pk_linear[0, :])
+        else:
+            self.matter_power_spectrum()
+            D_z_k = np.sqrt(self.Pk_linear / self.Pk_linear[0, :])
+        return D_z_k
+
 
 class CAMBNonLinearPerturbations:
     """
@@ -233,6 +282,37 @@ class CAMBNonLinearPerturbations:
         )
         self.k = k_values
         self.z = z_values
+        self.Pk_nonlinear = pk_values
         return pk_values
 
-      
+    def growth_rate(self) -> np.ndarray:
+        """
+        Calculates growth rate.
+
+        Returns:
+            np.ndarray: growth rate.
+        """
+
+        return self.results.get_fsigma8()/self.results.get_sigma8()      
+
+    def growth_factor(self) -> np.ndarray:
+        """
+        Calculates the growth factor for given redshifts and wavenumbers.
+
+        .. math::
+            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+            /P_{\rm \delta\delta}(z=0, k)}\\
+
+        and normalizes as for :math:`D(z)/D(0)`.
+
+        Returns:
+        --------
+        np.ndarray
+            The growth factor as a function of redshift and wavenumber.
+        """
+        if hasattr(self, 'Pk_nonlinear') and self.Pk_nonlinear is not None:
+            D_z_k = np.sqrt(self.Pk_nonlinear / self.Pk_nonlinear[0, :])
+        else:
+            self.matter_power_spectrum()
+            D_z_k = np.sqrt(self.Pk_nonlinear / self.Pk_nonlinear[0, :])
+        return D_z_k

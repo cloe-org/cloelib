@@ -19,7 +19,7 @@ import interpax
 """
 
 # UNITS
-c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s 
+c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 class ShearTracer:
     def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray,
@@ -242,9 +242,8 @@ class PositionsTracer:
         window_positions: numpy.ndarray
            Window function for angular photometric galaxy clustering
         """
-
         window_positions = self.dndz * \
-            self.perturbations.background.hubble_parameter(z)/c_0
+            self.perturbations.background.hubble_parameter(z, units = "km/s/Mpc") / c_0
 
         return window_positions
 

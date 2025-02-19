@@ -52,7 +52,7 @@ class AngularTwoPoint:
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
         dz = self.tracer1.z[1]-self.tracer1.z[0]
-        H = self.tracer1.perturbations.background.hubble_parameter(zs_calc)
+        H = self.tracer1.perturbations.background.hubble_parameter(zs_calc, units = "km/s/Mpc")
         chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
         chi2 = chi**2
         WT1 = self.tracer1.get_window(zs_calc)

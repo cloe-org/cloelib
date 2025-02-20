@@ -68,7 +68,7 @@ class CAMBBackground:
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args['CAMBparams'])
 
-    def hubble_parameter(self, zs: np.ndarray, units: str = "1/Mpc") -> np.ndarray:
+    def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
         Returns the Hubble parameter as a function of redshift.
 

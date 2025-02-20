@@ -251,7 +251,7 @@ class PositionsTracer:
            Window function for angular photometric galaxy clustering
         """
         window_positions = self.dndz * \
-            self.perturbations.background.hubble_parameter(z, units = "km/s/Mpc") / c_0
+            self.perturbations.background.hubble_parameter(z) / c_0
 
         return window_positions
 

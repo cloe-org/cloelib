@@ -2,7 +2,7 @@
 from cloelite.cosmology.cosmology import Background, Perturbations
 
 # General imports
-from typing import Protocol, Union, TypeVar, Optional
+from typing import Protocol, Union, TypeVar, Optional, Generic
 import numpy as np  # type: ignore
 import jax.numpy as jnp
 
@@ -16,7 +16,7 @@ T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 """
 
-class LegendreMultipoles(Protocol):
+class LegendreMultipoles(Protocol, Generic[T]):
     @property
     def linear_perturbations(self) -> Perturbations:
         """
@@ -60,7 +60,7 @@ class LegendreMultipoles(Protocol):
         ...
 
     def power_multipoles(self, k: T,
-                         ells: T) -> T:
+                         ells: T, **args) -> T:
         r"""Power spectrum Legendre multipoles
         Parameters
         ----------
@@ -68,6 +68,8 @@ class LegendreMultipoles(Protocol):
             Wavenumber
         ells: jax.numpy.ndarray or numpy.ndarray
             Legendre multipole order
+        args: EFTofLSS parameters
+
         Returns
         -------
         multipoles: jax.numpy.ndarray or numpy.ndarray

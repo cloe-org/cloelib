@@ -20,12 +20,12 @@ import jax
 def Cl_integration(WT1, WT2, Pkl, H, chi2):
     # To be updated
     # still have to include weights, basically we are doing unnormalized trapz
-    return np.einsum('iz,jz,lz,z,z->lij', WT1[:, 1:], WT2[:, 1:], Pkl[1:, 1:], 1/H[1:], 1/chi2[1:])
+    return np.einsum('iz,jz,lz,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2)
 
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
     return 10**interpax.interp2d(jax.numpy.log10(k_l), z_l, jax.numpy.log10(ks),  zs,
-                                 jax.numpy.log10(Pk), method="cubic")
+                                 jax.numpy.log10(Pk), method="akima", extrap=True)
 
 Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))
 
@@ -35,10 +35,10 @@ class AngularTwoPoint:
         # include test to check if tracers are compatible
         self.tracer1 = tracer1
         self.tracer2 = tracer2
-        
+
     def _matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells) -> np.ndarray:
         """
-        Prepares the matter power spectrum to calculate two-point angular 
+        Prepares the matter power spectrum to calculate two-point angular
         statistics following Limber
         """
         chi = self.tracer1.perturbations.background.comoving_distance(zs)
@@ -49,10 +49,10 @@ class AngularTwoPoint:
 
     def get_Cl(self, ells, nl, ks)  -> np.ndarray:
 
-        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s 
+        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
         dz = self.tracer1.z[1]-self.tracer1.z[0]
-        H = self.tracer1.perturbations.background.hubble_parameter(zs_calc)
+        H = self.tracer1.perturbations.background.hubble_parameter(zs_calc, units = "km/s/Mpc")
         chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
         chi2 = chi**2
         WT1 = self.tracer1.get_window(zs_calc)
@@ -60,7 +60,6 @@ class AngularTwoPoint:
         Pkl = self._matter_power_spectrum_limber_grid(zs_calc, ks, zs_calc, ells)
 
         return c_0*Cl_integration(WT1, WT2, Pkl, H, chi2)*dz
-    
+
     def get_pseudo_Cl(self, ells, nl, ks, mixing_matrix)  -> np.ndarray:
         pass
-

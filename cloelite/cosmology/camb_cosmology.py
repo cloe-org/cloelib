@@ -26,8 +26,8 @@ class CAMBBackground:
     A wrapper for CAMB background cosmological calculations.
     """
 
-    def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float, 
-                 As: float, ns: float, 
+    def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
+                 As: float, ns: float,
                  w0: float, wa: float, gamma_MG: float) -> None:
         """
         Initializes the CAMBBackground class with cosmological parameters.
@@ -68,7 +68,7 @@ class CAMBBackground:
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args['CAMBparams'])
 
-    def hubble_parameter(self, zs: np.ndarray, units: str = "1/Mpc") -> np.ndarray:
+    def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
         Returns the Hubble parameter as a function of redshift.
 
@@ -177,7 +177,7 @@ class CAMBLinearPerturbations:
             redshifts (np.ndarray): Array of redshifts for the calculations.
         """
         self.background = background
-        
+
         self.kmax = 100
         self.z = redshifts
 
@@ -198,7 +198,7 @@ class CAMBLinearPerturbations:
         self.z = z_values
         self.Pk_linear = pk_values
         return pk_values
-    
+
     def growth_rate(self) -> np.ndarray:
         """
         Calculates growth rate.
@@ -208,7 +208,7 @@ class CAMBLinearPerturbations:
         """
 
         return self.results.get_fsigma8()/self.results.get_sigma8()
-    
+
     def growth_factor(self) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
@@ -237,7 +237,7 @@ class CAMBNonLinearPerturbations:
     A wrapper for CAMB nonlinear perturbation calculations.
     """
 
-    def __init__(self, background: Background, redshifts: np.ndarray, 
+    def __init__(self, background: Background, redshifts: np.ndarray,
                  nonlinear_model: Optional[str] = None) -> None:
         """
         Initializes the CAMBNonLinearPerturbations class with linear perturbation data.
@@ -269,7 +269,7 @@ class CAMBNonLinearPerturbations:
         """
         Calculates the nonlinear matter power spectrum.
 
-        This function uses CAMB to compute the nonlinear matter power spectrum \( P(k) \) 
+        This function uses CAMB to compute the nonlinear matter power spectrum \( P(k) \)
         as a function of wavenumber \( k \) and redshift \( z \).
 
         Units of 1/Mpc
@@ -293,7 +293,7 @@ class CAMBNonLinearPerturbations:
             np.ndarray: growth rate.
         """
 
-        return self.results.get_fsigma8()/self.results.get_sigma8()      
+        return self.results.get_fsigma8()/self.results.get_sigma8()
 
     def growth_factor(self) -> np.ndarray:
         """

@@ -19,7 +19,7 @@ import interpax
 """
 
 # UNITS
-c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s 
+c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 class ShearTracer:
     def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray,
@@ -124,7 +124,8 @@ class ShearTracer:
 
         win_int = self._window_integrand(z, self.dndz)
 
-        W_val = (1.5 * self.background.H0 * self.background.Omm * \
+        W_val = (1.5 * self.background.H0 *
+                 (self.background.Omega_b0 + self.background.Omega_cdm0) * \
                  (1.0 + z) * self.background.comoving_distance(z) *
                   ( c_0/ self.background.H0)) * win_int
 
@@ -145,18 +146,25 @@ class ShearTracer:
         window_IA: np.ndarray
         """
         Hz = self.perturbations.background.hubble_parameter(z)
-        Dz = self.perturbations.growth_factor(z)
+        Dz = self.perturbations.growth_factor()[:,1]
+        #TODO discuss whether we want growth factor to output a 1D or a 2D array
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]
         Eta_IA = self.nuisance_params["EtaIA"]
-        factor = -Hz/c_0*A_IA*C_IA*(self.background.Omb+self.background.Omc)*(1+z)**Eta_IA/Dz
+        factor = -Hz/c_0*A_IA*C_IA*(self.background.Omega_b0 + self.background.Omega_cdm0)*(1+z)**Eta_IA/Dz
         return np.einsum('ij, j->ij', self.dndz, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
         interpolator = interpax.Akima1DInterpolator(self.z, self.dndz[bin_idx,:])
+        #horrible quick fix
+        #to make it right, we need the triangular matrix of simpson weight for the
+        #lensing efficiency. This will also significantly improve performance!
+        x = np.linspace(0., 4, 200)
+        y = self.background.comoving_distance(x)
+        rx_interp = interpax.Akima1DInterpolator(x, y)
         #f1 = lambda x, y: interpolator(x)*(1-tracer_she.background.comoving_distance(y)/tracer_she.background.comoving_distance(x))
         f1 = jax.jit(lambda x: interpolator(x))
-        f2 = jax.jit(lambda x: interpolator(x)/self.background.comoving_distance(x))
+        f2 = jax.jit(lambda x: interpolator(x)/rx_interp(x))
         integral_1 =  simps(f1, z, 3.)
         integral_2 =  simps(f2, z, 3.)
         efficiency = integral_1 - integral_2*self.background.comoving_distance(z)
@@ -171,7 +179,7 @@ class ShearTracer:
         return efficiency
 
     def get_lensing_window(self, z):
-        factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omb+self.background.Omc)\
+        factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omega_b0 + self.background.Omega_cdm0)\
         *(1+z)*self.background.comoving_distance(z)
         efficiency = self.get_lensing_efficiency(z)
         return np.einsum('ij, j->ij', efficiency, factor)
@@ -242,9 +250,8 @@ class PositionsTracer:
         window_positions: numpy.ndarray
            Window function for angular photometric galaxy clustering
         """
-
         window_positions = self.dndz * \
-            self.perturbations.background.hubble_parameter(z)/c_0
+            self.perturbations.background.hubble_parameter(z) / c_0
 
         return window_positions
 

@@ -57,3 +57,22 @@ def legendre(n, x):
             Pn = ((2*k - 1) * x * P1 - (k - 1) * P0) / k
             P0, P1 = P1, Pn
         return Pn
+
+def simps_jax(y, x=None, dx=1.0):
+    """
+    Simpson's rule integration in JAX.
+    Parameters:
+    - y: Array of function values to integrate.
+    - x: Array of sample points corresponding to y (optional).
+    - dx: Spacing between sample points if x is None (default: 1.0).
+    """
+    N = len(y)
+    if N % 2 == 0:
+        raise ValueError("Simpson's rule requires an odd number of samples.")
+        
+    if x is None:
+        x = jnp.arange(N) * dx
+        
+    h = jnp.diff(x)
+    S = y[0] + y[-1] + 4 * jnp.sum(y[1:-1:2]) + 2 * jnp.sum(y[2:-2:2])
+    return (h[0] / 3) * S

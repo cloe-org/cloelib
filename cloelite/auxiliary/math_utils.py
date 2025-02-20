@@ -1,3 +1,6 @@
+import jax
+import jax.numpy as jnp
+
 # This will go to a math-utils module, for the moment stays here
 max_size = 300 
 
@@ -40,3 +43,17 @@ def get_simpsons_weights(n):
     return precomputed_weights[n - 1]
 
 get_simpsons_weights_jit = jax.jit(get_simpsons_weights)
+
+
+def legendre(n, x):
+    if n == 0:
+        return jnp.ones_like(x)
+    elif n == 1:
+        return x
+    else:
+        P0 = jnp.ones_like(x)
+        P1 = x
+        for k in range(2, n+1):
+            Pn = ((2*k - 1) * x * P1 - (k - 1) * P0) / k
+            P0, P1 = P1, Pn
+        return Pn

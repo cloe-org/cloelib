@@ -1,5 +1,6 @@
 # General imports
 from typing import Protocol, Union, TypeVar
+
 import numpy as np  # type: ignore
 import jax.numpy as jnp
 
@@ -114,7 +115,7 @@ class Background(Protocol):
         """
         ...
 
-    def hubble_parameter(self, zs: T, units: str = '1/Mpc') -> T:
+    def hubble_parameter(self, zs: T, units: str = "km/s/Mpc") -> T:
         """
         Retrieves the hubble parameter as a function of redshift.
         """

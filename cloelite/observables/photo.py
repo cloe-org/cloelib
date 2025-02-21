@@ -1,6 +1,7 @@
 # cloelite imports
 from cloelite.auxiliary.units import SPEED_OF_LIGHT
 from cloelite.cosmology.cosmology import Perturbations
+from cloelite.auxiliary.math_utils import stacked_simpson
 
 # General imports
 import jax.numpy as np
@@ -170,13 +171,28 @@ class ShearTracer:
         efficiency = integral_1 - integral_2*self.background.comoving_distance(z)
         return efficiency
 
-    def get_lensing_efficiency(self, z):
+    def get_lensing_efficiency_check(self, z):
         n_bins = self.dndz.shape[0]
         efficiency = self.get_lensing_efficiency_bin(z, 0)
         for i in np.arange(1,n_bins):
             efficiency = np.vstack([efficiency, self.get_lensing_efficiency_bin(z, i)])
 
         return efficiency
+
+    def get_lensing_efficiency(self, z):
+        dndz = self.dndz
+        dz = z[1]-z[0]#assuming equispaced!
+        rz = self.background.comoving_distance(z)
+        rzrz = 1 - np.outer(rz,1/rz)
+        w_matrix = stacked_simpson(len(z))
+        result = np.einsum('ik, jk, jk->ij', dndz, rzrz, w_matrix)*dz
+        return result
+
+    def get_lensing_window_check(self, z):
+        factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omega_b0 + self.background.Omega_cdm0)\
+        *(1+z)*self.background.comoving_distance(z)
+        efficiency = self.get_lensing_efficiency_check(z)
+        return np.einsum('ij, j->ij', efficiency, factor)
 
     def get_lensing_window(self, z):
         factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omega_b0 + self.background.Omega_cdm0)\
@@ -199,6 +215,22 @@ class ShearTracer:
         window: np.ndarray
         """
         return self.get_lensing_window(z) + self.get_window_IA(z)
+
+    def get_window_new(self, z):
+        r"""Window
+
+        Computes general window given the selected tracer
+
+        Parameters
+        ----------
+        z: float
+            Redshift at which window kernel is being evaluated
+
+        Returns
+        -------
+        window: np.ndarray
+        """
+        return self.get_lensing_window_new(z) + self.get_window_IA(z)
 
 class PositionsTracer:
     def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray):

@@ -89,7 +89,13 @@ def stacked_simpson(n):
     return jnp.vstack(rows)
 
 #this 100 is clearly hardcoded. Think of a better mechanism!
-precomputed_simpson_matrix = stacked_simpson(100)
+_cached_stacked_simpson = {}
+
+def cached_stacked_simpson(n: int):
+    key = str(n)
+    if key not in _cached_stacked_simpson:
+        _cached_stacked_simpson[key] = stacked_simpson(n)
+    return _cached_stacked_simpson[key]
 
 def legendre(n, x):
     if n == 0:

@@ -1,7 +1,7 @@
 # cloelite imports
 from cloelite.auxiliary.units import SPEED_OF_LIGHT
 from cloelite.cosmology.cosmology import Perturbations
-from cloelite.auxiliary.math_utils import stacked_simpson
+from cloelite.auxiliary.math_utils import cached_stacked_simpson
 
 # General imports
 import jax.numpy as np
@@ -184,7 +184,7 @@ class ShearTracer:
         dz = z[1]-z[0]#assuming equispaced!
         rz = self.background.comoving_distance(z)
         rzrz = 1 - np.outer(rz,1/rz)
-        w_matrix = stacked_simpson(len(z))
+        w_matrix = cached_stacked_simpson(len(z))
         result = np.einsum('ik, jk, jk->ij', dndz, rzrz, w_matrix)*dz
         return result
 

@@ -10,10 +10,7 @@
 - [Acknowledgements](#acknowledgements)
 
 ## Introduction
-Library of models for the CLOE (Cosmology Likelihood for Observables in Euclid) org.  efficient and user-friendly by transforming it into the Cosmology Library for Observables in Euclid (compatible with classic Boltzmann Solvers and JAX).
-This is a work in progress, and will benefit from the feedback of the Euclid community (and the whole cosmology community in general).
-
-`cloelib` does not contain all the main features actual `cloe` has, and it should be seen as a toy repository to test further functionalities currently not implemented in `cloe` (and that would be difficult to include given its current architecture).
+Library of models for the CLOE (Cosmology Likelihood for Observables in Euclid) org.  This package is made efficient and user-friendly by transforming it into the Cosmology Library for Observables in Euclid (compatible with classic Boltzmann Solvers and JAX). This is a work in progress, and will benefit from the feedback of the Euclid community (and the whole cosmology community in general).
 
 ## Features
 The main features of `cloelib` are:
@@ -71,4 +68,4 @@ If you would like to contribute, follow the steps below:
 This project is licensed under the GLG License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgements
-- This project highly benefits 
+- This project relies on previous work by the Euclid Consortium and the `jaxcosmo` project.

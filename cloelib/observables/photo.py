@@ -4,10 +4,10 @@ from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import cached_stacked_simpson
 
 # General imports
-import jax.numpy as np
-from scipy.interpolate import RectBivariateSpline
-import jax
-import interpax
+import jax.numpy as np # type: ignore
+from scipy.interpolate import RectBivariateSpline # type: ignore
+import jax # type: ignore
+import interpax # type: ignore
 
 
 """

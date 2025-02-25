@@ -1,7 +1,7 @@
 # cloelite imports
-from cloelite.cosmology.cosmology import Background
-from cloelite.cosmology.cosmology import LinearPerturbations
-from cloelite.cosmology.cosmology import NonLinearPerturbations
+from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import LinearPerturbations
+from cloelib.cosmology.cosmology import NonLinearPerturbations
 
 # General imports
 from numpy import ndarray

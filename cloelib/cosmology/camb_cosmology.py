@@ -1,6 +1,6 @@
 # cloelite imports
-from cloelite.auxiliary.units import SPEED_OF_LIGHT
-from cloelite.cosmology.cosmology import Background
+from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.cosmology.cosmology import Background
 
 # General imports
 import numpy as np

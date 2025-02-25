@@ -1,5 +1,5 @@
 # cloelite imports
-from cloelite.cosmology.cosmology import Background 
+from cloelib.cosmology.cosmology import Background 
 
 # General imports
 from typing import Protocol, Union, TypeVar

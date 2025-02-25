@@ -1,7 +1,7 @@
 # cloelite imports
-from cloelite.auxiliary.units import SPEED_OF_LIGHT
-from cloelite.cosmology.cosmology import Perturbations
-from cloelite.auxiliary.math_utils import cached_stacked_simpson
+from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.cosmology.cosmology import Perturbations
+from cloelib.auxiliary.math_utils import cached_stacked_simpson
 
 # General imports
 import jax.numpy as np

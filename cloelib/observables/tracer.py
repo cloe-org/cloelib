@@ -1,10 +1,10 @@
 # cloelite imports
-from cloelite.cosmology.cosmology import Perturbations
+from cloelib.cosmology.cosmology import Perturbations
 
 # General imports
 from typing import Protocol, Union, TypeVar
 import numpy as np  # type: ignore
-import jax.numpy as jnp
+import jax.numpy as jnp # type: ignore
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 

@@ -2,10 +2,10 @@ import numpy as np
 
 import nautilus
 
-from cloelite.input import reader
-from cloelite.masking import masking
-from cloelite.cosmology import camb_cosmology
-from cloelite.summary_statistics import LegendreMultipoles
+from cloelib.input import reader
+from cloelib.masking import masking
+from cloelib.cosmology import camb_cosmology
+from cloelib.summary_statistics import LegendreMultipoles
 
 
 class EuclidLikelihood:

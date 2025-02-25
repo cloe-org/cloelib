@@ -1,5 +1,5 @@
 # cloelite imports
-from cloelite.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import Background
 
 # General imports
 from typing import Protocol, Union, TypeVar, Optional
@@ -8,7 +8,7 @@ from copy import deepcopy
 
 # Cosmology imports
 try:
-    from comet import comet
+    from comet import comet # type: ignore
 except ImportError:
     raise ImportError("Comet could not be imported or initialised.")
 

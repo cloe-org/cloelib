@@ -1,42 +1,32 @@
-# General imports
-import numpy as np
-from abc import ABC, abstractmethod
-
 # cloelite imports
-from cloelite.cosmology.cosmology import LinearPerturbations
-from cloelite.cosmology.cosmology import NonLinearPerturbations
+from cloelite.cosmology.cosmology import Perturbations
+
+# General imports
+from typing import Protocol, Union, TypeVar
+import numpy as np  # type: ignore
+import jax.numpy as jnp
+
+T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 """
 
 ## Notes:
 
-- Tracer abstract class to implement different window functions
+- Tracer protocol to implement different window functions
 
 """
 
-class Tracer(ABC):
-    def __init__(self, perturbations: {LinearPerturbations, NonLinearPerturbations}):
-        # The only common ingredients to all the tracers are
-        # perturbations and cosmological background
-        # (inherited from perturbations too)
+class Tracer(Protocol):
+    @property
+    def perturbations(self) -> Perturbations:
+        """
+        Stores perturbations obj
+        """
+        ...
 
-        self.perturbations = perturbations
-        self.background = perturbations.background
-
-    @abstractmethod
-    def _window_integrand(self, z, zprime):
-        r"""Window integrand.
-
-        Calculates generic integrand for windows such as
-        cosmic shear or magnification bias kernels
-
-        .. math::
-            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm A}(z^{\prime})
-            \frac{f_{K}\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}
-            }
-
-        This method is private. Not recommended to call directly, but possible
+    def _window_integrand(self, z: T, zprime: T) -> T:
+        """
+        Window integrand method.
 
         Parameters
         ----------
@@ -49,12 +39,11 @@ class Tracer(ABC):
         -------
         window_integrand: np.ndarray
         """
+        ...
 
-        pass
-
-    @abstractmethod
-    def _get_prefactor(self, ell):
-        r"""Computes the needed prefactor in Limber approximation.
+    def _get_prefactor(self, ell: T) -> T:
+        """
+        Computes the needed prefactor in Limber approximation.
 
         Parameters
         ----------
@@ -66,14 +55,11 @@ class Tracer(ABC):
         Pre-factor: float or numpy.ndarray of float
            Value(s) of the prefactor at the given :math:`\ell`
         """
+        ...
 
-        pass
-
-    @abstractmethod
-    def get_window(self, z):
-        r"""Window
-
-        Computes general window(s) given the selected tracer
+    def get_window(self, z: T) -> T:
+        """
+        Computes general window(s) given the selected tracer.
 
         Parameters
         ----------
@@ -83,7 +69,5 @@ class Tracer(ABC):
         Returns
         -------
         window: np.ndarray
-        all windows
         """
-
-        pass
+        ...

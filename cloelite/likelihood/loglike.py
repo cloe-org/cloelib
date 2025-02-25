@@ -5,7 +5,7 @@ import nautilus
 from cloelite.input import reader
 from cloelite.masking import masking
 from cloelite.cosmology import camb_cosmology
-from cloelite.observables import spectro
+from cloelite.summary_statistics import LegendreMultipoles
 
 
 class EuclidLikelihood:

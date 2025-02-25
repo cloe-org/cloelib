@@ -1,233 +1,215 @@
 # cloelite imports
+from cloelite.auxiliary.units import SPEED_OF_LIGHT
 from cloelite.cosmology.cosmology import Background
-from cloelite.cosmology.cosmology import LinearPerturbations
-from cloelite.cosmology.cosmology import NonLinearPerturbations
+
 # General imports
 import numpy as np
-from scipy.interpolate import interp1d
+from typing import Tuple, Optional
+
 # Cosmology imports
 try:
-    import camb
-    from camb import model
-except ImportError:
-    raise ImportError("camb could not be imported.")
-
+    import camb  # type: ignore
+    from camb import model  # type: ignore
+except ImportError as e:
+    raise ImportError("camb could not be imported.") from e
 
 """
-
 ## Notes:
 
-- Make sufficiently general to interface with CAMB keeping the structure by Cosmology
-
+- This implementation interfaces with CAMB while adhering to the
+Background, LinearPerturbations and NonLinearPerturbations Protocols.
 """
 
-class CAMBBackground(Background):
-    def __init__(self, H0: float, ombh2: float, omch2: float, Omk: float,
-                 sigma8: float, ns: float, As: float, w: float, wa: float,
-                 gamma_MG: float):
-        r"""
-        A class to define background cosmology using CAMB
-        and inheriting from Cosmology parent class
+
+class CAMBBackground:
+    """
+    A wrapper for CAMB background cosmological calculations.
+    """
+
+    def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
+                 As: float, ns: float,
+                 w0: float, wa: float, gamma_MG: float) -> None:
         """
+        Initializes the CAMBBackground class with cosmological parameters.
 
-        super().__init__(H0=H0, ombh2=ombh2, omch2=omch2, Omk=Omk,
-                         sigma8=sigma8, As=As, ns=ns, w=w, wa=wa,
-                         gamma_MG=gamma_MG)
-
-        self.CAMBparams = None
-        self.CAMBresults = None
-        self._update()
-
-    def _update(self):
-        # Define CAMB params
-        self.CAMBparams = camb.CAMBparams()
-        # For the moment, ignore neutrinos
-        self.CAMBparams.set_cosmology(H0=self.H0, ombh2=self.ombh2,
-                                      omch2=self.omch2, mnu=0.0,
-                                      neutrino_hierarchy='degenerate',
-                                      num_massive_neutrinos=0.0,
-                                      YHe=0.2454, nnu=0.0)
-        self.CAMBparams.set_dark_energy(w=self.w, wa=self.wa)
-        self.CAMBparams.InitPower.set_params(As=self.As, ns=self.ns)
-        # Get background cosmology
-        self.CAMBresults = camb.get_background(self.CAMBparams)
-
-        # Update derived parameters
-        self.Omm = self.CAMBparams.omegam
-        self.Omnu = self.CAMBparams.omeganu
-
-    def hubble_parameter(self, zs, units = '1/Mpc') -> np.ndarray:
-            r"""
-            Retrieves the hubble parameter as
-            a function of redshift
-
-            .. math::
-                H(z) = \sqrt
-
-            Parameters
-            ----------
-            zs: numpy.ndarray
-                Redshifts for the matter density
-            units: str
-                Used units to return H(z)
-                Options are: km/s/Mpc and 1/Mpc
-
-            Returns
-            -------
-            Hubble parameter: numpy.ndarray
-                hubble parameter as a function of redshift
-
-            """
-
-            if units == '1/Mpc':
-                return self.CAMBresults.h_of_z(zs)
-            elif units == 'km/s/Mpc':
-                return self.CAMBresults.hubble_parameter(zs)
-
-    def comoving_distance(self, zs) -> np.ndarray:
+        Args:
+            H0 (float): Hubble parameter at z=0 in km/s/Mpc.
+            Omb (float): Baryonic matter density parameter.
+            Omc (float): Cold dark matter density parameter.
+            Omk (float): Curvature density parameter.
+            As (float): Scalar amplitude of primordial fluctuations.
+            ns (float): Scalar spectral index.
+            w (float): Equation of state parameter for dark energy.
+            wa (float): Time evolution of the equation of state.
+            gamma_MG (float): Modified gravity growth parameter.
         """
-        Calculates the comoving distance for given redshifts.
+        self.H0 = H0
+        self.h = self.H0 / 100
+        self.Omega_b0 = Omega_b0
+        self.Omega_cdm0 = Omega_cdm0
+        self.Omega_k0 = Omega_k0
+        self.As = As
+        self.ns = ns
+        self.w0 = w0
+        self.wa = wa
+        self.gamma_MG = gamma_MG
 
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the comoving distance.
+        # Initialize CAMB parameters
+        self.interface_args = {'CAMBparams': camb.CAMBparams()}
+        self.interface_args['CAMBparams'].set_cosmology(
+            H0=self.H0,
+            ombh2=self.Omega_b0 * (self.h) ** 2,
+            omch2=self.Omega_cdm0 * (self.h) ** 2,
+            omk=self.Omega_k0
+        )
+        self.interface_args['CAMBparams'].set_dark_energy(w=self.w0, wa=self.wa)
+        self.interface_args['CAMBparams'].InitPower.set_params(As=self.As, ns=self.ns)
+
+        # Call CAMB to compute the background
+        self.results = camb.get_background(self.interface_args['CAMBparams'])
+
+    def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
+        """
+        Returns the Hubble parameter as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+            units (str): Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').
 
         Returns:
-        --------
-        np.ndarray
-            The comoving distance as a function of redshift.
+            np.ndarray: Hubble parameter values at specified redshifts.
         """
+        if units == "1/Mpc":
+            return self.results.h_of_z(zs)
+        if units == "km/s/Mpc":
+            return self.results.hubble_parameter(zs)
+        raise ValueError("Unsupported units for hubble_parameter. Choose '1/Mpc' or 'km/s/Mpc'.")
 
-        return self.CAMBresults.comoving_radial_distance(zs)
-
-    def angular_diameter_distance(self, zs) -> np.ndarray:
+    def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Calculates the angular diameter distance for given redshifts.
+        Returns the comoving distance as a function of redshift.
 
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the angular diameter distance.
+        Args:
+            zs (np.ndarray): Array of redshifts.
 
         Returns:
-        --------
-        np.ndarray
-            The angular diameter distance as a function of redshift.
+            np.ndarray: Comoving distance values.
         """
+        return self.results.comoving_radial_distance(zs)
 
-        return self.CAMBresults.angular_diameter_distance(zs)
-
-    def matter_density(self, zs) -> np.ndarray:
-        r"""
-        Computes the matter density as
-
-        .. math::
-            \Omega_{\rm m}(z) = \Omega_{{\rm m},0}(1+z)^3H_0^2/H^2(z)
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            Redshifts at which to calculate the matter density
-
-        Returns
-        -------
-        Matter density parameter: numpy.ndarray
-            Matter density as a function of redshift
-
+    def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
+        Returns the transverse comoving distance between two redshifts.
 
-        omegam_z = self.CAMBresults.get_Omega('cdm', z=zs) + \
-            self.CAMBresults.get_Omega('baryon', z=zs) + \
-            self.CAMBresults.get_Omega('neutrino', z=zs) + \
-            self.CAMBresults.get_Omega('nu', z=zs)
-        return self.CAMBresults.get_Omega('tot', z=zs)
-
-    def transverse_comoving_distance(self, zs) -> np.ndarray:
-        """
-        Calculates the transverse comoving distance beetween two redshifts.
-
-        Parameters:
-        -----------
-        zs : numpy.ndarray
-            Redshifts at which to calculate the transverse comoving distance.
+        Args:
+            zs (np.ndarray): Array of redshifts.
 
         Returns:
-        --------
-        np.ndarray
-            The transverse comoving distance as a function of redshift.
+            np.ndarray: Transverse comoving distance values.
         """
-        c_0 = 2.99792458e5
-        int_z1z2 = ((self.comoving_distance(z)[None, :] - self.comoving_distance(z)[:, None]) *
-                    self.H0 / c_0)
-        if self.Omk == 0.0:
-            y_int = int_z1z2
-        elif self.Omk > 0.0:
-            y_int = (np.sinh(np.sqrt(self.Omk) * int_z1z2) /
-                     np.sqrt(self.Omk))
+        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
+        delta_z = self.comoving_distance(zs)[None, :] - self.comoving_distance(zs)[:, None]
+        x = delta_z * self.H0 / c_0
+
+        if self.Omega_k0 == 0.0:
+            y = x
+        elif self.Omega_k0 > 0.0:
+            y = np.sinh(np.sqrt(self.Omega_k0) * x) / np.sqrt(self.Omega_k0)
         else:
-            y_int = (np.sin(np.sqrt(-self.Omk) * int_z1z2) /
-                     np.sqrt(-self.Omk))
-        y_int *= (self.cosmo_dic['c'] / self.H0)
+            y = np.sin(np.sqrt(-self.Omega_k0) * x) / np.sqrt(-self.Omega_k0)
 
-        return y_int
+        return y * (c_0 / self.H0)
 
-class CAMBLinearPerturbations(LinearPerturbations):
-    def __init__(self, background : CAMBBackground, redshifts: np.ndarray):
-        r"""
-        A class to define perturbations cosmology using JAX
-        and inheriting from Cosmology parent class
-
+    def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
+        Returns the angular diameter distance as a function of redshift.
 
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Angular diameter distance values.
+        """
+        return self.results.angular_diameter_distance(zs)
+
+    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the matter density as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values.
+        """
+        return (
+            self.results.get_Omega("cdm", z=zs)
+            + self.results.get_Omega("baryon", z=zs)
+            + self.results.get_Omega("nu", z=zs)
+        )
+
+    def Omega_b(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the matter density as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values.
+        """
+        return (
+            self.results.get_Omega("baryon", z=zs)
+        )
+
+
+class CAMBLinearPerturbations:
+    """
+    A wrapper for CAMB linear perturbation calculations.
+    """
+
+    def __init__(self, background: Background, redshifts: np.ndarray) -> None:
+        """
+        Initializes the CAMBLinearPerturbations class with a background instance.
+
+        Args:
+            background (Background): A CAMBBackground instance.
+            redshifts (np.ndarray): Array of redshifts for the calculations.
+        """
         self.background = background
-        self.background.CAMBparams.NonLinear = model.NonLinear_none
-        self.background.CAMBparams.set_matter_power(redshifts=redshifts,
-                                                    kmax=50)
-        self.CAMBdata = camb.get_results(self.background.CAMBparams)
-        self.redshifts= redshifts
 
-    def _update(self):
-        #self.background.CAMBparams.NonLinear = model.NonLinear_none
-        #self.background.CAMBparams.set_matter_power(redshifts=self.redshifts,
-        #                                            kmax=50)
-        #self.CAMBdata = camb.get_results(self.background.CAMBparams)
-        pass
+        self.kmax = 100
+        self.z = redshifts
 
-    def linear_matter_power_spectrum(self, zs, ks, kmax: float,
-                                     extrap_kmax: float):
-        r"""Computes the linear matter power spectrum.
+        self.background.interface_args['CAMBparams'].set_matter_power(redshifts=redshifts, kmax=self.kmax)
+        self.results = camb.get_results(self.background.interface_args['CAMBparams'])
 
-        Parameters
-        ----------
-        ks: numpy.ndarray
-            Wave number in h Mpc^{-1}
+    def matter_power_spectrum(self) -> np.ndarray:
+        """
+        Calculates the linear matter power spectrum.
 
-        zs: numpy.ndarray
-            Scale factor (def: 1.0)
+        Returns:
+            np.ndarray: Linear power spectrum values \(P(k)\).
+        """
+        k_values, z_values, pk_values = self.results.get_linear_matter_power_spectrum(
+            hubble_units=False, k_hunit=False
+        )
+        self.k = k_values
+        self.z = z_values
+        self.Pk_linear = pk_values
+        return pk_values
 
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
+    def growth_rate(self) -> np.ndarray:
+        """
+        Calculates growth rate.
 
+        Returns:
+            np.ndarray: growth rate.
         """
 
-        #Get the matter power spectrum interpolation object (based on RectBivariateSpline).
-        #Here for lensing we want the power spectrum of the Weyl potential.
-        pk_linear = camb.get_matter_power_interpolator(
-            self.background.CAMBparams, nonlinear=False,
-            hubble_units=False, k_hunit=False,
-            kmax=kmax, extrap_kmax = extrap_kmax,
-            var1='delta_tot',var2='delta_tot', zmax=zs)
+        return self.results.get_fsigma8()/self.results.get_sigma8()
 
-        self.Pk_linear = pk_linear
-
-        return pk_linear.P(zs, ks)
-
-    def growth_factor(self, zs, ks, kmax: float,
-                      extrap_kmax: float) -> np.ndarray:
+    def growth_factor(self) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
 
@@ -236,133 +218,84 @@ class CAMBLinearPerturbations(LinearPerturbations):
             /P_{\rm \delta\delta}(z=0, k)}\\
 
         and normalizes as for :math:`D(z)/D(0)`.
-
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
 
         Returns:
         --------
         np.ndarray
             The growth factor as a function of redshift and wavenumber.
         """
-        #if hasattr(self, 'Pk_linear') and self.Pk_linear is not None:
-        #    D_z_k = (np.sqrt(self.Pk_linear.P(zs, ks) /
-        #             self.Pk_linear.P(0.0, ks)))
-        #else:
-        self.linear_matter_power_spectrum(zs, ks, kmax, extrap_kmax)
-        D_z_k = (np.sqrt(self.Pk_linear.P(zs, ks) /
-                 self.Pk_linear.P(0.0, ks)))
-
+        if hasattr(self, 'Pk_linear') and self.Pk_linear is not None:
+            D_z_k = np.sqrt(self.Pk_linear / self.Pk_linear[0, :])
+        else:
+            self.matter_power_spectrum()
+            D_z_k = np.sqrt(self.Pk_linear / self.Pk_linear[0, :])
         return D_z_k
 
-    def sigma8(self) -> np.ndarray:
-        """
-        Calculates sigma8 for given redshifts
 
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth rate.
+class CAMBNonLinearPerturbations:
+    """
+    A wrapper for CAMB nonlinear perturbation calculations.
+    """
+
+    def __init__(self, background: Background, redshifts: np.ndarray,
+                 nonlinear_model: Optional[str] = None) -> None:
+        """
+        Initializes the CAMBNonLinearPerturbations class with linear perturbation data.
+
+        Args:
+            linear_perturbations (LinearPerturbations): An instance of the LinearPerturbations class.
+            redshifts (np.ndarray): Array of redshifts for the calculations.
+            nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
+                Defaults to None, which uses the CAMB default model.
+        """
+
+        self.background = background
+        self.kmax = 100
+        self.z = redshifts
+
+        # Configure CAMB parameters for nonlinear calculations
+        self.background.interface_args['CAMBparams'].NonLinear = model.NonLinear_both
+
+        if nonlinear_model:
+            self.background.interface_args['CAMBparams'].NonLinearModel.set_params(halofit_version=nonlinear_model)
+
+        self.background.interface_args['CAMBparams'].set_matter_power(redshifts=redshifts, kmax=self.kmax)
+
+        # Compute nonlinear perturbations
+        self.results = camb.get_results(self.background.interface_args['CAMBparams'])
+
+
+    def matter_power_spectrum(self) -> np.ndarray:
+        """
+        Calculates the nonlinear matter power spectrum.
+
+        This function uses CAMB to compute the nonlinear matter power spectrum \( P(k) \)
+        as a function of wavenumber \( k \) and redshift \( z \).
+
+        Units of 1/Mpc
 
         Returns:
-        --------
-        np.ndarray
-            The sigma8 as a function of redshift
+            np.ndarray: Nonlinear power spectrum values \( P(k) \).
         """
-
-        # This could be catch
-        s8 = np.array(self.CAMBdata.get_sigma8())
-        return s8[::-1]
-
-    def fsigma8(self) -> np.ndarray:
-        """
-        Calculates sigma8 for given redshifts
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth rate.
-
-        Returns:
-        --------
-        np.ndarray
-            The sigma8 as a function of redshift
-        """
-
-        fs8 = np.array(self.CAMBdata.get_fsigma8())
-        return fs8[::-1]
+        k_values, z_values, pk_values = self.results.get_nonlinear_matter_power_spectrum(
+            hubble_units=False, k_hunit=False
+        )
+        self.k = k_values
+        self.z = z_values
+        self.Pk_nonlinear = pk_values
+        return pk_values
 
     def growth_rate(self) -> np.ndarray:
         """
-        Calculates the growth rate for given redshifts and wavenumbers.
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth rate.
-        ks : array_like
-            Wavenumbers at which to calculate the growth rate.
+        Calculates growth rate.
 
         Returns:
-        --------
-        np.ndarray
-            The growth rate as a function of redshift and wavenumber.
+            np.ndarray: growth rate.
         """
 
-        return self.fsigma8()/self.sigma8()
+        return self.results.get_fsigma8()/self.results.get_sigma8()
 
-    def growth_rate_interpolator(self):
-        return interp1d(self.redshifts, self.growth_rate(), kind='cubic')
-
-class CAMBNonLinearPerturbations(NonLinearPerturbations):
-    def __init__(self, linearperturbations : CAMBLinearPerturbations, redshifts: np.ndarray,
-                  nonlinear_model = 'mead2020'):
-
-        self.linearperturbations = linearperturbations
-        self.background = linearperturbations.background
-        self.background.CAMBparams.NonLinear = model.NonLinear_both
-        self.background.CAMBparams.NonLinearModel.set_params(halofit_version=nonlinear_model)
-        self.background.CAMBparams.set_matter_power(redshifts=redshifts,
-                                                    kmax=2)
-        self.CAMBdata = camb.get_results(self.background.CAMBparams)
-
-    def nonlinear_matter_power_spectrum(self, zs, ks, kmax: float, extrap_kmax: float):
-        r"""Computes the linear matter power spectrum.
-
-        Parameters
-        ----------
-        ks: numpy.ndarray
-            Wave number in h Mpc^{-1}
-
-        zs: numpy.ndarray
-            Scale factor (def: 1.0)
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
-
-        """
-
-        #Get the matter power spectrum interpolation object (based on RectBivariateSpline).
-        #Here for lensing we want the power spectrum of the Weyl potential.
-        pk_nonlinear = camb.get_matter_power_interpolator(self.background.CAMBparams,
-                                                nonlinear=True, hubble_units=False, k_hunit=False,
-                                                kmax=kmax, extrap_kmax = extrap_kmax,
-                                                var1='delta_tot',var2='delta_tot',
-                                                zmax=zs)
-
-        self.Pk_nonlinear = pk_nonlinear
-
-        return pk_nonlinear.P(zs, ks)
-
-    def growth_factor(self, zs, ks, kmax: float, extrap_kmax: float) -> np.ndarray:
+    def growth_factor(self) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
 
@@ -371,14 +304,6 @@ class CAMBNonLinearPerturbations(NonLinearPerturbations):
             /P_{\rm \delta\delta}(z=0, k)}\\
 
         and normalizes as for :math:`D(z)/D(0)`.
-
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
 
         Returns:
         --------
@@ -386,65 +311,8 @@ class CAMBNonLinearPerturbations(NonLinearPerturbations):
             The growth factor as a function of redshift and wavenumber.
         """
         if hasattr(self, 'Pk_nonlinear') and self.Pk_nonlinear is not None:
-            D_z_k = np.sqrt(self.Pk_nonlinear.P(zs, ks) / self.Pk_nonlinear.P(0.0, ks))
+            D_z_k = np.sqrt(self.Pk_nonlinear / self.Pk_nonlinear[0, :])
         else:
-            self.nonlinear_matter_power_spectrum(zs, ks, kmax=kmax, extrap_kmax=extrap_kmax)
-            D_z_k = np.sqrt(self.Pk_nonlinear.P(zs, ks) / self.Pk_nonlinear.P(0.0, ks))
-
+            self.matter_power_spectrum()
+            D_z_k = np.sqrt(self.Pk_nonlinear / self.Pk_nonlinear[0, :])
         return D_z_k
-
-    def sigma8(self) -> np.ndarray:
-        """
-        Calculates sigma8 for given redshifts
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth rate.
-
-        Returns:
-        --------
-        np.ndarray
-            The sigma8 as a function of redshift
-        """
-
-        s8 = np.array(self.CAMBdata.get_sigma8())
-        return s8[::-1]
-
-
-    def fsigma8(self) -> np.ndarray:
-        """
-        Calculates sigma8 for given redshifts
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth rate.
-
-        Returns:
-        --------
-        np.ndarray
-            The sigma8 as a function of redshift
-        """
-
-        fs8 = np.array(self.CAMBdata.get_fsigma8())
-        return fs8[::-1]
-
-    def growth_rate(self) -> np.ndarray:
-        """
-        Calculates the growth rate for given redshifts and wavenumbers.
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth rate.
-        ks : array_like
-            Wavenumbers at which to calculate the growth rate.
-
-        Returns:
-        --------
-        np.ndarray
-            The growth rate as a function of redshift and wavenumber.
-        """
-
-        return self.fsigma8()/self.sigma8()

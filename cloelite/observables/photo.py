@@ -1,7 +1,7 @@
 # cloelite imports
-from cloelite.observables.tracer import Tracer
-from cloelite.cosmology.cosmology import LinearPerturbations
-from cloelite.cosmology.cosmology import NonLinearPerturbations
+from cloelite.auxiliary.units import SPEED_OF_LIGHT
+from cloelite.cosmology.cosmology import Perturbations
+from cloelite.auxiliary.math_utils import cached_stacked_simpson
 
 # General imports
 import jax.numpy as np
@@ -11,17 +11,20 @@ import interpax
 
 
 """
-**Date**: June 11, 2024
 
 ## Notes:
 
 - Make sufficiently general to interface with CAMB keeping the structure by Cosmology
+- Make Tracer a protocol
 
 """
 
-class ShearTracer(Tracer):
-    def __init__(self, perturbations: {LinearPerturbations, NonLinearPerturbations}, dndz: np.ndarray, z: np.ndarray,
-                 intrinsic_aligment_model: str, nuisance_params: dict):
+# UNITS
+c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
+
+class ShearTracer:
+    def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray,
+                 nuisance_params: dict):
         r"""
         A class to define the kernel for Cosmic Shear.
 
@@ -37,17 +40,12 @@ class ShearTracer(Tracer):
             It is expected to be normalised.
         z : np.ndarray
             A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
-        intrinsic_aligment_model : str
-            A string specifying the model used to describe intrinsic aligments
-        nuisance_params : dict
-            A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
         """
-
-        super().__init__(perturbations)
+        self.perturbations = perturbations
+        self.background = self.perturbations.background
         self.dndz = dndz
         self.z = z
         self.nuisance_params = nuisance_params
-        self.flags = {'intrinsic_aligment_model': intrinsic_aligment_model}
 
     def _get_prefactor(self, ell):
         return 0
@@ -67,18 +65,16 @@ class ShearTracer(Tracer):
 
         This method is private. Not recommended to call directly, but possible
 
-        Parameters
-        ----------
-        zprime: float or numpy.ndarray
-            Redshift parameter that will be integrated over
-        z: float
-            Redshift at which kernel is being evaluated
-        n_z: numpy.ndarray
-            Redshift bin distribution
+        Args:
+            zprime: float or numpy.ndarray
+                Redshift parameter that will be integrated over
+            z: float
+                Redshift at which kernel is being evaluated
+            n_z: numpy.ndarray
+                Redshift bin distribution
 
-        Returns
-        -------
-        window_integrand: np.ndarray
+        Returns:
+            window_integrand: np.ndarray
         """
 
         chi = self.background.comoving_distance(z)
@@ -127,10 +123,10 @@ class ShearTracer(Tracer):
             at specified scale for the redshifts defined in z
         """
 
-        c_0 = 2.99792458e5
         win_int = self._window_integrand(z, self.dndz)
 
-        W_val = (1.5 * self.background.H0 * self.background.Omm * \
+        W_val = (1.5 * self.background.H0 *
+                 (self.background.Omega_b0 + self.background.Omega_cdm0) * \
                  (1.0 + z) * self.background.comoving_distance(z) *
                   ( c_0/ self.background.H0)) * win_int
 
@@ -150,26 +146,32 @@ class ShearTracer(Tracer):
         -------
         window_IA: np.ndarray
         """
-        c_0 = 2.99792458e5
-        Hz = self.background.hubble_parameter(z)
-        Dz = self.perturbations.linearperturbations.growth_factor(z)
-        AIA = self.nuisance_params["AIA"]
-        CIA = self.nuisance_params["CIA"]
-        EtaIA = self.nuisance_params["EtaIA"]
-        factor = -Hz/c_0*AIA*CIA*(self.background.Omb+self.background.Omc)*(1+z)**EtaIA/Dz
+        Hz = self.perturbations.background.hubble_parameter(z)
+        Dz = self.perturbations.growth_factor()[:,1]
+        #TODO discuss whether we want growth factor to output a 1D or a 2D array
+        A_IA = self.nuisance_params["AIA"]
+        C_IA = self.nuisance_params["CIA"]
+        Eta_IA = self.nuisance_params["EtaIA"]
+        factor = -Hz/c_0*A_IA*C_IA*(self.background.Omega_b0 + self.background.Omega_cdm0)*(1+z)**Eta_IA/Dz
         return np.einsum('ij, j->ij', self.dndz, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
         interpolator = interpax.Akima1DInterpolator(self.z, self.dndz[bin_idx,:])
+        #horrible quick fix
+        #to make it right, we need the triangular matrix of simpson weight for the
+        #lensing efficiency. This will also significantly improve performance!
+        x = np.linspace(0., 4, 200)
+        y = self.background.comoving_distance(x)
+        rx_interp = interpax.Akima1DInterpolator(x, y)
         #f1 = lambda x, y: interpolator(x)*(1-tracer_she.background.comoving_distance(y)/tracer_she.background.comoving_distance(x))
         f1 = jax.jit(lambda x: interpolator(x))
-        f2 = jax.jit(lambda x: interpolator(x)/self.background.comoving_distance(x))
+        f2 = jax.jit(lambda x: interpolator(x)/rx_interp(x))
         integral_1 =  simps(f1, z, 3.)
         integral_2 =  simps(f2, z, 3.)
         efficiency = integral_1 - integral_2*self.background.comoving_distance(z)
         return efficiency
 
-    def get_lensing_efficiency(self, z):
+    def get_lensing_efficiency_check(self, z):
         n_bins = self.dndz.shape[0]
         efficiency = self.get_lensing_efficiency_bin(z, 0)
         for i in np.arange(1,n_bins):
@@ -177,13 +179,42 @@ class ShearTracer(Tracer):
 
         return efficiency
 
-    def get_lensing_window(self, z):
-        c_0 = 2.99792458e5
+    def get_lensing_efficiency(self, z):
+        dndz = self.dndz
+        dz = z[1]-z[0]#assuming equispaced!
+        rz = self.background.comoving_distance(z)
+        rzrz = 1 - np.outer(rz,1/rz)
+        w_matrix = cached_stacked_simpson(len(z))
+        result = np.einsum('ik, jk, jk->ij', dndz, rzrz, w_matrix)*dz
+        return result
 
-        factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omb+self.background.Omc)\
+    def get_lensing_window_check(self, z):
+        factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omega_b0 + self.background.Omega_cdm0)\
+        *(1+z)*self.background.comoving_distance(z)
+        efficiency = self.get_lensing_efficiency_check(z)
+        return np.einsum('ij, j->ij', efficiency, factor)
+
+    def get_lensing_window(self, z):
+        factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omega_b0 + self.background.Omega_cdm0)\
         *(1+z)*self.background.comoving_distance(z)
         efficiency = self.get_lensing_efficiency(z)
         return np.einsum('ij, j->ij', efficiency, factor)
+
+    def get_window_check(self, z):
+        r"""Window
+
+        Computes general window given the selected tracer
+
+        Parameters
+        ----------
+        z: float
+            Redshift at which window kernel is being evaluated
+
+        Returns
+        -------
+        window: np.ndarray
+        """
+        return self.get_lensing_window_check(z) + self.get_window_IA(z)
 
     def get_window(self, z):
         r"""Window
@@ -201,10 +232,8 @@ class ShearTracer(Tracer):
         """
         return self.get_lensing_window(z) + self.get_window_IA(z)
 
-class PositionsTracer(Tracer):
-    def __init__(self, perturbations: {LinearPerturbations, NonLinearPerturbations}, dndz: np.ndarray, z: np.ndarray,
-                 galaxy_bias_model: str, magnification_bias_model: str,
-                 nuisance_params: dict):
+class PositionsTracer:
+    def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray):
         r"""
         A class to define the kernel for angular (galaxy) clustering
 
@@ -228,18 +257,15 @@ class PositionsTracer(Tracer):
             A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
         """
 
-        super().__init__(perturbations)
+        self.perturbations = perturbations
         self.dndz = dndz
         self.z = z
-        self.nuisance_params = nuisance_params
-        self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}
 
-    def _get_prefactor(self, ell):
+        #self.nuisance_params = nuisance_params
+        #self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}
 
-        pass
-
-    def get_window_positions(self, z):
-        r"""Galaxy Position window.
+    def get_window_positions(self, z) -> np.ndarray:
+        r"""Galaxy Positions window function
 
         Implements the galaxy clustering photometric window function.
 
@@ -253,101 +279,30 @@ class PositionsTracer(Tracer):
 
         Returns
         -------
-        GCphot window function: float
+        window_positions: numpy.ndarray
            Window function for angular photometric galaxy clustering
         """
-
-        #
-        c_0 = 2.99792458e5 #please, put all the constanst in a single place
         window_positions = self.dndz * \
-            self.background.hubble_parameter(z)/c_0
+            self.perturbations.background.hubble_parameter(z) / c_0
 
         return window_positions
 
-
-    def get_window_RSD(self, z):
-        r"""GC window RSD.
-
-        Implements the RSD correction to the galaxy clustering photometric
-        window function in an array-like format, modulo the Limber and
-        full sky prefactor,
-
-        .. math::
-            W_i^{\rm{G,RSD}}(z,\ell) =
-            \frac{1}{c \,b_{\mathrm{g},i}^\mathrm{photo}} \
-            \left[H(z_{\rm m})f(z_{\rm m})\
-            \frac{n_i(z)}{\bar{n_i}}\right]_{\rm m}
-
-        where :math:`m` assumes the values (-1,0,+1).
-
-        Parameters
-        ----------
-        z: numpy.ndarray or float
-            Redshift at which to evaluate the window function
-        ell: numpy.ndarray or float
-            Multipole at which to evaluate the window function
-        bin_i: int
-            Index of desired tomographic bin. Tomographic bin
-            indices start from 1
-
-        Returns
-        -------
-        RSD GCphot window function: numpy.ndarray
-            Window function for RSD component of photometric galaxy clustering.
+    def get_window(self, z) -> np.ndarray:
         """
-        #if isinstance(ell, (int, float)):
-        #    ell = [ell]
-        #if isinstance(z, (int, float)):
-        #    z = [z]
-
-        #tdist = self.theory['f_K_z_func'](z)
-        #zm_arr = np.array([[self.z_minus1(ll, tdist) for ll in ell],
-        #                   np.full((len(ell), len(z)), z),
-        #                   [self.z_plus1(ll, tdist) for ll in ell]])
-
-        #Hzm_arr = self.theory['H_z_func_Mpc'](zm_arr)
-        #fzm_arr = self.theory['f_z'](zm_arr)
-        #nzm_arr = self.nz_GC.evaluates_n_i_z(bin_i, zm_arr)
-
-        #if self.theory['bias_model'] == 2:
-        #    bias = self.photobias[bin_i - 1]
-        #elif self.theory['bias_model'] in [1, 3]:
-        #    bias = self.theory['b1_inter'](z)
-
-        #return Hzm_arr * fzm_arr * nzm_arr / bias
-
-    def _window_integrand(self, z, zprime):
-        r"""Window integrand.
-
-        Calculates generic integrand for windows such as
-        cosmic shear or magnification bias kernels
-
-        .. math::
-            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm A}(z^{\prime})
-            \frac{f_{K}\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}
-            }
-
-        This method is private. Not recommended to call directly, but possible
+        Computes the angular photometric galaxy clustering window function.
 
         Parameters
         ----------
-        zprime: float or numpy.ndarray
-            Redshift parameter that will be integrated over
         z: float
-            Redshift at which kernel is being evaluated
+            Redshift at which window kernel is being evaluated
 
         Returns
         -------
-        window_integrand: np.ndarray
+        window: np.ndarray
         """
-
-        pass
-
-    def get_window(self, z):
-        # keep adding contributions here!
+        # add more contributions below
         return self.get_window_positions(z)
-    #gonna add the other contributes here!
+
 
 def simps(f, a, b, N=128):
     if N % 2 == 1:

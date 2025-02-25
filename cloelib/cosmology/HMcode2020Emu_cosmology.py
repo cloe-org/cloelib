@@ -1,6 +1,6 @@
 # cloelite imports
-from cloelite.cosmology.cosmology import Background
-from cloelite.auxiliary.extrapolator import extend_spectra
+from cloelib.cosmology.cosmology import Background
+from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
 # General imports

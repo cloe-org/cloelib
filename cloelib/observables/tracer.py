@@ -1,5 +1,5 @@
 # cloelite imports
-from cloelite.cosmology.cosmology import Perturbations
+from cloelib.cosmology.cosmology import Perturbations
 
 # General imports
 from typing import Protocol, Union, TypeVar

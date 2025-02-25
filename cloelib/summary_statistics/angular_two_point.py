@@ -1,6 +1,6 @@
 # cloelite imports
-from cloelite.observables.tracer import Tracer
-from cloelite.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.observables.tracer import Tracer
+from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
 import interpax

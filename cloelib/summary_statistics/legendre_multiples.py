@@ -1,6 +1,6 @@
 # cloelite imports
-from cloelite.observables.spectro import SpectroPower
-from cloelite.auxiliary.math_utils import legendre, simps_jax # I made it auto-diff :) 
+from cloelib.observables.spectro import SpectroPower
+from cloelib.auxiliary.math_utils import legendre, simps_jax # I made it auto-diff :) 
 
 # General imports
 from typing import Protocol, Union, TypeVar, Optional, Generic

@@ -11,8 +11,6 @@ python = "^3.9"
 jax = "^0.4"
 jaxlib = "^0.4"
 interpax = "^0.3.2"
-astropy = "^6.0.1"
-
 
 [build-system]
 requires = ["poetry-core"]

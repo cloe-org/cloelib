@@ -200,6 +200,22 @@ class ShearTracer:
         efficiency = self.get_lensing_efficiency(z)
         return np.einsum('ij, j->ij', efficiency, factor)
 
+    def get_window_check(self, z):
+        r"""Window
+
+        Computes general window given the selected tracer
+
+        Parameters
+        ----------
+        z: float
+            Redshift at which window kernel is being evaluated
+
+        Returns
+        -------
+        window: np.ndarray
+        """
+        return self.get_lensing_window_check(z) + self.get_window_IA(z)
+
     def get_window(self, z):
         r"""Window
 
@@ -215,22 +231,6 @@ class ShearTracer:
         window: np.ndarray
         """
         return self.get_lensing_window(z) + self.get_window_IA(z)
-
-    def get_window_new(self, z):
-        r"""Window
-
-        Computes general window given the selected tracer
-
-        Parameters
-        ----------
-        z: float
-            Redshift at which window kernel is being evaluated
-
-        Returns
-        -------
-        window: np.ndarray
-        """
-        return self.get_lensing_window_new(z) + self.get_window_IA(z)
 
 class PositionsTracer:
     def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray):

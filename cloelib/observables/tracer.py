@@ -1,4 +1,4 @@
-# cloelite imports
+# cloelib imports
 from cloelib.cosmology.cosmology import Perturbations
 
 # General imports

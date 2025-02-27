@@ -1,4 +1,4 @@
-# cloelite imports
+# cloelib imports
 from cloelib.observables.spectro import SpectroPower
 from cloelib.auxiliary.math_utils import legendre, simps_jax # I made it auto-diff :) 
 

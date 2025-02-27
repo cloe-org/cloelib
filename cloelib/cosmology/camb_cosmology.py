@@ -1,4 +1,4 @@
-# cloelite imports
+# cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
 

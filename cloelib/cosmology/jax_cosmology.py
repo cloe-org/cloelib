@@ -1,4 +1,4 @@
-# cloelite imports
+# cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.cosmology.cosmology import LinearPerturbations
 from cloelib.cosmology.cosmology import NonLinearPerturbations

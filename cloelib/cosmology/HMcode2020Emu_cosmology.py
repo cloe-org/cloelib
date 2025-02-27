@@ -1,4 +1,4 @@
-# cloelite imports
+# cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.auxiliary.extrapolator import extend_spectra
 

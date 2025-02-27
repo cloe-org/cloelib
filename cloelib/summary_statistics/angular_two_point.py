@@ -1,4 +1,4 @@
-# cloelite imports
+# cloelib imports
 from cloelib.observables.tracer import Tracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 

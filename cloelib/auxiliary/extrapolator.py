@@ -8,7 +8,7 @@ def extend_spectra(wavenumber_in, redshift_in, boost_in,
                  extrap_func=None,
                  extrap_kmax=500.0,
                  extrap_kmin=1e-4,
-                 extrap_zmax=4.0,
+                 extrap_z=4.0,
                  wavenumber_tanh_slope=10.0,
                  wavenumber_tanh_scale=1.15,
                  ns=0.96):
@@ -52,8 +52,8 @@ def extend_spectra(wavenumber_in, redshift_in, boost_in,
         max wavenumber for extrapolation in 1/Mpc
     extrap_kmin: float
         min wavenumber for extrapolation in 1/Mpc
-    extrap_zmax: float
-        max redshift to extrapolate
+    extrap_z: float or np.ndarray
+        max redshift to extrapolate or array with redshifts to evaluate
 
     Returns
     -------
@@ -69,7 +69,11 @@ def extend_spectra(wavenumber_in, redshift_in, boost_in,
     """
 
     wavenumber_base = np.geomspace(extrap_kmin,extrap_kmax,500)
-    redshift_base = np.linspace(0,extrap_zmax,100)
+
+    if isinstance(extrap_z, (int,float)):
+        redshift_base = np.linspace(0,extrap_zmax,100)
+    elif isinstance(extrap_z, (np.ndarray, list)):
+        redshift_base = np.asarray(extrap_z)
 
     # Extrapolate everything with HMcode if cosmology is not in range
     # and the option to extrapolate is HMcode.

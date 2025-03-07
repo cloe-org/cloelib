@@ -1,11 +1,13 @@
 # cloelib imports
 from cloelib.observables.tracer import Tracer
+from cloelib.observables.photo import PositionsTracer
+from cloelib.observables.photo import ShearTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
 import interpax
 import jax.numpy as np
-from scipy.interpolate import RectBivariateSpline
+from scipy.interpolate import RectBivariateSpline, interp1d
 import jax
 
 """
@@ -95,7 +97,7 @@ class AngularTwoPoint:
         Returns:
         - jax.numpy.ndarray: Interpolated matter power spectrum on the Limber grid.
         """
-        chi = self.tracer1.perturbations.background.comoving_distance(zs)
+        chi = self.tracer1.perturbations.background.comoving_distance(z_l)
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
         Pk = self.tracer1.perturbations.matter_power_spectrum()
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
@@ -125,8 +127,40 @@ class AngularTwoPoint:
         chi2 = chi**2
         WT1 = self.tracer1.get_window(zs_calc)
         WT2 = self.tracer2.get_window(zs_calc)
-        Pkl = self._matter_power_spectrum_limber_grid(zs_calc, ks, zs_calc, ells)
+        Pkl = self._matter_power_spectrum_limber_grid(zs_calc, ks, self.tracer1.perturbations.z, ells)
         return c_0*Cl_integration(WT1, WT2, Pkl, H, chi2)*dz
 
-    def get_pseudo_Cl(self, ells, nl, ks, mixing_matrix)  -> jax.numpy.ndarray:
-        pass
+    def get_pseudo_Cl(self, nl, ks, mixing_matrix,n_ells_int=50)  -> jax.numpy.ndarray:
+
+        ellmax = mixing_matrix[('POS', 'POS', 0, 0)].shape[1]-1
+        ells_calc = np.geomspace(1,ellmax+1,n_ells_int)
+        C_ell_calc = self.get_Cl(ells_calc, nl, ks)
+        C_ell_base = interp1d(ells_calc,C_ell_calc,axis=0,fill_value='extrapolate')(np.arange(ellmax + 1))
+        n_bin = C_ell_base.shape[2]
+
+        C_ell_out = {}
+        if (type(self.tracer1) == PositionsTracer) and (type(self.tracer2) == PositionsTracer):
+            for i in range(n_bin):
+                for j in range(i,n_bin):
+                    C_ell_out['POS','POS',i,j] = mixing_matrix['POS','POS',i,j] @ C_ell_base[:,i,j]
+
+        elif (type(self.tracer1) == PositionsTracer) and (type(self.tracer2) == ShearTracer):
+            for i in range(n_bin):
+                for j in range(i,n_bin):
+                    C_ell_out['POS','SHE',i,j] = mixing_matrix['POS','SHE',i,j] @ C_ell_base[:,i,j]
+                    C_ell_out['POS','SHE',j,i] = mixing_matrix['POS','SHE',j,i] @ C_ell_base[:,j,i]
+
+        elif (type(self.tracer1) == ShearTracer) and (type(self.tracer2) == PositionsTracer):
+            for i in range(n_bin):
+                for j in range(i,n_bin):
+                    C_ell_out['POS','SHE',j,i] = mixing_matrix['POS','SHE',j,i] @ C_ell_base[:,i,j]
+                    C_ell_out['POS','SHE',i,j] = mixing_matrix['POS','SHE',i,j] @ C_ell_base[:,j,i]
+
+        elif (type(self.tracer1) == ShearTracer) and (type(self.tracer2) == ShearTracer):
+            for i in range(n_bin):
+                for j in range(i,n_bin):
+                    C_ell_out['SHE','SHE',i,j] = np.stack([
+                        mixing_matrix['SHE','SHE',i,j][:,0,:] @ C_ell_base[:,i,j],
+                        mixing_matrix['SHE','SHE',i,j][:,1,:] @ C_ell_base[:,i,j]
+                            ])
+        return C_ell_out

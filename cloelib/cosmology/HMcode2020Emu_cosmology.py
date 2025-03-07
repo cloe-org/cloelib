@@ -1,5 +1,5 @@
 # cloelib imports
-from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
@@ -38,7 +38,7 @@ class HMemuLinearPerturbations:
             'As': self.background.As,
             'ns': self.background.ns,
             'hubble': self.background.H0 / 100,
-            'neutrino_mass': 0.0,
+            'neutrino_mass': 0.06,
             'w0': self.background.w0,
             'wa': self.background.wa,
         }
@@ -54,9 +54,27 @@ class HMemuLinearPerturbations:
         self.params_hm_emu['z'] = self.z
 
         _, Pk = HM2020_emu.get_linear_pk(**self.params_hm_emu)
-        self.Pk = Pk
 
-    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+        k_emu = HM2020_emu.emulator['linear']['k'] * self.background.h
+
+        # Warning: a lot of parameters currently hard-coded
+        k_out, z_out, Pk_out = \
+            extend_spectra(k_emu, self.z , self.background.h ** -3 * Pk,
+                           flag_range=True,
+                           option_wavenumber="logk2",
+                           option_redshift="power_law", extrap_z = redshifts,
+                           option_cosmo="const", ns=self.background.ns)
+
+        self.k = k_out
+        self.z  = z_out
+        self.Pk = Pk_out
+
+        pk_linear = interpolate.RectBivariateSpline(
+            self.z , self.k, Pk_out, kx=1, ky=1)
+
+        self.Pk_linear = pk_linear
+
+    def matter_power_spectrum(self) -> np.ndarray:
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -74,29 +92,10 @@ class HMemuLinearPerturbations:
             and redshift
 
         """
-        # Understand this below
-        k_emu = HM2020_emu.emulator['linear']['k'] * self.background.h
 
-        # Warning: a lot of parameters currently hard-coded
-        k_out, z_out, Pk_out = \
-            extend_spectra(k_emu, self.z , self.background.h ** -3 * self.Pk,
-                           flag_range=True,
-                           option_wavenumber="logk2",
-                           option_redshift="power_law",
-                           option_cosmo="const", ns=self.background.ns)
+        return self.Pk
 
-        self.k = k_out
-        self.z  = z_out
-
-        pk_linear = interpolate.RectBivariateSpline(
-            self.z , self.k, Pk_out, kx=1, ky=1)
-        
-        
-        self.Pk_linear = pk_linear
-
-        return pk_linear(zs, ks)
-
-    def growth_factor(self, zs, ks) -> np.ndarray:
+    def growth_factor(self) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
 
@@ -120,10 +119,7 @@ class HMemuLinearPerturbations:
             The growth factor as a function of redshift and wavenumber.
         """
         if hasattr(self, 'Pk_linear') and self.Pk_linear is not None:
-            D_z_k = np.sqrt(self.Pk_linear(zs, ks) / self.Pk_linear(0.0, ks))
-        else:
-            self.matter_power_spectrum(zs, ks)
-            D_z_k = np.sqrt(self.Pk_linear(zs, ks) / self.Pk_linear(0.0, ks))
+            D_z_k = np.sqrt(self.Pk / self.Pk[0,:])
 
         return D_z_k
 
@@ -142,9 +138,12 @@ class HMemuLinearPerturbations:
         return self.fsigma8/self.sigma8
 
 class HMemuNonLinearPerturbations:
-    def __init__(self, background : Background, redshifts: np.ndarray):
+    def __init__(self, background : Background, linearperturbations: Perturbations, redshifts: np.ndarray):
 
         assert background.Omega_k0 == 0, 'Non flat geometries not supported'
+
+        redshift_max = \
+            HM2020_emu.emulator['nonlinear']['bounds']['z'][1]
 
         self.z = redshifts[redshifts <= redshift_max]
         self.background = background
@@ -160,7 +159,7 @@ class HMemuNonLinearPerturbations:
             'wa': self.background.wa,
         }
 
-        hm_bounds = HM2020_emu.emulator['linear']['bounds']
+        hm_bounds = HM2020_emu.emulator['nonlinear']['bounds']
 
         for key in self.params_hm_emu.keys():
             if np.prod(self.params_hm_emu[key] - hm_bounds[key]) > 0:
@@ -170,13 +169,31 @@ class HMemuNonLinearPerturbations:
 
         self.params_hm_emu['z'] = self.z
 
-        _, Pk = HM2020_emu.get_nonlinear_pk(nonu=False, 
+        _, Pk = HM2020_emu.get_nonlinear_pk(nonu=False,
                                             **self.params_hm_emu,
                                             baryonic_boost=False)
-        self.Pk = Pk
+
+        k_emu = HM2020_emu.emulator['nonlinear']['k'] * self.background.h
+
+        # Warning: a lot of parameters currently hard-coded
+        k_out, z_out, Pk_out = \
+            extend_spectra(k_emu, self.z , self.background.h ** -3 * Pk,
+                           flag_range=True,
+                           option_wavenumber="logk2",
+                           option_redshift="power_law", extrap_z = redshifts,
+                           option_cosmo="const", ns=self.background.ns)
+
+        self.k = k_out
+        self.z  = z_out
+        self.Pk = Pk_out
+
+        pk_nonlinear = interpolate.RectBivariateSpline(
+            self.z , self.k, self.Pk, kx=1, ky=1)
+
+        self.Pk_nonlinear = pk_nonlinear
 
 
-    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+    def matter_power_spectrum(self) -> np.ndarray:
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -194,31 +211,10 @@ class HMemuNonLinearPerturbations:
             and redshift
 
         """
-        # Understand this below
 
+        return self.Pk
 
-        k_emu = HM2020_emu.emulator['nonlinear']['k'] * self.background.h
-
-        # Warning: a lot of parameters currently hard-coded
-        k_out, z_out, Pk_out = \
-            extend_spectra(k_emu, self.z , self.background.h ** -3 * self.Pk,
-                           flag_range=True,
-                           option_wavenumber="logk2",
-                           option_redshift="power_law",
-                           option_cosmo="const", ns=self.background.ns)
-
-        self.k = k_out
-        self.z  = z_out
-
-        pk_nonlinear = interpolate.RectBivariateSpline(
-            self.z , self.k, Pk_out, kx=1, ky=1)
-        
-        
-        self.Pk_nonlinear = pk_nonlinear
-
-        return pk_nonlinear(zs, ks)
-
-    def growth_factor(self, zs, ks) -> np.ndarray:
+    def growth_factor(self) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
 
@@ -241,11 +237,8 @@ class HMemuNonLinearPerturbations:
         np.ndarray
             The growth factor as a function of redshift and wavenumber.
         """
-        if hasattr(self, 'Pk_nonlinear') and self.Pk_nonlinear is not None:
-            D_z_k = np.sqrt(self.Pk_nonlinear(zs, ks) / self.Pk_nonlinear(0.0, ks))
-        else:
-            self.matter_power_spectrum(zs, ks)
-            D_z_k = np.sqrt(self.Pk_nonlinear(zs, ks) / self.Pk_nonlinear(0.0, ks))
+        if hasattr(self, 'Pk_nonlinear') and self.Pk is not None:
+            D_z_k = np.sqrt(self.Pk / self.Pk[0, :])
 
         return D_z_k
 

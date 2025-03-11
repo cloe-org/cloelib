@@ -1,4 +1,5 @@
 # cloelib imports
+from cloelib.cosmology.cosmology import Background
 from cloelib.observables.spectro import SpectroPower
 from cloelib.auxiliary.math_utils import legendre, simps_jax # I made it auto-diff :)
 
@@ -18,9 +19,13 @@ from scipy.special import roots_legendre # type: ignore
 """
 
 class LegendreMultipoles: #this class depends on SpectroPower
-    def __init__(self, spectro_power: SpectroPower, nbar: float):
+    def __init__(self, spectro_power: SpectroPower,
+                 background_fiducial: Background,
+                 nbar: float):
 
         self.spectro_power = spectro_power
+
+        self.background_fiducial = background_fiducial
 
         mu_min = 0.0
         mu_max = 1.0
@@ -46,7 +51,7 @@ class LegendreMultipoles: #this class depends on SpectroPower
         # this will always work, because it is dependent on Background protocol that will
         # always have angular_diameter_distance
         return (self.spectro_power.background.angular_diameter_distance(zs)
-                / self.spectro_power.background_fiducial.angular_diameter_distance(zs))
+                / self.background_fiducial.angular_diameter_distance(zs))
 
     def _q_AP_lo(self, zs: np.ndarray) -> np.ndarray:
         r"""AP distortion parameter parallel to the line of sight
@@ -61,7 +66,7 @@ class LegendreMultipoles: #this class depends on SpectroPower
         q_tr: np.ndarray
            Parallel AP parameter
         """
-        return (self.spectro_power.background_fiducial.hubble_parameter(zs)
+        return (self.background_fiducial.hubble_parameter(zs)
                 /self.spectro_power.background.hubble_parameter(zs))
 
     def _ensure_array(self, param):
@@ -137,7 +142,7 @@ class LegendreMultipoles: #this class depends on SpectroPower
         """
         sigma_z = parameters['sigmaz']
         sigma_r = 299792.458 * sigma_z / \
-            self.spectro_power.background_fiducial.hubble_parameter(parameters['z'])
+            self.background_fiducial.hubble_parameter(parameters['z'])
         return np.exp(-k**2 * mu**2 * sigma_r**2)
 
     def _Pk2d_noise(self, k: np.ndarray, mu: np.ndarray,

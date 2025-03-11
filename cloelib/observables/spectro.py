@@ -1,5 +1,5 @@
 # cloelib imports
-from cloelib.cosmology.cosmology import Background 
+from cloelib.cosmology.cosmology import Background
 
 # General imports
 from typing import Protocol, Union, TypeVar
@@ -16,14 +16,7 @@ class SpectroPower(Protocol):
         """
         ...
 
-    @property
-    def background_fiducial(self) -> Background: #dependency on Background
-        """
-        Stores background fiducial obj
-        """
-        ...
-
-    def Pk2d_rsd(self, k: T, mu: T, **args) -> T: 
+    def Pk2d_rsd(self, k: T, mu: T, **args) -> T:
         #for a class to be compatible with this protocol
         # it must always return _Pk2d_rsd
         r"""2D power spectrum from couplings of density and velocity fields
@@ -42,7 +35,7 @@ class SpectroPower(Protocol):
         """
         ...
 
-    def Pk2d_X_rsd(self, k: T, mu: T, **args) -> T: 
+    def Pk2d_X_rsd(self, k: T, mu: T, **args) -> T:
         #for a class to be compatible with this protocol
         # it must always return _Pk2d_rsd
         r"""2D power spectrum for the specific diagram X

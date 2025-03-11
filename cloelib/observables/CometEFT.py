@@ -21,12 +21,10 @@ except ImportError:
 
 """
 
-class CometEFT:
-    def __init__(self, background: Background, background_fiducial: Background,
-                 RSD_parameters: dict):
+class CometEFT_SpectroPower:
+    def __init__(self, background: Background, RSD_parameters: dict):
 
         self.background = background
-        self.background_fiducial = background_fiducial
 
         self.parameters = {}
         self.parameters['wc'] = self.background.Omega_cdm0 * self.background.h**2

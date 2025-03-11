@@ -1,0 +1,89 @@
+# cloelib imports
+from cloelib.cosmology.cosmology import Background
+
+# General imports
+from typing import Protocol, Union, TypeVar, Optional
+import numpy as np  # type: ignore
+from copy import deepcopy
+
+# Cosmology imports
+try:
+    from comet import comet # type: ignore
+    comet_inst = comet(model='VDG_infty', use_Mpc=True, bias_basis='AssBauGre')
+except ImportError:
+    raise ImportError("Comet could not be imported or initialised.")
+
+"""
+
+## Notes:
+
+- Interface of Legendre Multiples with Comet
+
+"""
+
+class CometVDG:
+    def __init__(self, background: Background, background_fiducial: Background,
+                 RSD_parameters: dict):
+
+        self.background = background
+        self.background_fiducial = background_fiducial
+
+        self.parameters = {}
+        self.parameters['wc'] = self.background.Omega_cdm0 * self.background.h**2
+        self.parameters['wb'] = self.background.Omega_b0 * self.background.h**2
+        self.parameters['ns'] = self.background.ns
+        self.parameters['h'] = self.background.h
+        self.parameters['As'] = self.background.As * 1e9
+        self.parameters['w0'] = self.background.w0
+        self.parameters['wa'] = self.background.wa
+        self.parameters.update(RSD_parameters)
+
+    def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
+        r"""2D power spectrum from couplings of density and velocity fields
+        Parameters
+        ----------
+        k: np.ndarray
+            Wavenumber
+        mu: np.ndarray
+            Angle (cosinus) to the line of sight
+        parameters: dict
+            Ensemble of cosmological and nuisance parameters
+        Returns
+        -------
+        Pk2d_rsd: np.ndarray
+            2D power spectrum from couplings of density and velocity fields
+        """
+        Pk2d = comet_inst.Pk2d(k=k, mu=mu, params=self.parameters,
+                               de_model='w0wa')
+        f = comet_inst.params['f']
+        sigmav = comet_inst.params['sv']
+        num = (f * k * mu)**2
+        den = 1.0 + num * self.parameters['avir']**2
+        W_damping = 1.0 / np.sqrt(den) * np.exp(
+            -num * sigmav**2 / den)
+        return Pk2d * W_damping
+
+    def Pk2d_X_rsd(self, k: np.ndarray, mu: np.ndarray, X: str) -> np.ndarray:
+        r"""2D power spectrum for the specific diagram X
+        Parameters
+        ----------
+        k: np.ndarray
+            Wavenumber
+        mu: np.ndarray
+            Angle (cosinus) to the line of sight
+        X: str
+            Identifier of loop diagram
+        Returns
+        -------
+        PX2d_rsd: np.ndarray
+            2D power spectrum of term X
+        """
+        Pk2d = comet_inst.PX2d(k=k, mu=mu, params=self.parameters, X=X,
+                               de_model='w0wa')
+        f = comet_inst.params['f']
+        sigmav = comet_inst.params['sv']
+        num = (f * k * mu)**2
+        den = 1.0 + num * self.parameters['avir']**2
+        W_damping = 1.0 / np.sqrt(den) * np.exp(
+            -num * sigmav**2 / den)
+        return Pk2d * W_damping

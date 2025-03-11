@@ -1,6 +1,6 @@
 # cloelib imports
 from cloelib.observables.spectro import SpectroPower
-from cloelib.auxiliary.math_utils import legendre, simps_jax # I made it auto-diff :) 
+from cloelib.auxiliary.math_utils import legendre, simps_jax # I made it auto-diff :)
 
 # General imports
 from typing import Protocol, Union, TypeVar, Optional, Generic
@@ -18,17 +18,16 @@ from scipy.special import roots_legendre # type: ignore
 """
 
 class LegendreMultipoles: #this class depends on SpectroPower
-    def __init__(self, spectro_power: SpectroPower,
-                 nbar: float, sigmaz: float, fout: float, redshift: float):
+    def __init__(self, spectro_power: SpectroPower, nbar: float):
+
         self.spectro_power = spectro_power
+
         mu_min = 0.0
         mu_max = 1.0
         mu_samp = 101
         self.mu_grid = np.linspace(mu_min, mu_max, mu_samp)
+
         self.nbar = nbar
-        self.sigmaz = sigmaz
-        self.fout = fout
-        self.redshift = redshift
 
     def _q_AP_tr(self, zs: np.ndarray) -> np.ndarray:
         r"""AP distortion parameter transversal to the line of sight
@@ -119,27 +118,6 @@ class LegendreMultipoles: #this class depends on SpectroPower
         q_tr = self._q_AP_tr(zs) if use_AP else 1.0
         q_lo = self._q_AP_lo(zs) if use_AP else 1.0
         return mu / q_lo / np.sqrt(mu**2 / q_lo**2 + (1.0-mu**2) / q_tr**2)
-
-    def Pk2d_noise(self, k: np.ndarray, mu: np.ndarray,
-                    parameters: dict) -> np.ndarray:
-        r"""2D power spectrum from expansion of stochastic field
-        Parameters
-        ----------
-        k: np.ndarray
-            Wavenumber
-        mu: np.ndarray
-            Angle (cosinus) to the line of sight
-        parameters: dict
-            Ensemble of cosmological and nuisance parameters
-        Returns
-        -------
-        Pk2d_noise: np.ndarray
-            2D power spectrum from expansion of stochastic field
-        """
-        noise = parameters['NP0'] + k**2 * (parameters['NP20'] +
-                                            parameters['NP22'] *
-                                            legendre(2, mu))
-        return noise / self.nbar
 
     def _damping_function(self, k: np.ndarray, mu: np.ndarray,
                           parameters: dict) -> np.ndarray:

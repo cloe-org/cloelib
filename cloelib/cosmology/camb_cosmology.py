@@ -196,7 +196,7 @@ class CAMBLinearPerturbations:
         )
         self.k = k_values
         self.z = z_values
-        self.Pk_linear = pk_values
+        self.Pk = pk_values
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -224,11 +224,11 @@ class CAMBLinearPerturbations:
         np.ndarray
             The growth factor as a function of redshift and wavenumber.
         """
-        if hasattr(self, 'Pk_linear') and self.Pk_linear is not None:
-            D_z_k = np.sqrt(self.Pk_linear / self.Pk_linear[0, :])
+        if hasattr(self, 'Pk') and self.Pk is not None:
+            D_z_k = np.sqrt(self.Pk / self.Pk[0, :])
         else:
             self.matter_power_spectrum()
-            D_z_k = np.sqrt(self.Pk_linear / self.Pk_linear[0, :])
+            D_z_k = np.sqrt(self.Pk / self.Pk[0, :])
         return D_z_k
 
 
@@ -250,7 +250,7 @@ class CAMBNonLinearPerturbations:
         """
 
         self.background = background
-        self.kmax = 100
+        self.kmax = 500
         self.z = redshifts
 
         # Configure CAMB parameters for nonlinear calculations
@@ -282,7 +282,7 @@ class CAMBNonLinearPerturbations:
         )
         self.k = k_values
         self.z = z_values
-        self.Pk_nonlinear = pk_values
+        self.Pk = pk_values
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -310,9 +310,9 @@ class CAMBNonLinearPerturbations:
         np.ndarray
             The growth factor as a function of redshift and wavenumber.
         """
-        if hasattr(self, 'Pk_nonlinear') and self.Pk_nonlinear is not None:
-            D_z_k = np.sqrt(self.Pk_nonlinear / self.Pk_nonlinear[0, :])
+        if hasattr(self, 'Pk') and self.Pk is not None:
+            D_z_k = np.sqrt(self.Pk / self.Pk[0, :])
         else:
             self.matter_power_spectrum()
-            D_z_k = np.sqrt(self.Pk_nonlinear / self.Pk_nonlinear[0, :])
+            D_z_k = np.sqrt(self.Pk / self.Pk[0, :])
         return D_z_k

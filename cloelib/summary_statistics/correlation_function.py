@@ -11,83 +11,56 @@ import jax
 import jax.numpy as np
 from jax import jit, grad, lax
 
-def legendre_polynomial(n, x):
-    """Computes P_n(x) using JAX-friendly recurrence."""
-    def body_fun(i, carry):
-        P_nm2, P_nm1 = carry
-        P_n = ((2 * i - 1) * x * P_nm1 - (i - 1) * P_nm2) / i
-        return (P_nm1, P_n)
 
-    P_nm2 = np.ones_like(x)  # P_0(x)
-    P_nm1 = x  # P_1(x)
+def d_0_0_ell(beta, ell):
+    base_case_0 = np.ones_like(beta)
+    base_case_1 = np.cos(beta)
+    
+    def body_fn(l, vals):
+        prev, prev2 = vals
+        new_val = ((2 * l - 1) / (l) * base_case_1 * prev - ((l - 1) / (l)) * prev2)
 
-    # If n == 0, return P_0(x), else compute recursively
-    return lax.cond(
-        n == 0,
-        lambda: P_nm2,
-        lambda: lax.fori_loop(2, n + 1, body_fun, (P_nm2, P_nm1))[1]
-    )
-
-def jacobi_polynomial(n, alpha, beta, x):
-    """Computes P_n^(alpha, beta)(x) using JAX-friendly recurrence."""
-    def body_fun(i, carry):
-        P_nm2, P_nm1 = carry
-        A_k = (2 * i + alpha + beta - 1) * (2 * i + alpha + beta - 2)
-        B_k = (2 * i + alpha + beta - 2) * (2 * i + alpha + beta - 1) * (2 * i + alpha + beta)
-        C_k = (2 * i + alpha + beta) * (alpha + i - 1) * (beta + i - 1)
-
-        P_n = ((B_k * (x - (alpha**2 - beta**2) / A_k) * P_nm1) - (C_k * P_nm2)) / (A_k * i)
-        return (P_nm1, P_n)
-
-    P_nm2 = np.ones_like(x)  # P_0^(alpha, beta)(x)
-    P_nm1 = 0.5 * ((alpha - beta) + (alpha + beta + 2) * x)  # P_1^(alpha, beta)(x)
-
-    return lax.cond(
-        n == 0,
-        lambda: P_nm2,
-        lambda: lax.fori_loop(2, n + 1, body_fun, (P_nm2, P_nm1))[1]
-    )
-
-
-
+        return new_val, prev
+    
+    return np.where(ell == 0, base_case_0, 
+                     np.where(ell == 1, base_case_1, 
+                               jax.lax.fori_loop(2, ell + 1, body_fn, (base_case_1, base_case_0))[0]))
 
 @jit
-def d_0_0(ell, beta):
-    """Computes d_{0,0}^ell(beta) using Legendre polynomials."""
-    return legendre_polynomial(ell, np.cos(beta))
+def d_2_2_ell(beta, ell):
+    def body_fn(l, vals):
+        prev, prev2 = vals
+        new_val = (l * (2 * l - 1) / (l**2 - 4)) * ((d_0_0_ell(beta, 1) - (4 / (l * (l - 1)))) * prev - (((l - 1)**2 - 4) / ((l - 1) * (2 * l - 1))) * prev2)
+        return new_val, prev
+    
+    base_case_2 = (1/4) * (1 + np.cos(beta))**2
+    base_case_3 = np.cos(beta/2)**4 * (3 * np.cos(beta) - 1)
+    return np.where(ell == 2, base_case_2, 
+                     np.where(ell == 3, base_case_3, 
+                               jax.lax.fori_loop(4, ell + 1, body_fn, (base_case_3, base_case_2))[0]))
 
 @jit
-def d_2_2(ell, beta):
-    """Computes d_{2,2}^ell(beta) using precomputed values when possible."""
-    ell = np.asarray(ell)  # Ensure JAX-traced value
-    exact_coeff = np.sqrt((ell - 1) * ell * (ell + 1) * (ell + 2) / 4)
-    approx_coeff = ell**2 / 2  # Large-ell approximation
-    coeff = np.where(ell > 200, approx_coeff, exact_coeff)
-
-    # Use precomputed values for large ell, otherwise use JAX recurrence
-    P_jacobi = jacobi_polynomial(ell - 2, 2, 2, np.cos(beta)),
-   
-
-    return (-1) ** ell * coeff * (np.sin(beta / 2) ** 2) * P_jacobi
+def d_2_0_ell(beta, ell):
+    def body_fn(l, vals):
+        prev, prev2 = vals
+        new_val = ((2 * l - 1) / np.sqrt(l**2 - 4)) * (d_0_0_ell(beta, 1) * prev - (np.sqrt((l - 1)**2 - 4) / (2 * l - 1)) * prev2)
+ 
 
 
-@jit
-def d_2_0(ell, beta):
-    """Computes d_{2,0}^ell(beta) using precomputed values when possible."""
-    ell = np.asarray(ell)  # Ensure JAX-traced value
-    exact_coeff = np.sqrt((ell - 1) * ell * (ell + 1) * (ell + 2) / 4)
-    approx_coeff = (ell ** 2) / 2  # Large-ell approximation
-    coeff = np.where(ell > 200, approx_coeff, exact_coeff)
-
-    # Use precomputed values for large ell, otherwise use JAX recurrence
-    P_jacobi = jacobi_polynomial(ell - 2, 1, 1, np.cos(beta)),
+        return new_val, prev
+    
+    base_case_2 = np.sqrt(3/8) * np.sin(beta)**2
+    base_case_3 = (np.sqrt(30)/4) * np.sin(beta)**2 * np.cos(beta)
+    return np.where(ell == 2, base_case_2, 
+                     np.where(ell == 3, base_case_3, 
+                               jax.lax.fori_loop(4, ell + 1, body_fn, (base_case_3, base_case_2))[0]))
 
 
-    return coeff * np.sin(beta) ** 2 * P_jacobi
 # Vectorize over `ell` and beta
-d_0_0_vmap = jax.vmap(jax.vmap(d_0_0, in_axes=(0, None)) , in_axes=(None, 0))
-d_2_2_vmap = jax.vmap(jax.vmap(d_2_2, in_axes=(0, None)) , in_axes=(None, 0))
-d_2_0_vmap = jax.vmap(jax.vmap(d_2_0, in_axes=(0, None)) , in_axes=(None, 0))
+
+d_0_0_vmap = jax.vmap(jax.vmap(d_0_0_ell, (None, 0)), (0, None))
+d_2_2_vmap = jax.vmap(jax.vmap(d_2_2_ell, (None, 0)), (0, None))
+d_2_0_vmap = jax.vmap(jax.vmap(d_2_0_ell, (None, 0)), (0, None))
 
 class CorrelationFunction:
     def __init__(self, angular_two_point):
@@ -117,23 +90,30 @@ class CorrelationFunction:
             (jax.numpy.ndarray, jax.numpy.ndarray): Computed xi_+(theta) and xi_-(theta).
         """
         # Compute Cl using the AngularTwoPoint instance
-        Cls = self.angular_two_point.get_Cl(ells, nl=0, ks=ks)
+        Cl_EE = self.angular_two_point.get_Cl(ells, nl=0, ks=ks)
 
-        Cl_EE = Cls
         Cl_BB = np.zeros_like(Cl_EE)  # No B-modes included
+        Cl_EB = np.zeros_like(Cl_EE)
+        Cl_BE = np.zeros_like(Cl_EE)
 
-        Ntomo = Cls.shape[1]  # Number of tomographic bins
+        Cl_plus = (Cl_EE+Cl_BB) + (Cl_EB+Cl_BE)
+        Cl_minus = (Cl_EE+Cl_BB) + (Cl_EB+Cl_BE)
+
+
+        Ntomo1 = Cl_EE.shape[1]  # Number of tomographic bins
+        Ntomo2 = Cl_EE.shape[2]  # Number of tomographic bins
+
         Ntheta = len(theta)
 
         # Compute Wigner-d matrix elements
         if self.s1 == 0 and self.s2 == 0:
-            d_l_theta_plus = d_0_0_vmap(ells, theta)
+            d_l_theta_plus = d_0_0_vmap(theta, ells)
             d_l_theta_minus = d_l_theta_plus
         elif self.s1 == 2 and self.s2 == 0:
-            d_l_theta_plus = d_2_0_vmap(ells, theta)
+            d_l_theta_plus = d_2_0_vmap(theta, ells)
             d_l_theta_minus = d_l_theta_plus
         elif self.s1 == 2 and self.s2 == 2:
-            d_l_theta_plus = d_2_2_vmap(ells, theta)
+            d_l_theta_plus = d_2_2_vmap(theta, ells)
             sign = np.where(ells % 2 == 0, 1.0, -1.0)
             d_l_theta_minus = d_l_theta_plus * sign
         else:
@@ -143,27 +123,23 @@ class CorrelationFunction:
         prefactor = (2 * ells + 1) / (4 * np.pi)
 
         # Initialize xi arrays
-        xi_plus = np.zeros((Ntheta, Ntomo, Ntomo))
-        xi_minus = np.zeros((Ntheta, Ntomo, Ntomo))
+        xi_plus = np.zeros((Ntheta, Ntomo1, Ntomo2))
+        if self.s2 == 2:
+            xi_minus = np.zeros((Ntheta, Ntomo1, Ntomo2))
 
         # Iterate over tomographic bins
-        for i in range(Ntomo):
-            for j in range(Ntomo):
-                Cl_ab_plus = Cl_EE[:, i, j]  # Shape: (Nells,)
-                Cl_ab_minus = Cl_ab_plus  # Ignore B-modes for now
-
+        for i in range(Ntomo1):
+            for j in range(Ntomo2):
+                Cl_ab_plus = Cl_plus[:, i, j]  # Shape: (Nells,)
+                Cl_ab_minus = Cl_minus[:, i, j] 
                 for k in range(Ntheta):
+                    xi_plus = xi_plus.at[k, i, j].set(np.sum(prefactor*Cl_ab_plus*d_l_theta_plus[k]))
+                 
+                    if self.s2 ==2:
+                        xi_minus = xi_minus.at[k, i, j].set((-1)**self.s2*np.sum(prefactor*Cl_ab_minus*d_l_theta_minus[k]))
 
-                    # Compute log-sum-exp terms for numerical stability
-                    log_terms_plus = np.log(prefactor) + np.log(np.abs(Cl_ab_plus)) + np.log(np.abs(d_l_theta_plus[k]))
-                    log_terms_minus = np.log(prefactor) + np.log(np.abs(Cl_ab_minus)) + np.log(np.abs(d_l_theta_minus[k]))
-
-                    # Compute max values for log-sum-exp trick
-                    max_log_plus = np.max(log_terms_plus, axis=0)
-                    max_log_minus = np.max(log_terms_minus, axis=0)
-
-                    # Numerically stable sum over ells
-                    xi_plus = xi_plus.at[k, i, j].set(np.exp(max_log_plus) * np.sum(np.exp(log_terms_plus - max_log_plus), axis=0))
-                    xi_minus = xi_minus.at[k, i, j].set(np.exp(max_log_minus) * np.sum(np.exp(log_terms_minus - max_log_minus), axis=0))
-
-        return xi_plus, xi_minus
+    
+        if self.s2 ==2:
+            return xi_plus, xi_minus
+        else:
+            return xi_plus

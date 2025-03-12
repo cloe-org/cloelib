@@ -3,15 +3,15 @@ import jax
 from jax.scipy.special import gammaln
 
 from cloelib.observables.photo import ShearTracer, PositionsTracer
-from scipy.special import eval_jacobi
-from scipy.interpolate import interp2d
-from scipy.interpolate import RectBivariateSpline
 
 import jax
 import jax.numpy as np
 from jax import jit, grad, lax
 
 
+""" Wigner Ds in the following are based on https://arxiv.org/pdf/1702.05301 """
+
+@jit
 def d_0_0_ell(beta, ell):
     base_case_0 = np.ones_like(beta)
     base_case_1 = np.cos(beta)

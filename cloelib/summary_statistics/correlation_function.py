@@ -81,7 +81,10 @@ class CorrelationFunction:
 
     def get_xi(self, ells, ks, theta):
         """
-        Compute the angular correlation function xi(theta) using a numerically stable summation.
+        Compute the angular correlation function xi(theta) using the Wigner d-matrices
+
+        TODO: Also implement FFTLog which is likely faster
+        WARNING: Currently assumes B-modes are zero, as they are not passed on from AngulerTwoPoint
 
         Args:
             ells (jax.numpy.ndarray): Multipole moments.
@@ -89,7 +92,10 @@ class CorrelationFunction:
             theta (jax.numpy.ndarray): Angles in radians.
 
         Returns:
-            (jax.numpy.ndarray, jax.numpy.ndarray): Computed xi_+(theta) and xi_-(theta).
+            if at least one tracer is spin 0 (clustering or GGL): 
+                jax.numpy.ndarray: Computed xi(theta)
+            if both tracers are spin 2 (cosmic shear):
+                (jax.numpy.ndarray, jax.numpy.ndarray): Computed xi_+(theta) and xi_-(theta).
         """
         # Compute Cl using the AngularTwoPoint instance
         Cl_EE = self.angular_two_point.get_Cl(ells, nl=0, ks=ks)
@@ -121,7 +127,7 @@ class CorrelationFunction:
         else:
             raise ValueError("Spin values not as expected")
 
-        # Compute the prefactor (2ℓ + 1) / (4π)
+        # Compute the prefactor (2\ell + 1) / (4\pi)
         prefactor = (2 * ells + 1) / (4 * np.pi)
 
         # Initialize xi arrays

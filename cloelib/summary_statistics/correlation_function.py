@@ -66,6 +66,8 @@ class CorrelationFunction:
     def __init__(self, angular_two_point):
         """
         Initializes CorrelationFunction with an AngularTwoPoint instance.
+        Also automatically sets the spins s1 and s2 dependent on the type of tracer
+        in AngularTwoPoint
 
         Args:
             angular_two_point (AngularTwoPoint): Instance providing Cl values.
@@ -92,7 +94,7 @@ class CorrelationFunction:
         # Compute Cl using the AngularTwoPoint instance
         Cl_EE = self.angular_two_point.get_Cl(ells, nl=0, ks=ks)
 
-        Cl_BB = np.zeros_like(Cl_EE)  # No B-modes included
+        Cl_BB = np.zeros_like(Cl_EE)  # No B-modes included, set to zero for now
         Cl_EB = np.zeros_like(Cl_EE)
         Cl_BE = np.zeros_like(Cl_EE)
 
@@ -114,7 +116,7 @@ class CorrelationFunction:
             d_l_theta_minus = d_l_theta_plus
         elif self.s1 == 2 and self.s2 == 2:
             d_l_theta_plus = d_2_2_vmap(theta, ells)
-            sign = np.where(ells % 2 == 0, 1.0, -1.0)
+            sign = np.where(ells % 2 == 0, 1.0, -1.0) # Uses d_(m, -m)^ell = d_(m, -m)^ell * (-1)**ell
             d_l_theta_minus = d_l_theta_plus * sign
         else:
             raise ValueError("Spin values not as expected")
@@ -127,19 +129,13 @@ class CorrelationFunction:
         if self.s2 == 2:
             xi_minus = np.zeros((Ntheta, Ntomo1, Ntomo2))
 
-        # Iterate over tomographic bins
-        for i in range(Ntomo1):
-            for j in range(Ntomo2):
-                Cl_ab_plus = Cl_plus[:, i, j]  # Shape: (Nells,)
-                Cl_ab_minus = Cl_minus[:, i, j] 
-                for k in range(Ntheta):
-                    xi_plus = xi_plus.at[k, i, j].set(np.sum(prefactor*Cl_ab_plus*d_l_theta_plus[k]))
-                 
-                    if self.s2 ==2:
-                        xi_minus = xi_minus.at[k, i, j].set((-1)**self.s2*np.sum(prefactor*Cl_ab_minus*d_l_theta_minus[k]))
+        # Vectorized computation over (theta, tomo1, tomo2)
+        # Compute xi_plus 
+        xi_plus = np.einsum('l,lij,θl->θij', prefactor, Cl_plus, d_l_theta_plus)
 
-    
-        if self.s2 ==2:
+        # Compute xi_minus if we have a spin2 tracer
+        if self.s2 == 2:
+            xi_minus = xi_minus = (-1) ** self.s2 * np.einsum('l,lij,θl->θij', prefactor, Cl_minus, d_l_theta_minus)
             return xi_plus, xi_minus
         else:
             return xi_plus

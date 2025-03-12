@@ -26,40 +26,145 @@ def d_0_0_ell(beta, ell):
                      np.where(ell == 1, base_case_1, 
                                jax.lax.fori_loop(2, ell + 1, body_fn, (base_case_1, base_case_0))[0]))
 
+
+
 @jit
 def d_2_2_ell(beta, ell):
-    def body_fn(l, vals):
-        prev, prev2 = vals
-        new_val = (l * (2 * l - 1) / (l**2 - 4)) * ((d_0_0_ell(beta, 1) - (4 / (l * (l - 1)))) * prev - (((l - 1)**2 - 4) / ((l - 1) * (2 * l - 1))) * prev2)
-        return new_val, prev
-    
+    """
+    Computes d_22^ell(beta) using recurrence for small ell
+    and an approximation for large ell, in a JIT-compatible way.
+    """
+    # Base cases
     base_case_2 = (1/4) * (1 + np.cos(beta))**2
-    base_case_3 = np.cos(beta/2)**4 * (3 * np.cos(beta) - 1)
-    return np.where(ell == 2, base_case_2, 
-                     np.where(ell == 3, base_case_3, 
-                               jax.lax.fori_loop(4, ell + 1, body_fn, (base_case_3, base_case_2))[0]))
+    base_case_3 = np.cos(beta / 2) ** 4 * (3 * np.cos(beta) - 2)
+
+    # Recurrence relation for small ell
+    def recurrence_fn(l, vals):
+        prev, prev2 = vals
+        new_val = (l * (2 * l - 1) / (l**2 - 4)) * (
+            (d_0_0_ell(beta, 1) - (4 / (l * (l - 1)))) * prev
+            - (((l - 1)**2 - 4) / ((l - 1) * (2 * l - 1))) * prev2
+        )
+        return new_val, prev
+
+    # Approximation for large ell (fixed to explicitly pass `beta`)
+    def approximation_fn(l, vals):
+        prev, prev2 = vals
+        new_val = 2 * d_0_0_ell(beta, 1) * prev - prev2
+        return new_val, prev
+
+    # Compute using a JIT-compatible conditional switch
+    def compute_d_2_2(ell):
+        return jax.lax.cond(
+            ell < 30000,
+            lambda: jax.lax.fori_loop(4, ell + 1, recurrence_fn, (base_case_3, base_case_2))[0],
+            lambda: jax.lax.fori_loop(50, ell + 1, approximation_fn, (base_case_3, base_case_2))[0]
+        )
+
+    return jax.lax.cond(
+        ell == 2, lambda: base_case_2,
+        lambda: jax.lax.cond(
+            ell == 3, lambda: base_case_3,
+            lambda: compute_d_2_2(ell)
+        )
+    )
+
+
+
+@jit
+def d_2_m2_ell(beta, ell):
+    """
+    Computes d_2-2^ell(beta) using recurrence for small ell
+    and an approximation for large ell, in a JIT-compatible way.
+    """
+    # Base cases
+    base_case_2 = (1/4) * (1 - np.cos(beta))**2
+    base_case_3 = np.sin(beta / 2) ** 4 * (3 * np.cos(beta) + 2)
+
+    # Recurrence relation for small ell
+    def recurrence_fn(l, vals):
+        prev, prev2 = vals
+        new_val = (l * (2 * l - 1) / (l**2 - 4)) * (
+            (d_0_0_ell(beta, 1) + (4 / (l * (l - 1)))) * prev
+            - (((l - 1)**2 - 4) / ((l - 1) * (2 * l - 1))) * prev2
+        )
+        return new_val, prev
+
+    # Approximation for large ell (fixed to explicitly pass `beta`)
+    def approximation_fn(l, vals):
+        prev, prev2 = vals
+        new_val = 2 * d_0_0_ell(beta, 1) * prev - prev2
+        return new_val, prev
+
+    # Compute using a JIT-compatible conditional switch
+    def compute_d_2_2(ell):
+        return jax.lax.cond(
+            ell < 30000,
+            lambda: jax.lax.fori_loop(4, ell + 1, recurrence_fn, (base_case_3, base_case_2))[0],
+            lambda: jax.lax.fori_loop(50, ell + 1, approximation_fn, (base_case_3, base_case_2))[0]
+        )
+
+    return jax.lax.cond(
+        ell == 2, lambda: base_case_2,
+        lambda: jax.lax.cond(
+            ell == 3, lambda: base_case_3,
+            lambda: compute_d_2_2(ell)
+        )
+    )
+
+
+
+
 
 @jit
 def d_2_0_ell(beta, ell):
-    def body_fn(l, vals):
-        prev, prev2 = vals
-        new_val = ((2 * l - 1) / np.sqrt(l**2 - 4)) * (d_0_0_ell(beta, 1) * prev - (np.sqrt((l - 1)**2 - 4) / (2 * l - 1)) * prev2)
- 
-
-
-        return new_val, prev
-    
+    """
+    Computes d_20^ell(beta) using recurrence for small ell
+    and an approximation for large ell, in a JIT-compatible way.
+    """
+    # Base cases
     base_case_2 = np.sqrt(3/8) * np.sin(beta)**2
     base_case_3 = (np.sqrt(30)/4) * np.sin(beta)**2 * np.cos(beta)
-    return np.where(ell == 2, base_case_2, 
-                     np.where(ell == 3, base_case_3, 
-                               jax.lax.fori_loop(4, ell + 1, body_fn, (base_case_3, base_case_2))[0]))
+
+    # Recurrence relation for small ell
+    def recurrence_fn(l, vals):
+        prev, prev2 = vals
+        sqrt_l2_4 = np.sqrt(l**2 - 4)
+        sqrt_lm1_2_4 = np.sqrt((l - 1)**2 - 4)
+        new_val = ((2 * l - 1) / sqrt_l2_4) * (
+            d_0_0_ell(beta, 1) * prev - (sqrt_lm1_2_4 / (2 * l - 1)) * prev2
+        )
+        return new_val, prev
+
+    # Approximation for large ell (fixed to explicitly pass `beta`)
+    def approximation_fn(l, vals):
+        prev, prev2 = vals
+        new_val = 2 * d_0_0_ell(beta, 1) * prev - prev2
+        return new_val, prev
+
+    # Compute using a JIT-compatible conditional switch
+    def compute_d_2_0(ell):
+        return jax.lax.cond(
+            ell < 30000,
+            lambda: jax.lax.fori_loop(4, ell + 1, recurrence_fn, (base_case_3, base_case_2))[0],
+            lambda: jax.lax.fori_loop(50, ell + 1, approximation_fn, (base_case_3, base_case_2))[0]
+        )
+
+    return jax.lax.cond(
+        ell == 2, lambda: base_case_2,
+        lambda: jax.lax.cond(
+            ell == 3, lambda: base_case_3,
+            lambda: compute_d_2_0(ell)
+        )
+    )
 
 
 # Vectorize over `ell` and beta
 
 d_0_0_vmap = jax.vmap(jax.vmap(d_0_0_ell, (None, 0)), (0, None))
 d_2_2_vmap = jax.vmap(jax.vmap(d_2_2_ell, (None, 0)), (0, None))
+d_2_m2_vmap = jax.vmap(jax.vmap(d_2_m2_ell, (None, 0)), (0, None))
+
 d_2_0_vmap = jax.vmap(jax.vmap(d_2_0_ell, (None, 0)), (0, None))
 
 class CorrelationFunction:
@@ -105,7 +210,7 @@ class CorrelationFunction:
         Cl_BE = np.zeros_like(Cl_EE)
 
         Cl_plus = (Cl_EE+Cl_BB) + (Cl_EB+Cl_BE)
-        Cl_minus = (Cl_EE+Cl_BB) + (Cl_EB+Cl_BE)
+        Cl_minus = (Cl_EE+Cl_BB) - (Cl_EB+Cl_BE)
 
 
         Ntomo1 = Cl_EE.shape[1]  # Number of tomographic bins
@@ -122,8 +227,7 @@ class CorrelationFunction:
             d_l_theta_minus = d_l_theta_plus
         elif self.s1 == 2 and self.s2 == 2:
             d_l_theta_plus = d_2_2_vmap(theta, ells)
-            sign = np.where(ells % 2 == 0, 1.0, -1.0) # Uses d_(m, -m)^ell = d_(m, -m)^ell * (-1)**ell
-            d_l_theta_minus = d_l_theta_plus * sign
+            d_l_theta_minus = d_2_m2_vmap(theta, ells)
         else:
             raise ValueError("Spin values not as expected")
 

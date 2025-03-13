@@ -1,28 +1,41 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.observables.spectro import SpectroPower
-from cloelib.auxiliary.math_utils import legendre, simps_jax # I made it auto-diff :)
+from cloelib.auxiliary.math_utils import legendre, simps_jax
 
 # General imports
 from typing import Protocol, Union, TypeVar, Optional, Generic
-import numpy as np  # type: ignore
-import jax.numpy as jnp # type: ignore
-from scipy import integrate # type: ignore
-from scipy.special import roots_legendre # type: ignore
+import numpy as np
+import jax.numpy as jnp
+from scipy import integrate
+from scipy.special import roots_legendre
 
-"""
 
-## Notes:
+class LegendreMultipoles:
+    r"""Class to compute spectroscopic Legendre multipoles of the galaxy
+    power spectrum using an external non-linear code
 
-- Class to calculate the legendre multiples given a SpectroPower instance
+    Parameters
+    ----------
+    spectro_power: SpectroPower
+        Class returning the anisotropic power spectrum (only density and
+        velocity field couplings; noise and systematics are included directly
+        here)
+    background_fiducial: Background
+        Background class for computing fiducial background distances
+    parameters: dict
+        Dictionary containing shot noise and parameters related to
+        observational systematics
+    nbar: float
+        Mean number denisty of the sample
+    """
 
-"""
-
-class LegendreMultipoles: #this class depends on SpectroPower
     def __init__(self, spectro_power: SpectroPower,
                  background_fiducial: Background,
                  parameters: dict,
                  nbar: float):
+        r"""Class constructor
+        """
 
         self.spectro_power = spectro_power
         self.redshift = spectro_power.redshift
@@ -51,9 +64,6 @@ class LegendreMultipoles: #this class depends on SpectroPower
         q_tr: np.ndarray
            Transversal AP parameter
         """
-        # as long as SpectroPower has the attribute background and background_fiducial
-        # this will always work, because it is dependent on Background protocol that will
-        # always have angular_diameter_distance
         return (self.spectro_power.background.angular_diameter_distance(zs)
                 / self.background_fiducial.angular_diameter_distance(zs))
 
@@ -177,10 +187,6 @@ class LegendreMultipoles: #this class depends on SpectroPower
         Pk2d_tot: np.ndarray
             Total 2D power spectrum (including RSD, systematics, and noise)
         """
-        # here is where you see how to call the SpectroPower method
-        # if the instance you are passing follows the SpectroPower protocol
-        # this will work
-
         return (self.spectro_power.Pk2d_rsd(k, mu) *
                 self._damping_function(k, mu) *
                 (1.0 - self.parameters['fout'])**2 +
@@ -194,8 +200,6 @@ class LegendreMultipoles: #this class depends on SpectroPower
         ----------
         k: np.ndarray
             Wavenumber
-        parameters: dict
-            Ensemble of cosmological and nuisance parameters
         ells: np.ndarray
             Legendre multipole order
         use_AP: bool
@@ -224,6 +228,7 @@ class LegendreMultipoles: #this class depends on SpectroPower
             multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
         return multipoles
 
+    #This need to be restored; not working at the moment
     def convolved_power_multipoles(self, parameters: dict, mixing_matrix=dict):
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix
         Parameters

@@ -9,7 +9,7 @@ from copy import deepcopy
 # Cosmology imports
 try:
     from comet import comet # type: ignore
-    comet_inst = comet(model='EFT', use_Mpc=True, bias_basis='AssBauGre')
+    comet_inst = comet(model='VDG_infty', use_Mpc=True, bias_basis='AssBauGre')
 except ImportError:
     raise ImportError("Comet could not be imported or initialised.")
 
@@ -21,10 +21,22 @@ except ImportError:
 
 """
 
-class CometEFT_SpectroPower:
+class CometVDG_SpectroPower:
+    r"""Class to retrieve :math:`P(k,\mu)` with the VDG model from COMET
+    Parameters
+    ----------
+    background: Background
+        Background class containing cosmology and background distances
+    RSD_parameters: dict
+        Dictionary containing bias and counterterm parameters
+    redshift: float
+        Redshift at which to evaluate :math:`P(k,\mu)`
+    """
+
     def __init__(self, background: Background, RSD_parameters: dict,
                  redshift: float):
-
+        r"""Class constructor
+        """
         self.background = background
 
         self.parameters = {}
@@ -40,6 +52,26 @@ class CometEFT_SpectroPower:
 
         self.redshift = redshift
 
+    def _Winfty(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
+        r"""Large-scale limit of the velocity difference generating function
+        Parameters
+        ----------
+        k: np.ndarray
+            Wavenumber
+        mu: np.ndarray
+            Angle (cosinus) to the line of sight
+        Returns
+        -------
+        Winfty: np.ndarray
+            Damping function
+        """
+        f = comet_inst.params['f']
+        sigmav = comet_inst.params['sv']
+        num = (f * k * mu)**2
+        den = 1.0 + num * self.parameters['avir']**2
+        Winfty = 1.0 / np.sqrt(den) * np.exp(-num * sigmav**2 / den)
+        return Winfty
+
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields
         Parameters
@@ -48,15 +80,15 @@ class CometEFT_SpectroPower:
             Wavenumber
         mu: np.ndarray
             Angle (cosinus) to the line of sight
-        parameters: dict
-            Ensemble of cosmological and nuisance parameters
         Returns
         -------
         Pk2d_rsd: np.ndarray
             2D power spectrum from couplings of density and velocity fields
         """
-        return comet_inst.Pk2d(k=k, mu=mu, params=self.parameters,
+        Pk2d = comet_inst.Pk2d(k=k, mu=mu, params=self.parameters,
                                de_model='w0wa')
+        Winfty = self._Winfty(k=k, mu=mu)
+        return Pk2d * Winfty
 
     def Pk2d_X_rsd(self, k: np.ndarray, mu: np.ndarray, X: str) -> np.ndarray:
         r"""2D power spectrum for the specific diagram X
@@ -73,5 +105,7 @@ class CometEFT_SpectroPower:
         PX2d_rsd: np.ndarray
             2D power spectrum of term X
         """
-        return self.comet_inst.PX2d(k=k, mu=mu, params=self.parameters, X=X,
-                                    de_model='w0wa')
+        Pk2d = comet_inst.PX2d(k=k, mu=mu, params=self.parameters, X=X,
+                               de_model='w0wa')
+        Winfty = self._Winfty(k=k, mu=mu)
+        return Pk2d * Winfty

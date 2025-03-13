@@ -22,7 +22,8 @@ except ImportError:
 """
 
 class CometEFT_SpectroPower:
-    def __init__(self, background: Background, RSD_parameters: dict):
+    def __init__(self, background: Background, RSD_parameters: dict,
+                 redshift: float):
 
         self.background = background
 
@@ -35,6 +36,9 @@ class CometEFT_SpectroPower:
         self.parameters['w0'] = self.background.w0
         self.parameters['wa'] = self.background.wa
         self.parameters.update(RSD_parameters)
+        self.parameters['z'] = redshift
+
+        self.redshift = redshift
 
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields

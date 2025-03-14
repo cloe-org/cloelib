@@ -27,7 +27,7 @@ class CAMBBackground:
     """
 
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
-                 As: float, ns: float,
+                 As: float, ns: float, mnu: float,
                  w0: float, wa: float, gamma_MG: float) -> None:
         """
         Initializes the CAMBBackground class with cosmological parameters.
@@ -53,6 +53,7 @@ class CAMBBackground:
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = gamma_MG
+        self.mnu = mnu
 
         # Initialize CAMB parameters
         self.interface_args = {'CAMBparams': camb.CAMBparams()}
@@ -60,7 +61,8 @@ class CAMBBackground:
             H0=self.H0,
             ombh2=self.Omega_b0 * (self.h) ** 2,
             omch2=self.Omega_cdm0 * (self.h) ** 2,
-            omk=self.Omega_k0
+            omk=self.Omega_k0,
+            mnu = self.mnu
         )
         self.interface_args['CAMBparams'].set_dark_energy(w=self.w0, wa=self.wa)
         self.interface_args['CAMBparams'].InitPower.set_params(As=self.As, ns=self.ns)
@@ -178,25 +180,45 @@ class CAMBLinearPerturbations:
         """
         self.background = background
 
-        self.kmax = 100
+        self.kmax = 300.
         self.z = redshifts
 
-        self.background.interface_args['CAMBparams'].set_matter_power(redshifts=redshifts, kmax=self.kmax)
+        self.background.interface_args['CAMBparams'].set_matter_power(
+            redshifts=redshifts, kmax=self.kmax)
         self.results = camb.get_results(self.background.interface_args['CAMBparams'])
 
-    def matter_power_spectrum(self) -> np.ndarray:
-        """
-        Calculates the linear matter power spectrum.
+        self.k_values, _, self.Pk_linear = self.results.get_linear_matter_power_spectrum(
+            hubble_units=False, k_hunit=False)
 
-        Returns:
-            np.ndarray: Linear power spectrum values \(P(k)\).
+    def matter_power_spectrum(self, zs, ks, hubble_units=False,
+                              k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
         """
-        k_values, z_values, pk_values = self.results.get_linear_matter_power_spectrum(
-            hubble_units=False, k_hunit=False
-        )
-        self.k = k_values
-        self.z = z_values
-        self.Pk_linear = pk_values
+        pk_values = camb.get_matter_power_interpolator(
+            self.background.interface_args['CAMBparams'],
+            nonlinear=False, extrap_kmax=self.kmax,
+            hubble_units=hubble_units, k_hunit=k_hunit,
+            var1='delta_tot', var2='delta_tot').P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -209,7 +231,7 @@ class CAMBLinearPerturbations:
 
         return self.results.get_fsigma8()/self.results.get_sigma8()
 
-    def growth_factor(self) -> np.ndarray:
+    def growth_factor(self, zs, ks) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
 
@@ -219,16 +241,22 @@ class CAMBLinearPerturbations:
 
         and normalizes as for :math:`D(z)/D(0)`.
 
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
         Returns:
         --------
         np.ndarray
-            The growth factor as a function of redshift and wavenumber.
+            The growth factor at the specified redshift and wavenumber.
         """
-        if hasattr(self, 'Pk_linear') and self.Pk_linear is not None:
-            D_z_k = np.sqrt(self.Pk_linear / self.Pk_linear[0, :])
-        else:
-            self.matter_power_spectrum()
-            D_z_k = np.sqrt(self.Pk_linear / self.Pk_linear[0, :])
+        D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
+                        self.matter_power_spectrum(0.0, ks))
+
         return D_z_k
 
 

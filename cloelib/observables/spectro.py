@@ -32,7 +32,7 @@ class SpectroPower(Protocol):
         ...
 
     def Pk2d_X_rsd(self, k: T, mu: T, **args) -> T:
-        r"""2D power spectrum for the specific diagram X
+        r"""2D power spectrum for the specific diagram X of the loop expansion
         Parameters
         ----------
         k: numpy.ndarray or jax.numpy.ndarray

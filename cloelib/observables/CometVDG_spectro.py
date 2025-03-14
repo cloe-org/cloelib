@@ -22,7 +22,8 @@ except ImportError:
 """
 
 class CometVDG_SpectroPower:
-    r"""Class to retrieve :math:`P(k,\mu)` with the VDG model from COMET
+    r"""Class to retrieve :math:`P(k,\mu)` (including redshift-space
+    distortions) with the VDG model from COMET
     Parameters
     ----------
     background: Background
@@ -91,7 +92,7 @@ class CometVDG_SpectroPower:
         return Pk2d * Winfty
 
     def Pk2d_X_rsd(self, k: np.ndarray, mu: np.ndarray, X: str) -> np.ndarray:
-        r"""2D power spectrum for the specific diagram X
+        r"""2D power spectrum for the specific diagram X of the loop expansion
         Parameters
         ----------
         k: np.ndarray

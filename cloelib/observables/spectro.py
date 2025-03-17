@@ -1,24 +1,22 @@
 # cloelib imports
-from cloelib.cosmology.cosmology import Background 
+from cloelib.cosmology.cosmology import Background
 
 # General imports
 from typing import Protocol, Union, TypeVar
-import numpy as np  # type: ignore
-import jax.numpy as jnp # type: ignore
+import numpy as np
+import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 class SpectroPower(Protocol):
     @property
-    def background(self) -> Background: #dependency on Background
+    def background(self) -> Background:
         """
-        Stores background obj
+        Attribute to store background object
         """
         ...
 
-    def Pk2d_rsd(self, k: T, mu: T, **args) -> T: 
-        #for a class to be compatible with this protocol
-        # it must always return _Pk2d_rsd
+    def Pk2d_rsd(self, k: T, mu: T, **args) -> T:
         r"""2D power spectrum from couplings of density and velocity fields
         Parameters
         ----------
@@ -26,8 +24,6 @@ class SpectroPower(Protocol):
             Wavenumber
         mu: numpy.ndarray or jax.numpy.ndarray
             Angle (cosinus) to the line of sight
-        **args
-            Ensemble of cosmological and nuisance parameters
         Returns
         -------
         Pk2d_rsd: numpy.ndarray or jax.numpy.ndarray
@@ -35,18 +31,14 @@ class SpectroPower(Protocol):
         """
         ...
 
-    def Pk2d_X_rsd(self, k: T, mu: T, **args) -> T: 
-        #for a class to be compatible with this protocol
-        # it must always return _Pk2d_rsd
-        r"""2D power spectrum for the specific diagram X
+    def Pk2d_X_rsd(self, k: T, mu: T, **args) -> T:
+        r"""2D power spectrum for the specific diagram X of the loop expansion
         Parameters
         ----------
         k: numpy.ndarray or jax.numpy.ndarray
             Wavenumber
         mu: numpy.ndarray or jax.numpy.ndarray
             Angle (cosinus) to the line of sight
-        **args
-            Ensemble of cosmological and nuisance parameters
         X: str
             Identifier of loop diagram
         Returns

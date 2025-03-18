@@ -46,6 +46,8 @@ class ShearTracer:
         self.dndz = dndz
         self.z = z
         self.nuisance_params = nuisance_params
+        # This is to add the necessary prefactor to shear, while avoiding it in GC
+        self.prefact_toggle = 1
 
     def _get_prefactor(self, ell):
         return 0
@@ -260,6 +262,8 @@ class PositionsTracer:
         self.perturbations = perturbations
         self.dndz = dndz
         self.z = z
+        # This is to add the necessary prefactor to shear, while avoiding it in GC
+        self.prefact_toggle = 1
 
         #self.nuisance_params = nuisance_params
         #self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}

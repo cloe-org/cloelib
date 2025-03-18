@@ -128,7 +128,16 @@ class AngularTwoPoint:
         WT1 = self.tracer1.get_window(zs_calc)
         WT2 = self.tracer2.get_window(zs_calc)
         Pkl = self._matter_power_spectrum_limber_grid(zs_calc, ks, self.tracer1.perturbations.z, ells)
-        return c_0*Cl_integration(WT1, WT2, Pkl, H, chi2)*dz
+        # Added the prefactor here as this is where we have access to ells.
+        # There may be a more efficient way to do the multiplication
+        prefactor = \
+            (np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0)) /
+             (ells + 0.5) ** 2)
+        # Did it this way to avoid an if statement, but would be good to know how necessary this is
+        prefactor_cell = ((prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle) *
+                          (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle))
+
+        return c_0*Cl_integration(WT1, WT2, Pkl, H, chi2)*dz*prefactor_cell[:, None, None]
 
     def get_pseudo_Cl(self, nl, ks, mixing_matrix,n_ells_int=50)  -> jax.numpy.ndarray:
 

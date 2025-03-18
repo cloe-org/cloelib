@@ -7,7 +7,6 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 # General imports
 import interpax
 import jax.numpy as np
-from scipy.interpolate import RectBivariateSpline, interp1d
 import jax
 
 """
@@ -144,7 +143,7 @@ class AngularTwoPoint:
         ellmax = mixing_matrix[('POS', 'POS', 0, 0)].shape[1]-1
         ells_calc = np.geomspace(1,ellmax+1,n_ells_int)
         C_ell_calc = self.get_Cl(ells_calc, nl, ks)
-        C_ell_base = interp1d(ells_calc,C_ell_calc,axis=0,fill_value='extrapolate')(np.arange(ellmax + 1))
+        C_ell_base = interpax.interp1d(np.arange(ellmax + 1),ells_calc,C_ell_calc,extrap=True)
         n_bin = C_ell_base.shape[2]
 
         C_ell_out = {}

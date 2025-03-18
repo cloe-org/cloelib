@@ -99,7 +99,7 @@ class AngularTwoPoint:
         """
         chi = self.tracer1.perturbations.background.comoving_distance(z_l)
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
-        Pk = self.tracer1.perturbations.matter_power_spectrum()
+        Pk = self.tracer1.perturbations.matter_power_spectrum(zs, ks)
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
         return Pkl
 

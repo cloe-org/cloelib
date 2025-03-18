@@ -6,6 +6,7 @@ from scipy import interpolate
 # General imports
 import numpy as np
 from typing import Tuple, Optional
+from copy import deepcopy
 
 # Cosmology imports
 try:
@@ -75,7 +76,7 @@ class HMemuLinearPerturbations:
 
         self.Pk_interp = pk_interp
 
-    def matter_power_spectrum(self) -> np.ndarray:
+    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -94,9 +95,9 @@ class HMemuLinearPerturbations:
 
         """
 
-        return self.Pk
+        return self.Pk_interp(zs, ks)
 
-    def growth_factor(self) -> np.ndarray:
+    def growth_factor(self, zs, ks) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
 
@@ -119,12 +120,12 @@ class HMemuLinearPerturbations:
         np.ndarray
             The growth factor as a function of redshift and wavenumber.
         """
-        if hasattr(self, 'Pk') and self.Pk is not None:
-            D_z_k = np.sqrt(self.Pk / self.Pk[0,:])
+        if hasattr(self, 'Pk_interp') and self.Pk_interp is not None:
+            D_z_k = np.sqrt(self.Pk_interp(zs, ks) / self.Pk_interp(0, ks))
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(self, zs) -> np.ndarray:
         """
         Calculates the growth rate for given redshifts and wavenumbers.
 
@@ -134,7 +135,10 @@ class HMemuLinearPerturbations:
             The growth rate as a function of redshift and wavenumber.
         """
 
-        self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
+        params = deepcopy(self.params_hm_emu)
+        params['z'] = zs
+
+        self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**params)
 
         return self.fsigma8/self.sigma8
 
@@ -221,7 +225,7 @@ class HMemuNonLinearPerturbations:
         self.Pk_interp = pk_interp
 
 
-    def matter_power_spectrum(self) -> np.ndarray:
+    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -240,9 +244,9 @@ class HMemuNonLinearPerturbations:
 
         """
 
-        return self.Pk
+        return self.Pk_interp(zs, ks)
 
-    def growth_factor(self) -> np.ndarray:
+    def growth_factor(self, zs, ks) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
 
@@ -265,12 +269,12 @@ class HMemuNonLinearPerturbations:
         np.ndarray
             The growth factor as a function of redshift and wavenumber.
         """
-        if hasattr(self, 'Pk') and self.Pk is not None:
-            D_z_k = np.sqrt(self.Pk / self.Pk[0, :])
+        if hasattr(self, 'Pk_interp') and self.Pk_interp is not None:
+            D_z_k = np.sqrt(self.Pk_interp(zs, ks) / self.Pk_interp(0, ks))
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(self, zs) -> np.ndarray:
         """
         Calculates the growth rate for given redshifts and wavenumbers.
 
@@ -280,6 +284,9 @@ class HMemuNonLinearPerturbations:
             The growth rate as a function of redshift and wavenumber.
         """
 
-        self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
+        params = deepcopy(self.params_hm_emu)
+        params['z'] = zs
+
+        self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**params)
 
         return self.fsigma8/self.sigma8

@@ -235,7 +235,8 @@ class ShearTracer:
         return self.get_lensing_window(z) + self.get_window_IA(z)
 
 class PositionsTracer:
-    def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray):
+    def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray,
+                 galaxy_bias_model: str, magnification_bias_model : str, nuisance_params: dict):
         r"""
         A class to define the kernel for angular (galaxy) clustering
 
@@ -263,10 +264,26 @@ class PositionsTracer:
         self.dndz = dndz
         self.z = z
         # This is to add the necessary prefactor to shear, while avoiding it in GC
-        self.prefact_toggle = 1
+        self.prefact_toggle = 0
 
-        #self.nuisance_params = nuisance_params
-        #self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}
+        self.nuisance_params = nuisance_params
+        self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}
+
+        self.n_z_bins = dndz.shape[0]
+        if self.flags['galaxy_bias_model'] in ['per_bin']:
+            self.bias_array = np.asarray([nuisance_params['b1_photo_bin%d'%bin] for bin in range(self.n_z_bins)])
+        elif self.flags['galaxy_bias_model'] in ['per_bin_int']:
+            self.bias_array = np.asarray([nuisance_params['b1_photo_bin%d'%bin] for bin in range(self.n_z_bins)])
+            self.bias_array = interpax.interp1d(self.z,self.z[np.argmax(dndz,axis=1)],self.bias_array,extrap=True)
+        elif self.flags['galaxy_bias_model'] in ['poly']:
+            poly_order = 3
+            self.bias_array = np.asarray([nuisance_params['b1_photo_poly%d'%bin] for bin in range(poly_order+1)])
+            self.bias_array = self.bias_array[0] + self.bias_array[1] * z + self.bias_array[2] * z ** 2 + + self.bias_array[3] * z ** 3
+        else:
+            raise ValueError('galaxy_bias_model must be selected from the '
+                             'following list: ["per_bin", '
+                             '"per_bin_int", "poly"]')
+
 
     def get_window_positions(self, z) -> np.ndarray:
         r"""Galaxy Positions window function
@@ -286,8 +303,12 @@ class PositionsTracer:
         window_positions: numpy.ndarray
            Window function for angular photometric galaxy clustering
         """
-        window_positions = self.dndz * \
-            self.perturbations.background.hubble_parameter(z) / c_0
+        if self.flags['galaxy_bias_model'] == 'per_bin':
+            window_positions = self.bias_array[:,None] * self.dndz * \
+                self.perturbations.background.hubble_parameter(z) / c_0
+        elif self.flags['galaxy_bias_model'] in ['per_bin_int', 'poly']:
+            window_positions = self.bias_array[None,:] * self.dndz * \
+                self.perturbations.background.hubble_parameter(z) / c_0
 
         return window_positions
 

@@ -1,7 +1,7 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.observables.spectro import SpectroPower
-from cloelib.auxiliary.math_utils import legendre, simps_jax
+from cloelib.auxiliary.math_utils import legendre
 
 # General imports
 from typing import Protocol, Union, TypeVar, Optional, Generic
@@ -228,7 +228,6 @@ class LegendreMultipoles:
             multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
         return multipoles
 
-    #This need to be restored; not working at the moment
     def convolved_power_multipoles(self, parameters: dict, mixing_matrix=dict):
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix
         Parameters

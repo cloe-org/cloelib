@@ -187,7 +187,7 @@ class CAMBLinearPerturbations:
             redshifts=redshifts, kmax=self.kmax)
         self.results = camb.get_results(self.background.interface_args['CAMBparams'])
 
-        self.k_values, _, self.Pk_linear = self.results.get_linear_matter_power_spectrum(
+        self.k, _, self.Pk = self.results.get_linear_matter_power_spectrum(
             hubble_units=False, k_hunit=False)
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,

@@ -42,7 +42,7 @@ class ShearTracer:
             A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
         """
         if 0. in z:
-            raise ValueError("One of the z array element is equal to zero, breaking Limber integration.")
+            raise ValueError("One of the z array elements is equal to zero, breaking Limber integration.")
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.dndz = dndz
@@ -259,7 +259,7 @@ class PositionsTracer:
             A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
         """
         if 0. in z:
-            raise ValueError("One of the z array element is equal to zero, breaking Limber integration.")
+            raise ValueError("One of the z array elements is equal to zero, breaking Limber integration.")
         self.perturbations = perturbations
         self.dndz = dndz
         self.z = z

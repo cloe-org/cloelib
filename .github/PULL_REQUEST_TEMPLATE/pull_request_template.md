@@ -22,6 +22,7 @@
 <!-- Link related issues. Use closing keywords if applicable. -->
 Resolves #IssueNumber
 Fixes #IssueNumber
+Follow-ups #IssueNumber
 
 ### 📸 Screenshots (if applicable)
 <!-- Upload screenshots to show scientific plots or other graphics -->

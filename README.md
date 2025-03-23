@@ -46,23 +46,23 @@ Clone the repository `main` branch and pip install it:
 Check out the `notebooks` folder to see how to compute observables and other quantities.
 
 ## Contributing
-If you would like to contribute, follow the steps below:
+If you would like to contribute, read the contribution guidelines and follow the steps below:
 
-1. Open an issue to let the `cloelib` maintainers know about your contribution plans
-2. Fork the repository
-3. Create a new branch:
+1. Open a new issue following the issue template to inform the cloelib maintainers about your contribution plans. Don't forget to tag the cloe-maintainers.
+2. Create a new branch:
    ```sh
    git checkout -b feature/your-feature-name
    ```
+3. Include your changes according to style guidelines
 4. Commit your changes:
    ```sh
    git commit -m 'Add some feature'
    ```
-5. Push to the branch:
+4. Push to the branch:
    ```sh
    git push origin feature/your-feature-name
    ```
-6. Open a pull request
+5. Open a pull request
 
 ## License
 This project is licensed under the GLG License - see the [LICENSE](LICENSE) file for details.

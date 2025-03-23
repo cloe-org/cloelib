@@ -300,3 +300,17 @@ class CLASSNonLinearPerturbations:
         self.z = z_values[::-1]
         self.Pk_nonlinear = (Pk_nl.T)[::-1, :]
         return self.Pk_nonlinear
+    
+    def growth_factor(self) -> np.ndarray:
+        """
+        Calculates growth factor from linear perturbations
+        This method is here to follow Protocol definition.
+        """ 
+        return self.linear_perturbations.growth_factor()
+    
+    def growth_rate(self, k_fix=True) -> np.ndarray:
+        """
+        Calculates growth rate from linear perturbations
+        This method is here to follow Protocol definition.
+        """ 
+        return self.linear_perturbations.growth_rate(k_fix=k_fix)

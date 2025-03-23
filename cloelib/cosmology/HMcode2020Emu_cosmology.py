@@ -40,7 +40,7 @@ class HMemuLinearPerturbations:
             'As': self.background.As,
             'ns': self.background.ns,
             'hubble': self.background.H0 / 100,
-            'neutrino_mass': 0.06,
+            'neutrino_mass': self.background.mnu,
             'w0': self.background.w0,
             'wa': self.background.wa,
         }
@@ -161,7 +161,7 @@ class HMemuNonLinearPerturbations:
             'As': self.background.As,
             'ns': self.background.ns,
             'hubble': self.background.H0 / 100,
-            'neutrino_mass': 0.06,
+            'neutrino_mass': self.background.mnu,
             'w0': self.background.w0,
             'wa': self.background.wa,
         }

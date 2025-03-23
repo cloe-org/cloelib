@@ -27,7 +27,7 @@ class CAMBBackground:
     """
 
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
-                 As: float, ns: float,
+                 As: float, ns: float, mnu: float,
                  w0: float, wa: float, gamma_MG: float) -> None:
         """
         Initializes the CAMBBackground class with cosmological parameters.
@@ -53,6 +53,7 @@ class CAMBBackground:
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = gamma_MG
+        self.mnu = mnu
 
         # Initialize CAMB parameters
         self.interface_args = {'CAMBparams': camb.CAMBparams()}
@@ -60,7 +61,8 @@ class CAMBBackground:
             H0=self.H0,
             ombh2=self.Omega_b0 * (self.h) ** 2,
             omch2=self.Omega_cdm0 * (self.h) ** 2,
-            omk=self.Omega_k0
+            omk=self.Omega_k0,
+            mnu = self.mnu
         )
         self.interface_args['CAMBparams'].set_dark_energy(w=self.w0, wa=self.wa)
         self.interface_args['CAMBparams'].InitPower.set_params(As=self.As, ns=self.ns)
@@ -178,18 +180,15 @@ class CAMBLinearPerturbations:
         """
         self.background = background
 
-        self.kmax = 100
+        self.kmax = 300.
         self.z = redshifts
 
-        self.background.interface_args['CAMBparams'].set_matter_power(redshifts=redshifts, kmax=self.kmax)
+        self.background.interface_args['CAMBparams'].set_matter_power(
+            redshifts=redshifts, kmax=self.kmax)
         self.results = camb.get_results(self.background.interface_args['CAMBparams'])
 
-        k_values, z_values, pk_values = self.results.get_linear_matter_power_spectrum(
-            hubble_units=False, k_hunit=False
-        )
-        self.k = k_values
-        self.z = z_values
-        self.Pk = pk_values
+        self.k, _, self.Pk = self.results.get_linear_matter_power_spectrum(
+            hubble_units=False, k_hunit=False)
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
                               k_hunit=False) -> np.ndarray:
@@ -215,7 +214,8 @@ class CAMBLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        pk_values = self.results.get_matter_power_interpolator(
+        pk_values = camb.get_matter_power_interpolator(
+            self.background.interface_args['CAMBparams'],
             nonlinear=False, extrap_kmax=self.kmax,
             hubble_units=hubble_units, k_hunit=k_hunit,
             var1='delta_tot', var2='delta_tot').P(zs, ks)

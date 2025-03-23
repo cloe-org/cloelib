@@ -39,6 +39,7 @@ Follow-ups #IssueNumber
 - [ ] I have updated documentation (if applicable)
 - [ ] My changes do not introduce breaking changes
 - [ ] I have added tests (if applicable)
+- [ ] I have consistently updated the GitHub information for the project, including milestones, task types, and other relevant details.
 
 ### ✅ PR Checklist for Reviewers
 - [ ] The next PR targets the correct branch

@@ -1,7 +1,7 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.observables.spectro import SpectroPower
-from cloelib.auxiliary.math_utils import legendre, simps_jax
+from cloelib.auxiliary.math_utils import legendre
 
 # General imports
 from typing import Protocol, Union, TypeVar, Optional, Generic

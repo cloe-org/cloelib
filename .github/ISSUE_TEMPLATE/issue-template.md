@@ -4,29 +4,28 @@ about: General template for cloelib issues
 title: ''
 labels: ''
 assignees: ''
-
 ---
 
-## Title
+## 📝 Issue Summary
+<!-- Briefly describe the issue. What problem/feature/enhacement need to be addressed? -->
 
-### Description
-TBA
+### 🎯 Goals / Acceptance Criteria
+- [ ] **Goal 1**: Describe the first goal this issue addresses
+- [ ] **Goal 2**: Describe the second goal this issue addresses
 
-### Goals/Acceptance Criteria
-- [ ] **Goal 1**: include the goals this task addresses
-- [ ] **Goal 2**: include the goals this task addresses
+### 🔄 Steps to Reproduce (if applicable)
+1. Step 1
+2. Step 2
+3. Step 3
 
-### Steps to Reproduce (if applicable)
-TBA
+### ✅ Expected Outcome
+<!-- What should happen when this issue is resolved? -->
 
-### Expected Outcome
-TBA
+### 🐞 Current Behavior (if applicable)
+<!-- Describe the existing problem or bug -->
 
-### Current Behavior (if applicable)
-TBA
+### 📌 Additional Notes
+<!-- Add any extra context, logs, or screenshots here -->
 
-### Additional Notes
-TBA
-
-### Assignees
-- TBA
+### 👥 Assignees
+- @TBA

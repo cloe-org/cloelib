@@ -152,13 +152,13 @@ class CAMBBackground:
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the matter density as a function of redshift.
+        Returns the baryon density as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Matter density values.
+            np.ndarray: Baryonic density values at specified redshifts.
         """
         return (
             self.results.get_Omega("baryon", z=zs)

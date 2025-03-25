@@ -125,7 +125,7 @@ class HMemuLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self, zs) -> np.ndarray:
+    def growth_rate(self) -> np.ndarray:
         """
         Calculates the growth rate for given redshifts and wavenumbers.
 
@@ -135,10 +135,7 @@ class HMemuLinearPerturbations:
             The growth rate as a function of redshift and wavenumber.
         """
 
-        params = deepcopy(self.params_hm_emu)
-        params['z'] = zs
-
-        self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**params)
+        self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
 
         return self.fsigma8/self.sigma8
 
@@ -274,7 +271,7 @@ class HMemuNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self, zs) -> np.ndarray:
+    def growth_rate(self) -> np.ndarray:
         """
         Calculates the growth rate for given redshifts and wavenumbers.
 
@@ -284,9 +281,6 @@ class HMemuNonLinearPerturbations:
             The growth rate as a function of redshift and wavenumber.
         """
 
-        params = deepcopy(self.params_hm_emu)
-        params['z'] = zs
-
-        self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**params)
+        self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
 
         return self.fsigma8/self.sigma8

@@ -228,18 +228,21 @@ class LegendreMultipoles:
             multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
         return multipoles
 
-    def convolved_power_multipoles(self, parameters: dict, mixing_matrix=dict):
+    def convolved_power_multipoles(self, mixing_matrix: dict) -> dict:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix
         Parameters
         ----------
-        parameters: dict
-            Ensemble of cosmological and nuisance parameters
+        mixing_matrix: dict
+            Dicitonary containing the mixing matrix
+        ells: np.ndarray
+            Legendre multipole order
+        use_AP: bool
+            Flag to switch between with and without AP corrections
         Returns
         -------
         multipoles_out: dict
             Convolved power spectrum Legendre multipoles
         """
-
         self.mixing_matrix_dict = mixing_matrix
 
         for key in self.mixing_matrix_dict:
@@ -253,15 +256,13 @@ class LegendreMultipoles:
 
         multipoles_in = {}
         if np.all(kin0 == kin2) and np.all(kin2 == kin4):
-            multipoles_in = self.power_multipoles(k=kin0,
-                                                  parameters=parameters,
-                                                  ells=[0,2,4])
+            multipoles_in = self.power_multipoles(k=kin0)
         else:
-            for ell in [0,2,4]:
+            for ell in [0, 2, 4]:
                 multipoles_in[f'ell{ell}'] = \
                     self.power_multipoles(
                         k=self.mixing_matrix_dict[f'kin{ell}'],
-                        parameters=parameters, ells=[ell])
+                        ells=[ell], use_AP=use_AP)
 
         for key in multipoles_in:
             multipoles_in[key] = \

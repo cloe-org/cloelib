@@ -209,7 +209,7 @@ class LegendreMultipoles:
         multipoles: dict
             Power spectrum Legendre multipoles
         """
-        ells = self._ensure_array(ells) if ells else np.array([0,2,4])
+        ells = self._ensure_array(ells) if ells is not None else np.array([0,2,4])
         AP_factor = (self._q_AP_tr(self.redshift)**2 *
                      self._q_AP_lo(self.redshift) if use_AP else 1.0)
         prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / \
@@ -228,7 +228,9 @@ class LegendreMultipoles:
             multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
         return multipoles
 
-    def convolved_power_multipoles(self, mixing_matrix: dict) -> dict:
+    def convolved_power_multipoles(self, mixing_matrix: dict,
+                                   ells: Optional[np.ndarray] = None,
+                                   use_AP: Optional[bool] = True) -> dict:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix
         Parameters
         ----------
@@ -243,38 +245,32 @@ class LegendreMultipoles:
         multipoles_out: dict
             Convolved power spectrum Legendre multipoles
         """
-        self.mixing_matrix_dict = mixing_matrix
+        ells_tot = [0, 2, 4]
+        ells = self._ensure_array(ells) if ells is not None else ells_tot
 
-        for key in self.mixing_matrix_dict:
-            self.mixing_matrix_dict[key] = \
-                np.asarray(self.mixing_matrix_dict[key], dtype=np.float32)
+        self.mixing_matrix_dict = {key: np.asarray(value, dtype=np.float32)
+                                   for key, value in mixing_matrix.items()}
 
-        kin0 = self.mixing_matrix_dict['kin0']
-        kin2 = self.mixing_matrix_dict['kin2']
-        kin4 = self.mixing_matrix_dict['kin4']
-        kout = self.mixing_matrix_dict['kout']
+        kin_arrays = [self.mixing_matrix_dict[f'kin{ell}'] for ell in ells_tot]
 
-        multipoles_in = {}
-        if np.all(kin0 == kin2) and np.all(kin2 == kin4):
-            multipoles_in = self.power_multipoles(k=kin0)
+        if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
+            multipoles_in = self.power_multipoles(
+                k=kin_arrays[0], ells=ells_tot, use_AP=use_AP)
         else:
-            for ell in [0, 2, 4]:
-                multipoles_in[f'ell{ell}'] = \
-                    self.power_multipoles(
-                        k=self.mixing_matrix_dict[f'kin{ell}'],
-                        ells=[ell], use_AP=use_AP)
+            multipoles_in = {
+                f'ell{ell}': self.power_multipoles(k=kin_arrays[i], ells=[ell],
+                                                   use_AP=use_AP)
+                for i, ell in enumerate(ells_tot)}
 
-        for key in multipoles_in:
-            multipoles_in[key] = \
-                np.asarray(multipoles_in[key], dtype=np.float32)
+        multipoles_in = {key: np.asarray(value, dtype=np.float32)
+                         for key, value in multipoles_in.items()}
 
         multipoles_out = {}
-        multipoles_out['k'] = kout
-        for ell in [0, 2, 4]:
-            multipoles_out[f'ell{ell}'] = np.zeros(kout.shape)
-            for ell_prime in [0, 2, 4]:
-                multipoles_out[f'ell{ell}'] += \
-                    np.dot(self.mixing_matrix_dict[f'W{ell}{ell_prime}'],
+        multipoles_out['k'] = self.mixing_matrix_dict['kout']
+        for ell in ells:
+            multipoles_out[f'ell{ell}'] = (
+                sum(np.dot(self.mixing_matrix_dict[f'W{ell}{ell_prime}'],
                            multipoles_in[f'ell{ell_prime}'])
+                    for ell_prime in ells_tot))
 
         return multipoles_out

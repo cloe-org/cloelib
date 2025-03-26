@@ -350,11 +350,22 @@ class CAMBNonLinearPerturbations:
 
         and normalizes as for :math:`D(z)/D(0)`.
 
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
         Returns:
         --------
         np.ndarray
-            The growth factor as a function of redshift and wavenumber.
+            The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
                         self.matter_power_spectrum(0.0, ks))
+        D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
+                        self.matter_power_spectrum(0.0, ks))
+
         return D_z_k

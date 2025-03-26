@@ -46,15 +46,14 @@ Clone the repository `main` branch and pip install it:
 Check out the `notebooks` folder to see how to compute observables and other quantities.
 
 ## Contributing
-If you would like to contribute, read the contribution guidelines and follow the steps below:
+If you would like to contribute, read the contribution guidelines specific for this repository, and follow the steps below:
 
-1. Open a new issue following the issue template to inform the cloelib maintainers about your contribution plans. Don't forget to tag the cloe-maintainers.
-2. Create a new branch:
+1. Create a new branch:
    ```sh
    git checkout -b feature/your-feature-name
    ```
-3. Include your changes according to style guidelines
-4. Commit your changes:
+2. Include your changes according to style guidelines
+3. Commit your changes:
    ```sh
    git commit -m 'Add some feature'
    ```

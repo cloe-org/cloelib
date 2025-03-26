@@ -48,6 +48,8 @@ class ShearTracer:
         self.dndz = dndz
         self.z = z
         self.nuisance_params = nuisance_params
+        # This is to add the necessary prefactor to shear, while avoiding it in GC
+        self.prefact_toggle = 1
 
     def _get_prefactor(self, ell):
         return 0
@@ -149,7 +151,7 @@ class ShearTracer:
         window_IA: np.ndarray
         """
         Hz = self.perturbations.background.hubble_parameter(z)
-        Dz = self.perturbations.growth_factor()[:,1]
+        Dz = self.perturbations.growth_factor(self.perturbations.z, self.perturbations.k)[:,1]
         #TODO discuss whether we want growth factor to output a 1D or a 2D array
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]
@@ -263,6 +265,8 @@ class PositionsTracer:
         self.perturbations = perturbations
         self.dndz = dndz
         self.z = z
+        # This is to add the necessary prefactor to shear, while avoiding it in GC
+        self.prefact_toggle = 0
 
         #self.nuisance_params = nuisance_params
         #self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}

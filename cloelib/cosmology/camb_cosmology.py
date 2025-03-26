@@ -278,7 +278,7 @@ class CAMBNonLinearPerturbations:
         """
 
         self.background = background
-        self.kmax = 100
+        self.kmax = 500
         self.z = redshifts
 
         # Configure CAMB parameters for nonlinear calculations
@@ -292,25 +292,42 @@ class CAMBNonLinearPerturbations:
         # Compute nonlinear perturbations
         self.results = camb.get_results(self.background.interface_args['CAMBparams'])
 
-
-    def matter_power_spectrum(self) -> np.ndarray:
-        """
-        Calculates the nonlinear matter power spectrum.
-
-        This function uses CAMB to compute the nonlinear matter power spectrum \( P(k) \)
-        as a function of wavenumber \( k \) and redshift \( z \).
-
-        Units of 1/Mpc
-
-        Returns:
-            np.ndarray: Nonlinear power spectrum values \( P(k) \).
-        """
         k_values, z_values, pk_values = self.results.get_nonlinear_matter_power_spectrum(
             hubble_units=False, k_hunit=False
         )
         self.k = k_values
         self.z = z_values
-        self.Pk_nonlinear = pk_values
+        self.Pk = pk_values
+
+    def matter_power_spectrum(self, zs, ks, hubble_units=False,
+                              k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        pk_values = self.results.get_matter_power_interpolator(
+            nonlinear=True, extrap_kmax=self.kmax,
+            hubble_units=hubble_units, k_hunit=k_hunit,
+            var1='delta_tot', var2='delta_tot').P(zs, ks)
+
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -323,7 +340,7 @@ class CAMBNonLinearPerturbations:
 
         return self.results.get_fsigma8()/self.results.get_sigma8()
 
-    def growth_factor(self) -> np.ndarray:
+    def growth_factor(self, zs, ks) -> np.ndarray:
         """
         Calculates the growth factor for given redshifts and wavenumbers.
 
@@ -333,14 +350,20 @@ class CAMBNonLinearPerturbations:
 
         and normalizes as for :math:`D(z)/D(0)`.
 
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
         Returns:
         --------
         np.ndarray
-            The growth factor as a function of redshift and wavenumber.
+            The growth factor at the specified redshift and wavenumber.
         """
-        if hasattr(self, 'Pk_nonlinear') and self.Pk_nonlinear is not None:
-            D_z_k = np.sqrt(self.Pk_nonlinear / self.Pk_nonlinear[0, :])
-        else:
-            self.matter_power_spectrum()
-            D_z_k = np.sqrt(self.Pk_nonlinear / self.Pk_nonlinear[0, :])
+        D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
+                        self.matter_power_spectrum(0.0, ks))
+
         return D_z_k

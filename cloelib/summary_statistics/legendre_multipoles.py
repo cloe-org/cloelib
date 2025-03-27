@@ -248,8 +248,7 @@ class LegendreMultipoles:
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
 
-        self.mixing_matrix_dict = {key: np.asarray(value, dtype=np.float32)
-                                   for key, value in mixing_matrix.items()}
+        self.mixing_matrix_dict = mixing_matrix
 
         kin_arrays = [self.mixing_matrix_dict[f'kin{ell}'] for ell in ells_tot]
 
@@ -261,9 +260,6 @@ class LegendreMultipoles:
                 f'ell{ell}': self.power_multipoles(k=kin_arrays[i], ells=[ell],
                                                    use_AP=use_AP)
                 for i, ell in enumerate(ells_tot)}
-
-        multipoles_in = {key: np.asarray(value, dtype=np.float32)
-                         for key, value in multipoles_in.items()}
 
         multipoles_out = {}
         multipoles_out['k'] = self.mixing_matrix_dict['kout']

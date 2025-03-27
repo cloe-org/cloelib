@@ -1,7 +1,7 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
-from cloelib.cosmology.cosmology import LinearPerturbations
-from cloelib.cosmology.cosmology import NonLinearPerturbations
+from cloelib.cosmology.cosmology import Perturbations
+#from cloelib.cosmology.cosmology import NonLinearPerturbations
 
 # General imports
 from numpy import ndarray
@@ -128,7 +128,7 @@ class JAXBackground(Background):
         """
         return self.transverse_comoving_distance(zs)/(1+zs)
 
-class JAXLinearPerturbations(LinearPerturbations):
+class JAXLinearPerturbations(Perturbations):
     def __init__(self, background : Background):
         r"""
         A class to define perturbations cosmology using JAX
@@ -424,8 +424,8 @@ class JAXLinearPerturbations(LinearPerturbations):
         pk = pk * pknorm
         return pk.squeeze()
 
-class JAXNonLinearPerturbations(NonLinearPerturbations):
-    def __init__(self, linearperturbations : LinearPerturbations):
+class JAXNonLinearPerturbations(Perturbations):
+    def __init__(self, linearperturbations : Perturbations):
         r"""
         A class to define perturbations cosmology using JAX
         and inheriting from Cosmology parent class

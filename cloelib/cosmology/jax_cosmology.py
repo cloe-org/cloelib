@@ -1,15 +1,16 @@
 # cloelib imports
+from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
 from cloelib.cosmology.cosmology import Perturbations
 #from cloelib.cosmology.cosmology import NonLinearPerturbations
 
 # General imports
-from numpy import ndarray
 import jax.numpy as np
 import jax
 import jax.lax as lx
 import functools
 import interpax
+from quadax import quadgk
 
 """
 
@@ -19,41 +20,51 @@ import interpax
 
 """
 
-class JAXBackground(Background):
-    def __init__(self, H0: float, Omb: float, Omc: float, Omk: float, As: float, ns: float,
-                 w: float, wa: float, sigma8: float, gamma_MG: float):
-        r"""
+class JAXBackground:
+    def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
+                 As: float, ns: float, w0: float, wa: float):
+        """
         A class to define background cosmology using JAX
         and inheriting from Cosmology parent class
 
+        Args:
+            H0 (float): Hubble parameter in [km/s/Mpc].
+            Omega_b0 (float): Baryonic matter density parameter.
+            Omega_cdm0 (float): Cold dark matter density parameter.
+            Omega_k0(float): Curvature density parameter.
+            As (float): Scalar amplitude of primordial fluctuations.
+            ns (float): Scalar spectral index.
+            w0 (float): Equation of state parameter for dark energy.
+            wa (float): Time evolution of the dark energy equation of state.
+
         """
-        super().__init__(H0, Omb, Omc, Omk, As, ns, w, wa, sigma8, gamma_MG)
+        self.H0 = H0
+        self.h = self.H0 / 100
+        self.Omega_b0 = Omega_b0
+        self.Omega_cdm0 = Omega_cdm0
+        self.Omega_k0 = Omega_k0
+        self.As = As
+        self.ns = ns
+        self.w0 = w0
+        self.wa = wa
 
     def hubble_parameter(self, zs) -> np.ndarray:
-        r"""
-        Retrieves the hubble parameter as
-        a function of redshift
+        """
+        Returns the Hubble parameter as a function of redshift.
 
-        .. math::
-            H(z) = \sqrt
+        Args:
+            zs (np.ndarray): Array of redshifts.
+            units (str): Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').
 
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            Redshifts for the matter density
-
-        Returns
-        -------
-        Hubble parameter: numpy.ndarray
-            hubble parameter as a function of redshift
+        Returns:
+            np.ndarray: Hubble parameter values at specified redshifts.
 
         """
-        return self.H0 * np.sqrt((self.Omb+self.Omc)*np.power(1+zs, 3) +
-                                 (self.Omk)*np.power(1+zs, 2) +
-                                 (1-self.Omb-self.Omc-self.Omk) * np.power(1+zs, 3*(1+self.w+self.wa))*np.exp(-3*self.wa*zs/(1+zs)))
+        return self.H0 * np.sqrt((self.Omega_b0+self.Omega_cdm0)*np.power(1+zs, 3) +
+                                 (self.Omega_k0)*np.power(1+zs, 2) +
+                                 (1-self.Omega_b0-self.Omega_cdm0-self.Omega_k0) * np.power(1+zs, 3*(1+self.w0+self.wa))*np.exp(-3*self.wa*zs/(1+zs)))
 
-    #@property
-    def comoving_distance(self, zs) -> np.ndarray:
+    def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
         Calculates the comoving distance for given redshifts.
 
@@ -67,51 +78,46 @@ class JAXBackground(Background):
         np.ndarray
             The comoving distance as a function of redshift.
         """
-        c_0 = 2.99792458e5 #please, put all the constanst in a single place
+        c_0 = c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         fun = lambda x: 1/self.hubble_parameter(x)
-        y = simps(fun, 0, zs, N=512) * c_0
-        return y
 
-    def matter_density(self, zs) -> np.ndarray:
-        r"""
-        Computes the matter density as
+        def myquad(x, fun):
+            y, _ = quadgk(fun, [0., x])
+            return y
 
-        .. math::
-            \Omega_{\rm m}(z) = \Omega_{{\rm m},0}(1+z)^3H_0^2/H^2(z)
+        y = np.array([myquad(myz, fun)  for myz in zs])
+        return y*c_0
 
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            Redshifts at which to calculate the matter density
-
-        Returns
-        -------
-        Matter density parameter: numpy.ndarray
-            Matter density as a function of redshift
-
+    def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
+        Returns the transverse comoving distance between two redshifts.
 
-        return
-
-    #@property
-    def transverse_comoving_distance(self, zs) -> np.ndarray:
-        """
-        Calculates the transverse comoving distance for given redshifts.
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the transverse comoving distance.
+        Args:
+            zs (np.ndarray): Array of redshifts.
 
         Returns:
-        --------
-        np.ndarray
-            The transverse comoving distance as a function of redshift.
+            np.ndarray: Transverse comoving distance values.
         """
-        return self.comoving_distance(zs)
-    #TODO add the lax conditionals to account for the curvature!
+        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
+        delta_z = self.comoving_distance(zs)
+        p = np.concatenate([np.array([self.Omega_k0]), delta_z], axis=0)
 
-    #@property
+        def default_case(p):
+            return p[1:]
+
+        def positive_case(p):
+            return np.sinh(np.sqrt(p[0]) * p[1:]) / np.sqrt(p[0])
+
+        def negative_case(p):
+            return np.sin(np.sqrt(-p[0]) * p[1:]) / np.sqrt(-p[0])
+
+        conditions = np.array([self.Omega_k0>0., self.Omega_k0<0., self.Omega_k0==0.])
+        index = np.argwhere(conditions, size=1).squeeze()
+
+        return lx.switch(index,
+                     [positive_case, negative_case, default_case],
+                     p)
+
     def angular_diameter_distance(self, zs) -> np.ndarray:
         """
         Calculates the angular diameter distance for given redshifts.
@@ -397,7 +403,7 @@ class JAXLinearPerturbations(Perturbations):
             Wave number in h Mpc^{-1}
 
         zs: array_like, optional
-            Redshifts 
+            Redshifts
 
         transfer_fn: transfer_fn(cosmo, k, **kwargs)
             Transfer function

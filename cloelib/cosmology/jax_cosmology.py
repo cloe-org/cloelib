@@ -114,9 +114,7 @@ class JAXBackground:
         conditions = np.array([self.Omega_k0>0., self.Omega_k0<0., self.Omega_k0==0.])
         index = np.argwhere(conditions, size=1).squeeze()
 
-        return lx.switch(index,
-                     [positive_case, negative_case, default_case],
-                     p)
+        return lx.switch(index, [positive_case, negative_case, default_case],p)
 
     def angular_diameter_distance(self, zs) -> np.ndarray:
         """

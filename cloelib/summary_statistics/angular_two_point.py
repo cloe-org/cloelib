@@ -166,25 +166,25 @@ class AngularTwoPoint:
         if (type(self.tracer1) == PositionsTracer) and (type(self.tracer2) == PositionsTracer):
             for i in range(1, n_bin+1):
                 for j in range(i, n_bin+1):
-                    C_ell_out[('POS','POS',i,j)] = mixing_matrix[('POS','POS',i,j)].array @ C_ell_base[:,i,j]
+                    C_ell_out[('POS','POS',i,j)] = mixing_matrix[('POS','POS',i,j)].array @ C_ell_base[:,i-1,j-1]
 
         elif (type(self.tracer1) == PositionsTracer) and (type(self.tracer2) == ShearTracer):
             for i in range(1, n_bin+1):
                 for j in range(i, n_bin+1):
-                    C_ell_out[('POS','SHE',i,j)] = mixing_matrix[('POS','SHE',i,j)].array @ C_ell_base[:,i,j]
+                    C_ell_out[('POS','SHE',i,j)] = mixing_matrix[('POS','SHE',i,j)].array @ C_ell_base[:,i-1,j-1]
                     C_ell_out[('POS','SHE',j,i)] = mixing_matrix[('POS','SHE',j,i)].array @ C_ell_base[:,j,i]
 
         elif (type(self.tracer1) == ShearTracer) and (type(self.tracer2) == PositionsTracer):
             for i in range(1, n_bin+1):
                 for j in range(i, n_bin+1):
-                    C_ell_out[('POS','SHE',j,i)] = mixing_matrix[('POS','SHE',j,i)].array @ C_ell_base[:,i,j]
+                    C_ell_out[('POS','SHE',j,i)] = mixing_matrix[('POS','SHE',j,i)].array @ C_ell_base[:,i-1,j-1]
                     C_ell_out[('POS','SHE',i,j)] = mixing_matrix[('POS','SHE',i,j)].array @ C_ell_base[:,j,i]
 
         elif (type(self.tracer1) == ShearTracer) and (type(self.tracer2) == ShearTracer):
             for i in range(1, n_bin+1):
                 for j in range(i, n_bin+1):
                     C_ell_out[('SHE','SHE',i,j)] = np.stack([
-                        mixing_matrix[('SHE','SHE',i,j)].array[0] @ C_ell_base[:,i,j],
-                        mixing_matrix[('SHE','SHE',i,j)].array[1] @ C_ell_base[:,i,j]
+                        mixing_matrix[('SHE','SHE',i,j)].array[0] @ C_ell_base[:,i-1,j-1],
+                        mixing_matrix[('SHE','SHE',i,j)].array[1] @ C_ell_base[:,i-1,j-1]
                             ])
         return C_ell_out

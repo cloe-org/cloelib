@@ -172,13 +172,13 @@ class AngularTwoPoint:
             for i in range(1, n_bin+1):
                 for j in range(i, n_bin+1):
                     C_ell_out[('POS','SHE',i,j)] = mixing_matrix[('POS','SHE',i,j)].array @ C_ell_base[:,i-1,j-1]
-                    C_ell_out[('POS','SHE',j,i)] = mixing_matrix[('POS','SHE',j,i)].array @ C_ell_base[:,j,i]
+                    C_ell_out[('POS','SHE',j,i)] = mixing_matrix[('POS','SHE',j,i)].array @ C_ell_base[:,j-1,i-1]
 
         elif (type(self.tracer1) == ShearTracer) and (type(self.tracer2) == PositionsTracer):
             for i in range(1, n_bin+1):
                 for j in range(i, n_bin+1):
                     C_ell_out[('POS','SHE',j,i)] = mixing_matrix[('POS','SHE',j,i)].array @ C_ell_base[:,i-1,j-1]
-                    C_ell_out[('POS','SHE',i,j)] = mixing_matrix[('POS','SHE',i,j)].array @ C_ell_base[:,j,i]
+                    C_ell_out[('POS','SHE',i,j)] = mixing_matrix[('POS','SHE',i,j)].array @ C_ell_base[:,j-1,i-1]
 
         elif (type(self.tracer1) == ShearTracer) and (type(self.tracer2) == ShearTracer):
             for i in range(1, n_bin+1):

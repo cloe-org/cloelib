@@ -248,9 +248,7 @@ class LegendreMultipoles:
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
 
-        self.mixing_matrix_dict = mixing_matrix
-
-        kin_arrays = [self.mixing_matrix_dict[f'kin{ell}'] for ell in ells_tot]
+        kin_arrays = [mixing_matrix[f'kin{ell}'] for ell in ells_tot]
 
         if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
             multipoles_in = self.power_multipoles(
@@ -262,10 +260,10 @@ class LegendreMultipoles:
                 for i, ell in enumerate(ells_tot)}
 
         multipoles_out = {}
-        multipoles_out['k'] = self.mixing_matrix_dict['kout']
+        multipoles_out['k'] = mixing_matrix['kout']
         for ell in ells:
             multipoles_out[f'ell{ell}'] = (
-                sum(np.dot(self.mixing_matrix_dict[f'W{ell}{ell_prime}'],
+                sum(np.dot(mixing_matrix[f'W{ell}{ell_prime}'],
                            multipoles_in[f'ell{ell_prime}'])
                     for ell_prime in ells_tot))
 

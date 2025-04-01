@@ -115,7 +115,6 @@ class JAXBackground:
         Returns:
             np.ndarray: Transverse comoving distance values.
         """
-        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         delta_z = self.comoving_distance(zs)
         p = np.concatenate([np.array([self.Omega_k0]), delta_z], axis=0)
 

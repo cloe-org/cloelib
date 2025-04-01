@@ -85,9 +85,10 @@ class JAXBackground:
 
         """
         c_0 = SPEED_OF_LIGHT / 1000
-        x = self.H0 * np.sqrt((self.Omega_b0+self.Omega_cdm0)*np.power(1+zs, 3) +
+        Omega_m0 = self.Omega_b0+self.Omega_cdm0+self.mnu/(93.14*(self.H0/100)**2)
+        x = self.H0 * np.sqrt(Omega_m0*np.power(1+zs, 3) +
                                  (self.Omega_k0)*np.power(1+zs, 2) +
-                                 (1-self.Omega_b0-self.Omega_cdm0-self.Omega_k0) * np.power(1+zs, 3*(1+self.w0+self.wa))*np.exp(-3*self.wa*zs/(1+zs)))
+                                 (1-Omega_m0-self.Omega_k0) * np.power(1+zs, 3*(1+self.w0+self.wa))*np.exp(-3*self.wa*zs/(1+zs)))
 
         def default_case(x):
             return x
@@ -189,7 +190,8 @@ class JAXBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return np.array([(self.Omega_b0+self.Omega_cdm0) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
+        Omega_nu0 = self.mnu/(93.14*(self.H0/100)**2)
+        return np.array([(self.Omega_b0+self.Omega_cdm0+Omega_nu0) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
 class JAXLinearPerturbations(Perturbations):
     def __init__(self, background : Background):

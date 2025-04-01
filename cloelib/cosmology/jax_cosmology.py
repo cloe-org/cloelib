@@ -53,6 +53,25 @@ class JAXBackground:
         self.gamma_MG = gamma_MG
         self.mnu = mnu
 
+        # Initialize JaxBgk parameters
+        self.interface_args = {'JAXparams': {}}  # Use a dictionary for CLASS parameters
+        self.interface_args['JAXparams']['H0'] = self.H0
+        self.interface_args['JAXparams']['Omega_b'] = self.Omega_b0
+        self.interface_args['JAXparams']['Omega_cdm'] = self.Omega_cdm0
+        self.interface_args['JAXparams']['Omega_k'] = self.Omega_k0
+        self.interface_args['JAXparams']['n_s'] = self.ns
+        self.interface_args['JAXparams']['m_ncdm'] = self.mnu
+        self.interface_args['JAXparams']['A_s'] = self.As
+        self.interface_args['JAXparams']['w0_fld'] = self.w0 # or w0
+        self.interface_args['JAXparams']['wa_fld'] = self.wa # or wa
+
+    @property
+    def _interface_args(self) -> dict:
+        """
+        Save internal structure format of interface codes
+        """
+        return self.interface_args
+
     def hubble_parameter(self, zs, units: str = "km/s/Mpc") -> np.ndarray:
         """
         Returns the Hubble parameter as a function of redshift.
@@ -147,6 +166,30 @@ class JAXBackground:
             The angular diameter distance as a function of redshift.
         """
         return self.transverse_comoving_distance(zs)/(1+zs)
+
+    def Omega_b(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the baryon density as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values.
+        """
+        return np.array([self.Omega_b0 * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
+
+    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the matter density as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values.
+        """
+        return np.array([(self.Omega_b0+self.Omega_cdm0) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
 class JAXLinearPerturbations(Perturbations):
     def __init__(self, background : Background):

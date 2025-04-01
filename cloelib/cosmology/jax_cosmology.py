@@ -22,7 +22,8 @@ from quadax import quadgk
 
 class JAXBackground:
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
-                 As: float, ns: float, w0: float, wa: float):
+                 As: float, ns: float, mnu: float,
+                 w0: float, wa: float, gamma_MG: float):
         """
         A class to define background cosmology using JAX
         and inheriting from Cosmology parent class
@@ -34,8 +35,10 @@ class JAXBackground:
             Omega_k0(float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
+            mnu (float): Total sum of neutrino mass in [eV].
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the dark energy equation of state.
+            gamma_MG (float): Modified gravity growth parameter.
 
         """
         self.H0 = H0
@@ -47,17 +50,19 @@ class JAXBackground:
         self.ns = ns
         self.w0 = w0
         self.wa = wa
+        self.gamma_MG = gamma_MG
+        self.mnu = mnu
 
-    def hubble_parameter(self, zs) -> np.ndarray:
+    def hubble_parameter(self, zs, units: str = "km/s/Mpc") -> np.ndarray:
         """
         Returns the Hubble parameter as a function of redshift.
 
         Args:
-            zs (np.ndarray): Array of redshifts.
+            zs : Redshifts.
             units (str): Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').
 
         Returns:
-            np.ndarray: Hubble parameter values at specified redshifts.
+            Hubble parameter values at specified redshift(s).
 
         """
         return self.H0 * np.sqrt((self.Omega_b0+self.Omega_cdm0)*np.power(1+zs, 3) +

@@ -65,9 +65,21 @@ class JAXBackground:
             Hubble parameter values at specified redshift(s).
 
         """
-        return self.H0 * np.sqrt((self.Omega_b0+self.Omega_cdm0)*np.power(1+zs, 3) +
+        c_0 = SPEED_OF_LIGHT / 1000
+        x = self.H0 * np.sqrt((self.Omega_b0+self.Omega_cdm0)*np.power(1+zs, 3) +
                                  (self.Omega_k0)*np.power(1+zs, 2) +
                                  (1-self.Omega_b0-self.Omega_cdm0-self.Omega_k0) * np.power(1+zs, 3*(1+self.w0+self.wa))*np.exp(-3*self.wa*zs/(1+zs)))
+
+        def default_case(x):
+            return x
+
+        def one_Mpc_case(x):
+            return x/c_0
+
+        conditions = np.array([units=="km/s/Mpc", units=="1/Mpc"])
+        index = np.argwhere(conditions, size=1).squeeze()
+
+        return lx.switch(index, [default_case, one_Mpc_case],x)
 
     def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -83,7 +95,7 @@ class JAXBackground:
         np.ndarray
             The comoving distance as a function of redshift.
         """
-        c_0 = c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
+        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         fun = lambda x: 1/self.hubble_parameter(x)
 
         def myquad(x, fun):

@@ -33,14 +33,15 @@ class CAMBBackground:
         Initializes the CAMBBackground class with cosmological parameters.
 
         Args:
-            H0 (float): Hubble parameter at z=0 in km/s/Mpc.
-            Omb (float): Baryonic matter density parameter.
-            Omc (float): Cold dark matter density parameter.
-            Omk (float): Curvature density parameter.
+            H0 (float): Hubble parameter in [km/s/Mpc].
+            Omega_b0 (float): Baryonic matter density parameter.
+            Omega_cdm0 (float): Cold dark matter density parameter.
+            Omega_k0(float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
-            w (float): Equation of state parameter for dark energy.
-            wa (float): Time evolution of the equation of state.
+            mnu (float): Total sum of neutrino mass in [eV].
+            w0 (float): Equation of state parameter for dark energy.
+            wa (float): Time evolution of the dark energy equation of state.
             gamma_MG (float): Modified gravity growth parameter.
         """
         self.H0 = H0
@@ -69,6 +70,13 @@ class CAMBBackground:
 
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args['CAMBparams'])
+
+    @property
+    def _interface_args(self) -> dict:
+        """
+        Save internal structure format of interface codes
+        """
+        return self.interface_args
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
@@ -109,9 +117,7 @@ class CAMBBackground:
         Returns:
             np.ndarray: Transverse comoving distance values.
         """
-        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
-        delta_z = self.comoving_distance(zs)[None, :] - self.comoving_distance(zs)[:, None]
-        x = delta_z * self.H0 / c_0
+        x = self.comoving_distance(zs)
 
         if self.Omega_k0 == 0.0:
             y = x
@@ -120,7 +126,7 @@ class CAMBBackground:
         else:
             y = np.sin(np.sqrt(-self.Omega_k0) * x) / np.sqrt(-self.Omega_k0)
 
-        return y * (c_0 / self.H0)
+        return y
 
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -152,13 +158,13 @@ class CAMBBackground:
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the matter density as a function of redshift.
+        Returns the baryon density as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Matter density values.
+            np.ndarray: Baryonic density values at specified redshifts.
         """
         return (
             self.results.get_Omega("baryon", z=zs)
@@ -228,8 +234,9 @@ class CAMBLinearPerturbations:
         Returns:
             np.ndarray: growth rate.
         """
-
-        return self.results.get_fsigma8()/self.results.get_sigma8()
+        f_z = self.results.get_fsigma8()/self.results.get_sigma8()
+        # Reversing array because camb re-sorts redshifts when power spectrum is computed
+        return f_z[::-1]
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """
@@ -292,16 +299,13 @@ class CAMBNonLinearPerturbations:
         # Compute nonlinear perturbations
         self.results = camb.get_results(self.background.interface_args['CAMBparams'])
 
-        k_values, z_values, pk_values = self.results.get_nonlinear_matter_power_spectrum(
-            hubble_units=False, k_hunit=False
-        )
-        self.k = k_values
-        self.z = z_values
-        self.Pk = pk_values
+        self.k, _, self.Pk = self.results.get_nonlinear_matter_power_spectrum(
+            hubble_units=False, k_hunit=False)
+
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
                               k_hunit=False) -> np.ndarray:
-        r"""Computes the linear matter power spectrum.
+        r"""Computes the nonlinear matter power spectrum.
 
         Parameters
         ----------
@@ -320,14 +324,13 @@ class CAMBNonLinearPerturbations:
         Returns
         -------
         pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
+            Nonlinear matter power spectrum at the specified scale
             and redshift
         """
         pk_values = self.results.get_matter_power_interpolator(
             nonlinear=True, extrap_kmax=self.kmax,
             hubble_units=hubble_units, k_hunit=k_hunit,
             var1='delta_tot', var2='delta_tot').P(zs, ks)
-
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -337,8 +340,9 @@ class CAMBNonLinearPerturbations:
         Returns:
             np.ndarray: growth rate.
         """
-
-        return self.results.get_fsigma8()/self.results.get_sigma8()
+        f_z = self.results.get_fsigma8()/self.results.get_sigma8()
+        # Reversing array because camb re-sorts redshifts when power spectrum is computed
+        return f_z[::-1]
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """

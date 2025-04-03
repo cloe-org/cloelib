@@ -138,9 +138,25 @@ class AngularTwoPoint:
 
         return c_0*Cl_integration(WT1, WT2, Pkl, H, chi2)*dz*prefactor_cell[:, None, None]
 
-    def get_pseudo_Cl(self, nl, ks, mixing_matrix,n_ells_int=50)  -> jax.numpy.ndarray:
+    def get_pseudo_Cl(self, nl, ks, mixing_matrix, n_ells_int=50)  -> jax.numpy.ndarray:
+        """
+        Computes the angular power spectrum Cl using Limber approximation
+        convolved with the mixing matrices.
 
-        ellmax = mixing_matrix[('POS', 'POS', 0, 0)].shape[1]-1
+        Combines the window functions of the tracers, interpolated matter power
+        spectrum, Hubble parameter, and comoving distances to calculate the
+        two-point angular statistics.
+
+        Parameters:
+        - nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
+        - ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+        - ks (numpy.ndarray): Mixing matrices in the euclidlib internal format.
+        - n_ells_int (int): number of multiples to calculate.
+
+        Returns:
+        - jax.numpy.ndarray: Pseudo angular power spectrum Cl for the given multipoles.
+        """
+        ellmax = mixing_matrix[('POS', 'POS', 1, 1)].ell[-1]
         ells_calc = np.geomspace(1,ellmax+1,n_ells_int)
         C_ell_calc = self.get_Cl(ells_calc, nl, ks)
         C_ell_base = interpax.interp1d(np.arange(ellmax + 1),ells_calc,C_ell_calc,extrap=True)
@@ -148,27 +164,27 @@ class AngularTwoPoint:
 
         C_ell_out = {}
         if (type(self.tracer1) == PositionsTracer) and (type(self.tracer2) == PositionsTracer):
-            for i in range(n_bin):
-                for j in range(i,n_bin):
-                    C_ell_out['POS','POS',i,j] = mixing_matrix['POS','POS',i,j] @ C_ell_base[:,i,j]
+            for i in range(1, n_bin+1):
+                for j in range(i, n_bin+1):
+                    C_ell_out[('POS','POS',i,j)] = mixing_matrix[('POS','POS',i,j)].array @ C_ell_base[:,i-1,j-1]
 
         elif (type(self.tracer1) == PositionsTracer) and (type(self.tracer2) == ShearTracer):
-            for i in range(n_bin):
-                for j in range(i,n_bin):
-                    C_ell_out['POS','SHE',i,j] = mixing_matrix['POS','SHE',i,j] @ C_ell_base[:,i,j]
-                    C_ell_out['POS','SHE',j,i] = mixing_matrix['POS','SHE',j,i] @ C_ell_base[:,j,i]
+            for i in range(1, n_bin+1):
+                for j in range(i, n_bin+1):
+                    C_ell_out[('POS','SHE',i,j)] = mixing_matrix[('POS','SHE',i,j)].array @ C_ell_base[:,i-1,j-1]
+                    C_ell_out[('POS','SHE',j,i)] = mixing_matrix[('POS','SHE',j,i)].array @ C_ell_base[:,j-1,i-1]
 
         elif (type(self.tracer1) == ShearTracer) and (type(self.tracer2) == PositionsTracer):
-            for i in range(n_bin):
-                for j in range(i,n_bin):
-                    C_ell_out['POS','SHE',j,i] = mixing_matrix['POS','SHE',j,i] @ C_ell_base[:,i,j]
-                    C_ell_out['POS','SHE',i,j] = mixing_matrix['POS','SHE',i,j] @ C_ell_base[:,j,i]
+            for i in range(1, n_bin+1):
+                for j in range(i, n_bin+1):
+                    C_ell_out[('POS','SHE',j,i)] = mixing_matrix[('POS','SHE',j,i)].array @ C_ell_base[:,i-1,j-1]
+                    C_ell_out[('POS','SHE',i,j)] = mixing_matrix[('POS','SHE',i,j)].array @ C_ell_base[:,j-1,i-1]
 
         elif (type(self.tracer1) == ShearTracer) and (type(self.tracer2) == ShearTracer):
-            for i in range(n_bin):
-                for j in range(i,n_bin):
-                    C_ell_out['SHE','SHE',i,j] = np.stack([
-                        mixing_matrix['SHE','SHE',i,j][:,0,:] @ C_ell_base[:,i,j],
-                        mixing_matrix['SHE','SHE',i,j][:,1,:] @ C_ell_base[:,i,j]
+            for i in range(1, n_bin+1):
+                for j in range(i, n_bin+1):
+                    C_ell_out[('SHE','SHE',i,j)] = np.stack([
+                        mixing_matrix[('SHE','SHE',i,j)].array[0] @ C_ell_base[:,i-1,j-1],
+                        mixing_matrix[('SHE','SHE',i,j)].array[1] @ C_ell_base[:,i-1,j-1]
                             ])
         return C_ell_out

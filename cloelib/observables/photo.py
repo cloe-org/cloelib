@@ -238,7 +238,7 @@ class ShearTracer:
 
 class PositionsTracer:
     def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray,
-                 galaxy_bias_model: str, magnification_bias_model : str, nuisance_params: dict):
+                 galaxy_bias_model: str, nuisance_params: dict):
         r"""
         A class to define the kernel for angular (galaxy) clustering
 
@@ -256,8 +256,6 @@ class PositionsTracer:
             A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
         galaxy_bias_model : str
             A string specifying the model used to describe the galaxy bias
-        magnification_bias_model : str
-            A string specifying the model used to describe the magnification bias
         nuisance_params : dict
             A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
         """
@@ -270,7 +268,7 @@ class PositionsTracer:
         self.prefact_toggle = 0
 
         self.nuisance_params = nuisance_params
-        self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}
+        self.flags = {'galaxy_bias_model': galaxy_bias_model}
 
         self.n_z_bins = dndz.shape[0]
         if self.flags['galaxy_bias_model'] in ['per_bin']:

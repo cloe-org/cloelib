@@ -1,71 +1,83 @@
-# cloelib
+# cloelib – The Library for the Cosmology Likelihood for Observables in Euclid  
 
-## Table of Contents
-- [Introduction](#introduction)
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgements](#acknowledgements)
+🚀 **cloelib** is a flexible and efficient library designed to compute cosmological observables for the **CLOE** (*Cosmology Likelihood for Observables in Euclid*) project. It is built for seamless integration with **Boltzmann solvers** and **JAX-based frameworks**, enabling automatic differentiation and modularity for the next generation of cosmological analyses.  
 
-## Introduction
-Library of models for the CLOE (Cosmology Likelihood for Observables in Euclid) org.  This package is made efficient and user-friendly by transforming it into the Cosmology Library for Observables in Euclid (compatible with classic Boltzmann Solvers and JAX). This is a work in progress, and will benefit from the feedback of the Euclid community (and the whole cosmology community in general).
+🛠️ **Work in Progress** – We welcome feedback from the **Euclid community** and beyond to refine and improve this library!  
 
-## Features
-The main features of `cloelib` are:
-- **User-friendly approach**: plot Euclid-like observables and other products (theoretical predictions for photometric and spectroscopic functions, window tracers, power spectra) in 3 minutes.
-- **Automatic differentiation**: `cloelib` includes a toy-example of how to use autodiff _à la `Jax`_ to allow for gradient computations.
-- **Extra modularity**: the class hierarchy of `cloelib` allows to import your external emulator or Boltzmann solver easily. It realies on python `Protocols` to interface external codes.  
+---
 
-The main structure of `cloelib` is based on:
-- Preparing your Cosmology using **Background & Perturbations** protocols
-- Decide which observables you would like to compute using **Tracer** or **SpectroPower** protocols.
-- Compute final summary statistics like angular power spectra or Legendre Multiples.
+## 📖 Table of Contents  
+- [✨ Features](#-features)  
+- [🚀 Installation](#-installation)  
+- [📊 Usage](#-usage)  
+- [🤝 Contributing](#-contributing)  
+- [📜 License](#-license)  
+- [🙏 Acknowledgements](#-acknowledgements)  
 
-## Installation
-Clone the repository `main` branch and pip install it:
-   ```sh
-   pip install .
-   ```
+---
 
-### Prerequisites
-- `python`, `jax`, `jaxlib`, `interpax`
+## ✨ Features  
 
-### Steps
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/gcanasherrera/cloelib.git
-   ```
-2. Navigate to the project directory:
-   ```sh
-   cd cloelib
-   ```
+🔹 **Intuitive & User-Friendly** – Generate **Euclid-like** observables (e.g., power spectra, window functions, and tracer statistics) in just **3 minutes**!  
 
-## Usage
-Check out the `notebooks` folder to see how to compute observables and other quantities.
+🔹 **Automatic Differentiation** – Includes a **toy-example with `JAX`** for gradient-based computations.  
 
-## Contributing
-If you would like to contribute, read the contribution guidelines and follow the steps below:
+🔹 **Modular & Extensible** –  
+- Easily interface with external **Boltzmann solvers** or **emulators** via **Python `Protocols`** following the cosmology.API.
+- Core structure enables defining **Background & Perturbation** models, choosing observables via **Tracer** or **SpectroPower** protocols, and computing final summary statistics like **angular power spectra** or **Legendre multipoles**.  
 
-1. Open a new issue following the issue template to inform the cloelib maintainers about your contribution plans. Don't forget to tag the cloe-maintainers.
-2. Create a new branch:
+---
+
+## 🚀 Installation  
+
+Clone the repository and install it via `pip`:  
+```sh
+pip install .
+```
+
+### ✅ Prerequisites  
+Ensure you have the following dependencies installed:  
+- `python`  
+- `jax`, `jaxlib`  
+- `interpax`  
+
+---
+
+## 📊 Usage  
+
+Explore the **tutorials** in the `cloe-org/playground` repository for examples on how to compute cosmological observables and other key quantities!  
+
+---
+
+## 🤝 Contributing  
+
+We encourage contributions! Please review the organization's general contribution guidelines along with the specific guidelines for this repository. Then, follow these steps:
+
+1️⃣ Create a new branch:  
    ```sh
    git checkout -b feature/your-feature-name
-   ```
-3. Include your changes according to style guidelines
-4. Commit your changes:
+   ```  
+2️⃣ Implement your changes following project style guidelines.  
+3️⃣ Commit your modifications:  
    ```sh
-   git commit -m 'Add some feature'
-   ```
-4. Push to the branch:
+   git commit -m "Add feature: [brief description]"  
+   ```  
+4️⃣ Push your branch:  
    ```sh
-   git push origin feature/your-feature-name
-   ```
-5. Open a pull request
+   git push origin feature/your-feature-name  
+   ```  
+5️⃣ Open a **pull request** and contribute to the project!  
 
-## License
-This project is licensed under the GLG License - see the [LICENSE](LICENSE) file for details.
+---
 
-## Acknowledgements
-- This project relies on previous work by the Euclid Consortium and the `jaxcosmo` project.
+## 📜 License  
+
+This project is licensed under the **GLG License** – see the [LICENSE](LICENSE) file for details.  
+
+---
+
+## 🙏 Acknowledgements  
+
+🔭 Inspired by the pioneering work of the **Euclid Consortium** and the **`jaxcosmo`** project.  
+
+🎯 **Join us in shaping the future of cosmological inference!** 🚀  

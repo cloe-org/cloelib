@@ -201,6 +201,24 @@ class JAXBackground:
         """
         return np.array([(self.Omega_m0) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
+    def w_a(self, a):
+        return self.w0 + (1.0 - a) * self.wa  # Equation (6) in Linder (2003)
+
+    def f_de(self, a):
+        return -3.0 * (1.0 + self.w0 + self.wa) * np.log(a) + 3.0 * self.wa * (a - 1.0)
+
+    def Esqr(self, a):
+        OmDE = 1. - self.Omega_m0 - self.background.Omega_k0
+        return (self.Omega_m0 * np.power(a, -3) + self.Omega_k0 * np.power(a, -2)
+                + OmDE * np.exp(self.f_de(a)))
+
+    def Omega_m_a(self, a):
+        return self.Omega_m0 * np.power(a, -3) / self.Esqr(a)
+
+    def Omega_de_a(self, a):
+        OmDE = 1. - self.Omega_m0 - self.Omega_k0
+        return OmDE * np.exp(self.f_de(a)) / self.Esqr(a)
+
 class JAXLinearPerturbations:
     def __init__(self, background: Background, redshifts: np.ndarray) -> None:
         """
@@ -213,28 +231,10 @@ class JAXLinearPerturbations:
         self.background = background
         self.z = redshifts
 
-    def w_a(self, a):
-        return self.background.w0 + (1.0 - a) * self.background.wa  # Equation (6) in Linder (2003)
-
-    def f_de(self, a):
-        return -3.0 * (1.0 + self.background.w0 + self.background.wa) * np.log(a) + 3.0 * self.background.wa * (a - 1.0)
-
-    def Esqr(self, a):
-        OmDE = 1. - self.background.Omega_m0 - self.background.Omega_k0
-        return (self.background.Omega_m0 * np.power(a, -3) + self.background.Omega_k0 * np.power(a, -2)
-                + OmDE * np.exp(self.f_de(a)))
-
-    def Omega_m_a(self, a):
-        return self.background.Omega_m0 * np.power(a, -3) / self.Esqr(a)
-
-    def Omega_de_a(self, a):
-        OmDE = 1. - self.background.Omega_m0 - self.background.Omega_k0
-        return OmDE * np.exp(self.f_de(a)) / self.Esqr(a)
-
     def D_derivs(self, y, x):
-            q = (2.0 - 0.5* ( self.Omega_m_a(x) + (1.0 + 3.0 * self.w_a(x)) *
-                             self.Omega_de_a(x))) / x
-            r = 1.5 * self.Omega_m_a(x) / x / x
+            q = (2.0 - 0.5* ( self.background.Omega_m_a(x) + (1.0 + 3.0 * self.background.w_a(x)) *
+                             self.background.Omega_de_a(x))) / x
+            r = 1.5 * self.background.Omega_m_a(x) / x / x
             return np.array([y[1], -q * y[1] + r * y[0]])
 
     def growth_factor(self, zs):
@@ -571,9 +571,9 @@ class JAXNonLinearPerturbations(Perturbations):
         # Compute non linear scale, effective spectral index and curvature
         k_nl, n, C = self._halofit_parameters(zs)
 
-        om_m = self.linearperturbations.Omega_m_a(a_s)
-        om_de = self.linearperturbations.Omega_de_a(a_s)
-        w = self.linearperturbations.w_a(a_s)
+        om_m = self.linearperturbations.background.Omega_m_a(a_s)
+        om_de = self.linearperturbations.background.Omega_de_a(a_s)
+        w = self.linearperturbations.background.w_a(a_s)
         frac = om_de / (1.0 - om_m)
 
         a_n = 10 ** (

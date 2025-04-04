@@ -21,6 +21,7 @@ interpax = "^0.3.2"
 [tool.poetry.extras]
 camb = ["camb"]
 hmcode2020emu = ["HMcode2020Emu"]
+comet-emu = ["comet-emu"]
 
 [tool.poetry.dependencies.HMcode2020Emu]
 git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"

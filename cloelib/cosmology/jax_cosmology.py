@@ -211,23 +211,23 @@ class JAXLinearPerturbations:
         self.z = redshifts
 
     def w_a(self, a):
-        return self.background.w + (1.0 - a) * self.background.wa  # Equation (6) in Linder (2003)
+        return self.background.w0 + (1.0 - a) * self.background.wa  # Equation (6) in Linder (2003)
 
     def f_de(self, a):
-        return -3.0 * (1.0 + self.background.w + self.background.wa) * np.log(a) + 3.0 * self.background.wa * (a - 1.0)
+        return -3.0 * (1.0 + self.background.w0 + self.background.wa) * np.log(a) + 3.0 * self.background.wa * (a - 1.0)
 
     def Esqr(self, a):
-        Omm = self.background.Omb + self.background.Omc
-        OmDE = 1. - Omm - self.background.Omk
-        return (Omm * np.power(a, -3) + self.background.Omk * np.power(a, -2)
+        Omm = self.background.Omega_b0 + self.background.Omega_cdm0
+        OmDE = 1. - Omm - self.background.Omega_k0
+        return (Omm * np.power(a, -3) + self.background.Omega_k0 * np.power(a, -2)
                 + OmDE * np.exp(self.f_de(a)))
 
     def Omega_m_a(self, a):
-        Omm = self.background.Omb + self.background.Omc
+        Omm = self.background.Omega_b0 + self.background.Omega_cdm0 + self.background.mnu/(93.14*(self.H0/100)**2)
         return Omm * np.power(a, -3) / self.Esqr(a)
 
     def Omega_de_a(self, a):
-        OmDE = 1. - self.background.Omb - self.background.Omc - self.background.Omk
+        OmDE = 1. - self.background.Omega_b0 - self.background.Omega_cdm0 - self.background.mnu/(93.14*(self.H0/100)**2) - self.background.Omega_k0
         return OmDE * np.exp(self.f_de(a)) / self.Esqr(a)
 
     def D_derivs(self, y, x):
@@ -308,10 +308,10 @@ class JAXLinearPerturbations:
         T_2_7_sqr = (2.726 / 2.7) ** 2
         h2 = (self.background.H0/100) ** 2
 
-        w_m = (self.background.Omc + self.background.Omb) * h2
-        w_b = self.background.Omb * h2
-        fb = self.background.Omb / (self.background.Omc + self.background.Omb)
-        fc = self.background.Omc / (self.background.Omc + self.background.Omb)
+        w_m = (self.background.Omega_b0 + self.background.Omega_cdm0 + self.background.mnu/(93.14*(self.H0/100)**2)) * h2
+        w_b = self.background.Omega_b0 * h2
+        fb = self.background.Omega_b0 / (self.background.Omega_b0 + self.background.Omega_cdm0 + self.background.mnu/(93.14*(self.H0/100)**2))
+        fc = (self.background.Omega_cdm0+self.background.mnu/(93.14*(self.H0/100)**2)) / (self.background.Omega_b0 + self.background.Omega_cdm0 + self.background.mnu/(93.14*(self.H0/100)**2))
 
         k_eq = 7.46e-2 * w_m / T_2_7_sqr / (self.background.H0/100)  # Eq. (3) [h/Mpc]
         z_eq = 2.50e4 * w_m / (T_2_7_sqr) ** 2  # Eq. (2)
@@ -350,9 +350,9 @@ class JAXLinearPerturbations:
         alpha_gamma = (
             1.0
             - 0.328 * np.log(431.0 * w_m) * w_b / w_m
-            + 0.38 * np.log(22.3 * w_m) * (self.background.Omb/ (self.background.Omc + self.background.Omb)) ** 2
+            + 0.38 * np.log(22.3 * w_m) * (self.background.Omega_b0/ (self.background.Omega_cdm0 + self.background.Omega_b0 + self.background.mnu/(93.14*(self.H0/100)**2))) ** 2
         )
-        gamma_eff = ((self.background.Omc + self.background.Omb)
+        gamma_eff = ((self.background.Omega_cdm0 + self.background.Omega_b0 + self.background.mnu/(93.14*(self.H0/100)**2))
             * (self.background.H0/100)
             * (alpha_gamma + (1.0 - alpha_gamma) / (1.0 + (0.43 * ks * sh_d) ** 4))
         )
@@ -460,7 +460,7 @@ class JAXLinearPerturbations:
         y = simps(int_sigma, np.log10(kmin), np.log10(kmax), N = 256)
         return 1.0 / (2.0 * np.pi**2.0) * y
 
-    def matter_power_spectrum(self, zs, ks, **kwargs):
+    def matter_power_spectrum(self, zs, ks):
         r"""Computes the linear matter power spectrum.
 
         Parameters

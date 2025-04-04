@@ -501,7 +501,6 @@ class JAXNonLinearPerturbations(Perturbations):
 
         """
         self.linearperturbations = linearperturbations
-        self.background = linearperturbations.background
 
     def _halofit_parameters(self, zs):
         r"""Computes the non linear scale,
@@ -647,7 +646,7 @@ class JAXNonLinearPerturbations(Perturbations):
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):
         Pk = jax.vmap(self.nonlinear_matter_power_spectrum,
                       in_axes = (0, None))(ks, zs)
-        chi = self.background.comoving_distance(zs)
+        chi = self.linearperturbations.background.comoving_distance(zs)
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
         return Pkl

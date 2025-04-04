@@ -66,7 +66,7 @@ class JAXBackground:
         self.interface_args['JAXparams']['Omega_cdm'] = self.Omega_cdm0
         self.interface_args['JAXparams']['Omega_k'] = self.Omega_k0
         self.interface_args['JAXparams']['Omega_m0'] = self.Omega_m0
-        self.interface_args['JAXparams']['Omega_mnu0'] = self.Omega_mnu0
+        self.interface_args['JAXparams']['Omega_nu0'] = self.Omega_nu0
         self.interface_args['JAXparams']['n_s'] = self.ns
         self.interface_args['JAXparams']['m_ncdm'] = self.mnu
         self.interface_args['JAXparams']['A_s'] = self.As

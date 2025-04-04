@@ -566,7 +566,7 @@ class JAXNonLinearPerturbations(Perturbations):
         a_s = a_z(zs)
 
         # Compute the linear power spectrum
-        pklin = self.linearperturbations.linear_matter_power_spectrum(ks, zs)
+        pklin = self.linearperturbations.matter_power_spectrum(zs, ks)
 
         # Compute non linear scale, effective spectral index and curvature
         k_nl, n, C = self._halofit_parameters(zs)
@@ -637,7 +637,7 @@ class JAXNonLinearPerturbations(Perturbations):
         pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
         return pk_nl.squeeze()
 
-    def nonlinear_matter_power_spectrum(self, ks, zs):
+    def matter_power_spectrum(self, ks, zs):
         """Computes the non-linear matter power spectrum.
 
         This function is just a wrapper over several nonlinear power spectra.

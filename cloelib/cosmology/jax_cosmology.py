@@ -52,8 +52,10 @@ class JAXBackground:
         self.wa = wa
         self.gamma_MG = gamma_MG
         self.mnu = mnu
-        self.sigma_8 = As_to_sigma8_max_precision(self.As, self.Omega_b0+self.Omega_cdm0+
-                                                  self.mnu/(93.14*(self.H0/100)**2),
+        self.Omega_nu0 = self.mnu/(93.14*(self.h)**2)#this is a semplification, we are assuming
+        #neutrinos are non relativistic
+        self.Omega_m0 = self.Omega_b0+self.Omega_cdm0+self.Omega_nu0
+        self.sigma_8 = As_to_sigma8_max_precision(self.As, self.Omega_m0,
                                                   self.Omega_b0, self.h, self.ns, 0.,
                                                   self.w0, self.wa)
 
@@ -63,12 +65,14 @@ class JAXBackground:
         self.interface_args['JAXparams']['Omega_b'] = self.Omega_b0
         self.interface_args['JAXparams']['Omega_cdm'] = self.Omega_cdm0
         self.interface_args['JAXparams']['Omega_k'] = self.Omega_k0
+        self.interface_args['JAXparams']['Omega_m0'] = self.Omega_m0
+        self.interface_args['JAXparams']['Omega_mnu0'] = self.Omega_mnu0
         self.interface_args['JAXparams']['n_s'] = self.ns
         self.interface_args['JAXparams']['m_ncdm'] = self.mnu
         self.interface_args['JAXparams']['A_s'] = self.As
         self.interface_args['JAXparams']['w0_fld'] = self.w0 # or w0
         self.interface_args['JAXparams']['wa_fld'] = self.wa # or wa
-        self.interface_args['JAXparams']['sigma_8'] = self.wa # or wa
+        self.interface_args['JAXparams']['sigma_8'] = self.sigma_8 # or wa
 
     @property
     def _interface_args(self) -> dict:
@@ -195,8 +199,7 @@ class JAXBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        Omega_nu0 = self.mnu/(93.14*(self.H0/100)**2)
-        return np.array([(self.Omega_b0+self.Omega_cdm0+Omega_nu0) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
+        return np.array([(self.Omega_m0) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
 class JAXLinearPerturbations:
     def __init__(self, background: Background, redshifts: np.ndarray) -> None:
@@ -217,17 +220,15 @@ class JAXLinearPerturbations:
         return -3.0 * (1.0 + self.background.w0 + self.background.wa) * np.log(a) + 3.0 * self.background.wa * (a - 1.0)
 
     def Esqr(self, a):
-        Omm = self.background.Omega_b0 + self.background.Omega_cdm0
-        OmDE = 1. - Omm - self.background.Omega_k0
-        return (Omm * np.power(a, -3) + self.background.Omega_k0 * np.power(a, -2)
+        OmDE = 1. - self.background.Omega_m0 - self.background.Omega_k0
+        return (self.background.Omega_m0 * np.power(a, -3) + self.background.Omega_k0 * np.power(a, -2)
                 + OmDE * np.exp(self.f_de(a)))
 
     def Omega_m_a(self, a):
-        Omm = self.background.Omega_b0 + self.background.Omega_cdm0 + self.background.mnu/(93.14*(self.H0/100)**2)
-        return Omm * np.power(a, -3) / self.Esqr(a)
+        return self.background.Omega_m0 * np.power(a, -3) / self.Esqr(a)
 
     def Omega_de_a(self, a):
-        OmDE = 1. - self.background.Omega_b0 - self.background.Omega_cdm0 - self.background.mnu/(93.14*(self.H0/100)**2) - self.background.Omega_k0
+        OmDE = 1. - self.background.Omega_m0 - self.background.Omega_k0
         return OmDE * np.exp(self.f_de(a)) / self.Esqr(a)
 
     def D_derivs(self, y, x):
@@ -308,12 +309,12 @@ class JAXLinearPerturbations:
         T_2_7_sqr = (2.726 / 2.7) ** 2
         h2 = (self.background.H0/100) ** 2
 
-        w_m = (self.background.Omega_b0 + self.background.Omega_cdm0 + self.background.mnu/(93.14*(self.H0/100)**2)) * h2
+        w_m = (self.background.Omega_m0) * h2
         w_b = self.background.Omega_b0 * h2
-        fb = self.background.Omega_b0 / (self.background.Omega_b0 + self.background.Omega_cdm0 + self.background.mnu/(93.14*(self.H0/100)**2))
-        fc = (self.background.Omega_cdm0+self.background.mnu/(93.14*(self.H0/100)**2)) / (self.background.Omega_b0 + self.background.Omega_cdm0 + self.background.mnu/(93.14*(self.H0/100)**2))
+        fb = self.background.Omega_b0 / (self.background.Omega_m0)
+        fc = (self.background.Omega_cdm0+self.background.Omega_nu0) / (self.background.Omega_m0)
 
-        k_eq = 7.46e-2 * w_m / T_2_7_sqr / (self.background.H0/100)  # Eq. (3) [h/Mpc]
+        k_eq = 7.46e-2 * w_m / T_2_7_sqr / (self.background.h)  # Eq. (3) [h/Mpc]
         z_eq = 2.50e4 * w_m / (T_2_7_sqr) ** 2  # Eq. (2)
 
         # z drag from Eq. (4)
@@ -343,7 +344,7 @@ class JAXLinearPerturbations:
             * np.power(w_b, 0.52)
             * np.power(w_m, 0.73)
             * (1.0 + np.power(10.4 * w_m, -0.95))
-            / (self.background.H0/100)
+            / (self.background.h)
         )
         #############################################
 
@@ -352,8 +353,7 @@ class JAXLinearPerturbations:
             - 0.328 * np.log(431.0 * w_m) * w_b / w_m
             + 0.38 * np.log(22.3 * w_m) * (self.background.Omega_b0/ (self.background.Omega_cdm0 + self.background.Omega_b0 + self.background.mnu/(93.14*(self.H0/100)**2))) ** 2
         )
-        gamma_eff = ((self.background.Omega_cdm0 + self.background.Omega_b0 + self.background.mnu/(93.14*(self.H0/100)**2))
-            * (self.background.H0/100)
+        gamma_eff = ((self.background.Omega_m0) * (self.background.h)
             * (alpha_gamma + (1.0 - alpha_gamma) / (1.0 + (0.43 * ks * sh_d) ** 4))
         )
 

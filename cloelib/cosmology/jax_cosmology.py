@@ -52,6 +52,10 @@ class JAXBackground:
         self.wa = wa
         self.gamma_MG = gamma_MG
         self.mnu = mnu
+        self.sigma_8 = As_to_sigma8_max_precision(self.As, self.Omega_b0+self.Omega_cdm0+
+                                                  self.mnu/(93.14*(self.H0/100)**2),
+                                                  self.Omega_b0, self.h, self.ns, 0.,
+                                                  self.w0, self.wa)
 
         # Initialize JaxBgk parameters
         self.interface_args = {'JAXparams': {}}  # Use a dictionary for CLASS parameters
@@ -64,6 +68,7 @@ class JAXBackground:
         self.interface_args['JAXparams']['A_s'] = self.As
         self.interface_args['JAXparams']['w0_fld'] = self.w0 # or w0
         self.interface_args['JAXparams']['wa_fld'] = self.wa # or wa
+        self.interface_args['JAXparams']['sigma_8'] = self.wa # or wa
 
     @property
     def _interface_args(self) -> dict:
@@ -193,14 +198,17 @@ class JAXBackground:
         Omega_nu0 = self.mnu/(93.14*(self.H0/100)**2)
         return np.array([(self.Omega_b0+self.Omega_cdm0+Omega_nu0) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
-class JAXLinearPerturbations(Perturbations):
-    def __init__(self, background : Background):
-        r"""
-        A class to define perturbations cosmology using JAX
-        and inheriting from Cosmology parent class
+class JAXLinearPerturbations:
+    def __init__(self, background: Background, redshifts: np.ndarray) -> None:
+        """
+        Initializes the JAXLinearPerturbations class with a background instance.
 
+        Args:
+            background (Background): A Background instance.
+            redshifts (np.ndarray): Array of redshifts for the calculations.
         """
         self.background = background
+        self.z = redshifts
 
     def w_a(self, a):
         return self.background.w + (1.0 - a) * self.background.wa  # Equation (6) in Linder (2003)
@@ -449,23 +457,19 @@ class JAXLinearPerturbations(Perturbations):
             pk = self.transfer_Eisenstein_Hu(k) ** 2 * self.primordial_matter_power(k)
             return k * (k * w) ** 2 * pk
 
-        #y = romb(int_sigma, np.log10(kmin), np.log10(kmax), divmax=7)
         y = simps(int_sigma, np.log10(kmin), np.log10(kmax), N = 256)
         return 1.0 / (2.0 * np.pi**2.0) * y
 
-    def linear_matter_power_spectrum(self, ks, zs, **kwargs):
+    def matter_power_spectrum(self, zs, ks, **kwargs):
         r"""Computes the linear matter power spectrum.
 
         Parameters
         ----------
-        k: array_like
-            Wave number in h Mpc^{-1}
-
         zs: array_like, optional
             Redshifts
 
-        transfer_fn: transfer_fn(cosmo, k, **kwargs)
-            Transfer function
+        k: array_like
+            Wave number in h Mpc^{-1}
 
         Returns
         -------
@@ -851,3 +855,51 @@ def Pkl_interp(k_l, z_l, ks, zs, Pk):
                                  method="cubic")
 
 Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))
+
+#from 2410.14623
+def As_to_sigma8_max_precision(As, Om, Ob, h, ns, mnu, w0, wa):
+    """
+    Compute the emulated conversion As -> sigma8, using the most accurate expression
+
+    Args:
+        :As (float): 10^9 times the amplitude of the primordial P(k)
+        :Om (float): The z=0 total matter density parameter, Om
+        :Ob (float): The z=0 baryonic density parameter, Ob
+        :h (float): Hubble constant, H0, divided by 100 km/s/Mpc
+        :ns (float): Spectral tilt of primordial power spectrum
+        :mnu (float): Sum of neutrino masses [eV / c^2]
+        :w0 (float): Time independent part of the dark energy EoS
+        :wa (float): Time dependent part of the dark energy EoS
+
+    Returns:
+        :sigma8 (float): Root-mean-square density fluctuation when the linearly
+            evolved field is smoothed with a top-hat filter of radius 8 Mpc/h
+    """
+
+    b = np.array([0.0246, 2.1062, 2.9355, 0.7626, 0.2962, 0.5096,
+                4.4025, 3.6495, 0.4144, 0.8615, 0.6188, 0.1751,
+                0.824, 0.5466, 0.5519, 0.3689, 0.3261, 0.2002,
+                0.8892, 0.4462, 1.215, 3.4829, 2.5852, 0.0242,
+                0.0051, 0.1614, 1.2991, 4.1426, 3.3055, 0.5716,
+                6.0094, 1.9569, 2.1477, 1.1902, 0.128, 0.6931,
+                0.2661])
+
+    term1_inner = (Om * b[1] +
+                (b[2] * mnu - b[3] * ns + np.log(b[4] * h - b[5] * mnu)) *
+                (b[6] * h + b[7] * mnu - b[8] * ns + 1))
+    term1 = b[0] * term1_inner
+
+    term2 = b[9] * h - mnu
+
+    term3_inner1 = (b[12] * w0 - b[13] * wa - np.log(Om * b[14])) * \
+                (Om * b[15] + b[16] * w0 + b[17] * wa + np.log(-b[18] * w0 - b[19] * wa))
+    term3_inner2 = np.log(Om * b[20] + np.log(-b[21] * w0 - b[22] * wa))
+    term3 = b[10] * w0 - b[11] * mnu - term3_inner1 - term3_inner2 + np.log(-b[23] * w0 - b[24] * wa)
+
+    term4_inner1 = Ob * b[30] - b[31] * h - np.log(Om * b[32])
+    term4_inner2 = Om * b[33] - b[34] * h - b[35] * mnu - b[36] * ns
+    term4 = b[25] * mnu - np.sqrt(Ob) * b[26] - Ob * b[27] + Om * b[28] - b[29] * h + 1 + term4_inner1 * term4_inner2
+
+    result = term1 * term2 * term3 * term4
+
+    return result*np.sqrt(As)

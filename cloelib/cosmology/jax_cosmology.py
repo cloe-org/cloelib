@@ -208,7 +208,7 @@ class JAXBackground:
         return -3.0 * (1.0 + self.w0 + self.wa) * np.log(a) + 3.0 * self.wa * (a - 1.0)
 
     def Esqr(self, a):
-        OmDE = 1. - self.Omega_m0 - self.background.Omega_k0
+        OmDE = 1. - self.Omega_m0 - self.Omega_k0
         return (self.Omega_m0 * np.power(a, -3) + self.Omega_k0 * np.power(a, -2)
                 + OmDE * np.exp(self.f_de(a)))
 
@@ -351,7 +351,7 @@ class JAXLinearPerturbations:
         alpha_gamma = (
             1.0
             - 0.328 * np.log(431.0 * w_m) * w_b / w_m
-            + 0.38 * np.log(22.3 * w_m) * (self.background.Omega_b0/ (self.background.Omega_cdm0 + self.background.Omega_b0 + self.background.mnu/(93.14*(self.H0/100)**2))) ** 2
+            + 0.38 * np.log(22.3 * w_m) * (self.background.Omega_b0/ (self.background.Omega_cdm0 + self.background.Omega_b0 + self.background.mnu/(93.14*(self.background.H0/100)**2))) ** 2
         )
         gamma_eff = ((self.background.Omega_m0) * (self.background.h)
             * (alpha_gamma + (1.0 - alpha_gamma) / (1.0 + (0.43 * ks * sh_d) ** 4))
@@ -483,7 +483,7 @@ class JAXLinearPerturbations:
         g = self.growth_factor(zs)
         t = self.transfer_Eisenstein_Hu(ks)
 
-        pknorm = self.background.sigma8**2 / self.sigma8sqr()#previously self.sigmasqr(8.0)
+        pknorm = self.background.sigma_8**2 / self.sigma8sqr()#previously self.sigmasqr(8.0)
         # this means we have a 0.01% difference compared to the romberg calculation,
         # but it is much faster
 
@@ -518,7 +518,7 @@ class JAXNonLinearPerturbations(Perturbations):
                 k = np.exp(logk)
                 r = np.exp(logr)
                 y = np.outer(k, r)
-                pk = self.linearperturbations.linear_matter_power_spectrum(k, 0.)
+                pk = self.linearperturbations.matter_power_spectrum(k, 0.)
                 g = self.linearperturbations.growth_factor(np.atleast_1d(zs))
                 return (
                     np.expand_dims(pk * k**3, axis=1)
@@ -541,7 +541,7 @@ class JAXNonLinearPerturbations(Perturbations):
         def integrand(logk):
             k = np.exp(logk)
             y = np.outer(k, 1.0 / k_nl)
-            pk = self.linearperturbations.linear_matter_power_spectrum(k, 0.)
+            pk = self.linearperturbations.matter_power_spectrum(k, 0.)
             g = np.expand_dims(self.linearperturbations.growth_factor(np.atleast_1d(zs)), 0)
             res = (
                 np.expand_dims(pk * k**3, axis=1)
@@ -646,7 +646,7 @@ class JAXNonLinearPerturbations(Perturbations):
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):
         Pk = jax.vmap(self.nonlinear_matter_power_spectrum,
                       in_axes = (0, None))(ks, zs)
-        chi = self.linearperturbations.background.comoving_distance(zs)
+        chi = self.linearperturbations.linearperturbations.background.comoving_distance(zs)
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
         return Pkl

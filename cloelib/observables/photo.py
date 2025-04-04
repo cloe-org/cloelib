@@ -8,6 +8,7 @@ import jax.numpy as np # type: ignore
 from scipy.interpolate import RectBivariateSpline # type: ignore
 import jax # type: ignore
 import interpax # type: ignore
+import jax.lax as lx
 
 
 """
@@ -271,20 +272,30 @@ class PositionsTracer:
         self.flags = {'galaxy_bias_model': galaxy_bias_model}
 
         self.n_z_bins = dndz.shape[0]
-        if self.flags['galaxy_bias_model'] in ['per_bin']:
-            self.bias_array = np.asarray([nuisance_params['b1_photo_bin%d'%bin] for bin in range(self.n_z_bins)])
-        elif self.flags['galaxy_bias_model'] in ['per_bin_int']:
-            self.bias_array = np.asarray([nuisance_params['b1_photo_bin%d'%bin] for bin in range(self.n_z_bins)])
-            self.bias_array = interpax.interp1d(self.z,self.z[np.argmax(dndz,axis=1)],self.bias_array,extrap=True)
-        elif self.flags['galaxy_bias_model'] in ['poly']:
-            poly_order = 3
-            self.bias_array = np.asarray([nuisance_params['b1_photo_poly%d'%bin] for bin in range(poly_order+1)])
-            self.bias_array = self.bias_array[0] + self.bias_array[1] * z + self.bias_array[2] * z ** 2 + + self.bias_array[3] * z ** 3
-        else:
-            raise ValueError('galaxy_bias_model must be selected from the '
-                             'following list: ["per_bin", '
-                             '"per_bin_int", "poly"]')
 
+        # Using dict.get so I can provide a default since lax has to compile every branch of the conditional
+        def per_bin_case():
+            bias_array = np.asarray([nuisance_params.get('b1_photo_bin%d'%bin, 1.0) for bin in range(self.n_z_bins)])
+            # lax required same size for all cases, so padding here and will only use first n_z_bins values later
+            return np.pad(bias_array,(0, self.z.shape[0] - self.n_z_bins))
+
+        def per_bin_int_case():
+            bias_array = np.asarray([nuisance_params.get('b1_photo_bin%d'%bin, 1.0) for bin in range(self.n_z_bins)])
+            index_max_nz = np.argmax(dndz,axis=1)
+            z_nz_max = jax.vmap(lambda i: lx.dynamic_index_in_dim(self.z, i, keepdims=False))(index_max_nz)
+            return interpax.interp1d(self.z, z_nz_max, bias_array, extrap=True)
+
+        def poly_case():
+            poly_order = 3
+            bias_array = np.asarray([nuisance_params.get('b1_photo_poly%d'%bin, 1.0) for bin in range(poly_order+1)])
+            return bias_array[0] + bias_array[1] * z + bias_array[2] * z ** 2 + bias_array[3] * z ** 3
+
+        conditions = np.array([self.flags['galaxy_bias_model'] == 'per_bin',
+                               self.flags['galaxy_bias_model'] == 'per_bin_int',
+                               self.flags['galaxy_bias_model'] == 'poly'])
+        index = np.argwhere(conditions, size=1).squeeze()
+
+        self.bias_array = lx.switch(index, [per_bin_case, per_bin_int_case, poly_case])
 
     def get_window_positions(self, z) -> np.ndarray:
         r"""Galaxy Positions window function
@@ -304,12 +315,30 @@ class PositionsTracer:
         window_positions: numpy.ndarray
            Window function for angular photometric galaxy clustering
         """
-        if self.flags['galaxy_bias_model'] == 'per_bin':
-            window_positions = self.bias_array[:,None] * self.dndz * \
+
+        def per_bin_case():
+            window = self.bias_array[:self.n_z_bins,None] * self.dndz * \
                 self.perturbations.background.hubble_parameter(z) / c_0
-        elif self.flags['galaxy_bias_model'] in ['per_bin_int', 'poly']:
-            window_positions = self.bias_array[None,:] * self.dndz * \
+            return window
+
+        def z_func_case():
+            window = self.bias_array[None,:] * self.dndz * \
                 self.perturbations.background.hubble_parameter(z) / c_0
+            return window
+
+        # if self.flags['galaxy_bias_model'] == 'per_bin':
+        #     window_positions = self.bias_array[:self.n_z_bins,None] * self.dndz * \
+        #         self.perturbations.background.hubble_parameter(z) / c_0
+        # elif self.flags['galaxy_bias_model'] in ['per_bin_int', 'poly']:
+        #     window_positions = self.bias_array[None,:] * self.dndz * \
+        #         self.perturbations.background.hubble_parameter(z) / c_0
+
+        conditions = np.array([self.flags['galaxy_bias_model'] == 'per_bin',
+                               self.flags['galaxy_bias_model'] in ['per_bin_int','poly']
+                               ])
+        index = np.argwhere(conditions, size=1).squeeze()
+
+        window_positions = lx.switch(index, [per_bin_case, z_func_case])
 
         return window_positions
 

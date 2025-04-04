@@ -32,10 +32,11 @@
 
 `cloelib` interfaces with external codes such as:
 
-| Background | Perturbations |  SpectroPower |  
-|-----------------|-------------|
-| [camb](https://camb.readthedocs.io)  | [camb](https://camb.readthedocs.io)  | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html)  |
-| [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public) | `PBJ` (no publicly available)  |
+| Background                                           | Perturbations                                         | SpectroPower                                         |
+|------------------------------------------------------|-------------------------------------------------------|------------------------------------------------------|
+| [camb](https://camb.readthedocs.io)                   | [camb](https://camb.readthedocs.io)                    | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
+| [class](https://github.com/lesgourg/class_public)     | [class](https://github.com/lesgourg/class_public)      | `PBJ` (not publicly available)                       |
+
 
 ---
 

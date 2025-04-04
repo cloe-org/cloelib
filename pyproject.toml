@@ -26,6 +26,10 @@ comet-emu = ["comet-emu"]
 [tool.poetry.dependencies.HMcode2020Emu]
 git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
 
+[tool.poetry.dependencies.comet-emu]
+git = "https://gitlab.com/aegge/comet-emu.git"
+branch = "test_lib"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

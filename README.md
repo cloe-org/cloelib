@@ -93,4 +93,5 @@ This project is licensed under the **GNU LESSER GENERAL PUBLIC LICENSE** – see
 ## 🙏 Acknowledgements  
 
 🔭 Inspired by the pioneering work of the **Euclid Consortium** and the **`jaxcosmo`** project. 
+
 🎯 With technical advice from S. Farrens and N. Tessore.

@@ -326,13 +326,6 @@ class PositionsTracer:
                 self.perturbations.background.hubble_parameter(z) / c_0
             return window
 
-        # if self.flags['galaxy_bias_model'] == 'per_bin':
-        #     window_positions = self.bias_array[:self.n_z_bins,None] * self.dndz * \
-        #         self.perturbations.background.hubble_parameter(z) / c_0
-        # elif self.flags['galaxy_bias_model'] in ['per_bin_int', 'poly']:
-        #     window_positions = self.bias_array[None,:] * self.dndz * \
-        #         self.perturbations.background.hubble_parameter(z) / c_0
-
         conditions = np.array([self.flags['galaxy_bias_model'] == 'per_bin',
                                self.flags['galaxy_bias_model'] in ['per_bin_int','poly']
                                ])

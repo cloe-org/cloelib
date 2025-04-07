@@ -71,6 +71,13 @@ class CAMBBackground:
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args['CAMBparams'])
 
+    @property
+    def _interface_args(self) -> dict:
+        """
+        Save internal structure format of interface codes
+        """
+        return self.interface_args
+
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
         Returns the Hubble parameter as a function of redshift.
@@ -110,9 +117,7 @@ class CAMBBackground:
         Returns:
             np.ndarray: Transverse comoving distance values.
         """
-        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
-        delta_z = self.comoving_distance(zs)[None, :] - self.comoving_distance(zs)[:, None]
-        x = delta_z * self.H0 / c_0
+        x = self.comoving_distance(zs)
 
         if self.Omega_k0 == 0.0:
             y = x
@@ -121,7 +126,7 @@ class CAMBBackground:
         else:
             y = np.sin(np.sqrt(-self.Omega_k0) * x) / np.sqrt(-self.Omega_k0)
 
-        return y * (c_0 / self.H0)
+        return y
 
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -280,7 +285,7 @@ class CAMBNonLinearPerturbations:
         """
 
         self.background = background
-        self.kmax = 100
+        self.kmax = 500
         self.z = redshifts
 
         # Configure CAMB parameters for nonlinear calculations
@@ -293,7 +298,7 @@ class CAMBNonLinearPerturbations:
 
         # Compute nonlinear perturbations
         self.results = camb.get_results(self.background.interface_args['CAMBparams'])
-        
+
         self.k, _, self.Pk = self.results.get_nonlinear_matter_power_spectrum(
             hubble_units=False, k_hunit=False)
 
@@ -322,8 +327,7 @@ class CAMBNonLinearPerturbations:
             Nonlinear matter power spectrum at the specified scale
             and redshift
         """
-        pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args['CAMBparams'],
+        pk_values = self.results.get_matter_power_interpolator(
             nonlinear=True, extrap_kmax=self.kmax,
             hubble_units=hubble_units, k_hunit=k_hunit,
             var1='delta_tot', var2='delta_tot').P(zs, ks)
@@ -365,7 +369,4 @@ class CAMBNonLinearPerturbations:
         """
         D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
                         self.matter_power_spectrum(0.0, ks))
-        D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
-                        self.matter_power_spectrum(0.0, ks))
-
         return D_z_k

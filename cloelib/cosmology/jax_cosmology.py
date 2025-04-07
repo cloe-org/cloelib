@@ -487,7 +487,7 @@ class JAXLinearPerturbations:
         # this means we have a 0.01% difference compared to the romberg calculation,
         # but it is much faster
 
-        pk =  np.outer(self.primordial_matter_power(ks) * t**2,  g**2)
+        pk =  np.outer(g**2, self.primordial_matter_power(ks) * t**2)
 
         # Apply normalisation
         pk = pk * pknorm
@@ -901,4 +901,4 @@ def As_to_sigma8_max_precision(As, Om, Ob, h, ns, mnu, w0, wa):
 
     result = term1 * term2 * term3 * term4
 
-    return result*np.sqrt(As)
+    return result*np.sqrt(As*10**9)

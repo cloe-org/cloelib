@@ -16,7 +16,7 @@ readme = "README.md"
 python = "^3.8"
 interpax = "0.3.3"
 jax = "0.4.30"
-numpy = "2.2.4"
+numpy = "^2.0"
 quadax = "0.2.7"
 scipy = "1.15.2"
 

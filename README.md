@@ -31,7 +31,7 @@
 
 ## 📂 Supported external codes
 
-`cloelib` interfaces with external codes such as:
+`cloelib` interfaces with the following external codes, each used by a specific internal module for its calculations:
 
 | Background                                           | Perturbations                                         | SpectroPower                                         |
 |------------------------------------------------------|-------------------------------------------------------|------------------------------------------------------|

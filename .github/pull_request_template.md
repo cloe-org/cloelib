@@ -33,6 +33,7 @@ Follow-ups #IssueNumber
 ---
 
 ### ✅ PR Checklist for Developers
+- [ ] I have titled this PR before merging as "gh-#:", where "#" represents the task it closes
 - [ ] My code follows the repository's coding style
 - [ ] I have tested my changes locally
 - [ ] No new warnings or errors introduced

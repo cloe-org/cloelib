@@ -70,13 +70,6 @@ class CAMBBackground:
 
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args['CAMBparams'])
-    
-    @property
-    def _interface_args(self) -> dict:
-        """
-        Save internal structure format of interface codes
-        """
-        return self.interface_args
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
@@ -117,7 +110,9 @@ class CAMBBackground:
         Returns:
             np.ndarray: Transverse comoving distance values.
         """
-        x = self.comoving_distance(zs)
+        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
+        delta_z = self.comoving_distance(zs)[None, :] - self.comoving_distance(zs)[:, None]
+        x = delta_z * self.H0 / c_0
 
         if self.Omega_k0 == 0.0:
             y = x
@@ -126,7 +121,7 @@ class CAMBBackground:
         else:
             y = np.sin(np.sqrt(-self.Omega_k0) * x) / np.sqrt(-self.Omega_k0)
 
-        return y
+        return y * (c_0 / self.H0)
 
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """

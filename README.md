@@ -54,7 +54,7 @@ You can also install (some) supported dependencies:
 pip install .[camb,hmcode2020emu,comet-emu]
 ```
 
-We do not provide installation support for `PBJ` and `CLASS`. For instructions on installing these packages, please refer to the [`playground`](https://github.com/cloe-org/playground) repository.
+**Note:** We do not offer installation support for `PBJ` and `CLASS`. For installation instructions, please refer to the official documentation of each package.
 
 ---
 
@@ -94,5 +94,5 @@ This project is licensed under the **GNU LESSER GENERAL PUBLIC LICENSE** – see
 ## 🙏 Acknowledgements  
 
 🔭 Inspired by the pioneering work of the **Euclid Consortium** and the **`jaxcosmo`** project. 
-
+👩‍💻🧑‍💻 Authored by M. Bonici, G. Cañas-Herrera, P. Carrilho, C. Moretti, and A. Pezzotta (listed in alphabetical order).
 🎯 With technical advice from S. Farrens and N. Tessore.

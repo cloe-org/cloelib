@@ -32,9 +32,6 @@ git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
 git = "https://gitlab.com/aegge/comet-emu.git"
 branch = "test_lib"
 
-[tool.poetry.dependencies.HMcode2020Emu]
-git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

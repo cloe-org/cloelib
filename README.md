@@ -97,6 +97,6 @@ This project is licensed under the **GNU LESSER GENERAL PUBLIC LICENSE** – see
 
 🔭 Inspired by the pioneering work of the **Euclid Consortium** and the **`jaxcosmo`** project. 
 
-👩‍💻🧑‍💻 Authored by M. Bonici, G. Cañas-Herrera, P. Carrilho, C. Moretti, and A. Pezzotta (listed in alphabetical order).
+👩‍💻🧑‍💻 Authored by M. Bonici, G. Cañas-Herrera, P. Carrilho, S. Casas, C. Moretti, and A. Pezzotta (listed in alphabetical order).
 
 🎯 With technical advice from S. Farrens and N. Tessore.

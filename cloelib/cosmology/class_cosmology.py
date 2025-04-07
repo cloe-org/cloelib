@@ -118,8 +118,7 @@ class CLASSBackground:
         Returns:
             np.ndarray: Transverse comoving distance values.
         """
-        delta_z = self.comoving_distance(zs)[None, :] - self.comoving_distance(zs)[:, None]
-        x = delta_z * self.H0 / CLASSBackground.c0
+        x = self.comoving_distance(zs)
 
         if self.Omega_k0 == 0.0:
             y = x
@@ -128,7 +127,7 @@ class CLASSBackground:
         else:
             y = np.sin(np.sqrt(-self.Omega_k0) * x) / np.sqrt(-self.Omega_k0)
 
-        return y * (c_0 / self.H0)
+        return y 
 
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """

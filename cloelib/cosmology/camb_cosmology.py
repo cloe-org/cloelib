@@ -70,7 +70,7 @@ class CAMBBackground:
 
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args['CAMBparams'])
-    
+
     @property
     def _interface_args(self) -> dict:
         """
@@ -285,7 +285,7 @@ class CAMBNonLinearPerturbations:
         """
 
         self.background = background
-        self.kmax = 100
+        self.kmax = 500
         self.z = redshifts
 
         # Configure CAMB parameters for nonlinear calculations
@@ -298,7 +298,7 @@ class CAMBNonLinearPerturbations:
 
         # Compute nonlinear perturbations
         self.results = camb.get_results(self.background.interface_args['CAMBparams'])
-        
+
         self.k, _, self.Pk = self.results.get_nonlinear_matter_power_spectrum(
             hubble_units=False, k_hunit=False)
 
@@ -327,8 +327,7 @@ class CAMBNonLinearPerturbations:
             Nonlinear matter power spectrum at the specified scale
             and redshift
         """
-        pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args['CAMBparams'],
+        pk_values = self.results.get_matter_power_interpolator(
             nonlinear=True, extrap_kmax=self.kmax,
             hubble_units=hubble_units, k_hunit=k_hunit,
             var1='delta_tot', var2='delta_tot').P(zs, ks)
@@ -368,8 +367,6 @@ class CAMBNonLinearPerturbations:
         np.ndarray
             The growth factor at the specified redshift and wavenumber.
         """
-        D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
-                        self.matter_power_spectrum(0.0, ks))
         D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
                         self.matter_power_spectrum(0.0, ks))
 

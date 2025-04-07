@@ -140,7 +140,7 @@ class AngularTwoPoint:
 
     def get_pseudo_Cl(self, nl, ks, mixing_matrix, n_ells_int=50)  -> jax.numpy.ndarray:
         """
-        Computes the angular power spectrum Cl using Limber approximation 
+        Computes the angular power spectrum Cl using Limber approximation
         convolved with the mixing matrices.
 
         Combines the window functions of the tracers, interpolated matter power

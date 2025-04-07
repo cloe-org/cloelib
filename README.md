@@ -8,7 +8,7 @@
 
 ## 📖 Table of Contents  
 - [✨ Features](#-features)  
-- [📂 Supported external codes](#-Supported_external_codes) 
+- [📂 Supported external codes](#-supported-external-codes) 
 - [🚀 Installation](#-installation)  
 - [📊 Usage](#-usage)  
 - [🤝 Contributing](#-contributing)  

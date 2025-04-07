@@ -8,6 +8,7 @@
 
 ## 📖 Table of Contents  
 - [✨ Features](#-features)  
+- [📂 Supported external codes](#-supported-external-codes) 
 - [🚀 Installation](#-installation)  
 - [📊 Usage](#-usage)  
 - [🤝 Contributing](#-contributing)  
@@ -28,18 +29,34 @@
 
 ---
 
+## 📂 Supported external codes
+
+`cloelib` interfaces with the following external codes, each used by a specific internal module for its calculations:
+
+| Background                                           | Perturbations                                         | SpectroPower                                         |
+|------------------------------------------------------|-------------------------------------------------------|------------------------------------------------------|
+| [camb](https://camb.readthedocs.io)                   | [camb](https://camb.readthedocs.io)                    | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
+| [class](https://github.com/lesgourg/class_public)     | [class](https://github.com/lesgourg/class_public)      | `PBJ` (not publicly available)                       |
+| NA    | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)       | NA                       |
+
+We do not provide installation support for `PBJ` and `class`.
+
+---
+
 ## 🚀 Installation  
 
-Clone the repository and install it via `pip`:  
+To install `cloelib` source code, clone the repository and install it via `pip`:  
 ```sh
 pip install .
 ```
 
-### ✅ Prerequisites  
-Ensure you have the following dependencies installed:  
-- `python`  
-- `jax`, `jaxlib`  
-- `interpax`  
+You can also install (some) supported dependencies:
+
+```sh
+pip install .[camb,hmcode2020emu,comet-emu]
+```
+
+**Note:** We do not offer installation support for `PBJ` and `CLASS`. For installation instructions, please refer to the official documentation of each package.
 
 ---
 
@@ -51,7 +68,7 @@ Explore the **tutorials** in the `cloe-org/playground` repository for examples o
 
 ## 🤝 Contributing  
 
-We encourage contributions! Please review the organization's general contribution guidelines along with the specific guidelines for this repository. Then, follow these steps:
+Please review the organization's general contribution guidelines and the specific guidelines for this repository in the [CONTRIBUTING.md](CONTRIBUTING.md) file. Once you're familiar with the guidelines, follow these steps:
 
 1️⃣ Create a new branch:  
    ```sh
@@ -72,12 +89,14 @@ We encourage contributions! Please review the organization's general contributio
 
 ## 📜 License  
 
-This project is licensed under the **GLG License** – see the [LICENSE](LICENSE) file for details.  
+This project is licensed under the **GNU LESSER GENERAL PUBLIC LICENSE** – see the [LICENSE](LICENSE) file for details.  
 
 ---
 
 ## 🙏 Acknowledgements  
 
-🔭 Inspired by the pioneering work of the **Euclid Consortium** and the **`jaxcosmo`** project.  
+🔭 Inspired by the pioneering work of the **Euclid Consortium** and the **`jaxcosmo`** project. 
 
-🎯 **Join us in shaping the future of cosmological inference!** 🚀  
+👩‍💻🧑‍💻 Authored by M. Bonici, G. Cañas-Herrera, P. Carrilho, C. Moretti, and A. Pezzotta (listed in alphabetical order).
+
+🎯 With technical advice from S. Farrens and N. Tessore.

@@ -518,7 +518,7 @@ class JAXNonLinearPerturbations(Perturbations):
                 k = np.exp(logk)
                 r = np.exp(logr)
                 y = np.outer(k, r)
-                pk = self.linearperturbations.matter_power_spectrum(k, 0.)
+                pk = self.linearperturbations.matter_power_spectrum(0., k)
                 g = self.linearperturbations.growth_factor(np.atleast_1d(zs))
                 return (
                     np.expand_dims(pk * k**3, axis=1)
@@ -541,7 +541,7 @@ class JAXNonLinearPerturbations(Perturbations):
         def integrand(logk):
             k = np.exp(logk)
             y = np.outer(k, 1.0 / k_nl)
-            pk = self.linearperturbations.matter_power_spectrum(k, 0.)
+            pk = self.linearperturbations.matter_power_spectrum(0., k)
             g = np.expand_dims(self.linearperturbations.growth_factor(np.atleast_1d(zs)), 0)
             res = (
                 np.expand_dims(pk * k**3, axis=1)
@@ -557,10 +557,9 @@ class JAXNonLinearPerturbations(Perturbations):
 
         n_eff = res[0] - 3.0
         C = res[0] ** 2 + res[1]
-
         return k_nl, n_eff, C
 
-    def halofit(self, ks, zs):
+    def halofit(self, zs, ks):
         zs = np.atleast_1d(zs)
         a_s = a_z(zs)
 
@@ -636,12 +635,13 @@ class JAXNonLinearPerturbations(Perturbations):
         pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
         return pk_nl.squeeze()
 
-    def matter_power_spectrum(self, ks, zs):
+    def matter_power_spectrum(self, zs, ks):
         """Computes the non-linear matter power spectrum.
 
         This function is just a wrapper over several nonlinear power spectra.
         """
-        return self.halofit(ks, zs)
+        #return self.halofit(ks, zs)
+        return jax.vmap(self.halofit, in_axes = (0, None))(zs, ks)
 
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):
         Pk = jax.vmap(self.nonlinear_matter_power_spectrum,

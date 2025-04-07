@@ -53,7 +53,7 @@ You can also install (some) supported dependencies:
 pip install .[camb,hmcode2020emu,comet-emu]
 ```
 
-We do not provide installation support for `PBJ` and `CLASS`.
+We do not provide installation support for `PBJ` and `CLASS`. For instructions on installing these packages, please refer to the [`playground`](https://github.com/cloe-org/playground) repository.
 
 ---
 

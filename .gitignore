@@ -1,1 +1,62 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
 *.pyc
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Poetry specific
+poetry.lock
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+
+# Testing
+.tox/
+.nox/
+.coverage
+htmlcov/
+coverage.xml
+pytest_cache/
+
+# MyPy
+.mypy_cache/
+
+# Caches
+.cache/
+pip-wheel-metadata/
+__pypackages__/
+
+# Editor & OS-specific files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local environment variables
+.env
+*.secrets
+
+# Compiled Cython files
+*.c
+*.so
+*.pyd
+
+# JAX & NumPy cache
+jax_cache/

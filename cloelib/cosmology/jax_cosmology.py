@@ -460,7 +460,7 @@ class JAXLinearPerturbations:
         y = simps(int_sigma, np.log10(kmin), np.log10(kmax), N = 256)
         return 1.0 / (2.0 * np.pi**2.0) * y
 
-    def matter_power_spectrum(self, zs, ks):
+    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False):
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -478,7 +478,19 @@ class JAXLinearPerturbations:
             and scale factor.
 
         """
+        h = self.background.h
+
+        def k_units_case(k):
+            return k/h
+
+        def kh_units_case(k):
+            return k
+
+        conditions = np.array([k_hunit==False, k_hunit==True])
+        index = np.argwhere(conditions, size=1).squeeze()
+
         ks = np.atleast_1d(ks)
+        ks = lx.switch(index, [k_units_case, kh_units_case], ks)
         zs = np.atleast_1d(zs)
         g = self.growth_factor(zs)
         t = self.transfer_Eisenstein_Hu(ks)
@@ -489,8 +501,19 @@ class JAXLinearPerturbations:
 
         pk =  np.outer(g**2, self.primordial_matter_power(ks) * t**2)
 
+        def hMpc_units_case(h):
+            return h*h*h
+
+        def Mpc_units_case(h):
+            return 1.
+
+        conditions = np.array([hubble_units==False, hubble_units==True])
+        index = np.argwhere(conditions, size=1).squeeze()
+
+        factor = lx.switch(index, [hMpc_units_case, Mpc_units_case], h)
+
         # Apply normalisation
-        pk = pk * pknorm
+        pk = pk * pknorm/factor
         return pk.squeeze()
 
 class JAXNonLinearPerturbations(Perturbations):
@@ -559,12 +582,12 @@ class JAXNonLinearPerturbations(Perturbations):
         C = res[0] ** 2 + res[1]
         return k_nl, n_eff, C
 
-    def halofit(self, zs, ks):
+    def halofit(self, zs, ks, hubble_units=False, k_hunit=False):
         zs = np.atleast_1d(zs)
         a_s = a_z(zs)
 
         # Compute the linear power spectrum
-        pklin = self.linearperturbations.matter_power_spectrum(zs, ks)
+        pklin = self.linearperturbations.matter_power_spectrum(zs, ks, hubble_units, k_hunit)
 
         # Compute non linear scale, effective spectral index and curvature
         k_nl, n, C = self._halofit_parameters(zs)
@@ -635,13 +658,12 @@ class JAXNonLinearPerturbations(Perturbations):
         pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
         return pk_nl.squeeze()
 
-    def matter_power_spectrum(self, zs, ks):
+    def matter_power_spectrum(self, zs, ks, hubble_units=False, k_hunit=False):
         """Computes the non-linear matter power spectrum.
 
         This function is just a wrapper over several nonlinear power spectra.
         """
-        #return self.halofit(ks, zs)
-        return jax.vmap(self.halofit, in_axes = (0, None))(zs, ks)
+        return jax.vmap(self.halofit, in_axes = (0, None, None, None))(zs, ks, hubble_units, k_hunit)
 
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):
         Pk = jax.vmap(self.nonlinear_matter_power_spectrum,

@@ -18,7 +18,7 @@ interpax = "0.3.3"
 jax = "0.4.30"
 numpy = "^2.0"
 quadax = "0.2.7"
-scipy = "^1.14"
+scipy = "<1.14"
 
 [tool.poetry.extras]
 camb = ["camb"]

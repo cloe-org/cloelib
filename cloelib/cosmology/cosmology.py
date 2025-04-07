@@ -1,5 +1,5 @@
 # General imports
-from typing import Protocol, Union, TypeVar
+from typing import Protocol, Union, TypeVar, runtime_checkable
 
 import numpy as np  # type: ignore
 import jax.numpy as jnp
@@ -16,7 +16,7 @@ import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
-
+@runtime_checkable
 class Background(Protocol):
 
     @property
@@ -48,9 +48,9 @@ class Background(Protocol):
         ...
 
     @property
-    def Omega_nu0(self) -> float:
+    def mnu(self) -> float:
         """
-        Omega neutrino; the neutrino density/critical density at z=0.
+        Total neutrino mass in eV.
         """
         ...
 
@@ -139,6 +139,7 @@ class Background(Protocol):
         """
         ...
 
+@runtime_checkable
 class Perturbations(Protocol):
 
     @property

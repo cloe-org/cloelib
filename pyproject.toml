@@ -32,11 +32,6 @@ git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
 git = "https://gitlab.com/aegge/comet-emu.git"
 branch = "test_lib"
 
-[tool.poetry.extras]
-camb = ["camb"]
-hmcode2020emu = ["HMcode2020Emu"]
-comet-emu = ["comet-emu"]
-
 [tool.poetry.dependencies.HMcode2020Emu]
 git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
 

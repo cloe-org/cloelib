@@ -52,91 +52,6 @@ class ShearTracer:
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 1
 
-    def _get_prefactor(self, ell):
-        return 0
-
-    @jax.jit
-    def _window_integrand(self, z, n_z):
-        r"""Window integrand.
-
-        Calculates generic integrand for windows such as
-        lensing or magnification bias kernels
-
-        .. math::
-            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm A}(z^{\prime})
-            \frac{f_{K}\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}
-            }
-
-        This method is private. Not recommended to call directly, but possible
-
-        Args:
-            zprime: float or numpy.ndarray
-                Redshift parameter that will be integrated over
-            z: float
-                Redshift at which kernel is being evaluated
-            n_z: numpy.ndarray
-                Redshift bin distribution
-
-        Returns:
-            window_integrand: np.ndarray
-        """
-
-        chi = self.background.comoving_distance(z)
-        weights = np.ones(len(chi))
-
-        mat_jax = jax.vmap(get_simpsons_weights_jit, in_axes=(0,))
-
-
-        for i, redshift in enumerate(z):
-            np.einsum('ij, j, j, jz -> iz', n_z, 1 - chi[i]/chi, mat_jax)
-
-        return
-
-    def get_window_shear(self, z):
-        r"""Weak Lensing shear kernel.
-
-        Calculates the weak lensing shear kernel for a given tomographic bin
-        distribution.
-        Uses broadcasting to compute a 2D-array of integrands and then applies
-        :obj:`np.trapz` on the array along one axis.
-
-        .. math::
-            W_{i}^{\gamma}(\ell, z, k) =
-            \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
-            \Omega_{{\rm m},0} (1 + z) \Sigma(z, k)
-            f_K\left[\tilde{r}(z)\right]
-            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
-            \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
-
-        Parameters
-        ----------
-        z: numpy.ndarray of float
-            Redshift at which weight is evaluated.
-        bin_i: int
-            Index of desired tomographic bin.
-            Tomographic bin indices start from 1
-        k: float
-            Wavenumber at which to evaluate the Modified Gravity
-            :math:`\Sigma(z,k)` function
-
-        Returns
-        -------
-        Shear kernel: numpy.ndarray
-            1-D Numpy array of shear kernel values for specified bin
-            at specified scale for the redshifts defined in z
-        """
-
-        win_int = self._window_integrand(z, self.dndz)
-
-        W_val = (1.5 * self.background.H0 *
-                 (self.background.Omega_b0 + self.background.Omega_cdm0) * \
-                 (1.0 + z) * self.background.comoving_distance(z) *
-                  ( c_0/ self.background.H0)) * win_int
-
-        return W_val
-
     def get_window_IA(self, z):
         r"""Window integrand.
 
@@ -151,13 +66,14 @@ class ShearTracer:
         -------
         window_IA: np.ndarray
         """
+        Omega_m0 = self.background.Omega_m(0.0)
         Hz = self.perturbations.background.hubble_parameter(z)
         Dz = self.perturbations.growth_factor(self.perturbations.z, self.perturbations.k)[:,1]
         #TODO discuss whether we want growth factor to output a 1D or a 2D array
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]
         Eta_IA = self.nuisance_params["EtaIA"]
-        factor = -Hz/c_0*A_IA*C_IA*(self.background.Omega_b0 + self.background.Omega_cdm0)*(1+z)**Eta_IA/Dz
+        factor = -Hz/c_0*A_IA*C_IA*Omega_m0*(1+z)**Eta_IA/Dz
         return np.einsum('ij, j->ij', self.dndz, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
@@ -200,7 +116,41 @@ class ShearTracer:
         return np.einsum('ij, j->ij', efficiency, factor)
 
     def get_lensing_window(self, z):
-        factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omega_b0 + self.background.Omega_cdm0)\
+        r"""Weak Lensing shear kernel.
+
+        Calculates the weak lensing shear kernel for a given tomographic bin
+        distribution.
+        Uses broadcasting to compute a 2D-array of integrands and then applies
+        :obj:`np.trapz` on the array along one axis.
+
+        .. math::
+            W_{i}^{\gamma}(\ell, z, k) =
+            \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
+            \Omega_{{\rm m},0} (1 + z) \Sigma(z, k)
+            f_K\left[\tilde{r}(z)\right]
+            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
+            \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
+            {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
+
+        Parameters
+        ----------
+        z: numpy.ndarray of float
+            Redshift at which weight is evaluated.
+        bin_i: int
+            Index of desired tomographic bin.
+            Tomographic bin indices start from 1
+        k: float
+            Wavenumber at which to evaluate the Modified Gravity
+            :math:`\Sigma(z,k)` function
+
+        Returns
+        -------
+        Shear kernel: numpy.ndarray
+            1-D Numpy array of shear kernel values for specified bin
+            at specified scale for the redshifts defined in z
+        """
+        Omega_m0 = self.background.Omega_m(0.0)
+        factor = 3/2*(self.background.H0/c_0)**2*Omega_m0\
         *(1+z)*self.background.comoving_distance(z)
         efficiency = self.get_lensing_efficiency(z)
         return np.einsum('ij, j->ij', efficiency, factor)

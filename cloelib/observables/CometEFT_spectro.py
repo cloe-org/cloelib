@@ -44,6 +44,7 @@ class CometEFT_SpectroPower:
         self.parameters = {}
         self.parameters['wc'] = self.background.Omega_cdm0 * self.background.h**2
         self.parameters['wb'] = self.background.Omega_b0 * self.background.h**2
+        self.parameters['Mnu'] = self.background.mnu
         self.parameters['ns'] = self.background.ns
         self.parameters['h'] = self.background.h
         self.parameters['As'] = self.background.As * 1e9
@@ -67,10 +68,11 @@ class CometEFT_SpectroPower:
         Pk2d_rsd: np.ndarray
             2D power spectrum from couplings of density and velocity fields
         """
-        return comet_inst.Pk2d(k=k, mu=mu, params=self.parameters,
-                               de_model='w0wa')
+        return np.squeeze(
+            comet_inst.P2d_nostoch(k=k[:, :, np.newaxis], mu=mu[:, np.newaxis],
+                                   params=self.parameters, de_model='w0wa'))
 
-    def Pk2d_X_rsd(self, k: np.ndarray, mu: np.ndarray, X: str) -> np.ndarray:
+    def Pk2d_X_rsd(self, k: np.ndarray, mu: np.ndarray, X_list: str) -> np.ndarray:
         r"""2D power spectrum for the specific diagram X of the loop expansion
         Parameters
         ----------
@@ -85,5 +87,7 @@ class CometEFT_SpectroPower:
         PX2d_rsd: np.ndarray
             2D power spectrum of term X
         """
-        return comet_inst.PX2d(k=k, mu=mu, params=self.parameters, X=X,
-                               de_model='w0wa')
+        Pk2d = comet_inst.PX_2d(k=k[:, :, np.newaxis], mu=mu[:, np.newaxis],
+                                params=self.parameters, X_list=X_list,
+                                de_model='w0wa')
+        return np.squeeze(Pk2d)

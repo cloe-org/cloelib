@@ -93,7 +93,7 @@ class CometVDG_SpectroPower:
         Winfty = self._Winfty(k=k, mu=mu)
         return Pk2d * Winfty
 
-    def Pk2d_X_rsd(self, k: np.ndarray, mu: np.ndarray, X_list: str) -> np.ndarray:
+    def Pk2d_X_rsd(self, k: np.ndarray, mu: np.ndarray, X_list: list) -> np.ndarray:
         r"""2D power spectrum for the specific diagram X of the loop expansion
         Parameters
         ----------
@@ -101,8 +101,8 @@ class CometVDG_SpectroPower:
             Wavenumber
         mu: np.ndarray
             Angle (cosinus) to the line of sight
-        X: str
-            Identifier of loop diagram
+        X: list
+            Identifiers of loop diagrams
         Returns
         -------
         PX2d_rsd: np.ndarray

@@ -55,6 +55,16 @@ class CometEFT_SpectroPower:
 
         self.redshift = redshift
 
+        self.diagram_naming_relation = {
+            'b1-b1': ['P0L_b1b1', 'P1L_b1b1'],
+            'b1-b2': 'P1L_b1b2', 'b1-bG2': 'P1L_b1g2', 'b1-bGam3': 'P1L_b1g21',
+            'b2-b2': 'P1L_b2b2', 'b2-bG2': 'P1L_b2g2', 'bG2-bG2': 'P1L_g2g2',
+            'b1': 'PNL_b1', 'b2': 'P1L_b2', 'bG2': 'P1L_g2', 'bGam3': 'P1L_g21',
+            'v-v': 'PNL_id',
+            'c0': 'Pctr_c0', 'c2': 'Pctr_c2', 'c4': 'Pctr_c4',
+            'b1-b1-cnlo': 'Pctr_b1b1cnlo', 'b1-cnlo': 'Pctr_b1cnlo', 'cnlo': 'Pctr_cnlo'
+        }
+
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields
         Parameters
@@ -87,7 +97,19 @@ class CometEFT_SpectroPower:
         PX2d_rsd: np.ndarray
             2D power spectrum of term X
         """
-        Pk2d = comet_inst.PX_2d(k=k[:, :, np.newaxis], mu=mu[:, np.newaxis],
-                                params=self.parameters, X_list=X_list,
-                                de_model='w0wa')
-        return np.squeeze(Pk2d)
+        X_list_expanded, index_map = [], {}
+        for key in X_list:
+            vals = self.diagram_naming_relation[key]
+            vals = vals if isinstance(vals, list) else [vals]
+            index_map[key] = list(range(len(X_list_expanded),
+                                  len(X_list_expanded) + len(vals)))
+            X_list_expanded.extend(vals)
+        Pk2d_expanded = np.squeeze(
+            comet_inst.PX_2d(k=k[:, :, np.newaxis], mu=mu[:, np.newaxis],
+                             params=self.parameters, X_list=X_list_expanded,
+                             de_model='w0wa'), axis=-1)
+        Pk2d = np.array(
+            [np.sum(Pk2d_expanded[indices], axis=0)
+             if len(indices) > 1 else Pk2d_expanded[indices[0]]
+             for key, indices in index_map.items()])
+        return Pk2d

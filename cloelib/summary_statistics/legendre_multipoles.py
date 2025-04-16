@@ -50,7 +50,6 @@ class LegendreMultipoles:
         self.parameters = parameters
         self.nbar = nbar
 
-
     def _q_AP_tr(self, zs: np.ndarray) -> np.ndarray:
         r"""AP distortion parameter transversal to the line of sight
         .. math::
@@ -169,9 +168,55 @@ class LegendreMultipoles:
         Pk2d_noise: np.ndarray
             2D power spectrum from expansion of stochastic field
         """
-        noise = self.parameters['NP0'] + k**2 * (self.parameters['NP20'] +
-                                                 self.parameters['NP22'] *
-                                                 legendre(2, mu))
+        noise = (self.parameters['NP0'] * self._Pk2d_noise_k0(k)
+                 + self.parameters['NP20'] * self._Pk2d_noise_k0(k)
+                 + self.parameters['NP22'] * self._Pk2d_noise_k2mu2(k, mu))
+        return noise
+
+    def _Pk2d_noise_k0(self, k: np.ndarray) -> np.ndarray:
+        r"""Leading-order term from 2d power spectrum of stochastic field
+        Parameters
+        ----------
+        k: np.ndarray
+            Wavenumber
+        Returns
+        -------
+        noise: np.ndarray
+            2D power spectrum from expansion of stochastic field
+        """
+        noise = np.full_like(k, 1.0)
+        return noise / self.nbar
+
+    def _Pk2d_noise_k2(self, k: np.ndarray) -> np.ndarray:
+        r"""Isotropic next-to-leading-order term from 2d power spectrum of
+        stochastic field
+        Parameters
+        ----------
+        k: np.ndarray
+            Wavenumber
+        Returns
+        -------
+        noise: np.ndarray
+            2D power spectrum from expansion of stochastic field
+        """
+        noise = k**2
+        return noise / self.nbar
+
+    def _Pk2d_noise_k2mu2(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
+        r"""Anisotropic next-to-leading-order term from 2d power spectrum of
+        stochastic field
+        Parameters
+        ----------
+        k: np.ndarray
+            Wavenumber
+        mu: np.ndarray
+            Angle (cosinus) to the line of sight
+        Returns
+        -------
+        noise: np.ndarray
+            2D power spectrum from expansion of stochastic field
+        """
+        noise = k**2 * legendre(2, mu)
         return noise / self.nbar
 
     def _Pk2d_tot(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
@@ -225,6 +270,50 @@ class LegendreMultipoles:
                                                            use_AP=use_AP)) *
                                 legendre(ell, self.mu_grid),
                                 self.mu_grid, axis=1)
+            multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
+        return multipoles
+
+    def power_X_multipoles(self, k: np.ndarray, X_list: list,
+                           ells: Optional[np.ndarray] = None,
+                           use_AP: Optional[bool] = True) -> dict:
+        r"""Power spectrum Legendre multipoles
+        Parameters
+        ----------
+        k: np.ndarray
+            Wavenumber
+        ells: np.ndarray
+            Legendre multipole order
+        use_AP: bool
+            Flag to switch between with and without AP corrections
+        Returns
+        -------
+        multipoles: dict
+            Power spectrum Legendre multipoles
+        """
+        ells = self._ensure_array(ells) if ells is not None else np.array([0,2,4])
+        AP_factor = (self._q_AP_tr(self.redshift)**2 *
+                     self._q_AP_lo(self.redshift) if use_AP else 1.0)
+        prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / \
+            AP_factor
+        Pk2d = np.empty((len(X_list), len(k), len(self.mu_grid)))
+        rsd_ids = [id for id, term in enumerate(X_list) if 'noise' not in term]
+        kAP = self._k_AP(k, self.mu_grid, self.redshift, use_AP=use_AP)
+        muAP = self._mu_AP(self.mu_grid, self.redshift, use_AP=use_AP)
+        Pk2d[rsd_ids] = self.spectro_power.Pk2d_X_rsd(
+            kAP, muAP, X_list=[X_list[id] for id in rsd_ids])
+        noise_ids = [id for id in range(len(X_list)) if id not in rsd_ids]
+        noise_func = {'noise_k0': self._Pk2d_noise_k0,
+                      'noise_k2': self._Pk2d_noise_k2,
+                      'noise_k2mu2': self._Pk2d_noise_k2mu2}
+        if noise_ids:
+            Pk2d[noise_ids] = np.array([
+                noise_func[X_list[id]](kAP, muAP) if X_list[id]=='noise_k2mu2'
+                else noise_func[X_list[id]](kAP) for id in noise_ids])
+        multipoles = {}
+        for i,ell in enumerate(ells):
+            multipoles[f'ell{ell}'] = \
+                integrate.simps(Pk2d * legendre(ell, self.mu_grid),
+                                self.mu_grid, axis=-1)
             multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
         return multipoles
 

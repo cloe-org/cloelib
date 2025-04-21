@@ -51,6 +51,8 @@ class ShearTracer:
         self.nuisance_params = nuisance_params
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 1
+        # Set multiplicative bias (m_bias)
+        self.m_bias = [self.nuisance_params[f'multiplicative_bias_{i+1}'] for i in range(self.dndz.shape[0])]
 
     def get_window_IA(self, z):
         r"""Window integrand.
@@ -78,13 +80,9 @@ class ShearTracer:
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
         interpolator = interpax.Akima1DInterpolator(self.z, self.dndz[bin_idx,:])
-        #horrible quick fix
-        #to make it right, we need the triangular matrix of simpson weight for the
-        #lensing efficiency. This will also significantly improve performance!
         x = np.linspace(0., 4, 200)
         y = self.background.comoving_distance(x)
         rx_interp = interpax.Akima1DInterpolator(x, y)
-        #f1 = lambda x, y: interpolator(x)*(1-tracer_she.background.comoving_distance(y)/tracer_she.background.comoving_distance(x))
         f1 = jax.jit(lambda x: interpolator(x))
         f2 = jax.jit(lambda x: interpolator(x)/rx_interp(x))
         integral_1 =  simps(f1, z, 3.)
@@ -97,12 +95,11 @@ class ShearTracer:
         efficiency = self.get_lensing_efficiency_bin(z, 0)
         for i in np.arange(1,n_bins):
             efficiency = np.vstack([efficiency, self.get_lensing_efficiency_bin(z, i)])
-
         return efficiency
 
     def get_lensing_efficiency(self, z):
         dndz = self.dndz
-        dz = z[1]-z[0]#assuming equispaced!
+        dz = z[1]-z[0] # assuming equispaced!
         rz = self.background.comoving_distance(z)
         rzrz = 1 - np.outer(rz,1/rz)
         w_matrix = cached_stacked_simpson(len(z))
@@ -185,7 +182,10 @@ class ShearTracer:
         -------
         window: np.ndarray
         """
-        return self.get_lensing_window(z) + self.get_window_IA(z)
+        total_window = self.get_lensing_window(z) + self.get_window_IA(z)
+        # Apply multiplicative bias
+        total_window *= (1 + np.array(self.m_bias)[:, None])
+        return total_window
 
 class PositionsTracer:
     def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray,

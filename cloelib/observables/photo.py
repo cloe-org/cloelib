@@ -1,7 +1,8 @@
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.auxiliary.math_utils import cached_stacked_simpson
+from cloelib.auxiliary.math_utils import cached_stacked_simpson, simps
+from cloelib.auxiliary.systematics import shift_dndz_jax
 
 # General imports
 import jax.numpy as np # type: ignore
@@ -15,8 +16,8 @@ import jax.lax as lx
 
 ## Notes:
 
-- Make sufficiently general to interface with CAMB keeping the structure by Cosmology
-- Make Tracer a protocol
+- Define a class for each observable tracer type: shear and galaxy positions
+- Both classes are compatible with the Tracer protocol
 
 """
 
@@ -46,13 +47,17 @@ class ShearTracer:
             raise ValueError("One of the z array elements is equal to zero, breaking Limber integration.")
         self.perturbations = perturbations
         self.background = self.perturbations.background
-        self.dndz = dndz
         self.z = z
         self.nuisance_params = nuisance_params
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 1
         # Set multiplicative bias (m_bias)
-        self.m_bias = [self.nuisance_params[f'multiplicative_bias_{i+1}'] for i in range(self.dndz.shape[0])]
+        self.m_bias = [self.nuisance_params[f'multiplicative_bias_{i+1}'] for i in range(dndz.shape[0])]
+        self.dz_shear_i = [self.nuisance_params[f'dz_shear_{i+1}'] for i in range(dndz.shape[0])]
+        self.n_z_bins = dndz.shape[0]
+        self.dndz = dndz
+        # Correct dndz for dz_shear
+        self.dndz_shifted = shift_dndz_jax(dndz, z, self.dz_shear_i)
 
     def get_window_IA(self, z):
         r"""Window integrand.
@@ -90,14 +95,32 @@ class ShearTracer:
         efficiency = integral_1 - integral_2*self.background.comoving_distance(z)
         return efficiency
 
-    def get_lensing_efficiency_check(self, z):
-        n_bins = self.dndz.shape[0]
-        efficiency = self.get_lensing_efficiency_bin(z, 0)
-        for i in np.arange(1,n_bins):
-            efficiency = np.vstack([efficiency, self.get_lensing_efficiency_bin(z, i)])
-        return efficiency
-
     def get_lensing_efficiency(self, z):
+        r"""
+        Compute the lensing efficiency kernel for each redshift bin.
+
+        This function calculates the geometric lensing kernel W(χ), which weights the contribution
+        of matter at different redshifts to the weak lensing signal, for a given redshift grid `z`.
+
+        Parameters
+        ----------
+        z : np.ndarray
+            1D array of redshift values (must be evenly spaced). Used to compute comoving distances
+            and define integration domain.
+
+        Returns
+        -------
+        np.ndarray
+            2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z) 
+            for each redshift bin over the evaluation grid.
+
+        Notes
+        -----
+        - Assumes `z` is evenly spaced; spacing is inferred as `z[1] - z[0]`.
+        - Uses a precomputed Simpson rule weight matrix (`cached_stacked_simpson`) for integration.
+        - `self.dndz` is expected to have shape (N_bins, len(z)) and be normalized.
+        - Efficiency is evaluated using `np.einsum`.
+        """
         dndz = self.dndz
         dz = z[1]-z[0] # assuming equispaced!
         rz = self.background.comoving_distance(z)
@@ -105,12 +128,6 @@ class ShearTracer:
         w_matrix = cached_stacked_simpson(len(z))
         result = np.einsum('ik, jk, jk->ij', dndz, rzrz, w_matrix)*dz
         return result
-
-    def get_lensing_window_check(self, z):
-        factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omega_b0 + self.background.Omega_cdm0)\
-        *(1+z)*self.background.comoving_distance(z)
-        efficiency = self.get_lensing_efficiency_check(z)
-        return np.einsum('ij, j->ij', efficiency, factor)
 
     def get_lensing_window(self, z):
         r"""Weak Lensing shear kernel.
@@ -151,22 +168,6 @@ class ShearTracer:
         *(1+z)*self.background.comoving_distance(z)
         efficiency = self.get_lensing_efficiency(z)
         return np.einsum('ij, j->ij', efficiency, factor)
-
-    def get_window_check(self, z):
-        r"""Window
-
-        Computes general window given the selected tracer
-
-        Parameters
-        ----------
-        z: float
-            Redshift at which window kernel is being evaluated
-
-        Returns
-        -------
-        window: np.ndarray
-        """
-        return self.get_lensing_window_check(z) + self.get_window_IA(z)
 
     def get_window(self, z):
         r"""Window
@@ -213,14 +214,16 @@ class PositionsTracer:
         if 0. in z:
             raise ValueError("One of the z array elements is equal to zero, breaking Limber integration.")
         self.perturbations = perturbations
-        self.dndz = dndz
         self.z = z
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 0
 
         self.nuisance_params = nuisance_params
+        self.dz_pos_i = [self.nuisance_params[f'dz_pos_{i+1}'] for i in range(dndz.shape[0])]
+        self.dndz = dndz
+        # Correct dndz for dz_pos
+        self.dndz_shifted = shift_dndz_jax(dndz, z, self.dz_pos_i)
         self.flags = {'galaxy_bias_model': galaxy_bias_model}
-
         self.n_z_bins = dndz.shape[0]
 
         # Using dict.get so I can provide a default since lax has to compile every branch of the conditional
@@ -300,13 +303,3 @@ class PositionsTracer:
         """
         # add more contributions below
         return self.get_window_positions(z)
-
-
-def simps(f, a, b, N=128):
-    if N % 2 == 1:
-        raise ValueError("N must be an even integer.")
-    dx = (b - a) / N
-    x = np.linspace(a, b, N + 1)
-    y = f(x)
-    S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
-    return S

@@ -1,0 +1,18 @@
+## 🚀 `cloelib` Release: TAG VERSION
+
+This release introduces new features and smoother workflows for working with Euclid's large-scale structure (LSS) observables.
+
+### ✨ What's New
+- 🌌 **Stable Euclid LSS Plots:** Effortlessly visualize key observables like weak lensing and galaxy clustering.
+- 🐍 **Pythonic Protocols:** Intuitive class structure for `Background`, `Perturbations`, `Tracers`, and `SummaryStatistics` makes model-building and integration easier.
+- 🔧 **Seamless Integration:** Compatible with CAMB, CLASS, emulators, and spectro codes (PBJ & Comet) for smooth handling of all cosmological ingredients.
+- 📊 **Photometric Data Ready:** Native support for `euclidlib` v2025.1 — including redshift binning, mixing matrices, and power spectrum input.
+- 📈 **Comprehensive Systematics:** Full-shape modeling for spectroscopic clustering; photometric angular spectra include intrinsic alignment and linear bias effects.
+- 🧩 **Playground Ready:** Plug into the [cloe-org playground](https://github.com/cloe-org/playground) to experiment and learn.
+- ⚡️ **JAX Support:** Includes JAX-native calculation of photometric observables and a toy model using `jax_cosmo`.
+
+### 🛠️ Bug Fixes
+- 🔧 gh-132: Fix merge issue with class  
+  _by @santiagocasas in [#131](https://github.com/cloe-org/cloelib/pull/131)_
+
+### 📄 Full Changelog  

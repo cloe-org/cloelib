@@ -27,7 +27,7 @@ def d_0_0_ell(beta, ell):
     base_case_0 = np.ones_like(beta)
     base_case_1 = np.cos(beta)
     
-    def body_fn(l, vals):
+    def recurrence_fn(l, vals):
         prev, prev2 = vals
         new_val = ((2 * l - 1) / (l) * base_case_1 * prev - ((l - 1) / (l)) * prev2)
 
@@ -35,7 +35,7 @@ def d_0_0_ell(beta, ell):
     
     return np.where(ell == 0, base_case_0, 
                      np.where(ell == 1, base_case_1, 
-                               jax.lax.fori_loop(2, ell + 1, body_fn, (base_case_1, base_case_0))[0]))
+                               jax.lax.fori_loop(2, ell + 1, recurrence_fn, (base_case_1, base_case_0))[0]))
 
 @jit
 def d_2_2_ell(beta, ell):
@@ -227,8 +227,6 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         WARNING: Currently assumes B-modes are zero, as they are not passed on from AngularTwoPoint
 
         Args:
-            ells (jax.numpy.ndarray): Multipole moments.
-            ks (jax.numpy.ndarray): Wavenumber grid.
             theta (jax.numpy.ndarray): Angles in radians.
 
         Returns:

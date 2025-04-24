@@ -1,12 +1,13 @@
 import jax.numpy as np
 import jax
+from jax import jit
+
 from jax.scipy.special import gammaln
 
 from cloelib.observables.photo import ShearTracer, PositionsTracer
+from .angular_correlation_function import AngularCorrelationFunction
 
-import jax
-import jax.numpy as np
-from jax import jit, grad, lax
+
 
 
 """ Wigner Ds in the following are based on https://arxiv.org/pdf/1702.05301 """
@@ -25,8 +26,6 @@ def d_0_0_ell(beta, ell):
     return np.where(ell == 0, base_case_0, 
                      np.where(ell == 1, base_case_1, 
                                jax.lax.fori_loop(2, ell + 1, body_fn, (base_case_1, base_case_0))[0]))
-
-
 
 @jit
 def d_2_2_ell(beta, ell):
@@ -158,7 +157,6 @@ def d_2_0_ell(beta, ell):
         )
     )
 
-
 # Vectorize over `ell` and beta
 
 d_0_0_vmap = jax.vmap(jax.vmap(d_0_0_ell, (None, 0)), (0, None))
@@ -167,7 +165,7 @@ d_2_m2_vmap = jax.vmap(jax.vmap(d_2_m2_ell, (None, 0)), (0, None))
 
 d_2_0_vmap = jax.vmap(jax.vmap(d_2_0_ell, (None, 0)), (0, None))
 
-class CorrelationFunction:
+class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
     def __init__(self, angular_two_point):
         """
         Initializes CorrelationFunction with an AngularTwoPoint instance.

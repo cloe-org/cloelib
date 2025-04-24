@@ -2,16 +2,26 @@ import jax.numpy as np
 import jax
 from jax import jit
 
-from jax.scipy.special import gammaln
+#from jax.scipy.special import gammaln
 
-from cloelib.observables.photo import ShearTracer, PositionsTracer
+from cloelib.observables.photo import ShearTracer #, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction
 
+"""
+Angular correlation function implementation using Wigner small-d matrices.
+
+This module provides `AngularCorrelationFunctionWigner`, a class that computes
+two-point angular correlation functions xi(theta) from angular power spectra Cl,
+using spherical harmonic transforms involving Wigner d-matrices.
+
+The Wigner d-matrices follow the recurrence relations from:
+https://arxiv.org/pdf/1702.05301
+"""
 
 
-
-""" Wigner Ds in the following are based on https://arxiv.org/pdf/1702.05301 """
-
+# -----------------------------------------------------------------------------------
+# Wigner d-matrix recurrence relations
+# -----------------------------------------------------------------------------------
 @jit
 def d_0_0_ell(beta, ell):
     base_case_0 = np.ones_like(beta)
@@ -157,7 +167,9 @@ def d_2_0_ell(beta, ell):
         )
     )
 
-# Vectorize over `ell` and beta
+# -----------------------------------------------------------------------------------
+# Vectorized versions of Wigner d-matrix functions
+# -----------------------------------------------------------------------------------
 
 d_0_0_vmap = jax.vmap(jax.vmap(d_0_0_ell, (None, 0)), (0, None))
 d_2_2_vmap = jax.vmap(jax.vmap(d_2_2_ell, (None, 0)), (0, None))
@@ -165,8 +177,29 @@ d_2_m2_vmap = jax.vmap(jax.vmap(d_2_m2_ell, (None, 0)), (0, None))
 
 d_2_0_vmap = jax.vmap(jax.vmap(d_2_0_ell, (None, 0)), (0, None))
 
+
+# -----------------------------------------------------------------------------------
+# Angular correlation function using Wigner d-matrices
+# -----------------------------------------------------------------------------------
 class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
-    def __init__(self, angular_two_point):
+    """
+    Correlation function implementation using Wigner small-d matrices.
+
+    This class computes real-space angular correlation functions from
+    angular power spectra Cl via spherical harmonic projection. The spin
+    configuration is inferred from the types of tracers in the provided
+    AngularTwoPoint object.
+
+    Parameters
+    ----------
+    angular_two_point : AngularTwoPoint object
+        Object providing Cl evaluation and tracers.
+    ells: jnp.ndarray
+        Multipole moments at which the Cl spectrum is evaluated.
+    ks : jnp.ndarray
+        Wavenumber grid (only needed for computing Cl via angular_two_point).
+    """
+    def __init__(self, angular_two_point, ells, ks):
         """
         Initializes CorrelationFunction with an AngularTwoPoint instance.
         Also automatically sets the spins s1 and s2 dependent on the type of tracer
@@ -174,15 +207,19 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
 
         Args:
             angular_two_point (AngularTwoPoint): Instance providing Cl values.
+            ells (jnp.ndarray): Multipole moments at which the Cl spectrum is evaluated.
+            ks (jnp.ndarray): Wavenumber grid (only needed for computing Cl via angular_two_point).
         """
         self.angular_two_point = angular_two_point
+        self.ells=ells
+        self.ks=ks
 
         # Determine spin values based on tracer type
         self.s1 = 2 if isinstance(angular_two_point.tracer1, ShearTracer) else 0
         self.s2 = 2 if isinstance(angular_two_point.tracer2, ShearTracer) else 0
 
 
-    def get_xi(self, ells, ks, theta):
+    def get_xi(self, theta):
         """
         Compute the angular correlation function xi(theta) using the Wigner d-matrices
 
@@ -201,7 +238,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
                 (jax.numpy.ndarray, jax.numpy.ndarray): Computed xi_+(theta) and xi_-(theta).
         """
         # Compute Cl using the AngularTwoPoint instance
-        Cl_EE = self.angular_two_point.get_Cl(ells, nl=0, ks=ks)
+        Cl_EE = self.angular_two_point.get_Cl(self.ells, nl=0, ks=self.ks)
 
         Cl_BB = np.zeros_like(Cl_EE)  # No B-modes included, set to zero for now
         Cl_EB = np.zeros_like(Cl_EE)
@@ -218,19 +255,19 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
 
         # Compute Wigner-d matrix elements
         if self.s1 == 0 and self.s2 == 0:
-            d_l_theta_plus = d_0_0_vmap(theta, ells)
+            d_l_theta_plus = d_0_0_vmap(theta, self.ells)
             d_l_theta_minus = d_l_theta_plus
         elif self.s1 == 2 and self.s2 == 0:
-            d_l_theta_plus = d_2_0_vmap(theta, ells)
+            d_l_theta_plus = d_2_0_vmap(theta, self.ells)
             d_l_theta_minus = d_l_theta_plus
         elif self.s1 == 2 and self.s2 == 2:
-            d_l_theta_plus = d_2_2_vmap(theta, ells)
-            d_l_theta_minus = d_2_m2_vmap(theta, ells)
+            d_l_theta_plus = d_2_2_vmap(theta, self.ells)
+            d_l_theta_minus = d_2_m2_vmap(theta, self.ells)
         else:
             raise ValueError("Spin values not as expected")
 
         # Compute the prefactor (2\ell + 1) / (4\pi)
-        prefactor = (2 * ells + 1) / (4 * np.pi)
+        prefactor = (2 * self.ells + 1) / (4 * np.pi)
 
         # Initialize xi arrays
         xi_plus = np.zeros((Ntheta, Ntomo1, Ntomo2))

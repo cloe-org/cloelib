@@ -8,6 +8,7 @@ import jax.numpy as np # type: ignore
 from scipy.interpolate import RectBivariateSpline # type: ignore
 import jax # type: ignore
 import interpax # type: ignore
+import jax.lax as lx
 
 
 """
@@ -41,96 +42,15 @@ class ShearTracer:
         z : np.ndarray
             A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
         """
+        if 0. in z:
+            raise ValueError("One of the z array elements is equal to zero, breaking Limber integration.")
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.dndz = dndz
         self.z = z
         self.nuisance_params = nuisance_params
-
-    def _get_prefactor(self, ell):
-        return 0
-
-    @jax.jit
-    def _window_integrand(self, z, n_z):
-        r"""Window integrand.
-
-        Calculates generic integrand for windows such as
-        lensing or magnification bias kernels
-
-        .. math::
-            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm A}(z^{\prime})
-            \frac{f_{K}\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}
-            }
-
-        This method is private. Not recommended to call directly, but possible
-
-        Args:
-            zprime: float or numpy.ndarray
-                Redshift parameter that will be integrated over
-            z: float
-                Redshift at which kernel is being evaluated
-            n_z: numpy.ndarray
-                Redshift bin distribution
-
-        Returns:
-            window_integrand: np.ndarray
-        """
-
-        chi = self.background.comoving_distance(z)
-        weights = np.ones(len(chi))
-
-        mat_jax = jax.vmap(get_simpsons_weights_jit, in_axes=(0,))
-
-
-        for i, redshift in enumerate(z):
-            np.einsum('ij, j, j, jz -> iz', n_z, 1 - chi[i]/chi, mat_jax)
-
-        return
-
-    def get_window_shear(self, z):
-        r"""Weak Lensing shear kernel.
-
-        Calculates the weak lensing shear kernel for a given tomographic bin
-        distribution.
-        Uses broadcasting to compute a 2D-array of integrands and then applies
-        :obj:`np.trapz` on the array along one axis.
-
-        .. math::
-            W_{i}^{\gamma}(\ell, z, k) =
-            \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
-            \Omega_{{\rm m},0} (1 + z) \Sigma(z, k)
-            f_K\left[\tilde{r}(z)\right]
-            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
-            \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
-
-        Parameters
-        ----------
-        z: numpy.ndarray of float
-            Redshift at which weight is evaluated.
-        bin_i: int
-            Index of desired tomographic bin.
-            Tomographic bin indices start from 1
-        k: float
-            Wavenumber at which to evaluate the Modified Gravity
-            :math:`\Sigma(z,k)` function
-
-        Returns
-        -------
-        Shear kernel: numpy.ndarray
-            1-D Numpy array of shear kernel values for specified bin
-            at specified scale for the redshifts defined in z
-        """
-
-        win_int = self._window_integrand(z, self.dndz)
-
-        W_val = (1.5 * self.background.H0 *
-                 (self.background.Omega_b0 + self.background.Omega_cdm0) * \
-                 (1.0 + z) * self.background.comoving_distance(z) *
-                  ( c_0/ self.background.H0)) * win_int
-
-        return W_val
+        # This is to add the necessary prefactor to shear, while avoiding it in GC
+        self.prefact_toggle = 1
 
     def get_window_IA(self, z):
         r"""Window integrand.
@@ -146,13 +66,14 @@ class ShearTracer:
         -------
         window_IA: np.ndarray
         """
+        Omega_m0 = self.background.Omega_m(0.0)
         Hz = self.perturbations.background.hubble_parameter(z)
-        Dz = self.perturbations.growth_factor()[:,1]
+        Dz = self.perturbations.growth_factor(self.perturbations.z, self.perturbations.k)[:,1]
         #TODO discuss whether we want growth factor to output a 1D or a 2D array
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]
         Eta_IA = self.nuisance_params["EtaIA"]
-        factor = -Hz/c_0*A_IA*C_IA*(self.background.Omega_b0 + self.background.Omega_cdm0)*(1+z)**Eta_IA/Dz
+        factor = -Hz/c_0*A_IA*C_IA*Omega_m0*(1+z)**Eta_IA/Dz
         return np.einsum('ij, j->ij', self.dndz, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
@@ -195,7 +116,41 @@ class ShearTracer:
         return np.einsum('ij, j->ij', efficiency, factor)
 
     def get_lensing_window(self, z):
-        factor = 3/2*(self.background.H0/c_0)**2*(self.background.Omega_b0 + self.background.Omega_cdm0)\
+        r"""Weak Lensing shear kernel.
+
+        Calculates the weak lensing shear kernel for a given tomographic bin
+        distribution.
+        Uses broadcasting to compute a 2D-array of integrands and then applies
+        :obj:`np.trapz` on the array along one axis.
+
+        .. math::
+            W_{i}^{\gamma}(\ell, z, k) =
+            \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
+            \Omega_{{\rm m},0} (1 + z) \Sigma(z, k)
+            f_K\left[\tilde{r}(z)\right]
+            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
+            \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
+            {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
+
+        Parameters
+        ----------
+        z: numpy.ndarray of float
+            Redshift at which weight is evaluated.
+        bin_i: int
+            Index of desired tomographic bin.
+            Tomographic bin indices start from 1
+        k: float
+            Wavenumber at which to evaluate the Modified Gravity
+            :math:`\Sigma(z,k)` function
+
+        Returns
+        -------
+        Shear kernel: numpy.ndarray
+            1-D Numpy array of shear kernel values for specified bin
+            at specified scale for the redshifts defined in z
+        """
+        Omega_m0 = self.background.Omega_m(0.0)
+        factor = 3/2*(self.background.H0/c_0)**2*Omega_m0\
         *(1+z)*self.background.comoving_distance(z)
         efficiency = self.get_lensing_efficiency(z)
         return np.einsum('ij, j->ij', efficiency, factor)
@@ -233,7 +188,8 @@ class ShearTracer:
         return self.get_lensing_window(z) + self.get_window_IA(z)
 
 class PositionsTracer:
-    def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray):
+    def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray,
+                 galaxy_bias_model: str, nuisance_params: dict):
         r"""
         A class to define the kernel for angular (galaxy) clustering
 
@@ -251,18 +207,45 @@ class PositionsTracer:
             A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
         galaxy_bias_model : str
             A string specifying the model used to describe the galaxy bias
-        magnification_bias_model : str
-            A string specifying the model used to describe the magnification bias
         nuisance_params : dict
             A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
         """
-
+        if 0. in z:
+            raise ValueError("One of the z array elements is equal to zero, breaking Limber integration.")
         self.perturbations = perturbations
         self.dndz = dndz
         self.z = z
+        # This is to add the necessary prefactor to shear, while avoiding it in GC
+        self.prefact_toggle = 0
 
-        #self.nuisance_params = nuisance_params
-        #self.flags = {'galaxy_bias_model': galaxy_bias_model, 'magnification_bias_model': magnification_bias_model}
+        self.nuisance_params = nuisance_params
+        self.flags = {'galaxy_bias_model': galaxy_bias_model}
+
+        self.n_z_bins = dndz.shape[0]
+
+        # Using dict.get so I can provide a default since lax has to compile every branch of the conditional
+        def per_bin_case():
+            bias_array = np.asarray([nuisance_params.get('b1_photo_bin%d'%bin, 1.0) for bin in range(self.n_z_bins)])
+            # lax required same size for all cases, so padding here and will only use first n_z_bins values later
+            return np.pad(bias_array,(0, self.z.shape[0] - self.n_z_bins))
+
+        def per_bin_int_case():
+            bias_array = np.asarray([nuisance_params.get('b1_photo_bin%d'%bin, 1.0) for bin in range(self.n_z_bins)])
+            index_max_nz = np.argmax(dndz,axis=1)
+            z_nz_max = jax.vmap(lambda i: lx.dynamic_index_in_dim(self.z, i, keepdims=False))(index_max_nz)
+            return interpax.interp1d(self.z, z_nz_max, bias_array, extrap=True)
+
+        def poly_case():
+            poly_order = 3
+            bias_array = np.asarray([nuisance_params.get('b1_photo_poly%d'%bin, 1.0) for bin in range(poly_order+1)])
+            return bias_array[0] + bias_array[1] * z + bias_array[2] * z ** 2 + bias_array[3] * z ** 3
+
+        conditions = np.array([self.flags['galaxy_bias_model'] == 'per_bin',
+                               self.flags['galaxy_bias_model'] == 'per_bin_int',
+                               self.flags['galaxy_bias_model'] == 'poly'])
+        index = np.argwhere(conditions, size=1).squeeze()
+
+        self.bias_array = lx.switch(index, [per_bin_case, per_bin_int_case, poly_case])
 
     def get_window_positions(self, z) -> np.ndarray:
         r"""Galaxy Positions window function
@@ -282,8 +265,23 @@ class PositionsTracer:
         window_positions: numpy.ndarray
            Window function for angular photometric galaxy clustering
         """
-        window_positions = self.dndz * \
-            self.perturbations.background.hubble_parameter(z) / c_0
+
+        def per_bin_case():
+            window = self.bias_array[:self.n_z_bins,None] * self.dndz * \
+                self.perturbations.background.hubble_parameter(z) / c_0
+            return window
+
+        def z_func_case():
+            window = self.bias_array[None,:] * self.dndz * \
+                self.perturbations.background.hubble_parameter(z) / c_0
+            return window
+
+        conditions = np.array([self.flags['galaxy_bias_model'] == 'per_bin',
+                               self.flags['galaxy_bias_model'] in ['per_bin_int','poly']
+                               ])
+        index = np.argwhere(conditions, size=1).squeeze()
+
+        window_positions = lx.switch(index, [per_bin_case, z_func_case])
 
         return window_positions
 

@@ -189,7 +189,7 @@ class CorrelationFunction:
         Compute the angular correlation function xi(theta) using the Wigner d-matrices
 
         TODO: Also implement FFTLog which is likely faster
-        WARNING: Currently assumes B-modes are zero, as they are not passed on from AngulerTwoPoint
+        WARNING: Currently assumes B-modes are zero, as they are not passed on from AngularTwoPoint
 
         Args:
             ells (jax.numpy.ndarray): Multipole moments.

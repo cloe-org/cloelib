@@ -1,71 +1,102 @@
-# cloelib
+# cloelib – The Library for the Cosmology Likelihood for Observables in Euclid  
 
-## Table of Contents
-- [Introduction](#introduction)
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgements](#acknowledgements)
+🚀 **cloelib** is a flexible and efficient library designed to compute cosmological observables for the **CLOE** (*Cosmology Likelihood for Observables in Euclid*) project. It is built for seamless integration with **Boltzmann solvers** and **JAX-based frameworks**, enabling automatic differentiation and modularity for the next generation of cosmological analyses.  
 
-## Introduction
-Library of models for the CLOE (Cosmology Likelihood for Observables in Euclid) org.  This package is made efficient and user-friendly by transforming it into the Cosmology Library for Observables in Euclid (compatible with classic Boltzmann Solvers and JAX). This is a work in progress, and will benefit from the feedback of the Euclid community (and the whole cosmology community in general).
+🛠️ **Work in Progress** – We welcome feedback from the **Euclid community** and beyond to refine and improve this library!  
 
-## Features
-The main features of `cloelib` are:
-- **User-friendly approach**: plot Euclid-like observables and other products (theoretical predictions for photometric and spectroscopic functions, window tracers, power spectra) in 3 minutes.
-- **Automatic differentiation**: `cloelib` includes a toy-example of how to use autodiff _à la `Jax`_ to allow for gradient computations.
-- **Extra modularity**: the class hierarchy of `cloelib` allows to import your external emulator or Boltzmann solver easily. It realies on python `Protocols` to interface external codes.  
+---
 
-The main structure of `cloelib` is based on:
-- Preparing your Cosmology using **Background & Perturbations** protocols
-- Decide which observables you would like to compute using **Tracer** or **SpectroPower** protocols.
-- Compute final summary statistics like angular power spectra or Legendre Multiples.
+## 📖 Table of Contents  
+- [✨ Features](#-features)  
+- [📂 Supported external codes](#-supported-external-codes) 
+- [🚀 Installation](#-installation)  
+- [📊 Usage](#-usage)  
+- [🤝 Contributing](#-contributing)  
+- [📜 License](#-license)  
+- [🙏 Acknowledgements](#-acknowledgements)  
 
-## Installation
-Clone the repository `main` branch and pip install it:
-   ```sh
-   pip install .
-   ```
+---
 
-### Prerequisites
-- `python`, `jax`, `jaxlib`, `interpax`
+## ✨ Features  
 
-### Steps
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/gcanasherrera/cloelib.git
-   ```
-2. Navigate to the project directory:
-   ```sh
-   cd cloelib
-   ```
+🔹 **Intuitive & User-Friendly** – Generate **Euclid-like** observables (e.g., power spectra, window functions, and tracer statistics) in just **3 minutes**!  
 
-## Usage
-Check out the `notebooks` folder to see how to compute observables and other quantities.
+🔹 **Automatic Differentiation** – Includes a **toy-example with `JAX`** for gradient-based computations.  
 
-## Contributing
-If you would like to contribute, follow the steps below:
+🔹 **Modular & Extensible** –  
+- Easily interface with external **Boltzmann solvers** or **emulators** via **Python `Protocols`** following the cosmology.API.
+- Core structure enables defining **Background & Perturbation** models, choosing observables via **Tracer** or **SpectroPower** protocols, and computing final summary statistics like **angular power spectra** or **Legendre multipoles**.  
 
-1. Open an issue to let the `cloelib` maintainers know about your contribution plans
-2. Fork the repository
-3. Create a new branch:
+---
+
+## 📂 Supported external codes
+
+`cloelib` interfaces with the following external codes, each used by a specific internal module for its calculations:
+
+| Background                                           | Perturbations                                         | SpectroPower                                         |
+|------------------------------------------------------|-------------------------------------------------------|------------------------------------------------------|
+| [camb](https://camb.readthedocs.io)                   | [camb](https://camb.readthedocs.io)                    | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
+| [class](https://github.com/lesgourg/class_public)     | [class](https://github.com/lesgourg/class_public)      | `PBJ` (not publicly available)                       |
+| NA    | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)       | NA                       |
+
+We do not provide installation support for `PBJ` and `class`.
+
+---
+
+## 🚀 Installation  
+
+To install `cloelib` source code, clone the repository and install it via `pip`:  
+```sh
+pip install .
+```
+
+You can also install (some) supported dependencies:
+
+```sh
+pip install .[camb,hmcode2020emu,comet-emu]
+```
+
+**Note:** We do not offer installation support for `PBJ` and `CLASS`. For installation instructions, please refer to the official documentation of each package.
+
+---
+
+## 📊 Usage  
+
+Explore the **tutorials** in the `cloe-org/playground` repository for examples on how to compute cosmological observables and other key quantities!  
+
+---
+
+## 🤝 Contributing  
+
+Please review the organization's general contribution guidelines and the specific guidelines for this repository in the [CONTRIBUTING.md](CONTRIBUTING.md) file. Once you're familiar with the guidelines, follow these steps:
+
+1️⃣ Create a new branch:  
    ```sh
    git checkout -b feature/your-feature-name
-   ```
-4. Commit your changes:
+   ```  
+2️⃣ Implement your changes following project style guidelines.  
+3️⃣ Commit your modifications:  
    ```sh
-   git commit -m 'Add some feature'
-   ```
-5. Push to the branch:
+   git commit -m "Add feature: [brief description]"  
+   ```  
+4️⃣ Push your branch:  
    ```sh
-   git push origin feature/your-feature-name
-   ```
-6. Open a pull request
+   git push origin feature/your-feature-name  
+   ```  
+5️⃣ Open a **pull request** and contribute to the project!  
 
-## License
-This project is licensed under the GLG License - see the [LICENSE](LICENSE) file for details.
+---
 
-## Acknowledgements
-- This project relies on previous work by the Euclid Consortium and the `jaxcosmo` project.
+## 📜 License  
+
+This project is licensed under the **GNU LESSER GENERAL PUBLIC LICENSE** – see the [LICENSE](LICENSE) file for details.  
+
+---
+
+## 🙏 Acknowledgements  
+
+🔭 Inspired by the pioneering work of the **Euclid Consortium** and the **`jaxcosmo`** project. 
+
+👩‍💻🧑‍💻 Authored by M. Bonici, G. Cañas-Herrera, P. Carrilho, S. Casas, C. Moretti, and A. Pezzotta (listed in alphabetical order).
+
+🎯 With technical advice from S. Farrens and N. Tessore.

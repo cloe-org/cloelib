@@ -1,9 +1,0 @@
-sample: ExternalBenchmark
-GCspectro:
-  Fourier: True
-  root: cov_power_comet_z{:s}.fits
-  root_mixing_matrix: mm_FS230degCircle_m3_nosm_obsz_z{:s}.fits
-  redshifts: ['1.', '1.2', '1.4', '1.65']
-  widths: [0.2, 0.2, 0.2, 0.3]
-  cov_is_num: False
-  cov_nsim: 0

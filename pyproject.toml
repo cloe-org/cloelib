@@ -1,16 +1,33 @@
 [tool.poetry]
 name = "cloelib"
-version = "0.1.0"
-description = "Proof of concept of how to make CLOE (Cosmology Likelihood for Observables in Euclid) more efficient and user-friendly by transforming it into the Cosmology Library for Observables in Euclid (compatible with classic Boltzmann Solvers and JAX)"
-authors = ["Your Name <you@example.com>"]
-license = "MIT"
+version = "0.7.2"
+description = "cloelib is a flexible and efficient library designed to compute cosmological observables for CLOE (Cosmology Likelihood for Observables in Euclid)"
+authors = [
+    "M. Bonici <marco.bonici@uwaterloo.ca>",
+    "G. Cañas-Herrera <guadalupe.canasherrera@esa.int>",
+    "P. Carrilho <pedro.carrilho@ed.ac.uk>",
+    "S. Casas <casas@physik.rwth-aachen.de>",
+    "C. Moretti <cmoretti@sissa.it>",
+    "A. Pezzotta <andrea.pezzotta@inaf.it>"
+]
+license = "LGPL-3.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
-jax = "^0.4"
-jaxlib = "^0.4"
-interpax = "^0.3.2"
+python = "^3.10"
+interpax = "0.3.3"
+jax = "0.4.38"
+numpy = "<2.0"
+quadax = "0.2.7"
+scipy = "<1.14"
+
+[tool.poetry.extras]
+camb = ["camb"]
+hmcode2020emu = ["HMcode2020Emu"]
+comet-emu = ["comet-emu"]
+
+[tool.poetry.dependencies.HMcode2020Emu]
+git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
 
 [build-system]
 requires = ["poetry-core"]

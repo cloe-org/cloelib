@@ -12,7 +12,6 @@
 - [🚀 Installation](#-installation)  
 - [📊 Usage](#-usage)  
 - [🤝 Contributing](#-contributing)  
-- [🤔 Troubleshooting](#-troubleshooting)  
 - [📜 License](#-license)  
 - [🙏 Acknowledgements](#-acknowledgements)  
 
@@ -59,6 +58,12 @@ pip install .[camb,hmcode2020emu,comet-emu]
 
 **Note:** We do not offer installation support for `PBJ` and `CLASS`. For installation instructions, please refer to the official documentation of each package.
 
+To work with the latest stable release of the code, move to the latest tag by typing: 
+ ```sh
+ git checkout name-latest-release
+ ```
+ with name-latest-release the latest name that appears in "Releases".
+
 ---
 
 ## 📊 Usage  
@@ -85,16 +90,6 @@ Please review the organization's general contribution guidelines and the specifi
    git push origin feature/your-feature-name  
    ```  
 5️⃣ Open a **pull request** and contribute to the project!  
-
----
-
-## 🤔 Troubleshooting
-
-To work with the latest stable release of the code, move to the latest tag by typing: 
- ```sh
- git checkout name-latest-release
- ```
- with name-latest-release the latest name that appears in "Releases".
 
 ---
 

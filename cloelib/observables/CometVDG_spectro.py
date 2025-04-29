@@ -102,31 +102,31 @@ class CometVDG_SpectroPower:
         Winfty = self._Winfty(k=k, mu=mu)
         return Pk2d * Winfty
 
-    def Pk2d_X_rsd(self, k: np.ndarray, mu: np.ndarray, X_list: list) -> np.ndarray:
-        r"""2D power spectrum for the specific diagram X of the loop expansion
+    def Pk2d_term_rsd(self, k: np.ndarray, mu: np.ndarray, term_list: list) -> np.ndarray:
+        r"""2D power spectrum for a subset of specific diagrams of the loop expansion
         Parameters
         ----------
         k: np.ndarray
             Wavenumber
         mu: np.ndarray
             Angle (cosinus) to the line of sight
-        X: list
+        term_list: list
             Identifiers of loop diagrams
         Returns
         -------
-        PX2d_rsd: np.ndarray
-            2D power spectrum of term X
+        Pk2d_term_rsd: np.ndarray
+            2D power spectrum of specific terms
         """
-        X_list_expanded, index_map = [], {}
-        for key in X_list:
+        term_list_expanded, index_map = [], {}
+        for key in term_list:
             vals = self.diagram_naming_relation[key]
             vals = vals if isinstance(vals, list) else [vals]
-            index_map[key] = list(range(len(X_list_expanded),
-                                  len(X_list_expanded) + len(vals)))
-            X_list_expanded.extend(vals)
+            index_map[key] = list(range(len(term_list_expanded),
+                                  len(term_list_expanded) + len(vals)))
+            term_list_expanded.extend(vals)
         Pk2d_expanded = np.squeeze(
             comet_inst.PX_2d(k=k[:, :, np.newaxis], mu=mu[:, np.newaxis],
-                             params=self.parameters, X_list=X_list_expanded,
+                             params=self.parameters, X_list=term_list_expanded,
                              de_model='w0wa'), axis=-1)
         Pk2d = np.array(
             [np.sum(Pk2d_expanded[indices], axis=0)

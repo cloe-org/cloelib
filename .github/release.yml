@@ -1,0 +1,21 @@
+name: 🚀 cloelib Release — ${{ steps.extract_tag.outputs.version }}
+
+body: |
+  This release delivers **[insert concise summary of key purpose or improvement]**, continuing our mission to streamline cosmological analysis and development.
+
+  ### ✨ What's New
+  - 🌌 **Cosmology Toolkit Expansion** — *[Describe any new models, parameters, or functionalities added for cosmological computations]*
+  - 🐍 **Enhanced Python Interface** — *[Detail usability upgrades, API extensions, or performance improvements for Python users]*
+  - 🔧 **Improved Integration Capabilities** — *[Highlight better support for external tools, pipelines, or data workflows]*
+  - 📊 **`cloelike` Module Updates** — *[List enhancements for the likelihood evaluation, configuration, or compatibility]*
+  - 📈 **Interactive Playground** — *[Introduce any new notebooks, demos, or guided examples for experimentation]*
+  - ⚡️ **Experimental JAX Backend** — *[Mention availability of JAX acceleration and relevant compatibility notes]*
+
+  ### 🛠️ Fixes
+  - 🧹 **Bug Fixes & Cleanup** — *[Outline notable resolved issues, bugs, or code refactoring efforts]*
+
+  ### ⚠️ Breaking Changes
+  - 🚨 *[Clearly describe any backwards-incompatible changes, including renamed interfaces, deprecated parameters, or modified behaviors]*
+
+  ### 📄 Full Changelog
+  For the complete list of changes, visit the [compare view](https://github.com/cloe-org/cloelib/compare/${{ steps.extract_previous_tag.outputs.previous }}...${{ steps.extract_tag.outputs.version }}).

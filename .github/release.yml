@@ -1,19 +1,21 @@
-name: 🚀 cloelib Release: ${{ steps.extract_tag.outputs.version }}
+name: 🚀 cloelib Release — ${{ steps.extract_tag.outputs.version }}
 
 body: |
-  This release introduces **[insert short summary or goal here]**.
+  This release delivers **[insert concise summary of key purpose or improvement]**, continuing our mission to streamline cosmological analysis and development.
 
   ### ✨ What's New
-  - 🌌 **Cosmological Features** — *[Add description of new cosmology capabilities]*
-  - 🐍 **Python Enhancements** — *[Add Python-specific updates or interface improvements]*
-  - 🔧 **Integration Tools** — *[Mention updates for integration with other tools/pipelines]*
-  - 📊 **`cloelike` Module** — *[List updates or additions to work with the likelihood engine]*  
-  - 📈 **Playground Environment** — *[Describe new interactive tools or tutorials/examples]*
-  - ⚡️ **JAX Support** — *[Note new or experimental support for accelerated backends]*
+  - 🌌 **Cosmology Toolkit Expansion** — *[Describe any new models, parameters, or functionalities added for cosmological computations]*
+  - 🐍 **Enhanced Python Interface** — *[Detail usability upgrades, API extensions, or performance improvements for Python users]*
+  - 🔧 **Improved Integration Capabilities** — *[Highlight better support for external tools, pipelines, or data workflows]*
+  - 📊 **`cloelike` Module Updates** — *[List enhancements for the likelihood evaluation, configuration, or compatibility]*
+  - 📈 **Interactive Playground** — *[Introduce any new notebooks, demos, or guided examples for experimentation]*
+  - ⚡️ **Experimental JAX Backend** — *[Mention availability of JAX acceleration and relevant compatibility notes]*
 
-  ### 🛠️ Bug Fixes
-  - 🔧 *[Summarize any notable bug fixes or technical cleanups]*
+  ### 🛠️ Fixes
+  - 🧹 **Bug Fixes & Cleanup** — *[Outline notable resolved issues, bugs, or code refactoring efforts]*
+
+  ### ⚠️ Breaking Changes
+  - 🚨 *[Clearly describe any backwards-incompatible changes, including renamed interfaces, deprecated parameters, or modified behaviors]*
 
   ### 📄 Full Changelog
-  For a complete list of changes, see the [compare view](https://github.com/cloe-org/cloelib/compare/${{ steps.extract_previous_tag.outputs.previous }}...${{ steps.extract_tag.outputs.version }}).
-
+  For the complete list of changes, visit the [compare view](https://github.com/cloe-org/cloelib/compare/${{ steps.extract_previous_tag.outputs.previous }}...${{ steps.extract_tag.outputs.version }}).

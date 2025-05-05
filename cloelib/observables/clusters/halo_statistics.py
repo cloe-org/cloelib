@@ -1,16 +1,21 @@
+import numpy as np  # type: ignore
+
+from .cosmo_temp import _tempPerturbationsCluster
+
+
 class HaloStatistics:
     def __init__(
         self,
-        cosmo,  # cosmo_temp class
-        profile="NFW",
-        overdensity_type="vir",
-        overdensity=None,
-        neutrino_cdm=None,
-        k_div=701,
-        k_min=1e-4,
-        k_max=5e1,
+        pertrurbations: Perturbations,
+        profile: str,
+        overdensity_type: str,
+        overdensity: int,
+        neutrino_cdm: bool,
+        k_div: int,
+        k_min: float,
+        k_max: float,
     ):
-        self.cosmo = cosmo
+        self.cosmo = _tempPerturbationsCluster(pertrurbations)
         self.profile = profile  # self.theory['obs_specifications']['CG']['profile']
         self.overdensity_type = overdensity_type  # self.theory['obs_specifications']['CG']['overdensity_type']
         self.overdensity = (

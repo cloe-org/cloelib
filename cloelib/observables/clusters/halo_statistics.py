@@ -7,7 +7,6 @@ class HaloStatistics:
     def __init__(
         self,
         pertrurbations: Perturbations,
-        profile: str,
         overdensity_type: str,
         overdensity: int,
         neutrino_cdm: bool,
@@ -16,7 +15,6 @@ class HaloStatistics:
         k_max: float,
     ):
         self.cosmo = _tempPerturbationsCluster(pertrurbations)
-        self.profile = profile  # self.theory['obs_specifications']['CG']['profile']
         self.overdensity_type = overdensity_type  # self.theory['obs_specifications']['CG']['overdensity_type']
         self.overdensity = (
             overdensity  # self.theory['obs_specifications']['CG']['overdensity']

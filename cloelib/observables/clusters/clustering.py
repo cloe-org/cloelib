@@ -1,4 +1,4 @@
-class halo_clustering:
+class HaloClustering:
     def __init__(
         self,
         pertrurbations: Perturbations,

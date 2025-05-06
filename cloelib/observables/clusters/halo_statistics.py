@@ -1,13 +1,16 @@
 from cloelib.cosmology.cosmology_clusters import Perturbations
 
 import jax.numpy as np
+from scipy.integrate import simpson as simps
+from scipy.special import gamma
+from scipy import integrate, interpolate
 
 
 class HaloStatistics:
 
     @property
     def background(self):
-        return self.perturbations.bakcground
+        return self.perturbations.background
 
     def __init__(
         self,
@@ -40,10 +43,10 @@ class HaloStatistics:
 
         Parameters
         ----------
-        k: float or numpy.ndarray
+        k: numpy.ndarray
                Wavenumber at which to evaluate W(kR)
                Units:  h Mpc^{-1}
-        R: float or numpy.ndarray
+        R: numpy.ndarray
                Radius at which to evaluate W(kR)
                Units: h^{-1} Mpc
 
@@ -69,7 +72,7 @@ class HaloStatistics:
 
         Parameters
         ----------
-        M: float or numpy.ndarray
+        M: numpy.ndarray
               Mass at which the radius is
               to be estimated in h^{-1} Ms
 
@@ -78,7 +81,7 @@ class HaloStatistics:
         radius_M: array
                 Radius_M in h^{-1} Mpc
         """
-        rho_m_0 = self.cosmo.rho_crit(0.0) * self.cosmo.Omega_m(0.0, self.nonu)
+        rho_m_0 = self.background.rho_crit(0.0) * self.background.Omega_m(0.0, self.nonu)
         return (M / rho_m_0 * (3.0 / (4.0 * np.pi))) ** (1 / 3.0)
 
     def delta_c(self, z):
@@ -88,7 +91,7 @@ class HaloStatistics:
 
         Parameters
         ----------
-        z: float
+        z: float or np.ndarray
             Redshift at which to evaluate the delta_c
 
         Returns
@@ -110,12 +113,12 @@ class HaloStatistics:
 
         Parameters
         ----------
-        z: float
+        z: float or np.ndarray
             Redshift.
 
         Returns
         -------
-        overdensity: float
+        overdensity: float or np.ndarray
             The overdensity factor which needs
             to be multiplied to the critical
             density in order to define an overdensity.
@@ -149,9 +152,9 @@ class HaloStatistics:
 
         Parameters
         ----------
-        z: float or numpy.ndarray
+        z: numpy.ndarray
                    Redshift at which to evaluate sigma_z_M
-        R: float or numpy.ndarray
+        R: numpy.ndarray
                Radius at which to evaluate sigma_z_R in h^{-1} Mpc
 
         Returns
@@ -185,9 +188,9 @@ class HaloStatistics:
 
         Parameters
         ----------
-        z: float or numpy.ndarray
+        z: numpy.ndarray
                    Redshift at which to evaluate sigma_z_M
-        M: float or numpy.ndarray
+        M: numpy.ndarray
                Mass at which to evaluate sigma_z_M in h^{-1} Mpc
 
         Returns
@@ -206,9 +209,9 @@ class HaloStatistics:
 
         Parameters
         ----------
-        z: float or numpy.ndarray
+        z: numpy.ndarray
                    Redshift at which to evaluate nu_z_M
-        M: float or numpy.ndarray
+        M: numpy.ndarray
                Mass at which to evaluate nu_z_M
 
         Returns
@@ -228,9 +231,9 @@ class HaloStatistics:
 
         Parameters
         ----------
-        z: float or numpy.ndarray
+        z: numpy.ndarray
                    Redshift at which to evaluate dlns_dlnR
-        M: float or numpy.ndarray
+        M: numpy.ndarray
                Mass at which to evaluate dlns_dlnR
                Units: Ms h^{-1}
 
@@ -265,9 +268,9 @@ class HaloStatistics:
 
         Parameters
         ----------
-        z: float or numpy.ndarray
+        z: numpy.ndarray
                    Redshift at which to evaluate f_sigma_nu
-        M: float or numpy.ndarray
+        M: numpy.ndarray
                Mass at which to evaluate f_sigma_nu in h^{-1} Ms
 
         Returns
@@ -286,9 +289,9 @@ class HaloStatistics:
 
         Parameters
         ----------
-        z: float or numpy.ndarray
+        z: numpy.ndarray
                    Redshift at which to evaluate dn_dm
-        M: float or numpy.ndarray
+        M: numpy.ndarray
                Mass at which to evaluate dn_dm
                Units: h^{-1} Ms
 
@@ -300,14 +303,14 @@ class HaloStatistics:
         """
 
         dlnsigmadlnR = self.dlns_dlnR(z, M)
-        rho_mean_0 = self.background.Omega_m(0, self.nonu) * self.background.rho_crit_z(
+        rho_mean_0 = self.background.Omega_m(0, self.nonu) * self.background.rho_crit(
             0
         )
 
         return rho_mean_0 / M**2.0 * self.f_sigma_nu(z, M) * dlnsigmadlnR / (-3)
 
 
-class HaloStatisticsTinker10(HaloStatistics):
+class HaloStatisticsTinker(HaloStatistics):
     def f_sigma_nu(self, z, M):
         r"""
         Computes the multiplicity function
@@ -333,9 +336,6 @@ class HaloStatisticsTinker10(HaloStatistics):
 
         Delta = self.get_Delta_crit(z) / self.background.Omega_m(z)
 
-        if type(M) is not np.ndarray:
-            M = np.array([M])
-
         # parameters
         p = [1.0, 0.24, 0.44, 0.88, 0.183, 1.5, 0.019, 0.107, 0.19, 2.4]
         y = np.log10(Delta)
@@ -356,7 +356,7 @@ class HaloStatisticsTinker10(HaloStatistics):
         ).T
 
 
-class HaloStatisticsCastro23(HaloStatistics):
+class HaloStatisticsCastro(HaloStatistics):
     def f_sigma_nu(self, z, M):
         r"""
         Computes the multiplicity function
@@ -417,7 +417,7 @@ class HaloStatisticsCastro23(HaloStatistics):
 
         dlnsigmadlnR = self.dlns_dlnR(z, M)
         Ommz = self.background.Omega_m(z, self.nonu)[:, np.newaxis]
-        sigma8 = self.sigma_z_R(z, 8.0)
+        sigma8 = self.sigma_z_R(z, np.array([8.0]))
         S8 = sigma8 * np.sqrt(self.background.Omega_m(0.0) / 0.3)
 
         nu = self.nu_z_M(z, M)

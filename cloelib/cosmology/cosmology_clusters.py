@@ -1,7 +1,5 @@
 # General imports
 from typing import Protocol, Union, TypeVar, runtime_checkable
-from astropy import units
-from astropy.constants import G
 
 import numpy as np  # type: ignore
 import jax.numpy as jnp
@@ -150,6 +148,12 @@ class Background(Protocol):
     def dV_dzdO(self, zs: T) -> T:
         """
         Volume element per redshit per solid angle.
+        """
+        ...
+     
+    def rdrag(self) -> float:
+        """
+        Sound horizon radius at last scattering
         """
         ...
 

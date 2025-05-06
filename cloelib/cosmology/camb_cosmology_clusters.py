@@ -1,10 +1,12 @@
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.cosmology_clusters.cosmology import Background
+from cloelib.cosmology.cosmology_clusters import Background
 
 # General imports
 import numpy as np
 from typing import Tuple, Optional
+from astropy import units
+from astropy.constants import G
 
 # Cosmology imports
 try:
@@ -204,6 +206,14 @@ class CAMBBackground:
             * self.hubble_parameter(zs)
         )
 
+    def rdrag(self,) -> float:
+        """
+        Returns the Sound horizon radius at last scattering.
+        
+        Returns:
+        float: Sound horizon radius at last scattering
+        """
+        return results.get_derived_params['rdrag']
 
 class CAMBLinearPerturbations:
     """

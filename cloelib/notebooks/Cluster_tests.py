@@ -1,6 +1,6 @@
 from cloelib.observables.clusters.selection_function import SelectionFunction
-from cloelib.observables.clusters.halo_statistics import HaloStatistics
-from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
+from cloelib.observables.clusters.halo_statistics import HaloStatistics, HaloStatisticsTinker, HaloStatisticsCastro
+from cloelib.cosmology.camb_cosmology_clusters import CAMBBackground, CAMBLinearPerturbations
 
 import numpy as np
 
@@ -59,5 +59,27 @@ SF.P_zobs_z(zob_test, lob_test, z_test)
 
 # HaloStatistics
 HS = HaloStatistics(perturbations, 'vir')
+
+k_test = np.logspace(-2, 1, 100)
+R_test = np.logspace(-1, 1, 20)
+M_test = np.logspace(14, 15, 50)
+
+HS.window(k_test, R_test)
+HS.radius_M(M_test)
+HS.delta_c(z_test)
+HS.get_Delta_crit(z_test)
+HS.sigma_z_R(z_test, R_test)
+HS.sigma_z_M(z_test, M_test)
+HS.nu_z_M(z_test, M_test)
+HS.dlns_dlnR(z_test, M_test)
+
+HS_tinker = HaloStatisticsTinker(perturbations, 'vir')
+#HS_tinker.bias(z_test, M_test)
+
+HS_castro = HaloStatisticsCastro(perturbations, 'vir')
+HS_castro.dn_dm(z_test, M_test)
+#HS_castro.bias(z_test, M_test)
+
+
 
 

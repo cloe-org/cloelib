@@ -1,0 +1,470 @@
+# cloelib imports
+from cloelib.observables.clusters.HaloStatistics import HaloStatistics
+from cloelib.observables.clusters.HaloStatistics import HaloStatistics.HaloStatisticsTinker10
+from cloelib.observables.clusters.HaloStatistics import HaloStatistics.HaloStatisticsCastro23
+from cloelib.observables.clusters.selection_function import SelectionFunction
+from cloelib.observables.clusters.cosmology_cluster import Perturbations
+from cloelib.observables.clusters.profile import Profile
+from cloelib.auxiliary.units import SPEED_OF_LIGHT
+
+# General imports
+import interpax
+import jax.numpy as np
+import jax
+
+"""
+
+## Notes:
+
+- Cluster counts, Cluster profile lensing and Clusters clustering class 
+
+"""
+
+#@jax.jit
+#def Cl_integration(WT1, WT2, Pkl, H, chi2):
+#    """
+#    Performs the integration to compute the angular power spectrum Cl.
+
+#    The integration is done using the unnormalized trapezoidal rule,
+#    utilizing the window functions, power spectrum, Hubble parameter,
+#    and comoving distance squared.
+
+#    Parameters:
+#    - WT1 (jax.numpy.ndarray): Window function for the first tracer.
+#    - WT2 (jax.numpy.ndarray): Window function for the second tracer.
+#    - Pkl (jax.numpy.ndarray): Matter power spectrum interpolated on Limber grid.
+#    - H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
+#    - chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
+
+#    Returns:
+#    - jax.numpy.ndarray: Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
+#    """
+#    return np.einsum('iz,jz,lz,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2)
+
+#@jax.jit
+#def Pkl_interp(k_l, z_l, ks, zs, Pk):
+#    """
+#    Interpolates the matter power spectrum on a Limber grid.
+
+#    Utilizes interpax's 2D interpolation with Akima method to handle
+#    non-uniform grids in logarithmic space. Extrapolation is enabled
+#    for values outside the given grid.
+
+#    Parameters:
+#    - k_l (jax.numpy.ndarray): Wavenumbers corresponding to (ells + 0.5) / chi.
+#    - z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
+#    - ks (jax.numpy.ndarray): Original wavenumber grid of the matter power spectrum.
+#    - zs (jax.numpy.ndarray): Original redshift grid of the matter power spectrum.
+#    - Pk (jax.numpy.ndarray): Matter power spectrum values on (ks, zs) grid.
+
+#    Returns:
+#    - jax.numpy.ndarray: Interpolated power spectrum on the Limber grid.
+#    """
+#    return 10**interpax.interp2d(jax.numpy.log10(k_l), z_l, jax.numpy.log10(ks),  zs,
+#                                 jax.numpy.log10(Pk), method="akima", extrap=True)
+
+#Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))
+
+
+class CC:
+    def __init__(self, perturbations: Perturbations, z, M):
+        """
+        Initializes the cluster counts
+
+        Parameters:
+        - ....
+        
+        """
+        self.perturbations = Perturbations
+        self.background = self.Perturbations.Background
+        
+        self.CG_like_selection = 'CC'
+        self.CG_xi2_cov_selection = 'covCC'
+        self.CG_xi2_cov_selection = 'non_CG_ESF'
+        self.bias = 'castro23'
+        
+        
+        self.zed_obs_edges = np.linspace(0.2, 1.8, 9)
+        self.Lambda_obs_edges = np.array([20.0, 30.0, 45.0, 60.0, 500.0])
+        self.Rad_obs_edges = np.linspace(5.0, 100.0, 11)
+        self.Lambda_obs_Cxi2_edges = np.array([20, 30, 500])
+        self.Rad_obs_Cxi2_edges = np.geomspace(20.0, 130.0, 31)
+        self.zed_obs_Cxi2_edges = np.arange(0.2, 1.81, 0.4)
+
+        # mass array (integration variable)
+        M_min = 12.0  # in Msun h^-1
+        M_max = 16.0
+        self.M_div = 50
+        self.Mass = np.logspace(M_min, M_max, self.M_div+1)
+
+        # true richness array (integration variable)
+        Lambda_min = 5.0
+        Lambda_max = 250.0
+        self.Lambda_div = 50
+        self.Lambda = np.geomspace(Lambda_min, Lambda_max, self.Lambda_div+1)
+
+        # true redshift array (integration variable)
+        z_min = 1e-5
+        z_max = self.zs_max - 1e-5  # correction needed for avoiding zero values in n_zs_norM computation
+        self.z_div = 50
+        self.zed   = np.linspace(z_min, z_max, self.z_div+1) 
+        
+        
+    def N_zbin_Lbin(self, z, M): 
+        
+        N_zbin_Lbin   = np.zeros((self.zed_obs_div, self.Lambda_obs_div))
+        cov_zbin_Lbin = np.zeros((self.zed_obs_div, self.zed_obs_div, self.Lambda_obs_div,self.Lambda_obs_div))
+        n_lbdobs_z    = np.zeros(self.Lambda_obs_div,dtype=list)
+        Plob_M_z      = np.zeros(self.Lambda_obs_div,dtype=list)
+        b_n_lbdobs_z  = np.zeros(self.Lambda_obs_div,dtype=list)
+        dV_dzob       = np.zeros((self.zed_obs_div, self.Lambda_obs_div),dtype=list)        
+        
+        if CG_like_selection in ['CC','CC_CWL','CC_Cxi2','CC_CWL_Cxi2']:
+
+            # mean observed bins
+            z_obs_mid      = 0.5 * (self.zed_obs_edges[1:] + self.zed_obs_edges[:-1])
+            Lambda_obs_mid = 0.5 * (self.Lambda_obs_edges[1:] + self.Lambda_obs_edges[:-1])
+
+            # volume element at the center of observed redshift bins
+            dvdzdomega_z1z2 = self.background.dV_dzdO(z)*(self.background.H0/100.0)**3.0
+
+            # hmf at the center of observed redshift bins
+            dndm_z = HaloStatistics.dn_dm(z, M) 
+
+            # hb at the center of observed redshift bins
+            if self.bias == 'castro23':
+                bias_z = HaloStatisticsCastro23.bias_castro23(z, M)  # only work for virial overdensity
+            elif self.bias == 'tinker10':
+                Delta_bkg = HaloStatistics.get_Delta(self.overdensity_type, z, 'tot', self.overdensity)/self.Omm_z(z, nu_cdm = 'tot')
+                bias_z    = HaloStatisticsTinker10.bias_tinker10(z, self.Mass, Delta_bkg) 
+            else:
+                raise ValueError('Invalid \'bias\' definition, %s.' % bias)
+
+
+            ##### number counts covariance
+            if CG_xi2_cov_selection in ['covCC','covCC_covCxi2']:
+                
+                # spherical harmonic expansion coefficients (covariance)
+                L   = 20
+                KL  = self.Kl_coeff(L)
+                self.rint = np.zeros((self.zed_obs_div,len(self.k),L+1))
+                
+                # power spectrum at the center of observed redshift bins
+                pk  = self.Pk_def(z_obs_mid, self.k, self.neutrino_cdm)          
+
+                # corrected halo Pk (only 0-th order correction is enough for number counts covariance)
+                photoz_corr0 = self.photoz_rsd_correction(z_obs_mid, 0)[0]  # can neglect richness dependence here
+                pk *=  photoz_corr0
+                
+                # array initialization for covariance
+                sab = np.zeros((self.zed_obs_div,self.zed_obs_div))            
+                SN  = np.zeros((self.zed_obs_div, self.zed_obs_div, self.Lambda_obs_div,self.Lambda_obs_div))
+                Nb_zbin_Lbin = np.zeros((self.zed_obs_div, self.Lambda_obs_div))
+
+                # richness-independent quantites that can be computed outside the lambda loop
+                for z_bin in range(len(self.zed_obs_edges)-1):
+                    
+                    z_tab = np.linspace(self.zed_obs_edges[z_bin], self.zed_obs_edges[z_bin+1], self.z_tab_sig)
+                        
+                    sab[z_bin,:(z_bin+1)] = 1/(2*np.pi**2) * simps((self.k**2 * np.sqrt(pk[z_bin]*pk[:(z_bin+1)])) 
+                                                                   * self.cov_window(z_bin, z_tab, self.k, L, KL), self.k, axis=-1)
+                    sab[:(z_bin+1),z_bin] = sab[z_bin,:(z_bin+1)]
+
+            for lambda_bin in range(len(self.Lambda_obs_edges)-1):
+
+                l_tab = np.geomspace(self.Lambda_obs_edges[lambda_bin], self.Lambda_obs_edges[lambda_bin+1], self.l_m_tab_sig[lambda_bin])
+
+                # P(lob|ltr,ztr)
+                Plob_l_z  = simps(SelectionFunction.P_lbdobs_lbd(self.zed, self.Lambda, l_tab), l_tab, axis=-1) 
+                if external_richness_selection_function == 'CG_ESF':
+                   Plob_l_z  = self.int_Plobltr_Dlob[lambda_bin](self.zed, self.Lambda).T  
+
+                # P(ltrM,ztr)
+                Pl_M_z  = SelectionFunction.P_lnlbd(self.zed, self.Mass, self.Lambda) 
+
+                # P(lob|M,ztr)
+                Plob_M_z[lambda_bin]  = simps(Pl_M_z[:,:,:]*Plob_l_z[:,np.newaxis,:], self.Lambda,axis=-1)  
+
+                # N(lob,ztr)
+                n_lbdobs_z[lambda_bin] = simps(Plob_M_z[lambda_bin]*dndm_z,self.Mass, axis=1)  
+
+                # N(lob,ztr) * bias(lob,ztr)
+                if CG_xi2_cov_selection in ['covCC','covCC_covCxi2']: 
+                   b_n_lbdobs_z[lambda_bin] = simps(Plob_M_z[lambda_bin] * dndm_z * bias_z, self.Mass, axis=1) 
+
+                    
+                for z_bin in range(len(self.zed_obs_edges)-1):
+                        
+                    z_tab = np.linspace(self.zed_obs_edges[z_bin], self.zed_obs_edges[z_bin+1], self.z_tab_sig)
+    
+                    # P(zob|ztr)                  
+                    Pzob_z = simps(SelectionFunction.P_zobs_z(z_tab, self.Lambda_obs_edges[lambda_bin],self.zed), z_tab, axis=0)       
+    
+                    # observed volume element dV/dz_ob
+                    dV_dzob[z_bin,lambda_bin] = dvdzdomega_z1z2 * Pzob_z * (self.area)*(np.pi**2.0/180.0**2.0) 
+    
+                    # N(lob,zob)
+                    N_zbin_Lbin[z_bin,lambda_bin]  = simps(n_lbdobs_z[lambda_bin] * dV_dzob[z_bin,lambda_bin], self.zed, axis=0)   
+    
+                    if CG_xi2_cov_selection in ['covCC','covCC_covCxi2']:
+    
+                        # N(lob,zob) * bias(lob,zob)
+                        Nb_zbin_Lbin[z_bin, lambda_bin] = simps(b_n_lbdobs_z[lambda_bin] * dV_dzob[z_bin,lambda_bin], self.zed, axis=0) 
+           
+                        # shot-noise matrix
+                        SN[z_bin,z_bin] = np.diag(N_zbin_Lbin[z_bin]) 
+           
+
+            if CG_xi2_cov_selection in ['covCC','covCC_covCxi2']:
+
+               # total covariance = shot-noise + sample covariance
+               cov_zbin_Lbin = SN + (Nb_zbin_Lbin.reshape(1,self.zed_obs_div,1,self.Lambda_obs_div) *
+                                     Nb_zbin_Lbin.reshape(self.zed_obs_div,1,self.Lambda_obs_div,1) * 
+                                     sab.reshape(self.zed_obs_div,self.zed_obs_div,1,1))
+                                     
+           return N_zbin_Lbin, cov_zbin_Lbin    
+                                     
+class CWL:
+    def __init__(self, ):
+        """
+        Initializes the cluster profile lensing
+
+        Checks if 
+
+        Parameters:
+        - ....
+        
+        """
+        self.perturbations = Perturbations
+        self.background = self.Perturbations.Background
+        
+        self.CG_like_selection = 'CC'
+        self.CG_xi2_cov_selection = 'covCC'
+        self.CG_xi2_cov_selection = 'non_CG_ESF'
+        self.bias = 'castro23'
+        
+        
+        self.zed_obs_edges = np.linspace(0.2, 1.8, 9)
+        self.Lambda_obs_edges = np.array([20.0, 30.0, 45.0, 60.0, 500.0])
+        self.Rad_obs_edges = np.linspace(5.0, 100.0, 11)
+        self.Lambda_obs_Cxi2_edges = np.array([20, 30, 500])
+        self.Rad_obs_Cxi2_edges = np.geomspace(20.0, 130.0, 31)
+        self.zed_obs_Cxi2_edges = np.arange(0.2, 1.81, 0.4)
+
+        # mass array (integration variable)
+        M_min = 12.0  # in Msun h^-1
+        M_max = 16.0
+        self.M_div = 50
+        self.Mass = np.logspace(M_min, M_max, self.M_div+1)
+
+        # true richness array (integration variable)
+        Lambda_min = 5.0
+        Lambda_max = 250.0
+        self.Lambda_div = 50
+        self.Lambda = np.geomspace(Lambda_min, Lambda_max, self.Lambda_div+1)
+
+        # true redshift array (integration variable)
+        z_min = 1e-5
+        z_max = self.zs_max - 1e-5  # correction needed for avoiding zero values in n_zs_norM computation
+        self.z_div = 50
+        self.zed   = np.linspace(z_min, z_max, self.z_div+1) 
+        
+        
+    def g_zbin_Lbin_Rbin(self, z, M):   
+        
+        ##### reduced shear
+        g_zbin_Lbin_Rbin = np.zeros(
+            ((self.zed_obs_div, self.Lambda_obs_div, self.Rad_obs_div)))
+        dV_dzob       = np.zeros((self.zed_obs_div, self.Lambda_obs_div),dtype=list) 
+        
+        dvdzdomega_z1z2 = self.background.dV_dzdO(z)*(self.background.H0/100.0)**3.0   
+        
+        if CG_like_selection in ['CC_CWL','CC_CWL_Cxi2'] :
+            
+            Rad_obs     = self.Rad_obs_edges
+            Rad_obs_mid = 0.5 * (Rad_obs[1:] + Rad_obs[:-1])            
+
+            for rad_bin in range(len(Rad_obs_mid)):                        
+                        excess_surface_mass_density = Profile.excess_surface_mass_density(Rad_obs[rad_bin], self.zed, 
+                                                                                       self.halo_concentration, self.Mass)           
+                        
+                        for lambda_bin in range(len(self.Lambda_obs_edges)-1):
+                            excesssurfacemassdensity = simps(Plob_M_z[lambda_bin]*dndm_z*excess_surface_mass_density[rad_bin], self.Mass, axis=1)
+                                 
+                            for z_bin in range(len(self.zed_obs_edges)-1):
+                                g_zbin_Lbin_Rbin[z_bin,lambda_bin, rad_bin] = (1.0+Profile.mshear)/N_zbin_Lbin[z_bin,lambda_bin] * simps(
+                                    Profile.m_sig_crit_m1(self.zed, z_bin)*dV_dzob[z_bin,lambda_bin]*excesssurfacemassdensity,self.zed) 
+       
+        ### !!!! note that the final number of richness bins is NL=nl+1 ONLY if we have two richness bins,
+        ### if nl>2, the effective number of richness bins is NL=factorial(nl)//(factorial(nl-2)*factorial(2)) + nl
+        ### this makes the reshape of the matrix more complex. Since we plan to use only two bins, for the moment it is not implemented.
+
+        Cxi2_zbin_Lbin_Rbin = np.zeros((((self.zed_obs_Cxi2_div, self.Lambda_obs_Cxi2_div+1, self.Rad_obs_Cxi2_div))))
+        cov_Cxi2 = np.zeros((self.zed_obs_Cxi2_div, self.zed_obs_Cxi2_div, self.Lambda_obs_Cxi2_div + 1, 
+                           self.Lambda_obs_Cxi2_div + 1, self.Rad_obs_Cxi2_div, self.Rad_obs_Cxi2_div))  
+                           
+        return g_zbin_Lbin_Rbin                     
+
+class Cxi2:
+    def __init__(self, tracer1 : Tracer, tracer2 : Tracer):
+        """
+        Initializes the AngularTwoPoint object.
+
+        Checks if the tracers are compatible and sets the two tracers
+        as instance attributes.
+
+        Parameters:
+        - tracer1 (Tracer): The first tracer for the two-point function.
+        - tracer2 (Tracer): The second tracer for the two-point function.
+        """
+        self.tracer1 = tracer1
+        self.tracer2 = tracer2
+
+        # 2point correlation function
+        if CG_like_selection in ['CC_Cxi2','CC_CWL_Cxi2']:
+            
+            # init
+            n_lbdobs_z_Cxi2    = np.zeros((self.Lambda_obs_Cxi2_div,self.z_div+1)) 
+            n_b_lbdobs_z_Cxi2  = np.zeros((self.Lambda_obs_Cxi2_div,self.z_div+1))
+            integ_zbin_lbin  = np.zeros(((self.zed_obs_Cxi2_div, self.Lambda_obs_Cxi2_div, len(self.k))))
+            
+            # clustering bins
+            z_obs_Cxi2_mid      = 0.5 * (self.zed_obs_Cxi2_edges[1:] + self.zed_obs_Cxi2_edges[:-1])
+            Lambda_obs_Cxi2_mid = 0.5 * (self.Lambda_obs_Cxi2_edges[1:] + self.Lambda_obs_Cxi2_edges[:-1])
+            
+            # array initialization for clustering covariance
+            V_zob = np.zeros(len(self.zed_obs_Cxi2_edges)-1)
+            sqrt_Pk_zbin_lbin = np.zeros(((self.zed_obs_Cxi2_div, self.Lambda_obs_Cxi2_div, len(self.k))))
+            one_over_n_lambdai_lambdaj = np.zeros(((self.zed_obs_Cxi2_div, self.Lambda_obs_Cxi2_div, self.Lambda_obs_Cxi2_div)))            
+                      
+            # spherical shell window function W(R,K) and volume of the shell (compute once outside the redshift loop)
+            W_rad, V_rad = self.WF_ra(z_obs_Cxi2_mid,self.Rad_obs_Cxi2_edges,self.k)                 
+
+
+            # matter power spectrum + IR resummation
+            ############
+            #### !!!!! ADD IR RESUMMATION (to be implemented? already implemented for galaxy clustering?)
+            ############
+            pk_IR = self.Pk_def(self.zed, self.k, self.neutrino_cdm) 
+            
+            # LOOP OVER CLUSTERING RICHNESS BINS
+            for lambda_bin in range(len(self.Lambda_obs_Cxi2_edges)-1):
+
+                l_tab = np.geomspace(self.Lambda_obs_Cxi2_edges[lambda_bin], 
+                                     self.Lambda_obs_Cxi2_edges[lambda_bin+1], self.l_m_tab_sig_Cxi2[lambda_bin])
+                
+                ## recompute quantities that depend on lambda_obs
+
+                # P(lob|ltr,ztr)
+                Plob_l_z_Cxi2 = simps(self.P_lbdobs_lbd(self.zed, self.Lambda, l_tab), l_tab, axis=-1)         
+
+                # P(lob|M,ztr)   
+                Plob_M_z_Cxi2 = simps(Pl_M_z[:,:,:] * Plob_l_z_Cxi2[:,np.newaxis,:], self.Lambda,axis=-1)  
+                
+                # n(lob,ztr) 
+                n_lbdobs_z_Cxi2 = simps(Plob_M_z_Cxi2 * dndm_z, self.Mass, axis=1)
+
+                # n(lob,ztr) * b(lob,zob) 
+                n_b_lbdobs_z_Cxi2 = simps(Plob_M_z_Cxi2 * dndm_z * bias_z, self.Mass, axis=1)
+
+                # effective halo bias
+                b_eff = (n_b_lbdobs_z_Cxi2/n_lbdobs_z_Cxi2)[:,np.newaxis]
+
+                # correct power specrum for photo-z uncertainties and RSD (eqs. 80-83)
+                photoz_corr0, photoz_corr1, photoz_corr2 = self.photoz_rsd_correction(self.zed, Lambda_obs_Cxi2_mid[lambda_bin])
+                pk_halo = pk_IR * (b_eff**2 * photoz_corr0 + b_eff*photoz_corr1 + photoz_corr2) 
+                
+                for z_bin in range(len(self.zed_obs_Cxi2_edges)-1):
+                    
+                    z_tab = np.linspace(self.zed_obs_Cxi2_edges[z_bin], self.zed_obs_Cxi2_edges[z_bin+1], self.z_tab_sig)
+                    
+
+                    # P(zob|ztr)                  
+                    Pzob_z = simps(self.P_zobs_z(z_tab, self.Lambda_obs_Cxi2_edges[lambda_bin],self.zed), z_tab, axis=0)       
+
+                    # observed volume element dV/dz_ob
+                    dV_dzob = dvdzdomega_z1z2 * Pzob_z * (self.area)*(np.pi**2.0/180.0**2.0) 
+
+                    # volume of the observed redshift slice
+                    V_zob[z_bin] = simps(dV_dzob,self.zed,axis=0)  
+
+                    # normalization factor
+                    N_int_lbdobs_z_Cxi2 = simps(dV_dzob * n_lbdobs_z_Cxi2, self.zed, axis=0) 
+                    
+                    # power spectrum and shot-noise terms
+                    sqrt_Pk_zbin_lbin[z_bin,lambda_bin,:] = simps((dV_dzob*n_lbdobs_z_Cxi2)[:,np.newaxis] * np.sqrt(pk_halo),
+                                                                  self.zed,axis=0)/N_int_lbdobs_z_Cxi2
+                    
+                    one_over_n_lambdai_lambdaj[z_bin,lambda_bin,lambda_bin] = V_zob[z_bin]/N_int_lbdobs_z_Cxi2
+
+            
+            # cross Pk and shot-noise in two richness bins
+            Pk_lambdai_lambdaj = sqrt_Pk_zbin_lbin[:,:,np.newaxis,:]*sqrt_Pk_zbin_lbin[:,np.newaxis,:,:]    # dim = [nz,nl,nl,nk]
+            one_over_n_lambdai_lambdaj = one_over_n_lambdai_lambdaj[:,:,:,np.newaxis]                       # dim = [nz,nl,nl,nk]             
+
+
+            # compute 2point correlation function
+            # dim = [nz,nl,nl,nr]
+            Cxi2_zbin_Lbin_Rbin_buf = simps((self.k**2./(2.*np.pi**2) * W_rad[:,np.newaxis,np.newaxis,:,:] *
+                                           Pk_lambdai_lambdaj[:,:,:,np.newaxis,:]), self.k,axis=-1)
+            
+            # xi(lambda_i,lambda_j) = xi(lambda_j,lambda_i), so reshape and keep only one of them
+            for z_bin in range(self.zed_obs_Cxi2_div):           
+                for rad_bin in range(self.Rad_obs_Cxi2_div):
+                    Cxi2_zbin_Lbin_Rbin[z_bin,:,rad_bin] = Cxi2_zbin_Lbin_Rbin_buf[z_bin,:,:,rad_bin][np.triu_indices(self.Lambda_obs_Cxi2_div)]
+
+            
+            # 2point correlation function covariance
+            if CG_xi2_cov_selection in ['covCxi2','covCC_covCxi2']:
+                ### alpha(z,l), beta(z,l), gamma(z,l) are nuisance parameters to be fitted on (few, ~100) simulations
+                ### to correct for bias model inaccuracy, non-poissonian shot-noise and high-order terms
+                ### ref values are alpha=0,beta=1,gamma=0
+                ### (see Euclid Collaboration: Fumagalli et al. 2022)
+                
+                # combine and reshape 
+                alpha_ij = (1+self.alpha_cov_Cxi2[:,:,np.newaxis,np.newaxis])*(1+self.alpha_cov_Cxi2[:,np.newaxis,:,np.newaxis])
+                beta_ij  = self.beta_cov_Cxi2[:,:,np.newaxis,np.newaxis]*self.beta_cov_Cxi2[:,np.newaxis,:,np.newaxis]  
+
+                beta_pk_ij = beta_ij*Pk_lambdai_lambdaj
+                alpha_n_ij = alpha_ij*one_over_n_lambdai_lambdaj
+                
+                
+                ### TWO TERMS OF EQ. 73             
+                cov_g  = np.zeros((self.zed_obs_Cxi2_div,self.Lambda_obs_Cxi2_div,self.Lambda_obs_Cxi2_div,self.Lambda_obs_Cxi2_div,
+                                  self.Lambda_obs_Cxi2_div,self.Rad_obs_Cxi2_div,self.Rad_obs_Cxi2_div))
+                cov_ng = np.zeros((self.zed_obs_Cxi2_div,self.Lambda_obs_Cxi2_div,self.Lambda_obs_Cxi2_div,self.Lambda_obs_Cxi2_div,
+                                  self.Lambda_obs_Cxi2_div,self.Rad_obs_Cxi2_div,self.Rad_obs_Cxi2_div))
+
+                for lambda_bin_i in range(self.Lambda_obs_Cxi2_div):
+                    for lambda_bin_j in range(self.Lambda_obs_Cxi2_div):
+
+                        for rad_bin in range(self.Rad_obs_Cxi2_div):
+                            
+                            cov_ng[:,lambda_bin_i,lambda_bin_j,lambda_bin_i,lambda_bin_j,rad_bin,rad_bin] = (simps(self.k**2./(2.*np.pi**2.) 
+                            * W_rad[:,rad_bin,:] * beta_pk_ij[:,lambda_bin_i,lambda_bin_j,:], x=self.k) 
+                            * (1+self.gamma_cov_Cxi2[:,lambda_bin_i])*one_over_n_lambdai_lambdaj[:,lambda_bin_i,lambda_bin_i,0]
+                            * (1+self.gamma_cov_Cxi2[:,lambda_bin_j])*one_over_n_lambdai_lambdaj[:,lambda_bin_j,lambda_bin_j,0]/V_rad[:,rad_bin])
+
+                        for lambda_bin_k in range(self.Lambda_obs_Cxi2_div):
+                            for lambda_bin_h in range(self.Lambda_obs_Cxi2_div):
+
+                                # gaussian term
+                                cov_g[:,lambda_bin_i,lambda_bin_j,lambda_bin_k,lambda_bin_h,:,:] = simps(self.k**2./(2.*np.pi**2.) 
+                                            * W_rad[:,np.newaxis,:,:] * W_rad[:,:,np.newaxis,:]
+                                            * (beta_pk_ij+alpha_n_ij)[:,lambda_bin_i,lambda_bin_k,np.newaxis,np.newaxis,:]  
+                                            * (beta_pk_ij+alpha_n_ij)[:,lambda_bin_j,lambda_bin_h,np.newaxis,np.newaxis,:], x=self.k, axis=-1)
+                               
+                                        
+              
+                ### EQ. 89 + RESHAPE according to 2ptCF
+                for z_bin in range(self.zed_obs_Cxi2_div):
+                    for lambda_bin_i in range(self.Lambda_obs_Cxi2_div):
+                        for lambda_bin_j in range(self.Lambda_obs_Cxi2_div):
+                            for lambda_bin_k in range(self.Lambda_obs_Cxi2_div):
+                                for lambda_bin_h in range(self.Lambda_obs_Cxi2_div):
+                                    # NOTE: if more than 2 richness bins, this has to be modified
+                                    cov_Cxi2[z_bin,z_bin,lambda_bin_i+lambda_bin_j,lambda_bin_k+lambda_bin_h,:,:] = 1/V_zob[z_bin] * (
+                                                            (cov_g+cov_ng)[z_bin,lambda_bin_i,lambda_bin_j,lambda_bin_k,lambda_bin_h,:,:] +
+                                                            (cov_g+cov_ng)[z_bin,lambda_bin_i,lambda_bin_j,lambda_bin_h,lambda_bin_k,:,:])
+
+        return Cxi2_zbin_Lbin_Rbin, cov_Cxi2

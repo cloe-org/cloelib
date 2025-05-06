@@ -395,7 +395,7 @@ class Profile:
                 return j0(l * theta[i]) * l * Pk_interp(kl)
 
             # Compute rho_m for this redshift
-            rho_m = self.cosmo.Omm_z(z_val, nu_cdm="tot") * self.cosmo.rho_crit_z(z_val)
+            rho_m = self.cosmo.Omega_m(z_val, nonu=False) * self.cosmo.rho_crit_z(z_val)
 
             # Compute Sigma for each mass M
             Sigma_z = quad_vec(
@@ -472,7 +472,7 @@ class Profile:
                 return j2 * l * Pk_interp(kl)
 
             # Compute rho_m for this redshift
-            rho_m = self.cosmo.Omm_z(z_val, nu_cdm="tot") * self.cosmo.rho_crit_z(z_val)
+            rho_m = self.cosmo.Omega_m(z_val, nuno=False) * self.cosmo.rho_crit_z(z_val)
 
             # Compute Sigma for each mass M
             DeltaSigma_z = quad_vec(

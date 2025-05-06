@@ -1,6 +1,6 @@
 from cloelib.cosmology.cosmology_clusters import Perturbations
 
-import jax.numpy as np
+import numpy as np
 from scipy.integrate import simpson as simps
 from scipy.special import gamma
 from scipy import integrate, interpolate

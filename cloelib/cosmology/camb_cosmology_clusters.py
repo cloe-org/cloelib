@@ -206,6 +206,14 @@ class CAMBBackground:
             * self.hubble_parameter(zs)
         )
 
+    def rdrag(self,) -> float:
+        """
+        Returns the Sound horizon radius at last scattering.
+        
+        Returns:
+        float: Sound horizon radius at last scattering
+        """
+        return results.get_derived_params['rdrag']
 
 class CAMBLinearPerturbations:
     """

@@ -37,7 +37,7 @@ camb_instance = CAMBBackground(H0=H0, Omega_b0=Omega_b0, Omega_cdm0=Omega_cdm0,
                                As=As, ns=ns, mnu=0., w0=-1.0, wa=0.0, 
                                gamma_MG=0.0)
 
-# SelecitonFunction
+# SelectionFunction
 SF = SelectionFunction(A_l, B_l, C_l, sig_A_l, sig_B_l, sig_C_l, sig_lambda_norm, sig_lambda_z, sig_lambda_exponent, sig_z_z, sig_z_lambda)
 
 z_test = np.linspace(0.01, 1., 20)

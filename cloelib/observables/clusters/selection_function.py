@@ -1,22 +1,13 @@
 # General imports
-import jax.numpy as np  # type: ignore
+import jax.numpy as np # type: ignore
 
 
 class SelectionFunction:
-    def __init__(
-        self,
-        A_l: float,
-        B_l: float,
-        C_l: float,
-        sig_A_l: float,
-        sig_B_l: float,
-        sig_C_l: float,
-        sig_lambda_norm: float,
-        sig_lambda_z: float,
-        sig_lambda_exponent: float,
-        sig_z_z: float,
-        sig_z_lambda: float,
-    ):
+    def __init__(self, A_l: float, B_l: float, C_l: float,
+                 sig_A_l: float, sig_B_l: float, sig_C_l: float, 
+                 sig_lambda_norm: float, sig_lambda_z: float, 
+                 sig_lambda_exponent: float, sig_z_z: float,
+                 sig_z_lambda: float):
         r"""
         Class defining the selection function of galaxy clusters, including
         sample purity, completeness, mass-observable relation, and
@@ -61,7 +52,7 @@ class SelectionFunction:
         self.sig_lambda_exponent = sig_lambda_exponent
         self.sig_z_z = sig_z_z
         self.sig_z_lambda = sig_z_lambda
-
+        
     def lnlambda(self, z, M):
         r"""
         Computes the theoretical richness
@@ -89,6 +80,8 @@ class SelectionFunction:
             + self.B_l * np.log(M / (3.0e14))
             + self.C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + 0.45))
         )
+
+
 
     def scatter_lnl(self, z, M):
         r"""

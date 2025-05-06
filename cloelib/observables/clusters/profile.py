@@ -1,3 +1,6 @@
+from ...auxiliary import units
+
+
 class Profile:
 
     @property
@@ -67,14 +70,14 @@ class Profile:
                      Critical surface mass density (unit : Msun/pc^2)
         """
 
-        light_speed = self.cosmo["c"] * (units.km / units.s)
+        light_speed = self.units.SPEED_OF_LIGHT * (units.km / units.s)
         fact = light_speed**2.0 / (4.0 * np.pi * G)
         fact = fact.to(units.Msun / units.pc).value
         d_a_sources = self.background.angular_diameter_distance(z_sources) * 1.0e6
         d_a_l = self.background.angular_diameter_distance(z) * 1.0e6
         d_m_l = (1.0 + z) * d_a_l
         d_m_sources = (1.0 + z_sources) * d_a_sources
-        d_h = self.cosmo["c"] / (self.background.H0 * 1.0e-6)
+        d_h = self.units.SPEED_OF_LIGHT / (self.background.H0 * 1.0e-6)
         d_a_lens_source = (
             1.0
             / (1.0 + z_sources)

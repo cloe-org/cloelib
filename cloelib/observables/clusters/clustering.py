@@ -1,3 +1,6 @@
+from ...auxiliary import units
+
+
 class HaloClustering:
     def __init__(
         self,
@@ -79,7 +82,7 @@ class HaloClustering:
         Dv = (
             (1 + z) ** 2
             * self.background.angular_diameter_distance(z) ** 2
-            * self.cosmo["c"]
+            * self.units.SPEED_OF_LIGHT
             * z
             / self.background.hubble_parameter(z)
         ) ** (1 / 3.0)
@@ -88,7 +91,7 @@ class HaloClustering:
         Dv_fid = (
             (1 + z) ** 2
             * self.background_fid.angular_diameter_distance(z) ** 2
-            * self.cosmo["c"]
+            * self.units.SPEED_OF_LIGHT
             * z
             / self.background_fid.hubble_parameter(z)
         ) ** (1 / 3.0)

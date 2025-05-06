@@ -1,4 +1,5 @@
 from cloelib.observables.clusters.selection_function import SelectionFunction
+from cloelib.observables.clusters.halo_statistics import HaloStatistics
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 
 import numpy as np
@@ -32,10 +33,12 @@ sig_z_z = 0.1
 sig_z_lambda = 0.1
 
 #
-camb_instance = CAMBBackground(H0=H0, Omega_b0=Omega_b0, Omega_cdm0=Omega_cdm0, 
-                               Omega_k0=Omega_k0,
-                               As=As, ns=ns, mnu=0., w0=-1.0, wa=0.0, 
-                               gamma_MG=0.0)
+background = CAMBBackground(H0=H0, Omega_b0=Omega_b0, Omega_cdm0=Omega_cdm0, 
+                            Omega_k0=Omega_k0,
+                            As=As, ns=ns, mnu=0., w0=-1.0, wa=0.0, 
+                            gamma_MG=0.0)
+perturbations = CAMBLinearPerturbations(background, np.linspace(0., 2., 100))
+
 
 # SelectionFunction
 SF = SelectionFunction(A_l, B_l, C_l, sig_A_l, sig_B_l, sig_C_l, sig_lambda_norm, sig_lambda_z, sig_lambda_exponent, sig_z_z, sig_z_lambda)
@@ -53,5 +56,8 @@ SF.scatter_lbdobs_lbd(z_test, l_test)
 SF.P_lbdobs_lbd(z_test, l_test, lob_test)
 SF.scatter_zobs_z(lob_test, z_test)
 SF.P_zobs_z(zob_test, lob_test, z_test)
+
+# HaloStatistics
+HS = HaloStatistics(perturbations, 'vir')
 
 

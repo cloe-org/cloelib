@@ -1,34 +1,31 @@
-from cloelib.cosmology_clusters.cosmology import Perturbations
+from cloelib.cosmology.cosmology_clusters import Perturbations
+
+import jax.numpy as np
 
 
 class HaloStatistics:
     def __init__(
         self,
-        pertrurbations: Perturbations,
+        perturbations: Perturbations,
         overdensity_type: str,
-        overdensity: int,
-        nonu: bool,
-        k_div: int,
-        k_min: float,
-        k_max: float,
+        overdensity: int = 200,
+        nonu: bool = False,
+        k_div: int = 500,
+        k_min: float = 1.e-4,
+        k_max: float = 1.e2,
     ):
-        self.cosmo = perturbations
-        
-        if overdensity_tipe not in ["crit", "mean", "vir"]:
-            raise ValueError("Invalid overdensity definition, %s." % overdensity_type)
-        self.overdensity_type = overdensity_type  # self.theory['obs_specifications']['CG']['overdensity_type']
-        self.overdensity = (
-            overdensity  # self.theory['obs_specifications']['CG']['overdensity']
-        )
+        self.perturbations = perturbations
+        self.background = perturbations.background
 
-        ################### ARRAYS FOR INTEGRATION VARIABLES ###################
+        if overdensity_type not in ["crit", "mean", "vir"]:
+            raise ValueError("Invalid overdensity definition, %s." % overdensity_type)
+        self.overdensity_type = overdensity_type
+        self.overdensity = overdensity
+
+        self.nonu = nonu
 
         # wavelength array (integration variable)
         self.k = np.geomspace(k_min, k_max, k_div)
-
-        self.nonu = (
-            nonu  # self.theory["obs_specifications"]["CG"]["nonu"]
-        )
 
     def window(self, k, R):
         r"""
@@ -74,7 +71,10 @@ class HaloStatistics:
         radius_M: array
                 Radius_M in h^{-1} Mpc
         """
-        rho_m_0 = self.cosmo.rho_crit(0.) * self.cosmo.Omega_m(0., self.nonu)
+        rho_m_0 = (
+            self.background.rho_crit(0.)
+            * self.background.Omega_m(0., self.nonu)
+        )
         return (M / rho_m_0 * (3.0 / (4.0 * np.pi))) ** (1 / 3.0)
 
     def delta_c(self, z):
@@ -97,7 +97,7 @@ class HaloStatistics:
             3.0
             / 20.0
             * (12.0 * np.pi) ** (2.0 / 3.0)
-            * (1.0 + 0.012299 * np.log10(self.cosmo.Omega_m(z)))
+            * (1.0 + 0.012299 * np.log10(self.background.Omega_m(z)))
         )
 
     def get_Delta_crit(self, z):
@@ -130,13 +130,49 @@ class HaloStatistics:
             Delta = self.overdensity
 
         elif self.overdensity_type == "mean":
-            Delta = self.overdensity * self.cosmo.Omega_m(z, self.nonu)
+            Delta = self.overdensity * self.background.Omega_m(z, self.nonu)
 
         elif self.overdensity_type == "vir":
-            x = self.cosmo.Omega_m(z, self.nonu) - 1.0
+            x = self.background.Omega_m(z, self.nonu) - 1.0
             Delta = 18.0 * np.pi**2 + 82.0 * x - 39.0 * x**2
 
         return Delta
+    
+    def sigma_z_R(self, z, R):
+        r"""
+        Computes the rms at the radii requested from
+        the table given by the Boltzman code
+
+        Parameters
+        ----------
+        z: float or numpy.ndarray
+                   Redshift at which to evaluate sigma_z_M
+        R: float or numpy.ndarray
+               Radius at which to evaluate sigma_z_R in h^{-1} Mpc
+
+        Returns
+        -------
+        sigma_z_R: numpy.ndarray
+                sigma_z_R[i,j] where i is the redshift axis and
+                j the radius axis
+        """
+        k = self.k  # h/Mpc
+        W, _ = self.window(k, R)
+        return np.sqrt(
+            (
+                1
+                / (2.0 * np.pi**2)
+                * simps(
+                    (k**2.0).reshape(1, 1, len(k))
+                    * self.perturbations.Pk_def(z, k, self.nonu).reshape(
+                        len(z), 1, len(k)
+                    )
+                    * (W**2.0).reshape(1, len(R), len(k)),
+                    k,
+                    axis=-1,
+                )
+            )
+        )
 
     def sigma_z_M(self, z, M):
         r"""
@@ -156,25 +192,8 @@ class HaloStatistics:
                 sigma_z_M[i,j] where i is the redshift axis and
                 j the mass axis
         """
-
-        k = self.k  # h/Mpc
-        R = self.cosmo.radius_M(M)  # Mpc/h
-        W, dWdx = self.window(k, R)
-        return np.sqrt(
-            (
-                1
-                / (2.0 * np.pi**2)
-                * simps(
-                    (k**2.0).reshape(1, 1, len(k))
-                    * self.cosmo.Pk_def(z, k, self.nonu).reshape(
-                        len(z), 1, len(k)
-                    )
-                    * (W**2.0).reshape(1, len(R), len(k)),
-                    k,
-                    axis=-1,
-                )
-            )
-        )
+        R = self.radius_M(M)  # Mpc/h
+        return self.sigma_z_R(z, R)
 
     def nu_z_M(self, z, M):
         r"""
@@ -219,11 +238,11 @@ class HaloStatistics:
         """
 
         k = self.k  # h/Mpc
-        R = self.cosmo.radius_M(M)  # Mpc/h
+        R = self.radius_M(M)  # Mpc/h
         W, dWdx = self.window(k, R)
         dsigma2_dR = np.pi**-2 * simps(
             k.reshape(1, 1, len(k)) ** 3
-            * self.cosmo.Pk_def(z, k, self.nonu).reshape(len(z), 1, len(k))
+            * self.perturbations.Pk_def(z, k, self.nonu).reshape(len(z), 1, len(k))
             * W.reshape(1, len(R), len(k))
             * dWdx.reshape(1, len(R), len(k)),
             k,
@@ -275,7 +294,10 @@ class HaloStatistics:
         """
 
         dlnsigmadlnR = self.dlns_dlnR(z, M)
-        rho_mean_0 = self.cosmo.Omega_m(0, self.nonu) * self.cosmo.rho_crit_z(0)
+        rho_mean_0 = (
+            self.background.Omega_m(0, self.nonu)
+            * self.background.rho_crit_z(0)
+        )
 
         return rho_mean_0 / M**2.0 * self.f_sigma_nu(z, M) * dlnsigmadlnR / (-3)
 
@@ -304,7 +326,7 @@ class HaloStatisticsTinker10(HaloStatistics):
 
     def bias(self, z, M):
 
-        Delta = self.get_Delta_crit(z) / self.cosmo.Omega_m(z)
+        Delta = self.get_Delta_crit(z) / self.background.Omega_m(z)
 
         if type(M) is not np.ndarray:
             M = np.array([M])
@@ -359,7 +381,7 @@ class HaloStatisticsCastro23(HaloStatistics):
         qz = 0.0251
 
         dlnsigmadlnR = self.dlns_dlnR(z, M)
-        Ommz = self.cosmo.Omega_m(z, self.nonu)[:, np.newaxis]
+        Ommz = self.background.Omega_m(z, self.nonu)[:, np.newaxis]
         nu = self.nu_z_M(z, M)
 
         aR = a1 + a2 * (dlnsigmadlnR + 0.6125) ** 2.0
@@ -389,9 +411,10 @@ class HaloStatisticsCastro23(HaloStatistics):
             M = np.append(M, M[-1] * np.arange(2, 6))
 
         dlnsigmadlnR = self.dlns_dlnR(z, M)
-        Ommz = self.cosmo.Omega_m(z, self.nonu)[:, np.newaxis]
-        S8 = self.cosmo.parameter["sigma8_0"] * np.sqrt(
-            self.cosmo.parameter["Omm"] / 0.3
+        Ommz = self.background.Omega_m(z, self.nonu)[:, np.newaxis]
+        sigma8 = self.sigma_z_R(z, 8.)
+        S8 = sigma8 * np.sqrt(
+            self.background.Omega_m(0.) / 0.3
         )
 
         nu = self.nu_z_M(z, M)

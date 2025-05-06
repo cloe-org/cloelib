@@ -3,7 +3,7 @@ from cloelib.observables.clusters.HaloStatistics import HaloStatistics
 from cloelib.observables.clusters.HaloStatistics import HaloStatistics.HaloStatisticsTinker10
 from cloelib.observables.clusters.HaloStatistics import HaloStatistics.HaloStatisticsCastro23
 from cloelib.observables.clusters.selection_function import SelectionFunction
-from cloelib.observables.clusters.cosmology_cluster import Perturbations
+from cloelib.observables.clusters.camb_cosmology_cluster import Perturbations
 from cloelib.observables.clusters.profile import Profile
 from cloelib.observables.clusters.clustering import HaloClustering
 from cloelib.auxiliary.units import SPEED_OF_LIGHT

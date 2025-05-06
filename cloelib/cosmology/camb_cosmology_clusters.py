@@ -1,10 +1,12 @@
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.cosmology_clusters.cosmology import Background
+from cloelib.cosmology.cosmology_clusters import Background
 
 # General imports
 import numpy as np
 from typing import Tuple, Optional
+from astropy import units
+from astropy.constants import G
 
 # Cosmology imports
 try:

@@ -5,35 +5,6 @@ class _tempPerturbationsCluster:
     def __init__(self, perturbations: Perturbations):
         self.perturbations = perturbations
 
-    def Pk_def(self, z, k, nu_cdm):
-        r"""
-        Computes the power spectrum for the clusters probe.
-
-
-        Parameters
-        ----------
-        z: float
-            Redshift at which to evaluate the power spectrum.
-        k: float or list or numpy.ndarray
-            Wavenumber at which to evaluate the  power spectrum.
-            Units: h Mpc^{-1}
-
-        Returns
-        -------
-            float or numpy.ndarray
-            Value of power spectrum
-            at a given redshift and k-mode for galaxy clusters
-            Units: h^{-3} Mpc^3
-        """
-
-        # general cloe works without h units
-        k_noh = k * self.h
-
-        if nu_cdm == "cb":
-            return (self.theory["Pk_cb"].P(z, k_noh)) * self.h**3
-        else:
-            return (self.theory["Pk_delta"].P(z, k_noh)) * self.h**3
-
     def photoz_rsd_correction(self, z, sigma_zob):
         # sigma_zob = self.scatter_zobs_z(Lambda, z)
         """

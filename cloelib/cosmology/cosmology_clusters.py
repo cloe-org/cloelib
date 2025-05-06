@@ -1,7 +1,5 @@
 # General imports
 from typing import Protocol, Union, TypeVar, runtime_checkable
-from astropy import units
-from astropy.constants import G
 
 import numpy as np  # type: ignore
 import jax.numpy as jnp

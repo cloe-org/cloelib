@@ -4,8 +4,8 @@ class HaloClustering:
         pertrurbations: Perturbations,
         pertrurbations_fid: Perturbations,
     ):
-        self.cosmo = _tempPerturbationsCluster(pertrurbations)
-        self.cosmo_fid = pertrurbations_fid
+        self.background = pertrurbations.background
+        self.background_fid = pertrurbations_fid.background
 
     def WF_ra(self, z_array, r_array, k_array):
         r"""
@@ -78,19 +78,19 @@ class HaloClustering:
         # isotropic volume distance
         Dv = (
             (1 + z) ** 2
-            * self.cosmo.angular_diameter_distance(z) ** 2
+            * self.background.angular_diameter_distance(z) ** 2
             * self.cosmo["c"]
             * z
-            / self.cosmo.hubble_parameter(z)
+            / self.background.hubble_parameter(z)
         ) ** (1 / 3.0)
 
         # isotropic volume distance at fiducial cosmology (assumed for measuring the 2pcf)
         Dv_fid = (
             (1 + z) ** 2
-            * self.cosmo_fid.angular_diameter_distance(z) ** 2
+            * self.background_fid.angular_diameter_distance(z) ** 2
             * self.cosmo["c"]
             * z
-            / self.cosmo_fid.hubble_parameter(z)
+            / self.background_fid.hubble_parameter(z)
         ) ** (1 / 3.0)
 
         return (Dv / self.cosmo["rdrag"]) * (self.cosmo_fid["rdrag"] / Dv_fid)

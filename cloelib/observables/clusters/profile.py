@@ -1,4 +1,9 @@
 class Profile:
+
+    @property
+    def background(self):
+        return self.perturbations.bakcground
+
     def __init__(
         self,
         pertrurbations: Perturbations,
@@ -13,7 +18,7 @@ class Profile:
         sigma_nz=0.3,
         alpha_nz=0.4,
     ):
-        self.cosmo = _tempPerturbationsCluster(pertrurbations)
+        self.perturbations = pertrurbations
         self.halo_statistics = halo_statistics
         self.two_halo = two_halo  # self.theory['obs_specifications']['CG']['two_halo']
         if self.two_halo not in ["None", "sum", "max"]:
@@ -65,11 +70,11 @@ class Profile:
         light_speed = self.cosmo["c"] * (units.km / units.s)
         fact = light_speed**2.0 / (4.0 * np.pi * G)
         fact = fact.to(units.Msun / units.pc).value
-        d_a_sources = self.cosmo.angular_diameter_distance(z_sources) * 1.0e6
-        d_a_l = self.cosmo.angular_diameter_distance(z) * 1.0e6
+        d_a_sources = self.background.angular_diameter_distance(z_sources) * 1.0e6
+        d_a_l = self.background.angular_diameter_distance(z) * 1.0e6
         d_m_l = (1.0 + z) * d_a_l
         d_m_sources = (1.0 + z_sources) * d_a_sources
-        d_h = self.cosmo["c"] / (self.cosmo["H0"] * 1.0e-6)
+        d_h = self.cosmo["c"] / (self.background.H0 * 1.0e-6)
         d_a_lens_source = (
             1.0
             / (1.0 + z_sources)
@@ -84,7 +89,7 @@ class Profile:
         )
         sig_crit = fact * (d_a_sources / (d_a_l[:, np.newaxis] * d_a_lens_source))
 
-        return sig_crit / self.cosmo.h  # Ms pc^{-2} h
+        return sig_crit / self.background.h  # Ms pc^{-2} h
 
     def n_zs_norM(self, z):
         r"""
@@ -182,7 +187,7 @@ class Profile:
         """
 
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
-        rho_c = self.rho_crit_z(z[:, np.newaxis]) / self.cosmo.h
+        rho_c = self.rho_crit_z(z[:, np.newaxis]) / self.background.h
         densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
@@ -270,7 +275,7 @@ class Profile:
                                      excess surface density (units : Msun / pc**2)
         """
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
-        rho_c = self.cosmo.rho_crit_z(z[:, np.newaxis]) / self.cosmo.h
+        rho_c = self.background.rho_crit_z(z[:, np.newaxis]) / self.background.h
         densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
@@ -347,7 +352,7 @@ class Profile:
             M = np.array([M])
 
         # Define base quantities
-        D_A = self.cosmo.angular_diameter_distance(z)  # D_A should now be (Nz, 1)
+        D_A = self.background.angular_diameter_distance(z)  # D_A should now be (Nz, 1)
         theta = R / D_A  # R is a scalar, so theta has shape (Nz, 1)
 
         kl_min = 1.0e-4
@@ -363,7 +368,7 @@ class Profile:
             # Get P(k) for this redshift
             Pk_interp = interpolate.InterpolatedUnivariateSpline(
                 kl_array,
-                self.cosmo.matter_power_spectrum(
+                self.perturbations.matter_power_spectrum(
                     z_val, kl_array, hubble_units=True, k_hunit=True
                 ),
             )
@@ -375,9 +380,9 @@ class Profile:
 
             # Compute rho_m for this redshift
             rho_m = (
-                self.cosmo.Omega_m(z_val, nonu=False)
-                * self.cosmo.rho_crit_z(z_val)
-                / self.cosmo.h
+                self.background.Omega_m(z_val, nonu=False)
+                * self.background.rho_crit_z(z_val)
+                / self.background.h
             )
 
             # Compute Sigma for each mass M
@@ -427,7 +432,7 @@ class Profile:
             M = np.array([M])
 
         # Define base quantities
-        D_A = self.cosmo.angular_diameter_distance(z)  # D_A should now be (Nz, 1)
+        D_A = self.background.angular_diameter_distance(z)  # D_A should now be (Nz, 1)
         theta = R / D_A  # R is a scalar, so theta has shape (Nz, 1)
 
         kl_min = 1.0e-4
@@ -443,7 +448,7 @@ class Profile:
             # Get P(k) for this redshift
             Pk_interp = interpolate.InterpolatedUnivariateSpline(
                 kl_array,
-                self.cosmo.matter_power_spectrum(
+                self.perturbations.matter_power_spectrum(
                     z_val, kl_array, hubble_units=True, k_hunit=True
                 ),
             )
@@ -456,9 +461,9 @@ class Profile:
 
             # Compute rho_m for this redshift
             rho_m = (
-                self.cosmo.Omega_m(z_val, nuno=False)
-                * self.cosmo.rho_crit_z(z_val)
-                / self.cosmo.h
+                self.background.Omega_m(z_val, nuno=False)
+                * self.background.rho_crit_z(z_val)
+                / self.background.h
             )
 
             # Compute Sigma for each mass M

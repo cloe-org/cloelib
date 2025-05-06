@@ -189,7 +189,7 @@ class Profile:
         """
 
         Delta_vir = self.cosmo.get_Delta(
-            self.overdensity_type, z[:, np.newaxis], "tot", self.overdensity
+            self.overdensity_type, z[:, np.newaxis], self.overdensity
         )
         rho_c = self.rho_crit_z(z[:, np.newaxis])
         densityThreshold = Delta_vir * rho_c
@@ -289,7 +289,7 @@ class Profile:
                                      excess surface density (units : Msun / pc**2)
         """
         Delta_vir = self.cosmo.get_Delta(
-            self.overdensity_type, z[:, np.newaxis], "tot", self.overdensity
+            self.overdensity_type, z[:, np.newaxis], self.overdensity
         )
         rho_c = self.cosmo.rho_crit_z(z[:, np.newaxis])
         densityThreshold = Delta_vir * rho_c

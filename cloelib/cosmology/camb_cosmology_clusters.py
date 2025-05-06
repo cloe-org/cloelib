@@ -172,18 +172,35 @@ class CAMBBackground:
             self.results.get_Omega("baryon", z=zs)
         )
 
-    def rho_crit(self, z: np.ndarray) -> np.ndarray:
+    def rho_crit(self, zs: np.ndarray) -> np.ndarray:
         """
         Returns the critical density as a function of redshift.
 
         Args:
-            z (float): Redshift.
+            zs (np.ndarray): Redshifts.
 
         Returns:
             float: Critical density value at the specified redshift.
         """
         G_unit = G.to(units.Mpc**3.0 / (units.Msun * units.s**2.0)).value
-        return 3.0 * self.hubble_parameter(z)**2.0 / (8.0 * np.pi * G_unit)
+        return 3.0 * self.hubble_parameter(zs)**2.0 / (8.0 * np.pi * G_unit)
+
+    def dV_dzdO(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the volume element per redshit per solid angle
+        at the redshift requested.
+
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+        np.ndarray: volume element in Mpc^3 h^{-3}
+        """
+        return (
+            SPEED_OF_LIGHT / 1.e3 * self.comoving_distance(zs) ** 2.
+            * self.hubble_parameter(zs)
+        )
 
 
 class CAMBLinearPerturbations:

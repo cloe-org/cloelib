@@ -13,6 +13,9 @@ class HaloStatistics:
         k_max: float,
     ):
         self.cosmo = perturbations
+        
+        if overdensity_tipe not in ["crit", "mean", "vir"]:
+            raise ValueError("Invalid overdensity definition, %s." % overdensity_type)
         self.overdensity_type = overdensity_type  # self.theory['obs_specifications']['CG']['overdensity_type']
         self.overdensity = (
             overdensity  # self.theory['obs_specifications']['CG']['overdensity']
@@ -74,6 +77,67 @@ class HaloStatistics:
         rho_m_0 = self.cosmo.rho_crit(0.) * self.cosmo.Omega_m(0., self.nonu)
         return (M / rho_m_0 * (3.0 / (4.0 * np.pi))) ** (1 / 3.0)
 
+    def delta_c(self, z):
+        r"""
+        Computes the critical overdensity at a given redshift
+        following an approximation from Kitayama & Suto (1999)
+
+        Parameters
+        ----------
+        z: float
+            Redshift at which to evaluate the delta_c
+
+        Returns
+        -------
+        delta_c:  float or numpy.ndarray
+            Value of the critical overdensity a given redshift
+        """
+
+        return (
+            3.0
+            / 20.0
+            * (12.0 * np.pi) ** (2.0 / 3.0)
+            * (1.0 + 0.012299 * np.log10(self.cosmo.Omega_m(z)))
+        )
+
+    def get_Delta_crit(self, z):
+        r"""
+        Critical overdensity factor.
+
+        Parameters
+        ----------
+        z: float
+            Redshift.
+
+        Returns
+        -------
+        overdensity: float
+            The overdensity factor which needs
+            to be multiplied to the critical
+            density in order to define an overdensity.
+
+        Notes
+        -----
+        The function is returned for :math:`\rm \rho_c` in a density definition
+        at a given redshift. The function returns :math:`\rm \Delta` for the
+        critical density of the universe, :math:`\rm \Delta \Omega_{m}` for
+        the mean matter density of the universe, :math:`\rm \Delta` determined
+        by `Bryan & Norman 1998
+        <http://adsabs.harvard.edu/abs/1998ApJ...495...80B>`_ Equation 6 for
+        the virial density.
+        """
+        if self.overdensity_type == "crit":
+            Delta = self.overdensity
+
+        elif self.overdensity_type == "mean":
+            Delta = self.overdensity * self.cosmo.Omega_m(z, self.nonu)
+
+        elif self.overdensity_type == "vir":
+            x = self.cosmo.Omega_m(z, self.nonu) - 1.0
+            Delta = 18.0 * np.pi**2 + 82.0 * x - 39.0 * x**2
+
+        return Delta
+
     def sigma_z_M(self, z, M):
         r"""
         Computes the rms at the masses requested from
@@ -131,7 +195,7 @@ class HaloStatistics:
                 j the mass axis
         """
 
-        return self.cosmo.delta_c(z)[:, np.newaxis] / self.sigma_z_M(z, M)
+        return self.delta_c(z)[:, np.newaxis] / self.sigma_z_M(z, M)
 
     def dlns_dlnR(self, z, M):
         r"""
@@ -245,9 +309,7 @@ class HaloStatisticsTinker10(HaloStatistics):
 
     def bias(self, z, M):
 
-        Delta = self.cosmo.get_Delta(
-            self.overdensity_type, z, "tot", self.overdensity
-        ) / self.cosmo.Omega_m(z)
+        Delta = self.get_Delta_crit(z) / self.cosmo.Omega_m(z)
 
         if type(M) is not np.ndarray:
             M = np.array([M])
@@ -266,7 +328,7 @@ class HaloStatisticsTinker10(HaloStatistics):
         nu = self.nu_z_M(z, M).T
         return (
             1.0
-            - A_par * nu**a_par / (nu**a_par + self.cosmo.delta_c(z) ** a_par)
+            - A_par * nu**a_par / (nu**a_par + self.delta_c(z) ** a_par)
             + B_par * nu**b_par
             + C_par * nu**c_par
         ).T
@@ -346,7 +408,7 @@ class HaloStatisticsCastro23(HaloStatistics):
 
         # parameters
         A0, a1, b1, b2, c1 = 1.150, 0.0929, 0.256, 0.173, -0.0372
-        b_pbs = 1 - 1 / self.cosmo.delta_c(z)[:, np.newaxis] * dlnnufnu_dlnnu
+        b_pbs = 1 - 1 / self.delta_c(z)[:, np.newaxis] * dlnnufnu_dlnnu
         f0 = 1 + a1 * Ommz
         f1 = 1 + b1 * dlnsigmadlnR + b2 * dlnsigmadlnR**2
         f2 = 1 + c1 * S8

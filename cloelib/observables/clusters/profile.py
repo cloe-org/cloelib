@@ -2,8 +2,7 @@ class Profile:
     def __init__(
         self,
         pertrurbations: Perturbations,
-        overdensity_type: str,
-        overdensity: int,
+        halo_statistics: HaloStatistics,
         two_halo="None",
         offcentering=False,
         rms_off=0.0,
@@ -15,10 +14,7 @@ class Profile:
         alpha_nz=0.4,
     ):
         self.cosmo = _tempPerturbationsCluster(pertrurbations)
-        self.overdensity_type = overdensity_type  # self.theory['obs_specifications']['CG']['overdensity_type']
-        self.overdensity = (
-            overdensity  # self.theory['obs_specifications']['CG']['overdensity']
-        )
+        self.halo_statistics = halo_statistics
         self.two_halo = two_halo  # self.theory['obs_specifications']['CG']['two_halo']
         if self.two_halo not in ["None", "sum", "max"]:
             raise ValueError("Invalid 'two_halo' definition, %s." % self.two_halo)
@@ -188,15 +184,13 @@ class Profile:
 
         """
 
-        Delta_vir = self.cosmo.get_Delta(
-            self.overdensity_type, z[:, np.newaxis], "tot", self.overdensity
-        )
+        Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
         rho_c = self.rho_crit_z(z[:, np.newaxis]) / self.cosmo.h
-        densityThreshold = Delta_vir * rho_c
+        densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
 
-        Sigma = self._surface_mass_density_cen(R, RDelta, c, Delta_vir, rho_c)
+        Sigma = self._surface_mass_density_cen(R, RDelta, c, Delta_crit, rho_c)
 
         if force_no_2h == False and self.two_halo == "sum":
             Sigma += self.surface_mass_density_2h(R, z, bias, M)
@@ -206,7 +200,7 @@ class Profile:
 
         return Sigma
 
-    def _surface_mass_density_cen(self, R, RDelta, c, Delta_vir, rho_c):
+    def _surface_mass_density_cen(self, R, RDelta, c, Delta_crit, rho_c):
         return NotImplementedError
 
     def surface_mass_density(
@@ -288,17 +282,15 @@ class Profile:
         excess_surface_mass_density: float or np.ndarray
                                      excess surface density (units : Msun / pc**2)
         """
-        Delta_vir = self.cosmo.get_Delta(
-            self.overdensity_type, z[:, np.newaxis], "tot", self.overdensity
-        )
+        Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
         rho_c = self.cosmo.rho_crit_z(z[:, np.newaxis]) / self.cosmo.h
-        densityThreshold = Delta_vir * rho_c
+        densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
         Rs = RDelta / c
         x = R / Rs
 
-        Sigma_mean = self._excess_surface_mass_density(R, RDelta, c, Delta_vir, rho_c)
+        Sigma_mean = self._excess_surface_mass_density(R, RDelta, c, Delta_crit, rho_c)
 
         Sigma = self.surface_mass_density_cen(R, z, c, M, bias, force_no_2h=True)
         DeltaSigma = Sigma_mean - Sigma
@@ -336,7 +328,7 @@ class Profile:
 
         return DeltaSigma
 
-    def _excess_surface_mass_density(self, R, RDelta, c, Delta_vir, rho_c):
+    def _excess_surface_mass_density(self, R, RDelta, c, Delta_crit, rho_c):
         return NotImplementedError
 
     def surface_mass_density_2h(self, R, z, bias, M=1e14):
@@ -589,20 +581,20 @@ class ProfileNFW(Profile):
         if x > 1.0:
             return np.log(x / 2.0) + np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)
 
-    def _surface_mass_density_cen(self, R, RDelta, c, Delta_vir, rho_c):
+    def _surface_mass_density_cen(self, R, RDelta, c, Delta_crit, rho_c):
 
         Rs = RDelta / c
         x = R / Rs
 
         F = np.vectorize(self.F_term)(x)
         m_nfw = np.log(1.0 + c) - c / (1.0 + c)  # Eq. 4 Oguri & Hamana 2011
-        rho_s = Delta_vir * c**3.0 / (3.0 * m_nfw) * rho_c
+        rho_s = Delta_crit * c**3.0 / (3.0 * m_nfw) * rho_c
 
         Sigma = 2.0 * rho_s * Rs * F * 1.0e-12
 
         return Sigma
 
-    def _excess_surface_mass_density(self, R, RDelta, c, Delta_vir, rho_c):
+    def _excess_surface_mass_density(self, R, RDelta, c, Delta_crit, rho_c):
 
         Rs = RDelta / c
         x = R / Rs
@@ -610,7 +602,7 @@ class ProfileNFW(Profile):
         G = np.vectorize(self.G_term)(x)
 
         m_nfw = np.log(1.0 + c) - c / (1.0 + c)  # Eq. 4 Oguri & Hamana 2011
-        rho_s = Delta_vir * c**3.0 / (3.0 * m_nfw) * rho_c
+        rho_s = Delta_crit * c**3.0 / (3.0 * m_nfw) * rho_c
 
         Sigma_mean = 4.0 * rho_s * Rs * (G / x**2.0) * 1.0e-12
         return Sigma_mean
@@ -669,7 +661,7 @@ class ProfileBMO(Profile):
         if x > 1.0:
             return (1.0 - self.F_term(x)) / (x**2.0 - 1.0)
 
-    def _surface_mass_density_cen(self, R, RDelta, c, Delta_vir, rho_c):
+    def _surface_mass_density_cen(self, R, RDelta, c, Delta_crit, rho_c):
 
         Rs = RDelta / c
         x = R / Rs
@@ -700,7 +692,7 @@ class ProfileBMO(Profile):
             )
         )
 
-        rho_s_bmo = Delta_vir * c**3.0 / (3.0 * m_bmo) * rho_c
+        rho_s_bmo = Delta_crit * c**3.0 / (3.0 * m_bmo) * rho_c
 
         const = rho_s_bmo * Rs
 
@@ -726,7 +718,7 @@ class ProfileBMO(Profile):
         Sigma = 1e-12 * const * term1 * (term2 + term3 + term4 - term5 + term6 * L)
         return Sigma
 
-    def _excess_surface_mass_density(self, R, RDelta, c, Delta_vir, rho_c):
+    def _excess_surface_mass_density(self, R, RDelta, c, Delta_crit, rho_c):
 
         Rs = RDelta / c
         x = R / Rs
@@ -757,7 +749,7 @@ class ProfileBMO(Profile):
             )
         )
 
-        rho_s_bmo = Delta_vir * c**3.0 / (3.0 * m_bmo) * rho_c
+        rho_s_bmo = Delta_crit * c**3.0 / (3.0 * m_bmo) * rho_c
 
         const = 2.0 * np.pi * rho_s_bmo * Rs**3.0
         term1 = tau**4.0 / (tau**2.0 + 1.0) ** 3.0

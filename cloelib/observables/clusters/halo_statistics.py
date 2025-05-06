@@ -7,6 +7,11 @@ from scipy import integrate, interpolate
 
 
 class HaloStatistics:
+
+    @property
+    def background(self):
+        return self.perturbations.bakcground
+
     def __init__(
         self,
         perturbations: Perturbations,
@@ -18,7 +23,6 @@ class HaloStatistics:
         k_max: float = 1.0e2,
     ):
         self.perturbations = perturbations
-        self.background = perturbations.background
 
         if overdensity_type not in ["crit", "mean", "vir"]:
             raise ValueError("Invalid overdensity definition, %s." % overdensity_type)

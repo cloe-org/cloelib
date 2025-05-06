@@ -151,7 +151,7 @@ class Background(Protocol):
         """
         ...
      
-    def rdarg(self) -> float:
+    def rdrag(self) -> float:
         """
         Sound horizon radius at last scattering
         """

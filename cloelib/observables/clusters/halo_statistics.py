@@ -10,7 +10,7 @@ class HaloStatistics:
 
     @property
     def background(self):
-        return self.perturbations.bakcground
+        return self.perturbations.background
 
     def __init__(
         self,
@@ -191,7 +191,7 @@ class HaloStatistics:
         z: numpy.ndarray
                    Redshift at which to evaluate sigma_z_M
         M: numpy.ndarray
-               Mass at which to evaluate sigma_z_M in h^{-1} Mpc
+               Mass at which to evaluate sigma_z_M in h^{-1} Msun
 
         Returns
         -------

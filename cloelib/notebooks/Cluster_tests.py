@@ -78,7 +78,7 @@ HS_tinker = HaloStatisticsTinker(perturbations, 'vir')
 
 HS_castro = HaloStatisticsCastro(perturbations, 'vir')
 HS_castro.dn_dm(z_test, M_test)
-#HS_castro.bias(z_test, M_test)
+HS_castro.bias(z_test, M_test)
 
 
 

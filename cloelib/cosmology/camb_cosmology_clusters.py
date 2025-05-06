@@ -180,14 +180,17 @@ class CAMBBackground:
         """
         Returns the critical density as a function of redshift.
 
+        Units: Mpc^{-3} Msun h^2
+
         Args:
             zs (np.ndarray): Redshifts.
 
         Returns:
             float: Critical density value at the specified redshift.
         """
+        hh = self.hubble_parameter(zs) / 3.085677581491367e19
         G_unit = G.to(units.Mpc**3.0 / (units.Msun * units.s**2.0)).value
-        return 3.0 * self.hubble_parameter(zs)**2.0 / (8.0 * np.pi * G_unit)
+        return 3.0 * hh**2.0 / (8.0 * np.pi * G_unit)
 
     def dV_dzdO(self, zs: np.ndarray) -> np.ndarray:
         """

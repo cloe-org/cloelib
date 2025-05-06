@@ -10,7 +10,7 @@ class HaloStatistics:
 
     @property
     def background(self):
-        return self.perturbations.bakcground
+        return self.perturbations.background
 
     def __init__(
         self,

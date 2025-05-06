@@ -150,6 +150,12 @@ class Background(Protocol):
         Volume element per redshit per solid angle.
         """
         ...
+     
+    def rdrag(self) -> float:
+        """
+        Sound horizon radius at last scattering
+        """
+        ...
 
 @runtime_checkable
 class Perturbations(Protocol):

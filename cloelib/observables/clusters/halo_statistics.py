@@ -11,8 +11,8 @@ class HaloStatistics:
         overdensity: int = 200,
         nonu: bool = False,
         k_div: int = 500,
-        k_min: float = 1.e-4,
-        k_max: float = 1.e2,
+        k_min: float = 1.0e-4,
+        k_max: float = 1.0e2,
     ):
         self.perturbations = perturbations
         self.background = perturbations.background
@@ -26,6 +26,9 @@ class HaloStatistics:
 
         # wavelength array (integration variable)
         self.k = np.geomspace(k_min, k_max, k_div)
+
+        self.nonu = nonu  # self.theory["obs_specifications"]["CG"]["nonu"]
+        self._camb_delta = "delta_nonu" if nonu else "delta_tot"
 
     def window(self, k, R):
         r"""
@@ -55,7 +58,7 @@ class HaloStatistics:
         dWdx = 3.0 * (np.sin(x) * (x**2.0 - 3.0) + 3.0 * x * np.cos(x)) / x**4.0
 
         return W, dWdx
-    
+
     def radius_M(self, M):
         r"""
         Convert the requested mass in the associated radius_M
@@ -71,10 +74,7 @@ class HaloStatistics:
         radius_M: array
                 Radius_M in h^{-1} Mpc
         """
-        rho_m_0 = (
-            self.background.rho_crit(0.)
-            * self.background.Omega_m(0., self.nonu)
-        )
+        rho_m_0 = self.cosmo.rho_crit(0.0) * self.cosmo.Omega_m(0.0, self.nonu)
         return (M / rho_m_0 * (3.0 / (4.0 * np.pi))) ** (1 / 3.0)
 
     def delta_c(self, z):
@@ -137,7 +137,7 @@ class HaloStatistics:
             Delta = 18.0 * np.pi**2 + 82.0 * x - 39.0 * x**2
 
         return Delta
-    
+
     def sigma_z_R(self, z, R):
         r"""
         Computes the rms at the radii requested from
@@ -164,9 +164,9 @@ class HaloStatistics:
                 / (2.0 * np.pi**2)
                 * simps(
                     (k**2.0).reshape(1, 1, len(k))
-                    * self.perturbations.Pk_def(z, k, self.nonu).reshape(
-                        len(z), 1, len(k)
-                    )
+                    * self.perturbations.matter_power_spectrum(
+                        z, k, delta=self._camb_delta
+                    ).reshape(len(z), 1, len(k))
                     * (W**2.0).reshape(1, len(R), len(k)),
                     k,
                     axis=-1,
@@ -242,7 +242,9 @@ class HaloStatistics:
         W, dWdx = self.window(k, R)
         dsigma2_dR = np.pi**-2 * simps(
             k.reshape(1, 1, len(k)) ** 3
-            * self.perturbations.Pk_def(z, k, self.nonu).reshape(len(z), 1, len(k))
+            * self.perturbations.matter_power_spectrum(
+                z, k, delta=self._camb_delta
+            ).reshape(len(z), 1, len(k))
             * W.reshape(1, len(R), len(k))
             * dWdx.reshape(1, len(R), len(k)),
             k,
@@ -294,9 +296,8 @@ class HaloStatistics:
         """
 
         dlnsigmadlnR = self.dlns_dlnR(z, M)
-        rho_mean_0 = (
-            self.background.Omega_m(0, self.nonu)
-            * self.background.rho_crit_z(0)
+        rho_mean_0 = self.background.Omega_m(0, self.nonu) * self.background.rho_crit_z(
+            0
         )
 
         return rho_mean_0 / M**2.0 * self.f_sigma_nu(z, M) * dlnsigmadlnR / (-3)
@@ -412,10 +413,8 @@ class HaloStatisticsCastro23(HaloStatistics):
 
         dlnsigmadlnR = self.dlns_dlnR(z, M)
         Ommz = self.background.Omega_m(z, self.nonu)[:, np.newaxis]
-        sigma8 = self.sigma_z_R(z, 8.)
-        S8 = sigma8 * np.sqrt(
-            self.background.Omega_m(0.) / 0.3
-        )
+        sigma8 = self.sigma_z_R(z, 8.0)
+        S8 = sigma8 * np.sqrt(self.background.Omega_m(0.0) / 0.3)
 
         nu = self.nu_z_M(z, M)
         nufnu = self.f_sigma_nu(z, M)

@@ -1,4 +1,12 @@
+from ...auxiliary import units
+
+
 class Profile:
+
+    @property
+    def background(self):
+        return self.perturbations.bakcground
+
     def __init__(
         self,
         pertrurbations: Perturbations,
@@ -13,7 +21,7 @@ class Profile:
         sigma_nz=0.3,
         alpha_nz=0.4,
     ):
-        self.cosmo = _tempPerturbationsCluster(pertrurbations)
+        self.perturbations = pertrurbations
         self.halo_statistics = halo_statistics
         self.two_halo = two_halo  # self.theory['obs_specifications']['CG']['two_halo']
         if self.two_halo not in ["None", "sum", "max"]:
@@ -62,29 +70,33 @@ class Profile:
                      Critical surface mass density (unit : Msun/pc^2)
         """
 
-        light_speed = self.cosmo["c"] * (units.km / units.s)
+        light_speed = self.units.SPEED_OF_LIGHT * (units.km / units.s)
         fact = light_speed**2.0 / (4.0 * np.pi * G)
         fact = fact.to(units.Msun / units.pc).value
-        d_a_sources = self.cosmo["d_z_func"](z_sources) * 1.0e6
-        d_a_l = self.cosmo["d_z_func"](z) * 1.0e6
+        d_a_sources = self.background.angular_diameter_distance(z_sources) * 1.0e6
+        d_a_l = self.background.angular_diameter_distance(z) * 1.0e6
         d_m_l = (1.0 + z) * d_a_l
         d_m_sources = (1.0 + z_sources) * d_a_sources
-        d_h = self.cosmo["c"] / (self.cosmo["H0"] * 1.0e-6)
+        d_h = self.units.SPEED_OF_LIGHT / (self.background.H0 * 1.0e-6)
         d_a_lens_source = (
             1.0
             / (1.0 + z_sources)
             * (
                 d_m_sources
                 * np.sqrt(
-                    1.0 + self.cosmo["Omk"] * (d_m_l[:, np.newaxis] ** 2.0 / d_h**2.0)
+                    1.0
+                    + self.background.Omega_k0
+                    * (d_m_l[:, np.newaxis] ** 2.0 / d_h**2.0)
                 )
                 - d_m_l[:, np.newaxis]
-                * np.sqrt(1.0 + self.cosmo["Omk"] * (d_m_sources**2.0 / d_h**2.0))
+                * np.sqrt(
+                    1.0 + self.background.Omega_k0 * (d_m_sources**2.0 / d_h**2.0)
+                )
             )
         )
         sig_crit = fact * (d_a_sources / (d_a_l[:, np.newaxis] * d_a_lens_source))
 
-        return sig_crit / self.cosmo.h  # Ms pc^{-2} h
+        return sig_crit / self.background.h  # Ms pc^{-2} h
 
     def n_zs_norM(self, z):
         r"""
@@ -156,7 +168,7 @@ class Profile:
 
         return self.nzsnorM[zbin] * simps(sig_crit_m1, x=z_s)  # pc^2 / Msun / h
 
-    def surface_mass_density_cen(self, R, z, c, M, bias, force_no_2h=False):
+    def surface_mass_density_cen(self, R, z, c, M, force_no_2h=False):
         r"""
         Centered surface mass density profile at radius R
 
@@ -171,9 +183,6 @@ class Profile:
             Concentration parameter of the cluster
         M: Float
             Mass of the cluster (Msun)
-        bias: function
-            Halo bias function. Must take (z, M) as arguments and return
-            2d array with shape (z.size, M.size).
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
 
@@ -185,7 +194,7 @@ class Profile:
         """
 
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
-        rho_c = self.rho_crit_z(z[:, np.newaxis]) / self.cosmo.h
+        rho_c = self.rho_crit_z(z[:, np.newaxis]) / self.background.h
         densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
@@ -193,9 +202,9 @@ class Profile:
         Sigma = self._surface_mass_density_cen(R, RDelta, c, Delta_crit, rho_c)
 
         if force_no_2h == False and self.two_halo == "sum":
-            Sigma += self.surface_mass_density_2h(R, z, bias, M)
+            Sigma += self.surface_mass_density_2h(R, z, M)
         elif force_no_2h == False and self.two_halo == "max":
-            Sigma_2h = self.surface_mass_density_2h(R, z, bias, M)
+            Sigma_2h = self.surface_mass_density_2h(R, z, M)
             Sigma = np.maximum(Sigma, Sigma_2h)
 
         return Sigma
@@ -203,9 +212,7 @@ class Profile:
     def _surface_mass_density_cen(self, R, RDelta, c, Delta_crit, rho_c):
         return NotImplementedError
 
-    def surface_mass_density(
-        self, R, z, c, M, bias, force_no_2h=False, force_no_off=False
-    ):
+    def surface_mass_density(self, R, z, c, M, force_no_2h=False, force_no_off=False):
         r"""
         Surface mass density profile at radius R
 
@@ -220,9 +227,6 @@ class Profile:
             Concentration parameter of the cluster
         M: Float
             Mass of the cluster (Msun)
-        bias: function
-            Halo bias function. Must take (z, M) as arguments and return
-            2d array with shape (z.size, M.size).
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
         force_no_off: bool
@@ -243,22 +247,20 @@ class Profile:
                 R,
                 self.r_interp,
                 self.surface_mass_density_cen(
-                    self.r_interp, z, c, M, bias, force_no_2h=False
+                    self.r_interp, z, c, M, force_no_2h=False
                 ),
                 self.rms_off,
                 Sigma_off,
             )
 
-            Sigma_cen = self.surface_mass_density_cen(
-                R, z, c, M, bias, force_no_2h=False
-            )
+            Sigma_cen = self.surface_mass_density_cen(R, z, c, M, force_no_2h=False)
             return (1.0 - self.f_off) * Sigma_cen + self.f_off * Sigma_off
 
         else:
 
-            return self.surface_mass_density_cen(R, z, c, M, bias, force_no_2h)
+            return self.surface_mass_density_cen(R, z, c, M, force_no_2h)
 
-    def excess_surface_mass_density(self, R, z, c, M, bias):
+    def excess_surface_mass_density(self, R, z, c, M):
         r"""
         Excess surface mass density profile at radius R
 
@@ -273,9 +275,6 @@ class Profile:
             Concentration parameter of the cluster
         M: Float
             Mass of the cluster (Msun)
-        bias: function
-            Halo bias function. Must take (z, M) as arguments and return
-            2d array with shape (z.size, M.size).
 
         Returns
         -------
@@ -283,7 +282,7 @@ class Profile:
                                      excess surface density (units : Msun / pc**2)
         """
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
-        rho_c = self.cosmo.rho_crit_z(z[:, np.newaxis]) / self.cosmo.h
+        rho_c = self.background.rho_crit_z(z[:, np.newaxis]) / self.background.h
         densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
@@ -292,13 +291,13 @@ class Profile:
 
         Sigma_mean = self._excess_surface_mass_density(R, RDelta, c, Delta_crit, rho_c)
 
-        Sigma = self.surface_mass_density_cen(R, z, c, M, bias, force_no_2h=True)
+        Sigma = self.surface_mass_density_cen(R, z, c, M, force_no_2h=True)
         DeltaSigma = Sigma_mean - Sigma
 
         if self.two_halo == "sum":
-            DeltaSigma += self.excess_surface_mass_density_2h(R, z, bias, M)
+            DeltaSigma += self.excess_surface_mass_density_2h(R, z, M)
         elif self.two_halo == "max":
-            DeltaSigma_2h = self.excess_surface_mass_density_2h(R, z, bias, M)
+            DeltaSigma_2h = self.excess_surface_mass_density_2h(R, z, M)
             DeltaSigma = np.maximum(DeltaSigma, DeltaSigma_2h)
 
         if self.offcentering:
@@ -313,7 +312,7 @@ class Profile:
                     self.r_interp,
                     self.r_interp,
                     self.surface_mass_density_cen(
-                        self.r_interp, z, c, M, bias, force_no_2h=False
+                        self.r_interp, z, c, M, force_no_2h=False
                     ),
                     self.rms_off,
                     DeltaSigma_off,
@@ -331,7 +330,7 @@ class Profile:
     def _excess_surface_mass_density(self, R, RDelta, c, Delta_crit, rho_c):
         return NotImplementedError
 
-    def surface_mass_density_2h(self, R, z, bias, M=1e14):
+    def surface_mass_density_2h(self, R, z, M=1e14):
         r"""
         Surface 2-halo density profile at radius R, generalized to handle arrays of z and M.
 
@@ -342,9 +341,6 @@ class Profile:
         z: np.ndarray
             Redshift(s) at which the mean matter content is
             to be computed. Can be an array.
-        bias: function
-            Halo bias function. Must take (z, M) as arguments and return
-            2d array with shape (z.size, M.size).
         M: np.ndarray
             Mass(es) of the cluster(s) (Msun), used only for the bias computation.
             Can be an array.
@@ -363,7 +359,7 @@ class Profile:
             M = np.array([M])
 
         # Define base quantities
-        D_A = self.cosmo["d_z_func"](z)  # D_A should now be (Nz, 1)
+        D_A = self.background.angular_diameter_distance(z)  # D_A should now be (Nz, 1)
         theta = R / D_A  # R is a scalar, so theta has shape (Nz, 1)
 
         kl_min = 1.0e-4
@@ -371,14 +367,17 @@ class Profile:
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
         # Bias calculation
-        bias_z = bias(z, M)
+        bias_z = self.halo_statistics.bias(z, M)
 
         # Compute P(k) interpolation and Sigma for each redshift z
         Sigma = np.zeros((z.size, M.size))
         for i, z_val in enumerate(z):  # Loop over redshift values
             # Get P(k) for this redshift
             Pk_interp = interpolate.InterpolatedUnivariateSpline(
-                kl_array, self.cosmo.Pk_def(z_val, kl_array, nu_cdm="tot")
+                kl_array,
+                self.perturbations.matter_power_spectrum(
+                    z_val, kl_array, hubble_units=True, k_hunit=True
+                ),
             )
 
             # Define the integrand for this redshift
@@ -388,9 +387,9 @@ class Profile:
 
             # Compute rho_m for this redshift
             rho_m = (
-                self.cosmo.Omega_m(z_val, nonu=False)
-                * self.cosmo.rho_crit_z(z_val)
-                / self.cosmo.h
+                self.background.Omega_m(z_val, nonu=False)
+                * self.background.rho_crit_z(z_val)
+                / self.background.h
             )
 
             # Compute Sigma for each mass M
@@ -413,7 +412,7 @@ class Profile:
 
         return Sigma  # Shape: (Nz, Nm)
 
-    def excess_surface_mass_density_2h(self, R, z, bias, M=1e14):
+    def excess_surface_mass_density_2h(self, R, z, M=1e14):
         r"""
         Excess surface 2-halo density profile at radius R
 
@@ -424,9 +423,6 @@ class Profile:
         z: float
             Redshift at which the mean matter contant is
             to be computed
-        bias: function
-            Halo bias function. Must take (z, M) as arguments and return
-            2d array with shape (z.size, M.size).
         M: Float
             Mass of the cluster (Msun), used only for the bias computation
 
@@ -443,7 +439,7 @@ class Profile:
             M = np.array([M])
 
         # Define base quantities
-        D_A = self.cosmo["d_z_func"](z)  # D_A should now be (Nz, 1)
+        D_A = self.background.angular_diameter_distance(z)  # D_A should now be (Nz, 1)
         theta = R / D_A  # R is a scalar, so theta has shape (Nz, 1)
 
         kl_min = 1.0e-4
@@ -451,14 +447,17 @@ class Profile:
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
         # Bias calculation
-        bias_z = bias(z, M)
+        bias_z = self.halo_statistics.bias(z, M)
 
         # Compute P(k) interpolation and Sigma for each redshift z
         DeltaSigma = np.zeros((z.size, M.size))
         for i, z_val in enumerate(z):  # Loop over redshift values
             # Get P(k) for this redshift
             Pk_interp = interpolate.InterpolatedUnivariateSpline(
-                kl_array, self.cosmo.Pk_def(z_val, kl_array, nu_cdm="tot")
+                kl_array,
+                self.perturbations.matter_power_spectrum(
+                    z_val, kl_array, hubble_units=True, k_hunit=True
+                ),
             )
 
             # Define the integrand for this redshift
@@ -469,9 +468,9 @@ class Profile:
 
             # Compute rho_m for this redshift
             rho_m = (
-                self.cosmo.Omega_m(z_val, nuno=False)
-                * self.cosmo.rho_crit_z(z_val)
-                / self.cosmo.h
+                self.background.Omega_m(z_val, nuno=False)
+                * self.background.rho_crit_z(z_val)
+                / self.background.h
             )
 
             # Compute Sigma for each mass M

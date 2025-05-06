@@ -156,7 +156,7 @@ class Profile:
 
         return self.nzsnorM[zbin] * simps(sig_crit_m1, x=z_s)  # pc^2 / Msun / h
 
-    def surface_mass_density_cen(self, R, z, c, M, bias, force_no_2h=False):
+    def surface_mass_density_cen(self, R, z, c, M, force_no_2h=False):
         r"""
         Centered surface mass density profile at radius R
 
@@ -171,9 +171,6 @@ class Profile:
             Concentration parameter of the cluster
         M: Float
             Mass of the cluster (Msun)
-        bias: function
-            Halo bias function. Must take (z, M) as arguments and return
-            2d array with shape (z.size, M.size).
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
 
@@ -193,9 +190,9 @@ class Profile:
         Sigma = self._surface_mass_density_cen(R, RDelta, c, Delta_crit, rho_c)
 
         if force_no_2h == False and self.two_halo == "sum":
-            Sigma += self.surface_mass_density_2h(R, z, bias, M)
+            Sigma += self.surface_mass_density_2h(R, z, M)
         elif force_no_2h == False and self.two_halo == "max":
-            Sigma_2h = self.surface_mass_density_2h(R, z, bias, M)
+            Sigma_2h = self.surface_mass_density_2h(R, z, M)
             Sigma = np.maximum(Sigma, Sigma_2h)
 
         return Sigma
@@ -203,9 +200,7 @@ class Profile:
     def _surface_mass_density_cen(self, R, RDelta, c, Delta_crit, rho_c):
         return NotImplementedError
 
-    def surface_mass_density(
-        self, R, z, c, M, bias, force_no_2h=False, force_no_off=False
-    ):
+    def surface_mass_density(self, R, z, c, M, force_no_2h=False, force_no_off=False):
         r"""
         Surface mass density profile at radius R
 
@@ -220,9 +215,6 @@ class Profile:
             Concentration parameter of the cluster
         M: Float
             Mass of the cluster (Msun)
-        bias: function
-            Halo bias function. Must take (z, M) as arguments and return
-            2d array with shape (z.size, M.size).
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
         force_no_off: bool
@@ -243,22 +235,20 @@ class Profile:
                 R,
                 self.r_interp,
                 self.surface_mass_density_cen(
-                    self.r_interp, z, c, M, bias, force_no_2h=False
+                    self.r_interp, z, c, M, force_no_2h=False
                 ),
                 self.rms_off,
                 Sigma_off,
             )
 
-            Sigma_cen = self.surface_mass_density_cen(
-                R, z, c, M, bias, force_no_2h=False
-            )
+            Sigma_cen = self.surface_mass_density_cen(R, z, c, M, force_no_2h=False)
             return (1.0 - self.f_off) * Sigma_cen + self.f_off * Sigma_off
 
         else:
 
-            return self.surface_mass_density_cen(R, z, c, M, bias, force_no_2h)
+            return self.surface_mass_density_cen(R, z, c, M, force_no_2h)
 
-    def excess_surface_mass_density(self, R, z, c, M, bias):
+    def excess_surface_mass_density(self, R, z, c, M):
         r"""
         Excess surface mass density profile at radius R
 
@@ -273,9 +263,6 @@ class Profile:
             Concentration parameter of the cluster
         M: Float
             Mass of the cluster (Msun)
-        bias: function
-            Halo bias function. Must take (z, M) as arguments and return
-            2d array with shape (z.size, M.size).
 
         Returns
         -------
@@ -292,13 +279,13 @@ class Profile:
 
         Sigma_mean = self._excess_surface_mass_density(R, RDelta, c, Delta_crit, rho_c)
 
-        Sigma = self.surface_mass_density_cen(R, z, c, M, bias, force_no_2h=True)
+        Sigma = self.surface_mass_density_cen(R, z, c, M, force_no_2h=True)
         DeltaSigma = Sigma_mean - Sigma
 
         if self.two_halo == "sum":
-            DeltaSigma += self.excess_surface_mass_density_2h(R, z, bias, M)
+            DeltaSigma += self.excess_surface_mass_density_2h(R, z, M)
         elif self.two_halo == "max":
-            DeltaSigma_2h = self.excess_surface_mass_density_2h(R, z, bias, M)
+            DeltaSigma_2h = self.excess_surface_mass_density_2h(R, z, M)
             DeltaSigma = np.maximum(DeltaSigma, DeltaSigma_2h)
 
         if self.offcentering:
@@ -313,7 +300,7 @@ class Profile:
                     self.r_interp,
                     self.r_interp,
                     self.surface_mass_density_cen(
-                        self.r_interp, z, c, M, bias, force_no_2h=False
+                        self.r_interp, z, c, M, force_no_2h=False
                     ),
                     self.rms_off,
                     DeltaSigma_off,
@@ -331,7 +318,7 @@ class Profile:
     def _excess_surface_mass_density(self, R, RDelta, c, Delta_crit, rho_c):
         return NotImplementedError
 
-    def surface_mass_density_2h(self, R, z, bias, M=1e14):
+    def surface_mass_density_2h(self, R, z, M=1e14):
         r"""
         Surface 2-halo density profile at radius R, generalized to handle arrays of z and M.
 
@@ -342,9 +329,6 @@ class Profile:
         z: np.ndarray
             Redshift(s) at which the mean matter content is
             to be computed. Can be an array.
-        bias: function
-            Halo bias function. Must take (z, M) as arguments and return
-            2d array with shape (z.size, M.size).
         M: np.ndarray
             Mass(es) of the cluster(s) (Msun), used only for the bias computation.
             Can be an array.
@@ -371,7 +355,7 @@ class Profile:
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
         # Bias calculation
-        bias_z = bias(z, M)
+        bias_z = self.halo_statistics.bias(z, M)
 
         # Compute P(k) interpolation and Sigma for each redshift z
         Sigma = np.zeros((z.size, M.size))
@@ -413,7 +397,7 @@ class Profile:
 
         return Sigma  # Shape: (Nz, Nm)
 
-    def excess_surface_mass_density_2h(self, R, z, bias, M=1e14):
+    def excess_surface_mass_density_2h(self, R, z, M=1e14):
         r"""
         Excess surface 2-halo density profile at radius R
 
@@ -424,9 +408,6 @@ class Profile:
         z: float
             Redshift at which the mean matter contant is
             to be computed
-        bias: function
-            Halo bias function. Must take (z, M) as arguments and return
-            2d array with shape (z.size, M.size).
         M: Float
             Mass of the cluster (Msun), used only for the bias computation
 
@@ -451,7 +432,7 @@ class Profile:
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
         # Bias calculation
-        bias_z = bias(z, M)
+        bias_z = self.halo_statistics.bias(z, M)
 
         # Compute P(k) interpolation and Sigma for each redshift z
         DeltaSigma = np.zeros((z.size, M.size))

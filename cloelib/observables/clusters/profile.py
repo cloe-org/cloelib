@@ -65,8 +65,8 @@ class Profile:
         light_speed = self.cosmo["c"] * (units.km / units.s)
         fact = light_speed**2.0 / (4.0 * np.pi * G)
         fact = fact.to(units.Msun / units.pc).value
-        d_a_sources = self.cosmo["d_z_func"](z_sources) * 1.0e6
-        d_a_l = self.cosmo["d_z_func"](z) * 1.0e6
+        d_a_sources = self.cosmo.angular_diameter_distance(z_sources) * 1.0e6
+        d_a_l = self.cosmo.angular_diameter_distance(z) * 1.0e6
         d_m_l = (1.0 + z) * d_a_l
         d_m_sources = (1.0 + z_sources) * d_a_sources
         d_h = self.cosmo["c"] / (self.cosmo["H0"] * 1.0e-6)
@@ -347,7 +347,7 @@ class Profile:
             M = np.array([M])
 
         # Define base quantities
-        D_A = self.cosmo["d_z_func"](z)  # D_A should now be (Nz, 1)
+        D_A = self.cosmo.angular_diameter_distance(z)  # D_A should now be (Nz, 1)
         theta = R / D_A  # R is a scalar, so theta has shape (Nz, 1)
 
         kl_min = 1.0e-4
@@ -427,7 +427,7 @@ class Profile:
             M = np.array([M])
 
         # Define base quantities
-        D_A = self.cosmo["d_z_func"](z)  # D_A should now be (Nz, 1)
+        D_A = self.cosmo.angular_diameter_distance(z)  # D_A should now be (Nz, 1)
         theta = R / D_A  # R is a scalar, so theta has shape (Nz, 1)
 
         kl_min = 1.0e-4

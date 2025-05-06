@@ -76,7 +76,3 @@ class _tempPerturbationsCluster:
         corr2[erf_ks < 0.02] = 1 / 5.0
 
         return corr0, corr1, corr2
-
-
-# Additional stuff
-self.cosmo["rdrag"]

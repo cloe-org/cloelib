@@ -96,4 +96,4 @@ class HaloClustering:
             / self.background_fid.hubble_parameter(z)
         ) ** (1 / 3.0)
 
-        return (Dv / self.cosmo["rdrag"]) * (self.cosmo_fid["rdrag"] / Dv_fid)
+        return (Dv / self.background.rdrag) * (self.background_fid.rdrag / Dv_fid)

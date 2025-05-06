@@ -5,6 +5,7 @@ from cloelib.observables.clusters.HaloStatistics import HaloStatistics.HaloStati
 from cloelib.observables.clusters.selection_function import SelectionFunction
 from cloelib.observables.clusters.cosmology_cluster import Perturbations
 from cloelib.observables.clusters.profile import Profile
+from cloelib.observables.clusters.clustering import HaloClustering
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
@@ -150,10 +151,10 @@ class CC:
                 self.rint = np.zeros((self.zed_obs_div,len(self.k),L+1))
                 
                 # power spectrum at the center of observed redshift bins
-                pk  = self.Pk_def(z_obs_mid, self.k, self.neutrino_cdm)          
+                pk  = self.perturbations.matter_power_spectrum(z_obs_mid, self.k, self.neutrino_cdm)(z_obs_mid, self.k, self.neutrino_cdm)          
 
                 # corrected halo Pk (only 0-th order correction is enough for number counts covariance)
-                photoz_corr0 = self.photoz_rsd_correction(z_obs_mid, 0)[0]  # can neglect richness dependence here
+                photoz_corr0 = HaloClustering.photoz_rsd_correction(z_obs_mid, 0)[0]  # can neglect richness dependence here
                 pk *=  photoz_corr0
                 
                 # array initialization for covariance

@@ -21,53 +21,7 @@ import jax
 
 """
 
-#@jax.jit
-#def Cl_integration(WT1, WT2, Pkl, H, chi2):
-#    """
-#    Performs the integration to compute the angular power spectrum Cl.
-
-#    The integration is done using the unnormalized trapezoidal rule,
-#    utilizing the window functions, power spectrum, Hubble parameter,
-#    and comoving distance squared.
-
-#    Parameters:
-#    - WT1 (jax.numpy.ndarray): Window function for the first tracer.
-#    - WT2 (jax.numpy.ndarray): Window function for the second tracer.
-#    - Pkl (jax.numpy.ndarray): Matter power spectrum interpolated on Limber grid.
-#    - H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
-#    - chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
-
-#    Returns:
-#    - jax.numpy.ndarray: Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
-#    """
-#    return np.einsum('iz,jz,lz,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2)
-
-#@jax.jit
-#def Pkl_interp(k_l, z_l, ks, zs, Pk):
-#    """
-#    Interpolates the matter power spectrum on a Limber grid.
-
-#    Utilizes interpax's 2D interpolation with Akima method to handle
-#    non-uniform grids in logarithmic space. Extrapolation is enabled
-#    for values outside the given grid.
-
-#    Parameters:
-#    - k_l (jax.numpy.ndarray): Wavenumbers corresponding to (ells + 0.5) / chi.
-#    - z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
-#    - ks (jax.numpy.ndarray): Original wavenumber grid of the matter power spectrum.
-#    - zs (jax.numpy.ndarray): Original redshift grid of the matter power spectrum.
-#    - Pk (jax.numpy.ndarray): Matter power spectrum values on (ks, zs) grid.
-
-#    Returns:
-#    - jax.numpy.ndarray: Interpolated power spectrum on the Limber grid.
-#    """
-#    return 10**interpax.interp2d(jax.numpy.log10(k_l), z_l, jax.numpy.log10(ks),  zs,
-#                                 jax.numpy.log10(Pk), method="akima", extrap=True)
-
-#Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))
-
-
-class CC:
+class ClusterStatistics:
     def __init__(self, perturbations: Perturbations, z, M):
         """
         Initializes the cluster counts
@@ -111,7 +65,7 @@ class CC:
         self.zed   = np.linspace(z_min, z_max, self.z_div+1) 
         
         
-    def N_zbin_Lbin(self, z, M): 
+    def N_zbin_Lbin_Rbin(self, z, M): 
         
         N_zbin_Lbin   = np.zeros((self.zed_obs_div, self.Lambda_obs_div))
         cov_zbin_Lbin = np.zeros((self.zed_obs_div, self.zed_obs_div, self.Lambda_obs_div,self.Lambda_obs_div))
@@ -151,7 +105,7 @@ class CC:
                 self.rint = np.zeros((self.zed_obs_div,len(self.k),L+1))
                 
                 # power spectrum at the center of observed redshift bins
-                pk  = self.perturbations.matter_power_spectrum(z_obs_mid, self.k, self.neutrino_cdm)(z_obs_mid, self.k, self.neutrino_cdm)          
+                pk  = self.perturbations.matter_power_spectrum(z_obs_mid, self.k, self.neutrino_cdm)          
 
                 # corrected halo Pk (only 0-th order correction is enough for number counts covariance)
                 photoz_corr0 = HaloClustering.photoz_rsd_correction(z_obs_mid, 0)[0]  # can neglect richness dependence here
@@ -221,64 +175,11 @@ class CC:
                # total covariance = shot-noise + sample covariance
                cov_zbin_Lbin = SN + (Nb_zbin_Lbin.reshape(1,self.zed_obs_div,1,self.Lambda_obs_div) *
                                      Nb_zbin_Lbin.reshape(self.zed_obs_div,1,self.Lambda_obs_div,1) * 
-                                     sab.reshape(self.zed_obs_div,self.zed_obs_div,1,1))
-                                     
-           return N_zbin_Lbin, cov_zbin_Lbin    
-                                     
-class CWL:
-    def __init__(self, ):
-        """
-        Initializes the cluster profile lensing
-
-        Checks if 
-
-        Parameters:
-        - ....
-        
-        """
-        self.perturbations = Perturbations
-        self.background = self.Perturbations.Background
-        
-        self.CG_like_selection = 'CC'
-        self.CG_xi2_cov_selection = 'covCC'
-        self.CG_xi2_cov_selection = 'non_CG_ESF'
-        self.bias = 'castro23'
-        
-        
-        self.zed_obs_edges = np.linspace(0.2, 1.8, 9)
-        self.Lambda_obs_edges = np.array([20.0, 30.0, 45.0, 60.0, 500.0])
-        self.Rad_obs_edges = np.linspace(5.0, 100.0, 11)
-        self.Lambda_obs_Cxi2_edges = np.array([20, 30, 500])
-        self.Rad_obs_Cxi2_edges = np.geomspace(20.0, 130.0, 31)
-        self.zed_obs_Cxi2_edges = np.arange(0.2, 1.81, 0.4)
-
-        # mass array (integration variable)
-        M_min = 12.0  # in Msun h^-1
-        M_max = 16.0
-        self.M_div = 50
-        self.Mass = np.logspace(M_min, M_max, self.M_div+1)
-
-        # true richness array (integration variable)
-        Lambda_min = 5.0
-        Lambda_max = 250.0
-        self.Lambda_div = 50
-        self.Lambda = np.geomspace(Lambda_min, Lambda_max, self.Lambda_div+1)
-
-        # true redshift array (integration variable)
-        z_min = 1e-5
-        z_max = self.zs_max - 1e-5  # correction needed for avoiding zero values in n_zs_norM computation
-        self.z_div = 50
-        self.zed   = np.linspace(z_min, z_max, self.z_div+1) 
-        
-        
-    def g_zbin_Lbin_Rbin(self, z, M):   
-        
+                                     sab.reshape(self.zed_obs_div,self.zed_obs_div,1,1)) 
+                                             
         ##### reduced shear
         g_zbin_Lbin_Rbin = np.zeros(
-            ((self.zed_obs_div, self.Lambda_obs_div, self.Rad_obs_div)))
-        dV_dzob       = np.zeros((self.zed_obs_div, self.Lambda_obs_div),dtype=list) 
-        
-        dvdzdomega_z1z2 = self.background.dV_dzdO(z)*(self.background.H0/100.0)**3.0   
+            ((self.zed_obs_div, self.Lambda_obs_div, self.Rad_obs_div)))         
         
         if CG_like_selection in ['CC_CWL','CC_CWL_Cxi2'] :
             
@@ -302,25 +203,8 @@ class CWL:
 
         Cxi2_zbin_Lbin_Rbin = np.zeros((((self.zed_obs_Cxi2_div, self.Lambda_obs_Cxi2_div+1, self.Rad_obs_Cxi2_div))))
         cov_Cxi2 = np.zeros((self.zed_obs_Cxi2_div, self.zed_obs_Cxi2_div, self.Lambda_obs_Cxi2_div + 1, 
-                           self.Lambda_obs_Cxi2_div + 1, self.Rad_obs_Cxi2_div, self.Rad_obs_Cxi2_div))  
+                           self.Lambda_obs_Cxi2_div + 1, self.Rad_obs_Cxi2_div, self.Rad_obs_Cxi2_div)) 
                            
-        return g_zbin_Lbin_Rbin                     
-
-class Cxi2:
-    def __init__(self, tracer1 : Tracer, tracer2 : Tracer):
-        """
-        Initializes the AngularTwoPoint object.
-
-        Checks if the tracers are compatible and sets the two tracers
-        as instance attributes.
-
-        Parameters:
-        - tracer1 (Tracer): The first tracer for the two-point function.
-        - tracer2 (Tracer): The second tracer for the two-point function.
-        """
-        self.tracer1 = tracer1
-        self.tracer2 = tracer2
-
         # 2point correlation function
         if CG_like_selection in ['CC_Cxi2','CC_CWL_Cxi2']:
             
@@ -339,14 +223,14 @@ class Cxi2:
             one_over_n_lambdai_lambdaj = np.zeros(((self.zed_obs_Cxi2_div, self.Lambda_obs_Cxi2_div, self.Lambda_obs_Cxi2_div)))            
                       
             # spherical shell window function W(R,K) and volume of the shell (compute once outside the redshift loop)
-            W_rad, V_rad = self.WF_ra(z_obs_Cxi2_mid,self.Rad_obs_Cxi2_edges,self.k)                 
+            W_rad, V_rad = HaloClustering.WF_ra(z_obs_Cxi2_mid,self.Rad_obs_Cxi2_edges,self.k)                 
 
 
             # matter power spectrum + IR resummation
             ############
             #### !!!!! ADD IR RESUMMATION (to be implemented? already implemented for galaxy clustering?)
             ############
-            pk_IR = self.Pk_def(self.zed, self.k, self.neutrino_cdm) 
+            pk_IR = self.perturbations.matter_power_spectrum((self.zed, self.k, self.neutrino_cdm) 
             
             # LOOP OVER CLUSTERING RICHNESS BINS
             for lambda_bin in range(len(self.Lambda_obs_Cxi2_edges)-1):
@@ -357,7 +241,7 @@ class Cxi2:
                 ## recompute quantities that depend on lambda_obs
 
                 # P(lob|ltr,ztr)
-                Plob_l_z_Cxi2 = simps(self.P_lbdobs_lbd(self.zed, self.Lambda, l_tab), l_tab, axis=-1)         
+                Plob_l_z_Cxi2 = simps(SelectionFunction.P_lbdobs_lbd(self.zed, self.Lambda, l_tab), l_tab, axis=-1)         
 
                 # P(lob|M,ztr)   
                 Plob_M_z_Cxi2 = simps(Pl_M_z[:,:,:] * Plob_l_z_Cxi2[:,np.newaxis,:], self.Lambda,axis=-1)  
@@ -372,7 +256,7 @@ class Cxi2:
                 b_eff = (n_b_lbdobs_z_Cxi2/n_lbdobs_z_Cxi2)[:,np.newaxis]
 
                 # correct power specrum for photo-z uncertainties and RSD (eqs. 80-83)
-                photoz_corr0, photoz_corr1, photoz_corr2 = self.photoz_rsd_correction(self.zed, Lambda_obs_Cxi2_mid[lambda_bin])
+                photoz_corr0, photoz_corr1, photoz_corr2 = HaloClustering.photoz_rsd_correction(self.zed, Lambda_obs_Cxi2_mid[lambda_bin])
                 pk_halo = pk_IR * (b_eff**2 * photoz_corr0 + b_eff*photoz_corr1 + photoz_corr2) 
                 
                 for z_bin in range(len(self.zed_obs_Cxi2_edges)-1):
@@ -468,4 +352,4 @@ class Cxi2:
                                                             (cov_g+cov_ng)[z_bin,lambda_bin_i,lambda_bin_j,lambda_bin_k,lambda_bin_h,:,:] +
                                                             (cov_g+cov_ng)[z_bin,lambda_bin_i,lambda_bin_j,lambda_bin_h,lambda_bin_k,:,:])
 
-        return Cxi2_zbin_Lbin_Rbin, cov_Cxi2
+        return N_zbin_Lbin, g_zbin_Lbin_Rbin, Cxi2_zbin_Lbin_Rbin, cov_zbin_Lbin, cov_Cxi2

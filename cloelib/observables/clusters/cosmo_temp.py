@@ -76,3 +76,14 @@ class _tempPerturbationsCluster:
         corr2[erf_ks < 0.02] = 1 / 5.0
 
         return corr0, corr1, corr2
+# Additional stuff
+self.cosmo["H0"]
+self.cosmo["H_z_func"](z)
+self.cosmo["Omk"]
+self.cosmo["c"]
+self.cosmo["d_z_func"](z)
+self.cosmo["fid_H_z_func"](z)
+self.cosmo["fid_d_z_func"](z)
+self.cosmo["fid_rdrag"]
+self.cosmo["r_z_func"](ztab)
+self.cosmo["rdrag"])

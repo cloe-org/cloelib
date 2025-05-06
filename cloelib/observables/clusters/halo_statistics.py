@@ -275,14 +275,9 @@ class HaloStatistics:
         """
 
         dlnsigmadlnR = self.dlns_dlnR(z, M)
+        rho_mean_0 = self.cosmo.Omega_m(0, self.nonu) * self.cosmo.rho_crit_z(0)
 
-        return (
-            self.cosmo.rho_mean_0()
-            / M**2.0
-            * self.f_sigma_nu(z, M)
-            * dlnsigmadlnR
-            / (-3)
-        )
+        return rho_mean_0 / M**2.0 * self.f_sigma_nu(z, M) * dlnsigmadlnR / (-3)
 
 
 class HaloStatisticsTinker10(HaloStatistics):

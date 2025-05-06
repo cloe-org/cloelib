@@ -81,10 +81,14 @@ class Profile:
             * (
                 d_m_sources
                 * np.sqrt(
-                    1.0 + self.cosmo["Omk"] * (d_m_l[:, np.newaxis] ** 2.0 / d_h**2.0)
+                    1.0
+                    + self.background.Omega_k0
+                    * (d_m_l[:, np.newaxis] ** 2.0 / d_h**2.0)
                 )
                 - d_m_l[:, np.newaxis]
-                * np.sqrt(1.0 + self.cosmo["Omk"] * (d_m_sources**2.0 / d_h**2.0))
+                * np.sqrt(
+                    1.0 + self.background.Omega_k0 * (d_m_sources**2.0 / d_h**2.0)
+                )
             )
         )
         sig_crit = fact * (d_a_sources / (d_a_l[:, np.newaxis] * d_a_lens_source))

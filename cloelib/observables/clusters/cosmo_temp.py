@@ -79,7 +79,5 @@ class _tempPerturbationsCluster:
 
 
 # Additional stuff
-self.cosmo["H0"]
-self.cosmo["Omk"]
 self.cosmo["c"]
 self.cosmo["rdrag"]

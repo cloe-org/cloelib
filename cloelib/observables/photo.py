@@ -150,12 +150,6 @@ class ShearTracer:
         ----------
         z: numpy.ndarray of float
             Redshift at which weight is evaluated.
-        bin_i: int
-            Index of desired tomographic bin.
-            Tomographic bin indices start from 1
-        k: float
-            Wavenumber at which to evaluate the Modified Gravity
-            :math:`\Sigma(z,k)` function
 
         Returns
         -------

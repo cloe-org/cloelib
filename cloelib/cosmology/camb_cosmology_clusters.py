@@ -146,6 +146,8 @@ class CAMBBackground:
 
         Args:
             zs (np.ndarray): Array of redshifts.
+            nonu (bool): if True, massive neutrinos are not included
+                         in the density parameter summation. 
 
         Returns:
             np.ndarray: Matter density values.
@@ -229,7 +231,7 @@ class CAMBLinearPerturbations:
             hubble_units=False, k_hunit=False)
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
-                              k_hunit=False) -> np.ndarray:
+                              k_hunit=False, delta='delta_tot') -> np.ndarray:
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -246,6 +248,9 @@ class CAMBLinearPerturbations:
         k_hunit: (Optional) bool
             Flag to specify if wavenumber in h units, defaults to False
 
+        delta: (Optional) str
+            Variable for which to compute the power spectrum
+
         Returns
         -------
         pk: numpy.ndarray
@@ -256,7 +261,7 @@ class CAMBLinearPerturbations:
             self.background.interface_args['CAMBparams'],
             nonlinear=False, extrap_kmax=self.kmax,
             hubble_units=hubble_units, k_hunit=k_hunit,
-            var1='delta_tot', var2='delta_tot').P(zs, ks)
+            var1=delta, var2=delta).P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -336,7 +341,7 @@ class CAMBNonLinearPerturbations:
 
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
-                              k_hunit=False) -> np.ndarray:
+                              k_hunit=False, delta='delta_tot') -> np.ndarray:
         r"""Computes the nonlinear matter power spectrum.
 
         Parameters
@@ -353,6 +358,9 @@ class CAMBNonLinearPerturbations:
         k_hunit: (Optional) bool
             Flag to specify if wavenumber in h units, defaults to False
 
+        delta: (Optional) str
+            Variable for which to compute the power spectrum
+
         Returns
         -------
         pk: numpy.ndarray
@@ -362,7 +370,7 @@ class CAMBNonLinearPerturbations:
         pk_values = self.results.get_matter_power_interpolator(
             nonlinear=True, extrap_kmax=self.kmax,
             hubble_units=hubble_units, k_hunit=k_hunit,
-            var1='delta_tot', var2='delta_tot').P(zs, ks)
+            var1=delta, var2=delta).P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:

@@ -82,5 +82,4 @@ class _tempPerturbationsCluster:
 self.cosmo["H0"]
 self.cosmo["Omk"]
 self.cosmo["c"]
-self.cosmo["r_z_func"](ztab)
 self.cosmo["rdrag"]

@@ -56,7 +56,7 @@ class HaloCovariance:
                 W[i,j,k] where i and j are two redshift bin and k are the wavenumbers
         """
 
-        rvec = self.cosmo["r_z_func"](ztab) * self.h  # Mpc  h^{-1}
+        rvec = self.cosmo.comoving_distance(ztab) * self.h  # Mpc  h^{-1}
         Vz = (rvec[-1] ** 3 - rvec[0] ** 3) / 3  # Mpc^3 h^{-3}
         kr = self.k[:, np.newaxis] * rvec
         self.rint[zbin] = (

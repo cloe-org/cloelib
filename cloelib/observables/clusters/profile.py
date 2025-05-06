@@ -362,7 +362,10 @@ class Profile:
         for i, z_val in enumerate(z):  # Loop over redshift values
             # Get P(k) for this redshift
             Pk_interp = interpolate.InterpolatedUnivariateSpline(
-                kl_array, self.cosmo.Pk_def(z_val, kl_array, nu_cdm="tot")
+                kl_array,
+                self.cosmo.matter_power_spectrum(
+                    z_val, kl_array, hubble_units=True, k_hunit=True
+                ),
             )
 
             # Define the integrand for this redshift
@@ -439,7 +442,10 @@ class Profile:
         for i, z_val in enumerate(z):  # Loop over redshift values
             # Get P(k) for this redshift
             Pk_interp = interpolate.InterpolatedUnivariateSpline(
-                kl_array, self.cosmo.Pk_def(z_val, kl_array, nu_cdm="tot")
+                kl_array,
+                self.cosmo.matter_power_spectrum(
+                    z_val, kl_array, hubble_units=True, k_hunit=True
+                ),
             )
 
             # Define the integrand for this redshift

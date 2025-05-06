@@ -13,7 +13,7 @@ class HaloStatistics:
         k_max: float,
     ):
         self.cosmo = perturbations
-        
+
         if overdensity_tipe not in ["crit", "mean", "vir"]:
             raise ValueError("Invalid overdensity definition, %s." % overdensity_type)
         self.overdensity_type = overdensity_type  # self.theory['obs_specifications']['CG']['overdensity_type']
@@ -26,9 +26,8 @@ class HaloStatistics:
         # wavelength array (integration variable)
         self.k = np.geomspace(k_min, k_max, k_div)
 
-        self.nonu = (
-            nonu  # self.theory["obs_specifications"]["CG"]["nonu"]
-        )
+        self.nonu = nonu  # self.theory["obs_specifications"]["CG"]["nonu"]
+        self._camb_delta = "delta_nonu" if nonu else "delta_tot"
 
     def window(self, k, R):
         r"""
@@ -58,7 +57,7 @@ class HaloStatistics:
         dWdx = 3.0 * (np.sin(x) * (x**2.0 - 3.0) + 3.0 * x * np.cos(x)) / x**4.0
 
         return W, dWdx
-    
+
     def radius_M(self, M):
         r"""
         Convert the requested mass in the associated radius_M
@@ -74,7 +73,7 @@ class HaloStatistics:
         radius_M: array
                 Radius_M in h^{-1} Mpc
         """
-        rho_m_0 = self.cosmo.rho_crit(0.) * self.cosmo.Omega_m(0., self.nonu)
+        rho_m_0 = self.cosmo.rho_crit(0.0) * self.cosmo.Omega_m(0.0, self.nonu)
         return (M / rho_m_0 * (3.0 / (4.0 * np.pi))) ** (1 / 3.0)
 
     def delta_c(self, z):
@@ -166,9 +165,9 @@ class HaloStatistics:
                 / (2.0 * np.pi**2)
                 * simps(
                     (k**2.0).reshape(1, 1, len(k))
-                    * self.cosmo.Pk_def(z, k, self.nonu).reshape(
-                        len(z), 1, len(k)
-                    )
+                    * self.cosmo.matter_power_spectrum(
+                        z, k, delta=self._camb_delta
+                    ).reshape(len(z), 1, len(k))
                     * (W**2.0).reshape(1, len(R), len(k)),
                     k,
                     axis=-1,
@@ -223,7 +222,9 @@ class HaloStatistics:
         W, dWdx = self.window(k, R)
         dsigma2_dR = np.pi**-2 * simps(
             k.reshape(1, 1, len(k)) ** 3
-            * self.cosmo.Pk_def(z, k, self.nonu).reshape(len(z), 1, len(k))
+            * self.cosmo.matter_power_spectrum(z, k, delta=self._camb_delta).reshape(
+                len(z), 1, len(k)
+            )
             * W.reshape(1, len(R), len(k))
             * dWdx.reshape(1, len(R), len(k)),
             k,

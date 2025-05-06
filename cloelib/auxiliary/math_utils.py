@@ -49,8 +49,8 @@ _cached_stacked_simpson = {}
 
 def cached_stacked_simpson(n: int):
     key = str(n)
-    #TODO for the moment we are using a plain "if", later we are gonna need a lax conditional
-    #or a better cache mechanism
+    # TODO for the moment we are using a plain "if", later we are gonna need a lax conditional
+    # or a better cache mechanism
     if key not in _cached_stacked_simpson:
         _cached_stacked_simpson[key] = stacked_simpson(n)
     return _cached_stacked_simpson[key]
@@ -67,3 +67,12 @@ def legendre(n, x):
             Pn = ((2*k - 1) * x * P1 - (k - 1) * P0) / k
             P0, P1 = P1, Pn
         return Pn
+
+def simps(f, a, b, N=128):
+    if N % 2 == 1:
+        raise ValueError("N must be an even integer.")
+    dx = (b - a) / N
+    x = np.linspace(a, b, N + 1)
+    y = f(x)
+    S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
+    return S

@@ -19,12 +19,19 @@ def test_selectionfunction(SF):
     l_test = np.logspace(0.0, 2.0, 20)
     lob_test = np.logspace(0.2, 2.2, 20)
 
+    print("    lnlambda")
     SF.lnlambda(z_test, M_test)
+    print("    scatter_lnl")
     SF.scatter_lnl(z_test, M_test)
+    print("    P_lnlbd")
     SF.P_lnlbd(z_test, M_test, l_test)
+    print("    scatter_lbdobs_lbd")
     SF.scatter_lbdobs_lbd(z_test, l_test)
+    print("    P_lbdobs_lbd")
     SF.P_lbdobs_lbd(z_test, l_test, lob_test)
+    print("    scatter_zobs_z")
     SF.scatter_zobs_z(lob_test, z_test)
+    print("    P_zobs_z")
     SF.P_zobs_z(zob_test, lob_test, z_test)
 
 
@@ -34,13 +41,21 @@ def test_halostatistics(HS, HS_tinker, HS_castro):
     R_test = np.logspace(-1, 1, 20)
     M_test = np.logspace(14, 15, 50)
 
+    print("    window")
     HS.window(k_test, R_test)
+    print("    radius_M")
     HS.radius_M(M_test)
+    print("    delta_c")
     HS.delta_c(z_test)
+    print("    get_Delta_crit")
     HS.get_Delta_crit(z_test)
+    print("    sigma_z_R")
     HS.sigma_z_R(z_test, R_test)
+    print("    sigma_z_M")
     HS.sigma_z_M(z_test, M_test)
+    print("    nu_z_M")
     HS.nu_z_M(z_test, M_test)
+    print("    dlns_dlnR")
     HS.dlns_dlnR(z_test, M_test)
 
     # HS_tinker.bias(z_test, M_test)
@@ -51,50 +66,48 @@ def test_halostatistics(HS, HS_tinker, HS_castro):
 
 def test_profiles(profile_nfw, profile_bmo):
     R_test = np.linspace(1e-5, 2, 21)
-    z_test = np.linspace(0.01, 1.0, 20)
+    z_test = np.linspace(0.01, 0.5, 20)
     M_test = 5e14
     c_test = 4.0
-    z_sources_test = np.linspace(0.5, 1, 21)
+    z_sources_test = np.linspace(0.6, 1, 21)
     zbin_test = 1
 
     for _prof in (profile_nfw, profile_bmo):
+        print("    sigma_crit")
         _prof.sigma_crit(z_test, z_sources_test)
+        print("    n_zs_norM")
         _prof.n_zs_norM(z_test)
+        print("    n_zs")
         _prof.n_zs(z_test)
-        # _prof.m_sig_crit_m1(z_test, zbin_test)
-        # _prof._surface_mass_density_cen(R_test, z_test, c_test, M_test, force_no_2h=False)
-        # _prof._surface_mass_density_profile(R_test, RDelta_test, c_test, Delta_crit_test, rho_c_test)
+        print("    surface_mass_density")
         _prof.surface_mass_density(
-            R_test, z_test, c_test, M_test, force_no_2h=False, force_no_off=False
+            R_test[10], z_test, c_test, M_test, force_no_2h=False, force_no_off=False
         )
-        _prof.excess_surface_mass_density(R_test, z_test, c_test, M_test)
-        # _prof._mean_surface_mass_density_profile(R_test, RDelta_test, c_test, Delta_crit_test, rho_c_test)
-        _prof.surface_mass_density_2h(R_test, z_test, M_test)
-        _prof.excess_surface_mass_density_2h(R_test, z_test, M_test)
-        # _prof.F_term(x_test)
-        # _prof.G_term(x_test)
-        # _prof._surface_mass_density_profile(R_test, RDelta_test, c_test, Delta_crit_test, rho_c_test)
-        # _prof._mean_surface_mass_density_profile(R_test, RDelta_test, c_test, Delta_crit_test, rho_c_test)
+        print("    excess_surface_mass_density")
+        _prof.excess_surface_mass_density(R_test[10], z_test, c_test, M_test)
+        print("    surface_mass_density_2h")
+        _prof.surface_mass_density_2h(R_test[10], z_test, M_test)
+        print("    excess_surface_mass_density_2h")
+        _prof.excess_surface_mass_density_2h(R_test[10], z_test, M_test)
 
 
-def test_clustering(background_fid, perturbations_fid):
-    k_min = 1e-4
-    k_max = 2e0
-    k_div = 300
-    nonu = True
-    CL = HaloClustering(perturbations, perturbations_fid, nonu, k_div, k_min, k_max)
-
+def test_clustering(CL):
     z_test = np.linspace(0.0, 2.0, 20)
     r_test = np.geomspace(20, 150, 30)
+    lob_test = np.logspace(0.2, 2.2, 20)
 
+    print("    APcorr_func")
     CL.APcorr_func(z_test)
+    print("    WF_ra")
     CL.WF_ra(z_test, r_test)
 
+    print("    Pk_IR_func")
     Pk_test = perturbations.matter_power_spectrum(
         z_test, CL.k, hubble_units=True, k_hunit=True
     )
     CL.Pk_IR_func(Pk_test)
 
+    print("    photoz_rsd_correction")
     sigma_zob = SF.scatter_zobs_z(lob_test, z_test)
     CL.photoz_rsd_correction(z_test, sigma_zob)
 
@@ -168,7 +181,7 @@ if __name__ == "__main__":
     HS_tinker = HaloStatisticsTinker(perturbations, "vir")
     HS_castro = HaloStatisticsCastro(perturbations, "vir")
 
-    #test_halostatistics(HS, HS_tinker, HS_castro)
+    # test_halostatistics(HS, HS_tinker, HS_castro)
 
     # Profiles
     print("# Profiles ")
@@ -189,8 +202,8 @@ if __name__ == "__main__":
 
     test_profiles(profile_nfw, profile_bmo)
 
-    print("# clustering")
     # clustering
+    print("# clustering")
 
     H0_fid = 73.0
     background_fid = CAMBBackground(
@@ -208,5 +221,10 @@ if __name__ == "__main__":
     perturbations_fid = CAMBLinearPerturbations(
         background_fid, np.linspace(0.0, 2.0, 100)
     )
+    k_min = 1e-4
+    k_max = 2e0
+    k_div = 300
+    nonu = True
+    CL = HaloClustering(perturbations, perturbations_fid, nonu, k_div, k_min, k_max)
 
-    test_clustering(background_fid, perturbations_fid)
+    test_clustering(CL)

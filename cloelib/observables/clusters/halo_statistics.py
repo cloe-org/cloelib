@@ -1,16 +1,21 @@
-from cloelib.cosmology.cosmology_clusters import Perturbations
+from cloelib.cosmology.cosmology import Perturbations
 
-import jax.numpy as np
+import numpy as np
 from scipy.integrate import simpson as simps
 from scipy.special import gamma
 from scipy import integrate, interpolate
 
 
 class HaloStatistics:
-
     @property
     def background(self):
         return self.perturbations.background
+
+    @property
+    def sigma8(self):
+        if self.__sigma8 is None:
+            self.__sigma8 = self.sigma_z_R(z, np.array([8.0]))
+        return self.__sigma8
 
     def __init__(
         self,
@@ -36,6 +41,9 @@ class HaloStatistics:
 
         self.nonu = nonu  # self.theory["obs_specifications"]["CG"]["nonu"]
         self._camb_delta = "delta_nonu" if nonu else "delta_tot"
+
+        # internal value of sigma8
+        self.__sigma8 = None
 
     def window(self, k, R):
         r"""
@@ -81,7 +89,9 @@ class HaloStatistics:
         radius_M: array
                 Radius_M in h^{-1} Mpc
         """
-        rho_m_0 = self.background.rho_crit(0.0) * self.background.Omega_m(0.0, self.nonu)
+        rho_m_0 = self.background.rho_crit(0.0) * self.background.Omega_m(
+            0.0, self.nonu
+        )
         return (M / rho_m_0 * (3.0 / (4.0 * np.pi))) ** (1 / 3.0)
 
     def delta_c(self, z):
@@ -191,7 +201,7 @@ class HaloStatistics:
         z: numpy.ndarray
                    Redshift at which to evaluate sigma_z_M
         M: numpy.ndarray
-               Mass at which to evaluate sigma_z_M in h^{-1} Mpc
+               Mass at which to evaluate sigma_z_M in h^{-1} Msun
 
         Returns
         -------
@@ -303,9 +313,7 @@ class HaloStatistics:
         """
 
         dlnsigmadlnR = self.dlns_dlnR(z, M)
-        rho_mean_0 = self.background.Omega_m(0, self.nonu) * self.background.rho_crit(
-            0
-        )
+        rho_mean_0 = self.background.Omega_m(0, self.nonu) * self.background.rho_crit(0)
 
         return rho_mean_0 / M**2.0 * self.f_sigma_nu(z, M) * dlnsigmadlnR / (-3)
 
@@ -333,7 +341,6 @@ class HaloStatisticsTinker(HaloStatistics):
         raise NotImplementedError
 
     def bias(self, z, M):
-
         Delta = self.get_Delta_crit(z) / self.background.Omega_m(z)
 
         # parameters
@@ -417,8 +424,7 @@ class HaloStatisticsCastro(HaloStatistics):
 
         dlnsigmadlnR = self.dlns_dlnR(z, M)
         Ommz = self.background.Omega_m(z, self.nonu)[:, np.newaxis]
-        sigma8 = self.sigma_z_R(z, np.array([8.0]))
-        S8 = sigma8 * np.sqrt(self.background.Omega_m(0.0) / 0.3)
+        S8 = self.sigma8 * np.sqrt(self.background.Omega_m(0.0) / 0.3)
 
         nu = self.nu_z_M(z, M)
         nufnu = self.f_sigma_nu(z, M)

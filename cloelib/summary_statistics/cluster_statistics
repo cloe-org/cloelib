@@ -3,7 +3,7 @@ from cloelib.observables.clusters.HaloStatistics import HaloStatistics
 from cloelib.observables.clusters.HaloStatistics import HaloStatistics.HaloStatisticsTinker10
 from cloelib.observables.clusters.HaloStatistics import HaloStatistics.HaloStatisticsCastro23
 from cloelib.observables.clusters.selection_function import SelectionFunction
-from cloelib.observables.clusters.cosmology_cluster import Perturbations
+from cloelib.observables.clusters.camb_cosmology_cluster import Perturbations
 from cloelib.observables.clusters.profile import Profile
 from cloelib.observables.clusters.clustering import HaloClustering
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
@@ -63,6 +63,21 @@ class ClusterStatistics:
         z_max = self.zs_max - 1e-5  # correction needed for avoiding zero values in n_zs_norM computation
         self.z_div = 50
         self.zed   = np.linspace(z_min, z_max, self.z_div+1) 
+
+        # volume element at the center of observed redshift bins
+        self.dvdzdomega_z1z2 = self.background.dV_dzdO(z)*(self.background.H0/100.0)**3.0
+
+        # hmf at the center of observed redshift bins
+        self.dndm_z = HaloStatistics.dn_dm(z, M) 
+
+        # hb at the center of observed redshift bins
+        if self.bias == 'castro23':
+                self.bias_z = HaloStatisticsCastro23.bias_castro23(z, M)  # only work for virial overdensity
+        elif self.bias == 'tinker10':
+                Delta_bkg = HaloStatistics.get_Delta(self.overdensity_type, z, 'tot', self.overdensity)/self.Omm_z(z, nu_cdm = 'tot')
+                self.bias_z    = HaloStatisticsTinker10.bias_tinker10(z, self.Mass, Delta_bkg) 
+        else:
+                raise ValueError('Invalid \'bias\' definition, %s.' % bias)
         
         
     def N_zbin_Lbin_Rbin(self, z, M): 
@@ -81,19 +96,19 @@ class ClusterStatistics:
             Lambda_obs_mid = 0.5 * (self.Lambda_obs_edges[1:] + self.Lambda_obs_edges[:-1])
 
             # volume element at the center of observed redshift bins
-            dvdzdomega_z1z2 = self.background.dV_dzdO(z)*(self.background.H0/100.0)**3.0
+            #dvdzdomega_z1z2 = self.background.dV_dzdO(z)*(self.background.H0/100.0)**3.0
 
             # hmf at the center of observed redshift bins
-            dndm_z = HaloStatistics.dn_dm(z, M) 
+            #dndm_z = HaloStatistics.dn_dm(z, M) 
 
             # hb at the center of observed redshift bins
-            if self.bias == 'castro23':
-                bias_z = HaloStatisticsCastro23.bias_castro23(z, M)  # only work for virial overdensity
-            elif self.bias == 'tinker10':
-                Delta_bkg = HaloStatistics.get_Delta(self.overdensity_type, z, 'tot', self.overdensity)/self.Omm_z(z, nu_cdm = 'tot')
-                bias_z    = HaloStatisticsTinker10.bias_tinker10(z, self.Mass, Delta_bkg) 
-            else:
-                raise ValueError('Invalid \'bias\' definition, %s.' % bias)
+            #if self.bias == 'castro23':
+            #    bias_z = HaloStatisticsCastro23.bias_castro23(z, M)  # only work for virial overdensity
+            #elif self.bias == 'tinker10':
+            #    Delta_bkg = HaloStatistics.get_Delta(self.overdensity_type, z, 'tot', self.overdensity)/self.Omm_z(z, nu_cdm = 'tot')
+            #    bias_z    = HaloStatisticsTinker10.bias_tinker10(z, self.Mass, Delta_bkg) 
+            #else:
+            #    raise ValueError('Invalid \'bias\' definition, %s.' % bias)
 
 
             ##### number counts covariance
@@ -141,11 +156,11 @@ class ClusterStatistics:
                 Plob_M_z[lambda_bin]  = simps(Pl_M_z[:,:,:]*Plob_l_z[:,np.newaxis,:], self.Lambda,axis=-1)  
 
                 # N(lob,ztr)
-                n_lbdobs_z[lambda_bin] = simps(Plob_M_z[lambda_bin]*dndm_z,self.Mass, axis=1)  
+                n_lbdobs_z[lambda_bin] = simps(Plob_M_z[lambda_bin]*self.dndm_z,self.Mass, axis=1)  
 
                 # N(lob,ztr) * bias(lob,ztr)
                 if CG_xi2_cov_selection in ['covCC','covCC_covCxi2']: 
-                   b_n_lbdobs_z[lambda_bin] = simps(Plob_M_z[lambda_bin] * dndm_z * bias_z, self.Mass, axis=1) 
+                   b_n_lbdobs_z[lambda_bin] = simps(Plob_M_z[lambda_bin] * self.dndm_z * self.bias_z, self.Mass, axis=1) 
 
                     
                 for z_bin in range(len(self.zed_obs_edges)-1):
@@ -156,7 +171,7 @@ class ClusterStatistics:
                     Pzob_z = simps(SelectionFunction.P_zobs_z(z_tab, self.Lambda_obs_edges[lambda_bin],self.zed), z_tab, axis=0)       
     
                     # observed volume element dV/dz_ob
-                    dV_dzob[z_bin,lambda_bin] = dvdzdomega_z1z2 * Pzob_z * (self.area)*(np.pi**2.0/180.0**2.0) 
+                    dV_dzob[z_bin,lambda_bin] = self.dvdzdomega_z1z2 * Pzob_z * (self.area)*(np.pi**2.0/180.0**2.0) 
     
                     # N(lob,zob)
                     N_zbin_Lbin[z_bin,lambda_bin]  = simps(n_lbdobs_z[lambda_bin] * dV_dzob[z_bin,lambda_bin], self.zed, axis=0)   
@@ -191,7 +206,7 @@ class ClusterStatistics:
                                                                                        self.halo_concentration, self.Mass)           
                         
                         for lambda_bin in range(len(self.Lambda_obs_edges)-1):
-                            excesssurfacemassdensity = simps(Plob_M_z[lambda_bin]*dndm_z*excess_surface_mass_density[rad_bin], self.Mass, axis=1)
+                            excesssurfacemassdensity = simps(Plob_M_z[lambda_bin]*self.dndm_z*excess_surface_mass_density[rad_bin], self.Mass, axis=1)
                                  
                             for z_bin in range(len(self.zed_obs_edges)-1):
                                 g_zbin_Lbin_Rbin[z_bin,lambda_bin, rad_bin] = (1.0+Profile.mshear)/N_zbin_Lbin[z_bin,lambda_bin] * simps(
@@ -247,10 +262,10 @@ class ClusterStatistics:
                 Plob_M_z_Cxi2 = simps(Pl_M_z[:,:,:] * Plob_l_z_Cxi2[:,np.newaxis,:], self.Lambda,axis=-1)  
                 
                 # n(lob,ztr) 
-                n_lbdobs_z_Cxi2 = simps(Plob_M_z_Cxi2 * dndm_z, self.Mass, axis=1)
+                n_lbdobs_z_Cxi2 = simps(Plob_M_z_Cxi2 * self.dndm_z, self.Mass, axis=1)
 
                 # n(lob,ztr) * b(lob,zob) 
-                n_b_lbdobs_z_Cxi2 = simps(Plob_M_z_Cxi2 * dndm_z * bias_z, self.Mass, axis=1)
+                n_b_lbdobs_z_Cxi2 = simps(Plob_M_z_Cxi2 * self.dndm_z * self.bias_z, self.Mass, axis=1)
 
                 # effective halo bias
                 b_eff = (n_b_lbdobs_z_Cxi2/n_lbdobs_z_Cxi2)[:,np.newaxis]
@@ -268,7 +283,7 @@ class ClusterStatistics:
                     Pzob_z = simps(self.P_zobs_z(z_tab, self.Lambda_obs_Cxi2_edges[lambda_bin],self.zed), z_tab, axis=0)       
 
                     # observed volume element dV/dz_ob
-                    dV_dzob = dvdzdomega_z1z2 * Pzob_z * (self.area)*(np.pi**2.0/180.0**2.0) 
+                    dV_dzob = self.dvdzdomega_z1z2 * Pzob_z * (self.area)*(np.pi**2.0/180.0**2.0) 
 
                     # volume of the observed redshift slice
                     V_zob[z_bin] = simps(dV_dzob,self.zed,axis=0)  

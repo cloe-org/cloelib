@@ -1,4 +1,4 @@
-from cloelib.cosmology.cosmology_clusters import Perturbations
+from cloelib.cosmology.cosmology import Perturbations
 
 import numpy as np
 from scipy.integrate import simpson as simps

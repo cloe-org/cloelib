@@ -1,6 +1,6 @@
 from cloelib.observables.clusters.selection_function import SelectionFunction
 from cloelib.observables.clusters.halo_statistics import HaloStatistics, HaloStatisticsTinker, HaloStatisticsCastro
-from cloelib.cosmology.camb_cosmology_clusters import CAMBBackground, CAMBLinearPerturbations
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 
 import numpy as np
 

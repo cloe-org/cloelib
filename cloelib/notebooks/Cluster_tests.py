@@ -115,64 +115,42 @@ def test_clustering(CL):
 if __name__ == "__main__":
     # Cosmology parameters
     print("# Cosmology parameters")
-    H0 = 67.7
-    h = H0 / 100.0
-    sigma8 = 0.8277
-    omch2 = 0.12
-    Omega_cdm0 = omch2 / h**2
-    ombh2 = 0.022
-    Omega_b0 = ombh2 / h**2
-    Omega_k0 = 0.0
-    w = -1.0
-    wa = 0.0
-    ns = 0.96
-    mnu = 0.0
-    As = 2e-9
-
-    # sel. function parameters
-    print("# sel. function parameters")
-    A_l = 0.5
-    B_l = 0.6
-    C_l = 0.5
-    sig_A_l = 0.1
-    sig_B_l = 0.0
-    sig_C_l = 0.0
-    sig_lambda_norm = 0.1
-    sig_lambda_z = 0.1
-    sig_lambda_exponent = 0.1
-    sig_z_z = 0.1
-    sig_z_lambda = 0.1
-
-    #
-    background = CAMBBackground(
-        H0=H0,
-        Omega_b0=Omega_b0,
-        Omega_cdm0=Omega_cdm0,
-        Omega_k0=Omega_k0,
-        As=As,
-        ns=ns,
-        mnu=0.0,
+    _H0 = 67.7
+    _h = _H0 / 100.0
+    _omch2 = 0.12
+    _ombh2 = 0.022
+    _cosmo_pars = dict(
+        H0=_H0,
+        Omega_cdm0=_omch2 / _h**2,
+        Omega_b0=_ombh2 / _h**2,
+        Omega_k0=0.0,
         w0=-1.0,
         wa=0.0,
+        ns=0.96,
+        mnu=0.0,
+        As=2e-9,
         gamma_MG=0.0,
     )
+
+    background = CAMBBackground(**_cosmo_pars)
     perturbations = CAMBLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
 
     # SelectionFunction
     print("# SelectionFunction")
-    SF = SelectionFunction(
-        A_l,
-        B_l,
-        C_l,
-        sig_A_l,
-        sig_B_l,
-        sig_C_l,
-        sig_lambda_norm,
-        sig_lambda_z,
-        sig_lambda_exponent,
-        sig_z_z,
-        sig_z_lambda,
+    _sel_pars = dict(
+        A_l=0.5,
+        B_l=0.6,
+        C_l=0.5,
+        sig_A_l=0.1,
+        sig_B_l=0.0,
+        sig_C_l=0.0,
+        sig_lambda_norm=0.1,
+        sig_lambda_z=0.1,
+        sig_lambda_exponent=0.1,
+        sig_z_z=0.1,
+        sig_z_lambda=0.1,
     )
+    SF = SelectionFunction(**_sel_pars)
     test_selectionfunction(SF)
 
     # HaloStatistics
@@ -180,8 +158,7 @@ if __name__ == "__main__":
     HS = HaloStatistics(perturbations, "vir")
     HS_tinker = HaloStatisticsTinker(perturbations, "vir")
     HS_castro = HaloStatisticsCastro(perturbations, "vir")
-
-    # test_halostatistics(HS, HS_tinker, HS_castro)
+    test_halostatistics(HS, HS_tinker, HS_castro)
 
     # Profiles
     print("# Profiles ")
@@ -199,25 +176,14 @@ if __name__ == "__main__":
 
     profile_nfw = ProfileNFW(HS_castro, **_prof_kwargs)
     profile_bmo = ProfileBMO(HS_castro, **_prof_kwargs)
-
     test_profiles(profile_nfw, profile_bmo)
 
     # clustering
     print("# clustering")
 
-    H0_fid = 73.0
-    background_fid = CAMBBackground(
-        H0=H0_fid,
-        Omega_b0=Omega_b0,
-        Omega_cdm0=Omega_cdm0,
-        Omega_k0=Omega_k0,
-        As=As,
-        ns=ns,
-        mnu=0.0,
-        w0=-1.0,
-        wa=0.0,
-        gamma_MG=0.0,
-    )
+    _cosmo_pars_fid = {**_cosmo_pars}
+    _cosmo_pars_fid["H0"] = 73.0
+    background_fid = CAMBBackground(**_cosmo_pars_fid)
     perturbations_fid = CAMBLinearPerturbations(
         background_fid, np.linspace(0.0, 2.0, 100)
     )
@@ -226,5 +192,4 @@ if __name__ == "__main__":
     k_div = 300
     nonu = True
     CL = HaloClustering(perturbations, perturbations_fid, nonu, k_div, k_min, k_max)
-
     test_clustering(CL)

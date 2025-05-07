@@ -5,6 +5,8 @@ from cloelib.cosmology.cosmology import Background
 # General imports
 import numpy as np
 from typing import Tuple, Optional
+from astropy import units
+from astropy.constants import G
 
 # Cosmology imports
 try:
@@ -140,21 +142,24 @@ class CAMBBackground:
         """
         return self.results.angular_diameter_distance(zs)
 
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: np.ndarray, nonu: bool = False) -> np.ndarray:
         """
         Returns the matter density as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
+            nonu (bool): if True, massive neutrinos are not included
+                         in the density parameter summation.
 
         Returns:
             np.ndarray: Matter density values.
         """
-        return (
-            self.results.get_Omega("cdm", z=zs)
-            + self.results.get_Omega("baryon", z=zs)
-            + self.results.get_Omega("nu", z=zs)
+        Om = self.results.get_Omega("cdm", z=zs) + self.results.get_Omega(
+            "baryon", z=zs
         )
+        if nonu:
+            return Om
+        return Om + self.results.get_Omega("nu", z=zs)
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -166,9 +171,53 @@ class CAMBBackground:
         Returns:
             np.ndarray: Baryonic density values at specified redshifts.
         """
+        return self.results.get_Omega("baryon", z=zs)
+
+    def rho_crit(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the critical density as a function of redshift.
+
+        Units: Mpc^{-3} Msun h^2
+
+        Args:
+            zs (np.ndarray): Redshifts.
+
+        Returns:
+            float: Critical density value at the specified redshift.
+        """
+        hh = self.hubble_parameter(zs) / 3.085677581491367e19
+        G_unit = G.to(units.Mpc**3.0 / (units.Msun * units.s**2.0)).value
+        return 3.0 * hh**2.0 / (8.0 * np.pi * G_unit)
+
+    def dV_dzdO(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the volume element per redshit per solid angle
+        at the redshift requested.
+
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+        np.ndarray: volume element in Mpc^3 h^{-3}
+        """
         return (
-            self.results.get_Omega("baryon", z=zs)
+            SPEED_OF_LIGHT
+            / 1.0e3
+            * self.comoving_distance(zs) ** 2.0
+            * self.hubble_parameter(zs)
         )
+
+    def rdrag(
+        self,
+    ) -> float:
+        """
+        Returns the Sound horizon radius at last scattering.
+
+        Returns:
+        float: Sound horizon radius at last scattering
+        """
+        return results.get_derived_params["rdrag"]
 
 
 class CAMBLinearPerturbations:
@@ -197,7 +246,7 @@ class CAMBLinearPerturbations:
             hubble_units=False, k_hunit=False)
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
-                              k_hunit=False) -> np.ndarray:
+                              k_hunit=False, delta='delta_tot') -> np.ndarray:
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -214,6 +263,9 @@ class CAMBLinearPerturbations:
         k_hunit: (Optional) bool
             Flag to specify if wavenumber in h units, defaults to False
 
+        delta: (Optional) str
+            Variable for which to compute the power spectrum
+
         Returns
         -------
         pk: numpy.ndarray
@@ -224,7 +276,7 @@ class CAMBLinearPerturbations:
             self.background.interface_args['CAMBparams'],
             nonlinear=False, extrap_kmax=self.kmax,
             hubble_units=hubble_units, k_hunit=k_hunit,
-            var1='delta_tot', var2='delta_tot').P(zs, ks)
+            var1=delta, var2=delta).P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -304,7 +356,7 @@ class CAMBNonLinearPerturbations:
 
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
-                              k_hunit=False) -> np.ndarray:
+                              k_hunit=False, delta='delta_tot') -> np.ndarray:
         r"""Computes the nonlinear matter power spectrum.
 
         Parameters
@@ -321,6 +373,9 @@ class CAMBNonLinearPerturbations:
         k_hunit: (Optional) bool
             Flag to specify if wavenumber in h units, defaults to False
 
+        delta: (Optional) str
+            Variable for which to compute the power spectrum
+
         Returns
         -------
         pk: numpy.ndarray
@@ -330,7 +385,7 @@ class CAMBNonLinearPerturbations:
         pk_values = self.results.get_matter_power_interpolator(
             nonlinear=True, extrap_kmax=self.kmax,
             hubble_units=hubble_units, k_hunit=k_hunit,
-            var1='delta_tot', var2='delta_tot').P(zs, ks)
+            var1=delta, var2=delta).P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:

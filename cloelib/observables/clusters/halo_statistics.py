@@ -1,6 +1,6 @@
-from cloelib.cosmology.cosmology_clusters import Perturbations
+from cloelib.cosmology.cosmology import Perturbations
 
-import jax.numpy as np
+import numpy as np
 from scipy.integrate import simpson as simps
 from scipy.special import gamma
 from scipy import integrate, interpolate
@@ -201,7 +201,7 @@ class HaloStatistics:
         z: numpy.ndarray
                    Redshift at which to evaluate sigma_z_M
         M: numpy.ndarray
-               Mass at which to evaluate sigma_z_M in h^{-1} Mpc
+               Mass at which to evaluate sigma_z_M in h^{-1} Msun
 
         Returns
         -------

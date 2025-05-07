@@ -81,14 +81,17 @@ class Profile:
                      Critical surface mass density (unit : Msun/pc^2)
         """
 
+        fact = (units.SPEED_OF_LIGHT / units.MPC_TO_KM) ** 2 / (
+            4 * np.pi * units.GRAVITATIONAL_CONSTANT
+        )  # Msun/Mpc
         light_speed = units.SPEED_OF_LIGHT * (ap_units.km / ap_units.s)
         fact = light_speed**2.0 / (4.0 * np.pi * ap_constants.G)
         fact = fact.to(ap_units.Msun / ap_units.pc).value
-        d_a_sources = self.background.angular_diameter_distance(z_sources) * 1.0e6
-        d_a_l = self.background.angular_diameter_distance(z) * 1.0e6
+        d_a_sources = self.background.angular_diameter_distance(z_sources)  # Mpc
+        d_a_l = self.background.angular_diameter_distance(z)  # Mpc
         d_m_l = (1.0 + z) * d_a_l
         d_m_sources = (1.0 + z_sources) * d_a_sources
-        d_h = units.SPEED_OF_LIGHT / (self.background.H0 * 1.0e-6)
+        d_h = units.SPEED_OF_LIGHT / 1e3 / self.background.H0  # Mpc
         d_a_lens_source = (
             1.0
             / (1.0 + z_sources)
@@ -107,7 +110,7 @@ class Profile:
         )
         sig_crit = fact * (d_a_sources / (d_a_l[:, np.newaxis] * d_a_lens_source))
 
-        return sig_crit / self.background.h  # Ms pc^{-2} h
+        return 1e12 * sig_crit / self.background.h  # Msun pc^{-2} h
 
     def n_zs_norM(self, z):
         r"""

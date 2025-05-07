@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.stats import skewnorm
 from scipy.integrate import simpson as simps
-from astropy import units as ap_units
 from astropy import constants as ap_constants
 from scipy import interpolate
 from scipy.integrate import quad_vec

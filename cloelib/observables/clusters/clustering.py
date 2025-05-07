@@ -1,18 +1,34 @@
-from ...auxiliary import unitsA
+from cloelib.cosmology.cosmology import Perturbations
+
+from ...auxiliary import units
 from scipy.special import erf
+import jax.numpy as np
+from scipy.integrate import simpson as simps
+from scipy.special import spherical_jn
 
 class HaloClustering:
     def __init__(
         self,
         pertrurbations: Perturbations,
         pertrurbations_fid: Perturbations,
+        nonu: bool = False,
+        k_div: int = 500,
+        k_min: float = 1.0e-4,
+        k_max: float = 1.0e2,
     ):
 
         self.background = pertrurbations.background
         self.background_fid = pertrurbations_fid.background
+
+        self.nonu = nonu
+
+        # wavelength array (integration variable)                                                                                                                                                               
+        self.k = np.geomspace(k_min, k_max, k_div)
+
+
         
-    def WF_ra(self, z: np.ndarray, r: np.ndarray, k: np.ndarray) -> np.ndarray, np.ndarray:
-        r"""
+    def WF_ra(self, z: np.ndarray, r: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """
         Computes the window function and the volume of the spherical shells as a function of the radial separation
 
         Parameters
@@ -21,8 +37,6 @@ class HaloClustering:
            Redshift at which apply the geometrical correction (Alcock-Paczynski effect)
         k: np.ndarray
            Wavenumber used to evaluate power spectrum, in h Mpc^{-1}
-        r: np.ndarray
-           Radial separation bins in h^{-1} Mpc
 
         Returns
         -------
@@ -31,14 +45,16 @@ class HaloClustering:
         spherical shell volume: numpy.ndarray
                 V[i,j] where i is the redshift bin and j is the radial bin
         """
-        z = z[:, np.newaxis, np.newaxis]
+
         r = r[np.newaxis, :, np.newaxis]
-        k = k[np.newaxis, np.newaxis, :]
+        k = self.k[np.newaxis, np.newaxis, :]
 
         r_z = (
-            self.APcorr_func(z) * r
+            self.APcorr_func(z)[:, np.newaxis, np.newaxis] * r
         )  # AP correction (adds a redshift dependence)
 
+
+        
         r3_TH_filter = (
             r_z**3
             * 3.0
@@ -81,11 +97,13 @@ class HaloClustering:
 
         """
 
+        z[z==0] = 1e-5
+        
         # isotropic volume distance
         Dv = (
             (1 + z) ** 2
             * self.background.angular_diameter_distance(z) ** 2
-            * self.units.SPEED_OF_LIGHT
+            * units.SPEED_OF_LIGHT
             * z
             / self.background.hubble_parameter(z)
         ) ** (1 / 3.0)
@@ -94,24 +112,22 @@ class HaloClustering:
         Dv_fid = (
             (1 + z) ** 2
             * self.background_fid.angular_diameter_distance(z) ** 2
-            * self.units.SPEED_OF_LIGHT
+            * units.SPEED_OF_LIGHT
             * z
             / self.background_fid.hubble_parameter(z)
         ) ** (1 / 3.0)
 
-        return (Dv / self.background.rdrag) * (self.background_fid.rdrag / Dv_fid)
+        return (Dv / self.background.rdrag()) * (self.background_fid.rdrag() / Dv_fid)
 
 
 
     # IR resummation of the bao wiggles in the Pk
-    def Pk_IR_func(self, k, Pk):
+    def Pk_IR_func(self, Pk: np.ndarray) -> np.ndarray:
         """
         Infrared resummation (first order approx) to correct non-linear damping of bao wiggles
 
         Parameters
         ----------                                                                                                                                                                                                   
-        k: np.ndarray                                                                                                                                                                                                
-           Wavenumber in h/Mpc
         Pk: np.ndarray
            Linear matter power spectrum at different redshifts in (Mpc/h)^3
                                                                                                                                                                                                                      
@@ -124,10 +140,11 @@ class HaloClustering:
         
         ns   = self.background.ns
         h    = self.background.h
-        Obh2 = self.background.Omega_b * h**2
+        Obh2 = self.background.Omega_b(0.) * h**2
         Omh2 = self.background.Omega_m(0., self.nonu) * h**2
         Tcmb =  2.73
-        
+
+        k     = self.k
         k    *= h  #  1/Mpc
         s     = 44.5 * np.log(9.83/Omh2) / np.sqrt(1.+10.*(Obh2)**0.75)
         Gamma = Omh2 / h
@@ -172,7 +189,7 @@ class HaloClustering:
 
 
     
-    def photoz_rsd_correction(self, z: np.ndarray, sigma_zob: np.ndarray) -> np.ndarray, np.ndarray, np.ndarray:
+    def photoz_rsd_correction(self, z: np.ndarray, sigma_zob: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """                                                                                                                                                                                                          
         Compute the correction that accounts for photo-z uncertainty and RSD (Kaiser effect)                                                                                                              
                                                                                                                                                                                                                      
@@ -192,11 +209,11 @@ class HaloClustering:
         
         # growth rate                                                                                                                                                                                                
         ##f_gr = self.perturbations.growth_rate() **0.55  #redshift???
-        f_gr = (self.cosmo.Omega_m(z, self.nonu) ** 0.55)[:, np.newaxis]
+        f_gr = (self.background.Omega_m(z, self.nonu) ** 0.55)[:, np.newaxis]
 
                 
         ks = self.k * (
-            sigma_zob * (self.units.SPEED_OF_LIGHT *1e-3) / self.background_fid.hubble_parameter(z)
+            sigma_zob * (units.SPEED_OF_LIGHT *1e-3) / self.background_fid.hubble_parameter(z)
         ).reshape(len(z), 1)
         
         erf_ks = erf(ks)
@@ -213,10 +230,9 @@ class HaloClustering:
         )
 
         # correct for numerical inaccuracy                                                                                                                                                                           
-        corr1[erf_ks < 0.02] = 2 / 3.0
-        corr2[erf_ks < 0.02] = 1 / 5.0
+        idx = erf_ks < 0.02
+        corr1 = corr1.at[idx].set(2/3.)
+        corr2 = corr2.at[idx].set(1/5.)
 
+        
         return corr0, corr1, corr2
-
-B
-B

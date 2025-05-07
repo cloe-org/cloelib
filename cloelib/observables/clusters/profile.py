@@ -2,6 +2,9 @@ from ...auxiliary import units
 
 
 class Profile:
+    @property
+    def perturbations(self):
+        return self.halo_statistics.perturbations
 
     @property
     def background(self):
@@ -9,7 +12,6 @@ class Profile:
 
     def __init__(
         self,
-        pertrurbations: Perturbations,
         halo_statistics: HaloStatistics,
         two_halo="None",
         offcentering=False,
@@ -21,7 +23,6 @@ class Profile:
         sigma_nz=0.3,
         alpha_nz=0.4,
     ):
-        self.perturbations = perturbations
         self.halo_statistics = halo_statistics
         self.two_halo = two_halo  # self.theory['obs_specifications']['CG']['two_halo']
         if self.two_halo not in ["None", "sum", "max"]:
@@ -239,7 +240,6 @@ class Profile:
 
         """
         if force_no_off == False and self.offcentering and self.rms_off >= 1.0e-4:
-
             R = np.asarray(R)
             Sigma_off = np.zeros_like(R)
 
@@ -257,7 +257,6 @@ class Profile:
             return (1.0 - self.f_off) * Sigma_cen + self.f_off * Sigma_off
 
         else:
-
             return self._surface_mass_density_cen(R, z, c, M, force_no_2h)
 
     def excess_surface_mass_density(self, R, z, c, M):
@@ -300,9 +299,7 @@ class Profile:
             DeltaSigma = np.maximum(DeltaSigma, DeltaSigma_2h)
 
         if self.offcentering:
-
             if self.rms_off >= 1.0e-4 and self.f_off >= 1.0e-4:
-
                 R = np.asarray(R)
                 DeltaSigma_off = np.zeros_like(R)
 
@@ -321,7 +318,6 @@ class Profile:
                 DeltaSigma += self.f_off * DeltaSigma_off
 
             elif self.rms_off < 1.0e-4 and self.f_off >= 1.0:
-
                 DeltaSigma = np.zeros(len(DeltaSigma))
 
         return DeltaSigma
@@ -547,11 +543,15 @@ class ProfileNFW(Profile):
         <https://ui.adsabs.harvard.edu/abs/2002A%26A...390..821G/abstract>`_.
         """
         if x < 1.0:
-            return (1.0 - np.arccosh(1.0 / x) / np.sqrt(1.0 - x**2.0)) / (x**2.0 - 1.0)
+            return (1.0 - np.arccosh(1.0 / x) / np.sqrt(1.0 - x**2.0)) / (
+                x**2.0 - 1.0
+            )
         if x == 1.0:
             return 1.0 / 3.0
         if x > 1.0:
-            return (1.0 - np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)) / (x**2.0 - 1.0)
+            return (1.0 - np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)) / (
+                x**2.0 - 1.0
+            )
 
     def G_term(self, x):
         r"""
@@ -580,7 +580,6 @@ class ProfileNFW(Profile):
             return np.log(x / 2.0) + np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)
 
     def _surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
-
         Rs = RDelta / c
         x = R / Rs
 
@@ -593,7 +592,6 @@ class ProfileNFW(Profile):
         return Sigma
 
     def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
-
         Rs = RDelta / c
         x = R / Rs
 
@@ -659,7 +657,6 @@ class ProfileBMO(Profile):
             return (1.0 - self.F_term(x)) / (x**2.0 - 1.0)
 
     def _surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
-
         Rs = RDelta / c
         x = R / Rs
 
@@ -716,7 +713,6 @@ class ProfileBMO(Profile):
         return Sigma
 
     def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
-
         Rs = RDelta / c
         x = R / Rs
 
@@ -756,11 +752,14 @@ class ProfileBMO(Profile):
 
         G = np.vectorize(self.G_term)(x)
         term3 = (
-            np.pi * (3.0 * tau**2.0 - 1.0) + 2.0 * tau * (tau**2.0 - 3.0) * np.log(tau)
+            np.pi * (3.0 * tau**2.0 - 1.0)
+            + 2.0 * tau * (tau**2.0 - 3.0) * np.log(tau)
         ) / tau
 
         term4 = tau**3.0 * np.sqrt(tau**2.0 + x**2.0)
-        term5 = -(tau**3.0) * np.pi * (4.0 * (tau**2.0 + x**2.0) - tau**2.0 - 1.0)
+        term5 = (
+            -(tau**3.0) * np.pi * (4.0 * (tau**2.0 + x**2.0) - tau**2.0 - 1.0)
+        )
         term6 = -(tau**2.0) * (tau**4.0 - 1.0) + +(tau**2.0 + x**2.0) * (
             3.0 * tau**4.0 - 6.0 * tau**2.0 - 1.0
         )

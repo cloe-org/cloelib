@@ -1,12 +1,10 @@
 # cloelib imports
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary import units
 from cloelib.cosmology.cosmology import Background
 
 # General imports
 import numpy as np
 from typing import Tuple, Optional
-from astropy import units
-from astropy.constants import G
 
 # Cosmology imports
 try:
@@ -185,9 +183,8 @@ class CAMBBackground:
         Returns:
             float: Critical density value at the specified redshift.
         """
-        hh = self.hubble_parameter(zs) / 3.085677581491367e19
-        G_unit = G.to(units.Mpc**3.0 / (units.Msun * units.s**2.0)).value
-        return 3.0 * hh**2.0 / (8.0 * np.pi * G_unit)
+        hh = self.hubble_parameter(zs) / units.MPC_TO_KM
+        return 3.0 * hh**2.0 / (8.0 * np.pi * units.GRAVITATIONAL_CONSTANT)
 
     def dV_dzdO(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -202,7 +199,7 @@ class CAMBBackground:
         np.ndarray: volume element in Mpc^3 h^{-3}
         """
         return (
-            SPEED_OF_LIGHT
+            units.SPEED_OF_LIGHT
             / 1.0e3
             * self.comoving_distance(zs) ** 2.0
             * self.hubble_parameter(zs)

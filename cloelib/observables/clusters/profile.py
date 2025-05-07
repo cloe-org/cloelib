@@ -24,21 +24,21 @@ class Profile:
         alpha_nz=0.4,
     ):
         self.halo_statistics = halo_statistics
-        self.two_halo = two_halo  # self.theory['obs_specifications']['CG']['two_halo']
+        self.two_halo = two_halo
         if self.two_halo not in ["None", "sum", "max"]:
             raise ValueError("Invalid 'two_halo' definition, %s." % self.two_halo)
 
         # offcentering
-        self.offcentering = offcentering  # self.theory['obs_specifications']['CG']['offcentering']  # offcentering
-        self.rms_off = rms_off  # self.theory['obs_specifications']['CG']['rms_off']                # rms_off
-        self.f_off = f_off  # self.theory['obs_specifications']['CG']['f_off']                  # f_off
+        self.offcentering = offcentering
+        self.rms_off = rms_off
+        self.f_off = f_off
         self.trunc_fact = trunc_fact
 
         # ???
-        self.zs_max = zs_max  # self.theory['obs_specifications']['CG']['zs_max']
-        self.mean_nz = mean_nz  # self.theory['obs_specifications']['CG']['mean_nz']
-        self.sigma_nz = sigma_nz  # self.theory['obs_specifications']['CG']['sigma_nz']
-        self.alpha_nz = alpha_nz  # self.theory['obs_specifications']['CG']['alpha_nz']
+        self.zs_max = zs_max
+        self.mean_nz = mean_nz
+        self.sigma_nz = sigma_nz
+        self.alpha_nz = alpha_nz
 
         # true redshift array (integration variable)
         z_min = 1e-5

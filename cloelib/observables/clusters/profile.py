@@ -1,4 +1,11 @@
+import numpy as np
+from scipy.stats import skewnorm
+from scipy.integrate import simpson as simps
+from astropy import units as ap_units
+from astropy import constants as ap_constants
+
 from ...auxiliary import units
+from .halo_statistics import HaloStatistics
 
 
 class Profile:
@@ -60,7 +67,7 @@ class Profile:
 
         Parameters
         ----------
-        z: float
+        z: np.ndarray
                    Redshift at which to evaluate the critical density
         z_sources: float
                    Redshift of the galaxy sources
@@ -71,14 +78,15 @@ class Profile:
                      Critical surface mass density (unit : Msun/pc^2)
         """
 
-        light_speed = self.units.SPEED_OF_LIGHT * (units.km / units.s)
-        fact = light_speed**2.0 / (4.0 * np.pi * G)
-        fact = fact.to(units.Msun / units.pc).value
+        light_speed = units.SPEED_OF_LIGHT * (ap_units.km / ap_units.s)
+        fact = light_speed**2.0 / (4.0 * np.pi * ap_constants.G)
+        fact = fact.to(ap_units.Msun / ap_units.pc).value
+        print(z_sources)
         d_a_sources = self.background.angular_diameter_distance(z_sources) * 1.0e6
         d_a_l = self.background.angular_diameter_distance(z) * 1.0e6
         d_m_l = (1.0 + z) * d_a_l
         d_m_sources = (1.0 + z_sources) * d_a_sources
-        d_h = self.units.SPEED_OF_LIGHT / (self.background.H0 * 1.0e-6)
+        d_h = units.SPEED_OF_LIGHT / (self.background.H0 * 1.0e-6)
         d_a_lens_source = (
             1.0
             / (1.0 + z_sources)
@@ -288,7 +296,9 @@ class Profile:
         Rs = RDelta / c
         x = R / Rs
 
-        Sigma_mean = self._mean_surface_mass_density_profile(R, RDelta, c, Delta_crit, rho_c)
+        Sigma_mean = self._mean_surface_mass_density_profile(
+            R, RDelta, c, Delta_crit, rho_c
+        )
         Sigma = self._surface_mass_density_cen(R, z, c, M, force_no_2h=True)
         DeltaSigma = Sigma_mean - Sigma
 

@@ -3,6 +3,9 @@ from scipy.stats import skewnorm
 from scipy.integrate import simpson as simps
 from astropy import units as ap_units
 from astropy import constants as ap_constants
+from scipy import interpolate
+from scipy.integrate import quad_vec
+from scipy.special import j0, j1
 
 from ...auxiliary import units
 from .halo_statistics import HaloStatistics
@@ -81,7 +84,6 @@ class Profile:
         light_speed = units.SPEED_OF_LIGHT * (ap_units.km / ap_units.s)
         fact = light_speed**2.0 / (4.0 * np.pi * ap_constants.G)
         fact = fact.to(ap_units.Msun / ap_units.pc).value
-        print(z_sources)
         d_a_sources = self.background.angular_diameter_distance(z_sources) * 1.0e6
         d_a_l = self.background.angular_diameter_distance(z) * 1.0e6
         d_m_l = (1.0 + z) * d_a_l
@@ -227,7 +229,7 @@ class Profile:
 
         Parameters
         ----------
-        R: np.ndarray
+        R: float
             Radius at which the profile is to be computed (units : Mpc)
         z: float
             Redshift at which the mean matter contant is
@@ -273,7 +275,7 @@ class Profile:
 
         Parameters
         ----------
-        R: np.ndarray
+        R: float
             Radius at which the profile is to be computed (units : Mpc)
         z: float
             Redshift at which the mean matter contant is
@@ -473,7 +475,7 @@ class Profile:
 
             # Compute rho_m for this redshift
             rho_m = (
-                self.background.Omega_m(z_val, nuno=False)
+                self.background.Omega_m(z_val, nonu=False)
                 * self.background.rho_crit(z_val)
                 / self.background.h
             )

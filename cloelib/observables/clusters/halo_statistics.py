@@ -122,8 +122,10 @@ class HaloStatistics:
         radius_M: array
             Radius in h^{-1} Mpc
         """
-        rho_m_0 = self.background.rho_crit(0.0) * self.background.Omega_m(
-            0.0, self.nonu
+        rho_m_0 = (
+            self.background.rho_crit(0.0)
+            * self.background.Omega_m(0.0, self.nonu)
+            / self.background.h**3
         )
         return (M / rho_m_0 * (3.0 / (4.0 * np.pi))) ** (1 / 3.0)
 
@@ -298,7 +300,7 @@ class HaloStatistics:
         dsigma2_dR = np.pi**-2 * simps(
             k.reshape(1, 1, len(k)) ** 3
             * self.perturbations.matter_power_spectrum(
-                z, k, delta=self._camb_delta
+                z, k, hubble_units=True, k_hunit=True, delta=self._camb_delta
             ).reshape(len(z), 1, len(k))
             * W.reshape(1, len(R), len(k))
             * dWdx.reshape(1, len(R), len(k)),

@@ -1,5 +1,8 @@
-from ...auxiliary import unitsA
+from cloelib.cosmology.camb_cosmology import Perturbations
+
+from ...auxiliary import units
 from scipy.special import erf
+import jax.numpy as np
 
 class HaloClustering:
     def __init__(
@@ -10,9 +13,11 @@ class HaloClustering:
 
         self.background = pertrurbations.background
         self.background_fid = pertrurbations_fid.background
+
+
         
-    def WF_ra(self, z: np.ndarray, r: np.ndarray, k: np.ndarray) -> np.ndarray, np.ndarray:
-        r"""
+    def WF_ra(self, z: np.ndarray, r: np.ndarray, k: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        """
         Computes the window function and the volume of the spherical shells as a function of the radial separation
 
         Parameters
@@ -85,7 +90,7 @@ class HaloClustering:
         Dv = (
             (1 + z) ** 2
             * self.background.angular_diameter_distance(z) ** 2
-            * self.units.SPEED_OF_LIGHT
+            * units.SPEED_OF_LIGHT
             * z
             / self.background.hubble_parameter(z)
         ) ** (1 / 3.0)
@@ -94,7 +99,7 @@ class HaloClustering:
         Dv_fid = (
             (1 + z) ** 2
             * self.background_fid.angular_diameter_distance(z) ** 2
-            * self.units.SPEED_OF_LIGHT
+            * units.SPEED_OF_LIGHT
             * z
             / self.background_fid.hubble_parameter(z)
         ) ** (1 / 3.0)
@@ -104,7 +109,7 @@ class HaloClustering:
 
 
     # IR resummation of the bao wiggles in the Pk
-    def Pk_IR_func(self, k, Pk):
+    def Pk_IR_func(self, k: np.ndarray, Pk: np.ndarray) -> np.ndarray:
         """
         Infrared resummation (first order approx) to correct non-linear damping of bao wiggles
 
@@ -172,7 +177,7 @@ class HaloClustering:
 
 
     
-    def photoz_rsd_correction(self, z: np.ndarray, sigma_zob: np.ndarray) -> np.ndarray, np.ndarray, np.ndarray:
+    def photoz_rsd_correction(self, z: np.ndarray, sigma_zob: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """                                                                                                                                                                                                          
         Compute the correction that accounts for photo-z uncertainty and RSD (Kaiser effect)                                                                                                              
                                                                                                                                                                                                                      
@@ -196,7 +201,7 @@ class HaloClustering:
 
                 
         ks = self.k * (
-            sigma_zob * (self.units.SPEED_OF_LIGHT *1e-3) / self.background_fid.hubble_parameter(z)
+            sigma_zob * (units.SPEED_OF_LIGHT *1e-3) / self.background_fid.hubble_parameter(z)
         ).reshape(len(z), 1)
         
         erf_ks = erf(ks)
@@ -217,6 +222,3 @@ class HaloClustering:
         corr2[erf_ks < 0.02] = 1 / 5.0
 
         return corr0, corr1, corr2
-
-B
-B

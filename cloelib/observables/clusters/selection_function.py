@@ -90,7 +90,7 @@ class SelectionFunction:
         Intrinsic scatter of the proxy - mass relation.
 
         Computes the scatter of the theoretical richness probability distribution
-        at the true redshift and mass requested.
+        at the requested true redshift and mass points.
 
         Parameters
         ----------
@@ -188,7 +188,7 @@ class SelectionFunction:
         P_lbdobs_lbd: numpy.ndarray
             P_lbdobs_lbd[i,j,k], where i is the redshift axis,
             j is the the theoretical richness axis,
-            k is the observed richness
+            and k is the observed richness
         """
         sigma_lbdobslbd = self.scatter_lbdobs_lbd(z, Lambda)[:, :, np.newaxis]
 
@@ -248,9 +248,9 @@ class SelectionFunction:
         Returns
         -------
         P_zobs_z: numpy.ndarray
-            P_zobs_z[i,j,k] where i is the observed redshift axis
-            j is the observed richness axis
-            k is the true redshift axis
+            P_zobs_z[i,j,k] where i is the observed redshift axis,
+            j is the observed richness axis,
+            and k is the true redshift axis
         """
         sigmazobsz = self.scatter_zobs_z(Lambda_obs, z)
 

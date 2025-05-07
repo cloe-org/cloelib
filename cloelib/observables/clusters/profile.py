@@ -169,7 +169,7 @@ class Profile:
 
         return self.nzsnorM[zbin] * simps(sig_crit_m1, x=z_s)  # pc^2 / Msun / h
 
-    def surface_mass_density_cen(self, R, z, c, M, force_no_2h=False):
+    def _surface_mass_density_cen(self, R, z, c, M, force_no_2h=False):
         r"""
         Centered surface mass density profile at radius R
 
@@ -195,12 +195,12 @@ class Profile:
         """
 
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
-        rho_c = self.rho_crit_z(z[:, np.newaxis]) / self.background.h
+        rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h
         densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
 
-        Sigma = self._surface_mass_density_cen(R, RDelta, c, Delta_crit, rho_c)
+        Sigma = self._surface_mass_density_profile(R, RDelta, c, Delta_crit, rho_c)
 
         if force_no_2h == False and self.two_halo == "sum":
             Sigma += self.surface_mass_density_2h(R, z, M)
@@ -210,7 +210,7 @@ class Profile:
 
         return Sigma
 
-    def _surface_mass_density_cen(self, R, RDelta, c, Delta_crit, rho_c):
+    def _surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
         return NotImplementedError
 
     def surface_mass_density(self, R, z, c, M, force_no_2h=False, force_no_off=False):
@@ -246,18 +246,18 @@ class Profile:
             ir.Sigma_off(
                 R,
                 self.r_interp,
-                self.surface_mass_density_cen(
+                self._surface_mass_density_cen(
                     self.r_interp, z, c, M, force_no_2h=False
                 ),
                 self.rms_off,
                 Sigma_off,
             )
 
-            Sigma_cen = self.surface_mass_density_cen(R, z, c, M, force_no_2h=False)
+            Sigma_cen = self._surface_mass_density_cen(R, z, c, M, force_no_2h=False)
             return (1.0 - self.f_off) * Sigma_cen + self.f_off * Sigma_off
 
         else:
-            return self.surface_mass_density_cen(R, z, c, M, force_no_2h)
+            return self._surface_mass_density_cen(R, z, c, M, force_no_2h)
 
     def excess_surface_mass_density(self, R, z, c, M):
         r"""
@@ -281,16 +281,15 @@ class Profile:
                                      excess surface density (units : Msun / pc**2)
         """
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
-        rho_c = self.background.rho_crit_z(z[:, np.newaxis]) / self.background.h
+        rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h
         densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
         Rs = RDelta / c
         x = R / Rs
 
-        Sigma_mean = self._excess_surface_mass_density(R, RDelta, c, Delta_crit, rho_c)
-
-        Sigma = self.surface_mass_density_cen(R, z, c, M, force_no_2h=True)
+        Sigma_mean = self._mean_surface_mass_density_profile(R, RDelta, c, Delta_crit, rho_c)
+        Sigma = self._surface_mass_density_cen(R, z, c, M, force_no_2h=True)
         DeltaSigma = Sigma_mean - Sigma
 
         if self.two_halo == "sum":
@@ -308,7 +307,7 @@ class Profile:
                     R,
                     self.r_interp,
                     self.r_interp,
-                    self.surface_mass_density_cen(
+                    self._surface_mass_density_cen(
                         self.r_interp, z, c, M, force_no_2h=False
                     ),
                     self.rms_off,
@@ -323,7 +322,7 @@ class Profile:
 
         return DeltaSigma
 
-    def _excess_surface_mass_density(self, R, RDelta, c, Delta_crit, rho_c):
+    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
         return NotImplementedError
 
     def surface_mass_density_2h(self, R, z, M=1e14):
@@ -384,7 +383,7 @@ class Profile:
             # Compute rho_m for this redshift
             rho_m = (
                 self.background.Omega_m(z_val, nonu=False)
-                * self.background.rho_crit_z(z_val)
+                * self.background.rho_crit(z_val)
                 / self.background.h
             )
 
@@ -465,7 +464,7 @@ class Profile:
             # Compute rho_m for this redshift
             rho_m = (
                 self.background.Omega_m(z_val, nuno=False)
-                * self.background.rho_crit_z(z_val)
+                * self.background.rho_crit(z_val)
                 / self.background.h
             )
 
@@ -580,7 +579,7 @@ class ProfileNFW(Profile):
         if x > 1.0:
             return np.log(x / 2.0) + np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)
 
-    def _surface_mass_density_cen(self, R, RDelta, c, Delta_crit, rho_c):
+    def _surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
         Rs = RDelta / c
         x = R / Rs
 
@@ -592,7 +591,7 @@ class ProfileNFW(Profile):
 
         return Sigma
 
-    def _excess_surface_mass_density(self, R, RDelta, c, Delta_crit, rho_c):
+    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
         Rs = RDelta / c
         x = R / Rs
 
@@ -601,8 +600,7 @@ class ProfileNFW(Profile):
         m_nfw = np.log(1.0 + c) - c / (1.0 + c)  # Eq. 4 Oguri & Hamana 2011
         rho_s = Delta_crit * c**3.0 / (3.0 * m_nfw) * rho_c
 
-        Sigma_mean = 4.0 * rho_s * Rs * (G / x**2.0) * 1.0e-12
-        return Sigma_mean
+        return 4.0 * rho_s * Rs * (G / x**2.0) * 1.0e-12
 
 
 class ProfileBMO(Profile):
@@ -658,7 +656,7 @@ class ProfileBMO(Profile):
         if x > 1.0:
             return (1.0 - self.F_term(x)) / (x**2.0 - 1.0)
 
-    def _surface_mass_density_cen(self, R, RDelta, c, Delta_crit, rho_c):
+    def _surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
         Rs = RDelta / c
         x = R / Rs
 
@@ -714,7 +712,7 @@ class ProfileBMO(Profile):
         Sigma = 1e-12 * const * term1 * (term2 + term3 + term4 - term5 + term6 * L)
         return Sigma
 
-    def _excess_surface_mass_density(self, R, RDelta, c, Delta_crit, rho_c):
+    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
         Rs = RDelta / c
         x = R / Rs
 
@@ -769,6 +767,4 @@ class ProfileBMO(Profile):
 
         M_proj = const * term1 * (term2 + term3 + (term5 + term6 * L) / term4)
 
-        Sigma_mean = M_proj / (np.pi * R**2.0) * 1.0e-12
-
-        return Sigma_mean
+        return M_proj / (np.pi * R**2.0) * 1.0e-12

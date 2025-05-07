@@ -14,7 +14,7 @@ class HaloStatistics:
     @property
     def sigma8(self):
         if self.__sigma8 is None:
-            self.__sigma8 = self.sigma_z_R(z, np.array([8.0]))
+            self.__sigma8 = self.sigma_z_R([0.0], np.array([8.0]))
         return self.__sigma8
 
     def __init__(

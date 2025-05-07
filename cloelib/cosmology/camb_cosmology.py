@@ -5,8 +5,6 @@ from cloelib.cosmology.cosmology import Background
 # General imports
 import numpy as np
 from typing import Tuple, Optional
-from astropy import units
-from astropy.constants import G
 
 # Cosmology imports
 try:

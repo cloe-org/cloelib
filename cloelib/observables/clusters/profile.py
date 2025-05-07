@@ -173,7 +173,7 @@ class Profile:
         """
 
         z_s = np.linspace(z + 1.0e-5, self.zs_max, self.z_div + 1, axis=1)
-        sig_crit_m1 = self.nzs[zbin] * 1.0 / self.sigma_crit(z, z_s)
+        sig_crit_m1[:] = self.nzs[zbin] * 1.0 / self.sigma_crit(z, z_s[:])
 
         return self.nzsnorM[zbin] * simps(sig_crit_m1, x=z_s)  # pc^2 / Msun / h
 

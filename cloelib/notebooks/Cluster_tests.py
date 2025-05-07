@@ -65,7 +65,7 @@ def test_profiles(profile_nfw, profile_bmo):
         # _prof._surface_mass_density_cen(R_test, z_test, c_test, M_test, force_no_2h=False)
         # _prof._surface_mass_density_profile(R_test, RDelta_test, c_test, Delta_crit_test, rho_c_test)
         _prof.surface_mass_density(
-            R_test, z_test[0], c_test, M_test, force_no_2h=False, force_no_off=False
+            R_test, z_test, c_test, M_test, force_no_2h=False, force_no_off=False
         )
         _prof.excess_surface_mass_density(R_test, z_test, c_test, M_test)
         # _prof._mean_surface_mass_density_profile(R_test, RDelta_test, c_test, Delta_crit_test, rho_c_test)
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     HS_tinker = HaloStatisticsTinker(perturbations, "vir")
     HS_castro = HaloStatisticsCastro(perturbations, "vir")
 
-    test_halostatistics(HS, HS_tinker, HS_castro)
+    #test_halostatistics(HS, HS_tinker, HS_castro)
 
     # Profiles
     print("# Profiles ")

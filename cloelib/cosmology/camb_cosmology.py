@@ -214,7 +214,7 @@ class CAMBBackground:
         Returns:
             float: Sound horizon radius at last scattering
         """
-        return results.get_derived_params["rdrag"]
+        return self.results.get_derived_params()["rdrag"]
 
 
 class CAMBLinearPerturbations:

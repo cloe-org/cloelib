@@ -1,6 +1,7 @@
 from cloelib.observables.clusters.selection_function import SelectionFunction
 from cloelib.observables.clusters.halo_statistics import HaloStatistics, HaloStatisticsTinker, HaloStatisticsCastro
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
+from cloelib.observables.clusters.clustering import HaloClustering
 
 import numpy as np
 
@@ -32,7 +33,7 @@ sig_lambda_exponent = 0.1
 sig_z_z = 0.1
 sig_z_lambda = 0.1
 
-#
+
 background = CAMBBackground(H0=H0, Omega_b0=Omega_b0, Omega_cdm0=Omega_cdm0, 
                             Omega_k0=Omega_k0,
                             As=As, ns=ns, mnu=0., w0=-1.0, wa=0.0, 
@@ -79,6 +80,40 @@ HS_tinker = HaloStatisticsTinker(perturbations, 'vir')
 HS_castro = HaloStatisticsCastro(perturbations, 'vir')
 HS_castro.dn_dm(z_test, M_test)
 HS_castro.bias(z_test, M_test)
+
+
+
+# clustering
+
+H0_fid = 73.
+background_fid = CAMBBackground(H0=H0_fid, Omega_b0=Omega_b0, Omega_cdm0=Omega_cdm0,
+                            Omega_k0=Omega_k0,
+                            As=As, ns=ns, mnu=0., w0=-1.0, wa=0.0,
+                            gamma_MG=0.0)
+perturbations_fid = CAMBLinearPerturbations(background_fid, np.linspace(0., 2., 100))
+
+
+k_min = 1e-4
+k_max = 2e0
+k_div = 300
+nonu  = True
+CL = HaloClustering(perturbations,perturbations_fid,nonu,k_div,k_min,k_max)
+
+z_test = np.linspace(0.,2.,20)
+r_test = np.geomspace(20,150,30)
+
+CL.APcorr_func(z_test)
+CL.WF_ra(z_test,r_test)
+
+
+Pk_test = perturbations.matter_power_spectrum(
+            z_test, CL.k, hubble_units=True, k_hunit=True)
+CL.Pk_IR_func(Pk_test)
+
+
+sigma_zob = SF.scatter_zobs_z(lob_test, z_test)
+CL.photoz_rsd_correction(z_test, sigma_zob)
+
 
 
 

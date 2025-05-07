@@ -65,14 +65,15 @@ def test_halostatistics(HS, HS_tinker, HS_castro):
 
 
 def test_profiles(profile_nfw, profile_bmo):
-    R_test = np.linspace(1e-5, 2, 21)
+    R_test = 1
     z_test = np.linspace(0.01, 0.5, 20)
     M_test = 5e14
     c_test = 4.0
     z_sources_test = np.linspace(0.6, 1, 21)
     zbin_test = 1
 
-    for _prof in (profile_nfw, profile_bmo):
+    for _name, _prof in zip(("NFW", "BMO"), (profile_nfw, profile_bmo)):
+        print(f"  {_name}")
         print("    sigma_crit")
         _prof.sigma_crit(z_test, z_sources_test)
         print("    n_zs_norM")
@@ -81,14 +82,14 @@ def test_profiles(profile_nfw, profile_bmo):
         _prof.n_zs(z_test)
         print("    surface_mass_density")
         _prof.surface_mass_density(
-            R_test[10], z_test, c_test, M_test, force_no_2h=False, force_no_off=False
+            R_test, z_test, c_test, M_test, force_no_2h=False, force_no_off=False
         )
         print("    excess_surface_mass_density")
-        _prof.excess_surface_mass_density(R_test[10], z_test, c_test, M_test)
+        _prof.excess_surface_mass_density(R_test, z_test, c_test, M_test)
         print("    surface_mass_density_2h")
-        _prof.surface_mass_density_2h(R_test[10], z_test, M_test)
+        _prof.surface_mass_density_2h(R_test, z_test, M_test)
         print("    excess_surface_mass_density_2h")
-        _prof.excess_surface_mass_density_2h(R_test[10], z_test, M_test)
+        _prof.excess_surface_mass_density_2h(R_test, z_test, M_test)
 
 
 def test_clustering(CL):

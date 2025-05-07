@@ -183,8 +183,8 @@ class CAMBBackground:
         Returns:
             float: Critical density value at the specified redshift.
         """
-        hh = self.hubble_parameter(zs) / units.MPC_TO_KM
-        return 3.0 * hh**2.0 / (8.0 * np.pi * units.GRAVITATIONAL_CONSTANT)
+        h_in_seconds = self.hubble_parameter(zs) / units.MPC_TO_KM
+        return 3.0 * h_in_seconds**2.0 / (8.0 * np.pi * units.GRAVITATIONAL_CONSTANT)
 
     def dV_dzdO(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -196,7 +196,7 @@ class CAMBBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-        np.ndarray: volume element in Mpc^3 h^{-3}
+            np.ndarray: volume element in Mpc^3 h^{-3}
         """
         return (
             units.SPEED_OF_LIGHT
@@ -212,7 +212,7 @@ class CAMBBackground:
         Returns the Sound horizon radius at last scattering.
 
         Returns:
-        float: Sound horizon radius at last scattering
+            float: Sound horizon radius at last scattering
         """
         return results.get_derived_params["rdrag"]
 

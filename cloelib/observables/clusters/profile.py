@@ -499,7 +499,7 @@ class Profile:
 
         return DeltaSigma  # Shape: (Nz, Nm)
 
-    def F_term(self, x):
+    def _f_term(self, x):
         r"""
         One-Halo profile F term.
 
@@ -516,7 +516,7 @@ class Profile:
         """
         return NotImplementedError
 
-    def G_term(self, x):
+    def _g_term(self, x):
         r"""
         One-Halo profile G term.
 
@@ -535,7 +535,7 @@ class Profile:
 
 
 class ProfileNFW(Profile):
-    def F_term(self, x):
+    def _f_term(self, x):
         r"""
         One-Halo NFW F term.
 
@@ -565,7 +565,7 @@ class ProfileNFW(Profile):
                 x**2.0 - 1.0
             )
 
-    def G_term(self, x):
+    def _g_term(self, x):
         r"""
         One-Halo NFW G term.
 
@@ -595,7 +595,7 @@ class ProfileNFW(Profile):
         Rs = RDelta / c
         x = R / Rs
 
-        F = np.vectorize(self.F_term)(x)
+        F = np.vectorize(self._f_term)(x)
         m_nfw = np.log(1.0 + c) - c / (1.0 + c)  # Eq. 4 Oguri & Hamana 2011
         rho_s = Delta_crit * c**3.0 / (3.0 * m_nfw) * rho_c
 
@@ -607,7 +607,7 @@ class ProfileNFW(Profile):
         Rs = RDelta / c
         x = R / Rs
 
-        G = np.vectorize(self.G_term)(x)
+        G = np.vectorize(self._g_term)(x)
 
         m_nfw = np.log(1.0 + c) - c / (1.0 + c)  # Eq. 4 Oguri & Hamana 2011
         rho_s = Delta_crit * c**3.0 / (3.0 * m_nfw) * rho_c
@@ -616,7 +616,7 @@ class ProfileNFW(Profile):
 
 
 class ProfileBMO(Profile):
-    def F_term(self, x):
+    def _f_term(self, x):
         r"""
         One-Halo BMO F term.
 
@@ -642,7 +642,7 @@ class ProfileBMO(Profile):
         if x > 1.0:
             return np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)
 
-    def G_term(self, x):
+    def _g_term(self, x):
         r"""
         One-Halo BMO G term.
 
@@ -662,11 +662,11 @@ class ProfileBMO(Profile):
         <https://ui.adsabs.harvard.edu/abs/2009JCAP...01..015B/abstract>`_.
         """
         if x < 1.0:
-            return (self.F_term(x) - 1.0) / (1.0 - x**2.0)
+            return (self._f_term(x) - 1.0) / (1.0 - x**2.0)
         if x == 1.0:
             return 1.0 / 3.0
         if x > 1.0:
-            return (1.0 - self.F_term(x)) / (x**2.0 - 1.0)
+            return (1.0 - self._f_term(x)) / (x**2.0 - 1.0)
 
     def _surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
         Rs = RDelta / c
@@ -702,8 +702,8 @@ class ProfileBMO(Profile):
 
         const = rho_s_bmo * Rs
 
-        G = np.vectorize(self.G_term)(x)
-        F = np.vectorize(self.F_term)(x)
+        G = np.vectorize(self._g_term)(x)
+        F = np.vectorize(self._f_term)(x)
 
         term1 = tau**4.0 / (tau**2.0 + 1.0) ** 3.0
         term2 = 2.0 * (tau**2.0 + 1.0) * G
@@ -759,10 +759,10 @@ class ProfileBMO(Profile):
         const = 2.0 * np.pi * rho_s_bmo * Rs**3.0
         term1 = tau**4.0 / (tau**2.0 + 1.0) ** 3.0
 
-        F = np.vectorize(self.F_term)(x)
+        F = np.vectorize(self._f_term)(x)
         term2 = 2.0 * (tau**2.0 + 1.0 + 4.0 * (x**2.0 - 1.0)) * F
 
-        G = np.vectorize(self.G_term)(x)
+        G = np.vectorize(self._g_term)(x)
         term3 = (
             np.pi * (3.0 * tau**2.0 - 1.0)
             + 2.0 * tau * (tau**2.0 - 3.0) * np.log(tau)

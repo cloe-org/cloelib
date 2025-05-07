@@ -84,9 +84,6 @@ class Profile:
         fact = (units.SPEED_OF_LIGHT / units.MPC_TO_KM) ** 2 / (
             4 * np.pi * units.GRAVITATIONAL_CONSTANT
         )  # Msun/Mpc
-        light_speed = units.SPEED_OF_LIGHT * (ap_units.km / ap_units.s)
-        fact = light_speed**2.0 / (4.0 * np.pi * ap_constants.G)
-        fact = fact.to(ap_units.Msun / ap_units.pc).value
         d_a_sources = self.background.angular_diameter_distance(z_sources)  # Mpc
         d_a_l = self.background.angular_diameter_distance(z)  # Mpc
         d_m_l = (1.0 + z) * d_a_l

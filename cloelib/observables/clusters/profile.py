@@ -80,14 +80,17 @@ class Profile:
                      Critical surface mass density (unit : Msun/pc^2)
         """
 
-        fact = (units.SPEED_OF_LIGHT / units.MPC_TO_KM) ** 2 / (
-            4 * np.pi * units.GRAVITATIONAL_CONSTANT
+        fact = (units.SPEED_OF_LIGHT / 1.e3 / units.MPC_TO_KM) ** 2.0 / (
+            4.0 * np.pi * units.GRAVITATIONAL_CONSTANT
         )  # Msun/Mpc
         d_a_sources = self.background.angular_diameter_distance(z_sources)  # Mpc
         d_a_l = self.background.angular_diameter_distance(z)  # Mpc
         d_m_l = (1.0 + z) * d_a_l
         d_m_sources = (1.0 + z_sources) * d_a_sources
-        d_h = units.SPEED_OF_LIGHT / 1e3 / self.background.H0  # Mpc
+        d_h = (
+            units.SPEED_OF_LIGHT / 1e3 / units.MPC_TO_KM
+            / self.background.H0
+        )  # Mpc
         d_a_lens_source = (
             1.0
             / (1.0 + z_sources)

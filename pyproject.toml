@@ -10,7 +10,7 @@ authors = [
     "C. Moretti <cmoretti@sissa.it>",
     "A. Pezzotta <andrea.pezzotta@inaf.it>"
 ]
-license = "LGPL-3.0"
+license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]

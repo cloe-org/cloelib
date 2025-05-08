@@ -392,7 +392,7 @@ class Profile:
         """
         return NotImplementedError
 
-    def _mass_density_2h(self, is_excess, R, z, M):
+    def _mass_density_2h(self, is_excess, R, z, M, bias_z=None):
         r"""
         Surface or excess surface 2-halo density profile.
 
@@ -410,6 +410,8 @@ class Profile:
             Redshift.
         M: np.ndarray
             Mass (Msun).
+        bias_z: np.ndarray (optional)
+            Halo bias. If None, it is computed internally.
 
         Returns
         -------
@@ -425,7 +427,8 @@ class Profile:
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
         # Bias calculation
-        bias_z = self.halo_statistics.bias(z, M)
+        if bias_z is None:
+            bias_z = self.halo_statistics.bias(z, M)
         
         # Compute P(k) interpolation and Sigma/DeltaSigma for each redshift z
         profile = np.zeros((z.size, M.size))
@@ -477,7 +480,7 @@ class Profile:
 
         return profile / self.background.h
 
-    def surface_mass_density_2h(self, R, z, M):
+    def surface_mass_density_2h(self, R, z, M, bias_z=None):
         r"""
         Surface 2-halo density profile.
 
@@ -491,6 +494,8 @@ class Profile:
             Redshift.
         M: np.ndarray
             Mass (Msun).
+        bias_z: np.ndarray (optional)
+            Halo bias. If None, it is computed internally.
 
         Returns
         -------
@@ -499,7 +504,7 @@ class Profile:
         """
         return self._mass_density_2h(False, R, z, M)
 
-    def excess_surface_mass_density_2h(self, R, z, M):
+    def excess_surface_mass_density_2h(self, R, z, M, bias_z=None):
         r"""
         Excess surface 2-halo density profile.
 
@@ -514,6 +519,8 @@ class Profile:
             Redshift.
         M: np.ndarray
             Mass (Msun).
+        bias_z: np.ndarray (optional)
+            Halo bias. If None, it is computed internally.
 
         Returns
         -------

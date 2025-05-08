@@ -222,7 +222,7 @@ class HaloStatistics:
                 * simps(
                     (k**2.0).reshape(1, 1, len(k))
                     * self.perturbations.matter_power_spectrum(
-                        z, k, delta=self._camb_delta
+                        z, k, hubble_units=True, k_hunit=True, delta=self._camb_delta
                     ).reshape(len(z), 1, len(k))
                     * (W**2.0).reshape(1, len(R), len(k)),
                     k,
@@ -353,6 +353,7 @@ class HaloStatistics:
         """
         dlnsigmadlnR = self.dlns_dlnR(z, M)
         rho_mean_0 = self.background.Omega_m(0, self.nonu) * self.background.rho_crit(0)
+        rho_mean_0 /= self.background.h**3.0
 
         return rho_mean_0 / M**2.0 * self.f_sigma_nu(z, M) * dlnsigmadlnR / (-3)
 

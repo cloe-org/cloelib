@@ -175,7 +175,7 @@ class CAMBBackground:
         """
         Returns the critical density as a function of redshift.
 
-        Units: Mpc^{-3} Msun h^2
+        Units: Mpc^{-3} Msun
 
         Args:
             zs (np.ndarray): Redshifts.

@@ -175,7 +175,7 @@ class CAMBBackground:
         """
         Returns the critical density as a function of redshift.
 
-        Units: Mpc^{-3} Msun h^2
+        Units: Mpc^{-3} Msun
 
         Args:
             zs (np.ndarray): Redshifts.
@@ -214,7 +214,7 @@ class CAMBBackground:
         Returns:
             float: Sound horizon radius at last scattering
         """
-        return results.get_derived_params["rdrag"]
+        return self.results.get_derived_params()["rdrag"]
 
 
 class CAMBLinearPerturbations:

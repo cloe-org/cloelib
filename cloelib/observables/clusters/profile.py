@@ -85,7 +85,7 @@ class Profile:
         Returns
         -------
         sigma_crit : float
-            Critical surface mass density (unit: Msun/pc^2)
+            Critical surface mass density (unit: h * Msun / pc^2)
         """
         fact = (units.SPEED_OF_LIGHT / 1.0e3 / units.MPC_TO_KM) ** 2.0 / (
             4.0 * np.pi * units.GRAVITATIONAL_CONSTANT
@@ -178,7 +178,7 @@ class Profile:
         Returns
         -------
         m_sigma_crit_m1: float
-            Effective inverse critical surface mass density (units : pc^2/Msun)
+            Effective inverse critical surface mass density (units : pc^2 / Msun / h)
         """
         z_s = np.linspace(z + 1.0e-5, self.zs_max, self.z_div + 1, axis=1)
         sig_crit_m1[:] = self.nzs[zbin] * 1.0 / self.sigma_crit(z, z_s[:])
@@ -187,36 +187,36 @@ class Profile:
 
     def _surface_mass_density_cen(self, R, z, c, M, force_no_2h=False):
         r"""
-        Centered surface mass density profile at radius R
+        Centered surface mass density profile.
+
+        Computes the centered surface mass density profile at radius R.
 
         Parameters
         ----------
         R: np.ndarray
-            Radius at which the profile is to be computed (units : Mpc)
+            Radial points (units : Mpc / h)
         z: float
-            Redshift at which the mean matter contant is
-            to be computed
+            Redshift.
         c: float
-            Concentration parameter of the cluster
+            Concentration.
         M: Float
-            Mass of the cluster (Msun)
+            Mass (Msun).
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
 
         Returns
         -------
         surface_mass_density: np.ndarray
-                              centered surface mass density profile (units : Msun / pc**2)
-
+            Centered surface mass density profile (units : h * Msun / pc**2)
         """
-
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
         rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
         densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
 
-        Sigma = self._surface_mass_density_profile(R, RDelta, c, Delta_crit, rho_c)
+        Sigma = self._surface_mass_density_profile(R, RDelta, c, densityThreshold)
+        Sigma /= self.background.h
 
         if force_no_2h == False and self.two_halo == "sum":
             Sigma += self.surface_mass_density_2h(R, z, M)
@@ -226,7 +226,28 @@ class Profile:
 
         return Sigma
 
-    def _surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
+    def _surface_mass_density_profile(self, R, RDelta, c, Delta):
+        r"""
+        Centered one-halo surface mass density profile.
+
+        Computes the centered one-halo surface mass density profile at radius R.
+
+        Parameters
+        ----------
+        R: np.ndarray
+            Radial points (units : Mpc / h)
+        RDelta: np.ndarray
+            Overdensity radius (units : Mpc / h).
+        c: float
+            Concentration.
+        Delta: np.ndarray
+            Critical overdensity.
+
+        Returns
+        -------
+        surface_mass_density_profile: np.ndarray
+            Centered one-halo surface mass density profile (units : h * Msun / pc**2)
+        """
         return NotImplementedError
 
     def surface_mass_density(self, R, z, c, M, force_no_2h=False, force_no_off=False):
@@ -305,7 +326,7 @@ class Profile:
         x = R / Rs
 
         Sigma_mean = self._mean_surface_mass_density_profile(
-            R, RDelta, c, Delta_crit, rho_c
+            R, RDelta, c, densityThreshold
         )
         Sigma = self._surface_mass_density_cen(R, z, c, M, force_no_2h=True)
         DeltaSigma = Sigma_mean - Sigma
@@ -340,7 +361,29 @@ class Profile:
 
         return DeltaSigma
 
-    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
+    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
+        r"""
+        Centered one-halo mean surface mass density profile.
+
+        Computes the centered one-halo mean surface mass density
+        within a radius R.
+
+        Parameters
+        ----------
+        R: np.ndarray
+            Radial points (units : Mpc / h)
+        RDelta: np.ndarray
+            Overdensity radius (units : Mpc / h).
+        c: float
+            Concentration.
+        Delta: np.ndarray
+            Critical overdensity.
+
+        Returns
+        -------
+        mean_surface_mass_density_profile: np.ndarray
+            Centered one-halo mean surface mass density (units : h * Msun / pc**2)
+        """
         return NotImplementedError
 
     def surface_mass_density_2h(self, R, z, M=1e14):
@@ -593,26 +636,26 @@ class ProfileNFW(Profile):
         if x > 1.0:
             return np.log(x / 2.0) + np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)
 
-    def _surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
+    def _surface_mass_density_profile(self, R, RDelta, c, Delta):
         Rs = RDelta / c
         x = R / Rs
 
         F = np.vectorize(self._f_term)(x)
         m_nfw = np.log(1.0 + c) - c / (1.0 + c)  # Eq. 4 Oguri & Hamana 2011
-        rho_s = Delta_crit * c**3.0 / (3.0 * m_nfw) * rho_c
+        rho_s = Delta * c**3.0 / (3.0 * m_nfw)
 
         Sigma = 2.0 * rho_s * Rs * F * 1.0e-12
 
         return Sigma
 
-    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
+    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
         Rs = RDelta / c
         x = R / Rs
 
         G = np.vectorize(self._g_term)(x)
 
         m_nfw = np.log(1.0 + c) - c / (1.0 + c)  # Eq. 4 Oguri & Hamana 2011
-        rho_s = Delta_crit * c**3.0 / (3.0 * m_nfw) * rho_c
+        rho_s = Delta * c**3.0 / (3.0 * m_nfw)
 
         return 4.0 * rho_s * Rs * (G / x**2.0) * 1.0e-12
 
@@ -670,7 +713,7 @@ class ProfileBMO(Profile):
         if x > 1.0:
             return (1.0 - self._f_term(x)) / (x**2.0 - 1.0)
 
-    def _surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
+    def _surface_mass_density_profile(self, R, RDelta, c, Delta):
         Rs = RDelta / c
         x = R / Rs
 
@@ -700,7 +743,7 @@ class ProfileBMO(Profile):
             )
         )
 
-        rho_s_bmo = Delta_crit * c**3.0 / (3.0 * m_bmo) * rho_c
+        rho_s_bmo = Delta * c**3.0 / (3.0 * m_bmo)
 
         const = rho_s_bmo * Rs
 
@@ -726,7 +769,7 @@ class ProfileBMO(Profile):
         Sigma = 1e-12 * const * term1 * (term2 + term3 + term4 - term5 + term6 * L)
         return Sigma
 
-    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
+    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
         Rs = RDelta / c
         x = R / Rs
 
@@ -756,7 +799,7 @@ class ProfileBMO(Profile):
             )
         )
 
-        rho_s_bmo = Delta_crit * c**3.0 / (3.0 * m_bmo) * rho_c
+        rho_s_bmo = Delta * c**3.0 / (3.0 * m_bmo)
 
         const = 2.0 * np.pi * rho_s_bmo * Rs**3.0
         term1 = tau**4.0 / (tau**2.0 + 1.0) ** 3.0

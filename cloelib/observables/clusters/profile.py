@@ -213,9 +213,15 @@ class Profile:
         rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
         densityThreshold = Delta_crit * rho_c
 
-        RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
+        RDelta = (
+            (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
+        )[:, :, np.newaxis]
 
-        Sigma = self._surface_mass_density_profile(R, RDelta, c, densityThreshold)
+        Sigma = self._surface_mass_density_profile(
+            R[np.newaxis, :][np.newaxis, :, :],
+            RDelta, c,
+            densityThreshold[:, :, np.newaxis]
+        )
 
         if force_no_2h == False and self.two_halo == "sum":
             Sigma += self.surface_mass_density_2h(R, z, M)
@@ -332,7 +338,9 @@ class Profile:
         x = R / Rs
 
         Sigma_mean = self._mean_surface_mass_density_profile(
-            R, RDelta, c, densityThreshold
+            R[np.newaxis, :][np.newaxis, :, :],
+            RDelta, c,
+            densityThreshold[:, :, np.newaxis]
         )
         Sigma = self._surface_mass_density_cen(R, z, c, M, force_no_2h=True)
         DeltaSigma = Sigma_mean - Sigma

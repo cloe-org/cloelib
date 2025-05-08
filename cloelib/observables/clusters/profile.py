@@ -427,65 +427,60 @@ class Profile:
             2-halo surface mass density profile (units : h * Msun / pc**2).
         """
         # Define base quantities
-        D_A = self.background.angular_diameter_distance(z)  # D_A should now be (Nz, 1)
-        theta = R / D_A  # R is a scalar, so theta has shape (Nz, 1)
+        D_A = self.background.angular_diameter_distance(z[:, np.newaxis])
+        theta = R[np.newaxis, :][np.newaxis, :, :] / D_A[:, :, np.newaxis]
+        rho_m = (
+            self.background.Omega_m(z[:, np.newaxis], nonu=False)
+            * self.background.rho_crit(z[:, np.newaxis])
+            / self.background.h**2.0
+        )[:, :, np.newaxis]
 
+        # Interpolate P(k)
         kl_min = 1.0e-4
         kl_max = 1.0e2
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
+
+        if len(z) == 1:
+            z_for_interp = np.array([z[0], z[0] + 0.05])
+        else:
+            z_for_interp = z
+
+        Pk_interp = interpolate.RectBivariateSpline(
+            z_for_interp, kl_array,
+            self.perturbations.matter_power_spectrum(
+                z_for_interp[:, np.newaxis], kl_array,
+                hubble_units=True, k_hunit=True,
+                self.halo_statistics.nonu
+            )
+        )
 
         # Bias calculation
         if bias_z is None:
             bias_z = self.halo_statistics.bias(z, M)
         
-        # Compute P(k) interpolation and Sigma/DeltaSigma for each redshift z
-        profile = np.zeros((z.size, M.size))
+        # Define the integrand
+        if is_excess:
+            def integrand(kl):
+                ll = (kl * (1.0 + z[:, np.newaxis]) * D_A)[:, :, np.newaxis]
+                j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
+                return j2 * ll *\
+                    Pk_interp(z[:, np.newaxis], kl)[:, :, np.newaxis] *\
+                    ((1.0 + z[:, np.newaxis]) * D_A)[:, :, np.newaxis]
+        else:
+            def integrand(kl):
+                ll = (kl * (1.0 + z[:, np.newaxis]) * D_A)[:, :, np.newaxis]
+                return j0(ll * theta) * ll *\
+                    Pk_interp(z[:, np.newaxis], kl)[:, :, np.newaxis] *\
+                    ((1.0 + z[:, np.newaxis]) * D_A)[:, :, np.newaxis]
 
-        for i, z_val in enumerate(z):  # Loop over redshift values
-            # Get P(k) for this redshift
-            Pk_interp = interpolate.InterpolatedUnivariateSpline(
-                kl_array,
-                self.perturbations.matter_power_spectrum(
-                    z_val, kl_array, hubble_units=True, k_hunit=True
-                ),
+        # Integrate
+        profile = quad_vec(integrand, kl_min, kl_max, epsrel=1e-1)[0]
+        profile *= 1.e-12 * rho_m * bias_z /\
+            (
+                2.0 * np.pi *
+                (1.0 + z[:, np.newaxis][:, :, np.newaxis])**3.0 *
+                D_A[:, :, np.newaxis]**2.0
             )
-
-            # Define the integrand for this redshift
-            if is_excess:
-                def integrand(l):
-                    kl = l / (1.0 + z_val) / D_A[i]
-                    return j0(l * theta[i]) * l * Pk_interp(kl)
-            else:
-                def integrand(l):
-                    kl = l / (1.0 + z_val) / D_A[i]
-                    j2 = 2.0 / (l * theta[i]) * j1(l * theta[i]) - j0(l * theta[i])
-                    return j2 * l * Pk_interp(kl)
-
-            # Compute rho_m for this redshift
-            rho_m = (
-                self.background.Omega_m(z_val, nonu=False)
-                * self.background.rho_crit(z_val)
-                / self.background.h**2.0
-            )
-
-            # Compute Sigma/DeltaSigma for each mass M
-            profile_z = quad_vec(
-                integrand,
-                kl_min * (1.0 + z_val) * D_A[i],
-                kl_max * (1.0 + z_val) * D_A[i],
-                epsrel=1e-1,
-            )[0]
-
-            profile_z *= (
-                1.0e-12
-                * rho_m
-                * bias_z[i]
-                / (2.0 * np.pi * (1.0 + z_val) ** 3.0 * D_A[i] ** 2.0)
-            )
-
-            # Store the result for this redshift
-            profile[i, :] = profile_z
-
         return profile / self.background.h
 
     def surface_mass_density_2h(self, R, z, M, bias_z=None):

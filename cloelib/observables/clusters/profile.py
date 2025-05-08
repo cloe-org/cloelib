@@ -726,7 +726,7 @@ class ProfileBMO(Profile):
         Returns
         -------
         G_BMO : float
-                One-Halo BMO G term.
+            One-Halo BMO G term.
 
         Notes
         -----

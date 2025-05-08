@@ -196,7 +196,7 @@ class CLASSLinearPerturbations:
         return self.interface_args
     
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
-                              k_hunit=False) -> np.ndarray:
+                              k_hunit=False, nonu=False) -> np.ndarray:
         """Calculates the CLASS linear matter power spectrum.
         
         Parameters
@@ -213,12 +213,17 @@ class CLASSLinearPerturbations:
         k_hunit: (Optional) bool
             Flag to specify if wavenumber in h units, defaults to False
 
+        nonu: (Optional) str
+            Get power spectrum without neutrinos
+
         Returns
         -------
         pk: numpy.ndarray
             Linear matter power spectrum at the specified scale
             and redshift
         """
+        if nonu:
+            raise NotImplementedError("Option nonu=True not implemented for CLASS.")
         if hubble_units == True or k_hunit == True:
             raise ValueError("This CLASS method does not yet support h-units")
         self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
@@ -293,7 +298,7 @@ class CLASSNonLinearPerturbations:
         self.results.compute()
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
-                              k_hunit=False) -> np.ndarray:
+                              k_hunit=False, nonu=False) -> np.ndarray:
         """Calculates the CLASS non-linear matter power spectrum.
         
         Parameters
@@ -310,12 +315,17 @@ class CLASSNonLinearPerturbations:
         k_hunit: (Optional) bool
             Flag to specify if wavenumber in h units, defaults to False
 
+        nonu: (Optional) str
+            Get power spectrum without neutrinos
+
         Returns
         -------
         pk: numpy.ndarray
             Non-linear matter power spectrum at the specified scale
             and redshift
         """
+        if nonu:
+            raise NotImplementedError("Option nonu=True not implemented for CLASS.")
         if hubble_units == True or k_hunit == True:
             raise ValueError("This CLASS method does not yet support h-units")
         self.Pk_nonlinear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])

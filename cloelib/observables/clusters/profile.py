@@ -401,6 +401,64 @@ class Profile:
         return NotImplementedError
 
     def _mass_density_2h(self, is_excess, R, z, M, bias_z=None):
+    # Ensure proper array shapes (z, M, R)
+        z = np.asarray(z)[:, np.newaxis, np.newaxis]  # shape (nz, 1, 1)
+        M = np.asarray(M)[np.newaxis, :, np.newaxis]  # shape (1, nM, 1)
+        R = np.asarray(R)[np.newaxis, np.newaxis, :]  # shape (1, 1, nR)
+        
+        # Calculate base quantities with strict 3D broadcasting
+        D_A = self.background.angular_diameter_distance(z.squeeze())[:, np.newaxis, np.newaxis]  # shape (nz, 1, 1)
+        theta = R / D_A  # shape (nz, 1, nR)
+        
+        rho_m = (
+            self.background.Omega_m(z.squeeze(), nonu=False)
+            * self.background.rho_crit(z.squeeze())
+            / self.background.h**2
+        )[:, np.newaxis, np.newaxis]  # shape (nz, 1, 1)
+    
+        # Power spectrum interpolation (unchanged)
+        kl_min, kl_max = 1e-4, 1e2
+        kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
+        
+        if len(z.squeeze()) == 1:
+            z_for_interp = np.linspace(z.min()*0.9, z.max()*1.1, 10)
+        else:
+            z_for_interp = z.squeeze()
+        
+        Pk_interp = interpolate.RectBivariateSpline(
+            z_for_interp, kl_array,
+            self.perturbations.matter_power_spectrum(
+                z_for_interp[:, np.newaxis], kl_array,
+                hubble_units=True, k_hunit=True,
+                nonu=self.halo_statistics.nonu
+            )
+        )
+    
+        # Ensure bias has shape (nz, nM, 1)
+        if bias_z is None:
+            bias_z = self.halo_statistics.bias(z.squeeze(), M.squeeze())[:, :, np.newaxis]
+        else:
+            bias_z = np.asarray(bias_z)[:, :, np.newaxis]
+    
+        # Strict 3D integrand
+        def integrand(kl):
+            ll = kl * (1.0 + z) * D_A  # shape (nz, 1, 1)
+            if is_excess:
+                j2 = 2.0/(ll * theta) * j1(ll * theta) - j0(ll * theta)
+                return j2 * ll * Pk_interp(z.squeeze(), kl)[:, np.newaxis, np.newaxis] * (1.0 + z) * D_A
+            else:
+                return j0(ll * theta) * ll * Pk_interp(z.squeeze(), kl)[:, np.newaxis, np.newaxis] * (1.0 + z) * D_A
+    
+        # Integration (result will be (nz, 1, nR))
+        profile = quad_vec(integrand, kl_min, kl_max, epsrel=1e-1)[0]
+        
+        # Final strictly 3D calculation
+        denominator = 2.0 * np.pi * (1.0 + z)**3.0 * D_A**2.0
+        profile = (1.e-12 * rho_m * bias_z * profile) / denominator
+        
+        return profile.squeeze() / self.background.h  # remove size-1 dims if needed
+    
+    '''def _mass_density_2h(self, is_excess, R, z, M, bias_z=None):
         r"""
         Surface or excess surface 2-halo density profile.
 
@@ -429,21 +487,21 @@ class Profile:
         # Define base quantities
         D_A = self.background.angular_diameter_distance(
             z
-        )[:, np.newaxis][:, :, np.newaxis]
-        theta = R[np.newaxis, :][np.newaxis, :, :] / D_A
+        )[:, np.newaxis, np.newaxis]
+        theta = R[np.newaxis, np.newaxis, :] / D_A
         rho_m = (
             self.background.Omega_m(z[:, np.newaxis], nonu=False)
             * self.background.rho_crit(z[:, np.newaxis])
             / self.background.h**2.0
-        )[:, :, np.newaxis]
+        )[:, np.newaxis, np.newaxis]
 
         # Interpolate P(k)
         kl_min = 1.0e-4
         kl_max = 1.0e2
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
-        if len(z) == 1:
-            z_for_interp = np.linspace(z * 0.9, z * 1.1, 10)
+        if len(z) < 10:
+            z_for_interp = np.linspace(z.min() * 0.9, z.max() * 1.1, 10)
         else:
             z_for_interp = z
 
@@ -458,32 +516,40 @@ class Profile:
 
         # Bias calculation
         if bias_z is None:
-            bias_z = self.halo_statistics.bias(z, M)
+            bias_z = self.halo_statistics.bias(z, M)[:, np.newaxis, np.newaxis]
+        else:
+            bias_z = bias_z[:, np.newaxis, np.newaxis]
         
         # Define the integrand
         if is_excess:
             def integrand(kl):
-                ll = (kl * (1.0 + z[:, np.newaxis]) * D_A)
+                ll = (kl * (1.0 + z[:, np.newaxis, np.newaxis]) * D_A)
                 j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
                 return j2 * ll *\
-                    Pk_interp(z[:, np.newaxis], kl)[:, :, np.newaxis] *\
-                    ((1.0 + z[:, np.newaxis]) * D_A)
+                    Pk_interp(
+                        z[:, np.newaxis], kl
+                    )[:, np.newaxis, np.newaxis] * (
+                        (1.0 + z[:, np.newaxis, np.newaxis]) * D_A
+                    )
         else:
             def integrand(kl):
                 ll = (kl * (1.0 + z[:, np.newaxis]) * D_A)
                 return j0(ll * theta) * ll *\
-                    Pk_interp(z[:, np.newaxis], kl)[:, :, np.newaxis] *\
-                    ((1.0 + z[:, np.newaxis]) * D_A)
+                    Pk_interp(
+                        z[:, np.newaxis], kl
+                    )[:, np.newaxis, np.newaxis] * (
+                        (1.0 + z[:, np.newaxis, np.newaxis]) * D_A
+                    )
 
         # Integrate
         profile = quad_vec(integrand, kl_min, kl_max, epsrel=1e-1)[0]
         profile *= 1.e-12 * rho_m * bias_z /\
             (
                 2.0 * np.pi *
-                (1.0 + z[:, np.newaxis][:, :, np.newaxis])**3.0 *
+                (1.0 + z[:, np.newaxis, np.newaxis])**3.0 *
                 D_A**2.0
             )
-        return profile / self.background.h
+        return profile / self.background.h'''
 
     def surface_mass_density_2h(self, R, z, M, bias_z=None):
         r"""

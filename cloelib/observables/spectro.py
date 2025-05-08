@@ -31,19 +31,17 @@ class SpectroPower(Protocol):
         """
         ...
 
-    def Pk2d_X_rsd(self, k: T, mu: T, **args) -> T:
-        r"""2D power spectrum for the specific diagram X of the loop expansion
+    def Pk2d_term_rsd(self, k: T, mu: T, **args) -> T:
+        r"""2D power spectrum for a subset of specific term of the loop expansion
         Parameters
         ----------
         k: numpy.ndarray or jax.numpy.ndarray
             Wavenumber
         mu: numpy.ndarray or jax.numpy.ndarray
             Angle (cosinus) to the line of sight
-        X: str
-            Identifier of loop diagram
         Returns
         -------
-        Pk2d_X_rsd: numpy.ndarray or jax.numpy.ndarray
-            2D power spectrum of term X
+        Pk2d_term_rsd: numpy.ndarray or jax.numpy.ndarray
+            2D power spectrum of specific terms
         """
         ...

@@ -195,18 +195,18 @@ class Profile:
         ----------
         R: np.ndarray
             Radial points (units : Mpc / h)
-        z: float
+        z: np.ndarray
             Redshift.
         c: float
             Concentration.
-        M: Float
+        M: np.ndarray
             Mass (Msun).
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
 
         Returns
         -------
-        surface_mass_density: np.ndarray
+        Sigma: np.ndarray
             Centered surface mass density profile (units : h * Msun / pc**2)
         """
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
@@ -216,7 +216,6 @@ class Profile:
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
 
         Sigma = self._surface_mass_density_profile(R, RDelta, c, densityThreshold)
-        Sigma /= self.background.h
 
         if force_no_2h == False and self.two_halo == "sum":
             Sigma += self.surface_mass_density_2h(R, z, M)
@@ -245,26 +244,28 @@ class Profile:
 
         Returns
         -------
-        surface_mass_density_profile: np.ndarray
+        Sigma: np.ndarray
             Centered one-halo surface mass density profile (units : h * Msun / pc**2)
         """
         return NotImplementedError
 
     def surface_mass_density(self, R, z, c, M, force_no_2h=False, force_no_off=False):
         r"""
-        Surface mass density profile at radius R
+        Total surface mass density profile.
+
+        Computes the total surface mass density profile at radius R, 
+        including the contribution from 2-halo term and miscetering.
 
         Parameters
         ----------
-        R: float
-            Radius at which the profile is to be computed (units : Mpc)
-        z: float
-            Redshift at which the mean matter contant is
-            to be computed
+        R: np.ndarray
+            Radial points (units : Mpc / h)
+        z: np.ndarray
+            Redshift.
         c: float
-            Concentration parameter of the cluster
-        M: Float
-            Mass of the cluster (Msun)
+            Concentration.
+        M: np.ndarray
+            Mass (Msun).
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
         force_no_off: bool
@@ -272,9 +273,8 @@ class Profile:
 
         Returns
         -------
-        surface_mass_density: np.ndarray
-                              surface mass density profile (units : Msun / pc**2)
-
+        Sigma: np.ndarray
+            Surface mass density profile (units : h * Msun / pc**2)
         """
         if force_no_off == False and self.offcentering and self.rms_off >= 1.0e-4:
             R = np.asarray(R)
@@ -298,24 +298,30 @@ class Profile:
 
     def excess_surface_mass_density(self, R, z, c, M):
         r"""
-        Excess surface mass density profile at radius R
+        Total excess surface mass density profile.
+
+        Computes the total excess surface mass density profile at radius R,
+        including the contribution from 2-halo term and miscetering.
 
         Parameters
         ----------
-        R: float
-            Radius at which the profile is to be computed (units : Mpc)
-        z: float
-            Redshift at which the mean matter contant is
-            to be computed
+        R: np.ndarray
+            Radial points (units : Mpc / h)
+        z: np.ndarray
+            Redshift.
         c: float
-            Concentration parameter of the cluster
-        M: Float
-            Mass of the cluster (Msun)
+            Concentration.
+        M: np.ndarray
+            Mass (Msun).
+        force_no_2h: bool
+            if True, force the non-inclusion of the 2-halo term
+        force_no_off: bool
+            if True, force the non-inclusion of the off-centering
 
         Returns
         -------
-        excess_surface_mass_density: float or np.ndarray
-                                     excess surface density (units : Msun / pc**2)
+        DeltaSigma: np.ndarray
+            Excess surface mass density profile (units : h * Msun / pc**2)
         """
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
         rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
@@ -381,39 +387,35 @@ class Profile:
 
         Returns
         -------
-        mean_surface_mass_density_profile: np.ndarray
+        Sigma_mean: np.ndarray
             Centered one-halo mean surface mass density (units : h * Msun / pc**2)
         """
         return NotImplementedError
 
-    def surface_mass_density_2h(self, R, z, M=1e14):
+    def _mass_density_2h(self, is_excess, R, z, M):
         r"""
-        Surface 2-halo density profile at radius R, generalized to handle arrays of z and M.
+        Surface or excess surface 2-halo density profile.
+
+        Computes either the cosmological surface or excess surface
+        2-halo density profile at radius R.
 
         Parameters
         ----------
-        R: float
-            Radius at which the profile is to be computed (units : Mpc)
+        is_excess: bool
+            If True, compute the excess surface density.
+            Compute the surface density otherwise.
+        R: np.ndarray
+            Radial points (units : Mpc / h)
         z: np.ndarray
-            Redshift(s) at which the mean matter content is
-            to be computed. Can be an array.
+            Redshift.
         M: np.ndarray
-            Mass(es) of the cluster(s) (Msun), used only for the bias computation.
-            Can be an array.
+            Mass (Msun).
 
         Returns
         -------
-        surface_mass_density_2h: np.ndarray
-            2-halo surface mass density profile (units : Msun / pc**2),
-            computed for each z and M.
+        profile: np.ndarray
+            2-halo surface mass density profile (units : h * Msun / pc**2).
         """
-
-        # Ensure z and M are arrays for broadcasting
-        if type(z) is not np.ndarray:
-            z = np.array([z])
-        if type(M) is not np.ndarray:
-            M = np.array([M])
-
         # Define base quantities
         D_A = self.background.angular_diameter_distance(z)  # D_A should now be (Nz, 1)
         theta = R / D_A  # R is a scalar, so theta has shape (Nz, 1)
@@ -424,9 +426,10 @@ class Profile:
 
         # Bias calculation
         bias_z = self.halo_statistics.bias(z, M)
+        
+        # Compute P(k) interpolation and Sigma/DeltaSigma for each redshift z
+        profile = np.zeros((z.size, M.size))
 
-        # Compute P(k) interpolation and Sigma for each redshift z
-        Sigma = np.zeros((z.size, M.size))
         for i, z_val in enumerate(z):  # Loop over redshift values
             # Get P(k) for this redshift
             Pk_interp = interpolate.InterpolatedUnivariateSpline(
@@ -437,9 +440,15 @@ class Profile:
             )
 
             # Define the integrand for this redshift
-            def integrand(l):
-                kl = l / (1.0 + z_val) / D_A[i]
-                return j0(l * theta[i]) * l * Pk_interp(kl)
+            if is_excess:
+                def integrand(l):
+                    kl = l / (1.0 + z_val) / D_A[i]
+                    return j0(l * theta[i]) * l * Pk_interp(kl)
+            else:
+                def integrand(l):
+                    kl = l / (1.0 + z_val) / D_A[i]
+                    j2 = 2.0 / (l * theta[i]) * j1(l * theta[i]) - j0(l * theta[i])
+                    return j2 * l * Pk_interp(kl)
 
             # Compute rho_m for this redshift
             rho_m = (
@@ -448,15 +457,15 @@ class Profile:
                 / self.background.h**2.0
             )
 
-            # Compute Sigma for each mass M
-            Sigma_z = quad_vec(
+            # Compute Sigma/DeltaSigma for each mass M
+            profile_z = quad_vec(
                 integrand,
                 kl_min * (1.0 + z_val) * D_A[i],
                 kl_max * (1.0 + z_val) * D_A[i],
                 epsrel=1e-1,
             )[0]
 
-            Sigma_z *= (
+            profile_z *= (
                 1.0e-12
                 * rho_m
                 * bias_z[i]
@@ -464,89 +473,54 @@ class Profile:
             )
 
             # Store the result for this redshift
-            Sigma[i, :] = Sigma_z
+            profile[i, :] = profile_z
 
-        return Sigma  # Shape: (Nz, Nm)
+        return profile
 
-    def excess_surface_mass_density_2h(self, R, z, M=1e14):
+    def surface_mass_density_2h(self, R, z, M):
         r"""
-        Excess surface 2-halo density profile at radius R
+        Surface 2-halo density profile.
+
+        Computes the cosmological surface 2-halo density profile at radius R.
 
         Parameters
         ----------
         R: np.ndarray
-            Radius at which the profile is to be computed (units : Mpc)
-        z: float
-            Redshift at which the mean matter contant is
-            to be computed
-        M: Float
-            Mass of the cluster (Msun), used only for the bias computation
+            Radial points (units : Mpc / h)
+        z: np.ndarray
+            Redshift.
+        M: np.ndarray
+            Mass (Msun).
 
         Returns
         -------
-        excess_surface_mass_density_2h: np.ndarray
-                                 2-halo excess surface mass density profile (units : Msun / pc**2)
-
+        Sigma: np.ndarray
+            2-halo surface mass density profile (units : h * Msun / pc**2).
         """
-        # Ensure z and M are arrays for broadcasting
-        if type(z) is not np.ndarray:
-            z = np.array([z])
-        if type(M) is not np.ndarray:
-            M = np.array([M])
+        return self._mass_density_2h(False, R, z, M)
 
-        # Define base quantities
-        D_A = self.background.angular_diameter_distance(z)  # D_A should now be (Nz, 1)
-        theta = R / D_A  # R is a scalar, so theta has shape (Nz, 1)
+    def excess_surface_mass_density_2h(self, R, z, M):
+        r"""
+        Excess surface 2-halo density profile.
 
-        kl_min = 1.0e-4
-        kl_max = 1.0e2
-        kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
+        Computes the cosmological excess surface 2-halo
+        density profile at radius R.
 
-        # Bias calculation
-        bias_z = self.halo_statistics.bias(z, M)
+        Parameters
+        ----------
+        R: np.ndarray
+            Radial points (units : Mpc / h)
+        z: np.ndarray
+            Redshift.
+        M: np.ndarray
+            Mass (Msun).
 
-        # Compute P(k) interpolation and Sigma for each redshift z
-        DeltaSigma = np.zeros((z.size, M.size))
-        for i, z_val in enumerate(z):  # Loop over redshift values
-            # Get P(k) for this redshift
-            Pk_interp = interpolate.InterpolatedUnivariateSpline(
-                kl_array,
-                self.perturbations.matter_power_spectrum(
-                    z_val, kl_array, hubble_units=True, k_hunit=True
-                ),
-            )
-
-            # Define the integrand for this redshift
-            def integrand(l):
-                kl = l / (1.0 + z_val) / D_A[i]
-                j2 = 2.0 / (l * theta[i]) * j1(l * theta[i]) - j0(l * theta[i])
-                return j2 * l * Pk_interp(kl)
-
-            # Compute rho_m for this redshift
-            rho_m = (
-                self.background.Omega_m(z_val, nonu=False)
-                * self.background.rho_crit(z_val)
-                / self.background.h**2.0
-            )
-
-            # Compute Sigma for each mass M
-            DeltaSigma_z = quad_vec(
-                integrand,
-                kl_min * (1.0 + z_val) * D_A[i],
-                kl_max * (1.0 + z_val) * D_A[i],
-                epsrel=1e-1,
-            )[0]
-            DeltaSigma_z *= (
-                1.0e-12
-                * rho_m
-                * bias_z[i]
-                / (2.0 * np.pi * (1.0 + z_val) ** 3.0 * D_A[i] ** 2.0)
-            )
-
-            # Store the result for this redshift
-            DeltaSigma[i, :] = DeltaSigma_z
-
-        return DeltaSigma  # Shape: (Nz, Nm)
+        Returns
+        -------
+        DeltaSigma: np.ndarray
+            2-halo surface mass density profile (units : h * Msun / pc**2).
+        """
+        return self._mass_density_2h(True, R, z, M)
 
     def _f_term(self, x):
         r"""
@@ -646,7 +620,7 @@ class ProfileNFW(Profile):
 
         Sigma = 2.0 * rho_s * Rs * F * 1.0e-12
 
-        return Sigma
+        return Sigma / self.background.h
 
     def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
         Rs = RDelta / c
@@ -657,7 +631,7 @@ class ProfileNFW(Profile):
         m_nfw = np.log(1.0 + c) - c / (1.0 + c)  # Eq. 4 Oguri & Hamana 2011
         rho_s = Delta * c**3.0 / (3.0 * m_nfw)
 
-        return 4.0 * rho_s * Rs * (G / x**2.0) * 1.0e-12
+        return 4.0 * rho_s * Rs * (G / x**2.0) * 1.0e-12 / self.background.h
 
 
 class ProfileBMO(Profile):
@@ -767,7 +741,7 @@ class ProfileBMO(Profile):
         L = np.log(x / (np.sqrt(tau**2.0 + x**2.0) + tau))
 
         Sigma = 1e-12 * const * term1 * (term2 + term3 + term4 - term5 + term6 * L)
-        return Sigma
+        return Sigma / self.background.h
 
     def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
         Rs = RDelta / c
@@ -821,4 +795,4 @@ class ProfileBMO(Profile):
 
         M_proj = const * term1 * (term2 + term3 + (term5 + term6 * L) / term4)
 
-        return M_proj / (np.pi * R**2.0) * 1.0e-12
+        return M_proj / (np.pi * R**2.0) * 1.0e-12 / self.background.h

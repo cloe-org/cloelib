@@ -243,7 +243,7 @@ class CAMBLinearPerturbations:
             hubble_units=False, k_hunit=False)
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
-                              k_hunit=False, delta='delta_tot') -> np.ndarray:
+                              k_hunit=False, nonu=False) -> np.ndarray:
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -260,8 +260,8 @@ class CAMBLinearPerturbations:
         k_hunit: (Optional) bool
             Flag to specify if wavenumber in h units, defaults to False
 
-        delta: (Optional) str
-            Variable for which to compute the power spectrum
+        nonu: (Optional) str
+            Get power spectrum without neutrinos
 
         Returns
         -------
@@ -269,11 +269,12 @@ class CAMBLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
+        _delta = "delta_nonu" if nonu else "delta_tot"
         pk_values = camb.get_matter_power_interpolator(
             self.background.interface_args['CAMBparams'],
             nonlinear=False, extrap_kmax=self.kmax,
             hubble_units=hubble_units, k_hunit=k_hunit,
-            var1=delta, var2=delta).P(zs, ks)
+            var1=_delta, var2=_delta).P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -353,7 +354,7 @@ class CAMBNonLinearPerturbations:
 
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
-                              k_hunit=False, delta='delta_tot') -> np.ndarray:
+                              k_hunit=False, nonu=False) -> np.ndarray:
         r"""Computes the nonlinear matter power spectrum.
 
         Parameters
@@ -370,8 +371,8 @@ class CAMBNonLinearPerturbations:
         k_hunit: (Optional) bool
             Flag to specify if wavenumber in h units, defaults to False
 
-        delta: (Optional) str
-            Variable for which to compute the power spectrum
+        nonu: (Optional) str
+            Get power spectrum without neutrinos
 
         Returns
         -------
@@ -379,10 +380,11 @@ class CAMBNonLinearPerturbations:
             Nonlinear matter power spectrum at the specified scale
             and redshift
         """
+        _delta = "delta_nonu" if nonu else "delta_tot"
         pk_values = self.results.get_matter_power_interpolator(
             nonlinear=True, extrap_kmax=self.kmax,
             hubble_units=hubble_units, k_hunit=k_hunit,
-            var1=delta, var2=delta).P(zs, ks)
+            var1=_delta, var2=_delta).P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:

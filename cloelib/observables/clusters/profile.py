@@ -502,7 +502,7 @@ class Profile:
         Sigma: np.ndarray
             2-halo surface mass density profile (units : h * Msun / pc**2).
         """
-        return self._mass_density_2h(False, R, z, M)
+        return self._mass_density_2h(False, R, z, M, bias_z)
 
     def excess_surface_mass_density_2h(self, R, z, M, bias_z=None):
         r"""
@@ -527,7 +527,7 @@ class Profile:
         DeltaSigma: np.ndarray
             2-halo surface mass density profile (units : h * Msun / pc**2).
         """
-        return self._mass_density_2h(True, R, z, M)
+        return self._mass_density_2h(True, R, z, M, bias_z)
 
     def _f_term(self, x):
         r"""

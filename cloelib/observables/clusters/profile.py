@@ -204,7 +204,7 @@ class Profile:
         """
 
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
-        rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h
+        rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
         densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
@@ -290,7 +290,7 @@ class Profile:
                                      excess surface density (units : Msun / pc**2)
         """
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
-        rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h
+        rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
         densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
@@ -395,7 +395,7 @@ class Profile:
             rho_m = (
                 self.background.Omega_m(z_val, nonu=False)
                 * self.background.rho_crit(z_val)
-                / self.background.h
+                / self.background.h**2.0
             )
 
             # Compute Sigma for each mass M
@@ -476,7 +476,7 @@ class Profile:
             rho_m = (
                 self.background.Omega_m(z_val, nonu=False)
                 * self.background.rho_crit(z_val)
-                / self.background.h
+                / self.background.h**2.0
             )
 
             # Compute Sigma for each mass M

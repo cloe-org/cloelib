@@ -44,14 +44,10 @@ def test_cosmo():
 
     perturbations = CAMBLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
     assert_allclose(perturbations.matter_power_spectrum(0, 1), 80.527367)
-    assert_allclose(
-        perturbations.matter_power_spectrum(0, 1, delta="delta_nonu"), 81.748209
-    )
+    assert_allclose(perturbations.matter_power_spectrum(0, 1, nonu=True), 81.748209)
 
     perturbations_nl = CAMBNonLinearPerturbations(
         background, np.linspace(0.0, 2.0, 100)
     )
     assert_allclose(perturbations_nl.matter_power_spectrum(0, 1), 735.860906)
-    assert_allclose(
-        perturbations_nl.matter_power_spectrum(0, 1, delta="delta_nonu"), 747.017036
-    )
+    assert_allclose(perturbations_nl.matter_power_spectrum(0, 1, nonu=True), 747.017036)

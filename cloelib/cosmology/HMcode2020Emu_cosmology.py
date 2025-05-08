@@ -76,7 +76,7 @@ class HMemuLinearPerturbations:
 
         self.Pk_interp = pk_interp
 
-    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+    def matter_power_spectrum(self, zs, ks, nonu=False) -> np.ndarray:
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -87,6 +87,9 @@ class HMemuLinearPerturbations:
         zs: numpy.ndarray
             redshifts
 
+        nonu: (Optional) str
+            Get power spectrum without neutrinos
+
         Returns
         -------
         pk: numpy.ndarray
@@ -94,6 +97,8 @@ class HMemuLinearPerturbations:
             and redshift
 
         """
+        if nonu:
+            raise NotImplementedError("Option nonu=True not implemented for HMcode2020Emu.")
 
         return self.Pk_interp(zs, ks)
 
@@ -222,7 +227,7 @@ class HMemuNonLinearPerturbations:
         self.Pk_interp = pk_interp
 
 
-    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+    def matter_power_spectrum(self, zs, ks, nonu=False) -> np.ndarray:
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -233,6 +238,9 @@ class HMemuNonLinearPerturbations:
         zs: numpy.ndarray
             redshifts
 
+        nonu: (Optional) str
+            Get power spectrum without neutrinos
+
         Returns
         -------
         pk: numpy.ndarray
@@ -240,6 +248,8 @@ class HMemuNonLinearPerturbations:
             and redshift
 
         """
+        if nonu:
+            raise NotImplementedError("Option nonu=True not implemented for HMcode2020Emu.")
 
         return self.Pk_interp(zs, ks)
 

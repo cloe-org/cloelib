@@ -1,4 +1,13 @@
+import numpy as np
+from scipy.stats import skewnorm
+from scipy.integrate import simpson as simps
+from astropy import constants as ap_constants
+from scipy import interpolate
+from scipy.integrate import quad_vec
+from scipy.special import j0, j1
+
 from ...auxiliary import units
+from .halo_statistics import HaloStatistics
 
 
 class Profile:
@@ -60,7 +69,7 @@ class Profile:
 
         Parameters
         ----------
-        z: float
+        z: np.ndarray
                    Redshift at which to evaluate the critical density
         z_sources: float
                    Redshift of the galaxy sources
@@ -71,14 +80,14 @@ class Profile:
                      Critical surface mass density (unit : Msun/pc^2)
         """
 
-        light_speed = self.units.SPEED_OF_LIGHT * (units.km / units.s)
-        fact = light_speed**2.0 / (4.0 * np.pi * G)
-        fact = fact.to(units.Msun / units.pc).value
-        d_a_sources = self.background.angular_diameter_distance(z_sources) * 1.0e6
-        d_a_l = self.background.angular_diameter_distance(z) * 1.0e6
+        fact = (units.SPEED_OF_LIGHT / units.MPC_TO_KM) ** 2 / (
+            4 * np.pi * units.GRAVITATIONAL_CONSTANT
+        )  # Msun/Mpc
+        d_a_sources = self.background.angular_diameter_distance(z_sources)  # Mpc
+        d_a_l = self.background.angular_diameter_distance(z)  # Mpc
         d_m_l = (1.0 + z) * d_a_l
         d_m_sources = (1.0 + z_sources) * d_a_sources
-        d_h = self.units.SPEED_OF_LIGHT / (self.background.H0 * 1.0e-6)
+        d_h = units.SPEED_OF_LIGHT / 1e3 / self.background.H0  # Mpc
         d_a_lens_source = (
             1.0
             / (1.0 + z_sources)
@@ -97,7 +106,7 @@ class Profile:
         )
         sig_crit = fact * (d_a_sources / (d_a_l[:, np.newaxis] * d_a_lens_source))
 
-        return sig_crit / self.background.h  # Ms pc^{-2} h
+        return 1e12 * sig_crit / self.background.h  # Msun pc^{-2} h
 
     def n_zs_norM(self, z):
         r"""
@@ -165,7 +174,7 @@ class Profile:
         """
 
         z_s = np.linspace(z + 1.0e-5, self.zs_max, self.z_div + 1, axis=1)
-        sig_crit_m1 = self.nzs[zbin] * 1.0 / self.sigma_crit(z, z_s)
+        sig_crit_m1[:] = self.nzs[zbin] * 1.0 / self.sigma_crit(z, z_s[:])
 
         return self.nzsnorM[zbin] * simps(sig_crit_m1, x=z_s)  # pc^2 / Msun / h
 
@@ -219,7 +228,7 @@ class Profile:
 
         Parameters
         ----------
-        R: np.ndarray
+        R: float
             Radius at which the profile is to be computed (units : Mpc)
         z: float
             Redshift at which the mean matter contant is
@@ -265,7 +274,7 @@ class Profile:
 
         Parameters
         ----------
-        R: np.ndarray
+        R: float
             Radius at which the profile is to be computed (units : Mpc)
         z: float
             Redshift at which the mean matter contant is
@@ -288,7 +297,9 @@ class Profile:
         Rs = RDelta / c
         x = R / Rs
 
-        Sigma_mean = self._mean_surface_mass_density_profile(R, RDelta, c, Delta_crit, rho_c)
+        Sigma_mean = self._mean_surface_mass_density_profile(
+            R, RDelta, c, Delta_crit, rho_c
+        )
         Sigma = self._surface_mass_density_cen(R, z, c, M, force_no_2h=True)
         DeltaSigma = Sigma_mean - Sigma
 
@@ -463,7 +474,7 @@ class Profile:
 
             # Compute rho_m for this redshift
             rho_m = (
-                self.background.Omega_m(z_val, nuno=False)
+                self.background.Omega_m(z_val, nonu=False)
                 * self.background.rho_crit(z_val)
                 / self.background.h
             )
@@ -487,7 +498,7 @@ class Profile:
 
         return DeltaSigma  # Shape: (Nz, Nm)
 
-    def F_term(self, x):
+    def _f_term(self, x):
         r"""
         One-Halo profile F term.
 
@@ -504,7 +515,7 @@ class Profile:
         """
         return NotImplementedError
 
-    def G_term(self, x):
+    def _g_term(self, x):
         r"""
         One-Halo profile G term.
 
@@ -523,7 +534,7 @@ class Profile:
 
 
 class ProfileNFW(Profile):
-    def F_term(self, x):
+    def _f_term(self, x):
         r"""
         One-Halo NFW F term.
 
@@ -553,7 +564,7 @@ class ProfileNFW(Profile):
                 x**2.0 - 1.0
             )
 
-    def G_term(self, x):
+    def _g_term(self, x):
         r"""
         One-Halo NFW G term.
 
@@ -583,7 +594,7 @@ class ProfileNFW(Profile):
         Rs = RDelta / c
         x = R / Rs
 
-        F = np.vectorize(self.F_term)(x)
+        F = np.vectorize(self._f_term)(x)
         m_nfw = np.log(1.0 + c) - c / (1.0 + c)  # Eq. 4 Oguri & Hamana 2011
         rho_s = Delta_crit * c**3.0 / (3.0 * m_nfw) * rho_c
 
@@ -595,7 +606,7 @@ class ProfileNFW(Profile):
         Rs = RDelta / c
         x = R / Rs
 
-        G = np.vectorize(self.G_term)(x)
+        G = np.vectorize(self._g_term)(x)
 
         m_nfw = np.log(1.0 + c) - c / (1.0 + c)  # Eq. 4 Oguri & Hamana 2011
         rho_s = Delta_crit * c**3.0 / (3.0 * m_nfw) * rho_c
@@ -604,7 +615,7 @@ class ProfileNFW(Profile):
 
 
 class ProfileBMO(Profile):
-    def F_term(self, x):
+    def _f_term(self, x):
         r"""
         One-Halo BMO F term.
 
@@ -630,7 +641,7 @@ class ProfileBMO(Profile):
         if x > 1.0:
             return np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)
 
-    def G_term(self, x):
+    def _g_term(self, x):
         r"""
         One-Halo BMO G term.
 
@@ -650,11 +661,11 @@ class ProfileBMO(Profile):
         <https://ui.adsabs.harvard.edu/abs/2009JCAP...01..015B/abstract>`_.
         """
         if x < 1.0:
-            return (self.F_term(x) - 1.0) / (1.0 - x**2.0)
+            return (self._f_term(x) - 1.0) / (1.0 - x**2.0)
         if x == 1.0:
             return 1.0 / 3.0
         if x > 1.0:
-            return (1.0 - self.F_term(x)) / (x**2.0 - 1.0)
+            return (1.0 - self._f_term(x)) / (x**2.0 - 1.0)
 
     def _surface_mass_density_profile(self, R, RDelta, c, Delta_crit, rho_c):
         Rs = RDelta / c
@@ -690,8 +701,8 @@ class ProfileBMO(Profile):
 
         const = rho_s_bmo * Rs
 
-        G = np.vectorize(self.G_term)(x)
-        F = np.vectorize(self.F_term)(x)
+        G = np.vectorize(self._g_term)(x)
+        F = np.vectorize(self._f_term)(x)
 
         term1 = tau**4.0 / (tau**2.0 + 1.0) ** 3.0
         term2 = 2.0 * (tau**2.0 + 1.0) * G
@@ -747,10 +758,10 @@ class ProfileBMO(Profile):
         const = 2.0 * np.pi * rho_s_bmo * Rs**3.0
         term1 = tau**4.0 / (tau**2.0 + 1.0) ** 3.0
 
-        F = np.vectorize(self.F_term)(x)
+        F = np.vectorize(self._f_term)(x)
         term2 = 2.0 * (tau**2.0 + 1.0 + 4.0 * (x**2.0 - 1.0)) * F
 
-        G = np.vectorize(self.G_term)(x)
+        G = np.vectorize(self._g_term)(x)
         term3 = (
             np.pi * (3.0 * tau**2.0 - 1.0)
             + 2.0 * tau * (tau**2.0 - 3.0) * np.log(tau)

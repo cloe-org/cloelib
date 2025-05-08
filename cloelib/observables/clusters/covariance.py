@@ -1,3 +1,7 @@
+from cloelib.cosmology.cosmology import Perturbations
+import jax.numpy as np
+from scipy.special import eval_legendre, spherical_jn
+
 class HaloCovariance:
     def __init__(
         self,
@@ -5,8 +9,9 @@ class HaloCovariance:
     ):
         self.background = pertrurbations.background
 
+        
     def Kl_coeff(self, L):
-        r"""
+        """
         Coefficients of the spherical harmonics expansion of the angular part of the window function
 
         Parameters
@@ -31,10 +36,12 @@ class HaloCovariance:
             / (2.0 * np.pi * (1 - np.cos(theta)))
         )
         KL[0] = 1 / (2.0 * np.sqrt(np.pi))
+
         return KL
 
+    
     def cov_window(self, zbin, ztab, k, L, KL):
-        r"""
+        """
         Computes the window function between redshifts bins
 
         Parameters
@@ -56,8 +63,10 @@ class HaloCovariance:
                 W[i,j,k] where i and j are two redshift bin and k are the wavenumbers
         """
 
-        rvec = self.background.comoving_distance(ztab) * self.h  # Mpc  h^{-1}
+        rvec = self.background.comoving_distance(ztab) * self.h  # Mpc h^{-1}
+
         Vz = (rvec[-1] ** 3 - rvec[0] ** 3) / 3  # Mpc^3 h^{-3}
+
         kr = self.k[:, np.newaxis] * rvec
         self.rint[zbin] = (
             1
@@ -74,3 +83,5 @@ class HaloCovariance:
         return (4 * np.pi) * np.sum(
             self.rint[:, :] * self.rint[: (zbin + 1), :, :] * KL[:] ** 2, axis=-1
         )
+
+

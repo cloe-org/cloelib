@@ -1,16 +1,27 @@
 from cloelib.cosmology.cosmology import Perturbations
-import jax.numpy as np
+import numpy as np
 from scipy.special import eval_legendre, spherical_jn
+from scipy.integrate import simpson as simps
 
 class HaloCovariance:
     def __init__(
-        self,
-        pertrurbations: Perturbations,
-    ):
+            self,
+            pertrurbations: Perturbations,
+            area: float,
+            nbins_zob: int,
+            k: np.ndarray,
+            L: int
+):
         self.background = pertrurbations.background
 
+        self.area = area
+        self.k = k
+        self.L = L
         
-    def Kl_coeff(self, L):
+        self.rint = np.zeros((nbins_zob,len(self.k),L+1))
+        
+        
+    def Kl_coeff(self):
         """
         Coefficients of the spherical harmonics expansion of the angular part of the window function
 
@@ -25,8 +36,10 @@ class HaloCovariance:
             Coefficients up to L multipole
         """
 
-        ell = np.linspace(0, L, L + 1, dtype=int)
+        ell = np.linspace(0, self.L, self.L + 1, dtype=int)
+
         theta = np.arccos(1 - (self.area * (np.pi / 180.0) ** 2.0) / (2 * np.pi))
+
         KL = (
             np.sqrt(np.pi / (2.0 * ell + 1.0))
             * (
@@ -35,25 +48,22 @@ class HaloCovariance:
             )
             / (2.0 * np.pi * (1 - np.cos(theta)))
         )
+
         KL[0] = 1 / (2.0 * np.sqrt(np.pi))
 
         return KL
 
     
-    def cov_window(self, zbin, ztab, k, L, KL):
+    def cov_window(self, iz, zarr_iz, KL):
         """
         Computes the window function between redshifts bins
 
         Parameters
         ----------
-        zbins: int
-               Index of the redshift bins at which to evaluate the window function
-        ztab: numpy.ndarray
-              Array of redshifts (integration variable) between zbins[zbin] and zbins[zbin+1]
-        k: numpy.ndarray
-           Wavenumbers used to evaluate power spectrum in h Mpc^{-1}
-        L: int
-           Maximum number at which the coefficients are evaluated
+        iz: int
+            Index of the redshift bins at which to evaluate the window function
+        zarr_iz: numpy.ndarray
+             Array of redshifts (integration variable) between zbins[iz] and zbins[iz+1]
         KL: numpy.ndarray
             Spherical harmonic expansion coefficients
 
@@ -63,25 +73,26 @@ class HaloCovariance:
                 W[i,j,k] where i and j are two redshift bin and k are the wavenumbers
         """
 
-        rvec = self.background.comoving_distance(ztab) * self.h  # Mpc h^{-1}
+        rvec = self.background.comoving_distance(zarr_iz) * (self.background.H0/100.)  # Mpc h^{-1}
 
         Vz = (rvec[-1] ** 3 - rvec[0] ** 3) / 3  # Mpc^3 h^{-3}
 
         kr = self.k[:, np.newaxis] * rvec
-        self.rint[zbin] = (
+
+        self.rint[iz] = (
             1
             / Vz
             * simps(
                 rvec**2.0
                 * np.array(
-                    [spherical_jn(l, kr, derivative=False) for l in range(L + 1)]
+                    [spherical_jn(l, kr, derivative=False) for l in range(self.L + 1)]
                 ),
                 rvec,
                 axis=-1,
             ).T
         )
         return (4 * np.pi) * np.sum(
-            self.rint[:, :] * self.rint[: (zbin + 1), :, :] * KL[:] ** 2, axis=-1
+            self.rint[iz,:, :] * self.rint[: (iz + 1), :, :] * KL[:] ** 2, axis=-1
         )
 
 

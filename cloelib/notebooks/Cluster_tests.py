@@ -7,7 +7,7 @@ from cloelib.observables.clusters.halo_statistics import (
 from cloelib.observables.clusters.profile import ProfileNFW, ProfileBMO
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.clusters.clustering import HaloClustering
-
+from cloelib.observables.clusters.covariance import HaloCovariance
 
 import numpy as np
 
@@ -113,6 +113,19 @@ def test_clustering(CL):
     CL.photoz_rsd_correction(z_test, sigma_zob)
 
 
+def test_count_covariance(CC):
+
+
+    print("    Covariance coefficients")
+    KL = CC.Kl_coeff()
+
+
+    iz = 1
+    zarr_iz = np.linspace(zbins[iz],zbins[iz+1],31)
+    print("    Covariance window")
+    CC.cov_window(iz, zarr_iz, KL)
+
+    
 if __name__ == "__main__":
     # Cosmology parameters
     print("# Cosmology parameters")
@@ -194,3 +207,17 @@ if __name__ == "__main__":
     nonu = True
     CL = HaloClustering(perturbations, perturbations_fid, nonu, k_div, k_min, k_max)
     test_clustering(CL)
+
+    # counts covariance
+    print("# counts covariance")
+    
+    area = 15000
+    nbins_z = 10
+    L = 20
+
+    zbins = np.linspace(0,2,nbins_z+1)
+    k_test = np.geomspace(k_min,k_max,k_div)
+    
+    CC = HaloCovariance(perturbations,area,nbins_z,k_test,L)
+
+    test_count_covariance(CC)

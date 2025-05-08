@@ -97,12 +97,14 @@ class HaloClustering:
 
         """
 
+        # units don't matter here, they cancel out
+        
         z[z==0] = 1e-5
         
         # isotropic volume distance
         Dv = (
             (1 + z) ** 2
-            * self.background.angular_diameter_distance(z) ** 2
+            * self.background.angular_diameter_distance(z) ** 2 
             * units.SPEED_OF_LIGHT
             * z
             / self.background.hubble_parameter(z)
@@ -213,7 +215,7 @@ class HaloClustering:
 
                 
         ks = self.k * (
-            sigma_zob * (units.SPEED_OF_LIGHT *1e-3) / self.background_fid.hubble_parameter(z)
+            sigma_zob * (units.SPEED_OF_LIGHT *1e-3) / (self.background_fid.hubble_parameter(z) * self.background.H0/100.)
         ).reshape(len(z), 1)
         
         erf_ks = erf(ks)

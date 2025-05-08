@@ -79,7 +79,6 @@ class Profile:
         sigma_crit : float
                      Critical surface mass density (unit : Msun/pc^2)
         """
-
         fact = (units.SPEED_OF_LIGHT / 1.e3 / units.MPC_TO_KM) ** 2.0 / (
             4.0 * np.pi * units.GRAVITATIONAL_CONSTANT
         )  # Msun/Mpc
@@ -106,7 +105,7 @@ class Profile:
         )
         sig_crit = fact * (d_a_sources / (d_a_l[:, np.newaxis] * d_a_lens_source))
 
-        return 1e12 * sig_crit / self.background.h  # Msun pc^{-2} h
+        return 1e-12 * sig_crit / self.background.h  # Msun pc^{-2} h
 
     def n_zs_norM(self, z):
         r"""

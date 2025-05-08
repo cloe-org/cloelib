@@ -427,8 +427,10 @@ class Profile:
             2-halo surface mass density profile (units : h * Msun / pc**2).
         """
         # Define base quantities
-        D_A = self.background.angular_diameter_distance(z[:, np.newaxis])
-        theta = R[np.newaxis, :][np.newaxis, :, :] / D_A[:, :, np.newaxis]
+        D_A = self.background.angular_diameter_distance(
+            z
+        )[:, np.newaxis][:, :, np.newaxis]
+        theta = R[np.newaxis, :][np.newaxis, :, :] / D_A
         rho_m = (
             self.background.Omega_m(z[:, np.newaxis], nonu=False)
             * self.background.rho_crit(z[:, np.newaxis])
@@ -441,7 +443,7 @@ class Profile:
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
         if len(z) == 1:
-            z_for_interp = np.array([z[0], z[0] + 0.05])
+            z_for_interp = np.linspace(z * 0.9, z * 1.1, 10)
         else:
             z_for_interp = z
 
@@ -450,7 +452,7 @@ class Profile:
             self.perturbations.matter_power_spectrum(
                 z_for_interp[:, np.newaxis], kl_array,
                 hubble_units=True, k_hunit=True,
-                self.halo_statistics.nonu
+                nonu=self.halo_statistics.nonu
             )
         )
 
@@ -461,17 +463,17 @@ class Profile:
         # Define the integrand
         if is_excess:
             def integrand(kl):
-                ll = (kl * (1.0 + z[:, np.newaxis]) * D_A)[:, :, np.newaxis]
+                ll = (kl * (1.0 + z[:, np.newaxis]) * D_A)
                 j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
                 return j2 * ll *\
                     Pk_interp(z[:, np.newaxis], kl)[:, :, np.newaxis] *\
-                    ((1.0 + z[:, np.newaxis]) * D_A)[:, :, np.newaxis]
+                    ((1.0 + z[:, np.newaxis]) * D_A)
         else:
             def integrand(kl):
-                ll = (kl * (1.0 + z[:, np.newaxis]) * D_A)[:, :, np.newaxis]
+                ll = (kl * (1.0 + z[:, np.newaxis]) * D_A)
                 return j0(ll * theta) * ll *\
                     Pk_interp(z[:, np.newaxis], kl)[:, :, np.newaxis] *\
-                    ((1.0 + z[:, np.newaxis]) * D_A)[:, :, np.newaxis]
+                    ((1.0 + z[:, np.newaxis]) * D_A)
 
         # Integrate
         profile = quad_vec(integrand, kl_min, kl_max, epsrel=1e-1)[0]
@@ -479,7 +481,7 @@ class Profile:
             (
                 2.0 * np.pi *
                 (1.0 + z[:, np.newaxis][:, :, np.newaxis])**3.0 *
-                D_A[:, :, np.newaxis]**2.0
+                D_A**2.0
             )
         return profile / self.background.h
 

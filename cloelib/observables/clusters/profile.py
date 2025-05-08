@@ -475,7 +475,7 @@ class Profile:
             # Store the result for this redshift
             profile[i, :] = profile_z
 
-        return profile
+        return profile / self.background.h
 
     def surface_mass_density_2h(self, R, z, M):
         r"""
@@ -524,7 +524,9 @@ class Profile:
 
     def _f_term(self, x):
         r"""
-        One-Halo profile F term.
+        One-halo centered profile F term.
+
+        Computes the one-halo centered profile F term.
 
         Parameters
         ----------
@@ -535,13 +537,14 @@ class Profile:
         -------
         float
             One-Halo profile F term.
-
         """
         return NotImplementedError
 
     def _g_term(self, x):
         r"""
-        One-Halo profile G term.
+        One-halo centered profile G term.
+
+        Computes the one-halo centered profile G term.
 
         Parameters
         ----------
@@ -552,7 +555,6 @@ class Profile:
         -------
         float
             One-Halo profile G term.
-
         """
         return NotImplementedError
 
@@ -560,7 +562,9 @@ class Profile:
 class ProfileNFW(Profile):
     def _f_term(self, x):
         r"""
-        One-Halo NFW F term.
+        NFW profile F term.
+
+        Computes the NFW profile F term.
 
         Parameters
         ----------
@@ -570,7 +574,7 @@ class ProfileNFW(Profile):
         Returns
         -------
         F_NFW: float
-                One-Halo NFW F term.
+            One-Halo NFW F term.
 
         Notes
         -----
@@ -586,7 +590,9 @@ class ProfileNFW(Profile):
 
     def _g_term(self, x):
         r"""
-        One-Halo NFW G term.
+        NFW profile G term.
+
+        Computes the NFW profile G term.
 
         Parameters
         ----------
@@ -595,8 +601,8 @@ class ProfileNFW(Profile):
 
         Returns
         -------
-        F_NFW: float
-                One-Halo NFW G term.
+        G_NFW: float
+            One-Halo NFW G term.
 
         Notes
         -----
@@ -611,6 +617,27 @@ class ProfileNFW(Profile):
             return np.log(x / 2.0) + np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)
 
     def _surface_mass_density_profile(self, R, RDelta, c, Delta):
+        r"""
+        NFW surface mass density profile.
+
+        Computes the NFW surface mass density profile at radius R.
+
+        Parameters
+        ----------
+        R: np.ndarray
+            Radial points (units : Mpc / h)
+        RDelta: np.ndarray
+            Overdensity radius (units : Mpc / h).
+        c: float
+            Concentration.
+        Delta: np.ndarray
+            Critical overdensity.
+
+        Returns
+        -------
+        Sigma: np.ndarray
+            NFW surface mass density profile (units : h * Msun / pc**2)
+        """
         Rs = RDelta / c
         x = R / Rs
 
@@ -623,6 +650,28 @@ class ProfileNFW(Profile):
         return Sigma / self.background.h
 
     def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
+        r"""
+        NFW mean surface mass density profile.
+
+        Computes the NFW mean surface mass density
+        within a radius R.
+
+        Parameters
+        ----------
+        R: np.ndarray
+            Radial points (units : Mpc / h)
+        RDelta: np.ndarray
+            Overdensity radius (units : Mpc / h).
+        c: float
+            Concentration.
+        Delta: np.ndarray
+            Critical overdensity.
+
+        Returns
+        -------
+        Sigma_mean: np.ndarray
+            NFW mean surface mass density (units : h * Msun / pc**2)
+        """
         Rs = RDelta / c
         x = R / Rs
 
@@ -637,7 +686,9 @@ class ProfileNFW(Profile):
 class ProfileBMO(Profile):
     def _f_term(self, x):
         r"""
-        One-Halo BMO F term.
+        BMO profile F term.
+
+        Computes the BMO profile F term.
 
         Parameters
         ----------
@@ -647,7 +698,7 @@ class ProfileBMO(Profile):
         Returns
         -------
         F_BMO : float
-                One-Halo BMO F term.
+            One-Halo BMO F term.
 
         Notes
         -----
@@ -663,7 +714,9 @@ class ProfileBMO(Profile):
 
     def _g_term(self, x):
         r"""
-        One-Halo BMO G term.
+        BMO profile G term.
+
+        Computes the BMO profile G term.
 
         Parameters
         ----------
@@ -688,6 +741,27 @@ class ProfileBMO(Profile):
             return (1.0 - self._f_term(x)) / (x**2.0 - 1.0)
 
     def _surface_mass_density_profile(self, R, RDelta, c, Delta):
+        r"""
+        BMO surface mass density profile.
+
+        Computes the BMO surface mass density profile at radius R.
+
+        Parameters
+        ----------
+        R: np.ndarray
+            Radial points (units : Mpc / h)
+        RDelta: np.ndarray
+            Overdensity radius (units : Mpc / h).
+        c: float
+            Concentration.
+        Delta: np.ndarray
+            Critical overdensity.
+
+        Returns
+        -------
+        Sigma: np.ndarray
+            BMO surface mass density profile (units : h * Msun / pc**2)
+        """
         Rs = RDelta / c
         x = R / Rs
 
@@ -744,6 +818,28 @@ class ProfileBMO(Profile):
         return Sigma / self.background.h
 
     def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
+        r"""
+        BMO mean surface mass density profile.
+
+        Computes the BMO mean surface mass density
+        within a radius R.
+
+        Parameters
+        ----------
+        R: np.ndarray
+            Radial points (units : Mpc / h)
+        RDelta: np.ndarray
+            Overdensity radius (units : Mpc / h).
+        c: float
+            Concentration.
+        Delta: np.ndarray
+            Critical overdensity.
+
+        Returns
+        -------
+        Sigma_mean: np.ndarray
+            BMO mean surface mass density (units : h * Msun / pc**2)
+        """
         Rs = RDelta / c
         x = R / Rs
 

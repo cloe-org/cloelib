@@ -140,7 +140,7 @@ class CLASSBackground:
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: np.ndarray, nonu=False) -> np.ndarray:
         """
         Returns the matter density as a function of redshift.
 
@@ -150,6 +150,8 @@ class CLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
+        if nonu:
+            raise NotImplementedError("Option nonu=True not implemented for CLASS.")
         return np.array([self.results.Om_m(z) for z in zs])
     
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:

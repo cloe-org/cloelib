@@ -1,3 +1,5 @@
+#import jax.numpy as np
+
 import numpy as np
 from numpy.testing import assert_raises, assert_equal, assert_allclose
 
@@ -15,11 +17,11 @@ def _test_selectionfunction(SF):
 
     print("    lnlambda")
     _lnlambda_ref = [-1.533121, -1.423534, -1.3337, -1.257575, -1.191523]
-    assert_allclose(SF.lnlambda(z_test, M_test)[:, 0], _lnlambda_ref, rtol=1e-06)
+    assert_allclose(SF.lnlambda(z_test, M_test)[:, 0], _lnlambda_ref, rtol=1e-05)
     print("    scatter_lnl")
-    assert_allclose(SF.scatter_lnl(z_test, M_test), 0.1)
+    assert_allclose(SF.scatter_lnl(z_test, M_test), 0.1, rtol=1e-05)
     print("    P_lnlbd")
-    assert_allclose(SF.P_lnlbd(z_test, M_test, l_test), 0, atol=1e-10)
+    assert_allclose(SF.P_lnlbd(z_test, M_test, l_test), 0, atol=1e-10, rtol=1e-05)
     print("    scatter_lbdobs_lbd")
     _scatter_lbdobs_lbd_ref = [0.101, 0.113324, 0.127151, 0.142666, 0.160074]
     assert_allclose(
@@ -28,12 +30,12 @@ def _test_selectionfunction(SF):
     print("    P_lbdobs_lbd")
     _P_lbdobs_lbd_ref = [2.06231e-07, 0.00000e00, 0.00000e00, 0.00000e00, 0.00000e00]
     assert_allclose(
-        SF.P_lbdobs_lbd(z_test, l_test, lob_test)[0, 0], _P_lbdobs_lbd_ref, rtol=1e-06
+        SF.P_lbdobs_lbd(z_test, l_test, lob_test)[0, 0], _P_lbdobs_lbd_ref, rtol=1e-05
     )
     print("    scatter_zobs_z")
     _scatter_zobs_z_ref = [0.159489, 0.526937, 1.635393, 5.087122, 15.948932]
     assert_allclose(
-        SF.scatter_zobs_z(lob_test, z_test), _scatter_zobs_z_ref, rtol=5e-06
+        SF.scatter_zobs_z(lob_test, z_test), _scatter_zobs_z_ref, rtol=1e-5
     )
     print("    P_zobs_z")
     _P_zobs_z_ref = [

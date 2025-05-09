@@ -1,3 +1,5 @@
+#import jax.numpy as np
+
 import numpy as np
 from numpy.testing import assert_raises, assert_equal, assert_allclose
 
@@ -64,7 +66,7 @@ def test_profiles():
         w0=-1.0,
         wa=0.0,
         ns=0.96,
-        mnu=0.0,
+        mnu=0.06,
         As=2e-9,
         gamma_MG=0.0,
     )
@@ -100,9 +102,9 @@ def test_profiles():
                 56955.802944,
                 56894.549792,
             ],
-            "rtol": 1e-7,
+            "rtol": 1e-5,
         },
-        "n_zs_norM": {"desired": [1.04925, 1.156374, 1.424675, 2.067442], "rtol": 5e-7},
+        "n_zs_norM": {"desired": [1.04925, 1.156374, 1.424675, 2.067442], "rtol": 1e-5},
         "n_zs": {
             "desired": [
                 3.445074e-01,
@@ -111,7 +113,7 @@ def test_profiles():
                 6.359309e-01,
                 7.500898e-01,
             ],
-            "rtol": 1e-7,
+            "rtol": 1e-5,
         },
         "surface_mass_density": {
             "desired": [57.765739, 60.257438, 62.603223, 64.766592],

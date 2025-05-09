@@ -1,4 +1,6 @@
+#import jax.numpy as np
 import numpy as np
+
 from numpy.testing import assert_raises, assert_equal, assert_allclose
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
@@ -20,7 +22,7 @@ def test_count_covariance():
         w0=-1.0,
         wa=0.0,
         ns=0.96,
-        mnu=0.0,
+        mnu=0.06,
         As=2e-9,
         gamma_MG=0.0,
     )

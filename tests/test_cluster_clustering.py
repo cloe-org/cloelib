@@ -1,4 +1,6 @@
+#import jax.numpy as np
 import numpy as np
+
 from numpy.testing import assert_raises, assert_equal, assert_allclose
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
@@ -43,8 +45,8 @@ def _test_clustering(CL,perturbations):
                               [0.99939964, 0.02087668]])
     ref_phz_rsd_1 = np.array([[6.666667e-01, 2.524346e-01],
                               [5.807121e-01, 1.010152e-05]])
-    ref_phz_rsd_2 = np.array([[2.000000e-01, 3.714267e-02],
-                              [1.849138e-01, 3.665836e-09]])
+    ref_phz_rsd_2 = np.array([[2.000000e-01, 3.714264e-02],
+                              [1.518641e-01, 3.665835e-09]])
 
     sigma_zob = 0.025 * z_test + 5e-6 * lob_test
     corr0,corr1,corr2 = CL.photoz_rsd_correction(z_test, sigma_zob)

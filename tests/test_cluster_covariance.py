@@ -5,17 +5,6 @@ from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbat
 from cloelib.observables.clusters.covariance import HaloCovariance
 
 
-def _test_count_covariance(CC):
-    print("    Covariance coefficients")
-    KL = CC.Kl_coeff()
-    assert_allclose(KL, XXX)
-
-    iz = 1
-    zarr_iz = np.linspace(zbins[iz], zbins[iz + 1], 31)
-    print("    Covariance window")
-    assert_allclose(CC.cov_window(iz, zarr_iz, KL), XXX)
-
-
 def test_count_covariance():
     # Cosmology parameters
     print("# Cosmology parameters")
@@ -46,9 +35,24 @@ def test_count_covariance():
     nbins_z = 10
     L = 20
 
+    k_min = 1e-4
+    k_max = 2e0
+    k_div = 300
+
     zbins = np.linspace(0, 2, nbins_z + 1)
     k_test = np.geomspace(k_min, k_max, k_div)
 
     CC = HaloCovariance(perturbations, area, nbins_z, k_test, L)
 
-    _test_count_covariance(CC)
+    print("    Covariance coefficients")
+    KL = CC.Kl_coeff()
+    # All validation values have to be updated with extarnal values
+    assert_allclose(
+        KL[:5], [0.282095, 0.310942, 0.1095, -0.074565, -0.091053], rtol=5e-6
+    )
+
+    print("    Covariance window")
+    iz = 0
+    zarr_iz = np.linspace(zbins[iz], zbins[iz + 1], 31)
+    # All validation values have to be updated with extarnal values
+    assert_allclose(CC.cov_window(iz, zarr_iz, KL)[0,:5], np.array([0.99959593, 0.99956826, 0.9995387,  0.99950711, 0.99947336]),rtol=1e-6)

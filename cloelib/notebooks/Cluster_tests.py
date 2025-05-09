@@ -68,6 +68,7 @@ def test_profiles(profile_nfw, profile_bmo):
     R_test = 1
     z_test = np.linspace(0.01, 0.5, 20)
     M_test = 5e14
+    M_test_arr = np.array([5e14])
     c_test = 4.0
     z_sources_test = np.linspace(0.6, 1, 21)
     zbin_test = 1
@@ -85,11 +86,11 @@ def test_profiles(profile_nfw, profile_bmo):
             R_test, z_test, c_test, M_test, force_no_2h=False, force_no_off=False
         )
         print("    excess_surface_mass_density")
-        _prof.excess_surface_mass_density(R_test, z_test, c_test, M_test)
+        _prof.excess_surface_mass_density(R_test, z_test, c_test, M_test_arr)
         print("    surface_mass_density_2h")
-        _prof.surface_mass_density_2h(R_test, z_test, M_test)
+        _prof.surface_mass_density_2h(R_test, z_test, M_test_arr)
         print("    excess_surface_mass_density_2h")
-        _prof.excess_surface_mass_density_2h(R_test, z_test, M_test)
+        _prof.excess_surface_mass_density_2h(R_test, z_test, M_test_arr)
 
 
 def test_clustering(CL):

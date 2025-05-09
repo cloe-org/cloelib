@@ -495,6 +495,8 @@ class HaloStatisticsCastro(HaloStatistics):
         -------
         If the mass array has less than 4 entries, this causes problem with the derivative
         """
+        if not hasattr(M, "__len__"):
+            M = [M]
         M = np.asarray(M)
         lenM_orig = M.size
         if lenM_orig < 4:

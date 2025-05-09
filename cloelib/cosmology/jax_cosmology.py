@@ -460,7 +460,7 @@ class JAXLinearPerturbations:
         y = simps(int_sigma, np.log10(kmin), np.log10(kmax), N = 256)
         return 1.0 / (2.0 * np.pi**2.0) * y
 
-    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False):
+    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False, nonu=False):
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -471,6 +471,9 @@ class JAXLinearPerturbations:
         k: array_like
             Wave number in h Mpc^{-1}
 
+        nonu: (Optional) str
+            Get power spectrum without neutrinos
+
         Returns
         -------
         pk: array_like
@@ -478,6 +481,9 @@ class JAXLinearPerturbations:
             and scale factor.
 
         """
+        if nonu:
+            raise NotImplementedError("Option nonu=True not implemented for HMcode2020Emu.")
+
         h = self.background.h
 
         def k_units_case(k):
@@ -658,11 +664,13 @@ class JAXNonLinearPerturbations(Perturbations):
         pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
         return pk_nl.squeeze()
 
-    def matter_power_spectrum(self, zs, ks, hubble_units=False, k_hunit=False):
+    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False, nonu=False):
         """Computes the non-linear matter power spectrum.
 
         This function is just a wrapper over several nonlinear power spectra.
         """
+        if nonu:
+            raise NotImplementedError("Option nonu=True not implemented for HMcode2020Emu.")
         return jax.vmap(self.halofit, in_axes = (0, None, None, None))(zs, ks, hubble_units, k_hunit)
 
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):

@@ -56,7 +56,6 @@ class HaloStatistics:
 
         self.nonu = nonu
         self.k = np.geomspace(k_min, k_max, k_div)
-        self._camb_delta = "delta_nonu" if nonu else "delta_tot"
 
         # internal value of sigma8
         self.__sigma8 = None
@@ -222,7 +221,7 @@ class HaloStatistics:
                 * simps(
                     (k**2.0).reshape(1, 1, len(k))
                     * self.perturbations.matter_power_spectrum(
-                        z, k, hubble_units=True, k_hunit=True, delta=self._camb_delta
+                        z, k, hubble_units=True, k_hunit=True, nonu=self.nonu
                     ).reshape(len(z), 1, len(k))
                     * (W**2.0).reshape(1, len(R), len(k)),
                     k,
@@ -300,7 +299,7 @@ class HaloStatistics:
         dsigma2_dR = np.pi**-2 * simps(
             k.reshape(1, 1, len(k)) ** 3
             * self.perturbations.matter_power_spectrum(
-                z, k, hubble_units=True, k_hunit=True, delta=self._camb_delta
+                z, k, hubble_units=True, k_hunit=True, nonu=self.nonu
             ).reshape(len(z), 1, len(k))
             * W.reshape(1, len(R), len(k))
             * dWdx.reshape(1, len(R), len(k)),
@@ -496,6 +495,8 @@ class HaloStatisticsCastro(HaloStatistics):
         -------
         If the mass array has less than 4 entries, this causes problem with the derivative
         """
+        if not hasattr(M, "__len__"):
+            M = [M]
         M = np.asarray(M)
         lenM_orig = M.size
         if lenM_orig < 4:

@@ -96,11 +96,11 @@ def test_profiles():
         # All validation values have to be updated with extarnal values
         "sigma_crit": {
             "desired": [
-                57267.891792,
-                57133.08175,
-                57032.977397,
-                56955.802944,
-                56894.549792,
+                57269.106048,
+                57134.290198,
+                57034.179918,
+                56956.999411,
+                56895.740123
             ],
             "rtol": 1e-5,
         },
@@ -116,19 +116,19 @@ def test_profiles():
             "rtol": 1e-5,
         },
         "surface_mass_density": {
-            "desired": [57.765739, 60.257438, 62.603223, 64.766592],
+            "desired": [57.782346, 60.278322, 62.62685 , 64.791899],
             "rtol": 1e-5,
         },
         "excess_surface_mass_density": {
-            "desired": [85.340935,  94.234199, 103.387105, 112.58797],
+            "desired": [85.397604,  94.3122  , 103.483482, 112.700292],
             "rtol": 1e-5,
         },
         "surface_mass_density_2h": {
-            "desired": [13.277136, 16.798192, 20.602275, 24.667479],
+            "desired": [13.272828, 16.800602, 20.613664, 24.68966],
             "rtol": 1e-5,
         },
         "excess_surface_mass_density_2h": {
-            "desired": [1.521806, 2.127219, 2.845102, 3.678177],
+            "desired": [1.519691, 2.125295, 2.843744, 3.677761],
             "rtol": 1e-5,
         },
     }
@@ -139,11 +139,11 @@ def test_profiles():
         # All validation values have to be updated with extarnal values
         {
             "surface_mass_density": {
-                "desired": [49.749838, 50.306213, 50.479487, 50.281184],
+                "desired": [49.754672, 50.309348, 50.479286, 50.276593],
                 "rtol": 1e-5,
             },
             "excess_surface_mass_density": {
-                "desired": [90.076335,  99.176673, 108.440987, 117.63397],
+                "desired": [90.134602,  99.25608 , 108.537932, 117.745383],
                 "rtol": 1e-5,
             },
         }

@@ -219,6 +219,13 @@ class JAXBackground:
         OmDE = 1. - self.Omega_m0 - self.Omega_k0
         return OmDE * np.exp(self.f_de(a)) / self.Esqr(a)
 
+    @property
+    def rdrag(self) -> float:
+        """
+        Sound horizon radius at last scattering.
+        """
+        raise NotImplementedError("rdrag not implemented for jax yet.")
+
 class JAXLinearPerturbations:
     def __init__(self, background: Background, redshifts: np.ndarray) -> None:
         """

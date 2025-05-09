@@ -164,6 +164,13 @@ class CLASSBackground:
         """
         return np.array([self.results.Om_b(z) for z in zs])
 
+    @property
+    def rdrag(self) -> float:
+        """
+        Sound horizon radius at last scattering.
+        """
+        raise NotImplementedError("rdrag not implemented for CLASS yet.")
+
 class CLASSLinearPerturbations:
     def __init__(self, background : Background, redshifts: np.ndarray):
         r"""

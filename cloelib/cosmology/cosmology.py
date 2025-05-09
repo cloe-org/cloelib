@@ -152,6 +152,7 @@ class Background(Protocol):
         """
         ...
 
+    @property
     def rdrag(self) -> float:
         """
         Sound horizon radius at last scattering

@@ -210,17 +210,16 @@ class Profile:
             Centered surface mass density profile (units : h * Msun / pc**2).
             Shape: (len(z), len(M), len(R)).
         """
-        Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
+        Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))[:, np.newaxis]
         rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
         densityThreshold = Delta_crit * rho_c
 
-        RDelta = (
-            (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
-        )[:, :, np.newaxis]
+        RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
 
         Sigma = self._surface_mass_density_profile(
             R[np.newaxis, np.newaxis, :],
-            RDelta, c,
+            RDelta[:, :, np.newaxis],
+            c,
             densityThreshold[:, :, np.newaxis]
         )
 
@@ -294,7 +293,6 @@ class Profile:
             Shape: (len(z), len(M), len(R)).
         """
         if force_no_off == False and self.offcentering and self.rms_off >= 1.0e-4:
-            R = np.asarray(R)
             Sigma_off = np.zeros_like(R)
 
             ir.Sigma_off(
@@ -341,7 +339,7 @@ class Profile:
             Excess surface mass density profile (units : h * Msun / pc**2).
             Shape: (len(z), len(M), len(R)).
         """
-        Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
+        Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))[:, np.newaxis]
         rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
         densityThreshold = Delta_crit * rho_c
 
@@ -351,7 +349,8 @@ class Profile:
 
         Sigma_mean = self._mean_surface_mass_density_profile(
             R[np.newaxis, np.newaxis, :],
-            RDelta, c,
+            RDelta[:, :, np.newaxis],
+            c,
             densityThreshold[:, :, np.newaxis]
         )
         Sigma = self._surface_mass_density_cen(R, z, c, M, force_no_2h=True)

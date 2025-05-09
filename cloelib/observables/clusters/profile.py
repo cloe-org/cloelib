@@ -200,7 +200,7 @@ class Profile:
         c: float
             Concentration.
         M: np.ndarray
-            Mass (Msun).
+            Mass (Msun / h).
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
 
@@ -230,9 +230,13 @@ class Profile:
             Sigma_2h = self.surface_mass_density_2h(R, z, M)
             Sigma = np.maximum(Sigma, Sigma_2h)
 
-        assert profile.shape == (
-            len(z.squeeze()), len(M.squeeze()), len(R.squeeze())
-        ), f"Expected shape {(len(z.squeeze()), len(M.squeeze()), len(R.squeeze()))}, got {profile.shape}"
+        expected_shape = (
+            len(np.atleast_1d(z.squeeze())), 
+            len(np.atleast_1d(M.squeeze())), 
+            len(np.atleast_1d(R.squeeze()))
+        )
+        assert Sigma.shape == expected_shape, \
+            f"Expected shape {expected_shape}, got {Sigma.shape}"
 
         return Sigma
 
@@ -277,7 +281,7 @@ class Profile:
         c: float
             Concentration.
         M: np.ndarray
-            Mass (Msun).
+            Mass (Msun / h).
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
         force_no_off: bool
@@ -325,7 +329,7 @@ class Profile:
         c: float
             Concentration.
         M: np.ndarray
-            Mass (Msun).
+            Mass (Msun / h).
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
         force_no_off: bool
@@ -426,7 +430,7 @@ class Profile:
         z: np.ndarray
             Redshift.
         M: np.ndarray
-            Mass (Msun).
+            Mass (Msun / h).
         bias_z: np.ndarray (optional)
             Halo bias. If None, it is computed internally.
 
@@ -441,16 +445,20 @@ class Profile:
         M = np.asarray(M)[np.newaxis, :, np.newaxis]  # shape (1, nM, 1)
         R = np.asarray(R)[np.newaxis, np.newaxis, :]  # shape (1, 1, nR)
 
+        # Squeeze z and M
+        z_squeeze = np.atleast_1d(z.squeeze())
+        M_squeeze = np.atleast_1d(M.squeeze())
+
         # Calculate base quantities
         D_A = self.background.angular_diameter_distance(
-            z.squeeze()
+            z_squeeze
         )[:, np.newaxis, np.newaxis]
 
         theta = R / D_A
 
         rho_m = (
-            self.background.Omega_m(z.squeeze(), nonu=False)
-            * self.background.rho_crit(z.squeeze())
+            self.background.Omega_m(z_squeeze, nonu=False)
+            * self.background.rho_crit(z_squeeze)
             / self.background.h**2
         )[:, np.newaxis, np.newaxis]
 
@@ -458,10 +466,10 @@ class Profile:
         kl_min, kl_max = 1e-4, 1e2
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
-        if len(z.squeeze()) < 10:
+        if len(z_squeeze) < 10:
             z_for_interp = np.linspace(z.min()*0.9, z.max()*1.1, 10)
         else:
-            z_for_interp = z.squeeze()
+            z_for_interp = z_squeeze
 
         Pk_interp = interpolate.RectBivariateSpline(
             z_for_interp, kl_array,
@@ -475,7 +483,7 @@ class Profile:
         # Ensure bias has shape (nz, nM, 1)
         if bias_z is None:
             bias_z = self.halo_statistics.bias(
-                z.squeeze(), M.squeeze()
+                z_squeeze, M_squeeze
             )[:, :, np.newaxis]
         else:
             bias_z = np.asarray(bias_z)[:, :, np.newaxis]
@@ -484,7 +492,7 @@ class Profile:
         def integrand(kl):
             kl = np.atleast_1d(kl)
             ll = kl[:, np.newaxis, np.newaxis, np.newaxis] * (1.0 + z) * D_A
-            Pk_vals = Pk_interp(z.squeeze(), kl).T
+            Pk_vals = Pk_interp(z_squeeze, kl).T
             if is_excess:
                 j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
                 return (
@@ -505,11 +513,15 @@ class Profile:
         denominator = 2.0 * np.pi * (1.0 + z)**3.0 * D_A**2.0
         profile = (1.e-12 * rho_m * bias_z * profile) / denominator
 
-        assert profile.shape == (
-            len(z.squeeze()), len(M.squeeze()), len(R.squeeze())
-        ), f"Expected shape {(len(z.squeeze()), len(M.squeeze()), len(R.squeeze()))}, got {profile.shape}"
+        expected_shape = (
+            len(np.atleast_1d(z.squeeze())), 
+            len(np.atleast_1d(M.squeeze())), 
+            len(np.atleast_1d(R.squeeze()))
+        )
+        assert profile.shape == expected_shape, \
+            f"Expected shape {expected_shape}, got {profile.shape}"
 
-        return profile / self.background.h
+        return profile
 
     def surface_mass_density_2h(self, R, z, M, bias_z=None):
         r"""
@@ -524,7 +536,7 @@ class Profile:
         z: np.ndarray
             Redshift.
         M: np.ndarray
-            Mass (Msun).
+            Mass (Msun / h).
         bias_z: np.ndarray (optional)
             Halo bias. If None, it is computed internally.
 
@@ -550,7 +562,7 @@ class Profile:
         z: np.ndarray
             Redshift.
         M: np.ndarray
-            Mass (Msun).
+            Mass (Msun / h).
         bias_z: np.ndarray (optional)
             Halo bias. If None, it is computed internally.
 
@@ -688,7 +700,7 @@ class ProfileNFW(Profile):
 
         Sigma = 2.0 * rho_s * Rs * F * 1.0e-12
 
-        return Sigma / self.background.h
+        return Sigma
 
     def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
         r"""
@@ -722,7 +734,7 @@ class ProfileNFW(Profile):
         m_nfw = np.log(1.0 + c) - c / (1.0 + c)  # Eq. 4 Oguri & Hamana 2011
         rho_s = Delta * c**3.0 / (3.0 * m_nfw)
 
-        return 4.0 * rho_s * Rs * (G / x**2.0) * 1.0e-12 / self.background.h
+        return 4.0 * rho_s * Rs * (G / x**2.0) * 1.0e-12
 
 
 class ProfileBMO(Profile):
@@ -858,7 +870,7 @@ class ProfileBMO(Profile):
         L = np.log(x / (np.sqrt(tau**2.0 + x**2.0) + tau))
 
         Sigma = 1e-12 * const * term1 * (term2 + term3 + term4 - term5 + term6 * L)
-        return Sigma / self.background.h
+        return Sigma
 
     def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
         r"""
@@ -935,4 +947,4 @@ class ProfileBMO(Profile):
 
         M_proj = const * term1 * (term2 + term3 + (term5 + term6 * L) / term4)
 
-        return M_proj / (np.pi * R**2.0) * 1.0e-12 / self.background.h
+        return M_proj / (np.pi * R**2.0) * 1.0e-12

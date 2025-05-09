@@ -1,3 +1,5 @@
+#import jax.numpy as np
+
 import numpy as np
 from numpy.testing import assert_raises, assert_equal, assert_allclose
 
@@ -24,7 +26,7 @@ def test_halostatistics():
         w0=-1.0,
         wa=0.0,
         ns=0.96,
-        mnu=0.0,
+        mnu=0.06,
         As=2e-9,
         gamma_MG=0.0,
     )
@@ -51,35 +53,35 @@ def test_halostatistics():
     _ref = [-0.0002, -0.001125, -0.006324, -0.035485, -0.186105]
     assert_allclose(dWdx[0], _ref, atol=5e-07)
     print("    radius_M")
-    _ref = [6.523691, 7.903632, 9.575468, 11.600945, 14.054865]
+    _ref = [ 6.513845,  7.891703,  9.561017, 11.583437, 14.033654]
     assert_allclose(HS.radius_M(M_test), _ref)
     print("    delta_c")
-    _ref = [1.6761, 1.679699, 1.681938, 1.683347, 1.684253]
+    _ref = [1.67614 , 1.679731, 1.681962, 1.683365, 1.684267]
     assert_allclose(HS.delta_c(z_test), _ref, rtol=5e-7)
     print("    get_Delta_crit")
-    _ref = [103.350844, 123.433339, 139.138379, 150.283152, 157.909004]
+    _ref = [103.543328, 123.635875, 139.317406, 150.428862, 158.024219]
     assert_allclose(HS.get_Delta_crit(z_test)[:5], _ref)
     print("    sigma_z_R")
-    _ref = [5.025379, 3.622691, 2.402038, 1.406789, 0.683393]
+    _ref = [4.951912, 3.569766, 2.367039, 1.386462, 0.673776]
     assert_allclose(HS.sigma_z_R(z_test, R_test)[0, :5], _ref, rtol=5e-7)
     print("    sigma_z_M")
-    _ref = [0.917697, 0.807373, 0.705316, 0.611551, 0.526045]
+    _ref = [0.905495, 0.796742, 0.696134, 0.603694, 0.519389]
     assert_allclose(HS.sigma_z_M(z_test, M_test)[0], _ref, rtol=1e-6)
     print("    nu_z_M")
-    _ref = [1.826419, 2.075992, 2.376381, 2.740734, 3.186231]
+    _ref = [1.851075, 2.103741, 2.407783, 2.776472, 3.227135]
     assert_allclose(HS.nu_z_M(z_test, M_test)[0], _ref, rtol=5e-7)
     print("    dlns_dlnR")
-    _ref = [-0.649908, -0.685486, -0.723499, -0.763745, -0.806543]
+    _ref = [-0.649273, -0.684757, -0.722659, -0.76278 , -0.805423]
     assert_allclose(HS.dlns_dlnR(z_test, M_test)[0], _ref, rtol=1e-6)
 
     print("    bias Tinker")
-    _ref = [2.170256, 2.699147, 3.452148, 4.543852, 6.157447]
+    _ref = [2.218172, 2.762588, 3.537439, 4.660406, 6.319501]
     assert_allclose(HS_tinker.bias(z_test, M_test)[0], _ref, rtol=5e-7)
 
     print("    dn_dm Castro")
-    _ref = [3.963046e-19, 9.968662e-20, 2.154962e-20, 3.719759e-21, 4.585653e-22]
+    _ref = [3.878612e-19, 9.651529e-20, 2.055990e-20, 3.477990e-21, 4.168748e-22]
     assert_allclose(HS_castro.dn_dm(z_test, M_test)[0], _ref, rtol=5e-7)
 
     print("    bias Castro")
-    _ref = [2.160949, 2.681549, 3.414679, 4.450279, 5.896728]
+    _ref = [2.209025, 2.743319, 3.495205, 4.556624, 6.038308]
     assert_allclose(HS_castro.bias(z_test, M_test)[0], _ref, rtol=5e-7)

@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      #- cluster_structure
+      - cluster_structure
   pull_request:
 
 jobs:

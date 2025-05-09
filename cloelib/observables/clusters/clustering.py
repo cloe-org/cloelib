@@ -54,7 +54,6 @@ class HaloClustering:
         )  # AP correction (adds a redshift dependence)
 
 
-        
         r3_TH_filter = (
             r_z**3
             * 3.0
@@ -210,12 +209,11 @@ class HaloClustering:
 
         
         # growth rate                                                                                                                                                                                                
-        ##f_gr = self.perturbations.growth_rate() **0.55  #redshift???
         f_gr = (self.background.Omega_m(z, self.nonu) ** 0.55)[:, np.newaxis]
 
-                
+
         ks = self.k * (
-            sigma_zob * (units.SPEED_OF_LIGHT *1e-3) / (self.background_fid.hubble_parameter(z) * self.background.H0/100.)
+            sigma_zob * (units.SPEED_OF_LIGHT *1e-3) / self.background.hubble_parameter(z) * (self.background.H0/100)
         ).reshape(len(z), 1)
         
         erf_ks = erf(ks)

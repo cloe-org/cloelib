@@ -4,25 +4,54 @@ from numpy.testing import assert_raises, assert_equal, assert_allclose
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.clusters.clustering import HaloClustering
 
-def _test_clustering(CL):
-    z_test = np.linspace(0.0, 2.0, 20)
-    r_test = np.geomspace(20, 150, 30)
-    lob_test = np.logspace(0.2, 2.2, 20)
+
+def _test_clustering(CL,perturbations):
+    z_test = np.array([0., 1.])
+    r_test = np.array([30.,60.,90.])
+    lob_test = np.array([50.]) 
 
     print("    APcorr_func")
-    assert_allclose(CL.APcorr_func(z_test), XXX)
+    ref_APcorr = np.array([1.0162  , 1.016033]) 
+    assert_allclose(CL.APcorr_func(z_test), ref_APcorr,rtol=1e-04)
+
+    
     print("    WF_ra")
-    assert_allclose(CL.WF_ra(z_test, r_test), XXX)
+    ref_WF_ra0 = np.array([[[9.9962026e-01, 5.3620315e-04],
+                            [9.9894708e-01, 3.8502066e-04]],
+                           [[9.9957979e-01, 5.4349063e-04],
+                            [9.9900585e-01, 3.8453474e-04]]])
+    ref_WF_ra1 = np.array([[ 830784.512318, 2254986.533435],
+                           [ 830373.221984, 2253870.173956]])
 
+
+    WF,VF = CL.WF_ra(z_test, r_test)
+    assert_allclose(WF, ref_WF_ra0,rtol=1e-04)    
+    assert_allclose(VF, ref_WF_ra1,rtol=1e-04)
+
+    
     print("    Pk_IR_func")
-    Pk_test = perturbations.matter_power_spectrum(
-        z_test, CL.k, hubble_units=True, k_hunit=True
-    )
-    assert_allclose(CL.Pk_IR_func(Pk_test), XXX)
+    ref_Pk_IR = np.array([[3782.7314, 63.855637],
+                          [1398.2388,  23.673042]])
 
+    Pk_test = perturbations.matter_power_spectrum(z_test, CL.k,
+                                                  hubble_units=True, k_hunit=True)
+    assert_allclose(CL.Pk_IR_func(Pk_test), ref_Pk_IR, rtol=1e-4)
+
+    
     print("    photoz_rsd_correction")
-    sigma_zob = SF.scatter_zobs_z(lob_test, z_test)
-    assert_allclose(CL.photoz_rsd_correction(z_test, sigma_zob), XXX)
+    ref_phz_rsd_0 = np.array([[0.99999981, 0.84024509],
+                              [0.99939964, 0.02087668]])
+    ref_phz_rsd_1 = np.array([[6.666667e-01, 2.524346e-01],
+                              [5.807121e-01, 1.010152e-05]])
+    ref_phz_rsd_2 = np.array([[2.000000e-01, 3.714267e-02],
+                              [1.849138e-01, 3.665836e-09]])
+
+    sigma_zob = 0.025 * z_test + 5e-6 * lob_test
+    corr0,corr1,corr2 = CL.photoz_rsd_correction(z_test, sigma_zob)
+    assert_allclose(corr0, ref_phz_rsd_0, rtol=1e-04)
+    assert_allclose(corr1, ref_phz_rsd_1, rtol=1e-04)
+    assert_allclose(corr2, ref_phz_rsd_2, rtol=1e-04)
+
 
 
 def test_clustering():
@@ -32,6 +61,9 @@ def test_clustering():
     _h = _H0 / 100.0
     _omch2 = 0.12
     _ombh2 = 0.022
+    _ns = 0.96
+    _mnu = 0.06
+    _As = 2.0e-9
     _cosmo_pars = dict(
         H0=_H0,
         Omega_cdm0=_omch2 / _h**2,
@@ -39,15 +71,14 @@ def test_clustering():
         Omega_k0=0.0,
         w0=-1.0,
         wa=0.0,
-        ns=0.96,
-        mnu=0.0,
-        As=2e-9,
+        ns=_ns,
+        mnu=_mnu,
+        As=_As,
         gamma_MG=0.0,
     )
 
     background = CAMBBackground(**_cosmo_pars)
     perturbations = CAMBLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
-
 
     _cosmo_pars_fid = {**_cosmo_pars}
     _cosmo_pars_fid["H0"] = 73.0
@@ -55,9 +86,9 @@ def test_clustering():
     perturbations_fid = CAMBLinearPerturbations(
         background_fid, np.linspace(0.0, 2.0, 100)
     )
-    k_min = 1e-4
-    k_max = 2e0
-    k_div = 300
+    k_min = 1e-3
+    k_max = 1e0
+    k_div = 2
     nonu = True
     CL = HaloClustering(perturbations, perturbations_fid, nonu, k_div, k_min, k_max)
-    _test_clustering(CL)
+    _test_clustering(CL,perturbations)

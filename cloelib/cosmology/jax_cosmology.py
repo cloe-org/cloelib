@@ -489,7 +489,7 @@ class JAXLinearPerturbations:
 
         """
         if nonu:
-            raise NotImplementedError("Option nonu=True not implemented for HMcode2020Emu.")
+            raise NotImplementedError("Option nonu=True not implemented for jax.")
 
         h = self.background.h
 
@@ -677,7 +677,7 @@ class JAXNonLinearPerturbations(Perturbations):
         This function is just a wrapper over several nonlinear power spectra.
         """
         if nonu:
-            raise NotImplementedError("Option nonu=True not implemented for HMcode2020Emu.")
+            raise NotImplementedError("Option nonu=True not implemented for jax.")
         return jax.vmap(self.halofit, in_axes = (0, None, None, None))(zs, ks, hubble_units, k_hunit)
 
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):

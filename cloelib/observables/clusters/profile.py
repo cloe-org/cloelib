@@ -207,7 +207,8 @@ class Profile:
         Returns
         -------
         Sigma: np.ndarray
-            Centered surface mass density profile (units : h * Msun / pc**2)
+            Centered surface mass density profile (units : h * Msun / pc**2).
+            Shape: (len(z), len(M), len(R)).
         """
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
         rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
@@ -228,6 +229,10 @@ class Profile:
         elif force_no_2h == False and self.two_halo == "max":
             Sigma_2h = self.surface_mass_density_2h(R, z, M)
             Sigma = np.maximum(Sigma, Sigma_2h)
+
+        assert profile.shape == (
+            len(z.squeeze()), len(M.squeeze()), len(R.squeeze())
+        ), f"Expected shape {(len(z.squeeze()), len(M.squeeze()), len(R.squeeze()))}, got {profile.shape}"
 
         return Sigma
 
@@ -251,7 +256,8 @@ class Profile:
         Returns
         -------
         Sigma: np.ndarray
-            Centered one-halo surface mass density profile (units : h * Msun / pc**2)
+            Centered one-halo surface mass density profile (units : h * Msun / pc**2).
+            Shape: (len(z), len(M), len(R)).
         """
         return NotImplementedError
 
@@ -280,7 +286,8 @@ class Profile:
         Returns
         -------
         Sigma: np.ndarray
-            Surface mass density profile (units : h * Msun / pc**2)
+            Surface mass density profile (units : h * Msun / pc**2).
+            Shape: (len(z), len(M), len(R)).
         """
         if force_no_off == False and self.offcentering and self.rms_off >= 1.0e-4:
             R = np.asarray(R)
@@ -327,7 +334,8 @@ class Profile:
         Returns
         -------
         DeltaSigma: np.ndarray
-            Excess surface mass density profile (units : h * Msun / pc**2)
+            Excess surface mass density profile (units : h * Msun / pc**2).
+            Shape: (len(z), len(M), len(R)).
         """
         Delta_crit = self.halo_statistics.get_Delta_crit(z[:, np.newaxis])
         rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
@@ -396,7 +404,8 @@ class Profile:
         Returns
         -------
         Sigma_mean: np.ndarray
-            Centered one-halo mean surface mass density (units : h * Msun / pc**2)
+            Centered one-halo mean surface mass density (units : h * Msun / pc**2).
+            Shape: (len(z), len(M), len(R)).
         """
         return NotImplementedError
 
@@ -473,27 +482,32 @@ class Profile:
 
         # Integrand function
         def integrand(kl):
-            ll = kl * (1.0 + z) * D_A
+            kl = np.atleast_1d(kl)
+            ll = kl[:, np.newaxis, np.newaxis, np.newaxis] * (1.0 + z) * D_A
+            Pk_vals = Pk_interp(z.squeeze(), kl).T
             if is_excess:
                 j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
                 return (
-                    j2 * ll
-                    * Pk_interp(z.squeeze(), kl)[:, np.newaxis, np.newaxis]
+                    j2 * ll * Pk_vals[:, :, np.newaxis, np.newaxis]
                     * (1.0 + z) * D_A
                 )
             else:
                 return (
-                    j0(ll * theta) * ll
-                    * Pk_interp(z.squeeze(), kl)[:, np.newaxis, np.newaxis]
+                    j0(ll * theta) * ll * Pk_vals[:, :, np.newaxis, np.newaxis]
                     * (1.0 + z) * D_A
                 )
 
         # Integration
         profile = quad_vec(integrand, kl_min, kl_max, epsrel=1e-1)[0]
+        profile = np.squeeze(profile, axis=0)
 
         # Final strictly 3D calculation
         denominator = 2.0 * np.pi * (1.0 + z)**3.0 * D_A**2.0
         profile = (1.e-12 * rho_m * bias_z * profile) / denominator
+
+        assert profile.shape == (
+            len(z.squeeze()), len(M.squeeze()), len(R.squeeze())
+        ), f"Expected shape {(len(z.squeeze()), len(M.squeeze()), len(R.squeeze()))}, got {profile.shape}"
 
         return profile / self.background.h
 
@@ -662,7 +676,8 @@ class ProfileNFW(Profile):
         Returns
         -------
         Sigma: np.ndarray
-            NFW surface mass density profile (units : h * Msun / pc**2)
+            NFW surface mass density profile (units : h * Msun / pc**2).
+            Shape: (len(z), len(M), len(R)).
         """
         Rs = RDelta / c
         x = R / Rs
@@ -696,7 +711,8 @@ class ProfileNFW(Profile):
         Returns
         -------
         Sigma_mean: np.ndarray
-            NFW mean surface mass density (units : h * Msun / pc**2)
+            NFW mean surface mass density (units : h * Msun / pc**2).
+            Shape: (len(z), len(M), len(R)).
         """
         Rs = RDelta / c
         x = R / Rs
@@ -786,7 +802,8 @@ class ProfileBMO(Profile):
         Returns
         -------
         Sigma: np.ndarray
-            BMO surface mass density profile (units : h * Msun / pc**2)
+            BMO surface mass density profile (units : h * Msun / pc**2).
+            Shape: (len(z), len(M), len(R)).
         """
         Rs = RDelta / c
         x = R / Rs
@@ -864,7 +881,8 @@ class ProfileBMO(Profile):
         Returns
         -------
         Sigma_mean: np.ndarray
-            BMO mean surface mass density (units : h * Msun / pc**2)
+            BMO mean surface mass density (units : h * Msun / pc**2).
+            Shape: (len(z), len(M), len(R)).
         """
         Rs = RDelta / c
         x = R / Rs

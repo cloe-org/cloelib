@@ -221,6 +221,40 @@ class Profile:
 
         return self.nzsnorM[zbin] * simps(sig_crit_m1, x=z_s)  # pc^2 / Msun / h
 
+    def _surface_mass_density_args(self, R, z, M):
+        r"""
+        Prepare arguments for _surface_mass_density_profile and
+        _mean_surface_mass_density_profile with correct shapes.
+
+        Parameters
+        ----------
+        R: np.ndarray
+            Radial points (units : Mpc / h)
+        z: np.ndarray
+            Redshift.
+        M: np.ndarray
+            Mass (Msun / h).
+
+        Returns
+        -------
+        Sigma: np.ndarray
+            Centered surface mass density profile (units : h * Msun / pc**2).
+            Shape: (len(z), len(M), len(R)).
+        """
+        Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))
+        rho_c = self.background.rho_crit(z) / self.background.h**2.0
+        densityThreshold = Delta_crit * rho_c
+
+        RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold[:, np.newaxis]) ** (
+            1.0 / 3.0
+        )
+
+        return (
+            R[np.newaxis, np.newaxis, :],
+            RDelta[:, :, np.newaxis],
+            densityThreshold[:, np.newaxis, np.newaxis],
+        )
+
     def _surface_mass_density_cen(self, R, z, c, M, force_no_2h=False):
         r"""
         Centered surface mass density profile.
@@ -242,21 +276,12 @@ class Profile:
 
         Returns
         -------
-        Sigma: np.ndarray
+        Sigma: np.ndarraDeltay
             Centered surface mass density profile (units : h * Msun / pc**2).
             Shape: (len(z), len(M), len(R)).
         """
-        Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))[:, np.newaxis]
-        rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
-        densityThreshold = Delta_crit * rho_c
-
-        RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
-
         Sigma = self._surface_mass_density_profile(
-            R[np.newaxis, np.newaxis, :],
-            RDelta[:, :, np.newaxis],
-            c,
-            densityThreshold[:, :, np.newaxis]
+            *self._surface_mass_density_args(R, z, M), c
         )
 
         if force_no_2h == False and self.two_halo == "sum":
@@ -266,16 +291,17 @@ class Profile:
             Sigma = np.maximum(Sigma, Sigma_2h)
 
         expected_shape = (
-            len(np.atleast_1d(z.squeeze())), 
-            len(np.atleast_1d(M.squeeze())), 
-            len(np.atleast_1d(R.squeeze()))
+            len(np.atleast_1d(z.squeeze())),
+            len(np.atleast_1d(M.squeeze())),
+            len(np.atleast_1d(R.squeeze())),
         )
-        assert Sigma.shape == expected_shape, \
-            f"Expected shape {expected_shape}, got {Sigma.shape}"
+        assert (
+            Sigma.shape == expected_shape
+        ), f"Expected shape {expected_shape}, got {Sigma.shape}"
 
         return Sigma
 
-    def _surface_mass_density_profile(self, R, RDelta, c, Delta):
+    def _surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         Centered one-halo surface mass density profile.
 
@@ -287,10 +313,10 @@ class Profile:
             Radial points (units : Mpc / h)
         RDelta: np.ndarray
             Overdensity radius (units : Mpc / h).
-        c: float
-            Concentration.
         Delta: np.ndarray
             Critical overdensity.
+        c: float
+            Concentration.
 
         Returns
         -------
@@ -304,7 +330,7 @@ class Profile:
         r"""
         Total surface mass density profile.
 
-        Computes the total surface mass density profile at radius R, 
+        Computes the total surface mass density profile at radius R,
         including the contribution from 2-halo term and miscetering.
 
         Parameters
@@ -375,19 +401,8 @@ class Profile:
             Excess surface mass density profile (units : h * Msun / pc**2).
             Shape: (len(z), len(M), len(R)).
         """
-        Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))[:, np.newaxis]
-        rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
-        densityThreshold = Delta_crit * rho_c
-
-        RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
-        Rs = RDelta / c
-        x = R / Rs
-
         Sigma_mean = self._mean_surface_mass_density_profile(
-            R[np.newaxis, np.newaxis, :],
-            RDelta[:, :, np.newaxis],
-            c,
-            densityThreshold[:, :, np.newaxis]
+            *self._surface_mass_density_args(R, z, M), c
         )
         Sigma = self._surface_mass_density_cen(R, z, c, M, force_no_2h=True)
         DeltaSigma = Sigma_mean - Sigma
@@ -422,7 +437,7 @@ class Profile:
 
         return DeltaSigma
 
-    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
+    def _mean_surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         Centered one-halo mean surface mass density profile.
 
@@ -435,10 +450,10 @@ class Profile:
             Radial points (units : Mpc / h)
         RDelta: np.ndarray
             Overdensity radius (units : Mpc / h).
-        c: float
-            Concentration.
         Delta: np.ndarray
             Critical overdensity.
+        c: float
+            Concentration.
 
         Returns
         -------
@@ -485,9 +500,9 @@ class Profile:
         M_squeeze = np.atleast_1d(M.squeeze())
 
         # Calculate base quantities
-        D_A = self.background.angular_diameter_distance(
-            z_squeeze
-        )[:, np.newaxis, np.newaxis]
+        D_A = self.background.angular_diameter_distance(z_squeeze)[
+            :, np.newaxis, np.newaxis
+        ]
 
         theta = R / D_A
 
@@ -502,24 +517,25 @@ class Profile:
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
         if len(z_squeeze) < 10:
-            z_for_interp = np.linspace(z.min()*0.9, z.max()*1.1, 10)
+            z_for_interp = np.linspace(z.min() * 0.9, z.max() * 1.1, 10)
         else:
             z_for_interp = z_squeeze
 
         Pk_interp = interpolate.RectBivariateSpline(
-            z_for_interp, kl_array,
+            z_for_interp,
+            kl_array,
             self.perturbations.matter_power_spectrum(
-                z_for_interp[:, np.newaxis], kl_array,
-                hubble_units=True, k_hunit=True,
-                nonu=self.halo_statistics.nonu
-            )
+                z_for_interp[:, np.newaxis],
+                kl_array,
+                hubble_units=True,
+                k_hunit=True,
+                nonu=self.halo_statistics.nonu,
+            ),
         )
 
         # Ensure bias has shape (nz, nM, 1)
         if bias_z is None:
-            bias_z = self.halo_statistics.bias(
-                z_squeeze, M_squeeze
-            )[:, :, np.newaxis]
+            bias_z = self.halo_statistics.bias(z_squeeze, M_squeeze)[:, :, np.newaxis]
         else:
             bias_z = np.asarray(bias_z)[:, :, np.newaxis]
 
@@ -530,14 +546,14 @@ class Profile:
             Pk_vals = Pk_interp(z_squeeze, kl).T
             if is_excess:
                 j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
-                return (
-                    j2 * ll * Pk_vals[:, :, np.newaxis, np.newaxis]
-                    * (1.0 + z) * D_A
-                )
+                return j2 * ll * Pk_vals[:, :, np.newaxis, np.newaxis] * (1.0 + z) * D_A
             else:
                 return (
-                    j0(ll * theta) * ll * Pk_vals[:, :, np.newaxis, np.newaxis]
-                    * (1.0 + z) * D_A
+                    j0(ll * theta)
+                    * ll
+                    * Pk_vals[:, :, np.newaxis, np.newaxis]
+                    * (1.0 + z)
+                    * D_A
                 )
 
         # Integration
@@ -545,16 +561,17 @@ class Profile:
         profile = np.squeeze(profile, axis=0)
 
         # Final strictly 3D calculation
-        denominator = 2.0 * np.pi * (1.0 + z)**3.0 * D_A**2.0
-        profile = (1.e-12 * rho_m * bias_z * profile) / denominator
+        denominator = 2.0 * np.pi * (1.0 + z) ** 3.0 * D_A**2.0
+        profile = (1.0e-12 * rho_m * bias_z * profile) / denominator
 
         expected_shape = (
-            len(np.atleast_1d(z.squeeze())), 
-            len(np.atleast_1d(M.squeeze())), 
-            len(np.atleast_1d(R.squeeze()))
+            len(np.atleast_1d(z.squeeze())),
+            len(np.atleast_1d(M.squeeze())),
+            len(np.atleast_1d(R.squeeze())),
         )
-        assert profile.shape == expected_shape, \
-            f"Expected shape {expected_shape}, got {profile.shape}"
+        assert (
+            profile.shape == expected_shape
+        ), f"Expected shape {expected_shape}, got {profile.shape}"
 
         return profile
 
@@ -669,11 +686,15 @@ class ProfileNFW(Profile):
         <https://ui.adsabs.harvard.edu/abs/2002A%26A...390..821G/abstract>`_.
         """
         if x < 1.0:
-            return (1.0 - np.arccosh(1.0 / x) / np.sqrt(1.0 - x**2.0)) / (x**2.0 - 1.0)
+            return (1.0 - np.arccosh(1.0 / x) / np.sqrt(1.0 - x**2.0)) / (
+                x**2.0 - 1.0
+            )
         if x == 1.0:
             return 1.0 / 3.0
         if x > 1.0:
-            return (1.0 - np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)) / (x**2.0 - 1.0)
+            return (1.0 - np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)) / (
+                x**2.0 - 1.0
+            )
 
     def _g_term(self, x):
         r"""
@@ -703,7 +724,7 @@ class ProfileNFW(Profile):
         if x > 1.0:
             return np.log(x / 2.0) + np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)
 
-    def _surface_mass_density_profile(self, R, RDelta, c, Delta):
+    def _surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         NFW surface mass density profile.
 
@@ -715,10 +736,10 @@ class ProfileNFW(Profile):
             Radial points (units : Mpc / h)
         RDelta: np.ndarray
             Overdensity radius (units : Mpc / h).
-        c: float
-            Concentration.
         Delta: np.ndarray
             Critical overdensity.
+        c: float
+            Concentration.
 
         Returns
         -------
@@ -735,9 +756,12 @@ class ProfileNFW(Profile):
 
         Sigma = 2.0 * rho_s * Rs * F * 1.0e-12
 
+        for _v in ("Rs", "x", "Sigma"):
+            print(f" - {_v}:", locals()[_v].shape)
+
         return Sigma
 
-    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
+    def _mean_surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         NFW mean surface mass density profile.
 
@@ -750,10 +774,10 @@ class ProfileNFW(Profile):
             Radial points (units : Mpc / h)
         RDelta: np.ndarray
             Overdensity radius (units : Mpc / h).
-        c: float
-            Concentration.
         Delta: np.ndarray
             Critical overdensity.
+        c: float
+            Concentration.
 
         Returns
         -------
@@ -829,7 +853,7 @@ class ProfileBMO(Profile):
         if x > 1.0:
             return (1.0 - self._f_term(x)) / (x**2.0 - 1.0)
 
-    def _surface_mass_density_profile(self, R, RDelta, c, Delta):
+    def _surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         BMO surface mass density profile.
 
@@ -841,10 +865,10 @@ class ProfileBMO(Profile):
             Radial points (units : Mpc / h)
         RDelta: np.ndarray
             Overdensity radius (units : Mpc / h).
-        c: float
-            Concentration.
         Delta: np.ndarray
             Critical overdensity.
+        c: float
+            Concentration.
 
         Returns
         -------
@@ -907,7 +931,7 @@ class ProfileBMO(Profile):
         Sigma = 1e-12 * const * term1 * (term2 + term3 + term4 - term5 + term6 * L)
         return Sigma
 
-    def _mean_surface_mass_density_profile(self, R, RDelta, c, Delta):
+    def _mean_surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         BMO mean surface mass density profile.
 
@@ -920,10 +944,10 @@ class ProfileBMO(Profile):
             Radial points (units : Mpc / h)
         RDelta: np.ndarray
             Overdensity radius (units : Mpc / h).
-        c: float
-            Concentration.
         Delta: np.ndarray
             Critical overdensity.
+        c: float
+            Concentration.
 
         Returns
         -------
@@ -970,11 +994,14 @@ class ProfileBMO(Profile):
 
         G = np.vectorize(self._g_term)(x)
         term3 = (
-            np.pi * (3.0 * tau**2.0 - 1.0) + 2.0 * tau * (tau**2.0 - 3.0) * np.log(tau)
+            np.pi * (3.0 * tau**2.0 - 1.0)
+            + 2.0 * tau * (tau**2.0 - 3.0) * np.log(tau)
         ) / tau
 
         term4 = tau**3.0 * np.sqrt(tau**2.0 + x**2.0)
-        term5 = -(tau**3.0) * np.pi * (4.0 * (tau**2.0 + x**2.0) - tau**2.0 - 1.0)
+        term5 = (
+            -(tau**3.0) * np.pi * (4.0 * (tau**2.0 + x**2.0) - tau**2.0 - 1.0)
+        )
         term6 = -(tau**2.0) * (tau**4.0 - 1.0) + +(tau**2.0 + x**2.0) * (
             3.0 * tau**4.0 - 6.0 * tau**2.0 - 1.0
         )

@@ -298,19 +298,20 @@ class LegendreMultipoles:
                      self._q_AP_lo(self.redshift) if use_AP else 1.0)
         prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / \
             AP_factor
+        kAP = self._k_AP(k, self.mu_grid, self.redshift, use_AP=use_AP)
+        muAP = self._mu_AP(self.mu_grid, self.redshift, use_AP=use_AP)
         Pk2d = np.empty((len(term_list), len(k), len(self.mu_grid)))
         rsd_ids = [index for index, term in enumerate(term_list)
                    if 'noise' not in term]
-        kAP = self._k_AP(k, self.mu_grid, self.redshift, use_AP=use_AP)
-        muAP = self._mu_AP(self.mu_grid, self.redshift, use_AP=use_AP)
-        Pk2d[rsd_ids] = self.spectro_power.Pk2d_term_rsd(
-            kAP, muAP, term_list=[term_list[index] for index in rsd_ids])
+        if rsd_ids:
+            Pk2d[rsd_ids] = self.spectro_power.Pk2d_term_rsd(
+                kAP, muAP, term_list=[term_list[index] for index in rsd_ids])
         noise_ids = [index for index in range(len(term_list))
                      if index not in rsd_ids]
-        noise_func = {'noise_k0': self._Pk2d_noise_k0,
-                      'noise_k2': self._Pk2d_noise_k2,
-                      'noise_k2mu2': self._Pk2d_noise_k2mu2}
         if noise_ids:
+            noise_func = {'noise_k0': self._Pk2d_noise_k0,
+                          'noise_k2': self._Pk2d_noise_k2,
+                          'noise_k2mu2': self._Pk2d_noise_k2mu2}
             Pk2d[noise_ids] = np.array([
                 noise_func[term_list[index]](kAP, muAP)
                 if term_list[index]=='noise_k2mu2'

@@ -349,8 +349,6 @@ class Profile:
         densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
-        Rs = RDelta / c
-        x = R / Rs
 
         Sigma_mean = self._mean_surface_mass_density_profile(
             R[np.newaxis, np.newaxis, :],

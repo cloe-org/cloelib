@@ -2,6 +2,7 @@ import numpy as np
 from scipy.stats import skewnorm
 from scipy.integrate import simpson as simps
 from astropy import constants as ap_constants
+from astropy import units as ap_units
 from scipy import interpolate
 from scipy.integrate import quad_vec
 from scipy.special import j0, j1
@@ -67,6 +68,41 @@ class Profile:
         Returns the Background class instance
         """
         return self.perturbations.background
+
+    def radius2mpc(self, radius, radius_units, z):
+        r"""Convert radius to Mpc
+
+        Parameters
+        ----------
+        radius: np.ndarray
+            Input distances
+        radius_units: str
+            Unit for the input radius. Accepted values are:
+            "Mpc", "radians", "degrees", "arcmin", "arcsec".
+        z: float
+            Redshift used to convert between angular and physical units
+
+        Returns
+        -------
+        np.ndarray
+            Radius in Mpc
+        """
+        if radius_units.lower() == "mpc":
+            return radius
+        units_bank = {
+            "radians": ap_units.rad,
+            "degrees": ap_units.deg,
+            "arcmin": ap_units.arcmin,
+            "arcsec": ap_units.arcsec,
+        }
+        units_in = units_bank.get(radius_units.lower(), None)
+        if units_in is None:
+            raise ValueError(
+                f"Units provideds (={radius_units}) not valid,"
+                f" it must be in {list(units_bank.keys())}"
+            )
+        theta = (radius * units_in).to(units.rad).value  # radius in radians
+        return theta * self.theory["d_z_func"](z[:, np.newaxis])
 
     def sigma_crit(self, z, z_sources):
         r"""

@@ -50,6 +50,7 @@ class CometEFT_SpectroPower:
         self.parameters['As'] = self.background.As * 1e9
         self.parameters['w0'] = self.background.w0
         self.parameters['wa'] = self.background.wa
+        self.parameters['Ok'] = self.background.Omega_k0
         self.parameters.update(RSD_parameters)
         self.parameters['z'] = redshift
 

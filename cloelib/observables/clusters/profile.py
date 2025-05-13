@@ -352,7 +352,7 @@ class Profile:
 
         Returns
         -------
-        Sigma: np.ndarraDeltay
+        Sigma: np.ndarray
             Centered surface mass density profile (units : h * Msun / pc**2).
             Shape: (len(z), len(M), len(R)).
         """

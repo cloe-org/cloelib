@@ -69,8 +69,71 @@ class Profile:
         """
         return self.perturbations.background
 
+    def _oper_arrays(self, arr1, arr2, function):
+        r"""Operates function(arr1, arr2). If arr2 is float,
+        output shape is arr1.size else (arr1.size, arr2.size).
+
+        Parameters
+        ----------
+        arr1: np.ndarray
+            Input distances in radians
+        arr2: float, np.ndarray
+            Redshift used to convert between angular and physical units
+
+        Returns
+        -------
+        np.ndarray
+            Distance in Mpc/h. If z is array, output shape is (len(distance), len(z)).
+        """
+        _arr2 = arr2
+        if hasattr(arr2, "__len__") and len(arr2) > 1:
+            _arr2 = arr2[:, np.newaxis]
+        return function(arr1, _arr2)
+
+    def _radians2mpc(self, distance, z):
+        r"""Convert distance from radians to Mpc/h
+
+        Parameters
+        ----------
+        radius: np.ndarray
+            Input distances in radians
+        z: float, np.ndarray
+            Redshift used to convert between angular and physical units
+
+        Returns
+        -------
+        np.ndarray
+            Distance in Mpc/h. If z is array, output shape is (len(distance), len(z)).
+        """
+        return self._oper_arrays(
+            distance,
+            self.background.angular_diameter_distance(z) * self.background.h,  # Mpc / h
+            lambda arr1, arr2: arr1 * arr2,
+        )
+
+    def _mpc2radians(self, distance, z):
+        r"""Convert distance from Mpc/h to radians.
+
+        Parameters
+        ----------
+        radius: np.ndarray
+            Input distances in Mpc/h
+        z: float, np.ndarray
+            Redshift used to convert between angular and physical units
+
+        Returns
+        -------
+        np.ndarray
+            Distance in radians. If z is array, output shape is (len(distance), len(z)).
+        """
+        return self._oper_arrays(
+            distance,
+            self.background.angular_diameter_distance(z) * self.background.h,  # Mpc / h
+            lambda arr1, arr2: arr1 / arr2,
+        )
+
     def radius2mpc(self, radius, radius_units, z):
-        r"""Convert radius to Mpc
+        r"""Convert radius to Mpc/h
 
         Parameters
         ----------
@@ -78,16 +141,16 @@ class Profile:
             Input distances
         radius_units: str
             Unit for the input radius. Accepted values are:
-            "Mpc", "radians", "degrees", "arcmin", "arcsec".
-        z: float
+            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
+        z: float, np.ndarray
             Redshift used to convert between angular and physical units
 
         Returns
         -------
         np.ndarray
-            Radius in Mpc
+            Radius in Mpc/h. If z is array, output shape is (len(R), len(z)).
         """
-        if radius_units.lower() == "mpc":
+        if radius_units.lower() == "mpc/h":
             return radius
         units_bank = {
             "radians": ap_units.rad,
@@ -101,8 +164,8 @@ class Profile:
                 f"Units provideds (={radius_units}) not valid,"
                 f" it must be in {list(units_bank.keys())}"
             )
-        theta = (radius * units_in).to(units.rad).value  # radius in radians
-        return theta * self.theory["d_z_func"](z[:, np.newaxis])
+        theta = (radius * units_in).to(ap_units.rad).value  # radius in radians
+        return self._radians2mpc(theta, z)
 
     def sigma_crit(self, z, z_sources):
         r"""
@@ -221,7 +284,7 @@ class Profile:
 
         return self.nzsnorM[zbin] * simps(sig_crit_m1, x=z_s)  # pc^2 / Msun / h
 
-    def _surface_mass_density_args(self, R, z, M):
+    def _surface_mass_density_args(self, R, z, M, radius_units="Mpc/h"):
         r"""
         Prepare arguments for _surface_mass_density_profile and
         _mean_surface_mass_density_profile with correct shapes.
@@ -234,28 +297,38 @@ class Profile:
             Redshift.
         M: np.ndarray
             Mass (Msun / h).
+        radius_units: str
+            Unit for the input radius. Accepted values are:
+            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
 
         Returns
         -------
-        Sigma: np.ndarray
-            Centered surface mass density profile (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+        R_reshaped: np.ndarray
+            Radius (units: Mpc / h) with shape (1, 1, len(R)) if radius_units="Mpc/h"
+            else (len(z), 1, len(R))
+        RDelta: np.ndarray
+            Radius of overdensity (units: Mpc / h) with shape (len(z), len(M), 1)
+        densityThreshold: np.ndarray
+            Threshold density (units : h * Msun / Mpc**2)  with shape (len(z), 1, 1)
         """
         Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))
         rho_c = self.background.rho_crit(z) / self.background.h**2.0
-        densityThreshold = Delta_crit * rho_c
+        densityThreshold = (Delta_crit * rho_c)[:, np.newaxis, np.newaxis]
 
-        RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold[:, np.newaxis]) ** (
-            1.0 / 3.0
-        )
+        RDelta = (
+            3.0 * M[np.newaxis, :, np.newaxis] / 4.0 / np.pi / densityThreshold
+        ) ** (1.0 / 3.0)
 
-        return (
-            R[np.newaxis, np.newaxis, :],
-            RDelta[:, :, np.newaxis],
-            densityThreshold[:, np.newaxis, np.newaxis],
-        )
+        if radius_units != "Mpc/h":
+            R_reshaped = self.radius2mpc(R, radius_units, z)[:, np.newaxis]
+        else:
+            R_reshaped = R[np.newaxis, np.newaxis, :]
 
-    def _surface_mass_density_cen(self, R, z, c, M, force_no_2h=False):
+        return R_reshaped, RDelta, densityThreshold
+
+    def _surface_mass_density_cen(
+        self, R, z, c, M, force_no_2h=False, radius_units="Mpc/h"
+    ):
         r"""
         Centered surface mass density profile.
 
@@ -273,6 +346,9 @@ class Profile:
             Mass (Msun / h).
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
+        radius_units: str
+            Unit for the input radius. Accepted values are:
+            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
 
         Returns
         -------
@@ -281,7 +357,7 @@ class Profile:
             Shape: (len(z), len(M), len(R)).
         """
         Sigma = self._surface_mass_density_profile(
-            *self._surface_mass_density_args(R, z, M), c
+            *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
         )
 
         if force_no_2h == False and self.two_halo == "sum":
@@ -317,6 +393,9 @@ class Profile:
             Critical overdensity.
         c: float
             Concentration.
+        radius_units: str
+            Unit for the input radius. Accepted values are:
+            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
 
         Returns
         -------
@@ -326,7 +405,9 @@ class Profile:
         """
         return NotImplementedError
 
-    def surface_mass_density(self, R, z, c, M, force_no_2h=False, force_no_off=False):
+    def surface_mass_density(
+        self, R, z, c, M, force_no_2h=False, force_no_off=False, radius_units="Mpc/h"
+    ):
         r"""
         Total surface mass density profile.
 
@@ -347,6 +428,9 @@ class Profile:
             if True, force the non-inclusion of the 2-halo term
         force_no_off: bool
             if True, force the non-inclusion of the off-centering
+        radius_units: str
+            Unit for the input radius. Accepted values are:
+            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
 
         Returns
         -------
@@ -361,19 +445,23 @@ class Profile:
                 R,
                 self.r_interp,
                 self._surface_mass_density_cen(
-                    self.r_interp, z, c, M, force_no_2h=False
+                    self.r_interp, z, c, M, force_no_2h=False, radius_units=radius_units
                 ),
                 self.rms_off,
                 Sigma_off,
             )
 
-            Sigma_cen = self._surface_mass_density_cen(R, z, c, M, force_no_2h=False)
+            Sigma_cen = self._surface_mass_density_cen(
+                R, z, c, M, force_no_2h=False, radius_units=radius_units
+            )
             return (1.0 - self.f_off) * Sigma_cen + self.f_off * Sigma_off
 
         else:
-            return self._surface_mass_density_cen(R, z, c, M, force_no_2h)
+            return self._surface_mass_density_cen(
+                R, z, c, M, force_no_2h, radius_units=radius_units
+            )
 
-    def excess_surface_mass_density(self, R, z, c, M):
+    def excess_surface_mass_density(self, R, z, c, M, radius_units="Mpc/h"):
         r"""
         Total excess surface mass density profile.
 
@@ -394,6 +482,9 @@ class Profile:
             if True, force the non-inclusion of the 2-halo term
         force_no_off: bool
             if True, force the non-inclusion of the off-centering
+        radius_units: str
+            Unit for the input radius. Accepted values are:
+            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
 
         Returns
         -------
@@ -402,15 +493,21 @@ class Profile:
             Shape: (len(z), len(M), len(R)).
         """
         Sigma_mean = self._mean_surface_mass_density_profile(
-            *self._surface_mass_density_args(R, z, M), c
+            *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
         )
-        Sigma = self._surface_mass_density_cen(R, z, c, M, force_no_2h=True)
+        Sigma = self._surface_mass_density_cen(
+            R, z, c, M, force_no_2h=True, radius_units=radius_units
+        )
         DeltaSigma = Sigma_mean - Sigma
 
         if self.two_halo == "sum":
-            DeltaSigma += self.excess_surface_mass_density_2h(R, z, M)
+            DeltaSigma += self.excess_surface_mass_density_2h(
+                R, z, M, radius_units=radius_units
+            )
         elif self.two_halo == "max":
-            DeltaSigma_2h = self.excess_surface_mass_density_2h(R, z, M)
+            DeltaSigma_2h = self.excess_surface_mass_density_2h(
+                R, z, M, radius_units=radius_units
+            )
             DeltaSigma = np.maximum(DeltaSigma, DeltaSigma_2h)
 
         if self.offcentering:
@@ -423,7 +520,12 @@ class Profile:
                     self.r_interp,
                     self.r_interp,
                     self._surface_mass_density_cen(
-                        self.r_interp, z, c, M, force_no_2h=False
+                        self.r_interp,
+                        z,
+                        c,
+                        M,
+                        force_no_2h=False,
+                        radius_units=radius_units,
                     ),
                     self.rms_off,
                     DeltaSigma_off,
@@ -454,6 +556,9 @@ class Profile:
             Critical overdensity.
         c: float
             Concentration.
+        radius_units: str
+            Unit for the input radius. Accepted values are:
+            "Mpc", "radians", "degrees", "arcmin", "arcsec".
 
         Returns
         -------
@@ -463,7 +568,7 @@ class Profile:
         """
         return NotImplementedError
 
-    def _mass_density_2h(self, is_excess, R, z, M, bias_z=None):
+    def _mass_density_2h(self, is_excess, R, z, M, bias_z=None, radius_units="Mpc/h"):
         r"""
         Surface or excess surface 2-halo density profile.
 

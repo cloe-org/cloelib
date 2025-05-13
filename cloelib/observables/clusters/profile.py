@@ -69,70 +69,9 @@ class Profile:
         """
         return self.perturbations.background
 
-    def _oper_arrays(self, arr1, arr2, function):
-        r"""Operates function(arr1, arr2). If arr2 is float,
-        output shape is arr1.size else (arr1.size, arr2.size).
-
-        Parameters
-        ----------
-        arr1: np.ndarray
-            Input distances in radians
-        arr2: float, np.ndarray
-            Redshift used to convert between angular and physical units
-
-        Returns
-        -------
-        np.ndarray
-            Distance in Mpc/h. If z is array, output shape is (len(distance), len(z)).
-        """
-        _arr2 = arr2
-        if hasattr(arr2, "__len__") and len(arr2) > 1:
-            _arr2 = arr2[:, np.newaxis]
-        return function(arr1, _arr2)
-
-    def _radians2mpc(self, distance, z):
-        r"""Convert distance from radians to Mpc/h
-
-        Parameters
-        ----------
-        radius: np.ndarray
-            Input distances in radians
-        z: float, np.ndarray
-            Redshift used to convert between angular and physical units
-
-        Returns
-        -------
-        np.ndarray
-            Distance in Mpc/h. If z is array, output shape is (len(distance), len(z)).
-        """
-        return self._oper_arrays(
-            distance,
-            self.background.angular_diameter_distance(z) * self.background.h,  # Mpc / h
-            lambda arr1, arr2: arr1 * arr2,
-        )
-
-    def _mpc2radians(self, distance, z):
-        r"""Convert distance from Mpc/h to radians.
-
-        Parameters
-        ----------
-        radius: np.ndarray
-            Input distances in Mpc/h
-        z: float, np.ndarray
-            Redshift used to convert between angular and physical units
-
-        Returns
-        -------
-        np.ndarray
-            Distance in radians. If z is array, output shape is (len(distance), len(z)).
-        """
-        return self._oper_arrays(
-            distance,
-            self.background.angular_diameter_distance(z) * self.background.h,  # Mpc / h
-            lambda arr1, arr2: arr1 / arr2,
-        )
-
-    def convert_distance(self, distance, units_in, units_out, z=None):
+    def convert_distance(
+        self, distance, units_in, units_out, angular_diameter_distance=None
+    ):
         r"""Convert distances
 
         Parameters
@@ -145,14 +84,16 @@ class Profile:
         units_out: str
             Unit for the input radius. Accepted values are:
             "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
-        z: float, np.ndarray
-            Redshift used to convert between angular and physical units
+        angular_diameter_distance: float, np.ndarray
+            Angular diameter distance (units: Mpc/h) to be used for converting
+            between angular and physical units. If array, it
+            should be in the shape (1, z.size).
 
         Returns
         -------
         np.ndarray
             Distance in output units. If z is array and physical to
-            angular conversion used, output shape is (len(distance), len(z)).
+            angular conversion used, output shape is (distance.size, z.size).
         """
         angular_units_bank = {
             "radians": ap_units.rad,
@@ -174,10 +115,10 @@ class Profile:
             theta = (
                 (distance * angular_units_bank[units_in]).to(ap_units.rad).value
             )  # distance in radians
-            out = self._radians2mpc(theta, z)
+            out = theta * angular_diameter_distance
         elif units_in.lower() not in angular_units_bank:
             # converting to angular units
-            theta = self._mpc2radians(distance, z)  # distance in radians
+            theta = distance / angular_diameter_distance  # distance in radians
             out = (theta * ap_units.rad).to(angular_units_bank[units_out]).value
         else:
             out = (
@@ -324,7 +265,7 @@ class Profile:
 
         Returns
         -------
-        R_reshaped: np.ndarray
+        R_outshape: np.ndarray
             Radius (units: Mpc / h) with shape (1, 1, len(R)) if radius_units="Mpc/h"
             else (len(z), 1, len(R))
         RDelta: np.ndarray
@@ -341,13 +282,16 @@ class Profile:
         ) ** (1.0 / 3.0)
 
         if radius_units.lower() != "mpc/h":
-            R_reshaped = self.convert_distance(R, radius_units, "Mpc/h", z)[
-                :, np.newaxis
-            ]
+            D_A = (
+                self.background.angular_diameter_distance(z) * self.background.h
+            )  # Mpc / h
+            R_outshape = self.convert_distance(
+                R, radius_units, "Mpc/h", D_A[:, np.newaxis]
+            )[:, np.newaxis]
         else:
-            R_reshaped = R[np.newaxis, np.newaxis, :]
+            R_outshape = R[np.newaxis, np.newaxis, :]
 
-        return R_reshaped, RDelta, densityThreshold
+        return R_outshape, RDelta, densityThreshold
 
     def _surface_mass_density_cen(
         self, R, z, c, M, force_no_2h=False, radius_units="Mpc/h"
@@ -619,12 +563,13 @@ class Profile:
             Shape: (len(z), len(M), len(R)).
         """
         # Ensure proper array shapes (z, M, R)
-        z_reshaped = np.asarray(z)[:, np.newaxis, np.newaxis]  # shape (nz, 1, 1)
-        M_reshaped = np.asarray(M)[np.newaxis, :, np.newaxis]  # shape (1, nM, 1)
+        z_outshape = np.asarray(z)[:, np.newaxis, np.newaxis]  # shape (nz, 1, 1)
+        M_outshape = np.asarray(M)[np.newaxis, :, np.newaxis]  # shape (1, nM, 1)
 
         # Calculate base quantities
-        D_A = self.background.angular_diameter_distance(z)[:, np.newaxis, np.newaxis]
-        rho_m = (
+        D_A = self.background.angular_diameter_distance(z)
+        D_A_outshape = D_A[:, np.newaxis, np.newaxis]
+        rho_m_outshape = (
             self.background.Omega_m(z, nonu=False)
             * self.background.rho_crit(z)
             / self.background.h**2
@@ -658,13 +603,19 @@ class Profile:
             bias_z = np.asarray(bias_z)[:, :, np.newaxis]
 
         # Integrand function
-        theta = self.convert_distance(R, radius_units, "radians", z)[:, np.newaxis]
+        theta = self.convert_distance(R, radius_units, "radians", D_A[:, np.newaxis])[
+            :, np.newaxis
+        ]
         if radius_units.lower() != "mpc/h":
             theta = theta.T[np.newaxis, :]
 
         def integrand(kl):
             kl = np.atleast_1d(kl)
-            ll = kl[:, np.newaxis, np.newaxis, np.newaxis] * (1.0 + z_reshaped) * D_A
+            ll = (
+                kl[:, np.newaxis, np.newaxis, np.newaxis]
+                * (1.0 + z_outshape)
+                * D_A_outshape
+            )
             Pk_vals = Pk_interp(z, kl).T
             if is_excess:
                 j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
@@ -672,16 +623,16 @@ class Profile:
                     j2
                     * ll
                     * Pk_vals[:, :, np.newaxis, np.newaxis]
-                    * (1.0 + z_reshaped)
-                    * D_A
+                    * (1.0 + z_outshape)
+                    * D_A_outshape
                 )
             else:
                 return (
                     j0(ll * theta)
                     * ll
                     * Pk_vals[:, :, np.newaxis, np.newaxis]
-                    * (1.0 + z_reshaped)
-                    * D_A
+                    * (1.0 + z_outshape)
+                    * D_A_outshape
                 )
 
         # Integration
@@ -689,8 +640,8 @@ class Profile:
         profile = np.squeeze(profile, axis=0)
 
         # Final strictly 3D calculation
-        denominator = 2.0 * np.pi * (1.0 + z_reshaped) ** 3.0 * D_A**2.0
-        profile = (1.0e-12 * rho_m * bias_z * profile) / denominator
+        denominator = 2.0 * np.pi * (1.0 + z_outshape) ** 3.0 * D_A_outshape**2.0
+        profile = (1.0e-12 * rho_m_outshape * bias_z * profile) / denominator
 
         expected_shape = (
             len(np.atleast_1d(z)),

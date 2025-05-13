@@ -152,27 +152,21 @@ class Profile:
             4.0 * np.pi * units.GRAVITATIONAL_CONSTANT
         )  # Msun/Mpc
         d_a_sources = self.background.angular_diameter_distance(z_sources)  # Mpc
-        d_a_l = self.background.angular_diameter_distance(z)  # Mpc
-        d_m_l = (1.0 + z) * d_a_l
         d_m_sources = (1.0 + z_sources) * d_a_sources
+        d_a_lens = self.background.angular_diameter_distance(z)[:, np.newaxis]  # Mpc
+        d_m_lens = (1.0 + z[:, np.newaxis]) * d_a_lens
         d_h = units.SPEED_OF_LIGHT / 1e3 / self.background.H0  # Mpc
         d_a_lens_source = (
             1.0
             / (1.0 + z_sources)
             * (
                 d_m_sources
-                * np.sqrt(
-                    1.0
-                    + self.background.Omega_k0
-                    * (d_m_l[:, np.newaxis] ** 2.0 / d_h**2.0)
-                )
-                - d_m_l[:, np.newaxis]
-                * np.sqrt(
-                    1.0 + self.background.Omega_k0 * (d_m_sources**2.0 / d_h**2.0)
-                )
+                * np.sqrt(1.0 + self.background.Omega_k0 * (d_m_lens / d_h) ** 2.0)
+                - d_m_lens
+                * np.sqrt(1.0 + self.background.Omega_k0 * (d_m_sources / d_h) ** 2.0)
             )
         )
-        sig_crit = fact * (d_a_sources / (d_a_l[:, np.newaxis] * d_a_lens_source))
+        sig_crit = fact * d_a_sources / (d_a_lens * d_a_lens_source)
 
         return 1e-12 * sig_crit / self.background.h  # Msun pc^{-2} h
 
@@ -215,7 +209,7 @@ class Profile:
         n_zs: float or np.ndarray
             Galaxy number density per redshift
         """
-        n_zs = np.zeros((len(z), self.z_div + 1))
+        n_zs = np.zeros((z.size, self.z_div + 1))
         for z_ind, zed in enumerate(z):
             z_s = np.linspace(zed + 1.0e-5, self.zs_max, self.z_div + 1)
             n_zs[z_ind] = skewnorm.pdf(z_s, self.alpha_nz, self.mean_nz, self.sigma_nz)
@@ -266,12 +260,12 @@ class Profile:
         Returns
         -------
         R_outshape: np.ndarray
-            Radius (units: Mpc / h) with shape (1, 1, len(R)) if radius_units="Mpc/h"
-            else (len(z), 1, len(R))
+            Radius (units: Mpc / h) with shape (1, 1, R.size) if radius_units="Mpc/h"
+            else (z.size, 1, R.size)
         RDelta: np.ndarray
-            Radius of overdensity (units: Mpc / h) with shape (len(z), len(M), 1)
+            Radius of overdensity (units: Mpc / h) with shape (z.size, M.size, 1)
         densityThreshold: np.ndarray
-            Threshold density (units : h * Msun / Mpc**2)  with shape (len(z), 1, 1)
+            Threshold density (units : h * Msun / Mpc**2)  with shape (z.size, 1, 1)
         """
         Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))
         rho_c = self.background.rho_crit(z) / self.background.h**2.0
@@ -326,6 +320,16 @@ class Profile:
         elif self.two_halo == "max":
             return np.maximum(term_1h, term_2h)
 
+    def _check_profile_shape(self, z, M, R, profile):
+        expected_shape = (
+            np.atleast_1d(z).size,
+            np.atleast_1d(M).size,
+            np.atleast_1d(R).size,
+        )
+        assert (
+            profile.shape == expected_shape
+        ), f"Expected shape {expected_shape}, got {profile.shape}"
+
     def _surface_mass_density_cen(
         self, R, z, c, M, force_no_2h=False, radius_units="Mpc/h"
     ):
@@ -354,7 +358,7 @@ class Profile:
         -------
         Sigma: np.ndarray
             Centered surface mass density profile (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
         Sigma = self._surface_mass_density_profile(
             *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
@@ -368,14 +372,7 @@ class Profile:
                 {"radius_units": radius_units},
             )
 
-        expected_shape = (
-            len(np.atleast_1d(z)),
-            len(np.atleast_1d(M)),
-            len(np.atleast_1d(R)),
-        )
-        assert (
-            Sigma.shape == expected_shape
-        ), f"Expected shape {expected_shape}, got {Sigma.shape}"
+        self._check_profile_shape(z, M, R, Sigma)
 
         return Sigma
 
@@ -403,7 +400,7 @@ class Profile:
         -------
         Sigma: np.ndarray
             Centered one-halo surface mass density profile (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
         return NotImplementedError
 
@@ -438,7 +435,7 @@ class Profile:
         -------
         Sigma: np.ndarray
             Surface mass density profile (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
         if force_no_off == False and self.offcentering and self.rms_off >= 1.0e-4:
             Sigma_off = np.zeros_like(R)
@@ -492,7 +489,7 @@ class Profile:
         -------
         DeltaSigma: np.ndarray
             Excess surface mass density profile (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
         Sigma_mean = self._mean_surface_mass_density_profile(
             *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
@@ -564,7 +561,7 @@ class Profile:
         -------
         Sigma_mean: np.ndarray
             Centered one-halo mean surface mass density (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
         return NotImplementedError
 
@@ -584,7 +581,8 @@ class Profile:
         M: np.ndarray
             Mass (Msun / h).
         bias_z: np.ndarray
-            Halo bias. If None, it is computed internally.
+            Halo bias. If None, it is computed internally,
+            else has to be shape (z.size, M.size).
         bessel_term: function
             Bessel term of the integrand with the power spectrum.
             Used to return the surface density or the excess surface density.
@@ -593,14 +591,13 @@ class Profile:
         -------
         profile: np.ndarray
             2-halo surface mass density profile (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
-        # Ensure proper array shapes (z, M, R)
-        z_outshape = np.asarray(z)[:, np.newaxis, np.newaxis]  # shape (nz, 1, 1)
-        M_outshape = np.asarray(M)[np.newaxis, :, np.newaxis]  # shape (1, nM, 1)
-
         # Calculate base quantities
         D_A = self.background.angular_diameter_distance(z)
+
+        # Ensure proper array shapes (z, M, R)
+        z_outshape = np.asarray(z)[:, np.newaxis, np.newaxis]  # shape (nz, 1, 1)
         D_A_outshape = D_A[:, np.newaxis, np.newaxis]
         rho_m_outshape = (
             self.background.Omega_m(z, nonu=False)
@@ -612,7 +609,7 @@ class Profile:
         kl_min, kl_max = 1e-4, 1e2
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
-        if len(z) < 10:
+        if z.size < 10:
             z_for_interp = np.linspace(z.min() * 0.9, z.max() * 1.1, 10)
         else:
             z_for_interp = z
@@ -631,16 +628,14 @@ class Profile:
 
         # Ensure bias has shape (nz, nM, 1)
         if bias_z is None:
-            bias_z = self.halo_statistics.bias(z, M)[:, :, np.newaxis]
-        else:
-            bias_z = np.asarray(bias_z)[:, :, np.newaxis]
+            bias_z = self.halo_statistics.bias(z, M)
+        bias_z = np.asarray(bias_z)[:, :, np.newaxis]
 
         # Integrand function
-        theta = self.convert_distance(R, radius_units, "radians", D_A[:, np.newaxis])[
-            :, np.newaxis
-        ]
+        _theta = self.convert_distance(R, radius_units, "radians", D_A[:, np.newaxis])
+        theta_outshape = _theta[:, np.newaxis]
         if radius_units.lower() != "mpc/h":
-            theta = theta.T[np.newaxis, :]
+            theta_outshape = theta_outshape[:, 0][np.newaxis, np.newaxis, :]
 
         def integrand(kl):
             kl = np.atleast_1d(kl)
@@ -651,7 +646,7 @@ class Profile:
             )
             Pk_vals = Pk_interp(z, kl).T
             return (
-                bessel_term(ll, theta)
+                bessel_term(ll, theta_outshape)
                 * Pk_vals[:, :, np.newaxis, np.newaxis]
                 * (1.0 + z_outshape)
                 * D_A_outshape
@@ -665,14 +660,7 @@ class Profile:
         denominator = 2.0 * np.pi * (1.0 + z_outshape) ** 3.0 * D_A_outshape**2.0
         profile = (1.0e-12 * rho_m_outshape * bias_z * profile) / denominator
 
-        expected_shape = (
-            len(np.atleast_1d(z)),
-            len(np.atleast_1d(M)),
-            len(np.atleast_1d(R)),
-        )
-        assert (
-            profile.shape == expected_shape
-        ), f"Expected shape {expected_shape}, got {profile.shape}"
+        self._check_profile_shape(z, M, R, profile)
 
         return profile
 
@@ -700,7 +688,7 @@ class Profile:
         -------
         Sigma: np.ndarray
             2-halo surface mass density profile (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
         return self._mass_density_2h(R, z, M, bias_z, bessel_term=self._bessel_term)
 
@@ -738,7 +726,7 @@ class Profile:
         -------
         DeltaSigma: np.ndarray
             2-halo surface mass density profile (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
         return self._mass_density_2h(
             R,
@@ -868,7 +856,7 @@ class ProfileNFW(Profile):
         -------
         Sigma: np.ndarray
             NFW surface mass density profile (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
         Rs = RDelta / c
         x = R / Rs
@@ -903,7 +891,7 @@ class ProfileNFW(Profile):
         -------
         Sigma_mean: np.ndarray
             NFW mean surface mass density (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
         Rs = RDelta / c
         x = R / Rs
@@ -994,7 +982,7 @@ class ProfileBMO(Profile):
         -------
         Sigma: np.ndarray
             BMO surface mass density profile (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
         Rs = RDelta / c
         x = R / Rs
@@ -1073,7 +1061,7 @@ class ProfileBMO(Profile):
         -------
         Sigma_mean: np.ndarray
             BMO mean surface mass density (units : h * Msun / pc**2).
-            Shape: (len(z), len(M), len(R)).
+            Shape: (z.size, M.size, R.size).
         """
         Rs = RDelta / c
         x = R / Rs

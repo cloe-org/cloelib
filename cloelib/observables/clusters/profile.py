@@ -327,11 +327,12 @@ class Profile:
             *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
         )
 
-        if force_no_2h == False and self.two_halo == "sum":
-            Sigma += self.surface_mass_density_2h(R, z, M)
-        elif force_no_2h == False and self.two_halo == "max":
-            Sigma_2h = self.surface_mass_density_2h(R, z, M)
-            Sigma = np.maximum(Sigma, Sigma_2h)
+        if not force_no_2h:
+            _Sigma_2h = self.surface_mass_density_2h(R, z, M)
+            if self.two_halo == "sum":
+                Sigma += _Sigma_2h
+            elif self.two_halo == "max":
+                Sigma = np.maximum(Sigma, _Sigma_2h)
 
         expected_shape = (
             len(np.atleast_1d(z)),

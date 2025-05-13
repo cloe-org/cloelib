@@ -293,6 +293,39 @@ class Profile:
 
         return R_outshape, RDelta, densityThreshold
 
+    def _combine_2h(self, term_1h, func_2h, args_2h=(), kwargs_2h=None):
+        r"""Combine 2h term.
+
+        Parameters
+        ----------
+        term_1h: np.ndarray
+            1 halo term.
+        func_2d: function
+            Function that computers the 2h term
+        args_2h: list, tuple
+            Positional arguments for func_2d
+        kwargs_2h: None, dict
+            Keyword arguments for func_2d
+
+        Returns
+        -------
+        np.ndarray
+            Combination between 1h and 2h terms
+        """
+
+        if self.two_halo == "None":
+            return term_1h
+
+        if kwargs_2h is None:
+            kwargs_2h = {}
+
+        term_2h = func_2h(*args_2h, **kwargs_2h)
+
+        if self.two_halo == "sum":
+            return term_1h + term_2h
+        elif self.two_halo == "max":
+            return np.maximum(term_1h, term_2h)
+
     def _surface_mass_density_cen(
         self, R, z, c, M, force_no_2h=False, radius_units="Mpc/h"
     ):
@@ -328,11 +361,12 @@ class Profile:
         )
 
         if not force_no_2h:
-            _Sigma_2h = self.surface_mass_density_2h(R, z, M)
-            if self.two_halo == "sum":
-                Sigma += _Sigma_2h
-            elif self.two_halo == "max":
-                Sigma = np.maximum(Sigma, _Sigma_2h)
+            Sigma = self._combine_2h(
+                Sigma,
+                self.surface_mass_density_2h,
+                (R, z, M),
+                {"radius_units": radius_units},
+            )
 
         expected_shape = (
             len(np.atleast_1d(z)),
@@ -468,15 +502,13 @@ class Profile:
         )
         DeltaSigma = Sigma_mean - Sigma
 
-        if self.two_halo == "sum":
-            DeltaSigma += self.excess_surface_mass_density_2h(
-                R, z, M, radius_units=radius_units
-            )
-        elif self.two_halo == "max":
-            DeltaSigma_2h = self.excess_surface_mass_density_2h(
-                R, z, M, radius_units=radius_units
-            )
-            DeltaSigma = np.maximum(DeltaSigma, DeltaSigma_2h)
+        # 2h term
+        DeltaSigma = self._combine_2h(
+            DeltaSigma,
+            self.excess_surface_mass_density_2h,
+            (R, z, M),
+            {"radius_units": radius_units},
+        )
 
         if self.offcentering:
             if self.rms_off >= 1.0e-4 and self.f_off >= 1.0e-4:

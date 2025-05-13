@@ -605,9 +605,17 @@ class Profile:
             / self.background.h**2
         )[:, np.newaxis, np.newaxis]
 
-        # Power spectrum interpolation
-        kl_min, kl_max = 1e-4, 1e2
-        kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
+        # Ensure bias has shape (nz, nM, 1)
+        if bias_z is None:
+            bias_z = self.halo_statistics.bias(z, M)
+        bias_z_outshape = np.asarray(bias_z)[:, :, np.newaxis]
+
+        # Two point correlation part
+
+        ## 1. Power spectrum interpolation
+
+        kl_min, kl_max, kl_num = 1e-4, 1e2, 500
+        kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), kl_num)
 
         if z.size < 10:
             z_for_interp = np.linspace(z.min() * 0.9, z.max() * 1.1, 10)
@@ -626,39 +634,29 @@ class Profile:
             ),
         )
 
-        # Ensure bias has shape (nz, nM, 1)
-        if bias_z is None:
-            bias_z = self.halo_statistics.bias(z, M)
-        bias_z = np.asarray(bias_z)[:, :, np.newaxis]
-
-        # Integrand function
+        ## 2. Get radial distance in radians
         _theta = self.convert_distance(R, radius_units, "radians", D_A[:, np.newaxis])
         theta_outshape = _theta[:, np.newaxis]
         if radius_units.lower() != "mpc/h":
             theta_outshape = theta_outshape[:, 0][np.newaxis, np.newaxis, :]
 
+        ## 3. Integrand function
         def integrand(kl):
-            kl = np.atleast_1d(kl)
-            ll = (
-                kl[:, np.newaxis, np.newaxis, np.newaxis]
-                * (1.0 + z_outshape)
-                * D_A_outshape
-            )
-            Pk_vals = Pk_interp(z, kl).T
-            return (
-                bessel_term(ll, theta_outshape)
-                * Pk_vals[:, :, np.newaxis, np.newaxis]
-                * (1.0 + z_outshape)
-                * D_A_outshape
-            )
+            ll = kl * (1.0 + z_outshape) * D_A_outshape
+            Pk_vals = Pk_interp(z, kl)
+            return bessel_term(ll, theta_outshape) * Pk_vals[:, np.newaxis]
 
-        # Integration
-        profile = quad_vec(integrand, kl_min, kl_max, epsrel=1e-1)[0]
-        profile = np.squeeze(profile, axis=0)
+        ## 4. Integration
+        two_point_corr_outshape = (
+            quad_vec(integrand, kl_min, kl_max, epsrel=1e-1)[0]
+            * (1.0 + z_outshape)
+            * D_A_outshape
+        )
 
         # Final strictly 3D calculation
-        denominator = 2.0 * np.pi * (1.0 + z_outshape) ** 3.0 * D_A_outshape**2.0
-        profile = (1.0e-12 * rho_m_outshape * bias_z * profile) / denominator
+        profile = (
+            1.0e-12 * rho_m_outshape * bias_z_outshape * two_point_corr_outshape
+        ) / (2.0 * np.pi * (1.0 + z_outshape) ** 3.0 * D_A_outshape**2.0)
 
         self._check_profile_shape(z, M, R, profile)
 

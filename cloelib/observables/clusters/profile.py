@@ -132,14 +132,17 @@ class Profile:
             lambda arr1, arr2: arr1 / arr2,
         )
 
-    def radius2mpc(self, radius, radius_units, z):
-        r"""Convert radius to Mpc/h
+    def convert_distance(self, distance, units_in, units_out, z=None):
+        r"""Convert distances
 
         Parameters
         ----------
-        radius: np.ndarray
+        distance: np.ndarray
             Input distances
-        radius_units: str
+        units_in: str
+            Unit for the input radius. Accepted values are:
+            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
+        units_out: str
             Unit for the input radius. Accepted values are:
             "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
         z: float, np.ndarray
@@ -148,24 +151,42 @@ class Profile:
         Returns
         -------
         np.ndarray
-            Radius in Mpc/h. If z is array, output shape is (len(R), len(z)).
+            Distance in output units. If z is array and physical to
+            angular conversion used, output shape is (len(distance), len(z)).
         """
-        if radius_units.lower() == "mpc/h":
-            return radius
-        units_bank = {
+        angular_units_bank = {
             "radians": ap_units.rad,
             "degrees": ap_units.deg,
             "arcmin": ap_units.arcmin,
             "arcsec": ap_units.arcsec,
         }
-        units_in = units_bank.get(radius_units.lower(), None)
-        if units_in is None:
-            raise ValueError(
-                f"Units provideds (={radius_units}) not valid,"
-                f" it must be in {list(units_bank.keys())}"
+        _valid_units = ["mpc/h", *angular_units_bank.keys()]
+        if units_in.lower() not in _valid_units:
+            raise ValueError(f"units_in (={units_in}) must be in {_valid_units}")
+        if units_out.lower() not in _valid_units:
+            raise ValueError(f"units_out (={units_out}) must be in {_valid_units}")
+
+        if units_in.lower() == units_out.lower():
+            return radius
+
+        if units_out.lower() not in angular_units_bank:
+            # converting to mpc/h
+            theta = (
+                (distance * angular_units_bank[units_in]).to(ap_units.rad).value
+            )  # distance in radians
+            out = self._radians2mpc(theta, z)
+        elif units_in.lower() not in angular_units_bank:
+            # converting to angular units
+            theta = self._mpc2radians(distance, z)  # distance in radians
+            out = (theta * ap_units.rad).to(angular_units_bank[units_out]).value
+        else:
+            out = (
+                (distance * angular_units_bank[units_in])
+                .to(angular_units_bank[units_out])
+                .value
             )
-        theta = (radius * units_in).to(ap_units.rad).value  # radius in radians
-        return self._radians2mpc(theta, z)
+
+        return out
 
     def sigma_crit(self, z, z_sources):
         r"""
@@ -319,8 +340,10 @@ class Profile:
             3.0 * M[np.newaxis, :, np.newaxis] / 4.0 / np.pi / densityThreshold
         ) ** (1.0 / 3.0)
 
-        if radius_units != "Mpc/h":
-            R_reshaped = self.radius2mpc(R, radius_units, z)[:, np.newaxis]
+        if radius_units.lower() != "mpc/h":
+            R_reshaped = self.convert_distance(R, radius_units, "Mpc/h", z)[
+                :, np.newaxis
+            ]
         else:
             R_reshaped = R[np.newaxis, np.newaxis, :]
 
@@ -367,9 +390,9 @@ class Profile:
             Sigma = np.maximum(Sigma, Sigma_2h)
 
         expected_shape = (
-            len(np.atleast_1d(z.squeeze())),
-            len(np.atleast_1d(M.squeeze())),
-            len(np.atleast_1d(R.squeeze())),
+            len(np.atleast_1d(z)),
+            len(np.atleast_1d(M)),
+            len(np.atleast_1d(R)),
         )
         assert (
             Sigma.shape == expected_shape

@@ -619,24 +619,14 @@ class Profile:
             Shape: (len(z), len(M), len(R)).
         """
         # Ensure proper array shapes (z, M, R)
-        z = np.asarray(z)[:, np.newaxis, np.newaxis]  # shape (nz, 1, 1)
-        M = np.asarray(M)[np.newaxis, :, np.newaxis]  # shape (1, nM, 1)
-        R = np.asarray(R)[np.newaxis, np.newaxis, :]  # shape (1, 1, nR)
-
-        # Squeeze z and M
-        z_squeeze = np.atleast_1d(z.squeeze())
-        M_squeeze = np.atleast_1d(M.squeeze())
+        z_reshaped = np.asarray(z)[:, np.newaxis, np.newaxis]  # shape (nz, 1, 1)
+        M_reshaped = np.asarray(M)[np.newaxis, :, np.newaxis]  # shape (1, nM, 1)
 
         # Calculate base quantities
-        D_A = self.background.angular_diameter_distance(z_squeeze)[
-            :, np.newaxis, np.newaxis
-        ]
-
-        theta = R / D_A
-
+        D_A = self.background.angular_diameter_distance(z)[:, np.newaxis, np.newaxis]
         rho_m = (
-            self.background.Omega_m(z_squeeze, nonu=False)
-            * self.background.rho_crit(z_squeeze)
+            self.background.Omega_m(z, nonu=False)
+            * self.background.rho_crit(z)
             / self.background.h**2
         )[:, np.newaxis, np.newaxis]
 
@@ -644,10 +634,10 @@ class Profile:
         kl_min, kl_max = 1e-4, 1e2
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
-        if len(z_squeeze) < 10:
+        if len(z) < 10:
             z_for_interp = np.linspace(z.min() * 0.9, z.max() * 1.1, 10)
         else:
-            z_for_interp = z_squeeze
+            z_for_interp = z
 
         Pk_interp = interpolate.RectBivariateSpline(
             z_for_interp,
@@ -663,24 +653,34 @@ class Profile:
 
         # Ensure bias has shape (nz, nM, 1)
         if bias_z is None:
-            bias_z = self.halo_statistics.bias(z_squeeze, M_squeeze)[:, :, np.newaxis]
+            bias_z = self.halo_statistics.bias(z, M)[:, :, np.newaxis]
         else:
             bias_z = np.asarray(bias_z)[:, :, np.newaxis]
 
         # Integrand function
+        theta = self.convert_distance(R, radius_units, "radians", z)[:, np.newaxis]
+        if radius_units.lower() != "mpc/h":
+            theta = theta.T[np.newaxis, :]
+
         def integrand(kl):
             kl = np.atleast_1d(kl)
-            ll = kl[:, np.newaxis, np.newaxis, np.newaxis] * (1.0 + z) * D_A
-            Pk_vals = Pk_interp(z_squeeze, kl).T
+            ll = kl[:, np.newaxis, np.newaxis, np.newaxis] * (1.0 + z_reshaped) * D_A
+            Pk_vals = Pk_interp(z, kl).T
             if is_excess:
                 j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
-                return j2 * ll * Pk_vals[:, :, np.newaxis, np.newaxis] * (1.0 + z) * D_A
+                return (
+                    j2
+                    * ll
+                    * Pk_vals[:, :, np.newaxis, np.newaxis]
+                    * (1.0 + z_reshaped)
+                    * D_A
+                )
             else:
                 return (
                     j0(ll * theta)
                     * ll
                     * Pk_vals[:, :, np.newaxis, np.newaxis]
-                    * (1.0 + z)
+                    * (1.0 + z_reshaped)
                     * D_A
                 )
 
@@ -689,13 +689,13 @@ class Profile:
         profile = np.squeeze(profile, axis=0)
 
         # Final strictly 3D calculation
-        denominator = 2.0 * np.pi * (1.0 + z) ** 3.0 * D_A**2.0
+        denominator = 2.0 * np.pi * (1.0 + z_reshaped) ** 3.0 * D_A**2.0
         profile = (1.0e-12 * rho_m * bias_z * profile) / denominator
 
         expected_shape = (
-            len(np.atleast_1d(z.squeeze())),
-            len(np.atleast_1d(M.squeeze())),
-            len(np.atleast_1d(R.squeeze())),
+            len(np.atleast_1d(z)),
+            len(np.atleast_1d(M)),
+            len(np.atleast_1d(R)),
         )
         assert (
             profile.shape == expected_shape
@@ -703,7 +703,7 @@ class Profile:
 
         return profile
 
-    def surface_mass_density_2h(self, R, z, M, bias_z=None):
+    def surface_mass_density_2h(self, R, z, M, bias_z=None, radius_units="Mpc/h"):
         r"""
         Surface 2-halo density profile.
 
@@ -719,6 +719,9 @@ class Profile:
             Mass (Msun / h).
         bias_z: np.ndarray (optional)
             Halo bias. If None, it is computed internally.
+        radius_units: str
+            Unit for the input radius. Accepted values are:
+            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
 
         Returns
         -------
@@ -728,7 +731,9 @@ class Profile:
         """
         return self._mass_density_2h(False, R, z, M, bias_z)
 
-    def excess_surface_mass_density_2h(self, R, z, M, bias_z=None):
+    def excess_surface_mass_density_2h(
+        self, R, z, M, bias_z=None, radius_units="Mpc/h"
+    ):
         r"""
         Excess surface 2-halo density profile.
 
@@ -745,6 +750,9 @@ class Profile:
             Mass (Msun / h).
         bias_z: np.ndarray (optional)
             Halo bias. If None, it is computed internally.
+        radius_units: str
+            Unit for the input radius. Accepted values are:
+            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
 
         Returns
         -------
@@ -752,7 +760,7 @@ class Profile:
             2-halo surface mass density profile (units : h * Msun / pc**2).
             Shape: (len(z), len(M), len(R)).
         """
-        return self._mass_density_2h(True, R, z, M, bias_z)
+        return self._mass_density_2h(True, R, z, M, bias_z, radius_units=radius_units)
 
     def _f_term(self, x):
         r"""
@@ -883,9 +891,6 @@ class ProfileNFW(Profile):
         rho_s = Delta * c**3.0 / (3.0 * m_nfw)
 
         Sigma = 2.0 * rho_s * Rs * F * 1.0e-12
-
-        for _v in ("Rs", "x", "Sigma"):
-            print(f" - {_v}:", locals()[_v].shape)
 
         return Sigma
 

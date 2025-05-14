@@ -797,15 +797,11 @@ class ProfileNFW(Profile):
         <https://ui.adsabs.harvard.edu/abs/2002A%26A...390..821G/abstract>`_.
         """
         if x < 1.0:
-            return (1.0 - np.arccosh(1.0 / x) / np.sqrt(1.0 - x**2.0)) / (
-                x**2.0 - 1.0
-            )
+            return (1.0 - np.arccosh(1.0 / x) / np.sqrt(1.0 - x**2.0)) / (x**2.0 - 1.0)
         if x == 1.0:
             return 1.0 / 3.0
         if x > 1.0:
-            return (1.0 - np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)) / (
-                x**2.0 - 1.0
-            )
+            return (1.0 - np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)) / (x**2.0 - 1.0)
 
     def _g_term(self, x):
         r"""
@@ -1102,14 +1098,11 @@ class ProfileBMO(Profile):
 
         G = np.vectorize(self._g_term)(x)
         term3 = (
-            np.pi * (3.0 * tau**2.0 - 1.0)
-            + 2.0 * tau * (tau**2.0 - 3.0) * np.log(tau)
+            np.pi * (3.0 * tau**2.0 - 1.0) + 2.0 * tau * (tau**2.0 - 3.0) * np.log(tau)
         ) / tau
 
         term4 = tau**3.0 * np.sqrt(tau**2.0 + x**2.0)
-        term5 = (
-            -(tau**3.0) * np.pi * (4.0 * (tau**2.0 + x**2.0) - tau**2.0 - 1.0)
-        )
+        term5 = -(tau**3.0) * np.pi * (4.0 * (tau**2.0 + x**2.0) - tau**2.0 - 1.0)
         term6 = -(tau**2.0) * (tau**4.0 - 1.0) + +(tau**2.0 + x**2.0) * (
             3.0 * tau**4.0 - 6.0 * tau**2.0 - 1.0
         )

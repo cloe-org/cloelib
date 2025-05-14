@@ -2,7 +2,7 @@ import pytest
 from cloelib.cosmology.cosmology import Background
 
 
-def test_background_runtume():
+def test_background_runtime():
     assert hasattr(Background, '_is_runtime_protocol')
 
 def test_background_required_methods():

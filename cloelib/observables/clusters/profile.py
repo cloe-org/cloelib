@@ -210,7 +210,9 @@ class Profile:
             Centered surface mass density profile (units : h * Msun / pc**2).
             Shape: (len(z), len(M), len(R)).
         """
-        Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))[:, np.newaxis]
+        Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))[
+            :, np.newaxis
+        ]
         rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
         densityThreshold = Delta_crit * rho_c
 
@@ -220,7 +222,7 @@ class Profile:
             R[np.newaxis, np.newaxis, :],
             RDelta[:, :, np.newaxis],
             c,
-            densityThreshold[:, :, np.newaxis]
+            densityThreshold[:, :, np.newaxis],
         )
 
         if force_no_2h == False and self.two_halo == "sum":
@@ -230,12 +232,13 @@ class Profile:
             Sigma = np.maximum(Sigma, Sigma_2h)
 
         expected_shape = (
-            len(np.atleast_1d(z.squeeze())), 
-            len(np.atleast_1d(M.squeeze())), 
-            len(np.atleast_1d(R.squeeze()))
+            len(np.atleast_1d(z.squeeze())),
+            len(np.atleast_1d(M.squeeze())),
+            len(np.atleast_1d(R.squeeze())),
         )
-        assert Sigma.shape == expected_shape, \
-            f"Expected shape {expected_shape}, got {Sigma.shape}"
+        assert (
+            Sigma.shape == expected_shape
+        ), f"Expected shape {expected_shape}, got {Sigma.shape}"
 
         return Sigma
 
@@ -268,7 +271,7 @@ class Profile:
         r"""
         Total surface mass density profile.
 
-        Computes the total surface mass density profile at radius R, 
+        Computes the total surface mass density profile at radius R,
         including the contribution from 2-halo term and miscetering.
 
         Parameters
@@ -339,19 +342,19 @@ class Profile:
             Excess surface mass density profile (units : h * Msun / pc**2).
             Shape: (len(z), len(M), len(R)).
         """
-        Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))[:, np.newaxis]
+        Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))[
+            :, np.newaxis
+        ]
         rho_c = self.background.rho_crit(z[:, np.newaxis]) / self.background.h**2.0
         densityThreshold = Delta_crit * rho_c
 
         RDelta = (3.0 * M / 4.0 / np.pi / densityThreshold) ** (1.0 / 3.0)
-        Rs = RDelta / c
-        x = R / Rs
 
         Sigma_mean = self._mean_surface_mass_density_profile(
             R[np.newaxis, np.newaxis, :],
             RDelta[:, :, np.newaxis],
             c,
-            densityThreshold[:, :, np.newaxis]
+            densityThreshold[:, :, np.newaxis],
         )
         Sigma = self._surface_mass_density_cen(R, z, c, M, force_no_2h=True)
         DeltaSigma = Sigma_mean - Sigma
@@ -412,7 +415,7 @@ class Profile:
         """
         return NotImplementedError
 
-    def _mass_density_2h(self, is_excess, R, z, M, bias_z=None):
+    def _mass_density_2h(self, R, z, M, bias_z, bessel_term):
         r"""
         Surface or excess surface 2-halo density profile.
 
@@ -421,17 +424,18 @@ class Profile:
 
         Parameters
         ----------
-        is_excess: bool
-            If True, compute the excess surface density.
-            Compute the surface density otherwise.
         R: np.ndarray
             Radial points (units : Mpc / h)
         z: np.ndarray
             Redshift.
         M: np.ndarray
             Mass (Msun / h).
-        bias_z: np.ndarray (optional)
+        bias_z: np.ndarray
             Halo bias. If None, it is computed internally.
+        bessel_term: function
+            Bessel term of the integrand with the power spectrum.
+            Used to return the surface density or the excess surface density.
+            It should take (ll, theta) as inputs.
 
         Returns
         -------
@@ -449,9 +453,9 @@ class Profile:
         M_squeeze = np.atleast_1d(M.squeeze())
 
         # Calculate base quantities
-        D_A = self.background.angular_diameter_distance(
-            z_squeeze
-        )[:, np.newaxis, np.newaxis]
+        D_A = self.background.angular_diameter_distance(z_squeeze)[
+            :, np.newaxis, np.newaxis
+        ]
 
         theta = R / D_A
 
@@ -466,24 +470,25 @@ class Profile:
         kl_array = np.logspace(np.log10(kl_min), np.log10(kl_max), 500)
 
         if len(z_squeeze) < 10:
-            z_for_interp = np.linspace(z.min()*0.9, z.max()*1.1, 10)
+            z_for_interp = np.linspace(z.min() * 0.9, z.max() * 1.1, 10)
         else:
             z_for_interp = z_squeeze
 
         Pk_interp = interpolate.RectBivariateSpline(
-            z_for_interp, kl_array,
+            z_for_interp,
+            kl_array,
             self.perturbations.matter_power_spectrum(
-                z_for_interp[:, np.newaxis], kl_array,
-                hubble_units=True, k_hunit=True,
-                nonu=self.halo_statistics.nonu
-            )
+                z_for_interp[:, np.newaxis],
+                kl_array,
+                hubble_units=True,
+                k_hunit=True,
+                nonu=self.halo_statistics.nonu,
+            ),
         )
 
         # Ensure bias has shape (nz, nM, 1)
         if bias_z is None:
-            bias_z = self.halo_statistics.bias(
-                z_squeeze, M_squeeze
-            )[:, :, np.newaxis]
+            bias_z = self.halo_statistics.bias(z_squeeze, M_squeeze)[:, :, np.newaxis]
         else:
             bias_z = np.asarray(bias_z)[:, :, np.newaxis]
 
@@ -492,33 +497,29 @@ class Profile:
             kl = np.atleast_1d(kl)
             ll = kl[:, np.newaxis, np.newaxis, np.newaxis] * (1.0 + z) * D_A
             Pk_vals = Pk_interp(z_squeeze, kl).T
-            if is_excess:
-                j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
-                return (
-                    j2 * ll * Pk_vals[:, :, np.newaxis, np.newaxis]
-                    * (1.0 + z) * D_A
-                )
-            else:
-                return (
-                    j0(ll * theta) * ll * Pk_vals[:, :, np.newaxis, np.newaxis]
-                    * (1.0 + z) * D_A
-                )
+            return (
+                bessel_term(ll, theta)
+                * Pk_vals[:, :, np.newaxis, np.newaxis]
+                * (1.0 + z)
+                * D_A
+            )
 
         # Integration
         profile = quad_vec(integrand, kl_min, kl_max, epsrel=1e-1)[0]
         profile = np.squeeze(profile, axis=0)
 
         # Final strictly 3D calculation
-        denominator = 2.0 * np.pi * (1.0 + z)**3.0 * D_A**2.0
-        profile = (1.e-12 * rho_m * bias_z * profile) / denominator
+        denominator = 2.0 * np.pi * (1.0 + z) ** 3.0 * D_A**2.0
+        profile = (1.0e-12 * rho_m * bias_z * profile) / denominator
 
         expected_shape = (
-            len(np.atleast_1d(z.squeeze())), 
-            len(np.atleast_1d(M.squeeze())), 
-            len(np.atleast_1d(R.squeeze()))
+            len(np.atleast_1d(z.squeeze())),
+            len(np.atleast_1d(M.squeeze())),
+            len(np.atleast_1d(R.squeeze())),
         )
-        assert profile.shape == expected_shape, \
-            f"Expected shape {expected_shape}, got {profile.shape}"
+        assert (
+            profile.shape == expected_shape
+        ), f"Expected shape {expected_shape}, got {profile.shape}"
 
         return profile
 
@@ -545,7 +546,14 @@ class Profile:
             2-halo surface mass density profile (units : h * Msun / pc**2).
             Shape: (len(z), len(M), len(R)).
         """
-        return self._mass_density_2h(False, R, z, M, bias_z)
+        return self._mass_density_2h(R, z, M, bias_z, bessel_term=self._bessel_term)
+
+    def _bessel_term(self, ll, theta):
+        return j0(ll * theta) * ll
+
+    def _bessel_term_exess(self, ll, theta):
+        j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
+        return j2 * ll
 
     def excess_surface_mass_density_2h(self, R, z, M, bias_z=None):
         r"""
@@ -571,7 +579,9 @@ class Profile:
             2-halo surface mass density profile (units : h * Msun / pc**2).
             Shape: (len(z), len(M), len(R)).
         """
-        return self._mass_density_2h(True, R, z, M, bias_z)
+        return self._mass_density_2h(
+            R, z, M, bias_z, bessel_term=self._bessel_term_exess
+        )
 
     def _f_term(self, x):
         r"""

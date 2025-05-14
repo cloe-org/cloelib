@@ -65,9 +65,9 @@ def test_halostatistics(HS, HS_tinker, HS_castro):
 
 
 def test_profiles(profile_nfw, profile_bmo):
-    R_test = 1
+    R_test = np.logspace(-1, 1, 5)
     z_test = np.linspace(0.01, 0.5, 20)
-    M_test = 5e14
+    M_test = np.array([5e14])
     M_test_arr = np.array([5e14])
     c_test = 4.0
     z_sources_test = np.linspace(0.6, 1, 21)

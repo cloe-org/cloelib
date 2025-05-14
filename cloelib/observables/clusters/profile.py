@@ -639,13 +639,14 @@ class Profile:
         _theta = self.convert_distance(R, radius_units, "radians", D_A[:, np.newaxis])
         theta_outshape = _theta[:, np.newaxis]
         if radius_units.lower() != "mpc/h":
-            theta_outshape = theta_outshape[:, 0][np.newaxis, np.newaxis, :]
+            # in this case, theta_outshape was missing z dimension
+            theta_outshape = theta_outshape[np.newaxis, np.newaxis, :, 0]
 
         ## 3. Integrand function
         def integrand(kl):
             ll = kl * (1.0 + z_outshape) * D_A_outshape
-            Pk_vals = Pk_interp(z, kl)
-            return bessel_term(ll, theta_outshape) * Pk_vals[:, np.newaxis]
+            Pk_vals = Pk_interp(z, kl)[:, np.newaxis]  # add axis for correct shape
+            return bessel_term(ll, theta_outshape) * Pk_vals
 
         ## 4. Integration
         two_point_corr_outshape = (

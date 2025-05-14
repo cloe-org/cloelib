@@ -586,6 +586,7 @@ class Profile:
         bessel_term: function
             Bessel term of the integrand with the power spectrum.
             Used to return the surface density or the excess surface density.
+            It should take (ll, theta) as inputs.
 
         Returns
         -------
@@ -662,6 +663,13 @@ class Profile:
 
         return profile
 
+    def _bessel_term(self, ll, theta):
+        return j0(ll * theta) * ll
+
+    def _bessel_term_exess(self, ll, theta):
+        j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
+        return j2 * ll
+
     def surface_mass_density_2h(self, R, z, M, bias_z=None, radius_units="Mpc/h"):
         r"""
         Surface 2-halo density profile.
@@ -689,13 +697,6 @@ class Profile:
             Shape: (z.size, M.size, R.size).
         """
         return self._mass_density_2h(R, z, M, bias_z, bessel_term=self._bessel_term)
-
-    def _bessel_term(self, ll, theta):
-        return j0(ll * theta) * ll
-
-    def _bessel_term_exess(self, ll, theta):
-        j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
-        return j2 * ll
 
     def excess_surface_mass_density_2h(
         self, R, z, M, bias_z=None, radius_units="Mpc/h"

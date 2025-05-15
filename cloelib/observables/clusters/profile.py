@@ -699,7 +699,7 @@ class Profile:
             2-halo surface mass density profile (units : h * Msun / pc**2).
             Shape: (z.size, M.size, R.size).
         """
-        return self._mass_density_2h(R, z, M, bias_z, bessel_term=self._bessel_term)
+        return self._mass_density_2h(R, z, M, bias_z, bessel_term=self._bessel_term, radius_units=radius_units)
 
     def excess_surface_mass_density_2h(
         self, R, z, M, bias_z=None, radius_units="Mpc/h"

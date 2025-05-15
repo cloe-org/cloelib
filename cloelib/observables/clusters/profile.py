@@ -267,9 +267,11 @@ class Profile:
         densityThreshold: np.ndarray
             Threshold density (units : h * Msun / Mpc**2)  with shape (z.size, 1, 1)
         """
-        Delta_crit = np.atleast_1d(self.halo_statistics.get_Delta_crit(z))
-        rho_c = self.background.rho_crit(z) / self.background.h**2.0
-        densityThreshold = (Delta_crit * rho_c)[:, np.newaxis, np.newaxis]
+        densityThreshold = np.atleast_1d(
+            self.halo_statistics.get_Delta_crit(z)
+            * self.background.rho_crit(z)
+            / self.background.h**2.0
+        )[:, np.newaxis, np.newaxis]
 
         RDelta = (
             3.0 * M[np.newaxis, :, np.newaxis] / 4.0 / np.pi / densityThreshold

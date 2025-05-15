@@ -404,7 +404,7 @@ class Profile:
             Centered one-halo surface mass density profile (units : h * Msun / pc**2).
             Shape: (z.size, M.size, R.size).
         """
-        return NotImplementedError
+        raise NotImplementedError
 
     def surface_mass_density(
         self, R, z, c, M, force_no_2h=False, force_no_off=False, radius_units="Mpc/h"
@@ -565,7 +565,7 @@ class Profile:
             Centered one-halo mean surface mass density (units : h * Msun / pc**2).
             Shape: (z.size, M.size, R.size).
         """
-        return NotImplementedError
+        raise NotImplementedError
 
     def _mass_density_2h(self, R, z, M, bias_z, bessel_term, radius_units="Mpc/h"):
         r"""
@@ -755,7 +755,7 @@ class Profile:
         float
             One-Halo profile F term.
         """
-        return NotImplementedError
+        raise NotImplementedError
 
     def _g_term(self, x):
         r"""
@@ -773,7 +773,7 @@ class Profile:
         float
             One-Halo profile G term.
         """
-        return NotImplementedError
+        raise NotImplementedError
 
 
 class ProfileNFW(Profile):

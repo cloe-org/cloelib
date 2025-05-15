@@ -11,6 +11,11 @@ from ...auxiliary import units
 from .halo_statistics import HaloStatistics
 
 
+def _bessel_j2(x):
+    """Bessel function j2"""
+    return 2.0 / x * j1(x) - j0(x)
+
+
 class Profile:
     def __init__(
         self,
@@ -567,7 +572,7 @@ class Profile:
         """
         raise NotImplementedError
 
-    def _mass_density_2h(self, R, z, M, bias_z, bessel_term, radius_units="Mpc/h"):
+    def _mass_density_2h(self, R, z, M, bias_z, bessel_function, radius_units="Mpc/h"):
         r"""
         Surface or excess surface 2-halo density profile.
 
@@ -585,10 +590,10 @@ class Profile:
         bias_z: np.ndarray
             Halo bias. If None, it is computed internally,
             else has to be shape (z.size, M.size).
-        bessel_term: function
-            Bessel term of the integrand with the power spectrum.
+        bessel_function: function
+            Bessel function that goes in the integrand with the power spectrum.
             Used to return the surface density or the excess surface density.
-            It should take (ll, theta) as inputs.
+            It should take (ll*theta) as input.
 
         Returns
         -------
@@ -648,7 +653,7 @@ class Profile:
         def integrand(kl):
             ll = kl * (1.0 + z_outshape) * D_A_outshape
             Pk_vals = Pk_interp(z, kl)[:, np.newaxis]  # add axis for correct shape
-            return bessel_term(ll, theta_outshape) * Pk_vals
+            return bessel_function(ll * theta_outshape) * ll * Pk_vals
 
         ## 4. Integration
         two_point_corr_outshape = (
@@ -665,13 +670,6 @@ class Profile:
         self._check_profile_shape(z, M, R, profile)
 
         return profile
-
-    def _bessel_term(self, ll, theta):
-        return j0(ll * theta) * ll
-
-    def _bessel_term_exess(self, ll, theta):
-        j2 = 2.0 / (ll * theta) * j1(ll * theta) - j0(ll * theta)
-        return j2 * ll
 
     def surface_mass_density_2h(self, R, z, M, bias_z=None, radius_units="Mpc/h"):
         r"""
@@ -699,7 +697,9 @@ class Profile:
             2-halo surface mass density profile (units : h * Msun / pc**2).
             Shape: (z.size, M.size, R.size).
         """
-        return self._mass_density_2h(R, z, M, bias_z, bessel_term=self._bessel_term, radius_units=radius_units)
+        return self._mass_density_2h(
+            R, z, M, bias_z, bessel_function=j0, radius_units=radius_units
+        )
 
     def excess_surface_mass_density_2h(
         self, R, z, M, bias_z=None, radius_units="Mpc/h"
@@ -735,7 +735,7 @@ class Profile:
             z,
             M,
             bias_z,
-            bessel_term=self._bessel_term_exess,
+            bessel_function=_bessel_j2,
             radius_units=radius_units,
         )
 

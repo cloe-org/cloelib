@@ -602,7 +602,7 @@ class Profile:
             Shape: (z.size, M.size, R.size).
         """
         # Calculate base quantities
-        D_A = self.background.angular_diameter_distance(z)
+        D_A = self.background.angular_diameter_distance(z) * self.background.h
 
         # Ensure proper array shapes (z, M, R)
         z_outshape = np.asarray(z)[:, np.newaxis, np.newaxis]  # shape (nz, 1, 1)

@@ -30,7 +30,7 @@ def shift_dndz_jax(dndz: T, z: T, dz: T) -> T:
     Notes
     -----
     - Interpolation outside bounds is filled with zero.
-    - Assumes input `dndz` is already normalized.
+    - `dndz` is being normalized _by this function_ .
     - JAX-compatible and JIT-compiled for use in differentiable models.
     """
     def interp_single_bin(i):

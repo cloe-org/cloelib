@@ -40,4 +40,4 @@ def shift_dndz_jax(dndz: T, z: T, dz: T) -> T:
     bins = dndz.shape[0]
     shifted = jnp.stack([interp_single_bin(i) for i in range(bins)], axis=0)
     normalization = (-0.5*(shifted[0]+shifted[-1])+jnp.sum(shifted))*(z[1]-z[0])
-    return shifted*normalization
+    return shifted/normalization

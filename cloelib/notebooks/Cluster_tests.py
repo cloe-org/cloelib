@@ -99,15 +99,15 @@ def test_profiles(profile_nfw, profile_bmo):
             c_test,
             radius_units=radius_units,
         )
-        print("    surface_mass_density_2h")
-        _prof.surface_mass_density_2h(
+        print("    _surface_mass_density_2h")
+        _prof._surface_mass_density_2h(
             R_test,
             z_test,
             M_test,
             radius_units=radius_units,
         )
-        print("    excess_surface_mass_density_2h")
-        _prof.excess_surface_mass_density_2h(
+        print("    _excess_surface_mass_density_2h")
+        _prof._excess_surface_mass_density_2h(
             R_test,
             z_test,
             M_test,

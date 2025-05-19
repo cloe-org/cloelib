@@ -69,40 +69,22 @@ def test_array_shapes():
         _r, _z, _m = profile_nfw._surface_mass_density_args(**_kwargs)
         assert (_r * _z * _m).shape == out_shape
 
+        _kwargs["c"] = c_test
         for bias_z in (None, np.ones((z_test.size, M_test.size))):
 
             _kwargs["bias_z"] = bias_z
 
-            assert profile_nfw.surface_mass_density_2h(**_kwargs).shape == out_shape
-            assert (
-                profile_nfw.excess_surface_mass_density_2h(**_kwargs).shape == out_shape
-            )
+            for two_halo in ("None", "sum", "max"):
+                profile_nfw.two_halo = two_halo
 
-            _kwargs["c"] = c_test
-
-            for two_halo in ("auto", "None"):
-
-                _kwargs["two_halo"] = (
-                    profile_nfw.two_halo if two_halo == "auto" else two_halo
-                )
+                assert profile_nfw.surface_mass_density(**_kwargs).shape == out_shape
                 assert (
-                    profile_nfw._surface_mass_density_cen(**_kwargs).shape == out_shape
+                    profile_nfw.excess_surface_mass_density(**_kwargs).shape
+                    == out_shape
                 )
 
-                for offcentering in ("auto", "None"):
-                    _kwargs["two_halo"] = two_halo
-                    _kwargs["offcentering"] = offcentering
-                    assert (
-                        profile_nfw.surface_mass_density(**_kwargs).shape == out_shape
-                    )
-                _kwargs.pop("offcentering")
-
-            _kwargs.pop("two_halo")
-
-            assert profile_nfw.excess_surface_mass_density(**_kwargs).shape == out_shape
-
-            _kwargs.pop("c")
             _kwargs.pop("bias_z")
+        _kwargs.pop("c")
 
 
 def _test_profile(profile, reference_vals):
@@ -124,9 +106,7 @@ def _test_profile(profile, reference_vals):
     assert_allclose(profile.n_zs(z_test)[0][:5], **reference_vals["n_zs"])
     print("    surface_mass_density")
     assert_allclose(
-        profile.surface_mass_density(
-            R_test, z_test, M_test, c_test, two_halo="auto", offcentering="auto"
-        )[:, 0, 0],
+        profile.surface_mass_density(R_test, z_test, M_test, c_test)[:, 0, 0],
         **reference_vals["surface_mass_density"],
     )
     print("    excess_surface_mass_density")
@@ -134,14 +114,14 @@ def _test_profile(profile, reference_vals):
         profile.excess_surface_mass_density(R_test, z_test, M_test, c_test)[:, 0, 0],
         **reference_vals["excess_surface_mass_density"],
     )
-    print("    surface_mass_density_2h")
+    print("    _surface_mass_density_2h")
     assert_allclose(
-        profile.surface_mass_density_2h(R_test, z_test, M_test)[:, 0, 0],
+        profile._surface_mass_density_2h(R_test, z_test, M_test)[:, 0, 0],
         **reference_vals["surface_mass_density_2h"],
     )
-    print("    excess_surface_mass_density_2h")
+    print("    _excess_surface_mass_density_2h")
     assert_allclose(
-        profile.excess_surface_mass_density_2h(R_test, z_test, M_test)[:, 0, 0],
+        profile._excess_surface_mass_density_2h(R_test, z_test, M_test)[:, 0, 0],
         **reference_vals["excess_surface_mass_density_2h"],
     )
 

@@ -255,9 +255,7 @@ class Profile:
         z,
         M,
         c,
-        two_halo="auto",
         bias_z=None,
-        offcentering="auto",
         radius_units="Mpc/h",
     ):
         r"""
@@ -276,15 +274,9 @@ class Profile:
             Mass (Msun / h).
         c: float
             Concentration.
-        two_halo: str
-            Application of the 2-halo term, options are "auto", "None", "sum", "max".
-            If "auto", the attribute self.two_halo is used.
         bias_z: np.ndarray
             Halo bias used for the 2h term. If None, it is computed internally,
             else has to be shape (z.size, M.size).
-        offcentering: str
-            Application of offcentering, options are "auto" or "None".
-            If "auto", the attributes (self.offcentering, self.rms_off) are used.
         radius_units: str
             Unit for the input radius. Accepted values are:
             "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
@@ -295,33 +287,30 @@ class Profile:
             Surface mass density profile (units : h * Msun / pc**2).
             Shape: (z.size, M.size, R.size).
         """
-        if offcentering == "None" or not self.offcentering or self.rms_off < 1.0e-4:
-            two_halo = self.two_halo if two_halo == "auto" else two_halo
-            return self._surface_mass_density_cen(
-                R, z, M, c, two_halo, bias_z, radius_units=radius_units
-            )
-        elif offcentering == "auto":
+        if self.offcentering and self.rms_off >= 1.0e-4:
             Sigma_off = np.zeros_like(R)
 
             ir.Sigma_off(
                 R,
                 self.r_interp,
                 self._surface_mass_density_cen(
-                    self.r_interp, z, M, c, two_halo="None", radius_units=radius_units
+                    self.r_interp, z, M, c, self.two_halo, radius_units=radius_units
                 ),
                 self.rms_off,
                 Sigma_off,
             )
 
             Sigma_cen = self._surface_mass_density_cen(
-                R, z, M, c, two_halo="None", radius_units=radius_units
+                R, z, M, c, self.two_halo, radius_units=radius_units
             )
             return (1.0 - self.f_off) * Sigma_cen + self.f_off * Sigma_off
         else:
-            raise ValueError("Invalid 'offcentering' definition, %s." % offcentering)
+            return self._surface_mass_density_cen(
+                R, z, M, c, self.two_halo, bias_z, radius_units=radius_units
+            )
 
     def excess_surface_mass_density(
-        self, R, z, M, c, two_halo="auto", bias_z=None, radius_units="Mpc/h"
+        self, R, z, M, c, bias_z=None, radius_units="Mpc/h"
     ):
         r"""
         Total excess surface mass density profile.
@@ -339,9 +328,6 @@ class Profile:
             Concentration.
         M: np.ndarray
             Mass (Msun / h).
-        two_halo: str
-            Application of the 2-halo term, options are "auto", "None", "sum", "max".
-            If "auto", the attribute self.two_halo is used.
         bias_z: np.ndarray
             Halo bias used for the 2h term. If None, it is computed internally,
             else has to be shape (z.size, M.size).
@@ -355,6 +341,7 @@ class Profile:
             Excess surface mass density profile (units : h * Msun / pc**2).
             Shape: (z.size, M.size, R.size).
         """
+        # centered 1h term
         Sigma_mean = self._mean_surface_mass_density_profile(
             *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
         )
@@ -363,7 +350,7 @@ class Profile:
         )
         DeltaSigma = Sigma_mean - Sigma
 
-        # 2h term
+        # centered 2h term
         if self.two_halo != "None":
             DeltaSigma_2h = self._excess_surface_mass_density_2h(
                 R, z, M, bias_z, radius_units
@@ -373,32 +360,33 @@ class Profile:
             elif self.two_halo == "max":
                 DeltaSigma = np.maximum(DeltaSigma, DeltaSigma_2h)
 
-        if self.offcentering:
-            if self.rms_off >= 1.0e-4 and self.f_off >= 1.0e-4:
-                R = np.asarray(R)
-                DeltaSigma_off = np.zeros_like(R)
+        # offcentered terms
+        if self.offcentering and self.rms_off >= 1.0e-4 and self.f_off >= 1.0e-4:
+            # non negligible offcentering
+            R = np.asarray(R)
+            DeltaSigma_off = np.zeros_like(R)
 
-                ir.DeltaSigma_off(
-                    R,
+            ir.DeltaSigma_off(
+                R,
+                self.r_interp,
+                self.r_interp,
+                self._surface_mass_density_cen(
                     self.r_interp,
-                    self.r_interp,
-                    self._surface_mass_density_cen(
-                        self.r_interp,
-                        z,
-                        c,
-                        M,
-                        self.two_halo,
-                        radius_units=radius_units,
-                    ),
-                    self.rms_off,
-                    DeltaSigma_off,
-                )
+                    z,
+                    c,
+                    M,
+                    two_halo=self.two_halo,
+                    radius_units=radius_units,
+                ),
+                self.rms_off,
+                DeltaSigma_off,
+            )
 
-                DeltaSigma *= 1.0 - self.f_off
-                DeltaSigma += self.f_off * DeltaSigma_off
+            DeltaSigma = (1.0 - self.f_off) * DeltaSigma + self.f_off * DeltaSigma_off
 
-            elif self.rms_off < 1.0e-4 and self.f_off >= 1.0:
-                DeltaSigma = np.zeros(len(DeltaSigma))
+        elif self.offcentering and self.rms_off < 1.0e-4 and self.f_off >= 1.0:
+            # extreme offcentering
+            DeltaSigma = np.zeros(len(DeltaSigma))
 
         return DeltaSigma
 
@@ -451,6 +439,16 @@ class Profile:
 
         return R_outshape, RDelta, densityThreshold
 
+    def _check_profile_shape(self, z, M, R, profile):
+        expected_shape = (
+            np.atleast_1d(z).size,
+            np.atleast_1d(M).size,
+            np.atleast_1d(R).size,
+        )
+        assert (
+            profile.shape == expected_shape
+        ), f"Expected shape {expected_shape}, got {profile.shape}"
+
     def _surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         Centered one-halo surface mass density profile.
@@ -475,6 +473,55 @@ class Profile:
             Shape: (z.size, M.size, R.size).
         """
         raise NotImplementedError
+
+    def _surface_mass_density_cen(
+        self, R, z, M, c, two_halo="None", bias_z=None, radius_units="Mpc/h"
+    ):
+        r"""
+        Centered surface mass density profile.
+
+        Computes the centered surface mass density profile at radius R.
+
+        Parameters
+        ----------
+        R: np.ndarray
+            Radial points (units : Mpc / h)
+        z: np.ndarray
+            Redshift.
+        M: np.ndarray
+            Mass (Msun / h).
+        c: float
+            Concentration.
+        two_halo: str
+            Application of the 2-halo term, options are "None", "sum", "max".
+        bias_z: np.ndarray
+            Halo bias used for the 2h term. If None, it is computed internally,
+            else has to be shape (z.size, M.size).
+        radius_units: str
+            Unit for the input radius. Accepted values are:
+            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
+
+        Returns
+        -------
+        Sigma: np.ndarray
+            Centered surface mass density profile (units : h * Msun / pc**2).
+            Shape: (z.size, M.size, R.size).
+        """
+        Sigma = self._surface_mass_density_profile(
+            *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
+        )
+
+        self._validate_two_halo(two_halo)
+        if two_halo != "None":
+            Sigma_2h = self._surface_mass_density_2h(R, z, M, bias_z, radius_units)
+            if two_halo == "sum":
+                Sigma += Sigma_2h
+            elif two_halo == "max":
+                Sigma = np.maximum(Sigma, Sigma_2h)
+
+        self._check_profile_shape(z, M, R, Sigma)
+
+        return Sigma
 
     def _mean_surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""

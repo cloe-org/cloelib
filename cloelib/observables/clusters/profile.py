@@ -494,9 +494,8 @@ class Profile:
         Sigma_mean = self._mean_surface_mass_density_profile(
             *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
         )
-        two_halo = self.two_halo if two_halo == "auto" else two_halo
         Sigma = self._surface_mass_density_cen(
-            R, z, M, c, two_halo, radius_units=radius_units
+            R, z, M, c, two_halo="None", radius_units=radius_units
         )
         DeltaSigma = Sigma_mean - Sigma
 

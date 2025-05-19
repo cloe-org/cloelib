@@ -342,7 +342,7 @@ class Profile:
             Shape: (z.size, M.size, R.size).
         """
         # centered 1h term
-        Sigma_mean = self._mean_surface_mass_density_profile(
+        Sigma_mean = self._model_mean_surface_mass_density_profile(
             *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
         )
         Sigma = self._surface_mass_density_cen(
@@ -392,8 +392,8 @@ class Profile:
 
     def _surface_mass_density_args(self, R, z, M, radius_units="Mpc/h"):
         r"""
-        Prepare arguments for _surface_mass_density_profile and
-        _mean_surface_mass_density_profile with correct shapes.
+        Prepare arguments for _model_surface_mass_density_profile and
+        _model_mean_surface_mass_density_profile with correct shapes.
 
         Parameters
         ----------
@@ -449,7 +449,7 @@ class Profile:
             profile.shape == expected_shape
         ), f"Expected shape {expected_shape}, got {profile.shape}"
 
-    def _surface_mass_density_profile(self, R, RDelta, Delta, c):
+    def _model_surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         Centered one-halo surface mass density profile.
 
@@ -507,7 +507,7 @@ class Profile:
             Centered surface mass density profile (units : h * Msun / pc**2).
             Shape: (z.size, M.size, R.size).
         """
-        Sigma = self._surface_mass_density_profile(
+        Sigma = self._model_surface_mass_density_profile(
             *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
         )
 
@@ -523,7 +523,7 @@ class Profile:
 
         return Sigma
 
-    def _mean_surface_mass_density_profile(self, R, RDelta, Delta, c):
+    def _model_mean_surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         Centered one-halo mean surface mass density profile.
 
@@ -812,7 +812,7 @@ class ProfileNFW(Profile):
         if x > 1.0:
             return np.log(x / 2.0) + np.arccos(1.0 / x) / np.sqrt(x**2.0 - 1.0)
 
-    def _surface_mass_density_profile(self, R, RDelta, Delta, c):
+    def _model_surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         NFW surface mass density profile.
 
@@ -846,7 +846,7 @@ class ProfileNFW(Profile):
 
         return Sigma
 
-    def _mean_surface_mass_density_profile(self, R, RDelta, Delta, c):
+    def _model_mean_surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         NFW mean surface mass density profile.
 
@@ -938,7 +938,7 @@ class ProfileBMO(Profile):
         if x > 1.0:
             return (1.0 - self._f_term(x)) / (x**2.0 - 1.0)
 
-    def _surface_mass_density_profile(self, R, RDelta, Delta, c):
+    def _model_surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         BMO surface mass density profile.
 
@@ -1016,7 +1016,7 @@ class ProfileBMO(Profile):
         Sigma = 1e-12 * const * term1 * (term2 + term3 + term4 - term5 + term6 * L)
         return Sigma
 
-    def _mean_surface_mass_density_profile(self, R, RDelta, Delta, c):
+    def _model_mean_surface_mass_density_profile(self, R, RDelta, Delta, c):
         r"""
         BMO mean surface mass density profile.
 

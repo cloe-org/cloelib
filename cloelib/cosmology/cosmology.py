@@ -193,3 +193,9 @@ class Perturbations(Protocol):
         Retrieves the matter power spectrum.
         """
         ...
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        """
+        Retrieves the matter power spectrum without neutrinos.
+        """
+        ...

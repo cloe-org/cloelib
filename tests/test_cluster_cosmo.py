@@ -121,9 +121,9 @@ def test_cosmo():
             perturbations = _LinearPerturbations(background, *_lp_args)
             _safe_ni_assert(
                 assert_allclose,
-                perturbations.matter_power_spectrum,
+                perturbations.matter_power_spectrum_cb,
                 (0, 1),
-                dict(nonu=True),
+                {},
                 81.748209,
             )
 
@@ -131,8 +131,8 @@ def test_cosmo():
             perturbations_nl = _NonLinearPerturbations(background, *_nlp_args)
             _safe_ni_assert(
                 assert_allclose,
-                perturbations_nl.matter_power_spectrum,
+                perturbations_nl.matter_power_spectrum_cb,
                 (0, 1),
-                dict(nonu=True),
+                {},
                 747.017036,
             )

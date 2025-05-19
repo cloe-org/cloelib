@@ -195,8 +195,6 @@ class JAXBackground:
 
         Args:
             zs (np.ndarray): Array of redshifts.
-            nonu (bool): if True, massive neutrinos are not included
-                         in the density parameter summation.
 
         Returns:
             np.ndarray: Matter density values (no neutrinos).
@@ -482,7 +480,7 @@ class JAXLinearPerturbations:
         y = simps(int_sigma, np.log10(kmin), np.log10(kmax), N = 256)
         return 1.0 / (2.0 * np.pi**2.0) * y
 
-    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False, nonu=False):
+    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False):
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -493,9 +491,6 @@ class JAXLinearPerturbations:
         k: array_like
             Wave number in h Mpc^{-1}
 
-        nonu: (Optional) str
-            Get power spectrum without neutrinos
-
         Returns
         -------
         pk: array_like
@@ -503,8 +498,6 @@ class JAXLinearPerturbations:
             and scale factor.
 
         """
-        if nonu:
-            raise NotImplementedError("Option nonu=True not implemented for jax.")
 
         h = self.background.h
 
@@ -543,6 +536,31 @@ class JAXLinearPerturbations:
         # Apply normalisation
         pk = pk * pknorm/factor
         return pk.squeeze()
+
+    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum without neutrinos.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for jax.")
 
 class JAXNonLinearPerturbations(Perturbations):
     def __init__(self, linearperturbations : Perturbations):
@@ -686,14 +704,37 @@ class JAXNonLinearPerturbations(Perturbations):
         pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
         return pk_nl.squeeze()
 
-    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False, nonu=False):
+    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False):
         """Computes the non-linear matter power spectrum.
 
         This function is just a wrapper over several nonlinear power spectra.
         """
-        if nonu:
-            raise NotImplementedError("Option nonu=True not implemented for jax.")
         return jax.vmap(self.halofit, in_axes = (0, None, None, None))(zs, ks, hubble_units, k_hunit)
+
+    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum without neutrinos.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for jax.")
 
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):
         Pk = jax.vmap(self.nonlinear_matter_power_spectrum,

@@ -1,11 +1,15 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
+from cloelib.summary_statistics.APDistortion import APDistortion
 
 # General imports
-from typing import Protocol, Union, TypeVar, Optional, Generic
-import numpy as np
+from typing import Union, TypeVar
+import numpy as np  # type: ignore
+import jax.numpy as jnp
 
-class BAO_alphas:
+T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
+
+class BarionicAcousticOscillation:
     r"""Class to compute alpha parameters for the BAO analysis
 
     Parameters
@@ -30,10 +34,10 @@ class BAO_alphas:
         self.Neff = 3.046 # This is hardcoded but should come from background
         self.rd_ratio = self.sound_horizon_drag(self.background_fiducial) / \
             self.sound_horizon_drag(self.background)
-
+        self.ap_distortion = APDistortion(background, background_fiducial)
         self.alphas_dict = self.set_alphas()
 
-    def alpha_par(self, zs: np.ndarray) -> np.ndarray:
+    def alpha_par(self, zs: T) -> T:
         r"""Alpha_parallel
         Dilation parameter along the line of sight
         ..math::
@@ -48,12 +52,10 @@ class BAO_alphas:
         alpha_perp: np.array
             alpha_perpendicular at requested redshifts
         """
-        DA_ratio = (self.background_fiducial.hubble_parameter(zs)
-                      / self.background.hubble_parameter(zs))
-        alpha_par = self.rd_ratio * DA_ratio
+        alpha_par = self.rd_ratio * self.ap_distortion.q_AP_lo(zs)
         return alpha_par
 
-    def alpha_perp(self, zs: np.ndarray) -> np.ndarray:
+    def alpha_perp(self, zs: T) -> T:
         r"""Alpha_perpendicular
         Dilation parameter perpendicular to the line of sight
         ..math::
@@ -68,13 +70,11 @@ class BAO_alphas:
         alpha_perp: np.array
             alpha_perpendicular at requested redshifts
         """
-        DA_ratio = (self.background.angular_diameter_distance(zs)
-                      / self.background_fiducial.angular_diameter_distance(zs))
-        alpha_perp = self.rd_ratio * DA_ratio
+        alpha_perp = self.rd_ratio * self.ap_distortion.q_AP_tr(zs)
         return alpha_perp
 
-    def alpha_iso(self, alpha_par: np.ndarray,
-                  alpha_perp: np.ndarray) -> np.ndarray:
+    def alpha_iso(self, alpha_par: T,
+                  alpha_perp: T) -> T:
         r"""Alpha_iso
         Geometrical mean of alpha_parallel and alpha_perpendicular
         ..math::

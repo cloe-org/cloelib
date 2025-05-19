@@ -338,7 +338,7 @@ class Profile:
         ), f"Expected shape {expected_shape}, got {profile.shape}"
 
     def _surface_mass_density_cen(
-        self, R, z, M, c, force_no_2h=False, radius_units="Mpc/h"
+        self, R, z, M, c, force_no_2h=False, bias_z=None, radius_units="Mpc/h"
     ):
         r"""
         Centered surface mass density profile.
@@ -357,6 +357,9 @@ class Profile:
             Concentration.
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
+        bias_z: np.ndarray
+            Halo bias used for the 2h term. If None, it is computed internally,
+            else has to be shape (z.size, M.size).
         radius_units: str
             Unit for the input radius. Accepted values are:
             "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
@@ -375,7 +378,7 @@ class Profile:
             Sigma = self._combine_2h(
                 Sigma,
                 self.surface_mass_density_2h,
-                (R, z, M),
+                (R, z, M, bias_z),
                 {"radius_units": radius_units},
             )
 
@@ -412,7 +415,7 @@ class Profile:
         raise NotImplementedError
 
     def surface_mass_density(
-        self, R, z, M, c, force_no_2h=False, force_no_off=False, radius_units="Mpc/h"
+        self, R, z, M, c, force_no_2h=False, bias_z=None, force_no_off=False, radius_units="Mpc/h"
     ):
         r"""
         Total surface mass density profile.
@@ -432,6 +435,9 @@ class Profile:
             Concentration.
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
+        bias_z: np.ndarray
+            Halo bias used for the 2h term. If None, it is computed internally,
+            else has to be shape (z.size, M.size).
         force_no_off: bool
             if True, force the non-inclusion of the off-centering
         radius_units: str
@@ -464,10 +470,10 @@ class Profile:
 
         else:
             return self._surface_mass_density_cen(
-                R, z, M, c, force_no_2h, radius_units=radius_units
+                R, z, M, c, force_no_2h, bias_z, radius_units=radius_units
             )
 
-    def excess_surface_mass_density(self, R, z, M, c, radius_units="Mpc/h"):
+    def excess_surface_mass_density(self, R, z, M, c, bias_z=None, radius_units="Mpc/h"):
         r"""
         Total excess surface mass density profile.
 
@@ -484,10 +490,9 @@ class Profile:
             Concentration.
         M: np.ndarray
             Mass (Msun / h).
-        force_no_2h: bool
-            if True, force the non-inclusion of the 2-halo term
-        force_no_off: bool
-            if True, force the non-inclusion of the off-centering
+        bias_z: np.ndarray
+            Halo bias used for the 2h term. If None, it is computed internally,
+            else has to be shape (z.size, M.size).
         radius_units: str
             Unit for the input radius. Accepted values are:
             "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
@@ -510,7 +515,7 @@ class Profile:
         DeltaSigma = self._combine_2h(
             DeltaSigma,
             self.excess_surface_mass_density_2h,
-            (R, z, M),
+            (R, z, M, bias_z),
             {"radius_units": radius_units},
         )
 

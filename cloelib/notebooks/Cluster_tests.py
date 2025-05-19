@@ -87,8 +87,8 @@ def test_profiles(profile_nfw, profile_bmo):
         _prof.surface_mass_density(
             R_test,
             z_test,
-            c_test,
             M_test_arr,
+            c_test,
             force_no_2h=False,
             force_no_off=False,
             radius_units=radius_units,
@@ -97,8 +97,8 @@ def test_profiles(profile_nfw, profile_bmo):
         _prof.excess_surface_mass_density(
             R_test,
             z_test,
-            c_test,
             M_test_arr,
+            c_test,
             radius_units=radius_units,
         )
         print("    surface_mass_density_2h")
@@ -232,14 +232,14 @@ if __name__ == "__main__":
 
     # counts covariance
     print("# counts covariance")
-    
+
     area = 15000
     nbins_z = 10
     L = 20
 
-    zbins = np.linspace(0,2,nbins_z+1)
-    k_test = np.geomspace(k_min,k_max,k_div)
-    
-    CC = HaloCovariance(perturbations,area,nbins_z,k_test,L)
+    zbins = np.linspace(0, 2, nbins_z + 1)
+    k_test = np.geomspace(k_min, k_max, k_div)
+
+    CC = HaloCovariance(perturbations, area, nbins_z, k_test, L)
 
     test_count_covariance(CC)

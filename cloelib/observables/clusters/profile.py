@@ -82,17 +82,17 @@ class Profile:
         Parameters
         ----------
         distance: np.ndarray
-            Input distances
+            Input projected distances
         units_in: str
-            Unit for the input radius. Accepted values are:
+            Unit for the input projected distance. Accepted values are:
             "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
         units_out: str
-            Unit for the input radius. Accepted values are:
+            Unit for the output projected distance. Accepted values are:
             "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
         angular_diameter_distance: float, np.ndarray
             Angular diameter distance (units: Mpc/h) to be used for converting
             between angular and physical units. If array, it
-            should be in the shape (1, z.size).
+            should be in the shape (z.size, 1).
 
         Returns
         -------
@@ -302,7 +302,7 @@ class Profile:
         term_1h: np.ndarray
             1 halo term.
         func_2d: function
-            Function that computers the 2h term
+            Function that computes the 2h term
         args_2h: list, tuple
             Positional arguments for func_2d
         kwargs_2h: None, dict

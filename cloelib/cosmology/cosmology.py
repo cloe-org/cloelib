@@ -110,7 +110,13 @@ class Background(Protocol):
         """
         ...
 
-    def Omega_m(self, zs: T, nonu: bool) -> T:
+    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Computes the matter density without neutrinos as a function of redshift.
+        """
+        ...
+
+    def Omega_m(self, zs: T) -> T:
         """
         Computes the matter density as a function of redshift.
         """
@@ -152,6 +158,7 @@ class Background(Protocol):
         """
         ...
 
+    @property
     def rdrag(self) -> float:
         """
         Sound horizon radius at last scattering
@@ -184,5 +191,11 @@ class Perturbations(Protocol):
     def matter_power_spectrum(self, zs: T, ks: T) -> T:
         """
         Retrieves the matter power spectrum.
+        """
+        ...
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        """
+        Retrieves the matter power spectrum without neutrinos.
         """
         ...

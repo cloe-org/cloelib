@@ -76,7 +76,7 @@ class HMemuLinearPerturbations:
 
         self.Pk_interp = pk_interp
 
-    def matter_power_spectrum(self, zs, ks, nonu=False) -> np.ndarray:
+    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -87,9 +87,6 @@ class HMemuLinearPerturbations:
         zs: numpy.ndarray
             redshifts
 
-        nonu: (Optional) str
-            Get power spectrum without neutrinos
-
         Returns
         -------
         pk: numpy.ndarray
@@ -97,10 +94,32 @@ class HMemuLinearPerturbations:
             and redshift
 
         """
-        if nonu:
-            raise NotImplementedError("Option nonu=True not implemented for HMcode2020Emu.")
-
         return self.Pk_interp(zs, ks)
+
+    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum without neutrinos.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for HMcode2020Emu.")
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """
@@ -227,7 +246,7 @@ class HMemuNonLinearPerturbations:
         self.Pk_interp = pk_interp
 
 
-    def matter_power_spectrum(self, zs, ks, nonu=False) -> np.ndarray:
+    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -238,9 +257,6 @@ class HMemuNonLinearPerturbations:
         zs: numpy.ndarray
             redshifts
 
-        nonu: (Optional) str
-            Get power spectrum without neutrinos
-
         Returns
         -------
         pk: numpy.ndarray
@@ -248,10 +264,32 @@ class HMemuNonLinearPerturbations:
             and redshift
 
         """
-        if nonu:
-            raise NotImplementedError("Option nonu=True not implemented for HMcode2020Emu.")
-
         return self.Pk_interp(zs, ks)
+
+    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum without neutrinos.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for HMcode2020Emu.")
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """

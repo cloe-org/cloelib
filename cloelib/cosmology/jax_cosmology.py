@@ -189,6 +189,19 @@ class JAXBackground:
         """
         return np.array([self.Omega_b0 * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
+    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the matter density (no neutrinos) as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values (no neutrinos).
+        """
+        _Omega_m_use = self.Omega_b0+self.Omega_cdm0
+        return np.array([(_Omega_m_use) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
+
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
         Returns the matter density as a function of redshift.
@@ -199,7 +212,7 @@ class JAXBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return np.array([(self.Omega_m0) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
+        return np.array([self.Omega_m0 * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
     def w_a(self, a):
         return self.w0 + (1.0 - a) * self.wa  # Equation (6) in Linder (2003)
@@ -218,6 +231,13 @@ class JAXBackground:
     def Omega_de_a(self, a):
         OmDE = 1. - self.Omega_m0 - self.Omega_k0
         return OmDE * np.exp(self.f_de(a)) / self.Esqr(a)
+
+    @property
+    def rdrag(self) -> float:
+        """
+        Sound horizon radius at last scattering.
+        """
+        raise NotImplementedError("rdrag not implemented for jax yet.")
 
 class JAXLinearPerturbations:
     def __init__(self, background: Background, redshifts: np.ndarray) -> None:
@@ -460,7 +480,7 @@ class JAXLinearPerturbations:
         y = simps(int_sigma, np.log10(kmin), np.log10(kmax), N = 256)
         return 1.0 / (2.0 * np.pi**2.0) * y
 
-    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False, nonu=False):
+    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False):
         r"""Computes the linear matter power spectrum.
 
         Parameters
@@ -471,9 +491,6 @@ class JAXLinearPerturbations:
         k: array_like
             Wave number in h Mpc^{-1}
 
-        nonu: (Optional) str
-            Get power spectrum without neutrinos
-
         Returns
         -------
         pk: array_like
@@ -481,8 +498,6 @@ class JAXLinearPerturbations:
             and scale factor.
 
         """
-        if nonu:
-            raise NotImplementedError("Option nonu=True not implemented for HMcode2020Emu.")
 
         h = self.background.h
 
@@ -521,6 +536,31 @@ class JAXLinearPerturbations:
         # Apply normalisation
         pk = pk * pknorm/factor
         return pk.squeeze()
+
+    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum without neutrinos.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for jax.")
 
 class JAXNonLinearPerturbations(Perturbations):
     def __init__(self, linearperturbations : Perturbations):
@@ -664,14 +704,37 @@ class JAXNonLinearPerturbations(Perturbations):
         pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
         return pk_nl.squeeze()
 
-    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False, nonu=False):
+    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False):
         """Computes the non-linear matter power spectrum.
 
         This function is just a wrapper over several nonlinear power spectra.
         """
-        if nonu:
-            raise NotImplementedError("Option nonu=True not implemented for HMcode2020Emu.")
         return jax.vmap(self.halofit, in_axes = (0, None, None, None))(zs, ks, hubble_units, k_hunit)
+
+    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum without neutrinos.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for jax.")
 
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):
         Pk = jax.vmap(self.nonlinear_matter_power_spectrum,

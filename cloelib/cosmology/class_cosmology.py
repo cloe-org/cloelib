@@ -140,6 +140,18 @@ class CLASSBackground:
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
+    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the matter density (no neutrinos) as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values (no neutrinos).
+        """
+        raise NotImplementedError("Not implemented for CLASS.")
+
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
         Returns the matter density as a function of redshift.
@@ -163,6 +175,13 @@ class CLASSBackground:
             np.ndarray: Matter density values.
         """
         return np.array([self.results.Om_b(z) for z in zs])
+
+    @property
+    def rdrag(self) -> float:
+        """
+        Sound horizon radius at last scattering.
+        """
+        raise NotImplementedError("rdrag not implemented for CLASS yet.")
 
 class CLASSLinearPerturbations:
     def __init__(self, background : Background, redshifts: np.ndarray):
@@ -196,7 +215,7 @@ class CLASSLinearPerturbations:
         return self.interface_args
     
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
-                              k_hunit=False, nonu=False) -> np.ndarray:
+                              k_hunit=False) -> np.ndarray:
         """Calculates the CLASS linear matter power spectrum.
         
         Parameters
@@ -213,8 +232,35 @@ class CLASSLinearPerturbations:
         k_hunit: (Optional) bool
             Flag to specify if wavenumber in h units, defaults to False
 
-        nonu: (Optional) str
-            Get power spectrum without neutrinos
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        if hubble_units == True or k_hunit == True:
+            raise ValueError("This CLASS method does not yet support h-units")
+        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
+        # To match array convention of CAMB
+        return self.Pk_linear
+
+    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False,
+                                 k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum without neutrinos.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
 
         Returns
         -------
@@ -222,13 +268,7 @@ class CLASSLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        if nonu:
-            raise NotImplementedError("Option nonu=True not implemented for CLASS.")
-        if hubble_units == True or k_hunit == True:
-            raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
-        # To match array convention of CAMB
-        return self.Pk_linear
+        raise NotImplementedError("Not implemented for CLASS.")
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """
@@ -298,7 +338,7 @@ class CLASSNonLinearPerturbations:
         self.results.compute()
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
-                              k_hunit=False, nonu=False) -> np.ndarray:
+                              k_hunit=False) -> np.ndarray:
         """Calculates the CLASS non-linear matter power spectrum.
         
         Parameters
@@ -315,22 +355,43 @@ class CLASSNonLinearPerturbations:
         k_hunit: (Optional) bool
             Flag to specify if wavenumber in h units, defaults to False
 
-        nonu: (Optional) str
-            Get power spectrum without neutrinos
-
         Returns
         -------
         pk: numpy.ndarray
             Non-linear matter power spectrum at the specified scale
             and redshift
         """
-        if nonu:
-            raise NotImplementedError("Option nonu=True not implemented for CLASS.")
         if hubble_units == True or k_hunit == True:
             raise ValueError("This CLASS method does not yet support h-units")
         self.Pk_nonlinear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
         # To match array convention of CAMB
         return self.Pk_nonlinear
+
+    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False,
+                                 k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum without neutrinos.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for CLASS.")
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """

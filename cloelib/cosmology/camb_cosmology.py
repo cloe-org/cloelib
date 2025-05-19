@@ -140,7 +140,23 @@ class CAMBBackground:
         """
         return self.results.angular_diameter_distance(zs)
 
-    def Omega_m(self, zs: np.ndarray, nonu: bool = False) -> np.ndarray:
+    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the matter density (no neutrinos) as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+            nonu (bool): if True, massive neutrinos are not included
+                         in the density parameter summation.
+
+        Returns:
+            np.ndarray: Matter density values (no neutrinos).
+        """
+        return self.results.get_Omega("cdm", z=zs) + self.results.get_Omega(
+            "baryon", z=zs
+        )
+
+    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
         Returns the matter density as a function of redshift.
 
@@ -152,12 +168,7 @@ class CAMBBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        Om = self.results.get_Omega("cdm", z=zs) + self.results.get_Omega(
-            "baryon", z=zs
-        )
-        if nonu:
-            return Om
-        return Om + self.results.get_Omega("nu", z=zs)
+        return self.Omega_m_cb(zs) + self.results.get_Omega("nu", z=zs)
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """

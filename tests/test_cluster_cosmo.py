@@ -93,16 +93,16 @@ def test_cosmo():
             background = _Background(**_cosmo_pars)
             _safe_ni_assert(
                 assert_less_than,
-                background.Omega_m,
+                background.Omega_m_cb,
                 (_z_test,),
-                dict(nonu=True),
+                {},
                 background.Omega_m(_z_test),
             )
             _safe_ni_assert(
                 assert_allclose,
-                background.Omega_m,
+                background.Omega_m_cb,
                 (_z_test,),
-                dict(nonu=True),
+                {},
                 _cosmo_pars["Omega_cdm0"] + _cosmo_pars["Omega_b0"],
                 rtol=1e-07,
             )

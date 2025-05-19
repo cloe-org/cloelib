@@ -110,7 +110,13 @@ class Background(Protocol):
         """
         ...
 
-    def Omega_m(self, zs: T, nonu: bool) -> T:
+    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Computes the matter density without neutrinos as a function of redshift.
+        """
+        ...
+
+    def Omega_m(self, zs: T) -> T:
         """
         Computes the matter density as a function of redshift.
         """

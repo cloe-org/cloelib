@@ -189,7 +189,22 @@ class JAXBackground:
         """
         return np.array([self.Omega_b0 * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
-    def Omega_m(self, zs: np.ndarray, nonu=False) -> np.ndarray:
+    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the matter density (no neutrinos) as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+            nonu (bool): if True, massive neutrinos are not included
+                         in the density parameter summation.
+
+        Returns:
+            np.ndarray: Matter density values (no neutrinos).
+        """
+        _Omega_m_use = self.Omega_b0+self.Omega_cdm0
+        return np.array([(_Omega_m_use) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
+
+    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
         Returns the matter density as a function of redshift.
 
@@ -199,10 +214,7 @@ class JAXBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        _Omega_m_use = self.Omega_m0
-        if nonu:
-            _Omega_m_use = self.Omega_b0+self.Omega_cdm0
-        return np.array([(_Omega_m_use) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
+        return np.array([self.Omega_m0 * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
     def w_a(self, a):
         return self.w0 + (1.0 - a) * self.wa  # Equation (6) in Linder (2003)

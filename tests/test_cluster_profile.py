@@ -80,21 +80,24 @@ def test_array_shapes():
 
             _kwargs["c"] = c_test
 
-            for force_no_2h in (True, False):
+            for two_halo in ("auto", "None"):
 
-                _kwargs["force_no_2h"] = force_no_2h
+                _kwargs["two_halo"] = (
+                    profile_nfw.two_halo if two_halo == "auto" else two_halo
+                )
                 assert (
                     profile_nfw._surface_mass_density_cen(**_kwargs).shape == out_shape
                 )
 
                 for force_no_off in (True, False):
+                    _kwargs["two_halo"] = two_halo
                     _kwargs["force_no_off"] = force_no_off
                     assert (
                         profile_nfw.surface_mass_density(**_kwargs).shape == out_shape
                     )
                 _kwargs.pop("force_no_off")
 
-            _kwargs.pop("force_no_2h")
+            _kwargs.pop("two_halo")
 
             assert profile_nfw.excess_surface_mass_density(**_kwargs).shape == out_shape
 
@@ -122,7 +125,7 @@ def _test_profile(profile, reference_vals):
     print("    surface_mass_density")
     assert_allclose(
         profile.surface_mass_density(
-            R_test, z_test, M_test, c_test, force_no_2h=False, force_no_off=False
+            R_test, z_test, M_test, c_test, two_halo="auto", force_no_off=False
         )[:, 0, 0],
         **reference_vals["surface_mass_density"],
     )

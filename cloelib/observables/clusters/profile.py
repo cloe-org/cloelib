@@ -31,9 +31,9 @@ class Profile:
         alpha_nz=0.4,
     ):
         self.halo_statistics = halo_statistics
+
+        self._validate_two_halo(two_halo)
         self.two_halo = two_halo
-        if self.two_halo not in ["None", "sum", "max"]:
-            raise ValueError("Invalid 'two_halo' definition, %s." % self.two_halo)
 
         # offcentering
         self.offcentering = offcentering
@@ -59,6 +59,10 @@ class Profile:
         self.nzsnorM = np.vectorize(self.n_zs_norM)(self.zed)
         self.nzs = self.n_zs(self.zed)
         self.r_interp = np.logspace(-10, 2.5, 200)
+
+    def _validate_two_halo(self, two_halo):
+        if two_halo not in ("None", "sum", "max"):
+            raise ValueError("Invalid 'two_halo' definition, %s." % two_halo)
 
     @property
     def perturbations(self):
@@ -294,39 +298,6 @@ class Profile:
 
         return R_outshape, RDelta, densityThreshold
 
-    def _combine_2h(self, term_1h, func_2h, args_2h=(), kwargs_2h=None):
-        r"""Combine 2h term.
-
-        Parameters
-        ----------
-        term_1h: np.ndarray
-            1 halo term.
-        func_2d: function
-            Function that computes the 2h term
-        args_2h: list, tuple
-            Positional arguments for func_2d
-        kwargs_2h: None, dict
-            Keyword arguments for func_2d
-
-        Returns
-        -------
-        np.ndarray
-            Combination between 1h and 2h terms
-        """
-
-        if self.two_halo == "None":
-            return term_1h
-
-        if kwargs_2h is None:
-            kwargs_2h = {}
-
-        term_2h = func_2h(*args_2h, **kwargs_2h)
-
-        if self.two_halo == "sum":
-            return term_1h + term_2h
-        elif self.two_halo == "max":
-            return np.maximum(term_1h, term_2h)
-
     def _check_profile_shape(self, z, M, R, profile):
         expected_shape = (
             np.atleast_1d(z).size,
@@ -338,7 +309,7 @@ class Profile:
         ), f"Expected shape {expected_shape}, got {profile.shape}"
 
     def _surface_mass_density_cen(
-        self, R, z, M, c, force_no_2h=False, bias_z=None, radius_units="Mpc/h"
+        self, R, z, M, c, two_halo="None", bias_z=None, radius_units="Mpc/h"
     ):
         r"""
         Centered surface mass density profile.
@@ -355,8 +326,8 @@ class Profile:
             Mass (Msun / h).
         c: float
             Concentration.
-        force_no_2h: bool
-            if True, force the non-inclusion of the 2-halo term
+        two_halo: str
+            Application of the 2-halo term, options are "None", "sum", "max".
         bias_z: np.ndarray
             Halo bias used for the 2h term. If None, it is computed internally,
             else has to be shape (z.size, M.size).
@@ -374,13 +345,13 @@ class Profile:
             *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
         )
 
-        if not force_no_2h:
-            Sigma = self._combine_2h(
-                Sigma,
-                self.surface_mass_density_2h,
-                (R, z, M, bias_z),
-                {"radius_units": radius_units},
-            )
+        self._validate_two_halo(two_halo)
+        if two_halo != "None":
+            Sigma_2h = self.surface_mass_density_2h(R, z, M, bias_z, radius_units)
+            if two_halo == "sum":
+                Sigma += Sigma_2h
+            elif two_halo == "max":
+                Sigma = np.maximum(Sigma, Sigma_2h)
 
         self._check_profile_shape(z, M, R, Sigma)
 
@@ -415,7 +386,15 @@ class Profile:
         raise NotImplementedError
 
     def surface_mass_density(
-        self, R, z, M, c, force_no_2h=False, bias_z=None, force_no_off=False, radius_units="Mpc/h"
+        self,
+        R,
+        z,
+        M,
+        c,
+        two_halo="auto",
+        bias_z=None,
+        force_no_off=False,
+        radius_units="Mpc/h",
     ):
         r"""
         Total surface mass density profile.
@@ -433,8 +412,9 @@ class Profile:
             Mass (Msun / h).
         c: float
             Concentration.
-        force_no_2h: bool
-            if True, force the non-inclusion of the 2-halo term
+        two_halo: str
+            Application of the 2-halo term, options are "auto", "None", "sum", "max".
+            If "auto", the attribute self.two_halo is used.
         bias_z: np.ndarray
             Halo bias used for the 2h term. If None, it is computed internally,
             else has to be shape (z.size, M.size).
@@ -457,23 +437,26 @@ class Profile:
                 R,
                 self.r_interp,
                 self._surface_mass_density_cen(
-                    self.r_interp, z, M, c, force_no_2h=False, radius_units=radius_units
+                    self.r_interp, z, M, c, two_halo="None", radius_units=radius_units
                 ),
                 self.rms_off,
                 Sigma_off,
             )
 
             Sigma_cen = self._surface_mass_density_cen(
-                R, z, M, c, force_no_2h=False, radius_units=radius_units
+                R, z, M, c, two_halo="None", radius_units=radius_units
             )
             return (1.0 - self.f_off) * Sigma_cen + self.f_off * Sigma_off
 
         else:
+            two_halo = self.two_halo if two_halo == "auto" else two_halo
             return self._surface_mass_density_cen(
-                R, z, M, c, force_no_2h, bias_z, radius_units=radius_units
+                R, z, M, c, two_halo, bias_z, radius_units=radius_units
             )
 
-    def excess_surface_mass_density(self, R, z, M, c, bias_z=None, radius_units="Mpc/h"):
+    def excess_surface_mass_density(
+        self, R, z, M, c, two_halo="auto", bias_z=None, radius_units="Mpc/h"
+    ):
         r"""
         Total excess surface mass density profile.
 
@@ -490,6 +473,9 @@ class Profile:
             Concentration.
         M: np.ndarray
             Mass (Msun / h).
+        two_halo: str
+            Application of the 2-halo term, options are "auto", "None", "sum", "max".
+            If "auto", the attribute self.two_halo is used.
         bias_z: np.ndarray
             Halo bias used for the 2h term. If None, it is computed internally,
             else has to be shape (z.size, M.size).
@@ -506,18 +492,21 @@ class Profile:
         Sigma_mean = self._mean_surface_mass_density_profile(
             *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
         )
+        two_halo = self.two_halo if two_halo == "auto" else two_halo
         Sigma = self._surface_mass_density_cen(
-            R, z, M, c, force_no_2h=True, radius_units=radius_units
+            R, z, M, c, two_halo, radius_units=radius_units
         )
         DeltaSigma = Sigma_mean - Sigma
 
         # 2h term
-        DeltaSigma = self._combine_2h(
-            DeltaSigma,
-            self.excess_surface_mass_density_2h,
-            (R, z, M, bias_z),
-            {"radius_units": radius_units},
-        )
+        if self.two_halo != "None":
+            DeltaSigma_2h = self.excess_surface_mass_density_2h(
+                R, z, M, bias_z, radius_units
+            )
+            if self.two_halo == "sum":
+                DeltaSigma += DeltaSigma_2h
+            elif self.two_halo == "max":
+                DeltaSigma = np.maximum(DeltaSigma, DeltaSigma_2h)
 
         if self.offcentering:
             if self.rms_off >= 1.0e-4 and self.f_off >= 1.0e-4:
@@ -533,7 +522,7 @@ class Profile:
                         z,
                         c,
                         M,
-                        force_no_2h=False,
+                        self.two_halo,
                         radius_units=radius_units,
                     ),
                     self.rms_off,

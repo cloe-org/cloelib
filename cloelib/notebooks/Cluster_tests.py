@@ -67,9 +67,7 @@ def test_halostatistics(HS, HS_tinker, HS_castro):
 def test_profiles(profile_nfw, profile_bmo):
     R_test = np.logspace(-1, 1, 5)
     z_test = np.linspace(0.01, 0.5, 20)
-    M_test = np.array([5e14])
-    M_test_arr = np.array([5e14])
-    M_test_arr = np.array([1e14, 5e14])
+    M_test = np.array([1e14, 5e14])
     c_test = 4.0
     z_sources_test = np.linspace(0.6, 1, 21)
     zbin_test = 1
@@ -87,9 +85,9 @@ def test_profiles(profile_nfw, profile_bmo):
         _prof.surface_mass_density(
             R_test,
             z_test,
-            M_test_arr,
+            M_test,
             c_test,
-            force_no_2h=False,
+            two_halo="auto",
             force_no_off=False,
             radius_units=radius_units,
         )
@@ -97,7 +95,7 @@ def test_profiles(profile_nfw, profile_bmo):
         _prof.excess_surface_mass_density(
             R_test,
             z_test,
-            M_test_arr,
+            M_test,
             c_test,
             radius_units=radius_units,
         )
@@ -105,14 +103,14 @@ def test_profiles(profile_nfw, profile_bmo):
         _prof.surface_mass_density_2h(
             R_test,
             z_test,
-            M_test_arr,
+            M_test,
             radius_units=radius_units,
         )
         print("    excess_surface_mass_density_2h")
         _prof.excess_surface_mass_density_2h(
             R_test,
             z_test,
-            M_test_arr,
+            M_test,
             radius_units=radius_units,
         )
 

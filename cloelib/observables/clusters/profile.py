@@ -338,7 +338,7 @@ class Profile:
         ), f"Expected shape {expected_shape}, got {profile.shape}"
 
     def _surface_mass_density_cen(
-        self, R, z, c, M, force_no_2h=False, radius_units="Mpc/h"
+        self, R, z, M, c, force_no_2h=False, radius_units="Mpc/h"
     ):
         r"""
         Centered surface mass density profile.
@@ -351,10 +351,10 @@ class Profile:
             Radial points (units : Mpc / h)
         z: np.ndarray
             Redshift.
-        c: float
-            Concentration.
         M: np.ndarray
             Mass (Msun / h).
+        c: float
+            Concentration.
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
         radius_units: str
@@ -412,7 +412,7 @@ class Profile:
         raise NotImplementedError
 
     def surface_mass_density(
-        self, R, z, c, M, force_no_2h=False, force_no_off=False, radius_units="Mpc/h"
+        self, R, z, M, c, force_no_2h=False, force_no_off=False, radius_units="Mpc/h"
     ):
         r"""
         Total surface mass density profile.
@@ -426,10 +426,10 @@ class Profile:
             Radial points (units : Mpc / h)
         z: np.ndarray
             Redshift.
-        c: float
-            Concentration.
         M: np.ndarray
             Mass (Msun / h).
+        c: float
+            Concentration.
         force_no_2h: bool
             if True, force the non-inclusion of the 2-halo term
         force_no_off: bool
@@ -451,23 +451,23 @@ class Profile:
                 R,
                 self.r_interp,
                 self._surface_mass_density_cen(
-                    self.r_interp, z, c, M, force_no_2h=False, radius_units=radius_units
+                    self.r_interp, z, M, c, force_no_2h=False, radius_units=radius_units
                 ),
                 self.rms_off,
                 Sigma_off,
             )
 
             Sigma_cen = self._surface_mass_density_cen(
-                R, z, c, M, force_no_2h=False, radius_units=radius_units
+                R, z, M, c, force_no_2h=False, radius_units=radius_units
             )
             return (1.0 - self.f_off) * Sigma_cen + self.f_off * Sigma_off
 
         else:
             return self._surface_mass_density_cen(
-                R, z, c, M, force_no_2h, radius_units=radius_units
+                R, z, M, c, force_no_2h, radius_units=radius_units
             )
 
-    def excess_surface_mass_density(self, R, z, c, M, radius_units="Mpc/h"):
+    def excess_surface_mass_density(self, R, z, M, c, radius_units="Mpc/h"):
         r"""
         Total excess surface mass density profile.
 
@@ -502,7 +502,7 @@ class Profile:
             *self._surface_mass_density_args(R, z, M, radius_units=radius_units), c
         )
         Sigma = self._surface_mass_density_cen(
-            R, z, c, M, force_no_2h=True, radius_units=radius_units
+            R, z, M, c, force_no_2h=True, radius_units=radius_units
         )
         DeltaSigma = Sigma_mean - Sigma
 

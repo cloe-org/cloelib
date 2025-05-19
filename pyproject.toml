@@ -20,6 +20,7 @@ jax = "0.4.38"
 numpy = "<2.0"
 quadax = "0.2.7"
 scipy = "<1.14"
+pytest = "8.3.5"
 
 [tool.poetry.extras]
 camb = ["camb"]

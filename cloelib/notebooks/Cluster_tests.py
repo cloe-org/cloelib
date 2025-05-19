@@ -88,7 +88,7 @@ def test_profiles(profile_nfw, profile_bmo):
             M_test,
             c_test,
             two_halo="auto",
-            force_no_off=False,
+            offcentering="auto",
             radius_units=radius_units,
         )
         print("    excess_surface_mass_density")

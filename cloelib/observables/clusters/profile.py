@@ -393,7 +393,7 @@ class Profile:
         c,
         two_halo="auto",
         bias_z=None,
-        force_no_off=False,
+        offcentering="auto",
         radius_units="Mpc/h",
     ):
         r"""
@@ -418,8 +418,9 @@ class Profile:
         bias_z: np.ndarray
             Halo bias used for the 2h term. If None, it is computed internally,
             else has to be shape (z.size, M.size).
-        force_no_off: bool
-            if True, force the non-inclusion of the off-centering
+        offcentering: str
+            Application of offcentering, options are "auto" or "None".
+            If "auto", the attributes (self.offcentering, self.rms_off) are used.
         radius_units: str
             Unit for the input radius. Accepted values are:
             "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
@@ -430,7 +431,12 @@ class Profile:
             Surface mass density profile (units : h * Msun / pc**2).
             Shape: (z.size, M.size, R.size).
         """
-        if force_no_off == False and self.offcentering and self.rms_off >= 1.0e-4:
+        if offcentering == "None" or not self.offcentering or self.rms_off < 1.0e-4:
+            two_halo = self.two_halo if two_halo == "auto" else two_halo
+            return self._surface_mass_density_cen(
+                R, z, M, c, two_halo, bias_z, radius_units=radius_units
+            )
+        elif offcentering == "auto":
             Sigma_off = np.zeros_like(R)
 
             ir.Sigma_off(
@@ -447,12 +453,8 @@ class Profile:
                 R, z, M, c, two_halo="None", radius_units=radius_units
             )
             return (1.0 - self.f_off) * Sigma_cen + self.f_off * Sigma_off
-
         else:
-            two_halo = self.two_halo if two_halo == "auto" else two_halo
-            return self._surface_mass_density_cen(
-                R, z, M, c, two_halo, bias_z, radius_units=radius_units
-            )
+            raise ValueError("Invalid 'offcentering' definition, %s." % offcentering)
 
     def excess_surface_mass_density(
         self, R, z, M, c, two_halo="auto", bias_z=None, radius_units="Mpc/h"

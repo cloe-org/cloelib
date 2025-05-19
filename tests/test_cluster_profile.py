@@ -89,13 +89,13 @@ def test_array_shapes():
                     profile_nfw._surface_mass_density_cen(**_kwargs).shape == out_shape
                 )
 
-                for force_no_off in (True, False):
+                for offcentering in ("auto", "None"):
                     _kwargs["two_halo"] = two_halo
-                    _kwargs["force_no_off"] = force_no_off
+                    _kwargs["offcentering"] = offcentering
                     assert (
                         profile_nfw.surface_mass_density(**_kwargs).shape == out_shape
                     )
-                _kwargs.pop("force_no_off")
+                _kwargs.pop("offcentering")
 
             _kwargs.pop("two_halo")
 
@@ -125,7 +125,7 @@ def _test_profile(profile, reference_vals):
     print("    surface_mass_density")
     assert_allclose(
         profile.surface_mass_density(
-            R_test, z_test, M_test, c_test, two_halo="auto", force_no_off=False
+            R_test, z_test, M_test, c_test, two_halo="auto", offcentering="auto"
         )[:, 0, 0],
         **reference_vals["surface_mass_density"],
     )

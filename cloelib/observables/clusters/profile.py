@@ -102,7 +102,7 @@ class Profile:
         -------
         np.ndarray
             Distance in output units. If z is array and physical to
-            angular conversion used, output shape is (distance.size, z.size).
+            angular conversion used, output shape is (z.size, distance.size).
         """
         angular_units_bank = {
             "radians": ap_units.rad,

@@ -113,7 +113,7 @@ class Profile:
             raise ValueError(f"units_out (={units_out}) must be in {_valid_units}")
 
         if units_in.lower() == units_out.lower():
-            return radius
+            return distance
 
         if units_out.lower() not in angular_units_bank:
             # converting to mpc/h

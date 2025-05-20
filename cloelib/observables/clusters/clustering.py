@@ -1,4 +1,4 @@
-from cloelib.cosmology.cosmology import Perturbations
+from cloelib.cosmology.cosmology import Background
 
 from ...auxiliary import units
 from scipy.special import erf
@@ -9,33 +9,22 @@ from scipy.special import spherical_jn
 class HaloClustering:
     def __init__(
         self,
-        pertrurbations: Perturbations,
-        pertrurbations_fid: Perturbations,
+        background: Background,
+        background_fid: Background,
         nonu: bool = False,
         k_div: int = 500,
         k_min: float = 1.0e-4,
         k_max: float = 1.0e2,
     ):
 
+        self.background = background
+        self.background_fid = background_fid
+
         self.nonu = nonu
 
         # wavelength array (integration variable)                                                                                                                                                               
         self.k = np.geomspace(k_min, k_max, k_div)
 
-    @property
-    def background(self):
-        r"""
-        Returns the Background class instance
-        """
-        return self.perturbations.background
-
-
-    @property
-    def background_fid(self):
-        r"""
-        Returns the fiducial Background class instance
-        """
-        return self.perturbations.background_fid
 
     @property
     def nonu(self):
@@ -147,7 +136,7 @@ class HaloClustering:
             / self.background_fid.hubble_parameter(z)
         ) ** (1 / 3.0)
 
-        return (Dv / self.background.rdrag()) * (self.background_fid.rdrag() / Dv_fid)
+        return (Dv / self.background.rdrag) * (self.background_fid.rdrag / Dv_fid)
 
 
 

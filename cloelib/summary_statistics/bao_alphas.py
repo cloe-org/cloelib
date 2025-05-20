@@ -9,7 +9,7 @@ import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
-class BarionicAcousticOscillation:
+class BaryonAcousticOscillations:
     r"""Class to compute alpha parameters for the BAO analysis
 
     Parameters

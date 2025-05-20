@@ -85,12 +85,9 @@ def test_clustering():
     _cosmo_pars_fid = {**_cosmo_pars}
     _cosmo_pars_fid["H0"] = 73.0
     background_fid = CAMBBackground(**_cosmo_pars_fid)
-    perturbations_fid = CAMBLinearPerturbations(
-        background_fid, np.linspace(0.0, 2.0, 100)
-    )
     k_min = 1e-3
     k_max = 1e0
     k_div = 2
     nonu = True
-    CL = HaloClustering(perturbations, perturbations_fid, nonu, k_div, k_min, k_max)
+    CL = HaloClustering(background, background_fid, nonu, k_div, k_min, k_max)
     _test_clustering(CL,perturbations)

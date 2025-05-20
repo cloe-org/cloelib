@@ -65,18 +65,11 @@ class Profile:
             raise ValueError("Invalid 'two_halo' definition, %s." % two_halo)
 
     @property
-    def perturbations(self):
-        r"""
-        Returns the Perturbations class instance
-        """
-        return self.halo_statistics.perturbations
-
-    @property
     def background(self):
         r"""
         Returns the Background class instance
         """
-        return self.perturbations.background
+        return self.halo_statistics.perturbations.background
 
     def convert_distance(
         self, distance, units_in, units_out, angular_diameter_distance=None
@@ -587,7 +580,7 @@ class Profile:
         z_outshape = np.asarray(z)[:, np.newaxis, np.newaxis]  # shape (nz, 1, 1)
         D_A_outshape = D_A[:, np.newaxis, np.newaxis]
         rho_m_outshape = (
-            self.background.Omega_m(z, nonu=False)
+            self.halo_statistics._Omega_m(z)
             * self.background.rho_crit(z)
             / self.background.h**2
         )[:, np.newaxis, np.newaxis]
@@ -612,12 +605,11 @@ class Profile:
         Pk_interp = interpolate.RectBivariateSpline(
             z_for_interp,
             kl_array,
-            self.perturbations.matter_power_spectrum(
+            self.halo_statistics._matter_power_spectrum(
                 z_for_interp[:, np.newaxis],
                 kl_array,
                 hubble_units=True,
                 k_hunit=True,
-                nonu=self.halo_statistics.nonu,
             ),
         )
 

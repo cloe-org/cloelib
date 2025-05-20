@@ -1,6 +1,7 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.observables.spectro import SpectroPower
+from cloelib.summary_statistics.APDistortion import APDistortion
 from cloelib.auxiliary.math_utils import legendre
 
 # General imports
@@ -39,8 +40,8 @@ class LegendreMultipoles:
 
         self.spectro_power = spectro_power
         self.redshift = spectro_power.redshift
-
         self.background_fiducial = background_fiducial
+        self.ap_distortion = APDistortion(spectro_power.background, background_fiducial)
 
         mu_min = 0.0
         mu_max = 1.0
@@ -49,38 +50,6 @@ class LegendreMultipoles:
 
         self.parameters = parameters
         self.nbar = nbar
-
-    def _q_AP_tr(self, zs: np.ndarray) -> np.ndarray:
-        r"""AP distortion parameter transversal to the line of sight
-        .. math::
-            q_{\perp}(z) &= \frac{D_{\rm M}(z)}{D_{\rm M,fid}(z)}\\
-        Parameters
-        ----------
-        z: np.ndarray
-           Redshift
-        Returns
-        -------
-        q_tr: np.ndarray
-           Transversal AP parameter
-        """
-        return (self.spectro_power.background.angular_diameter_distance(zs)
-                / self.background_fiducial.angular_diameter_distance(zs))
-
-    def _q_AP_lo(self, zs: np.ndarray) -> np.ndarray:
-        r"""AP distortion parameter parallel to the line of sight
-        .. math::
-            q_{\parallel}(z) &= \frac{H_{\rm fid}(z)}{H(z)}\\
-        Parameters
-        ----------
-        z: np.ndarray
-           Redshift
-        Returns
-        -------
-        q_tr: np.ndarray
-           Parallel AP parameter
-        """
-        return (self.background_fiducial.hubble_parameter(zs)
-                /self.spectro_power.background.hubble_parameter(zs))
 
     def _ensure_array(self, param):
         if np.isscalar(param):
@@ -109,8 +78,8 @@ class LegendreMultipoles:
         kAP: np.ndarray
            AP-distorted wavenumber
         """
-        q_tr = self._q_AP_tr(zs) if use_AP else 1.0
-        q_lo = self._q_AP_lo(zs) if use_AP else 1.0
+        q_tr = self.ap_distortion.q_AP_tr(zs) if use_AP else 1.0
+        q_lo = self.ap_distortion.q_AP_lo(zs) if use_AP else 1.0
         return np.outer(k, np.sqrt(mu**2 / q_lo**2 + (1.0-mu**2) / q_tr**2))
 
     def _mu_AP(self, mu: np.ndarray, zs: float,
@@ -133,8 +102,8 @@ class LegendreMultipoles:
         muAP: np.ndarray
            AP-distorted angle (cosinus) to the line of sight
         """
-        q_tr = self._q_AP_tr(zs) if use_AP else 1.0
-        q_lo = self._q_AP_lo(zs) if use_AP else 1.0
+        q_tr = self.ap_distortion.q_AP_tr(zs) if use_AP else 1.0
+        q_lo = self.ap_distortion.q_AP_lo(zs) if use_AP else 1.0
         return mu / q_lo / np.sqrt(mu**2 / q_lo**2 + (1.0-mu**2) / q_tr**2)
 
     def _damping_function(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
@@ -255,8 +224,8 @@ class LegendreMultipoles:
             Power spectrum Legendre multipoles
         """
         ells = self._ensure_array(ells) if ells is not None else np.array([0,2,4])
-        AP_factor = (self._q_AP_tr(self.redshift)**2 *
-                     self._q_AP_lo(self.redshift) if use_AP else 1.0)
+        AP_factor = (self.ap_distortion.q_AP_tr(self.redshift)**2 *
+                     self.ap_distortion.q_AP_lo(self.redshift) if use_AP else 1.0)
         prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / \
             AP_factor
         multipoles = {}
@@ -294,8 +263,8 @@ class LegendreMultipoles:
         """
         ells = self._ensure_array(ells) \
             if ells is not None else np.array([0,2,4])
-        AP_factor = (self._q_AP_tr(self.redshift)**2 *
-                     self._q_AP_lo(self.redshift) if use_AP else 1.0)
+        AP_factor = (self.ap_distortion.q_AP_lo(self.redshift)**2 *
+                     self.ap_distortion.q_AP_lo(self.redshift) if use_AP else 1.0)
         prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / \
             AP_factor
         kAP = self._k_AP(k, self.mu_grid, self.redshift, use_AP=use_AP)

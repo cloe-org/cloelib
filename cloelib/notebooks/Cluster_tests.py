@@ -67,11 +67,11 @@ def test_halostatistics(HS, HS_tinker, HS_castro):
 def test_profiles(profile_nfw, profile_bmo):
     R_test = np.logspace(-1, 1, 5)
     z_test = np.linspace(0.01, 0.5, 20)
-    M_test = np.array([5e14])
-    M_test_arr = np.array([5e14])
+    M_test = np.array([1e14, 5e14])
     c_test = 4.0
     z_sources_test = np.linspace(0.6, 1, 21)
     zbin_test = 1
+    radius_units = "arcsec"
 
     for _name, _prof in zip(("NFW", "BMO"), (profile_nfw, profile_bmo)):
         print(f"  {_name}")
@@ -83,14 +83,36 @@ def test_profiles(profile_nfw, profile_bmo):
         _prof.n_zs(z_test)
         print("    surface_mass_density")
         _prof.surface_mass_density(
-            R_test, z_test, c_test, M_test, force_no_2h=False, force_no_off=False
+            R_test,
+            z_test,
+            M_test,
+            c_test,
+            two_halo="auto",
+            offcentering="auto",
+            radius_units=radius_units,
         )
         print("    excess_surface_mass_density")
-        _prof.excess_surface_mass_density(R_test, z_test, c_test, M_test_arr)
-        print("    surface_mass_density_2h")
-        _prof.surface_mass_density_2h(R_test, z_test, M_test_arr)
-        print("    excess_surface_mass_density_2h")
-        _prof.excess_surface_mass_density_2h(R_test, z_test, M_test_arr)
+        _prof.excess_surface_mass_density(
+            R_test,
+            z_test,
+            M_test,
+            c_test,
+            radius_units=radius_units,
+        )
+        print("    _surface_mass_density_2h")
+        _prof._surface_mass_density_2h(
+            R_test,
+            z_test,
+            M_test,
+            radius_units=radius_units,
+        )
+        print("    _excess_surface_mass_density_2h")
+        _prof._excess_surface_mass_density_2h(
+            R_test,
+            z_test,
+            M_test,
+            radius_units=radius_units,
+        )
 
 
 def test_clustering(CL):
@@ -115,18 +137,15 @@ def test_clustering(CL):
 
 
 def test_count_covariance(CC):
-
-
     print("    Covariance coefficients")
     KL = CC.Kl_coeff()
 
-
     iz = 1
-    zarr_iz = np.linspace(zbins[iz],zbins[iz+1],31)
+    zarr_iz = np.linspace(zbins[iz], zbins[iz + 1], 31)
     print("    Covariance window")
     CC.cov_window(iz, zarr_iz, KL)
 
-    
+
 if __name__ == "__main__":
     # Cosmology parameters
     print("# Cosmology parameters")
@@ -211,14 +230,14 @@ if __name__ == "__main__":
 
     # counts covariance
     print("# counts covariance")
-    
+
     area = 15000
     nbins_z = 10
     L = 20
 
-    zbins = np.linspace(0,2,nbins_z+1)
-    k_test = np.geomspace(k_min,k_max,k_div)
-    
-    CC = HaloCovariance(perturbations,area,nbins_z,k_test,L)
+    zbins = np.linspace(0, 2, nbins_z + 1)
+    k_test = np.geomspace(k_min, k_max, k_div)
+
+    CC = HaloCovariance(perturbations, area, nbins_z, k_test, L)
 
     test_count_covariance(CC)

@@ -17,14 +17,43 @@ class HaloClustering:
         k_max: float = 1.0e2,
     ):
 
-        self.background = pertrurbations.background
-        self.background_fid = pertrurbations_fid.background
-
         self.nonu = nonu
 
         # wavelength array (integration variable)                                                                                                                                                               
         self.k = np.geomspace(k_min, k_max, k_div)
 
+    @property
+    def background(self):
+        r"""
+        Returns the Background class instance
+        """
+        return self.perturbations.background
+
+
+    @property
+    def background_fid(self):
+        r"""
+        Returns the fiducial Background class instance
+        """
+        return self.perturbations.background_fid
+
+    @property
+    def nonu(self):
+        r"""
+        Includes or not neutrinos on matter density and matter power spectrum.
+        """
+        return self.__nonu
+
+    @nonu.setter
+    def nonu(self, value):
+        """Set nonu"""
+        if not isinstance(value, bool):
+            raise ValueError(f"value for nonu must be boolean, used {value}")
+        self.__nonu = value
+        if self.nonu:
+            self._Omega_m = self.background.Omega_m_cb
+        else:
+            self._Omega_m = self.background.Omega_m
 
         
     def WF_ra(self, z: np.ndarray, r: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -142,7 +171,7 @@ class HaloClustering:
         ns   = self.background.ns
         h    = self.background.h
         Obh2 = self.background.Omega_b(0.) * h**2
-        Omh2 = self.background.Omega_m(0., self.nonu) * h**2
+        Omh2 = self._Omega_m(0.) * h**2
         Tcmb =  2.73
 
         k     = self.k
@@ -209,7 +238,7 @@ class HaloClustering:
 
         
         # growth rate                                                                                                                                                                                                
-        f_gr = (self.background.Omega_m(z, self.nonu) ** 0.55)[:, np.newaxis]
+        f_gr = (self._Omega_m(z) ** 0.55)[:, np.newaxis]
 
 
         ks = self.k * (

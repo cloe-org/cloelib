@@ -107,6 +107,6 @@ This project is licensed under the **GNU LESSER GENERAL PUBLIC LICENSE** – see
 
 🎯 With technical advice from S. Farrens and N. Tessore.
 
-🛠️ With contributions from L. Linke, D. Navarro Gironès, I. Tutusaus
+🛠️ With contributions from L. Linke, D. Navarro Gironès, I. Tutusaus, S. Davini
 
 🐞  Bugs spotted by A. Hall

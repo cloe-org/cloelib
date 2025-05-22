@@ -21,6 +21,7 @@ numpy = "<2.0"
 quadax = "0.2.7"
 scipy = "<1.14"
 pytest = "8.3.5"
+pytest-cov = "6.1.1"
 
 [tool.poetry.extras]
 camb = ["camb"]
@@ -33,3 +34,6 @@ git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "--verbose --cov=cloelib"

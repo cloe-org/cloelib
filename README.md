@@ -1,8 +1,8 @@
 # cloelib – The Library for the Cosmology Likelihood for Observables in Euclid  
 
-🚀 **cloelib** is a flexible and efficient library designed to compute cosmological observables for the **CLOE** (*Cosmology Likelihood for Observables in Euclid*) project. It is built for seamless integration with **Boltzmann solvers** and **JAX-based frameworks**, enabling automatic differentiation and modularity for the next generation of cosmological analyses.  
+**cloelib** is a flexible and efficient library designed to compute cosmological observables for the **CLOE** (*Cosmology Likelihood for Observables in Euclid*) project. It is built for seamless integration with **Boltzmann solvers** and **JAX-based frameworks**, enabling automatic differentiation and modularity for the next generation of cosmological analyses.  
 
-🛠️ **Work in Progress** – We welcome feedback from the **Euclid community** and beyond to refine and improve this library!  
+We welcome feedback from the **Euclid community** and beyond to refine and improve this library!  
 
 ---
 
@@ -101,8 +101,12 @@ This project is licensed under the **GNU LESSER GENERAL PUBLIC LICENSE** – see
 
 ## 🙏 Acknowledgements  
 
-🔭 Inspired by the pioneering work of the **Euclid Consortium** and the **`jaxcosmo`** project. 
+🔭 Inspired by the pioneering work of the **Euclid Consortium** CLOE software and the **`jaxcosmo`** project. 
 
 👩‍💻🧑‍💻 Authored by M. Bonici, G. Cañas-Herrera, P. Carrilho, S. Casas, C. Moretti, and A. Pezzotta (listed in alphabetical order).
 
 🎯 With technical advice from S. Farrens and N. Tessore.
+
+🛠️ With contributions from L. Linke, D. Navarro Gironès, I. Tutusaus
+
+🐞  Bugs spotted by A. Hall

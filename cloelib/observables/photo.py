@@ -316,7 +316,7 @@ class PositionsTracer:
         result = np.einsum('ik, jk, jk->ij', self.dndz_shifted, rzrz, w_matrix)*dz
         return result
 
-    def get_magnification_window(self, z):
+    def get_window_magnification(self, z):
         r"""Magnification photometric galaxy kernel.
 
         Calculates the weak lensing shear kernel for a given tomographic bin
@@ -359,11 +359,10 @@ class PositionsTracer:
 
     def get_window(self, z) -> np.ndarray:
         """
-        Computes the angular photometric galaxy clustering window function.
-
-        If magnification bias is zero, it computes the window function
-        using the galaxy positions. Otherwise, it computes the window function
-        using both the galaxy positions and the magnification bias.
+        Computes the angular photometric galaxy clustering window function,
+        including magnification bias.
+        This function combines the galaxy clustering window and the magnification
+        bias window to produce the final window function.
 
         Parameters
         ----------
@@ -374,19 +373,5 @@ class PositionsTracer:
         -------
         window: np.ndarray
         """
-        def calculate_with_magnification():
-            return self.get_window_positions(z) + self.get_magnification_window(z)
-
-        def calculate_without_magnification():
-            return self.get_window_positions(z)
-
-        # Check if all terms in self.magnification_bias are zero
-        is_magnification_zero = jax.numpy.all(jax.numpy.array(self.magnification_bias) == 0.0)
-
-        # Use lax.cond to handle the conditional logic
-        window = lx.cond(
-            is_magnification_zero,
-            calculate_without_magnification,
-            calculate_with_magnification)
-
+        window = self.get_window_positions(z) + self.get_window_magnification(z)
         return window

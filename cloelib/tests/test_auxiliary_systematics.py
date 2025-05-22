@@ -1,13 +1,10 @@
 import pytest
 from cloelib.auxiliary.systematics import shift_dndz_jax
 
-# test/test_normalization.py
-
 import jax.numpy as jnp
 from jax import random
 import pytest
 
-# The actual test
 def test_shift_dndz_jax():
     bins = 3
     z = jnp.linspace(0.0, 5.0, 500)

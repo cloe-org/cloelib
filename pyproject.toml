@@ -22,7 +22,7 @@ quadax = "0.2.7"
 scipy = "<1.14"
 pytest = "8.3.5"
 pytest-cov = "6.1.1"
-pydocstyle = "6.3.0"
+pytest-pydocstyle = "2.4.0"
 
 [tool.poetry.extras]
 camb = ["camb"]

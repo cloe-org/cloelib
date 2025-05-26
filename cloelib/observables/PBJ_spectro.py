@@ -1,3 +1,5 @@
+"""Interface of Legendre Multipoles with PBJ."""
+
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.cosmology.cosmology import Perturbations
@@ -13,30 +15,25 @@ try:
 except:
     raise ImportError("PBJ could not be imported or initialised.")
 
-"""
-
-## Notes:
-
-- Interface of Legendre Multipoles with PBJ
-
-"""
 
 class PBJSpectroPower:
-    r"""Class to retrieve :math:`P(k,\mu)` with the EFT model from PBJ
-    Parameters
-    ----------
-    linear_perturbations: Perturbations
-        Perturbations object containing cosmology, linear power spectrum,
-        redshift and growth functions
-    nuisance_parameters: dict
-        Dictionary containing bias and counterterm parameters
-    redshift: float
-        Redshift at which to evaluate :math:`P(k,\mu)`
-    """
+    r"""Class to retrieve :math:`P(k,\mu)` with the EFT model from PBJ."""
+
     def __init__(self, 
                  linear_perturbations: Perturbations,
                  nuisance_parameters: dict):
-        
+        r"""Class constructor.
+    
+        Parameters
+        ----------
+        linear_perturbations: Perturbations
+            Perturbations object containing cosmology, linear power spectrum,
+            redshift and growth functions
+        nuisance_parameters: dict
+            Dictionary containing bias and counterterm parameters
+        redshift: float
+            Redshift at which to evaluate :math:`P(k,\mu)`
+        """
         self.linear_perturbations = linear_perturbations
         self.background = linear_perturbations.background
         self.parameters = nuisance_parameters
@@ -53,7 +50,7 @@ class PBJSpectroPower:
                       'Tcmb': 2.7255}
 
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
-        r"""2D power spectrum from couplings of density and velocity fields
+        r"""2D power spectrum from couplings of density and velocity fields.
 
         Parameters
         ----------
@@ -82,7 +79,7 @@ class PBJSpectroPower:
         return pkmu
         
     def Pk2d_X_rsd(self, k: np.ndarray, mu: np.ndarray, X: str) -> np.ndarray:
-        r"""2D power spectrum for the specific diagram X
+        r"""2D power spectrum for the specific diagram X.
 
         Parameters
         ----------

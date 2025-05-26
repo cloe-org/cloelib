@@ -1,3 +1,4 @@
+"""Implementation of Background and Perturbation cosmology using CAMB."""
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
@@ -13,13 +14,6 @@ try:
 except ImportError as e:
     raise ImportError("camb could not be imported.") from e
 
-"""
-## Notes:
-
-- This implementation interfaces with CAMB while adhering to the
-Background, LinearPerturbations and NonLinearPerturbations Protocols.
-"""
-
 
 class CAMBBackground:
     """A wrapper for CAMB background cosmological calculations."""
@@ -28,7 +22,7 @@ class CAMBBackground:
                  As: float, ns: float, mnu: float,
                  w0: float, wa: float, gamma_MG: float) -> None:
         """
-        Initialize the CAMBBackground class with cosmological parameters.
+        Initialize the CAMBBackground instance with cosmological parameters.
 
         Args:
             H0 (float): Hubble parameter in [km/s/Mpc].

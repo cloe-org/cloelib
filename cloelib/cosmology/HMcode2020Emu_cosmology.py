@@ -1,3 +1,4 @@
+"""Implementation of Background and Perturbation cosmology using HMcode2020Emu."""
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
@@ -27,8 +28,10 @@ except ImportError:
 """
 
 class HMemuLinearPerturbations:
-    def __init__(self, background : Background, redshifts: np.ndarray):
+    """Class for perturbations cosmology using HMemu, inheriting from Perturbations parent class."""
 
+    def __init__(self, background : Background, redshifts: np.ndarray):
+        """Intialize the HMemuLinearPerturbations instance."""
         assert background.Omega_k0 == 0, 'Non flat geometries not supported'
 
         self.z = redshifts[redshifts <= redshift_max]
@@ -138,10 +141,12 @@ class HMemuLinearPerturbations:
         return self.fsigma8/self.sigma8
 
 class HMemuNonLinearPerturbations:
+    """Class for non linear perturbations cosmology using HMemu, inheriting from Perturbations parent class."""
+
     def __init__(self, background : Background,
                  linearperturbations: Perturbations, redshifts: np.ndarray,
                  log10TAGN: Optional[float] = None):
-
+        """Initialize the HMemuNonLinearPerturbations intance."""
         assert background.Omega_k0 == 0, 'Non flat geometries not supported'
 
         redshift_max = \

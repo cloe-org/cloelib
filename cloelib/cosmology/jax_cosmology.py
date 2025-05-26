@@ -21,12 +21,13 @@ from quadax import quadgk
 """
 
 class JAXBackground:
+    """Class to define background cosmology using JAX,inheriting from Cosmology parent class."""
+
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
                  As: float, ns: float, mnu: float,
                  w0: float, wa: float, gamma_MG: float):
         """
-        A class to define background cosmology using JAX
-        and inheriting from Cosmology parent class
+        Initialize the JAXBackground class.
 
         Args:
             H0 (float): Hubble parameter in [km/s/Mpc].
@@ -76,14 +77,12 @@ class JAXBackground:
 
     @property
     def _interface_args(self) -> dict:
-        """
-        Save internal structure format of interface codes
-        """
+        """Save internal structure format of interface codes."""
         return self.interface_args
 
     def hubble_parameter(self, zs, units: str = "km/s/Mpc") -> np.ndarray:
         """
-        Returns the Hubble parameter as a function of redshift.
+        Return the Hubble parameter as a function of redshift.
 
         Args:
             zs : Redshifts.
@@ -112,7 +111,7 @@ class JAXBackground:
 
     def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Calculates the comoving distance for given redshifts.
+        Calculate the comoving distance for given redshifts.
 
         Parameters:
         -----------
@@ -136,7 +135,7 @@ class JAXBackground:
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the transverse comoving distance between two redshifts.
+        Return the transverse comoving distance between two redshifts.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -163,7 +162,7 @@ class JAXBackground:
 
     def angular_diameter_distance(self, zs) -> np.ndarray:
         """
-        Calculates the angular diameter distance for given redshifts.
+        Calculate the angular diameter distance for given redshifts.
 
         Parameters:
         -----------
@@ -179,7 +178,7 @@ class JAXBackground:
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the baryon density as a function of redshift.
+        Return the baryon density as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -191,7 +190,7 @@ class JAXBackground:
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the matter density as a function of redshift.
+        Return the matter density as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -222,7 +221,7 @@ class JAXBackground:
 class JAXLinearPerturbations:
     def __init__(self, background: Background, redshifts: np.ndarray) -> None:
         """
-        Initializes the JAXLinearPerturbations class with a background instance.
+        Initialize the JAXLinearPerturbations class with a background instance.
 
         Args:
             background (Background): A Background instance.
@@ -270,7 +269,7 @@ class JAXLinearPerturbations:
         return result
 
     def transfer_Eisenstein_Hu(self, ks):
-        """Computes the Eisenstein & Hu matter transfer function.
+        """Compute the Eisenstein & Hu matter transfer function.
 
         Parameters
         ----------
@@ -405,13 +404,14 @@ class JAXLinearPerturbations:
         return res
 
     def primordial_matter_power(self, ks):
-        """Primordial power spectrum
+        """Primordial power spectrum.
+
         Pk = k^n
         """
         return ks ** self.background.ns
 
     def sigmasqr(self, R, kmin=0.0001, kmax=1000.0, ksteps=5):
-        """Computes the energy of the fluctuations within a sphere of R h^{-1} Mpc
+        r"""Compute the energy of the fluctuations within a sphere of R h^{-1} Mpc.
 
         .. math::
 
@@ -436,7 +436,7 @@ class JAXLinearPerturbations:
         return 1.0 / (2.0 * np.pi**2.0) * y
 
     def sigma8sqr(self, kmin=0.0001, kmax=100.0):
-        """Computes the energy of the fluctuations within a sphere of R h^{-1} Mpc
+        r"""Compute the energy of the fluctuations within a sphere of R h^{-1} Mpc.
 
         .. math::
 
@@ -461,7 +461,7 @@ class JAXLinearPerturbations:
         return 1.0 / (2.0 * np.pi**2.0) * y
 
     def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False):
-        r"""Computes the linear matter power spectrum.
+        r"""Compute the linear matter power spectrum.
 
         Parameters
         ----------
@@ -517,19 +517,13 @@ class JAXLinearPerturbations:
         return pk.squeeze()
 
 class JAXNonLinearPerturbations(Perturbations):
-    def __init__(self, linearperturbations : Perturbations):
-        r"""
-        A class to define perturbations cosmology using JAX
-        and inheriting from Cosmology parent class
+    """Class for perturbations cosmology using JAX, inheriting from Cosmology parent class."""
 
-        """
+    def __init__(self, linearperturbations : Perturbations):
         self.linearperturbations = linearperturbations
 
     def _halofit_parameters(self, zs):
-        r"""Computes the non linear scale,
-        effective spectral index,
-        spectral curvature
-        """
+        """Compute the non linear scale, effective spectral index, spectral curvature."""
         # Step 1: Finding the non linear scale for which sigma(R)=1
         # That's our search range for the non linear scale
         logr = np.linspace(np.log(1e-4), np.log(1e1), 256)
@@ -659,7 +653,7 @@ class JAXNonLinearPerturbations(Perturbations):
         return pk_nl.squeeze()
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False, k_hunit=False):
-        """Computes the non-linear matter power spectrum.
+        """Compute the non-linear matter power spectrum.
 
         This function is just a wrapper over several nonlinear power spectra.
         """
@@ -702,7 +696,7 @@ def odeint(fn, y0, t):
 @functools.partial(jax.vmap, in_axes=(0, None, None))
 def interp(x, xp, fp):
     """
-    Simple equivalent of np.interp that compute a linear interpolation.
+    Compute a linear interpolation (equivalent of np.interp).
 
     We are not doing any checks, so make sure your query points are lying
     inside the array.
@@ -735,6 +729,7 @@ def a_z(z):
 def _romberg_diff(b, c, k):
     """
     Compute the differences for the Romberg quadrature corrections.
+
     See Forman Acton's "Real Computing Made Real," p 143.
     """
     tmp = 4.0**k
@@ -744,6 +739,7 @@ def _romberg_diff(b, c, k):
 def romb(function, a, b, args=(), divmax=6, return_error=False):
     """
     Romberg integration of a callable function or method.
+
     Returns the integral of `function` (a function of one variable)
     over the interval (`a`, `b`).
     If `show` is 1, the triangular array of the intermediate results
@@ -838,6 +834,7 @@ def romb(function, a, b, args=(), divmax=6, return_error=False):
 def _difftrap1(function, interval):
     """
     Perform part of the trapezoidal rule to integrate a function.
+
     Assume that we had called difftrap with all lower powers-of-2
     starting with 1.  Calling difftrap only returns the summation
     of the new ordinates.  It does _not_ multiply by the width
@@ -853,6 +850,7 @@ def _difftrap1(function, interval):
 def _difftrapn(function, interval, numtraps):
     """
     Perform part of the trapezoidal rule to integrate a function.
+
     Assume that we had called difftrap with all lower powers-of-2
     starting with 1.  Calling difftrap only returns the summation
     of the new ordinates.  It does _not_ multiply by the width
@@ -880,7 +878,7 @@ Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, Non
 #from 2410.14623
 def As_to_sigma8_max_precision(As, Om, Ob, h, ns, mnu, w0, wa):
     """
-    Compute the emulated conversion As -> sigma8, using the most accurate expression
+    Compute the emulated conversion As -> sigma8, using the most accurate expression.
 
     Args:
         :As (float): 10^9 times the amplitude of the primordial P(k)
@@ -896,7 +894,6 @@ def As_to_sigma8_max_precision(As, Om, Ob, h, ns, mnu, w0, wa):
         :sigma8 (float): Root-mean-square density fluctuation when the linearly
             evolved field is smoothed with a top-hat filter of radius 8 Mpc/h
     """
-
     b = np.array([0.0246, 2.1062, 2.9355, 0.7626, 0.2962, 0.5096,
                 4.4025, 3.6495, 0.4144, 0.8615, 0.6188, 0.1751,
                 0.824, 0.5466, 0.5519, 0.3689, 0.3261, 0.2002,

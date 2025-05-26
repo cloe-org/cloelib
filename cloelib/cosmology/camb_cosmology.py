@@ -22,9 +22,8 @@ Background, LinearPerturbations and NonLinearPerturbations Protocols.
 
 
 class CAMBBackground:
-    """
-    A wrapper for CAMB background cosmological calculations.
-    """
+    """A wrapper for CAMB background cosmological calculations."""
+
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
                  As: float, ns: float, mnu: float,
                  w0: float, wa: float, gamma_MG: float) -> None:
@@ -72,9 +71,7 @@ class CAMBBackground:
 
     @property
     def _interface_args(self) -> dict:
-        """
-        Save internal structure format of interface codes
-        """
+        """Save internal structure format of interface codes."""
         return self.interface_args
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
@@ -171,12 +168,11 @@ class CAMBBackground:
 
 
 class CAMBLinearPerturbations:
-    """
-    A wrapper for CAMB linear perturbation calculations.
-    """
+    """A wrapper for CAMB linear perturbation calculations."""
+
     def __init__(self, background: Background, redshifts: np.ndarray) -> None:
         """
-        Initializes the CAMBLinearPerturbations class with a background instance.
+        Initialize the CAMBLinearPerturbations class with a background instance.
 
         Args:
             background (Background): A CAMBBackground instance.
@@ -237,7 +233,7 @@ class CAMBLinearPerturbations:
         return f_z[::-1]
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        """
+        r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::
@@ -266,9 +262,8 @@ class CAMBLinearPerturbations:
 
 
 class CAMBNonLinearPerturbations:
-    """
-    A wrapper for CAMB nonlinear perturbation calculations.
-    """
+    """A wrapper for CAMB nonlinear perturbation calculations."""
+
     def __init__(self, background: Background, redshifts: np.ndarray,
                  nonlinear_model: Optional[str] = None) -> None:
         """
@@ -341,7 +336,7 @@ class CAMBNonLinearPerturbations:
         return f_z[::-1]
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        """
+        r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::

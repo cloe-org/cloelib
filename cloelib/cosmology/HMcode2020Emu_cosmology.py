@@ -97,7 +97,7 @@ class HMemuLinearPerturbations:
         return self.Pk_interp(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        """
+        r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::
@@ -241,7 +241,7 @@ class HMemuNonLinearPerturbations:
         return self.Pk_interp(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        """
+        r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::

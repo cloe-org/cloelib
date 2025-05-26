@@ -15,7 +15,7 @@ class Tracer(Protocol):
 
     @property
     def perturbations(self) -> Perturbations:
-        """Stores perturbations obj."""
+        """Store perturbations obj."""
         ...
 
     def _window_integrand(self, z: T, zprime: T) -> T:

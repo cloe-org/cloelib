@@ -73,7 +73,7 @@ class Background(Protocol):
 
     @property
     def gamma_MG(self) -> float:
-        """Returns modified gravity Linder parameter."""
+        """Return the modified gravity Linder parameter."""
         ...
 
     @property

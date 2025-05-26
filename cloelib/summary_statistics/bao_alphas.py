@@ -1,3 +1,4 @@
+"""Module to compute alpha parameters for the BAO analysis."""
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.summary_statistics.APDistortion import APDistortion
@@ -10,23 +11,22 @@ import jax.numpy as jnp
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 class BaryonAcousticOscillations:
-    r"""Class to compute alpha parameters for the BAO analysis
-
-    Parameters
-    ----------
-    background: Background
-        Object following the Background protocol; used to compute background
-        quantities needed for the alphas in a given cosmology
-    background_fiducial: Background
-        Object following the Background protocol; used to compute background
-        quantities in the fiducial cosmology
-    redshifts: np.ndarray
-        Array of redshifts at which the alphas are output
-    """
+    """Class to compute alpha parameters for the BAO analysis."""
 
     def __init__(self, background: Background, background_fiducial: Background,
                  redshifts: np.ndarray) -> None:
-        r"""Class constructor
+        """Initialize the class instance.
+
+        Parameters
+        ----------
+        background: Background
+            Object following the Background protocol; used to compute background
+            quantities needed for the alphas in a given cosmology
+        background_fiducial: Background
+            Object following the Background protocol; used to compute background
+            quantities in the fiducial cosmology
+        redshifts: np.ndarray
+            Array of redshifts at which the alphas are output
         """
         self.background = background
         self.background_fiducial = background_fiducial
@@ -38,7 +38,8 @@ class BaryonAcousticOscillations:
         self.alphas_dict = self.set_alphas()
 
     def alpha_par(self, zs: T) -> T:
-        r"""Alpha_parallel
+        r"""Alpha_parallel.
+
         Dilation parameter along the line of sight
         ..math::
             \alpha_\parallel(z) &= \frac{H_{\rm fid}(z)}{H(z)} \frac{r_{\rm d,fid}}{r_{\rm d}}
@@ -49,14 +50,15 @@ class BaryonAcousticOscillations:
 
         Returns
         -------
-        alpha_perp: np.array
-            alpha_perpendicular at requested redshifts
+        alpha_par: np.array
+            alpha_parallel at requested redshifts
         """
         alpha_par = self.rd_ratio * self.ap_distortion.q_AP_lo(zs)
         return alpha_par
 
     def alpha_perp(self, zs: T) -> T:
-        r"""Alpha_perpendicular
+        r"""Alpha_perpendicular.
+
         Dilation parameter perpendicular to the line of sight
         ..math::
             \alpha_\perp(z) &= \frac{D_{\rm A}(z)}{D_{\rm A, fid}(z)} \frac{r_{\rm d,fid}}{r_{\rm d}}
@@ -75,7 +77,8 @@ class BaryonAcousticOscillations:
 
     def alpha_iso(self, alpha_par: T,
                   alpha_perp: T) -> T:
-        r"""Alpha_iso
+        r"""Alpha_iso.
+
         Geometrical mean of alpha_parallel and alpha_perpendicular
         ..math::
             \alpha_{\rm iso} = (\alpha_\parallel * \alpha_\perp)^{2/3}
@@ -96,7 +99,8 @@ class BaryonAcousticOscillations:
 
     def alpha_AP(self, alpha_par: np.ndarray,
                   alpha_perp: np.ndarray) -> np.ndarray:
-        r"""Alpha_AP
+        r"""Alpha_AP.
+
         Ratio of alpha_parallel and alpha_perpendicular
         ..math::
             \alpha_{\rm AP} = (\alpha_\parallel * \alpha_\perp)^{2/3}
@@ -116,8 +120,10 @@ class BaryonAcousticOscillations:
         return (alpha_par / alpha_perp)
 
     def set_alphas(self) -> dict:
-        r"""Constructs a dictionary with values for alpha_par, alpha_perp, alpha_iso
-        and alpha_AP evaluated at the redshifts requested at initialisation
+        r"""Construct a dictionary with values for the BAO alphas.
+
+        The alphas are alpha_par, alpha_perp, alpha_iso and alpha_AP.
+        The alphas are evaluated at the redshifts requested at initialisation.
 
         Returns
         -------
@@ -135,8 +141,10 @@ class BaryonAcousticOscillations:
         return alphas
 
     def sound_horizon_drag(self, background):
-        r"""Computes the sound horizon at drag epoch using the fitting formula
-        Eq.17 of [1411.1074](https://arxiv.org/abs/1411.1074)
+        r"""Compute the sound horizon at drag epoch.
+
+        Uses the fitting formula Eq.17
+        of [1411.1074](https://arxiv.org/abs/1411.1074)
 
         Parameters
         ----------

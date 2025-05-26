@@ -77,7 +77,7 @@ class HMemuLinearPerturbations:
         self.Pk_interp = pk_interp
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-        r"""Computes the linear matter power spectrum.
+        r"""Compute the linear matter power spectrum.
 
         Parameters
         ----------
@@ -94,12 +94,11 @@ class HMemuLinearPerturbations:
             and redshift
 
         """
-
         return self.Pk_interp(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """
-        Calculates the growth factor for given redshifts and wavenumbers.
+        Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
@@ -127,14 +126,13 @@ class HMemuLinearPerturbations:
 
     def growth_rate(self) -> np.ndarray:
         """
-        Calculates the growth rate for given redshifts and wavenumbers.
+        Calculate the growth rate for given redshifts and wavenumbers.
 
         Returns:
         --------
         np.ndarray
             The growth rate as a function of redshift and wavenumber.
         """
-
         self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
 
         return self.fsigma8/self.sigma8
@@ -223,7 +221,7 @@ class HMemuNonLinearPerturbations:
 
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-        r"""Computes the linear matter power spectrum.
+        r"""Compute the linear matter power spectrum.
 
         Parameters
         ----------
@@ -240,12 +238,11 @@ class HMemuNonLinearPerturbations:
             and redshift
 
         """
-
         return self.Pk_interp(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """
-        Calculates the growth factor for given redshifts and wavenumbers.
+        Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
@@ -273,14 +270,13 @@ class HMemuNonLinearPerturbations:
 
     def growth_rate(self) -> np.ndarray:
         """
-        Calculates the growth rate for given redshifts and wavenumbers.
+        Calculate the growth rate for given redshifts and wavenumbers.
 
         Returns:
         --------
         np.ndarray
             The growth rate as a function of redshift and wavenumber.
         """
-
         self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
 
         return self.fsigma8/self.sigma8

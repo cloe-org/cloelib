@@ -12,10 +12,8 @@ def extend_spectra(wavenumber_in, redshift_in, boost_in,
                  wavenumber_tanh_slope=10.0,
                  wavenumber_tanh_scale=1.15,
                  ns=0.96):
-
-    """Calculates extrapolation of the spectrum/boost outside its given range.
-
-    Returns spectrum/boost array and corresponding scales in 1/Mpc.
+    """Calculate extrapolation of the spectrum/boost outside its given range.
+    Return spectrum/boost array and corresponding scales in 1/Mpc.
 
     Options for wavenumber extrapolation:
         - const, `power_law`, `hm_simple`, `hm_smooth`

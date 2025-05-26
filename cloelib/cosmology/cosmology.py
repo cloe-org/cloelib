@@ -1,3 +1,4 @@
+"""Protocols for Background and Perturbation cosmology classes.."""
 # General imports
 from typing import Protocol, Union, TypeVar, runtime_checkable
 
@@ -18,6 +19,7 @@ T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 @runtime_checkable
 class Background(Protocol):
+    """Protocol for Background cosmology class."""
 
     @property
     def H0(self) -> float:
@@ -105,6 +107,7 @@ class Background(Protocol):
 
 @runtime_checkable
 class Perturbations(Protocol):
+    """Protocol for Perturbation cosmology class."""
 
     @property
     def background(self) -> Background:

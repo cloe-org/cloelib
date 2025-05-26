@@ -1,3 +1,4 @@
+"""Implementation of Background and Perturbation cosmology using CLASS."""
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
@@ -23,7 +24,7 @@ class CLASSBackground:
                  As: float, ns: float, mnu: float, 
                  w0: float, wa: float, gamma_MG: float) -> None:
         """
-        Initialize the CLASSBackground class with cosmological parameters.
+        Initialize the CLASSBackground instance with cosmological parameters.
 
         Args:
             H0 (float): Hubble parameter at z=0 in km/s/Mpc.
@@ -168,6 +169,7 @@ class CLASSLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
 
     def __init__(self, background : Background, redshifts: np.ndarray):
+        """Initialize the CLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 100
@@ -267,6 +269,7 @@ class CLASSNonLinearPerturbations:
     def __init__(self, background : Background, 
                  redshifts: np.ndarray,
                  nonlinear_model: Optional[str] = None):
+        """Initialize the CLASSNonLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 100

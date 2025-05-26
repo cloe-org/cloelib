@@ -1,3 +1,4 @@
+"""Module for auxiliary functions related to systematics effects."""
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, lax

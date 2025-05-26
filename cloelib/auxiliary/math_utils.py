@@ -1,3 +1,4 @@
+"""Module for mathematical functions."""
 import jax
 import jax.numpy as jnp
 

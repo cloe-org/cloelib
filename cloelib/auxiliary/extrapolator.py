@@ -1,3 +1,4 @@
+"""Extrapolator module."""
 import numpy as np
 
 def extend_spectra(wavenumber_in, redshift_in, boost_in,

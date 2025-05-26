@@ -30,7 +30,7 @@ def shift_dndz_jax(dndz: T, z: T, dz: T) -> T:
     Notes
     -----
     - Interpolation outside bounds is filled with zero.
-    - Assumes input `dndz` is already normalized.
+    - `dndz` is being normalized _by this function_ .
     - JAX-compatible and JIT-compiled for use in differentiable models.
     """
     def interp_single_bin(i):
@@ -39,4 +39,6 @@ def shift_dndz_jax(dndz: T, z: T, dz: T) -> T:
 
     bins = dndz.shape[0]
     shifted = jnp.stack([interp_single_bin(i) for i in range(bins)], axis=0)
-    return shifted
+    #do the cumulative trapezoidal integral (notice the different treatment of first and last point)
+    normalization = (-0.5*(shifted[:,0]+shifted[:,-1])+jnp.sum(shifted, axis=1))*(z[1]-z[0])
+    return shifted / (normalization[:, None])

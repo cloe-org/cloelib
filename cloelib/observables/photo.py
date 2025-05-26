@@ -81,10 +81,10 @@ class ShearTracer:
         C_IA = self.nuisance_params["CIA"]
         Eta_IA = self.nuisance_params["EtaIA"]
         factor = -Hz/c_0*A_IA*C_IA*Omega_m0*(1+z)**Eta_IA/Dz
-        return np.einsum('ij, j->ij', self.dndz, factor)
+        return np.einsum('ij, j->ij', self.dndz_shifted, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
-        interpolator = interpax.Akima1DInterpolator(self.z, self.dndz[bin_idx,:])
+        interpolator = interpax.Akima1DInterpolator(self.z, self.dndz_shifted[bin_idx,:])
         x = np.linspace(0., 4, 200)
         y = self.background.comoving_distance(x)
         rx_interp = interpax.Akima1DInterpolator(x, y)
@@ -111,7 +111,7 @@ class ShearTracer:
         Returns
         -------
         np.ndarray
-            2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z) 
+            2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
             for each redshift bin over the evaluation grid.
 
         Notes
@@ -121,12 +121,11 @@ class ShearTracer:
         - `self.dndz` is expected to have shape (N_bins, len(z)) and be normalized.
         - Efficiency is evaluated using `np.einsum`.
         """
-        dndz = self.dndz
         dz = z[1]-z[0] # assuming equispaced!
         rz = self.background.comoving_distance(z)
         rzrz = 1 - np.outer(rz,1/rz)
         w_matrix = cached_stacked_simpson(len(z))
-        result = np.einsum('ik, jk, jk->ij', dndz, rzrz, w_matrix)*dz
+        result = np.einsum('ik, jk, jk->ij', self.dndz_shifted, rzrz, w_matrix)*dz
         return result
 
     def get_window_lensing(self, z):
@@ -266,12 +265,12 @@ class PositionsTracer:
         """
 
         def per_bin_case():
-            window = self.bias_array[:self.n_z_bins,None] * self.dndz * \
+            window = self.bias_array[:self.n_z_bins,None] * self.dndz_shifted * \
                 self.perturbations.background.hubble_parameter(z) / c_0
             return window
 
         def z_func_case():
-            window = self.bias_array[None,:] * self.dndz * \
+            window = self.bias_array[None,:] * self.dndz_shifted * \
                 self.perturbations.background.hubble_parameter(z) / c_0
             return window
 
@@ -300,7 +299,7 @@ class PositionsTracer:
         Returns
         -------
         np.ndarray
-            2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z) 
+            2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
             for each redshift bin over the evaluation grid.
 
         Notes
@@ -310,15 +309,14 @@ class PositionsTracer:
         - `self.dndz` is expected to have shape (N_bins, len(z)) and be normalized.
         - Efficiency is evaluated using `np.einsum`.
         """
-        dndz = self.dndz
         dz = z[1]-z[0] # assuming equispaced!
         rz = self.background.comoving_distance(z)
         rzrz = 1 - np.outer(rz,1/rz)
         w_matrix = cached_stacked_simpson(len(z))
-        result = np.einsum('ik, jk, jk->ij', dndz, rzrz, w_matrix)*dz
+        result = np.einsum('ik, jk, jk->ij', self.dndz_shifted, rzrz, w_matrix)*dz
         return result
 
-    def get_magnification_window(self, z):
+    def get_window_magnification(self, z):
         r"""Magnification photometric galaxy kernel.
 
         Calculates the weak lensing shear kernel for a given tomographic bin
@@ -361,11 +359,10 @@ class PositionsTracer:
 
     def get_window(self, z) -> np.ndarray:
         """
-        Computes the angular photometric galaxy clustering window function.
-
-        If magnification bias is zero, it computes the window function
-        using the galaxy positions. Otherwise, it computes the window function
-        using both the galaxy positions and the magnification bias.
+        Computes the angular photometric galaxy clustering window function,
+        including magnification bias.
+        This function combines the galaxy clustering window and the magnification
+        bias window to produce the final window function.
 
         Parameters
         ----------
@@ -376,19 +373,5 @@ class PositionsTracer:
         -------
         window: np.ndarray
         """
-        def calculate_with_magnification():
-            return self.get_window_positions(z) + self.get_magnification_window(z)
-
-        def calculate_without_magnification():
-            return self.get_window_positions(z)
-
-        # Check if all terms in self.magnification_bias are zero
-        is_magnification_zero = jax.numpy.all(jax.numpy.array(self.magnification_bias) == 0.0)
-
-        # Use lax.cond to handle the conditional logic
-        window = lx.cond(
-            is_magnification_zero,
-            calculate_without_magnification,
-            calculate_with_magnification)
-
-        return window 
+        window = self.get_window_positions(z) + self.get_window_magnification(z)
+        return window

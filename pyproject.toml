@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cloelib"
-version = "0.7.2"
+version = "0.8.0"
 description = "cloelib is a flexible and efficient library designed to compute cosmological observables for CLOE (Cosmology Likelihood for Observables in Euclid)"
 authors = [
     "M. Bonici <marco.bonici@uwaterloo.ca>",
@@ -10,7 +10,7 @@ authors = [
     "C. Moretti <cmoretti@sissa.it>",
     "A. Pezzotta <andrea.pezzotta@inaf.it>"
 ]
-license = "LGPL-3.0"
+license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -20,11 +20,17 @@ jax = "0.4.38"
 numpy = "<2.0"
 quadax = "0.2.7"
 scipy = "<1.14"
+pytest = "8.3.5"
+pytest-cov = "6.1.1"
 
 [tool.poetry.extras]
 camb = ["camb"]
 hmcode2020emu = ["HMcode2020Emu"]
 comet-emu = ["comet-emu"]
+
+[tool.poetry.dependencies.tensorflow]
+version = "==2.13"
+optional = true
 
 [tool.poetry.dependencies.HMcode2020Emu]
 git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
@@ -32,3 +38,6 @@ git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "--verbose --cov=cloelib"

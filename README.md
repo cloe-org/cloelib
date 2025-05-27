@@ -95,7 +95,7 @@ Please review the organization's general contribution guidelines and the specifi
 
 ## 📜 License  
 
-This project is licensed under the **GNU LESSER GENERAL PUBLIC LICENSE** – see the [LICENSE](LICENSE) file for details.  
+This project is licensed under the **MIT LICENSE** – see the [LICENSE](LICENSE) file for details.  
 
 ---
 

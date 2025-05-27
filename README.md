@@ -4,6 +4,9 @@
 
 We welcome feedback from the **Euclid community** and beyond to refine and improve this library!  
 
+[![CI](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml)
+[![pydocstyle](https://img.shields.io/badge/pydocstyle-enabled-AD4CD3)](http://www.pydocstyle.org/en/stable/)
+
 ---
 
 ## 📖 Table of Contents  
@@ -95,7 +98,7 @@ Please review the organization's general contribution guidelines and the specifi
 
 ## 📜 License  
 
-This project is licensed under the **GNU LESSER GENERAL PUBLIC LICENSE** – see the [LICENSE](LICENSE) file for details.  
+This project is licensed under the **MIT LICENSE** – see the [LICENSE](LICENSE) file for details.  
 
 ---
 

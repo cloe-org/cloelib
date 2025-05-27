@@ -1,3 +1,5 @@
+"""SpectroPower protocol."""
+
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 
@@ -9,15 +11,16 @@ import jax.numpy as jnp
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 class SpectroPower(Protocol):
+    r"""Protocol to define the :math:`P(k,\mu)` interface."""
+
     @property
     def background(self) -> Background:
-        """
-        Attribute to store background object
-        """
+        """Attribute to store background object."""
         ...
 
     def Pk2d_rsd(self, k: T, mu: T, **args) -> T:
-        r"""2D power spectrum from couplings of density and velocity fields
+        r"""2D power spectrum from couplings of density and velocity fields.
+
         Parameters
         ----------
         k: numpy.ndarray or jax.numpy.ndarray
@@ -32,7 +35,8 @@ class SpectroPower(Protocol):
         ...
 
     def Pk2d_term_rsd(self, k: T, mu: T, **args) -> T:
-        r"""2D power spectrum for a subset of specific term of the loop expansion
+        r"""2D power spectrum for a subset of specific term of the loop expansion.
+
         Parameters
         ----------
         k: numpy.ndarray or jax.numpy.ndarray

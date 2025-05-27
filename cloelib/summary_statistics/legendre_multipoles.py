@@ -1,3 +1,4 @@
+"""Module to compute Legendre multipoles."""
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.observables.spectro import SpectroPower
@@ -13,31 +14,28 @@ from scipy.special import roots_legendre
 
 
 class LegendreMultipoles:
-    r"""Class to compute spectroscopic Legendre multipoles of the galaxy
-    power spectrum using an external non-linear code
-
-    Parameters
-    ----------
-    spectro_power: SpectroPower
-        Class returning the anisotropic power spectrum (only density and
-        velocity field couplings; noise and systematics are included directly
-        here)
-    background_fiducial: Background
-        Background class for computing fiducial background distances
-    parameters: dict
-        Dictionary containing shot noise and parameters related to
-        observational systematics
-    nbar: float
-        Mean number denisty of the sample
-    """
+    """Class to compute spectroscopic Legendre multipoles of the galaxy power spectrum."""
 
     def __init__(self, spectro_power: SpectroPower,
                  background_fiducial: Background,
                  parameters: dict,
                  nbar: float):
-        r"""Class constructor
-        """
+        """Initialize the class instance.
 
+        Parameters
+        ----------
+        spectro_power: SpectroPower
+            Class returning the anisotropic power spectrum (only density and
+            velocity field couplings; noise and systematics are included directly
+            here)
+        background_fiducial: Background
+            Background class for computing fiducial background distances
+        parameters: dict
+            Dictionary containing shot noise and parameters related to
+            observational systematics
+        nbar: float
+            Mean number denisty of the sample
+        """
         self.spectro_power = spectro_power
         self.redshift = spectro_power.redshift
         self.background_fiducial = background_fiducial
@@ -58,7 +56,8 @@ class LegendreMultipoles:
 
     def _k_AP(self, k: np.ndarray, mu: np.ndarray, zs: float,
               use_AP: Optional[bool] = True) -> np.ndarray:
-        r"""AP-distorted wavenumber
+        r"""AP-distorted wavenumber.
+
         .. math::
             k(k_{\rm fid},\mu_{\rm fid}, z) &= k_{\rm fid} \
             \left[\frac{(\mu_{\rm fid})^2}{q_\parallel^2(z)} + \
@@ -84,7 +83,8 @@ class LegendreMultipoles:
 
     def _mu_AP(self, mu: np.ndarray, zs: float,
                use_AP: Optional[bool] = True) -> np.ndarray:
-        r"""AP-distorted angle (cosinus) to the line of sight
+        r"""AP-distorted angle (cosinus) to the line of sight.
+
         .. math::
             \mu(\mu_{\rm fid}, z) &= \frac{\mu_{\rm fid}}{q_\parallel(z)} \
             \left[\frac{(\mu_{\rm fid})^2}{q_\parallel^2(z)} + \
@@ -107,7 +107,8 @@ class LegendreMultipoles:
         return mu / q_lo / np.sqrt(mu**2 / q_lo**2 + (1.0-mu**2) / q_tr**2)
 
     def _damping_function(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
-        r"""Damping function due to GCsp redshift uncertainty
+        r"""Damping function due to GCsp redshift uncertainty.
+
         Parameters
         ----------
         k: np.ndarray
@@ -125,7 +126,8 @@ class LegendreMultipoles:
         return np.exp(-k**2 * mu**2 * sigma_r**2)
 
     def _Pk2d_noise(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
-        r"""2D power spectrum from expansion of stochastic field
+        r"""2D power spectrum from expansion of stochastic field.
+
         Parameters
         ----------
         k: np.ndarray
@@ -143,7 +145,8 @@ class LegendreMultipoles:
         return noise
 
     def _Pk2d_noise_k0(self, k: np.ndarray) -> np.ndarray:
-        r"""Leading-order term from 2d power spectrum of stochastic field
+        r"""Leading-order term from 2d power spectrum of stochastic field.
+
         Parameters
         ----------
         k: np.ndarray
@@ -157,8 +160,8 @@ class LegendreMultipoles:
         return noise / self.nbar
 
     def _Pk2d_noise_k2(self, k: np.ndarray) -> np.ndarray:
-        r"""Isotropic next-to-leading-order term from 2d power spectrum of
-        stochastic field
+        r"""Isotropic next-to-leading-order term from 2d power spectrum of stochastic field.
+
         Parameters
         ----------
         k: np.ndarray
@@ -172,8 +175,8 @@ class LegendreMultipoles:
         return noise / self.nbar
 
     def _Pk2d_noise_k2mu2(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
-        r"""Anisotropic next-to-leading-order term from 2d power spectrum of
-        stochastic field
+        r"""Anisotropic next-to-leading-order term from 2d power spectrum of stochastic field.
+
         Parameters
         ----------
         k: np.ndarray
@@ -189,7 +192,8 @@ class LegendreMultipoles:
         return noise / self.nbar
 
     def _Pk2d_tot(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
-        r"""Total 2D power spectrum (including RSD, systematics, and noise)
+        r"""Total 2D power spectrum (including RSD, systematics, and noise).
+
         Parameters
         ----------
         k: np.ndarray
@@ -209,7 +213,8 @@ class LegendreMultipoles:
     def power_multipoles(self, k: np.ndarray,
                          ells: Optional[np.ndarray] = None,
                          use_AP: Optional[bool] = True) -> dict:
-        r"""Power spectrum Legendre multipoles
+        r"""Power spectrum Legendre multipoles.
+
         Parameters
         ----------
         k: np.ndarray
@@ -245,7 +250,8 @@ class LegendreMultipoles:
     def power_term_multipoles(self, k: np.ndarray, term_list: list,
                               ells: Optional[np.ndarray] = None,
                               use_AP: Optional[bool] = True) -> dict:
-        r"""Power spectrum Legendre multipoles
+        r"""Power spectrum Legendre multipoles.
+
         Parameters
         ----------
         k: np.ndarray
@@ -296,7 +302,8 @@ class LegendreMultipoles:
     def convolved_power_multipoles(self, mixing_matrix: dict,
                                    ells: Optional[np.ndarray] = None,
                                    use_AP: Optional[bool] = True) -> dict:
-        r"""Power spectrum Legendre multipoles convolved with the mixing matrix
+        r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
+
         Parameters
         ----------
         mixing_matrix: dict

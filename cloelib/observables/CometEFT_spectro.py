@@ -1,3 +1,5 @@
+"""Interface of Legendre Multiples with Comet."""
+
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 
@@ -13,31 +15,22 @@ try:
 except ImportError:
     raise ImportError("Comet could not be imported or initialised.")
 
-"""
-
-## Notes:
-
-- Interface of Legendre Multiples with Comet
-
-"""
 
 class CometEFT_SpectroPower:
-    r"""Class to retrieve :math:`P(k,\mu)` (including redshift-space
-    distortions) with the EFT model from COMET
-
-    Parameters
-    ----------
-    background: Background
-        Background class containing cosmology and background distances
-    RSD_parameters: dict
-        Dictionary containing bias and counterterm parameters
-    redshift: float
-        Redshift at which to evaluate :math:`P(k,\mu)`
-    """
+    r"""Class to retrieve :math:`P(k,\mu)` (including RSD) with the EFT model from COMET."""
 
     def __init__(self, background: Background, RSD_parameters: dict,
                  redshift: float):
-        r"""Class constructor
+        r"""Class constructor.
+
+        Parameters
+        ----------
+        background: Background
+            Background class containing cosmology and background distances
+        RSD_parameters: dict
+            Dictionary containing bias and counterterm parameters
+        redshift: float
+            Redshift at which to evaluate :math:`P(k,\mu)`
         """
         self.background = background
 
@@ -67,7 +60,8 @@ class CometEFT_SpectroPower:
         }
 
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
-        r"""2D power spectrum from couplings of density and velocity fields
+        r"""2D power spectrum from couplings of density and velocity fields.
+
         Parameters
         ----------
         k: np.ndarray
@@ -84,7 +78,8 @@ class CometEFT_SpectroPower:
                                    params=self.parameters, de_model='w0wa'))
 
     def Pk2d_term_rsd(self, k: np.ndarray, mu: np.ndarray, term_list: list) -> np.ndarray:
-        r"""2D power spectrum for a subset of specific diagrams of the loop expansion
+        r"""2D power spectrum for a subset of specific diagrams of the loop expansion.
+
         Parameters
         ----------
         k: np.ndarray

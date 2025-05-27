@@ -1,12 +1,3 @@
-import jax.numpy as np
-import jax
-from jax import jit
-
-#from jax.scipy.special import gammaln
-
-from cloelib.observables.photo import ShearTracer #, PositionsTracer
-from .angular_correlation_function import AngularCorrelationFunction
-
 """
 Angular correlation function implementation using Wigner small-d matrices.
 
@@ -18,12 +9,24 @@ The Wigner d-matrices follow the recurrence relations from:
 https://arxiv.org/pdf/1702.05301
 """
 
+import jax.numpy as np
+import jax
+from jax import jit
 
-# -----------------------------------------------------------------------------------
-# Wigner d-matrix recurrence relations
-# -----------------------------------------------------------------------------------
+#from jax.scipy.special import gammaln
+
+from cloelib.observables.photo import ShearTracer #, PositionsTracer
+from .angular_correlation_function import AngularCorrelationFunction
+
+
 @jit
 def d_0_0_ell(beta, ell):
+    """
+    Compute d_00^ell(beta).
+
+    The computation uses the Wigner d-matrix
+    recurrence relations in a JIT-compatible way.
+    """
     base_case_0 = np.ones_like(beta)
     base_case_1 = np.cos(beta)
     
@@ -40,7 +43,9 @@ def d_0_0_ell(beta, ell):
 @jit
 def d_2_2_ell(beta, ell):
     """
-    Computes d_22^ell(beta) using recurrence for small ell
+    Compute d_22^ell(beta).
+
+    The computation uses recurrence for small ell
     and an approximation for large ell, in a JIT-compatible way.
     """
     # Base cases
@@ -83,7 +88,9 @@ def d_2_2_ell(beta, ell):
 @jit
 def d_2_m2_ell(beta, ell):
     """
-    Computes d_2-2^ell(beta) using recurrence for small ell
+    Compute d_2-2^ell(beta).
+
+    The computation uses recurrence for small ell
     and an approximation for large ell, in a JIT-compatible way.
     """
     # Base cases
@@ -128,7 +135,9 @@ def d_2_m2_ell(beta, ell):
 @jit
 def d_2_0_ell(beta, ell):
     """
-    Computes d_20^ell(beta) using recurrence for small ell
+    Compute d_20^ell(beta).
+
+    The computation uses recurrence for small ell
     and an approximation for large ell, in a JIT-compatible way.
     """
     # Base cases
@@ -182,33 +191,25 @@ d_2_0_vmap = jax.vmap(jax.vmap(d_2_0_ell, (None, 0)), (0, None))
 # Angular correlation function using Wigner d-matrices
 # -----------------------------------------------------------------------------------
 class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
-    """
-    Correlation function implementation using Wigner small-d matrices.
+    """Correlation function implementation using Wigner small-d matrices."""
 
-    This class computes real-space angular correlation functions from
-    angular power spectra Cl via spherical harmonic projection. The spin
-    configuration is inferred from the types of tracers in the provided
-    AngularTwoPoint object.
-
-    Parameters
-    ----------
-    angular_two_point : AngularTwoPoint object
-        Object providing Cl evaluation and tracers.
-    ells: jnp.ndarray
-        Multipole moments at which the Cl spectrum is evaluated.
-    ks : jnp.ndarray
-        Wavenumber grid (only needed for computing Cl via angular_two_point).
-    """
     def __init__(self, angular_two_point, ells, ks):
         """
-        Initializes CorrelationFunction with an AngularTwoPoint instance.
-        Also automatically sets the spins s1 and s2 dependent on the type of tracer
-        in AngularTwoPoint
+        Initialize CorrelationFunction with an AngularTwoPoint instance.
 
-        Args:
-            angular_two_point (AngularTwoPoint): Instance providing Cl values.
-            ells (jnp.ndarray): Multipole moments at which the Cl spectrum is evaluated.
-            ks (jnp.ndarray): Wavenumber grid (only needed for computing Cl via angular_two_point).
+        Thie real-space angular correlation functions are computed from
+        angular power spectra Cl via spherical harmonic projection. The spin
+        configuration is inferred from the types of tracers in the provided
+        AngularTwoPoint object.
+
+        Parameters
+        ----------
+        angular_two_point : AngularTwoPoint object
+            Object providing Cl evaluation and tracers.
+        ells: jnp.ndarray
+            Multipole moments at which the Cl spectrum is evaluated.
+        ks: jnp.ndarray
+            Wavenumber grid (only needed for computing Cl via angular_two_point).
         """
         self.angular_two_point = angular_two_point
         self.ells=ells
@@ -221,7 +222,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
 
     def get_xi(self, theta):
         """
-        Compute the angular correlation function xi(theta) using the Wigner d-matrices
+        Compute the angular correlation function xi(theta) using the Wigner d-matrices.
 
         TODO: Also implement FFTLog which is likely faster
         WARNING: Currently assumes B-modes are zero, as they are not passed on from AngularTwoPoint

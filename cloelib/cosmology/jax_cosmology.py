@@ -1,3 +1,10 @@
+"""
+Implementation of Background and Perturbation cosmology using JAX.
+
+The module enables automatic differentiation.
+All of the functions are completely differentiable.
+"""
+
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
@@ -11,14 +18,6 @@ import jax.lax as lx
 import functools
 import interpax
 from quadax import quadgk
-
-"""
-
-## Notes:
-
-- Make it completely differentiable
-
-"""
 
 class JAXBackground:
     """Class to define background cosmology using JAX,inheriting from Cosmology parent class."""
@@ -201,24 +200,31 @@ class JAXBackground:
         return np.array([(self.Omega_m0) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
     def w_a(self, a):
+        """Write documentation (TODO)."""
         return self.w0 + (1.0 - a) * self.wa  # Equation (6) in Linder (2003)
 
     def f_de(self, a):
+        """Write documentation (TODO)."""
         return -3.0 * (1.0 + self.w0 + self.wa) * np.log(a) + 3.0 * self.wa * (a - 1.0)
 
     def Esqr(self, a):
+        """Write documentation (TODO)."""
         OmDE = 1. - self.Omega_m0 - self.Omega_k0
         return (self.Omega_m0 * np.power(a, -3) + self.Omega_k0 * np.power(a, -2)
                 + OmDE * np.exp(self.f_de(a)))
 
     def Omega_m_a(self, a):
+        """Write documentation (TODO)."""
         return self.Omega_m0 * np.power(a, -3) / self.Esqr(a)
 
     def Omega_de_a(self, a):
+        """Write documentation (TODO)."""
         OmDE = 1. - self.Omega_m0 - self.Omega_k0
         return OmDE * np.exp(self.f_de(a)) / self.Esqr(a)
 
 class JAXLinearPerturbations:
+    """A wrapper for JAX linear perturbation calculations."""
+
     def __init__(self, background: Background, redshifts: np.ndarray) -> None:
         """
         Initialize the JAXLinearPerturbations class with a background instance.
@@ -231,12 +237,14 @@ class JAXLinearPerturbations:
         self.z = redshifts
 
     def D_derivs(self, y, x):
-            q = (2.0 - 0.5* ( self.background.Omega_m_a(x) + (1.0 + 3.0 * self.background.w_a(x)) *
-                             self.background.Omega_de_a(x))) / x
-            r = 1.5 * self.background.Omega_m_a(x) / x / x
-            return np.array([y[1], -q * y[1] + r * y[0]])
+        """Write documentation (TODO)."""
+        q = (2.0 - 0.5* (self.background.Omega_m_a(x) + (1.0 + 3.0 * self.background.w_a(x)) *
+                         self.background.Omega_de_a(x))) / x
+        r = 1.5 * self.background.Omega_m_a(x) / x / x
+        return np.array([y[1], -q * y[1] + r * y[0]])
 
     def growth_factor(self, zs):
+        """Compute the growth factor."""
         atab = np.logspace(-3., 0.0, 128)
 
         a_s = a_z(zs)
@@ -252,7 +260,7 @@ class JAXLinearPerturbations:
         return result
 
     def growth_rate(self, zs):
-
+        """Compute the growth rate."""
         atab = np.logspace(-3., 0.0, 256)
 
         a_s = a_z(zs)
@@ -520,6 +528,7 @@ class JAXNonLinearPerturbations(Perturbations):
     """Class for perturbations cosmology using JAX, inheriting from Cosmology parent class."""
 
     def __init__(self, linearperturbations : Perturbations):
+        """Initialse the class instance."""
         self.linearperturbations = linearperturbations
 
     def _halofit_parameters(self, zs):
@@ -577,6 +586,7 @@ class JAXNonLinearPerturbations(Perturbations):
         return k_nl, n_eff, C
 
     def halofit(self, zs, ks, hubble_units=False, k_hunit=False):
+        """Write documentation (TODO)."""
         zs = np.atleast_1d(zs)
         a_s = a_z(zs)
 
@@ -660,6 +670,7 @@ class JAXNonLinearPerturbations(Perturbations):
         return jax.vmap(self.halofit, in_axes = (0, None, None, None))(zs, ks, hubble_units, k_hunit)
 
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):
+        """Write documentation (TODO)."""
         Pk = jax.vmap(self.nonlinear_matter_power_spectrum,
                       in_axes = (0, None))(ks, zs)
         chi = self.linearperturbations.linearperturbations.background.comoving_distance(zs)
@@ -669,6 +680,7 @@ class JAXNonLinearPerturbations(Perturbations):
 
 #function takenfrom JAXCosmo. Should likely be moved to an utils.py
 def simps(f, a, b, N=128):
+    """Write documentation (TODO)."""
     if N % 2 == 1:
         raise ValueError("N must be an even integer.")
     dx = (b - a) / N
@@ -679,6 +691,7 @@ def simps(f, a, b, N=128):
 
 #function takes from JAXCosmo. Should likely be moved to an utils.py
 def odeint(fn, y0, t):
+    """Write documentation (TODO)."""
 
     def rk4(carry, t):
         y, t_prev = carry
@@ -722,6 +735,7 @@ def interp(x, xp, fp):
 
 @jax.jit
 def a_z(z):
+    r"""Compute a(z)."""
     return 1/(1+z)
 
 #function from jaxcosmo
@@ -870,6 +884,7 @@ def _difftrapn(function, interval, numtraps):
 
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
+    """Write documentation (TODO)."""
     return 10**interpax.interp2d(np.log10(k_l), z_l, np.log10(ks), zs, np.log10(Pk),
                                  method="cubic")
 

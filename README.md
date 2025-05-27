@@ -4,6 +4,8 @@
 
 We welcome feedback from the **Euclid community** and beyond to refine and improve this library!  
 
+[![pydocstyle](https://img.shields.io/badge/pydocstyle-enabled-AD4CD3)](http://www.pydocstyle.org/en/stable/)
+
 ---
 
 ## 📖 Table of Contents  

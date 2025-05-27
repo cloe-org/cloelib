@@ -1,3 +1,4 @@
+"""Extrapolator module."""
 import numpy as np
 
 def extend_spectra(wavenumber_in, redshift_in, boost_in,
@@ -12,10 +13,9 @@ def extend_spectra(wavenumber_in, redshift_in, boost_in,
                  wavenumber_tanh_slope=10.0,
                  wavenumber_tanh_scale=1.15,
                  ns=0.96):
+    """Calculate extrapolation of the spectrum/boost outside its given range.
 
-    """Calculates extrapolation of the spectrum/boost outside its given range.
-
-    Returns spectrum/boost array and corresponding scales in 1/Mpc.
+    Return spectrum/boost array and corresponding scales in 1/Mpc.
 
     Options for wavenumber extrapolation:
         - const, `power_law`, `hm_simple`, `hm_smooth`
@@ -67,7 +67,6 @@ def extend_spectra(wavenumber_in, redshift_in, boost_in,
        and scales `wavenumber_out`
 
     """
-
     default_n_k = 500
     wavenumber_base = np.geomspace(extrap_kmin, extrap_kmax, default_n_k)
 

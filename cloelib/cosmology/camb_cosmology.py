@@ -1,3 +1,4 @@
+"""Implementation of Background and Perturbation cosmology using CAMB."""
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
@@ -13,24 +14,15 @@ try:
 except ImportError as e:
     raise ImportError("camb could not be imported.") from e
 
-"""
-## Notes:
-
-- This implementation interfaces with CAMB while adhering to the
-Background, LinearPerturbations and NonLinearPerturbations Protocols.
-"""
-
 
 class CAMBBackground:
-    """
-    A wrapper for CAMB background cosmological calculations.
-    """
+    """A wrapper for CAMB background cosmological calculations."""
 
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
                  As: float, ns: float, mnu: float,
                  w0: float, wa: float, gamma_MG: float) -> None:
         """
-        Initializes the CAMBBackground class with cosmological parameters.
+        Initialize the CAMBBackground instance with cosmological parameters.
 
         Args:
             H0 (float): Hubble parameter in [km/s/Mpc].
@@ -73,14 +65,12 @@ class CAMBBackground:
 
     @property
     def _interface_args(self) -> dict:
-        """
-        Save internal structure format of interface codes
-        """
+        """Save internal structure format of interface codes."""
         return self.interface_args
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
-        Returns the Hubble parameter as a function of redshift.
+        Return the Hubble parameter as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -97,7 +87,7 @@ class CAMBBackground:
 
     def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the comoving distance as a function of redshift.
+        Return the comoving distance as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -109,7 +99,7 @@ class CAMBBackground:
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the transverse comoving distance between two redshifts.
+        Return the transverse comoving distance between two redshifts.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -130,7 +120,7 @@ class CAMBBackground:
 
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the angular diameter distance as a function of redshift.
+        Return the angular diameter distance as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -142,7 +132,7 @@ class CAMBBackground:
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the matter density as a function of redshift.
+        Return the matter density as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -158,7 +148,7 @@ class CAMBBackground:
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the baryon density as a function of redshift.
+        Return the baryon density as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -172,13 +162,11 @@ class CAMBBackground:
 
 
 class CAMBLinearPerturbations:
-    """
-    A wrapper for CAMB linear perturbation calculations.
-    """
+    """A wrapper for CAMB linear perturbation calculations."""
 
     def __init__(self, background: Background, redshifts: np.ndarray) -> None:
         """
-        Initializes the CAMBLinearPerturbations class with a background instance.
+        Initialize the CAMBLinearPerturbations class with a background instance.
 
         Args:
             background (Background): A CAMBBackground instance.
@@ -198,7 +186,7 @@ class CAMBLinearPerturbations:
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
                               k_hunit=False) -> np.ndarray:
-        r"""Computes the linear matter power spectrum.
+        r"""Compute the linear matter power spectrum.
 
         Parameters
         ----------
@@ -229,7 +217,7 @@ class CAMBLinearPerturbations:
 
     def growth_rate(self) -> np.ndarray:
         """
-        Calculates growth rate.
+        Calculate growth rate.
 
         Returns:
             np.ndarray: growth rate.
@@ -239,8 +227,8 @@ class CAMBLinearPerturbations:
         return f_z[::-1]
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        """
-        Calculates the growth factor for given redshifts and wavenumbers.
+        r"""
+        Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
@@ -268,14 +256,12 @@ class CAMBLinearPerturbations:
 
 
 class CAMBNonLinearPerturbations:
-    """
-    A wrapper for CAMB nonlinear perturbation calculations.
-    """
+    """A wrapper for CAMB nonlinear perturbation calculations."""
 
     def __init__(self, background: Background, redshifts: np.ndarray,
                  nonlinear_model: Optional[str] = None) -> None:
         """
-        Initializes the CAMBNonLinearPerturbations class with linear perturbation data.
+        Initialize the CAMBNonLinearPerturbations class with linear perturbation data.
 
         Args:
             linear_perturbations (LinearPerturbations): An instance of the LinearPerturbations class.
@@ -283,7 +269,6 @@ class CAMBNonLinearPerturbations:
             nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
                 Defaults to None, which uses the CAMB default model.
         """
-
         self.background = background
         self.kmax = 500
         self.z = redshifts
@@ -305,7 +290,7 @@ class CAMBNonLinearPerturbations:
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
                               k_hunit=False) -> np.ndarray:
-        r"""Computes the nonlinear matter power spectrum.
+        r"""Compute the nonlinear matter power spectrum.
 
         Parameters
         ----------
@@ -335,7 +320,7 @@ class CAMBNonLinearPerturbations:
 
     def growth_rate(self) -> np.ndarray:
         """
-        Calculates growth rate.
+        Calculate growth rate.
 
         Returns:
             np.ndarray: growth rate.
@@ -345,8 +330,8 @@ class CAMBNonLinearPerturbations:
         return f_z[::-1]
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        """
-        Calculates the growth factor for given redshifts and wavenumbers.
+        r"""
+        Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\

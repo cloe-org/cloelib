@@ -1,3 +1,4 @@
+"""Implementation of Background and Perturbation cosmology using CLASS."""
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
@@ -16,15 +17,14 @@ except ImportError as e:
     raise ImportError("classy could not be imported.") from e
 
 class CLASSBackground:
-    """
-    A wrapper for CLASS background cosmological calculations.
-    """
+    """A wrapper for CLASS background cosmological calculations."""
+
     c0 = SPEED_OF_LIGHT/1000
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
                  As: float, ns: float, mnu: float, 
                  w0: float, wa: float, gamma_MG: float) -> None:
         """
-        Initializes the CLASSBackground class with cosmological parameters.
+        Initialize the CLASSBackground instance with cosmological parameters.
 
         Args:
             H0 (float): Hubble parameter at z=0 in km/s/Mpc.
@@ -74,14 +74,13 @@ class CLASSBackground:
 
     @property
     def _interface_args(self) -> dict:
-        """
-        Save internal structure format of interface codes
-        """
+        """Save internal structure format of interface codes."""
         return self.interface_args
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
-        Returns the Hubble parameter as a function of redshift.
+        Return the Hubble parameter as a function of redshift.
+
         Args:
             zs (np.ndarray): Array of redshifts.
             units (str): Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').
@@ -99,7 +98,8 @@ class CLASSBackground:
 
     def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the comoving distance as a function of redshift.
+        Return the comoving distance as a function of redshift.
+
         Args:
             zs (np.ndarray): Array of redshifts.
 
@@ -110,7 +110,7 @@ class CLASSBackground:
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the transverse comoving distance between two redshifts.
+        Return the transverse comoving distance between two redshifts.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -131,7 +131,8 @@ class CLASSBackground:
 
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the angular diameter distance as a function of redshift.
+        Return the angular diameter distance as a function of redshift.
+
         Args:
             zs (np.ndarray): Array of redshifts.
 
@@ -142,7 +143,7 @@ class CLASSBackground:
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the matter density as a function of redshift.
+        Return the matter density as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -154,7 +155,7 @@ class CLASSBackground:
     
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the baryon density as a function of redshift.
+        Return the baryon density as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -165,11 +166,10 @@ class CLASSBackground:
         return np.array([self.results.Om_b(z) for z in zs])
 
 class CLASSLinearPerturbations:
+    """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
+
     def __init__(self, background : Background, redshifts: np.ndarray):
-        r"""
-        A class to define perturbations cosmology using CLASS
-        and inheriting from Perturbations parent class
-        """
+        """Initialize the CLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 100
@@ -190,14 +190,12 @@ class CLASSLinearPerturbations:
 
     @property
     def _interface_args(self) -> dict:
-        """
-        Save internal structure format of interface codes
-        """
+        """Save internal structure format of interface codes."""
         return self.interface_args
     
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
                               k_hunit=False) -> np.ndarray:
-        """Calculates the CLASS linear matter power spectrum.
+        """Calculate the CLASS linear matter power spectrum.
         
         Parameters
         ----------
@@ -226,8 +224,8 @@ class CLASSLinearPerturbations:
         return self.Pk_linear
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        """
-        Calculates the growth factor for given redshifts and wavenumbers.
+        r"""
+        Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
@@ -255,7 +253,7 @@ class CLASSLinearPerturbations:
     
     def growth_rate(self) -> np.ndarray:
         """
-        Calculates the growth rate f(z).
+        Calculate the growth rate f(z).
 
         Returns
         -------
@@ -266,13 +264,12 @@ class CLASSLinearPerturbations:
                 for zi in self.z]
 
 class CLASSNonLinearPerturbations:
+    """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
+
     def __init__(self, background : Background, 
                  redshifts: np.ndarray,
                  nonlinear_model: Optional[str] = None):
-        r"""
-        A class to define non-linear perturbations cosmology using CLASS
-        and inheriting from Perturbations parent class
-        """
+        """Initialize the CLASSNonLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 100
@@ -294,7 +291,7 @@ class CLASSNonLinearPerturbations:
 
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
                               k_hunit=False) -> np.ndarray:
-        """Calculates the CLASS non-linear matter power spectrum.
+        """Calculate the CLASS non-linear matter power spectrum.
         
         Parameters
         ----------
@@ -323,8 +320,8 @@ class CLASSNonLinearPerturbations:
         return self.Pk_nonlinear
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        """
-        Calculates the growth factor for given redshifts and wavenumbers.
+        r"""
+        Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
@@ -352,7 +349,7 @@ class CLASSNonLinearPerturbations:
     
     def growth_rate(self) -> np.ndarray:
         """
-        Calculates the growth rate f(z).
+        Calculate the growth rate f(z).
 
         Returns
         -------
@@ -361,3 +358,4 @@ class CLASSNonLinearPerturbations:
         """
         return [self.results.scale_independent_growth_factor_f(zi)
                 for zi in self.z]
+

@@ -1,3 +1,4 @@
+"""Module for angular two-point functions."""
 # cloelib imports
 from cloelib.observables.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
@@ -13,7 +14,6 @@ import jax
 
 ## Notes:
 
-- Two point asbtract class to compute two point functions
 - Note, change for T vartype
 
 """
@@ -21,7 +21,7 @@ import jax
 @jax.jit
 def Cl_integration(WT1, WT2, Pkl, H, chi2):
     """
-    Performs the integration to compute the angular power spectrum Cl.
+    Perform the integration to compute the angular power spectrum Cl.
 
     The integration is done using the unnormalized trapezoidal rule,
     utilizing the window functions, power spectrum, Hubble parameter,
@@ -42,7 +42,7 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2):
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
     """
-    Interpolates the matter power spectrum on a Limber grid.
+    Interpolate the matter power spectrum on a Limber grid.
 
     Utilizes interpax's 2D interpolation with Akima method to handle
     non-uniform grids in logarithmic space. Extrapolation is enabled
@@ -65,9 +65,11 @@ Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, Non
 
 
 class AngularTwoPoint:
+    """Two point asbtract class to compute two point functions."""
+
     def __init__(self, tracer1 : Tracer, tracer2 : Tracer):
         """
-        Initializes the AngularTwoPoint object.
+        Initialize the AngularTwoPoint instance.
 
         Checks if the tracers are compatible and sets the two tracers
         as instance attributes.
@@ -81,7 +83,7 @@ class AngularTwoPoint:
 
     def _matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells) -> jax.numpy.ndarray:
         """
-        Prepares the matter power spectrum grid for Limber approximation.
+        Prepare the matter power spectrum grid for Limber approximation.
 
         It calculates the k values on the Limber grid using the comoving
         distances and multipoles, then interpolates the matter power
@@ -104,7 +106,7 @@ class AngularTwoPoint:
 
     def get_Cl(self, ells, nl, ks)  -> jax.numpy.ndarray:
         """
-        Computes the angular power spectrum Cl using Limber approximation.
+        Compute the angular power spectrum Cl using Limber approximation.
 
         Combines the window functions of the tracers, interpolated matter power
         spectrum, Hubble parameter, and comoving distances to calculate the
@@ -140,8 +142,7 @@ class AngularTwoPoint:
 
     def get_pseudo_Cl(self, nl, ks, mixing_matrix, n_ells_int=50)  -> jax.numpy.ndarray:
         """
-        Computes the angular power spectrum Cl using Limber approximation
-        convolved with the mixing matrices.
+        Compute the angular power spectrum Cl using Limber approximation convolved with the mixing matrices.
 
         Combines the window functions of the tracers, interpolated matter power
         spectrum, Hubble parameter, and comoving distances to calculate the

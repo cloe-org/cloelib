@@ -3,6 +3,7 @@ import jax
 import jax.numpy as jnp
 
 def simpsons_weights_odd(num_el):
+    """Write documentation (TODO)."""
     w = jnp.zeros(num_el)
     w = w.at[0].set(1/3)
     w = w.at[1::2].set(4/3)
@@ -11,6 +12,7 @@ def simpsons_weights_odd(num_el):
     return w
 
 def simpsons_weights_even(num_el):
+    """Write documentation (TODO)."""
     num_el = int(num_el)
     w_odd_end = simpsons_weights_odd(num_el - 1)
     w_odd_end = w_odd_end.at[-1].add(1/6)
@@ -24,6 +26,7 @@ def simpsons_weights_even(num_el):
     return w_odd
 
 def stack_zeros_and_simpson(num_weights, num_zeros):
+    """Write documentation (TODO)."""
     # Compute Simpson weights for num_weights elements.
     if num_weights % 2 == 1:
         weights = simpsons_weights_odd(num_weights)
@@ -37,6 +40,7 @@ def stack_zeros_and_simpson(num_weights, num_zeros):
     return jnp.concatenate([zeros_array, weights], axis=0)
 
 def stacked_simpson(n):
+    """Write documentation (TODO)."""
     rows = []
     # For row i (0-indexed), we want i zeros on the left and (n - i) Simpson weights.
     for i in range(n):
@@ -49,6 +53,7 @@ def stacked_simpson(n):
 _cached_stacked_simpson = {}
 
 def cached_stacked_simpson(n: int):
+    """Write documentation (TODO)."""
     key = str(n)
     # TODO for the moment we are using a plain "if", later we are gonna need a lax conditional
     # or a better cache mechanism
@@ -57,6 +62,7 @@ def cached_stacked_simpson(n: int):
     return _cached_stacked_simpson[key]
 
 def legendre(n, x):
+    """Write documentation (TODO)."""
     if n == 0:
         return jnp.ones_like(x)
     elif n == 1:
@@ -70,6 +76,7 @@ def legendre(n, x):
         return Pn
 
 def simps(f, a, b, N=128):
+    """Write documentation (TODO)."""
     if N % 2 == 1:
         raise ValueError("N must be an even integer.")
     dx = (b - a) / N
@@ -77,3 +84,4 @@ def simps(f, a, b, N=128):
     y = f(x)
     S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
     return S
+

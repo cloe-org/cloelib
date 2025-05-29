@@ -250,7 +250,7 @@ class LegendreMultipoles:
     def power_term_multipoles(self, k: np.ndarray, term_list: list,
                               ells: Optional[np.ndarray] = None,
                               use_AP: Optional[bool] = True) -> dict:
-        r"""Power spectrum Legendre multipoles.
+        r"""Power spectrum Legendre multipoles of specified terms.
 
         Parameters
         ----------
@@ -265,7 +265,7 @@ class LegendreMultipoles:
         Returns
         -------
         multipoles: dict
-            Power spectrum Legendre multipoles
+            Power spectrum Legendre multipoles of specified terms
         """
         ells = self._ensure_array(ells) \
             if ells is not None else np.array([0,2,4])
@@ -327,8 +327,9 @@ class LegendreMultipoles:
                 k=kin_arrays[0], ells=ells_tot, use_AP=use_AP)
         else:
             multipoles_in = {
-                f'ell{ell}': self.power_multipoles(k=kin_arrays[i], ells=[ell],
-                                                   use_AP=use_AP)
+                f'ell{ell}':
+                    self.power_multipoles(k=kin_arrays[i], ells=[ell],
+                                          use_AP=use_AP)[f'ell{ell}']
                 for i, ell in enumerate(ells_tot)}
 
         multipoles_out = {}
@@ -337,6 +338,55 @@ class LegendreMultipoles:
             multipoles_out[f'ell{ell}'] = (
                 sum(np.dot(mixing_matrix[f'W{ell}{ell_prime}'],
                            multipoles_in[f'ell{ell_prime}'])
+                    for ell_prime in ells_tot))
+
+        return multipoles_out
+
+    def convolved_power_term_multipoles(self, mixing_matrix: dict,
+                                        term_list: list,
+                                        ells: Optional[np.ndarray] = None,
+                                        use_AP: Optional[bool] = True) -> dict:
+        r"""Power spectrum Legendre multipoles of specified terms
+            convolved with the mixing matrix.
+
+        Parameters
+        ----------
+        mixing_matrix: dict
+            Dicitonary containing the mixing matrix
+        term_list: list
+            List of terms to compute
+        ells: np.ndarray
+            Legendre multipole order
+        use_AP: bool
+            Flag to switch between with and without AP corrections
+        Returns
+        -------
+        multipoles_out: dict
+            Convolved power spectrum Legendre multipoles of specified terms
+        """
+        ells_tot = [0, 2, 4]
+        ells = self._ensure_array(ells) if ells is not None else ells_tot
+
+        kin_arrays = [mixing_matrix[f'kin{ell}'] for ell in ells_tot]
+
+        if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
+            multipoles_in = self.power_term_multipoles(
+                k=kin_arrays[0], term_list=term_list,
+                ells=ells_tot, use_AP=use_AP)
+        else:
+            multipoles_in = {
+                f'ell{ell}':
+                    self.power_term_multipoles(k=kin_arrays[i],
+                                               term_list=term_list, ells=[ell],
+                                               use_AP=use_AP)[f'ell{ell}']
+                for i, ell in enumerate(ells_tot)}
+
+        multipoles_out = {}
+        multipoles_out['k'] = mixing_matrix['kout']
+        for ell in ells:
+            multipoles_out[f'ell{ell}'] = (
+                sum(np.einsum('ij,kj->ki', mixing_matrix[f'W{ell}{ell_prime}'],
+                              multipoles_in[f'ell{ell_prime}'])
                     for ell_prime in ells_tot))
 
         return multipoles_out

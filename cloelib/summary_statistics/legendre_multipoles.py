@@ -346,8 +346,7 @@ class LegendreMultipoles:
                                         term_list: list,
                                         ells: Optional[np.ndarray] = None,
                                         use_AP: Optional[bool] = True) -> dict:
-        r"""Power spectrum Legendre multipoles of specified terms
-            convolved with the mixing matrix.
+        r"""Convolved power spectrum multipoles of specified terms.
 
         Parameters
         ----------

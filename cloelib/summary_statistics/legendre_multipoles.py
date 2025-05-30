@@ -384,8 +384,8 @@ class LegendreMultipoles:
         multipoles_out['k'] = mixing_matrix['kout']
         for ell in ells:
             multipoles_out[f'ell{ell}'] = (
-                sum(np.einsum('ij,kj->ki', mixing_matrix[f'W{ell}{ell_prime}'],
-                              multipoles_in[f'ell{ell_prime}'])
+                sum(np.dot(mixing_matrix[f'W{ell}{ell_prime}'],
+                           multipoles_in[f'ell{ell_prime}'].T).T
                     for ell_prime in ells_tot))
 
         return multipoles_out

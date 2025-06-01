@@ -1,4 +1,5 @@
 """Module for mathematical functions."""
+from functools import lru_cache
 import jax
 import jax.numpy as jnp
 
@@ -84,4 +85,3 @@ def simps(f, a, b, N=128):
     y = f(x)
     S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
     return S
-

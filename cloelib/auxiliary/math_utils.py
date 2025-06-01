@@ -24,7 +24,7 @@ def simpsons_weights_even(num_el: int) -> jnp.ndarray:
     return (w_odd_start + w_odd_end) / 2.0
 
 def stack_zeros_and_simpson(num_weights: int, num_zeros: int) -> jnp.ndarray:
-    """Simpson's rule weights"""
+    """Simpson's rule weights."""
     if num_weights % 2 == 1:
         weights = simpsons_weights_odd(num_weights)
     else:
@@ -45,7 +45,7 @@ def _cached_stacked_simpson_py(n: int) -> jnp.ndarray:
     return stacked_simpson(n)
 
 def cached_stacked_simpson(n: int) -> jnp.ndarray:
-    "Cached version of the simpson weights."
+    """Cache the simpson weights calculation."""
     return _cached_stacked_simpson_py(n)
 
 cached_stacked_simpson = jax.jit(cached_stacked_simpson, static_argnums=0)

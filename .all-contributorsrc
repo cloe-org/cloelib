@@ -9,13 +9,18 @@
   "contributorsPerLine": 7,
   "contributors": [
     {
+      "login": "ahallcosmo",
+      "name": "Alex Hall",
+      "avatar_url": "https://avatars.githubusercontent.com/u/59091484?v=4",
+      "profile": "http://alexhall.space",
+      "contributions": ["bug"]
+    },
+    {
       "login": "itutusaus",
       "name": "itutusaus",
       "avatar_url": "https://avatars.githubusercontent.com/u/20775836?v=4",
       "profile": "https://github.com/itutusaus",
-      "contributions": [
-        "review"
-      ]
+      "contributions": ["review"]
     }
   ]
 }

@@ -43,6 +43,17 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "stefanodavini",
+      "name": "stefanodavini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/206831738?v=4",
+      "profile": "https://github.com/stefanodavini",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
     }
   ]
 }

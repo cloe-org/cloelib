@@ -6,7 +6,6 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 
 [![CI](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml)
 [![pydocstyle](https://img.shields.io/badge/pydocstyle-enabled-AD4CD3)](http://www.pydocstyle.org/en/stable/)
-[![All Contributors](https://img.shields.io/github/all-contributors/cloe-org/cloelib?color=ee8449&style=flat-square)](#contributors)
 
 ---
 

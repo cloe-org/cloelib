@@ -163,6 +163,18 @@
         "code",
         "review"
       ]
+    },
+    {
+      "login": "sfarrens",
+      "name": "Samuel Farrens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6851839?v=4",
+      "profile": "http://sfarrens.github.io",
+      "contributions": [
+        "tool",
+        "mentoring",
+        "code",
+        "review"
+      ]
     }
   ]
 }

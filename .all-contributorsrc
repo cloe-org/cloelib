@@ -54,6 +54,26 @@
         "doc",
         "test"
       ]
+    },
+    {
+      "login": "gcanasherrera",
+      "name": "Guadalupe Cañas-Herrera",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13239454?v=4",
+      "profile": "http://gcanasherrera.com",
+      "contributions": [
+        "code",
+        "maintenance",
+        "ideas",
+        "bug",
+        "content",
+        "data",
+        "doc",
+        "infra",
+        "projectManagement",
+        "question",
+        "test",
+        "talk"
+      ]
     }
   ]
 }

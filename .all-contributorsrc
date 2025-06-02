@@ -74,6 +74,25 @@
         "test",
         "talk"
       ]
+    },
+    {
+      "login": "marcobonici",
+      "name": "Marco Bonici",
+      "avatar_url": "https://avatars.githubusercontent.com/u/58727599?v=4",
+      "profile": "https://marcobonici.github.io/",
+      "contributions": [
+        "code",
+        "maintenance",
+        "ideas",
+        "bug",
+        "content",
+        "doc",
+        "infra",
+        "projectManagement",
+        "question",
+        "test",
+        "talk"
+      ]
     }
   ]
 }

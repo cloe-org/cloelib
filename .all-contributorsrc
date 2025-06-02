@@ -124,6 +124,17 @@
         "doc",
         "talk"
       ]
+    },
+    {
+      "login": "santiagocasas",
+      "name": "Santiago Casas",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6987716?v=4",
+      "profile": "http://www.cosmostat.org/people/santiago-casas",
+      "contributions": [
+        "code",
+        "maintenance",
+        "ideas"
+      ]
     }
   ]
 }

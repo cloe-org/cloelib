@@ -110,6 +110,15 @@ This project is licensed under the **MIT LICENSE** – see the [LICENSE](LICENSE
 
 🎯 With technical advice from S. Farrens and N. Tessore.
 
-🛠️ With contributions from L. Linke, D. Navarro Gironès, I. Tutusaus, S. Davini
+## 🤝 Contributors
 
-🐞  Bugs spotted by A. Hall
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind are welcome!
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->

@@ -23,6 +23,18 @@ def simpsons_weights_even(num_el: int) -> jnp.ndarray:
     w_odd_start = jnp.append(1/6, w_odd_start)
     return (w_odd_start + w_odd_end) / 2.0
 
+def simpsons_weights_jax(num_el: int) -> jnp.ndarray:
+    """JAX-compatible Simpson's weights computation."""
+    return jax.lax.cond(
+        num_el % 2 == 1,
+        lambda: simpsons_weights_odd(num_el),
+        lambda: simpsons_weights_even(num_el)
+    )
+
+# JIT-compiled version with static argument
+simpsons_weights_jit = jax.jit(simpsons_weights_jax, static_argnums=(0,))
+
+
 def stack_zeros_and_simpson(num_weights: int, num_zeros: int) -> jnp.ndarray:
     """Simpson's rule weights."""
     if num_weights % 2 == 1:

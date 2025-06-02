@@ -93,6 +93,21 @@
         "test",
         "talk"
       ]
+    },
+    {
+      "login": "chiaramoretti",
+      "name": "Chiara Moretti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12472732?v=4",
+      "profile": "https://github.com/chiaramoretti",
+      "contributions": [
+        "code",
+        "maintenance",
+        "ideas",
+        "bug",
+        "content",
+        "doc",
+        "talk"
+      ]
     }
   ]
 }

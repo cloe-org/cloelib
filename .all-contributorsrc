@@ -1,4 +1,21 @@
 {
   "projectName": "cloelib",
-  "projectOwner": "cloe-org"
+  "projectOwner": "cloe-org",
+  "files": [
+    "README.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "ahallcosmo",
+      "name": "Alex Hall",
+      "avatar_url": "https://avatars.githubusercontent.com/u/59091484?v=4",
+      "profile": "http://alexhall.space",
+      "contributions": [
+        "bug"
+      ]
+    }
+  ]
 }

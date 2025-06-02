@@ -13,14 +13,27 @@
       "name": "Alex Hall",
       "avatar_url": "https://avatars.githubusercontent.com/u/59091484?v=4",
       "profile": "http://alexhall.space",
-      "contributions": ["bug"]
+      "contributions": [
+        "bug"
+      ]
     },
     {
       "login": "itutusaus",
       "name": "itutusaus",
       "avatar_url": "https://avatars.githubusercontent.com/u/20775836?v=4",
       "profile": "https://github.com/itutusaus",
-      "contributions": ["review"]
+      "contributions": [
+        "review"
+      ]
+    },
+    {
+      "login": "llinke1",
+      "name": "Laila Linke",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42432333?v=4",
+      "profile": "https://github.com/llinke1",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }

@@ -135,6 +135,22 @@
         "maintenance",
         "ideas"
       ]
+    },
+    {
+      "login": "PedroCarrilho",
+      "name": "Pedro Carrilho",
+      "avatar_url": "https://avatars.githubusercontent.com/u/60090062?v=4",
+      "profile": "https://github.com/PedroCarrilho",
+      "contributions": [
+        "code",
+        "maintenance",
+        "ideas",
+        "bug",
+        "content",
+        "data",
+        "doc",
+        "talk"
+      ]
     }
   ]
 }

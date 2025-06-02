@@ -16,11 +16,11 @@ def simpsons_weights_even(num_el: int) -> jnp.ndarray:
     """Simpson's rule weights when num_el is even."""
     num_el = int(num_el)
     w_odd_end = simpsons_weights_odd(num_el - 1)
-    w_odd_end = w_odd_end.at[-1].add(1/6)
-    w_odd_end = jnp.append(w_odd_end, 1/6)
+    w_odd_end = w_odd_end.at[-1].add(1/2)
+    w_odd_end = jnp.append(w_odd_end, 1/2)
     w_odd_start = simpsons_weights_odd(num_el - 1)
-    w_odd_start = w_odd_start.at[0].add(1/6)
-    w_odd_start = jnp.append(1/6, w_odd_start)
+    w_odd_start = w_odd_start.at[0].add(1/2)
+    w_odd_start = jnp.append(1/2, w_odd_start)
     return (w_odd_start + w_odd_end) / 2.0
 
 def simpsons_weights_jax(num_el: int) -> jnp.ndarray:

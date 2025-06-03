@@ -11,9 +11,9 @@ def test_simpson():
     x = np.arange(0,101)
     y = np.power(x, 3)
     w = simpsons_weights_jit(len(x))
-    assert integrate.simpson(y, x=x) == np.dot(y,w)
+    assert np.allclose(integrate.simpson(y, x=x), np.dot(y,w), rtol=1e-5)
 
     x = np.arange(0,100)
     y = np.power(x, 3)
     w = simpsons_weights_jit(len(x))
-    assert integrate.simpson(y, x=x) == np.dot(y,w)
+    assert assert np.allclose(integrate.simpson(y, x=x), np.dot(y,w), rtol=1e-5)

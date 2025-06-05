@@ -40,7 +40,7 @@ def emulator_data(filename: str, url_base: str) -> str:
         print(f"Downloading {filename} from {url} ...")
         urllib.request.urlretrieve(url, file_path)
     else:
-        print(f"{filename} already exists at {file_path}")
+        pass
 
     if filename.endswith('.pkl'):
         file_path = file_path[:-4]

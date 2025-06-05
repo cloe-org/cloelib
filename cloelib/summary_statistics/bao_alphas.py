@@ -133,11 +133,11 @@ class BaryonAcousticOscillations:
         alpha_par = self.alpha_par(self.zs)
         alpha_perp = self.alpha_perp(self.zs)
 
-        alphas = {'alpha_par': alpha_par,
-                  'alpha_perp': alpha_perp,
-                  'alpha_iso': self.alpha_iso(alpha_par, alpha_perp),
-                  'alpha_AP': self.alpha_AP(alpha_par, alpha_perp)
-                  }
+        alphas = {z: {'alpha_par': alpha_par[i],
+                      'alpha_perp': alpha_perp[i],
+                      'alpha_iso': self.alpha_iso(alpha_par[i], alpha_perp[i]),
+                      'alpha_AP': self.alpha_AP(alpha_par[i], alpha_perp[i])}
+                      for i, z in enumerate(self.zs)}
         return alphas
 
     def sound_horizon_drag(self, background):

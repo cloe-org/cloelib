@@ -6,7 +6,8 @@ import warnings
 from scipy import interpolate
 import os
 import urllib.request
-
+from typing import Tuple, Optional
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # Suppress TensorFlow warnings
 
 ##########################################################################
 # This module contains different emulators for linear and non-linear matter power spectra. 
@@ -849,7 +850,7 @@ class w0wa3degenNonLinear:
     Class to compute the nonlinear matter power spectrum using the Cosmopower emulator. Computes the nonlinear power spectrum for the w0wa cosmology. Neutrinos are modeled as in Archidiacono et al. (2024). There are three degenerate massive neutrinos, with a total mass sum described by the mnu parameter. Nonlinear corrections are applied using the mead2020 model in CAMB.
     """
 
-    def __init__(self, background : Background, redshifts: np.ndarray):
+    def __init__(self, background : Background,linearperturbations: Perturbations, redshifts: np.ndarray,log10TAGN: Optional[float] = None):
         """
         Initialize the Cosmopower emulator.
 
@@ -984,7 +985,7 @@ class w0waOnemassNonLinear:
     Class to compute the nonlinear matter power spectrum using the Cosmopower emulator. Computes the nonlinear power spectrum for the w0wa cosmology. Neutrinos are modeled as in Casas et al. 2023. There are is one massive neutrino, with a total mass described by the mnu parameter. Nonlinear corrections are applied using the mead2020 model in CAMB.
     """
 
-    def __init__(self, background : Background, redshifts: np.ndarray):
+    def __init__(self, background : Background,linearperturbations: Perturbations, redshifts: np.ndarray,log10TAGN: Optional[float] = None):
         """
         Initialize the Cosmopower emulator.
 
@@ -1118,7 +1119,7 @@ class LCDMOnemassNonLinear:
     Class to compute the nonlinear matter power spectrum using the Cosmopower emulator. Computes the nonlinear power spectrum for the LCDM cosmology (w is set to -1). Neutrinos are modeled as in Casas et al. 2023. There are is one massive neutrino, with a total mass described by the mnu parameter. Nonlinear corrections are applied using the mead2020 model in CAMB.
     """
 
-    def __init__(self, background : Background, redshifts: np.ndarray):
+    def __init__(self, background : Background,linearperturbations: Perturbations, redshifts: np.ndarray,log10TAGN: Optional[float] = None):
         """
         Initialize the Cosmopower emulator.
 
@@ -1248,7 +1249,7 @@ class LCDM3degenNonLinear:
     Class to compute the nonlinear matter power spectrum using the Cosmopower emulator. Computes the nonlinear power spectrum for the LCDM cosmology (w is set to -1). Neutrinos are modeled as in Archidiacono et al. (2024). There are three degenerate massive neutrinos, with a total mass sum described by the mnu parameter. Nonlinear corrections are applied using the mead2020 model in CAMB.
     """
 
-    def __init__(self, background : Background, redshifts: np.ndarray):
+    def __init__(self, background : Background,linearperturbations: Perturbations, redshifts: np.ndarray,log10TAGN: Optional[float] = None):
         """
         Initialize the Cosmopower emulator.
 
@@ -1379,7 +1380,7 @@ class LCDMNonLinear:
     Class to compute the nonlinear power spectrum for the LCDM cosmology. The mass of the neutrinos is set to zero. Nonlinear corrections are applied using the mead2020 model in CAMB.
     """
 
-    def __init__(self, background : Background, redshifts: np.ndarray):
+    def __init__(self, background : Background,linearperturbations: Perturbations, redshifts: np.ndarray,log10TAGN: Optional[float] = None):
         """
         Initialize the Cosmopower emulator.
 
@@ -1508,7 +1509,7 @@ class w0waNonLinear:
     Class to compute the nonlinear power spectrum for the w0wa cosmology. Neutrino mass is set to zero. Nonlinear corrections are applied using the mead2020 model in CAMB.
     """
 
-    def __init__(self, background : Background, redshifts: np.ndarray):
+    def __init__(self, background : Background,linearperturbations: Perturbations, redshifts: np.ndarray,log10TAGN: Optional[float] = None):
         """
         Initialize the Cosmopower emulator.
 

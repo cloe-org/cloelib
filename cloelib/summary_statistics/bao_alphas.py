@@ -35,6 +35,13 @@ class BaryonAcousticOscillations:
         self.rd_ratio = self.sound_horizon_drag(self.background_fiducial) / \
             self.sound_horizon_drag(self.background)
         self.ap_distortion = APDistortion(background, background_fiducial)
+
+        # the `alphas_dict` attribute is a dictionary containing
+        # values of the alphas given background and
+        # background_fiducial. The structure follows the hierarchy
+        # alphas_dict = {redshift: {alphas: value for alphas} for
+        # redshift in zs}, to match the preliminary datamodel for BAO,
+        # will need to be reassessed when we freeze the datamodel
         self.alphas_dict = self.set_alphas()
 
     def alpha_par(self, zs: T) -> T:

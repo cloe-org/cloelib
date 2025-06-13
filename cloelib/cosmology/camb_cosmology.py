@@ -57,7 +57,8 @@ class CAMBBackground:
             omk=self.Omega_k0,
             mnu = self.mnu
         )
-        self.interface_args['CAMBparams'].set_dark_energy(w=self.w0, wa=self.wa)
+        self.interface_args['CAMBparams'].set_dark_energy(w=self.w0, wa=self.wa,
+                                                          dark_energy_model='ppf')
         self.interface_args['CAMBparams'].InitPower.set_params(As=self.As, ns=self.ns)
 
         # Call CAMB to compute the background

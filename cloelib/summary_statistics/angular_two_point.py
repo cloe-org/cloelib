@@ -34,6 +34,7 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2, weights):
     - Pkl (jax.numpy.ndarray): Matter power spectrum interpolated on Limber grid.
     - H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
     - chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
+    - weights (jax.numpy.ndarray): Array of weights used for the fixed nodes integration.
 
     Returns:
     - jax.numpy.ndarray: Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).

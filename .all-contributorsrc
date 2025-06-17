@@ -184,6 +184,17 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "caspervedder",
+      "name": "Casper Vedder",
+      "avatar_url": "https://avatars.githubusercontent.com/u/187176614?v=4",
+      "profile": "https://github.com/caspervedder",
+      "contributions": [
+        "code",
+        "ideas",
+        "bug"
+      ]
     }
   ]
 }

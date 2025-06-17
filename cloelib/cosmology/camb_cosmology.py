@@ -182,6 +182,14 @@ class CAMBLinearPerturbations:
         """
         self.background = background
 
+        # Avoid unnecessary computations
+        self.background.interface_args['CAMBparams'].WantCls = False
+        self.background.interface_args['CAMBparams'].DoLensing = False
+        self.background.interface_args['CAMBparams'].Want_CMB = False
+        self.background.interface_args['CAMBparams'].Want_CMB_lensing = False
+        self.background.interface_args['CAMBparams'].Want_cl_2D_array = False
+        self.background.interface_args['CAMBparams'].WantTransfer = True
+
         self.kmax = 300.
         self.z = redshifts
 
@@ -284,6 +292,14 @@ class CAMBNonLinearPerturbations:
         # Configure CAMB parameters for nonlinear calculations
         self.background.interface_args['CAMBparams'].NonLinear = model.NonLinear_both
 
+        # Avoid unnecessary computations
+        self.background.interface_args['CAMBparams'].WantCls = False
+        self.background.interface_args['CAMBparams'].DoLensing = False
+        self.background.interface_args['CAMBparams'].Want_CMB = False
+        self.background.interface_args['CAMBparams'].Want_CMB_lensing = False
+        self.background.interface_args['CAMBparams'].Want_cl_2D_array = False
+        self.background.interface_args['CAMBparams'].WantTransfer = True
+        
         if nonlinear_model:
             self.background.interface_args['CAMBparams'].NonLinearModel.set_params(halofit_version=nonlinear_model)
 

@@ -59,6 +59,12 @@ You can also install (some) supported dependencies:
 pip install .[camb,hmcode2020emu,comet-emu]
 ```
 
+**Note:** Some shells or terminals may not interpret the brackets correctly. If you encounter an error, try adding quotation marks:
+
+ ```sh
+pip install ."[camb,hmcode2020emu,comet-emu]"
+```
+
 **Note:** We do not offer installation support for `PBJ` and `CLASS`. For installation instructions, please refer to the official documentation of each package.
 
 To work with the latest stable release of the code, move to the latest tag by typing: 

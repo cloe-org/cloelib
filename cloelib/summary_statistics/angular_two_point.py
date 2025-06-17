@@ -4,6 +4,7 @@ from cloelib.observables.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.math_utils import simpsons_weights_jit
 
 # General imports
 import interpax
@@ -19,7 +20,7 @@ import jax
 """
 
 @jax.jit
-def Cl_integration(WT1, WT2, Pkl, H, chi2):
+def Cl_integration(WT1, WT2, Pkl, H, chi2, weights):
     """
     Perform the integration to compute the angular power spectrum Cl.
 
@@ -33,11 +34,12 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2):
     - Pkl (jax.numpy.ndarray): Matter power spectrum interpolated on Limber grid.
     - H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
     - chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
+    - weights (jax.numpy.ndarray): Array of weights used for the fixed nodes integration.
 
     Returns:
     - jax.numpy.ndarray: Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
     """
-    return np.einsum('iz,jz,lz,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2)
+    return np.einsum('iz,jz,lz,z,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2, weights)
 
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
@@ -137,8 +139,9 @@ class AngularTwoPoint:
         # Did it this way to avoid an if statement, but would be good to know how necessary this is
         prefactor_cell = ((prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle) *
                           (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle))
+        weights = simpsons_weights_jit(len(H))
 
-        return c_0*Cl_integration(WT1, WT2, Pkl, H, chi2)*dz*prefactor_cell[:, None, None]
+        return c_0*Cl_integration(WT1, WT2, Pkl, H, chi2, weights)*dz*prefactor_cell[:, None, None]
 
     def get_pseudo_Cl(self, nl, ks, mixing_matrix, n_ells_int=50)  -> jax.numpy.ndarray:
         """

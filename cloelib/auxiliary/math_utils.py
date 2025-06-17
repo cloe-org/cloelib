@@ -3,7 +3,7 @@ from functools import lru_cache
 import numpy as np
 import jax
 import jax.numpy as jnp
-from typing import TypeVar
+from typing import TypeVar, Union
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 

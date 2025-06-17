@@ -61,13 +61,7 @@ class CAMBBackground:
         self.interface_args['CAMBparams'].set_dark_energy(w=self.w0, wa=self.wa,
                                                           dark_energy_model='ppf')
         self.interface_args['CAMBparams'].InitPower.set_params(As=self.As, ns=self.ns)
-        # Avoid unnecessary computations
-        self.background.interface_args['CAMBparams'].WantCls = False
-        self.background.interface_args['CAMBparams'].DoLensing = False
-        self.background.interface_args['CAMBparams'].Want_CMB = False
-        self.background.interface_args['CAMBparams'].Want_CMB_lensing = False
-        self.background.interface_args['CAMBparams'].Want_cl_2D_array = False
-        self.background.interface_args['CAMBparams'].WantTransfer = True
+        
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args['CAMBparams'])
 

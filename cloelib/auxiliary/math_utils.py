@@ -1,9 +1,14 @@
 """Module for mathematical functions."""
+from functools import lru_cache
+import numpy as np
 import jax
 import jax.numpy as jnp
+from typing import TypeVar, Union
 
-def simpsons_weights_odd(num_el):
-    """Write documentation (TODO)."""
+T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
+
+def simpsons_weights_odd(num_el: int) -> T:
+    """Simpson's rule weights when num_el is odd."""
     w = jnp.zeros(num_el)
     w = w.at[0].set(1/3)
     w = w.at[1::2].set(4/3)
@@ -11,55 +16,55 @@ def simpsons_weights_odd(num_el):
     w = w.at[-1].set(1/3)
     return w
 
-def simpsons_weights_even(num_el):
-    """Write documentation (TODO)."""
+def simpsons_weights_even(num_el: int) -> T:
+    """Simpson's rule weights when num_el is even."""
     num_el = int(num_el)
     w_odd_end = simpsons_weights_odd(num_el - 1)
-    w_odd_end = w_odd_end.at[-1].add(1/6)
-    w_odd_end = jnp.append(w_odd_end, 1/6)
-
+    w_odd_end = w_odd_end.at[-1].add(1/2)
+    w_odd_end = jnp.append(w_odd_end, 1/2)
     w_odd_start = simpsons_weights_odd(num_el - 1)
-    w_odd_start = w_odd_start.at[0].add(1/6)
-    w_odd_start = jnp.append(1/6, w_odd_start)
+    w_odd_start = w_odd_start.at[0].add(1/2)
+    w_odd_start = jnp.append(1/2, w_odd_start)
+    return (w_odd_start + w_odd_end) / 2.0
 
-    w_odd = (w_odd_start + w_odd_end) / 2.0
-    return w_odd
+def simpsons_weights_jax(num_el: int) -> T:
+    """JAX-compatible Simpson's weights computation."""
+    return jax.lax.cond(
+        num_el % 2 == 1,
+        lambda: simpsons_weights_odd(num_el),
+        lambda: simpsons_weights_even(num_el)
+    )
 
-def stack_zeros_and_simpson(num_weights, num_zeros):
-    """Write documentation (TODO)."""
-    # Compute Simpson weights for num_weights elements.
+# JIT-compiled version with static argument
+simpsons_weights_jit = jax.jit(simpsons_weights_jax, static_argnums=(0,))
+
+
+def stack_zeros_and_simpson(num_weights: int, num_zeros: int) -> jnp.ndarray:
+    """Simpson's rule weights."""
     if num_weights % 2 == 1:
         weights = simpsons_weights_odd(num_weights)
     else:
         weights = simpsons_weights_even(num_weights)
-
-    # Create an array of zeros of length num_zeros.
     zeros_array = jnp.zeros(num_zeros)
-
-    # Concatenate zeros on the left and weights on the right.
     return jnp.concatenate([zeros_array, weights], axis=0)
 
-def stacked_simpson(n):
-    """Write documentation (TODO)."""
+def stacked_simpson(n: int) -> jnp.ndarray:
+    """Simpson's rule weights, with a stacking."""
     rows = []
-    # For row i (0-indexed), we want i zeros on the left and (n - i) Simpson weights.
     for i in range(n):
-        num_zeros = i
-        num_weights = n - i
-        row = stack_zeros_and_simpson(num_weights, num_zeros)
+        row = stack_zeros_and_simpson(n - i, i)
         rows.append(row)
     return jnp.vstack(rows)
 
-_cached_stacked_simpson = {}
+@lru_cache(maxsize=None)
+def _cached_stacked_simpson_py(n: int) -> jnp.ndarray:
+    return stacked_simpson(n)
 
-def cached_stacked_simpson(n: int):
-    """Write documentation (TODO)."""
-    key = str(n)
-    # TODO for the moment we are using a plain "if", later we are gonna need a lax conditional
-    # or a better cache mechanism
-    if key not in _cached_stacked_simpson:
-        _cached_stacked_simpson[key] = stacked_simpson(n)
-    return _cached_stacked_simpson[key]
+def cached_stacked_simpson(n: int) -> jnp.ndarray:
+    """Cache the simpson weights calculation."""
+    return _cached_stacked_simpson_py(n)
+
+cached_stacked_simpson = jax.jit(cached_stacked_simpson, static_argnums=0)
 
 def legendre(n, x):
     """Write documentation (TODO)."""
@@ -84,4 +89,3 @@ def simps(f, a, b, N=128):
     y = f(x)
     S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
     return S
-

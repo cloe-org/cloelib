@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cloelib"
-version = "0.8.0"
+version = "0.8.2"
 description = "cloelib is a flexible and efficient library designed to compute cosmological observables for CLOE (Cosmology Likelihood for Observables in Euclid)"
 authors = [
     "M. Bonici <marco.bonici@uwaterloo.ca>",
@@ -8,7 +8,7 @@ authors = [
     "P. Carrilho <pedro.carrilho@ed.ac.uk>",
     "S. Casas <casas@physik.rwth-aachen.de>",
     "C. Moretti <cmoretti@sissa.it>",
-    "A. Pezzotta <andrea.pezzotta@inaf.it>"
+    "A. Pezzotta <andrea.pezzotta@inaf.it>",
 ]
 license = "MIT"
 readme = "README.md"

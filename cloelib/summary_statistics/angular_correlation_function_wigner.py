@@ -261,12 +261,6 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         self.s1 = 2 if isinstance(angular_two_point.tracer1, ShearTracer) else 0
         self.s2 = 2 if isinstance(angular_two_point.tracer2, ShearTracer) else 0
 
-d_0_0_ell = memoize_jax(_d_0_0_ell_compute)
-d_2_2_ell = memoize_jax(_d_2_2_ell_compute)
-d_2_m2_ell = memoize_jax(_d_2_m2_ell_compute)
-d_2_0_ell = memoize_jax(_d_2_0_ell_compute)
-
-
     def get_xi(self, theta):
         """
         Compute the angular correlation function xi(theta) using the Wigner d-matrices.

@@ -12,6 +12,7 @@ https://arxiv.org/pdf/1702.05301
 import jax.numpy as np
 import jax
 from jax import jit
+from functools import lru_cache, wraps
 
 from cloelib.observables.photo import ShearTracer #, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction

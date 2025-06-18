@@ -16,8 +16,44 @@ from jax import jit
 from cloelib.observables.photo import ShearTracer #, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction
 
+def memoize_jax(func):
+    """Memoize functions with JAX array arguments."""
+    @lru_cache(maxsize=None)
+    def cached_func(*hashable_args, **hashable_kwargs):
+        args = [
+            jnp.frombuffer(arg[0], dtype=arg[2]).reshape(arg[1])
+            if isinstance(arg, tuple) and len(arg) == 3
+            else arg
+            for arg in hashable_args
+        ]
+        kwargs = {
+            k: jnp.frombuffer(v[0], dtype=v[2]).reshape(v[1])
+            if isinstance(v, tuple) and len(v) == 3
+            else v
+            for k, v in hashable_kwargs.items()
+        }
+        return func(*args, **kwargs)
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        hashable_args = tuple(
+            (arg.tobytes(), arg.shape, arg.dtype)
+            if hasattr(arg, 'shape') and hasattr(arg, 'dtype')
+            else arg
+            for arg in args
+        )
+        hashable_kwargs_dict = {
+            k: (v.tobytes(), v.shape, v.dtype)
+            if hasattr(v, 'shape') and hasattr(v, 'dtype')
+            else v
+            for k, v in kwargs.items()
+        }
+        return cached_func(*hashable_args, **hashable_kwargs_dict)
+
+    return wrapper
+
 @jit
-def d_0_0_ell(beta, ell):
+def _d_0_0_ell_compute(beta, ell):
     """
     Compute d_00^ell(beta).
 
@@ -38,7 +74,7 @@ def d_0_0_ell(beta, ell):
                                jax.lax.fori_loop(2, ell + 1, recurrence_fn, (base_case_1, base_case_0))[0]))
 
 @jit
-def d_2_2_ell(beta, ell):
+def _d_2_2_ell_compute(beta, ell):
     """
     Compute d_22^ell(beta).
 
@@ -83,7 +119,7 @@ def d_2_2_ell(beta, ell):
 
 
 @jit
-def d_2_m2_ell(beta, ell):
+def _d_2_m2_ell_compute(beta, ell):
     """
     Compute d_2-2^ell(beta).
 
@@ -130,7 +166,7 @@ def d_2_m2_ell(beta, ell):
 
 
 @jit
-def d_2_0_ell(beta, ell):
+def _d_2_0_ell_compute(beta, ell):
     """
     Compute d_20^ell(beta).
 
@@ -177,11 +213,20 @@ def d_2_0_ell(beta, ell):
 # Vectorized versions of Wigner d-matrix functions
 # -----------------------------------------------------------------------------------
 
-d_0_0_vmap = jax.vmap(jax.vmap(d_0_0_ell, (None, 0)), (0, None))
-d_2_2_vmap = jax.vmap(jax.vmap(d_2_2_ell, (None, 0)), (0, None))
-d_2_m2_vmap = jax.vmap(jax.vmap(d_2_m2_ell, (None, 0)), (0, None))
+d_0_0_ell = memoize_jax(_d_0_0_ell_compute)
+d_2_2_ell = memoize_jax(_d_2_2_ell_compute)
+d_2_m2_ell = memoize_jax(_d_2_m2_ell_compute)
+d_2_0_ell = memoize_jax(_d_2_0_ell_compute)
 
-d_2_0_vmap = jax.vmap(jax.vmap(d_2_0_ell, (None, 0)), (0, None))
+_d_0_0_vmap_compute = jax.vmap(jax.vmap(_d_0_0_ell_compute, (None, 0)), (0, None))
+_d_2_2_vmap_compute = jax.vmap(jax.vmap(_d_2_2_ell_compute, (None, 0)), (0, None))
+_d_2_m2_vmap_compute = jax.vmap(jax.vmap(_d_2_m2_ell_compute, (None, 0)), (0, None))
+_d_2_0_vmap_compute = jax.vmap(jax.vmap(_d_2_0_ell_compute, (None, 0)), (0, None))
+
+d_0_0_vmap = memoize_jax(_d_0_0_vmap_compute)
+d_2_2_vmap = memoize_jax(_d_2_2_vmap_compute)
+d_2_m2_vmap = memoize_jax(_d_2_m2_vmap_compute)
+d_2_0_vmap = memoize_jax(_d_2_0_vmap_compute)
 
 
 # -----------------------------------------------------------------------------------
@@ -215,6 +260,11 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         # Determine spin values based on tracer type
         self.s1 = 2 if isinstance(angular_two_point.tracer1, ShearTracer) else 0
         self.s2 = 2 if isinstance(angular_two_point.tracer2, ShearTracer) else 0
+
+d_0_0_ell = memoize_jax(_d_0_0_ell_compute)
+d_2_2_ell = memoize_jax(_d_2_2_ell_compute)
+d_2_m2_ell = memoize_jax(_d_2_m2_ell_compute)
+d_2_0_ell = memoize_jax(_d_2_0_ell_compute)
 
 
     def get_xi(self, theta):

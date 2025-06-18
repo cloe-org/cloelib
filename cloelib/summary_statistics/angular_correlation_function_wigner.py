@@ -22,13 +22,13 @@ def memoize_jax(func):
     @lru_cache(maxsize=None)
     def cached_func(*hashable_args, **hashable_kwargs):
         args = [
-            jnp.frombuffer(arg[0], dtype=arg[2]).reshape(arg[1])
+            np.frombuffer(arg[0], dtype=arg[2]).reshape(arg[1])
             if isinstance(arg, tuple) and len(arg) == 3
             else arg
             for arg in hashable_args
         ]
         kwargs = {
-            k: jnp.frombuffer(v[0], dtype=v[2]).reshape(v[1])
+            k: np.frombuffer(v[0], dtype=v[2]).reshape(v[1])
             if isinstance(v, tuple) and len(v) == 3
             else v
             for k, v in hashable_kwargs.items()
@@ -90,7 +90,7 @@ def _d_2_2_ell_compute(beta, ell):
     def recurrence_fn(l, vals):
         prev, prev2 = vals
         new_val = (l * (2 * l - 1) / (l**2 - 4)) * (
-            (d_0_0_ell(beta, 1) - (4 / (l * (l - 1)))) * prev
+            (_d_0_0_ell_compute(beta, 1) - (4 / (l * (l - 1)))) * prev
             - (((l - 1)**2 - 4) / ((l - 1) * (2 * l - 1))) * prev2
         )
         return new_val, prev
@@ -98,7 +98,7 @@ def _d_2_2_ell_compute(beta, ell):
     # Approximation for large ell (fixed to explicitly pass `beta`)
     def approximation_fn(l, vals):
         prev, prev2 = vals
-        new_val = 2 * d_0_0_ell(beta, 1) * prev - prev2
+        new_val = 2 * _d_0_0_ell_compute(beta, 1) * prev - prev2
         return new_val, prev
 
     # Compute using a JIT-compatible conditional switch
@@ -135,7 +135,7 @@ def _d_2_m2_ell_compute(beta, ell):
     def recurrence_fn(l, vals):
         prev, prev2 = vals
         new_val = (l * (2 * l - 1) / (l**2 - 4)) * (
-            (d_0_0_ell(beta, 1) + (4 / (l * (l - 1)))) * prev
+            (_d_0_0_ell_compute(beta, 1) + (4 / (l * (l - 1)))) * prev
             - (((l - 1)**2 - 4) / ((l - 1) * (2 * l - 1))) * prev2
         )
         return new_val, prev
@@ -143,7 +143,7 @@ def _d_2_m2_ell_compute(beta, ell):
     # Approximation for large ell (fixed to explicitly pass `beta`)
     def approximation_fn(l, vals):
         prev, prev2 = vals
-        new_val = 2 * d_0_0_ell(beta, 1) * prev - prev2
+        new_val = 2 * _d_0_0_ell_compute(beta, 1) * prev - prev2
         return new_val, prev
 
     # Compute using a JIT-compatible conditional switch
@@ -184,14 +184,14 @@ def _d_2_0_ell_compute(beta, ell):
         sqrt_l2_4 = np.sqrt(l**2 - 4)
         sqrt_lm1_2_4 = np.sqrt((l - 1)**2 - 4)
         new_val = ((2 * l - 1) / sqrt_l2_4) * (
-            d_0_0_ell(beta, 1) * prev - (sqrt_lm1_2_4 / (2 * l - 1)) * prev2
+            _d_0_0_ell_compute(beta, 1) * prev - (sqrt_lm1_2_4 / (2 * l - 1)) * prev2
         )
         return new_val, prev
 
     # Approximation for large ell (fixed to explicitly pass `beta`)
     def approximation_fn(l, vals):
         prev, prev2 = vals
-        new_val = 2 * d_0_0_ell(beta, 1) * prev - prev2
+        new_val = 2 * _d_0_0_ell_compute(beta, 1) * prev - prev2
         return new_val, prev
 
     # Compute using a JIT-compatible conditional switch

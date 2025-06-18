@@ -13,11 +13,8 @@ import jax.numpy as np
 import jax
 from jax import jit
 
-#from jax.scipy.special import gammaln
-
 from cloelib.observables.photo import ShearTracer #, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction
-
 
 @jit
 def d_0_0_ell(beta, ell):
@@ -29,15 +26,15 @@ def d_0_0_ell(beta, ell):
     """
     base_case_0 = np.ones_like(beta)
     base_case_1 = np.cos(beta)
-    
+
     def recurrence_fn(l, vals):
         prev, prev2 = vals
         new_val = ((2 * l - 1) / (l) * base_case_1 * prev - ((l - 1) / (l)) * prev2)
 
         return new_val, prev
-    
-    return np.where(ell == 0, base_case_0, 
-                     np.where(ell == 1, base_case_1, 
+
+    return np.where(ell == 0, base_case_0,
+                     np.where(ell == 1, base_case_1,
                                jax.lax.fori_loop(2, ell + 1, recurrence_fn, (base_case_1, base_case_0))[0]))
 
 @jit
@@ -231,7 +228,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             theta (jax.numpy.ndarray): Angles in radians.
 
         Returns:
-            if at least one tracer is spin 0 (clustering or GGL): 
+            if at least one tracer is spin 0 (clustering or GGL):
                 jax.numpy.ndarray: Computed xi(theta)
             if both tracers are spin 2 (cosmic shear):
                 (jax.numpy.ndarray, jax.numpy.ndarray): Computed xi_+(theta) and xi_-(theta).
@@ -274,7 +271,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             xi_minus = np.zeros((Ntheta, Ntomo1, Ntomo2))
 
         # Vectorized computation over (theta, tomo1, tomo2)
-        # Compute xi_plus 
+        # Compute xi_plus
         xi_plus = np.einsum('l,lij,θl->θij', prefactor, Cl_plus, d_l_theta_plus)
 
         # Compute xi_minus if we have a spin2 tracer

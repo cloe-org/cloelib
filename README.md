@@ -41,7 +41,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | [camb](https://camb.readthedocs.io)                   | [camb](https://camb.readthedocs.io)                    | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
 | [class](https://github.com/lesgourg/class_public)     | [class](https://github.com/lesgourg/class_public)      | `PBJ` (not publicly available)                       |
 | NA    | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)       | NA                       |
-
+| NA    | [FlamingoBaryonResponseEmulator](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator.git)  | NA                        |
 We do not provide installation support for `PBJ` and `class`.
 
 ---
@@ -56,13 +56,13 @@ pip install .
 You can also install (some) supported dependencies:
 
 ```sh
-pip install .[camb,hmcode2020emu,comet-emu]
+pip install .[camb,hmcode2020emu,comet-emu,FlamingoBaryonResponseEmulator]
 ```
 
 **Note:** Some shells or terminals may not interpret the brackets correctly. If you encounter an error, try adding quotation marks:
 
  ```sh
-pip install ."[camb,hmcode2020emu,comet-emu]"
+pip install ."[camb,hmcode2020emu,comet-emu,FlamingoBaryonResponseEmulator]"
 ```
 
 **Note:** We do not offer installation support for `PBJ` and `CLASS`. For installation instructions, please refer to the official documentation of each package.

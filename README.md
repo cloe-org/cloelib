@@ -42,6 +42,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | [class](https://github.com/lesgourg/class_public)     | [class](https://github.com/lesgourg/class_public)      | `PBJ` (not publicly available)                       |
 | NA    | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)       | NA                       |
 | NA    | [FlamingoBaryonResponseEmulator](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator.git)  | NA                        |
+
 We do not provide installation support for `PBJ` and `class`.
 
 ---

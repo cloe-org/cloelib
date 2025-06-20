@@ -134,11 +134,6 @@ class MGemuNonlinearBoost:
         boost = np.ones((len(zvals), boost_inrange.shape[1]))
         boost[z_mask, :] = boost_inrange
 
-
-        # extrapolate the boost to low and high k 
-        kmin = k_emu[0]
-        kmax = k_emu[-1]
-
         # Create the interpolator over the original grid
         boost_interp = interpolate.RectBivariateSpline(zvals, k_emu, boost)
 
@@ -147,10 +142,14 @@ class MGemuNonlinearBoost:
         # Precompute interpolated values on the new k grid
         boost_resampled = np.zeros((len(zvals), len(k_target)))
 
+        # constant extrapolation of the boost to low and high k 
+        kmin = k_emu[0]
+        kmax = k_emu[-1]
+
         for i, z_val in enumerate(zvals):
             for j, k_val in enumerate(k_target):
-                if k_val < kmin:
-                    boost_resampled[i, j] = 1.0
+                if k_val < kmin: 
+                    boost_resampled[i, j] = boost_interp(z_val, kmin)[0]
                 elif k_val > kmax:
                     boost_resampled[i, j] = boost_interp(z_val, kmax)[0]
                 else:

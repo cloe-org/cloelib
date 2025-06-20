@@ -1,15 +1,11 @@
-"""Implementation of baryon correction of the matter power spectrum from FlamingoBaryonResponseEmulator"""
+"""Implementation of baryon correction of the matter power spectrum from FlamingoBaryonResponseEmulator."""
 # General imports
 import numpy as np
-
 # Cosmology imports
 try:
     import FlamingoBaryonResponseEmulator as fre
-    flamingo_emulator =  fre.FlamingoBaryonResponseEmulator()
 except ImportError:
     raise ImportError("FlamingoBaryonResponseEmulator could not be imported or initialised.")
-
-
 """
 
 ## Notes:
@@ -20,10 +16,11 @@ except ImportError:
 
 class FlamingoBaryonResponseCorrection:
     """Class for power spectrum suppresion prediction from FLAMINGO using FlamingoBaryonResponseEmulator."""
-
+    
     def __init__(self):
-        pass
-
+        """Intialize the FlamingoBaryonRespnseEmulator instance."""    
+        self.flamingo_emulator =  fre.FlamingoBaryonResponseEmulator()
+       
                 
     def predict(self, z: float, k: np.array, fgas_sigma: float, Mstar_sigma: float, jet_fraction: float) -> np.ndarray:
         """
@@ -70,9 +67,8 @@ class FlamingoBaryonResponseCorrection:
             When the input redshift is not in the range [0, 2].
 
         """
-  
         # Call emulator
-        self.response = flamingo_emulator.predict(
+        self.response = self.flamingo_emulator.predict(
             k, z, fgas_sigma, Mstar_sigma, jet_fraction
         )    
         return self.response      
@@ -127,9 +123,8 @@ class FlamingoBaryonResponseCorrection:
             When the input redshift is not in the range [0, 2].
 
         """
-  
         # Call emulator
-        self.response, self.variance = flamingo_emulator.predict_with_variance(
+        self.response, self.variance = self.flamingo_emulator.predict_with_variance(
             k, z, fgas_sigma, Mstar_sigma, jet_fraction
         )    
         return self.response, self.variance      

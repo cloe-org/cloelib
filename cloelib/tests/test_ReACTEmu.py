@@ -1,0 +1,119 @@
+import numpy as np
+import pytest
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
+from cloelib.cosmology.ReACTEmu_cosmology import MGemuNonlinearBoost, BoostedPerturbations
+
+
+# -------------------------------
+# Fixtures using actual CAMB class
+# -------------------------------
+
+@pytest.fixture(scope="module")
+def camb_background():
+    return CAMBBackground(
+        H0=67.39774575153639,
+        Omega_b0=0.05062684354655124,
+        Omega_cdm0=0.3164470361777248 - 0.05062684354655124,
+        Omega_k0=0.0,
+        As=2.1977194699875245e-9,
+        ns=0.9423180532642602,
+        mnu=0.0,
+        w0=-1,
+        wa=0,
+        gamma_MG=0.0,
+    )
+
+
+@pytest.fixture(scope="module")
+def camb_linear(camb_background):
+    zs = np.array([0.1, 0.478, 0.785, 1.5])
+    linear = CAMBLinearPerturbations(camb_background, zs)
+    return linear, zs
+
+
+# -------------------------
+# Test: MGemu boost runs
+# -------------------------
+def test_mgemu_initializes_correctly(camb_background, camb_linear):
+    linear_pert, zs = camb_linear
+    obj = MGemuNonlinearBoost(camb_background, linear_pert, zs, gravity_model='fr', MGp1=1e-4)
+    val = obj.mg_spectrum_boost(0.5, 0.2)
+    assert isinstance(val, float) or isinstance(val, np.ndarray)
+
+
+# -------------------------
+# Test: Boosted spectrum interface
+# -------------------------
+def test_boosted_spectrum_shape():
+    class DummyBase:
+        def matter_power_spectrum(self, z, k):
+            return np.outer(np.ones_like(z), np.ones_like(k)) * 2.0
+
+    def dummy_boost(z, k, grid=False):
+        return np.outer(np.ones_like(z), np.ones_like(k)) * 1.5
+
+    z = np.array([0.1, 0.5])
+    k = np.array([0.01, 0.1, 1.0])
+    boosted = BoostedPerturbations(DummyBase(), dummy_boost)
+    result = boosted.matter_power_spectrum(z, k)
+
+    assert result.shape == (2, 3)
+    assert np.allclose(result, 3.0)
+
+
+def test_boosted_scalar_input():
+    class DummyBase:
+        def matter_power_spectrum(self, z, k):
+            return np.array([2.0])
+
+    def dummy_boost(z, k, grid=False):
+        return np.array([1.5])
+
+    boosted = BoostedPerturbations(DummyBase(), dummy_boost)
+    val = boosted.matter_power_spectrum(0.5, 0.1)
+    assert np.isclose(val, 3.0)
+
+
+# -------------------------
+# Validation against external data
+# -------------------------
+@pytest.mark.parametrize("model_name,mgparam,file", [
+    ("fr", 1e-5, "validation_data/fR_validation_data.dat"),
+    ("dgp", 0.1, "validation_data/dgp_validation_data.dat"),
+])
+def test_mg_boost_matches_validation(camb_background, camb_linear, model_name, mgparam, file):
+    linear_pert, zs = camb_linear
+    boost_obj = MGemuNonlinearBoost(camb_background, linear_pert, zs, model_name, mgparam)
+    interp = boost_obj.MGboost_interp
+
+
+    # Load validation data
+    data = np.loadtxt(file)
+
+    # Original k in h/Mpc (from data)
+    k_raw = data[:, 0]
+    assert k_raw.min() <= 0.01 and k_raw.max() >= 3.0, "k range incomplete"
+
+    # Convert to 1/Mpc
+    k_vals_physical = k_raw * camb_background.h
+
+    # Clamp k-values to emulator-supported range
+    kmin = interp.get_knots()[1][0]
+    kmax = interp.get_knots()[1][-1]
+    k_vals = np.clip(k_vals_physical, kmin, kmax)
+
+
+    z_map = {1.5: 1, 0.785: 2, 0.478: 3, 0.1: 4}  # column indices
+
+    for z in zs:
+        model_B = interp(z, k_vals, grid=False)
+        data_B = data[:, z_map[z]]
+        rel_err = np.abs((model_B - data_B) / data_B)
+
+        mask = (k_vals >= 0.01) & (k_vals <= 3.0)
+        max_err = rel_err[mask].max()
+
+        assert max_err < 0.005, (
+            f"{model_name} boost error > 0.5% at z={z} "
+            f"(max rel error = {max_err:.5f})"
+        )

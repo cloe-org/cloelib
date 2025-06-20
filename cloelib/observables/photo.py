@@ -239,7 +239,7 @@ class PositionsTracer:
                                self.flags['galaxy_bias_model'] == 'poly'])
         index = np.argwhere(conditions, size=1).squeeze()
 
-        self.bias_array = lx.switch(index, [per_bin_case, per_bin_int_case, poly_case])
+        self.bias_array = [per_bin_case, per_bin_int_case, poly_case][index]()
 
     def get_window_positions(self, z) -> np.ndarray:
         r"""Galaxy Positions window function.
@@ -275,7 +275,7 @@ class PositionsTracer:
                                ])
         index = np.argwhere(conditions, size=1).squeeze()
 
-        window_positions = lx.switch(index, [per_bin_case, z_func_case])
+        window_positions = [per_bin_case, z_func_case][index]()
 
         return window_positions
 

@@ -59,6 +59,12 @@ You can also install (some) supported dependencies:
 pip install .[camb,hmcode2020emu,comet-emu]
 ```
 
+**Note:** Some shells or terminals may not interpret the brackets correctly. If you encounter an error, try adding quotation marks:
+
+ ```sh
+pip install ."[camb,hmcode2020emu,comet-emu]"
+```
+
 **Note:** We do not offer installation support for `PBJ` and `CLASS`. For installation instructions, please refer to the official documentation of each package.
 
 To work with the latest stable release of the code, move to the latest tag by typing: 
@@ -136,6 +142,9 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="http://ntessore.page"><img src="https://avatars.githubusercontent.com/u/3993688?v=4?s=100" width="100px;" alt="Nicolas Tessore"/><br /><sub><b>Nicolas Tessore</b></sub></a><br /><a href="#tool-ntessore" title="Tools">🔧</a> <a href="#mentoring-ntessore" title="Mentoring">🧑‍🏫</a> <a href="#code-ntessore" title="Code">💻</a> <a href="#review-ntessore" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://sfarrens.github.io"><img src="https://avatars.githubusercontent.com/u/6851839?v=4?s=100" width="100px;" alt="Samuel Farrens"/><br /><sub><b>Samuel Farrens</b></sub></a><br /><a href="#tool-sfarrens" title="Tools">🔧</a> <a href="#mentoring-sfarrens" title="Mentoring">🧑‍🏫</a> <a href="#code-sfarrens" title="Code">💻</a> <a href="#review-sfarrens" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/josecolomanadal"><img src="https://avatars.githubusercontent.com/u/83759085?v=4?s=100" width="100px;" alt="Jose Coloma Nadal"/><br /><sub><b>Jose Coloma Nadal</b></sub></a><br /><a href="#bug-josecolomanadal" title="Bug reports">🐛</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/caspervedder"><img src="https://avatars.githubusercontent.com/u/187176614?v=4?s=100" width="100px;" alt="Casper Vedder"/><br /><sub><b>Casper Vedder</b></sub></a><br /><a href="#code-caspervedder" title="Code">💻</a> <a href="#ideas-caspervedder" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-caspervedder" title="Bug reports">🐛</a></td>
     </tr>
   </tbody>
 </table>

@@ -72,7 +72,6 @@ class FlamingoBaryonResponseCorrection:
 
         Parameters
         ----------
-
         z: float
             The redshift at which the baryonic response has to be evaluated.
             The value has to be between 0 and 2.

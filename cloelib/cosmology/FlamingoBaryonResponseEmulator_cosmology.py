@@ -64,7 +64,7 @@ class FlamingoBaryonResponseCorrection:
             When the input redshift is not in the range [0, 2].
 
         """        
-        return self.flamingo_emulator.predict(k, z, fgas_sigma, Mstar_sigma, jet_fraction  
+        return self.flamingo_emulator.predict(k, z, fgas_sigma, Mstar_sigma, jet_fraction) 
 
     def predict_with_variance(self, z: float, k: np.array, fgas_sigma: float,  Mstar_sigma: float, jet_fraction: float) -> tuple[np.array, np.array]:
         """

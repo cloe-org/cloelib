@@ -195,6 +195,15 @@
         "ideas",
         "bug"
       ]
+    },
+    {
+      "login": "nebblu",
+      "name": "Ben Bose",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45853389?v=4",
+      "profile": "https://benbose.com/",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }

@@ -1,13 +1,6 @@
-"""Implementation of Background and Perturbation cosmology using HMcode2020Emu."""
-# cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
-from cloelib.auxiliary.extrapolator import extend_spectra
-
-from scipy import interpolate
+"""Implementation of baryon correction of the matter power spectrum from FlamingoBaryonResponseEmulator"""
 # General imports
 import numpy as np
-from typing import Tuple, Optional
-from copy import deepcopy
 
 # Cosmology imports
 try:

@@ -24,8 +24,7 @@ class FlamingoBaryonResponseCorrection:
                 
     def predict(self, z: float, k: np.array, fgas_sigma: float, Mstar_sigma: float, jet_fraction: float) -> np.ndarray:
         """
-        Returns the predicted baryonic response for a set of comoving modes,
-        redshift, and galaxy formation model (three parameters).
+        Return the predicted baryonic response for a set of comoving modes, redshift, and galaxy formation model (three parameters).
 
         Parameters
         ----------
@@ -56,28 +55,20 @@ class FlamingoBaryonResponseCorrection:
 
         Returns
         -------
-
         baryon_ratio: np.array
             The baryonic response at the modes k specified in the input.
 
         Raises
         ------
-
         ValueError
             When the input redshift is not in the range [0, 2].
 
-        """
-        # Call emulator
-        self.response = self.flamingo_emulator.predict(
-            k, z, fgas_sigma, Mstar_sigma, jet_fraction
-        )    
-        return self.response      
+        """        
+        return self.flamingo_emulator.predict(k, z, fgas_sigma, Mstar_sigma, jet_fraction  
 
     def predict_with_variance(self, z: float, k: np.array, fgas_sigma: float,  Mstar_sigma: float, jet_fraction: float) -> tuple[np.array, np.array]:
         """
-        Returns the predicted baryonic response as well as the variance around the
-        prediction for a set of comoving modes, redshift, and galaxy formation
-        model (three parameters).
+        Return the predicted baryonic response as well as the variance around the prediction for a set of comoving modes, redshift, and galaxy formation model (three parameters).
 
         Parameters
         ----------
@@ -108,7 +99,6 @@ class FlamingoBaryonResponseCorrection:
 
         Returns
         -------
-
         baryon_ratio: np.array
             The baryonic response at the modes k specified in the input.
 
@@ -118,15 +108,10 @@ class FlamingoBaryonResponseCorrection:
 
         Raises
         ------
-
         ValueError
             When the input redshift is not in the range [0, 2].
 
-        """
-        # Call emulator
-        self.response, self.variance = self.flamingo_emulator.predict_with_variance(
-            k, z, fgas_sigma, Mstar_sigma, jet_fraction
-        )    
-        return self.response, self.variance      
+        """      
+        return self.flamingo_emulator.predict_with_variance(k, z, fgas_sigma, Mstar_sigma, jet_fraction)         
 
 

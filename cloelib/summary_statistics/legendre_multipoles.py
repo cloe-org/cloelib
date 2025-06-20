@@ -41,10 +41,8 @@ class LegendreMultipoles:
         self.background_fiducial = background_fiducial
         self.ap_distortion = APDistortion(spectro_power.background, background_fiducial)
 
-        mu_min = 0.0
-        mu_max = 1.0
-        mu_samp = 101
-        self.mu_grid = np.linspace(mu_min, mu_max, mu_samp)
+        self.mu_grid, self.mu_weights = np.polynomial.legendre.leggauss(10)
+        self.mu_grid = 0.5 * (self.mu_grid + 1.0)
 
         self.parameters = parameters
         self.nbar = nbar
@@ -233,18 +231,15 @@ class LegendreMultipoles:
                      self.ap_distortion.q_AP_lo(self.redshift) if use_AP else 1.0)
         prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / \
             AP_factor
+        kAP = self._k_AP(k, self.mu_grid, self.redshift, use_AP=use_AP)
+        muAP = self._mu_AP(self.mu_grid, self.redshift, use_AP=use_AP)
+        Pk2d_tot = self._Pk2d_tot(kAP, muAP)
         multipoles = {}
         for i,ell in enumerate(ells):
+            leg = legendre(ell, self.mu_grid)
             multipoles[f'ell{ell}'] = \
-                integrate.simps(self._Pk2d_tot(self._k_AP(k, self.mu_grid,
-                                                          self.redshift,
-                                                          use_AP=use_AP),
-                                               self._mu_AP(self.mu_grid,
-                                                           self.redshift,
-                                                           use_AP=use_AP)) *
-                                legendre(ell, self.mu_grid),
-                                self.mu_grid, axis=1)
-            multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
+                np.einsum("ab,b,b->a", Pk2d_tot, leg, self.mu_weights)
+            multipoles[f'ell{ell}'] *= prefactors[i]
         return multipoles
 
     def power_term_multipoles(self, k: np.ndarray, term_list: list,
@@ -269,7 +264,7 @@ class LegendreMultipoles:
         """
         ells = self._ensure_array(ells) \
             if ells is not None else np.array([0,2,4])
-        AP_factor = (self.ap_distortion.q_AP_lo(self.redshift)**2 *
+        AP_factor = (self.ap_distortion.q_AP_tr(self.redshift)**2 *
                      self.ap_distortion.q_AP_lo(self.redshift) if use_AP else 1.0)
         prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / \
             AP_factor
@@ -293,10 +288,10 @@ class LegendreMultipoles:
                 else noise_func[term_list[index]](kAP) for index in noise_ids])
         multipoles = {}
         for i,ell in enumerate(ells):
+            leg = legendre(ell, self.mu_grid)
             multipoles[f'ell{ell}'] = \
-                integrate.simps(Pk2d * legendre(ell, self.mu_grid),
-                                self.mu_grid, axis=-1)
-            multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
+                np.einsum("abc,c,c->ab", Pk2d, leg, self.mu_weights)
+            multipoles[f'ell{ell}'] *= prefactors[i]
         return multipoles
 
     def convolved_power_multipoles(self, mixing_matrix: dict,

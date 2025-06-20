@@ -29,6 +29,8 @@ class MGemuNonlinearBoost:
         Initializes the MGemuNonlinearBoost class to compute modified gravity (MG)
         nonlinear boost from emulators based on the Halo Model Reaction (https://arxiv.org/abs/1812.05594)
 
+        These emulators were created based on training data produced using ReACT (https://arxiv.org/abs/2005.12184)
+
         This class allows for f(R), DGP, IDE, and other parameterized gravity models 
 
         See https://github.com/nebblu/MGEmus/tree/main for more details 

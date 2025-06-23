@@ -48,6 +48,20 @@ class LegendreMultipoles:
         self.nbar = nbar
 
     def _ensure_array(self, param):
+        """Ensure that the input parameter is a NumPy array.
+
+        If the input is a scalar, it is converted to a NumPy array.
+
+        Parameters
+        ----------
+        param : scalar or array-like
+            Input parameter.
+
+        Returns
+        -------
+        numpy.ndarray
+            Input parameter as a NumPy array.
+        """
         if np.isscalar(param):
             param = np.array([param])
         return np.asarray(param)

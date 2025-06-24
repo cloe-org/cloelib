@@ -43,6 +43,7 @@ class LegendreMultipoles:
 
         self.mu_grid, self.mu_weights = np.polynomial.legendre.leggauss(10)
         self.mu_grid = 0.5 * (self.mu_grid + 1.0)
+        self.mu_weights *= 0.5
 
         self.parameters = parameters
         self.nbar = nbar
@@ -253,7 +254,7 @@ class LegendreMultipoles:
             leg = legendre(ell, self.mu_grid)
             multipoles[f'ell{ell}'] = \
                 np.einsum("ab,b,b->a", Pk2d_tot, leg, self.mu_weights)
-            multipoles[f'ell{ell}'] *= prefactors[i]
+            multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
         return multipoles
 
     def power_term_multipoles(self, k: np.ndarray, term_list: list,

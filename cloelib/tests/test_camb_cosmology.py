@@ -19,7 +19,6 @@ def camb_background_instance(scope="module"):
                                    gamma_MG=0.0)
     return camb_instance
 
-
 def test_camb_background_required_methods():
     """Test that all required methods are present."""
     methods_required = {name for name, value in Background.__dict__.items() if callable(value) and not name.startswith('_')}
@@ -153,10 +152,9 @@ def test_angular_diameter_distance(camb_background_instance, zs):
     assert isinstance(result, np.ndarray)
     assert len(result) == len(zs)
 
-
-
 @pytest.fixture
 def camb_perturbation_instances(camb_background_instance, zs, scope="module"):
+    """Fixture to create the Linear and NonLinear instance of CAMBPerturnations."""
     camb_lin = CAMBLinearPerturbations(background=camb_background_instance, redshifts=zs)
     camb_non = CAMBNonLinearPerturbations(background=camb_background_instance, redshifts=zs, 
                                       nonlinear_model='mead2016')
@@ -166,7 +164,6 @@ def camb_perturbation_instances(camb_background_instance, zs, scope="module"):
 def ks(scope="module"):
     return np.logspace(np.log10(1e-4), np.log10(5), 20)
 
-
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_camb_matter_power_spectrum(camb_perturbation_instances, key, zs, ks):
     """Test matter_power_spectrum."""
@@ -175,5 +172,21 @@ def test_camb_matter_power_spectrum(camb_perturbation_instances, key, zs, ks):
     assert callable(camb_instance.matter_power_spectrum)
     result = camb_instance.matter_power_spectrum(zs, ks)
     assert isinstance(result, np.ndarray)
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_growth_factor(camb_perturbation_instances, key, zs, ks):
+    """Test growth_factor."""
+    camb_instance = camb_perturbation_instances[key]
+    assert hasattr(camb_instance, 'growth_factor')
+    assert callable(camb_instance.growth_factor)
+    result = camb_instance.growth_factor(zs, ks)
+    assert isinstance(result, np.ndarray)
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_growth_rate(camb_perturbation_instances, key, zs, ks):
+    """Test growth_rate."""
+    camb_instance = camb_perturbation_instances[key]
+    assert hasattr(camb_instance, 'growth_rate')
+    assert callable(camb_instance.growth_rate)
 
 

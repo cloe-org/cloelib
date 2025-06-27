@@ -194,7 +194,7 @@ class CAMBLinearPerturbations:
         self.k, _, self.Pk = self.results.get_linear_matter_power_spectrum(
             hubble_units=False, k_hunit=False)
 
-    def matter_power_spectrum(self, zs, ks, hubble_units=False,
+    def matter_power_spectrum(self, zs: np.ndarray, ks: np.ndarray, hubble_units=False,
                               k_hunit=False) -> np.ndarray:
         r"""Compute the linear matter power spectrum.
 
@@ -236,7 +236,7 @@ class CAMBLinearPerturbations:
         # Reversing array because camb re-sorts redshifts when power spectrum is computed
         return f_z[::-1]
 
-    def growth_factor(self, zs, ks) -> np.ndarray:
+    def growth_factor(self, zs: np.ndarray, ks:np.ndarray) -> np.ndarray:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
@@ -306,7 +306,7 @@ class CAMBNonLinearPerturbations:
             hubble_units=False, k_hunit=False)
 
 
-    def matter_power_spectrum(self, zs, ks, hubble_units=False,
+    def matter_power_spectrum(self, zs: np.ndarray, ks: np.ndarray, hubble_units=False,
                               k_hunit=False) -> np.ndarray:
         r"""Compute the nonlinear matter power spectrum.
 
@@ -347,7 +347,7 @@ class CAMBNonLinearPerturbations:
         # Reversing array because camb re-sorts redshifts when power spectrum is computed
         return f_z[::-1]
 
-    def growth_factor(self, zs, ks) -> np.ndarray:
+    def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 

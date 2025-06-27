@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 
-from cloelib.cosmology.cosmology import Background
-from cloelib.cosmology.camb_cosmology import CAMBBackground
+from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations, CAMBNonLinearPerturbations
 
 @pytest.fixture
 def camb_background_instance(scope="module"):
@@ -18,6 +18,7 @@ def camb_background_instance(scope="module"):
                                    As=2e-9, ns=0.96, mnu=0., w0=-1.0, wa=0.0, 
                                    gamma_MG=0.0)
     return camb_instance
+
 
 def test_camb_background_required_methods():
     """Test that all required methods are present."""
@@ -89,7 +90,7 @@ def test_camb_background_wa(camb_background_instance):
 
 @pytest.fixture
 def zs(scope="module"):
-    return np.array([0.0, 0.1, 0.5, 1.0])
+    return np.linspace(0, 2, 20)
 
 def test_omega_m(camb_background_instance, zs):
     """Test Omega_m returns an np.ndarray object of correct size."""
@@ -151,4 +152,28 @@ def test_angular_diameter_distance(camb_background_instance, zs):
     result = camb_background_instance.angular_diameter_distance(zs)
     assert isinstance(result, np.ndarray)
     assert len(result) == len(zs)
+
+
+
+@pytest.fixture
+def camb_perturbation_instances(camb_background_instance, zs, scope="module"):
+    camb_lin = CAMBLinearPerturbations(background=camb_background_instance, redshifts=zs)
+    camb_non = CAMBNonLinearPerturbations(background=camb_background_instance, redshifts=zs, 
+                                      nonlinear_model='mead2016')
+    return {"Linear": camb_lin, "NonLinear": camb_non}
+
+@pytest.fixture
+def ks(scope="module"):
+    return np.logspace(np.log10(1e-4), np.log10(5), 20)
+
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_camb_matter_power_spectrum(camb_perturbation_instances, key, zs, ks):
+    """Test matter_power_spectrum."""
+    camb_instance = camb_perturbation_instances[key]
+    assert hasattr(camb_instance, 'matter_power_spectrum')
+    assert callable(camb_instance.matter_power_spectrum)
+    result = camb_instance.matter_power_spectrum(zs, ks)
+    assert isinstance(result, np.ndarray)
+
 

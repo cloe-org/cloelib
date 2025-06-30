@@ -5,7 +5,7 @@ import numpy as np
 try:
     import FlamingoBaryonResponseEmulator as fre
 except ImportError:
-    raise ImportError("FlamingoBaryonResponseEmulator could not be imported or initialised.")
+    raise ImportError("FlamingoBaryonResponseEmulator could not be imported.")
 """
 
 ## Notes:
@@ -18,9 +18,11 @@ class FlamingoBaryonResponseCorrection:
     """Class for power spectrum suppresion prediction from FLAMINGO using FlamingoBaryonResponseEmulator."""
     
     def __init__(self):
-        """Intialize the FlamingoBaryonRespnseEmulator instance."""    
-        self.flamingo_emulator =  fre.FlamingoBaryonResponseEmulator()
-       
+        """Intialize the FlamingoBaryonRespnseEmulator instance.""" 
+        try:
+            self.flamingo_emulator =  fre.FlamingoBaryonResponseEmulator()
+        except ImportError:
+            raise ImportError("FlamingoBaryonResponseEmulator could not be initialized.")        
                 
     def predict(self, z: float, k: np.array, fgas_sigma: float, Mstar_sigma: float, jet_fraction: float) -> np.ndarray:
         """
@@ -30,7 +32,7 @@ class FlamingoBaryonResponseCorrection:
         ----------
         z: float
             The redshift at which the baryonic response has to be evaluated.
-            The value has to be between 0 and 2.
+            The value has to be between 0 and 3.
         
 
         k: np.array
@@ -74,7 +76,7 @@ class FlamingoBaryonResponseCorrection:
         ----------
         z: float
             The redshift at which the baryonic response has to be evaluated.
-            The value has to be between 0 and 2.
+            The value has to be between 0 and 3.
 
         k: np.array
             The Fourier modes at which the baryonic response has to be evaluated

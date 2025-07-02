@@ -306,7 +306,7 @@ class LegendreMultipoles:
             leg = legendre(ell, self.mu_grid)
             multipoles[f'ell{ell}'] = \
                 np.einsum("abc,c,c->ab", Pk2d, leg, self.mu_weights)
-            multipoles[f'ell{ell}'] *= prefactors[i]
+            multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
         return multipoles
 
     def convolved_power_multipoles(self, mixing_matrix: dict,

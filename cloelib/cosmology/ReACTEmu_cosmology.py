@@ -60,7 +60,6 @@ class MGemuNonlinearBoost:
         MGp3 : float, optional
             Optional third MG parameter.
         """
-        
 
         self.background = background
 
@@ -78,7 +77,6 @@ class MGemuNonlinearBoost:
         zvals = zs 
         z_mask = zvals <= redshift_max
         zvals_inrange = zvals[z_mask]
-
 
         # Define the dictionary to be fed to the emulator
         # Add parameters as necessary 
@@ -126,6 +124,7 @@ class MGemuNonlinearBoost:
 
         # Compute only for z ≤ redshift_max
         k_emu, boost_inrange = MG_emu.get_nonlinear_boost(**params_inrange)
+
         # Change h/Mpc --> 1/Mpc
         k_emu *= self.background.h
 

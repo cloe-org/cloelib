@@ -4,13 +4,12 @@
 
 These emulators were trained on data from ReACT for a variety of MG models including:
 
-- **f(R)** gravity
-- **DGP** (Dvali–Gabadadze–Porrati) braneworld model
+- **f(R)** gravity (Hu-Sawicki)
+- **DGP** (Dvali–Gabadadze–Porrati) braneworld model (normal branch)
 - General parameterizations such as:
-  - Linder's γ
-  - Interacting dark energy (IDE)
-  - Horndeski-like \( q_1 \) models
-
+  - Linder's γ with phenomenological screening [https://arxiv.org/abs/2404.11508](https://arxiv.org/abs/2404.11508)
+  - Interacting dark energy (IDE) [https://arxiv.org/abs/2111.13598](https://arxiv.org/abs/2111.13598)
+    
 ---
 
 ## 🚀 Features

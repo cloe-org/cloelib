@@ -60,8 +60,7 @@ class MGemuNonlinearBoost:
         MGp3 : float, optional
             Optional third MG parameter.
         """
-        
-        
+
         self.background = background
 
         # Cosmology imports
@@ -78,9 +77,6 @@ class MGemuNonlinearBoost:
         zvals = zs 
         z_mask = zvals <= redshift_max
         zvals_inrange = zvals[z_mask]
-        zvals_outrange = zvals[~z_mask]
-
-
 
         # Define the dictionary to be fed to the emulator
         # Add parameters as necessary 
@@ -128,37 +124,59 @@ class MGemuNonlinearBoost:
 
         # Compute only for z ≤ redshift_max
         k_emu, boost_inrange = MG_emu.get_nonlinear_boost(**params_inrange)
+
+        # Change h/Mpc --> 1/Mpc
         k_emu *= self.background.h
 
-        # Create full boost array and fill manually
-        boost = np.ones((len(zvals), boost_inrange.shape[1]))
-        boost[z_mask, :] = boost_inrange
-
         # Create the interpolator over the original grid
-        boost_interp = interpolate.RectBivariateSpline(zvals, k_emu, boost)
+        boost_inrange_interp = interpolate.RectBivariateSpline(zvals_inrange, k_emu, boost_inrange, kx=1, ky=1)
 
-        k_target = linearperturbations.k 
-        
-        # Precompute interpolated values on the new k grid
-        boost_resampled = np.zeros((len(zvals), len(k_target)))
 
-        # constant extrapolation of the boost to low and high k 
+        # Low k extrapolation 
+        # constant extrapolation of the boost to low  k 
         kmin = k_emu[0]
         kmax = k_emu[-1]
+        
+        k_low_mask = linearperturbations.k < kmax 
+        k_target = linearperturbations.k[k_low_mask]
 
-        for i, z_val in enumerate(zvals):
+        # Precompute interpolated values on the new k grid
+        boost_resampled = np.zeros((len(zvals_inrange), len(k_target)))
+
+        for i, z_val in enumerate(zvals_inrange):
             for j, k_val in enumerate(k_target):
                 if k_val < kmin: 
-                    boost_resampled[i, j] = boost_interp(z_val, kmin)[0]
-                elif k_val > kmax:
-                    boost_resampled[i, j] = boost_interp(z_val, kmax)[0]
+                    boost_resampled[i, j] = boost_inrange_interp(z_val, kmin)[0]
                 else:
-                    boost_resampled[i, j] = boost_interp(z_val, k_val)[0]
+                    boost_resampled[i, j] = boost_inrange_interp(z_val, k_val)[0]
 
-        # Compute new boost based on extrapolations
-        mgboost_interp = interpolate.RectBivariateSpline(zvals , k_target , boost_resampled)
 
-        self.MGboost_interp = mgboost_interp
+        # High k extrapolation 
+        # Handle high-k extrapolation with extend_spectra or constant
+        # For simplicity, assume constant high-k for now:
+
+        # 🚀 Combine with extrapolation in z if needed:
+        k_out, z_out, boost_out = extend_spectra(
+            k_target, zvals_inrange, boost_resampled,
+            flag_range=True,
+            option_wavenumber="power_law",   # Or "const" if preferred for high-k
+            option_redshift="power_law",     # Or 'none' if no z extrapolation needed
+            extrap_z=zvals,                  # Full target z grid
+            option_cosmo="const"
+        )
+
+
+        #✅ Apply boost = 1 for z > redshift_max if it is lower than 1 (this is safest thing to do since the extend_spectra results in unphysical high-z extrapolations)
+        z_max = zvals_inrange[-1]
+        z_mask_high = z_out > z_max
+        if np.any(z_mask_high):
+            # Only set boost to 1 where it is less than 1
+            boost_out[z_mask_high, :] = np.maximum(boost_out[z_mask_high, :], 1.0)
+        
+
+        # Build interpolator
+        self.MGboost_interp = interpolate.RectBivariateSpline(z_out, k_out, boost_out, kx=1, ky=1)
+
 
 
     def mg_spectrum_boost(self, zs, ks) -> np.ndarray:

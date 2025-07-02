@@ -2,7 +2,7 @@
 
 `ReACTEmu` is a Python module for computing the **nonlinear matter power spectrum boost** in **modified gravity (MG)** and **dark energy** models. It leverages pre-trained emulators based on **ReACT** and the **Halo Model Reaction framework** ([arXiv:1812.05594](https://arxiv.org/abs/1812.05594)).
 
-These emulators were trained on simulation data from ReACT for a variety of MG models including:
+These emulators were trained on data from ReACT for a variety of MG models including:
 
 - **f(R)** gravity
 - **DGP** (Dvali–Gabadadze–Porrati) braneworld model
@@ -16,7 +16,6 @@ These emulators were trained on simulation data from ReACT for a variety of MG m
 ## 🚀 Features
 
 - Computes redshift- and scale-dependent nonlinear boost factors \( B(k, z) \)
-- Compatible with standard nonlinear baselines (e.g. HMcode, ReACT baseline)
 - Fast spline-based interpolation over the emulator grid
 - Currently has a constant extrapolation in \( k \) 
 

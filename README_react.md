@@ -30,10 +30,9 @@ These emulators were trained on data from ReACT for a variety of MG models inclu
   - MG model and parameters
 
 - **`BoostedPerturbations`**  
-  Applies the boost factor \( B(k, z) \) to any base nonlinear spectrum \( P_{\Lambda\text{CDM}}(k,z) \) to compute:
-  \[
-  P_{\text{MG}}(k,z) = B(k, z) \cdot P_{\Lambda\text{CDM}}(k,z)
-  \]
+  Applies the boost factor $B(k, z)$ to any base nonlinear spectrum $P_{\Lambda\text{CDM}}(k,z)$ to compute:
+
+$P_{\text{MG}}(k,z) = B(k, z) \cdot P_{\Lambda\text{CDM}}(k,z)$
 
 ---
 
@@ -51,7 +50,7 @@ To install the necessary packages:
 ```bash
 pip install numpy scipy matplotlib camb pytest
 pip install "tensorflow-probability[tf]"
-
+```
 
 ### 🧪 Testing and Validation
 
@@ -59,8 +58,7 @@ A `pytest` test suite is included in `tests/test_ReACTEmu.py`. It performs the f
 
 - ✅ Verifies correct initialization and interface behavior  
 - 📊 Loads external validation files for **f(R)** and **DGP** models  
-- ❌ Fails if the predicted nonlinear boost differs by more than **0.5%** in the range  
-  \( k \in [0.01,\ 3] \ \text{Mpc}^{-1} \)
+- ❌ Fails if the predicted nonlinear boost differs by more than **0.5%** in the range $k \in [0.01,\ 3] \ \text{Mpc}^{-1}$
 
 #### 🔧 Run the test suite
 
@@ -68,7 +66,7 @@ To execute the tests from the repository root:
 
 ```bash
 pytest tests/test_ReACTEmu.py
-
+```
 
 
 ### 📊 Boost Validation Notebook

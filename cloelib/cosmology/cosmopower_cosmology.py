@@ -858,8 +858,12 @@ class w0wa3degenNonLinear:
         ----------
         background : Background
             The background cosmology.
+        linearperturbations : Perturbations
+            The linear perturbations for the background cosmology.
         redshifts : np.ndarray
             The redshift values for which to compute the power spectrum.
+        log10TAGN : float, optional
+            The logarithm of the AGN feedback parameter, by default None.
         """
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=UserWarning)
@@ -993,8 +997,12 @@ class w0waOnemassNonLinear:
         ----------
         background : Background
             The background cosmology.
+        linearperturbations : Perturbations
+            The linear perturbations for the background cosmology.
         redshifts : np.ndarray
             The redshift values for which to compute the power spectrum.
+        log10TAGN : float, optional
+            The logarithm of the AGN feedback parameter, by default None.
         """
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=UserWarning)
@@ -1127,8 +1135,12 @@ class LCDMOnemassNonLinear:
         ----------
         background : Background
             The background cosmology.
+        linearperturbations : Perturbations
+            The linear perturbations for the background cosmology.
         redshifts : np.ndarray
             The redshift values for which to compute the power spectrum.
+        log10TAGN : float, optional
+            The logarithm of the AGN feedback parameter, by default None.
         """
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=UserWarning)
@@ -1257,8 +1269,12 @@ class LCDM3degenNonLinear:
         ----------
         background : Background
             The background cosmology.
+        linearperturbations : Perturbations
+            The linear perturbations for the background cosmology.
         redshifts : np.ndarray
             The redshift values for which to compute the power spectrum.
+        log10TAGN : float, optional
+            The logarithm of the AGN feedback parameter, by default None.
         """
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=UserWarning)
@@ -1388,8 +1404,12 @@ class LCDMNonLinear:
         ----------
         background : Background
             The background cosmology.
+        linearperturbations : Perturbations
+            The linear perturbations for the background cosmology.
         redshifts : np.ndarray
             The redshift values for which to compute the power spectrum.
+        log10TAGN : float, optional
+            The logarithm of the AGN feedback parameter, by default None.
         """
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=UserWarning)
@@ -1517,8 +1537,12 @@ class w0waNonLinear:
         ----------
         background : Background
             The background cosmology.
+        linearperturbations : Perturbations
+            The linear perturbations for the background cosmology.
         redshifts : np.ndarray
             The redshift values for which to compute the power spectrum.
+        log10TAGN : float, optional
+            The logarithm of the AGN feedback parameter, by default None.
         """
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=UserWarning)

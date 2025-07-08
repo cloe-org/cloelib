@@ -1,3 +1,7 @@
+"""
+This module provides Cosmopower-based emulators for linear and nonlinear matter power spectra in various cosmological models.
+"""
+
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
 
@@ -139,19 +143,19 @@ class w0wa3degenLinear:
 
 
     def __str__(self):
-        """Return emulator description"""
+        """Return emulator description."""
         return f"CosmopowIvan linear Pk module.  Computes the linear power spectrum for the w0wa cosmology between  k_min={self.k_min} and k_max={self.k_max}. Neutrinos are modeled as in Archidiacono et al. (2024). There are three degenerate massive neutrinos, with a total mass sum described by the mnu parameter."
     
     def matter_power_spectrum(self,zs,ks):
         """
-        Return the linear matter power spectrum for the given redshifts
+        Return the linear matter power spectrum for the given redshifts.
 
         Returns
         -------
         k : numpy.ndarray
-            The k-modes in Mpc^{-1}
+            The k-modes in Mpc^{-1}.
         Pk_lin : numpy.ndarray
-            The linear power spectrum in (Mpc/h)^3
+            The linear power spectrum in (Mpc/h)^3.
         """
 
         return self.Pk_int(zs, ks)
@@ -274,19 +278,19 @@ class w0waOnemassLinear:
 
 
     def __str__(self):
-        """Return emulator description"""
+        """Return emulator description."""
         return f"CosmopowIvan linear Pk module. Computes the linear power spectrum for the w0wa cosmology between k_min={self.k_min} and k_max={self.k_max}. Neutrinos are modeled as in Casas et al. 2023. There are is one massive neutrino, with a total mass described by the mnu parameter."
     
     def matter_power_spectrum(self,zs,ks):
         """
-        Return the linear matter power spectrum for the given redshifts
+        Return the linear matter power spectrum for the given redshifts.
 
         Returns
         -------
         k : numpy.ndarray
-            The k-modes in Mpc^{-1}
+            The k-modes in Mpc^{-1}.
         Pk_lin : numpy.ndarray
-            The linear power spectrum in (Mpc/h)^3
+            The linear power spectrum in (Mpc/h)^3.
         """
 
         return self.Pk_int(zs, ks)
@@ -404,19 +408,19 @@ class LCDMOnemassLinear:
 
 
     def __str__(self):
-        """Return emulator description"""
+        """Return emulator description."""
         return f"CosmopowIvan linear Pk module. Computes the linear power spectrum for the LCDM cosmology (w is set to -1), between  k_min={self.k_min} and k_max={self.k_max}. Neutrinos are modeled as in Casas et al. 2023. There are is one massive neutrino, with a total mass described by the mnu parameter."
     
     def matter_power_spectrum(self,zs,ks):
         """
-        Return the linear matter power spectrum for the given redshifts
+        Return the linear matter power spectrum for the given redshifts.
 
         Returns
         -------
         k : numpy.ndarray
-            The k-modes in Mpc^{-1}
+            The k-modes in Mpc^{-1}.
         Pk_lin : numpy.ndarray
-            The linear power spectrum in (Mpc/h)^3
+            The linear power spectrum in (Mpc/h)^3.
         """
 
         return self.Pk_int(zs, ks)
@@ -533,19 +537,19 @@ class LCDM3degenLinear:
 
 
     def __str__(self):
-        """Return emulator description"""
+        """Return emulator description."""
         return f"CosmopowIvan linear Pk module. Computes the linear power spectrum for the LCDM cosmology (w is set to -1) between k_min={self.k_min} and k_max={self.k_max}. Neutrinos are modeled as in Archidiacono et al. (2024). There are three degenerate massive neutrinos, with a total mass sum described by the mnu parameter."
     
     def matter_power_spectrum(self,zs,ks):
         """
-        Return the linear matter power spectrum for the given redshifts
+        Return the linear matter power spectrum for the given redshifts.
 
         Returns
         -------
         k : numpy.ndarray
-            The k-modes in Mpc^{-1}
+            The k-modes in Mpc^{-1}.
         Pk_lin : numpy.ndarray
-            The linear power spectrum in (Mpc/h)^3
+            The linear power spectrum in (Mpc/h)^3.
         """
 
         return self.Pk_int(zs, ks)
@@ -662,7 +666,7 @@ class LCDMLinear:
 
 
     def __str__(self):
-        """Return emulator description"""
+        """Return emulator description."""
         return f"CosmopowIvan linear Pk module. Computes the linear power spectrum for the LCDM cosmology between k_min={self.k_min} and k_max={self.k_max}. The mass of the neutrinos is set to zero and the w parameter is set to -1."
     
     def matter_power_spectrum(self,zs,ks):
@@ -672,9 +676,9 @@ class LCDMLinear:
         Returns
         -------
         k : numpy.ndarray
-            The k-modes in Mpc^{-1}
+            The k-modes in Mpc^{-1}.
         Pk_lin : numpy.ndarray
-            The linear power spectrum in (Mpc/h)^3
+            The linear power spectrum in (Mpc/h)^3.
         """
 
         return self.Pk_int(zs, ks)
@@ -795,19 +799,19 @@ class w0waLinear:
 
 
     def __str__(self):
-        """Return emulator description"""
+        """Return emulator description."""
         return f"CosmopowIvan linear Pk module. Computes the linear power spectrum for the w0wa cosmology between k_min={self.k_min} and k_max={self.k_max}. Neutrino mass is set to zero."
     
     def matter_power_spectrum(self,zs,ks):
         """
-        Return the linear matter power spectrum for the given redshifts
+        Return the linear matter power spectrum for the given redshifts.
 
         Returns
         -------
         k : numpy.ndarray
-            The k-modes in Mpc^{-1}
+            The k-modes in Mpc^{-1}.
         Pk_lin : numpy.ndarray
-            The linear power spectrum in (Mpc/h)^3
+            The linear power spectrum in (Mpc/h)^3.
         """
 
         return self.Pk_int(zs, ks)
@@ -934,19 +938,19 @@ class w0wa3degenNonLinear:
 
 
     def __str__(self):
-        """Return emulator description"""
+        """Return emulator description."""
         return f"CosmopowIvan linear Pk module. Computes the nonlinear power spectrum for the w0wa cosmology between k_min={self.k_min} and k_max={self.k_max}. Neutrinos are modeled as in Archidiacono et al. (2024). There are three degenerate massive neutrinos, with a total mass sum described by the mnu parameter. Nonlinear corrections are applied using the mead2020 model in CAMB."
     
     def matter_power_spectrum(self,zs,ks):
         """
-        Return the linear matter power spectrum for the given redshifts
+        Return the linear matter power spectrum for the given redshifts.
 
         Returns
         -------
         k : numpy.ndarray
-            The k-modes in Mpc^{-1}
+            The k-modes in Mpc^{-1}.
         Pk_lin : numpy.ndarray
-            The linear power spectrum in (Mpc/h)^3
+            The linear power spectrum in (Mpc/h)^3.
         """
 
         return self.Pk_int(zs, ks)
@@ -1073,19 +1077,19 @@ class w0waOnemassNonLinear:
 
 
     def __str__(self):
-        """Return emulator description"""
+        """Return emulator description."""
         return f"CosmopowIvan linear Pk module. Computes the nonlinear power spectrum for the w0wa cosmology between k_min={self.k_min} and k_max={self.k_max}. Neutrinos are modeled as in Casas et al. 2023. There are is one massive neutrino, with a total mass described by the mnu parameter. Nonlinear corrections are applied using the mead2020 model in CAMB. "
     
     def matter_power_spectrum(self,zs,ks):
         """
-        Return the linear matter power spectrum for the given redshifts
+        Return the linear matter power spectrum for the given redshifts.
 
         Returns
         -------
         k : numpy.ndarray
-            The k-modes in Mpc^{-1}
+            The k-modes in Mpc^{-1}.
         Pk_lin : numpy.ndarray
-            The linear power spectrum in (Mpc/h)^3
+            The linear power spectrum in (Mpc/h)^3.
         """
 
         return self.Pk_int(zs, ks)
@@ -1207,12 +1211,12 @@ class LCDMOnemassNonLinear:
 
 
     def __str__(self):
-        """Return emulator description"""
+        """Return emulator description."""
         return f"CosmopowIvan nonlinear Pk module. Computes the nonlinear power spectrum for the LCDM cosmology (w is set to -1) between  k_min={self.k_min} and k_max={self.k_max}. Neutrinos are modeled as in Casas et al. 2023. There are is one massive neutrino, with a total mass described by the mnu parameter. Nonlinear corrections are applied using the mead2020 model in CAMB."
     
     def matter_power_spectrum(self,zs,ks):
         """
-        Return the linear matter power spectrum for the given redshifts
+        Return the linear matter power spectrum for the given redshifts.
 
         Returns
         -------
@@ -1351,9 +1355,9 @@ class LCDM3degenNonLinear:
         Returns
         -------
         k : numpy.ndarray
-            The k-modes in Mpc^{-1}
+            The k-modes in Mpc^{-1}.
         Pk_lin : numpy.ndarray
-            The linear power spectrum in (Mpc/h)^3
+            The linear power spectrum in (Mpc/h)^3.
         """
 
         return self.Pk_int(zs, ks)
@@ -1474,19 +1478,19 @@ class LCDMNonLinear:
 
 
     def __str__(self):
-        """Return emulator description"""
+        """Return emulator description."""
         return f"CosmopowIvan nonlinear Pk module,computes nonlinear matter power spectrum between k_min={self.k_min} and k_max={self.k_max}.  The mass of the neutrinos is set to zero. Nonlinear corrections are applied using the mead2020 model in CAMB."
     
     def matter_power_spectrum(self,zs,ks):
         """
-        Return the linear matter power spectrum for the given redshifts
+        Return the linear matter power spectrum for the given redshifts.
 
         Returns
         -------
         k : numpy.ndarray
-            The k-modes in Mpc^{-1}
+            The k-modes in Mpc^{-1}.
         Pk_lin : numpy.ndarray
-            The linear power spectrum in (Mpc/h)^3
+            The linear power spectrum in (Mpc/h)^3.
         """
 
         return self.Pk_int(zs, ks)
@@ -1611,7 +1615,7 @@ class w0waNonLinear:
 
 
     def __str__(self):
-        """Return emulator description"""
+        """Return emulator description."""
         return f"CosmopowIvan nonlinear Pk module. Computs the nonlinear power spectrum for the w0wa cosmology between k_min={self.k_min}, k_max={self.k_max}.  Neutrino mass is set to zero. Nonlinear corrections are applied using the mead2020 model in CAMB"
     
     def matter_power_spectrum(self,zs,ks):
@@ -1621,9 +1625,9 @@ class w0waNonLinear:
         Returns
         -------
         k : numpy.ndarray
-            The k-modes in Mpc^{-1}
+            The k-modes in Mpc^{-1}.
         Pk_lin : numpy.ndarray
-            The linear power spectrum in (Mpc/h)^3
+            The linear power spectrum in (Mpc/h)^3.
         """
 
         return self.Pk_int(zs, ks)

@@ -18,6 +18,8 @@ dist/
 *.egg-info/
 
 # Jupyter notebooks
+notebooks/
+*.ipynb
 .ipynb_checkpoints/
 
 # Logs and databases
@@ -62,6 +64,7 @@ Thumbs.db
 jax_cache/
 
 # Data and binaries
+*/data/*
 *.dat
 *.fits
 %.hdf5

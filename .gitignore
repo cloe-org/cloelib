@@ -60,3 +60,17 @@ Thumbs.db
 
 # JAX & NumPy cache
 jax_cache/
+
+# Data and binaries
+*.dat
+*.fits
+%.hdf5
+*.h5
+*.pkl
+*.hkl
+*.zip
+*.tar
+*.tar.gz
+*.png
+*.jpg
+*.pdf

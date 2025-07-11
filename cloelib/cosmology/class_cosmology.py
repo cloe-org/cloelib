@@ -36,7 +36,8 @@ class CLASSBackground:
             ns (float): Scalar spectral index.
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the equation of state.
-            mnu (float): Sum of neutrino masses in [eV].
+            mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
+                Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             N_mnu (int): Number of massive neutrino species.
             N_ur (Optional[float]): Effective number of ultra-relativistic species.
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
@@ -112,17 +113,27 @@ class CLASSBackground:
     def N_ur(self) -> float:
         """
         Effective number of ultra-relativistic species.
-        If the user gave one, return it; otherwise infer from other parameters.
+        If the user gave one, return it; otherwise infer from other parameters such that
+        N_eff = 3.044 for the standard model of cosmology.
         """
         if self._provided_N_ur is not None:
             return self._provided_N_ur
 
-        # Fallback: compute ΔN_eff from number of massive neutrinos.
-        # A simple approximation is that heavy neutrinos are non-relativistic today,
-        # so their contribution to N_eff is zero, and only the massless ones count.
-        # If you assume all three are massive, you can choose a standard
-        # baseline of 3.046 (the SM expectation). Adjust as your science needs.
-        return 3.046
+        # If N_ur is not provided, we assume the standard model of cosmology
+        # where N_eff = 3.044 (including photons, neutrinos, and their contributions)
+        # This is a common assumption in cosmology.
+        # Values are taken from the CLASS documentation.
+        if self.N_mnu == 0:
+            return 3.044
+        elif self.N_mnu == 1:
+            return 2.308
+        elif self.N_mnu == 2:
+            return 1.0176
+        elif self.N_mnu == 3:
+            return 0.00441
+        else:
+            raise ValueError(f"Unsupported number of massive neutrino species: {self.N_mnu}. "
+                             "N_ur can only be inferred for 0, 1, 2, or 3 massive neutrino species.")
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

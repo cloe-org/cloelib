@@ -34,14 +34,14 @@ class CLASSBackground:
             Omega_k0 (float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
-            w0 (float): Equation of state parameter for dark energy.
-            wa (float): Time evolution of the equation of state.
             mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
+            w0 (float): Equation of state parameter for dark energy.
+            wa (float): Time evolution of the equation of state.
+            gamma_MG (float): Modified gravity growth parameter (not directly used in CLASS, but kept for protocol compliance).
             N_mnu (int): Number of massive neutrino species.
             N_ur (Optional[float]): Effective number of ultra-relativistic species.
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
-            gamma_MG (float): Modified gravity growth parameter (not directly used in CLASS, but kept for protocol compliance).
         """
         self.H0 = H0
         self.h = self.H0 / 100

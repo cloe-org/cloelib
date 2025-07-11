@@ -21,7 +21,7 @@ class CLASSBackground:
 
     c0 = SPEED_OF_LIGHT/1000
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
-                 As: float, ns: float, mnu: float, 
+                 As: float, ns: float, mnu: float, N_ur: float,
                  w0: float, wa: float, gamma_MG: float) -> None:
         """
         Initialize the CLASSBackground instance with cosmological parameters.
@@ -49,6 +49,7 @@ class CLASSBackground:
         self.wa = wa
         self.gamma_MG = gamma_MG  # Kept for protocol, but CLASS doesn't directly use it
         self.mnu = mnu
+        self.N_ur = N_ur
 
         # Initialize CLASS parameters
         self.interface_args = {'CLASSparams': {}}  # Use a dictionary for CLASS parameters
@@ -66,6 +67,7 @@ class CLASSBackground:
         # To avoid using a cosmological constant
         self.interface_args['CLASSparams']['Omega_Lambda'] = 0. 
         self.interface_args['CLASSparams']['N_ncdm'] = 1 
+        self.interface_args['CLASSparams']['N_ur'] = self.N_ur
 
         # Initialize CLASS
         self.results = Class()
@@ -187,6 +189,7 @@ class CLASSLinearPerturbations:
         self.results = Class()
         self.results.set(self.interface_args['CLASSparams'])
         self.results.compute()
+
 
     @property
     def _interface_args(self) -> dict:

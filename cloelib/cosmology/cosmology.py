@@ -1,6 +1,6 @@
 """Protocols for Background and Perturbation cosmology classes.."""
 # General imports
-from typing import Protocol, Union, TypeVar, runtime_checkable
+from typing import Protocol, Union, Sequence, TypeVar, runtime_checkable
 
 import numpy as np  # type: ignore
 import jax.numpy as jnp
@@ -42,8 +42,8 @@ class Background(Protocol):
         ...
 
     @property
-    def mnu(self) -> float:
-        """Total neutrino mass in eV."""
+    def mnu(self) -> Union[float, Sequence[float], T]:
+        """Total neutrino mass in eV (either a single float or an array per species)."""
         ...
 
     @property

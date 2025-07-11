@@ -6,7 +6,7 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 # General imports
 import numpy as np
 import copy
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union, Sequence
 import interpax
 from scipy.interpolate import UnivariateSpline
 
@@ -21,8 +21,8 @@ class CLASSBackground:
 
     c0 = SPEED_OF_LIGHT/1000
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
-                 As: float, ns: float, mnu: float, N_ur: float,
-                 w0: float, wa: float, gamma_MG: float) -> None:
+                 As: float, ns: float, mnu: Union[float, Sequence[float], np.ndarray],
+                N_ur: float, w0: float, wa: float, gamma_MG: float) -> None:
         """
         Initialize the CLASSBackground instance with cosmological parameters.
 
@@ -58,7 +58,6 @@ class CLASSBackground:
         self.interface_args['CLASSparams']['omega_cdm'] = self.Omega_cdm0 * (self.h)**2
         self.interface_args['CLASSparams']['Omega_k'] = self.Omega_k0
         self.interface_args['CLASSparams']['n_s'] = self.ns
-        self.interface_args['CLASSparams']['m_ncdm'] = self.mnu
         self.interface_args['CLASSparams']['A_s'] = self.As
         self.interface_args['CLASSparams']['w0_fld'] = self.w0 # or w0
         self.interface_args['CLASSparams']['wa_fld'] = self.wa # or wa
@@ -66,7 +65,16 @@ class CLASSBackground:
         self.interface_args['CLASSparams']['use_ppf'] = "yes"
         # To avoid using a cosmological constant
         self.interface_args['CLASSparams']['Omega_Lambda'] = 0. 
-        self.interface_args['CLASSparams']['N_ncdm'] = 1 
+
+        # neutrino parameters require more care
+        if isinstance(self.mnu, float):
+            self.interface_args['CLASSparams']['m_ncdm'] = self.mnu
+        elif isinstance(self.mnu, (np.ndarray, Sequence)):
+            m_ncdm_str = ",".join(f"{mass:g}" for mass in self.mnu)
+            self.interface_args['CLASSparams']['m_ncdm'] = m_ncdm_str
+        else:
+            raise TypeError("mnu must be a float, numpy.ndarray or Sequence of floats")
+        self.interface_args['CLASSparams']['N_ncdm'] = 2
         self.interface_args['CLASSparams']['N_ur'] = self.N_ur
 
         # Initialize CLASS

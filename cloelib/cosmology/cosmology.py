@@ -47,6 +47,11 @@ class Background(Protocol):
         ...
 
     @property
+    def N_ur(self) -> float:
+        """Effective number of ultra-relativistic species. As defined by CLASS."""
+        ...
+
+    @property
     def Omega_k0(self) -> float:
         """Omega curvature; the effective curvature density/critical density at z=0."""
         ...

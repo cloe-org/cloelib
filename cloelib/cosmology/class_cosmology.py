@@ -74,28 +74,8 @@ class CLASSBackground:
         # To avoid using a cosmological constant
         self.interface_args['CLASSparams']['Omega_Lambda'] = 0. 
 
-        # neutrino parameters require more care
-        if isinstance(self.mnu, float) and self.N_mnu > 1:
-            # user gave a total mnu but wants to use a degenerate mass case
-            per_mass = self.mnu / self.N_mnu
-            m_ncdm_str = ",".join(f"{per_mass:g}" for _ in range(self.N_mnu))
-            self.interface_args['CLASSparams']['m_ncdm'] = m_ncdm_str
-
-        elif isinstance(self.mnu, float) and self.N_mnu == 1:
-            # single species case
-            self.interface_args['CLASSparams']['m_ncdm'] = f"{self.mnu:g}"
-
-        elif isinstance(self.mnu, (np.ndarray, Sequence)):
-            # user passed an explicit list/array of masses
-            if len(self.mnu) != self.N_mnu:
-                    raise ValueError(f"Expected {self.N_mnu} individual neutrino masses, "
-                                     f"but got {len(self.mnu)}: {self.mnu}")
-
-            m_ncdm_str = ",".join(f"{mass:g}" for mass in self.mnu)
-            self.interface_args['CLASSparams']['m_ncdm'] = m_ncdm_str
-
-        else:
-            raise TypeError("mnu must be a float, numpy.ndarray or Sequence of floats")
+        # Set neutrino parameters
+        self.interface_args['CLASSparams']['m_ncdm'] = self._set_neutrino_masses()
         self.interface_args['CLASSparams']['N_ncdm'] = self.N_mnu
         self.interface_args['CLASSparams']['N_ur'] = self.N_ur
 
@@ -134,6 +114,31 @@ class CLASSBackground:
         else:
             raise ValueError(f"Unsupported number of massive neutrino species: {self.N_mnu}. "
                              "N_ur can only be inferred for 0, 1, 2, or 3 massive neutrino species.")
+
+    def _set_neutrino_masses(self) -> str:
+        """
+        Set the neutrino masses in the CLASS parameters.
+        This is a helper method to ensure that the neutrino masses are set correctly.
+        """
+        # neutrino parameters require more care
+        if isinstance(self.mnu, float) and self.N_mnu > 1:
+            # user gave a total mnu but wants to use a degenerate mass case
+            per_mass = self.mnu / self.N_mnu
+            m_ncdm_str = ",".join(f"{per_mass:g}" for _ in range(self.N_mnu))
+            return m_ncdm_str
+        elif isinstance(self.mnu, float) and self.N_mnu == 1:
+            # single species case
+            return f"{self.mnu:g}"
+        elif isinstance(self.mnu, (np.ndarray, Sequence)):
+            # user passed an explicit list/array of masses
+            if len(self.mnu) != self.N_mnu:
+                    raise ValueError(f"Expected {self.N_mnu} individual neutrino masses, "
+                                     f"but got {len(self.mnu)}: {self.mnu}")
+
+            m_ncdm_str = ",".join(f"{mass:g}" for mass in self.mnu)
+            return m_ncdm_str
+        else:
+            raise TypeError("mnu must be a float, numpy.ndarray or Sequence of floats")
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
@@ -210,7 +215,7 @@ class CLASSBackground:
             np.ndarray: Matter density values.
         """
         return np.array([self.results.Om_m(z) for z in zs])
-    
+
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the baryon density as a function of redshift.

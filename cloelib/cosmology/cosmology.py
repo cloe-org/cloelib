@@ -52,6 +52,11 @@ class Background(Protocol):
         ...
 
     @property
+    def N_mnu(self) -> int:
+        """Number of massive neutrino species."""
+        ...
+
+    @property
     def Omega_k0(self) -> float:
         """Omega curvature; the effective curvature density/critical density at z=0."""
         ...

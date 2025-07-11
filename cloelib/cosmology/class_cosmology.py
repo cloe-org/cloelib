@@ -22,7 +22,8 @@ class CLASSBackground:
     c0 = SPEED_OF_LIGHT/1000
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
                  As: float, ns: float, mnu: Union[float, Sequence[float], np.ndarray],
-                N_ur: float, w0: float, wa: float, gamma_MG: float) -> None:
+                 w0: float, wa: float, gamma_MG: float, N_mnu: int, N_ur: Optional[float] = None,
+                 ) -> None:
         """
         Initialize the CLASSBackground instance with cosmological parameters.
 
@@ -33,9 +34,12 @@ class CLASSBackground:
             Omega_k0 (float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
-            mnu (float): Sum of neutrino masses in [eV].
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the equation of state.
+            mnu (float): Sum of neutrino masses in [eV].
+            N_mnu (int): Number of massive neutrino species.
+            N_ur (Optional[float]): Effective number of ultra-relativistic species.
+                If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
             gamma_MG (float): Modified gravity growth parameter (not directly used in CLASS, but kept for protocol compliance).
         """
         self.H0 = H0
@@ -49,7 +53,10 @@ class CLASSBackground:
         self.wa = wa
         self.gamma_MG = gamma_MG  # Kept for protocol, but CLASS doesn't directly use it
         self.mnu = mnu
-        self.N_ur = N_ur
+        self.N_mnu = N_mnu
+        # We can set N_ur to a default value if not provided
+        self._provided_N_ur = N_ur
+
 
         # Initialize CLASS parameters
         self.interface_args = {'CLASSparams': {}}  # Use a dictionary for CLASS parameters
@@ -67,14 +74,28 @@ class CLASSBackground:
         self.interface_args['CLASSparams']['Omega_Lambda'] = 0. 
 
         # neutrino parameters require more care
-        if isinstance(self.mnu, float):
-            self.interface_args['CLASSparams']['m_ncdm'] = self.mnu
+        if isinstance(self.mnu, float) and self.N_mnu > 1:
+            # user gave a total mnu but wants to use a degenerate mass case
+            per_mass = self.mnu / self.N_mnu
+            m_ncdm_str = ",".join(f"{per_mass:g}" for _ in range(self.N_mnu))
+            self.interface_args['CLASSparams']['m_ncdm'] = m_ncdm_str
+
+        elif isinstance(self.mnu, float) and self.N_mnu == 1:
+            # single species case
+            self.interface_args['CLASSparams']['m_ncdm'] = f"{self.mnu:g}"
+
         elif isinstance(self.mnu, (np.ndarray, Sequence)):
+            # user passed an explicit list/array of masses
+            if len(self.mnu) != self.N_mnu:
+                    raise ValueError(f"Expected {self.N_mnu} individual neutrino masses, "
+                                     f"but got {len(self.mnu)}: {self.mnu}")
+
             m_ncdm_str = ",".join(f"{mass:g}" for mass in self.mnu)
             self.interface_args['CLASSparams']['m_ncdm'] = m_ncdm_str
+
         else:
             raise TypeError("mnu must be a float, numpy.ndarray or Sequence of floats")
-        self.interface_args['CLASSparams']['N_ncdm'] = 2
+        self.interface_args['CLASSparams']['N_ncdm'] = self.N_mnu
         self.interface_args['CLASSparams']['N_ur'] = self.N_ur
 
         # Initialize CLASS
@@ -86,6 +107,22 @@ class CLASSBackground:
     def _interface_args(self) -> dict:
         """Save internal structure format of interface codes."""
         return self.interface_args
+
+    @property
+    def N_ur(self) -> float:
+        """
+        Effective number of ultra-relativistic species.
+        If the user gave one, return it; otherwise infer from other parameters.
+        """
+        if self._provided_N_ur is not None:
+            return self._provided_N_ur
+
+        # Fallback: compute ΔN_eff from number of massive neutrinos.
+        # A simple approximation is that heavy neutrinos are non-relativistic today,
+        # so their contribution to N_eff is zero, and only the massless ones count.
+        # If you assume all three are massive, you can choose a standard
+        # baseline of 3.046 (the SM expectation). Adjust as your science needs.
+        return 3.046
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

@@ -43,7 +43,7 @@ class Background(Protocol):
 
     @property
     def mnu(self) -> Union[float, Sequence[float], T]:
-        """Total neutrino mass in eV (either a single float or an array per species)."""
+        """Total neutrino mass in eV (float) or an array of individual neutrino masses in eV."""
         ...
 
     @property
@@ -58,7 +58,7 @@ class Background(Protocol):
 
     @property
     def N_mnu(self) -> int:
-        """Number of massive neutrino species."""
+        """Integer number of massive neutrino species."""
         ...
 
     @property

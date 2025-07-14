@@ -94,6 +94,7 @@ class CLASSBackground:
     @property
     def N_ur(self) -> float:
         """Effective number of ultra-relativistic species.
+
         If the user gave one, return it; otherwise infer from other parameters such that
         N_eff = 3.044 for the standard model of cosmology.
         """
@@ -126,6 +127,7 @@ class CLASSBackground:
 
     def _set_neutrino_masses(self) -> str:
         """Set the neutrino masses in the CLASS parameters.
+
         This is a helper method to ensure that the neutrino masses are set correctly.
         """
         # neutrino parameters require more care

@@ -52,6 +52,11 @@ class Background(Protocol):
         ...
 
     @property
+    def N_eff(self) -> float:
+        """Effective number of relativistic species."""
+        ...
+
+    @property
     def N_mnu(self) -> int:
         """Number of massive neutrino species."""
         ...
@@ -97,10 +102,6 @@ class Background(Protocol):
 
     def Omega_m(self, zs: T) -> T:
         """Compute the matter density as a function of redshift."""
-        ...
-
-    def N_eff(self) -> float:
-        """Effective number of relativistic species."""
         ...
 
     def hubble_parameter(self, zs: T, units: str = "km/s/Mpc") -> T:

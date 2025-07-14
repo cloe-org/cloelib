@@ -56,6 +56,15 @@ class CAMBBackground:
         # We can set N_ur to a default value if not provided
         self._provided_N_ur = N_ur
 
+        # camb does not accept mnu as an array, so we need to handle it
+        if isinstance(self.mnu, Sequence) or isinstance(self.mnu, np.ndarray):
+            mnu_arg = float(np.sum(self.mnu))
+        else:
+            mnu_arg = float(self.mnu)
+
+        if mnu_arg > 0 and self.N_mnu == 0:
+            raise ValueError("If mnu is provided, N_mnu must be greater than 0.")
+
         # Initialize CAMB parameters
         self.interface_args = {'CAMBparams': camb.CAMBparams()}
         self.interface_args['CAMBparams'].set_cosmology(
@@ -63,7 +72,7 @@ class CAMBBackground:
             ombh2=self.Omega_b0 * (self.h) ** 2,
             omch2=self.Omega_cdm0 * (self.h) ** 2,
             omk=self.Omega_k0,
-            mnu = self.mnu,
+            mnu = mnu_arg,
             num_massive_neutrinos= self.N_mnu,
         )
 
@@ -122,6 +131,10 @@ class CAMBBackground:
         return self.N_ur + self.N_mnu*np.power(T_ncdm, 4.)*np.power(4./11, -4./3)
 
     def _set_neutrino_parameters(self) -> None:
+        """
+        Set the neutrino mass parameters in the CAMB interface arguments.
+        This method handles both degenerate and non-degenerate neutrino mass cases.
+        """
         if isinstance(self.mnu, float) and self.N_mnu >= 1:
             # user gave a total mnu but wants to use a degenerate mass case
             self.interface_args['CAMBparams'].nu_mass_eigenstates = 1
@@ -129,10 +142,18 @@ class CAMBBackground:
             self.interface_args['CAMBparams'].nu_mass_fractions = [mass_fraction] * self.N_mnu
             self.interface_args['CAMBparams'].nu_mass_degeneracies = [1.0] * self.N_mnu
             self.interface_args['CAMBparams'].nu_mass_numbers = [1] * self.N_mnu
+        elif isinstance(self.mnu, (np.ndarray, Sequence)):
+            # non-degenerate case
+            sum_mnu = np.sum(self.mnu)
+            if len(self.mnu) != self.N_mnu:
+                raise ValueError(f"Expected {self.N_mnu} individual neutrino masses, "
+                                     f"but got {len(self.mnu)}: {self.mnu}")
+            self.interface_args['CAMBparams'].nu_mass_eigenstates = self.N_mnu
+            self.interface_args['CAMBparams'].nu_mass_fractions = [mass / sum_mnu for mass in self.mnu]
+            self.interface_args['CAMBparams'].nu_mass_degeneracies = [1.0] * self.N_mnu
+            self.interface_args['CAMBparams'].nu_mass_numbers = [1] * self.N_mnu
         else:
-            raise NotImplementedError(
-                "Non-degenerate neutrino mass cases are not implemented in CAMBBackground."
-            )
+            raise TypeError("mnu must be a float, numpy.ndarray or Sequence of floats")
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

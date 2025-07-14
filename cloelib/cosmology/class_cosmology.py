@@ -106,11 +106,11 @@ class CLASSBackground:
         if self.N_mnu == 0:
             return 3.044
         elif self.N_mnu == 1:
-            return 2.308
+            return 2.0308
         elif self.N_mnu == 2:
             return 1.0176
         elif self.N_mnu == 3:
-            return 0.00441
+            return 0.0044
         else:
             raise ValueError(f"Unsupported number of massive neutrino species: {self.N_mnu}. "
                              "N_ur can only be inferred for 0, 1, 2, or 3 massive neutrino species.")

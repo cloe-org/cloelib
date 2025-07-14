@@ -63,8 +63,14 @@ class CAMBBackground:
             ombh2=self.Omega_b0 * (self.h) ** 2,
             omch2=self.Omega_cdm0 * (self.h) ** 2,
             omk=self.Omega_k0,
-            mnu = self.mnu
+            mnu = self.mnu,
+            num_massive_neutrinos= self.N_mnu,
         )
+
+        # setting the neutrino parameters
+        self.interface_args['CAMBparams'].share_delta_neff = True
+        self.interface_args['CAMBparams'].num_nu_massless = self.N_eff - self.N_mnu
+        
         # Set initial conditions and dark energy
         self.interface_args['CAMBparams'].set_dark_energy(w=self.w0, wa=self.wa,
                                                           dark_energy_model='ppf')
@@ -72,6 +78,11 @@ class CAMBBackground:
         
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args['CAMBparams'])
+
+    @property
+    def _interface_args(self) -> dict:
+        """Save internal structure format of interface codes."""
+        return self.interface_args
 
     @property
     def N_ur(self) -> float:
@@ -108,11 +119,6 @@ class CAMBBackground:
         """
         T_ncdm = 0.71611  # Standard value for neutrino temperature in K
         return self.N_ur + self.N_mnu*np.power(T_ncdm, 4.)*np.power(4./11, -4./3)
-
-    @property
-    def _interface_args(self) -> dict:
-        """Save internal structure format of interface codes."""
-        return self.interface_args
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

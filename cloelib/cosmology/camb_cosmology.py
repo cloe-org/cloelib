@@ -134,6 +134,8 @@ class CAMBBackground:
         """Set the neutrino mass parameters in the CAMB interface arguments.
 
         This method handles both degenerate and non-degenerate neutrino mass cases.
+        If the non-degenerate case is used (mnu is an array), 
+        it will set accurate_massive_neutrinos = True.
         """
         if isinstance(self.mnu, float) and self.N_mnu >= 1:
             # user gave a total mnu but wants to use a degenerate mass case
@@ -149,9 +151,16 @@ class CAMBBackground:
                 raise ValueError(f"Expected {self.N_mnu} individual neutrino masses, "
                                      f"but got {len(self.mnu)}: {self.mnu}")
             self.interface_args['CAMBparams'].nu_mass_eigenstates = self.N_mnu
+            self.interface_args['CAMBparams'].Transfer.accurate_massive_neutrinos = True
             self.interface_args['CAMBparams'].nu_mass_fractions = [mass / sum_mnu for mass in self.mnu]
             self.interface_args['CAMBparams'].nu_mass_degeneracies = [1.0] * self.N_mnu
             self.interface_args['CAMBparams'].nu_mass_numbers = [1] * self.N_mnu
+        elif isinstance(self.mnu, float) and self.N_mnu == 0:
+            # no neutrinos, set to zero
+            self.interface_args['CAMBparams'].nu_mass_eigenstates = 0
+            self.interface_args['CAMBparams'].nu_mass_fractions = []
+            self.interface_args['CAMBparams'].nu_mass_degeneracies = []
+            self.interface_args['CAMBparams'].nu_mass_numbers = []
         else:
             raise TypeError("mnu must be a float, numpy.ndarray or Sequence of floats")
 

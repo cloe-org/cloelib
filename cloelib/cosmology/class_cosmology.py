@@ -77,7 +77,8 @@ class CLASSBackground:
         self.interface_args['CLASSparams']['Omega_Lambda'] = 0. 
 
         # Set neutrino parameters
-        self.interface_args['CLASSparams']['m_ncdm'] = self._set_neutrino_masses()
+        if self.N_mnu > 0:
+            self.interface_args['CLASSparams']['m_ncdm'] = self._set_neutrino_masses()
         self.interface_args['CLASSparams']['N_ncdm'] = self.N_mnu
         self.interface_args['CLASSparams']['N_ur'] = self.N_ur
 

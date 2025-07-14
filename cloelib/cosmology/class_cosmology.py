@@ -114,6 +114,15 @@ class CLASSBackground:
         else:
             raise ValueError(f"Unsupported number of massive neutrino species: {self.N_mnu}. "
                              "N_ur can only be inferred for 0, 1, 2, or 3 massive neutrino species.")
+    @property
+    def N_eff(self) -> float:
+        """
+        Return the effective number of relativistic species.
+
+        Returns:
+            float: Effective number of relativistic species.
+        """
+        return self.results.Neff()
 
     def _set_neutrino_masses(self) -> str:
         """
@@ -228,14 +237,6 @@ class CLASSBackground:
         """
         return np.array([self.results.Om_b(z) for z in zs])
 
-    def N_eff(self) -> float:
-        """
-        Return the effective number of relativistic species.
-
-        Returns:
-            float: Effective number of relativistic species.
-        """
-        return self.results.Neff()
 
 class CLASSLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""

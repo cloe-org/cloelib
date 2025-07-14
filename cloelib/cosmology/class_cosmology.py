@@ -119,8 +119,7 @@ class CLASSBackground:
         """
         Return the effective number of relativistic species.
 
-        Returns:
-            float: Effective number of relativistic species.
+        Assumes a standard value of T_ncdm = 0.71611 K for neutrinos.
         """
         return self.results.Neff()
 

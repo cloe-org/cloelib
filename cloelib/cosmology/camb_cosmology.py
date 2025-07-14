@@ -5,7 +5,7 @@ from cloelib.cosmology.cosmology import Background
 
 # General imports
 import numpy as np
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union, Sequence
 
 # Cosmology imports
 try:
@@ -19,8 +19,9 @@ class CAMBBackground:
     """A wrapper for CAMB background cosmological calculations."""
 
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
-                 As: float, ns: float, mnu: float,
-                 w0: float, wa: float, gamma_MG: float) -> None:
+                 As: float, ns: float, mnu: Union[float, Sequence[float], np.ndarray],
+                 w0: float, wa: float, gamma_MG: float, N_mnu: int, N_ur: Optional[float] = None
+                 ) -> None:
         """
         Initialize the CAMBBackground instance with cosmological parameters.
 
@@ -31,10 +32,14 @@ class CAMBBackground:
             Omega_k0(float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
-            mnu (float): Total sum of neutrino mass in [eV].
+            mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
+                Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the dark energy equation of state.
             gamma_MG (float): Modified gravity growth parameter.
+            N_mnu (int): Number of massive neutrino species.
+            N_ur (Optional[float]): Extra number of ultra-relativistic species.
+                If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
         """
         self.H0 = H0
         self.h = self.H0 / 100
@@ -47,6 +52,9 @@ class CAMBBackground:
         self.wa = wa
         self.gamma_MG = gamma_MG
         self.mnu = mnu
+        self.N_mnu = N_mnu
+        # We can set N_ur to a default value if not provided
+        self._provided_N_ur = N_ur
 
         # Initialize CAMB parameters
         self.interface_args = {'CAMBparams': camb.CAMBparams()}
@@ -64,6 +72,42 @@ class CAMBBackground:
         
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args['CAMBparams'])
+
+    @property
+    def N_ur(self) -> float:
+        """
+        Effective number of ultra-relativistic species.
+        If the user gave one, return it; otherwise infer from other parameters such that
+        N_eff = 3.044 for the standard model of cosmology.
+        """
+        if self._provided_N_ur is not None:
+            return self._provided_N_ur
+
+        # If N_ur is not provided, we assume the standard model of cosmology
+        # where N_eff = 3.044 (including photons, neutrinos, and their contributions)
+        # This is a common assumption in cosmology.
+        # Values are taken from the CLASS documentation.
+        if self.N_mnu == 0:
+            return 3.044
+        elif self.N_mnu == 1:
+            return 2.308
+        elif self.N_mnu == 2:
+            return 1.0176
+        elif self.N_mnu == 3:
+            return 0.0044
+        else:
+            raise ValueError(f"Unsupported number of massive neutrino species: {self.N_mnu}. "
+                             "N_ur can only be inferred for 0, 1, 2, or 3 massive neutrino species.")
+
+    @property
+    def N_eff(self) -> float:
+        """
+        Return the effective number of relativistic species.
+
+        Assumes a standard value of T_ncdm = 0.71611 K for neutrinos.
+        """
+        T_ncdm = 0.71611  # Standard value for neutrino temperature in K
+        return self.N_ur + self.N_mnu*np.power(T_ncdm, 4.)*np.power(4./11, -4./3)
 
     @property
     def _interface_args(self) -> dict:

@@ -99,6 +99,10 @@ class Background(Protocol):
         """Compute the matter density as a function of redshift."""
         ...
 
+    def N_eff(self) -> float:
+        """Effective number of relativistic species."""
+        ...
+
     def hubble_parameter(self, zs: T, units: str = "km/s/Mpc") -> T:
         """Retrieve the hubble parameter as a function of redshift."""
         ...

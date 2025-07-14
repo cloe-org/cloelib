@@ -228,6 +228,15 @@ class CLASSBackground:
         """
         return np.array([self.results.Om_b(z) for z in zs])
 
+    def N_eff(self) -> float:
+        """
+        Return the effective number of relativistic species.
+
+        Returns:
+            float: Effective number of relativistic species.
+        """
+        return self.results.Neff()
+
 class CLASSLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
 

@@ -14,6 +14,6 @@ def test_background_required_methods():
 def test_background_required_attributes():
     contents = Background.__dict__.items()
     attributes_found = {name for name, value in contents if not callable(value) and not name.startswith('_')}
-    attributes_required = {'wa', 'As', 'w0', 'Omega_k0', 'h', 'Omega_b0', 'gamma_MG', 'mnu', 'Omega_cdm0', 'H0', 'ns'}
+    attributes_required = {'wa', 'As', 'w0', 'Omega_k0', 'h', 'Omega_b0', 'gamma_MG', 'mnu', 'Omega_cdm0', 'H0', 'ns', 'N_ur', 'N_mnu', 'N_eff'}
     assert attributes_required == attributes_found
 

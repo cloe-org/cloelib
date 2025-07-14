@@ -58,6 +58,8 @@ class CLASSBackground:
         # We can set N_ur to a default value if not provided
         self._provided_N_ur = N_ur
 
+        if np.sum(self.mnu) > 0 and self.N_mnu == 0:
+            raise ValueError("If mnu is provided, N_mnu must be greater than 0.")
 
         # Initialize CLASS parameters
         self.interface_args = {'CLASSparams': {}}  # Use a dictionary for CLASS parameters

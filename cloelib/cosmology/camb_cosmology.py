@@ -69,8 +69,9 @@ class CAMBBackground:
 
         # setting the neutrino parameters
         self.interface_args['CAMBparams'].share_delta_neff = True
+        self._set_neutrino_parameters()
         self.interface_args['CAMBparams'].num_nu_massless = self.N_eff - self.N_mnu
-        
+
         # Set initial conditions and dark energy
         self.interface_args['CAMBparams'].set_dark_energy(w=self.w0, wa=self.wa,
                                                           dark_energy_model='ppf')
@@ -101,7 +102,7 @@ class CAMBBackground:
         if self.N_mnu == 0:
             return 3.044
         elif self.N_mnu == 1:
-            return 2.308
+            return 2.0308
         elif self.N_mnu == 2:
             return 1.0176
         elif self.N_mnu == 3:
@@ -119,6 +120,19 @@ class CAMBBackground:
         """
         T_ncdm = 0.71611  # Standard value for neutrino temperature in K
         return self.N_ur + self.N_mnu*np.power(T_ncdm, 4.)*np.power(4./11, -4./3)
+
+    def _set_neutrino_parameters(self) -> None:
+        if isinstance(self.mnu, float) and self.N_mnu >= 1:
+            # user gave a total mnu but wants to use a degenerate mass case
+            self.interface_args['CAMBparams'].nu_mass_eigenstates = 1
+            mass_fraction = 1.0 / self.N_mnu
+            self.interface_args['CAMBparams'].nu_mass_fractions = [mass_fraction] * self.N_mnu
+            self.interface_args['CAMBparams'].nu_mass_degeneracies = [1.0] * self.N_mnu
+            self.interface_args['CAMBparams'].nu_mass_numbers = [1] * self.N_mnu
+        else:
+            raise NotImplementedError(
+                "Non-degenerate neutrino mass cases are not implemented in CAMBBackground."
+            )
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

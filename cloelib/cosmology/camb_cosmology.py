@@ -97,6 +97,7 @@ class CAMBBackground:
     @property
     def N_ur(self) -> float:
         """Effective number of ultra-relativistic species.
+
         If the user gave one, return it; otherwise infer from other parameters such that
         N_eff = 3.044 for the standard model of cosmology.
         """
@@ -131,6 +132,7 @@ class CAMBBackground:
 
     def _set_neutrino_parameters(self) -> None:
         """Set the neutrino mass parameters in the CAMB interface arguments.
+
         This method handles both degenerate and non-degenerate neutrino mass cases.
         """
         if isinstance(self.mnu, float) and self.N_mnu >= 1:

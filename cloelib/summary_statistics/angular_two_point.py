@@ -5,6 +5,7 @@ from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import simpsons_weights_jit
+from cloelib.profiling import profile_function
 
 # General imports
 import interpax
@@ -105,7 +106,8 @@ class AngularTwoPoint:
         Pk = self.tracer1.perturbations.matter_power_spectrum(zs, ks)
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
         return Pkl
-
+    
+    @profile_function
     def get_Cl(self, ells, nl, ks)  -> jax.numpy.ndarray:
         """
         Compute the angular power spectrum Cl using Limber approximation.

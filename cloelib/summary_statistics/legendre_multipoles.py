@@ -41,28 +41,15 @@ class LegendreMultipoles:
         self.background_fiducial = background_fiducial
         self.ap_distortion = APDistortion(spectro_power.background, background_fiducial)
 
-        self.mu_grid, self.mu_weights = np.polynomial.legendre.leggauss(10)
-        self.mu_grid = 0.5 * (self.mu_grid + 1.0)
-        self.mu_weights *= 0.5
+        mu_min = 0.0
+        mu_max = 1.0
+        mu_samp = 101
+        self.mu_grid = np.linspace(mu_min, mu_max, mu_samp)
 
         self.parameters = parameters
         self.nbar = nbar
 
     def _ensure_array(self, param):
-        """Ensure that the input parameter is a NumPy array.
-
-        If the input is a scalar, it is converted to a NumPy array.
-
-        Parameters
-        ----------
-        param : scalar or array-like
-            Input parameter.
-
-        Returns
-        -------
-        numpy.ndarray
-            Input parameter as a NumPy array.
-        """
         if np.isscalar(param):
             param = np.array([param])
         return np.asarray(param)
@@ -246,14 +233,17 @@ class LegendreMultipoles:
                      self.ap_distortion.q_AP_lo(self.redshift) if use_AP else 1.0)
         prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / \
             AP_factor
-        kAP = self._k_AP(k, self.mu_grid, self.redshift, use_AP=use_AP)
-        muAP = self._mu_AP(self.mu_grid, self.redshift, use_AP=use_AP)
-        Pk2d_tot = self._Pk2d_tot(kAP, muAP)
         multipoles = {}
         for i,ell in enumerate(ells):
-            leg = legendre(ell, self.mu_grid)
             multipoles[f'ell{ell}'] = \
-                np.einsum("ab,b,b->a", Pk2d_tot, leg, self.mu_weights)
+                integrate.simps(self._Pk2d_tot(self._k_AP(k, self.mu_grid,
+                                                          self.redshift,
+                                                          use_AP=use_AP),
+                                               self._mu_AP(self.mu_grid,
+                                                           self.redshift,
+                                                           use_AP=use_AP)) *
+                                legendre(ell, self.mu_grid),
+                                self.mu_grid, axis=1)
             multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
         return multipoles
 
@@ -279,7 +269,7 @@ class LegendreMultipoles:
         """
         ells = self._ensure_array(ells) \
             if ells is not None else np.array([0,2,4])
-        AP_factor = (self.ap_distortion.q_AP_tr(self.redshift)**2 *
+        AP_factor = (self.ap_distortion.q_AP_lo(self.redshift)**2 *
                      self.ap_distortion.q_AP_lo(self.redshift) if use_AP else 1.0)
         prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / \
             AP_factor
@@ -303,9 +293,9 @@ class LegendreMultipoles:
                 else noise_func[term_list[index]](kAP) for index in noise_ids])
         multipoles = {}
         for i,ell in enumerate(ells):
-            leg = legendre(ell, self.mu_grid)
             multipoles[f'ell{ell}'] = \
-                np.einsum("abc,c,c->ab", Pk2d, leg, self.mu_weights)
+                integrate.simps(Pk2d * legendre(ell, self.mu_grid),
+                                self.mu_grid, axis=-1)
             multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
         return multipoles
 

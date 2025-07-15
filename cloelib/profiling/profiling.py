@@ -1,3 +1,9 @@
+"""
+Profiling utilities for cloe-lib.
+
+Provides decorators and helpers for runtime profiling using pyinstrument.
+"""
+
 import os
 import functools
 from pyinstrument import Profiler

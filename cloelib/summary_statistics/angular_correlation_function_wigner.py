@@ -19,7 +19,7 @@ from cloelib.auxiliary.cache import memoize_jax
 
 @jit
 def _d_0_0_ell_compute(beta, ell):
-    """
+    r"""
     Evaluate the Wigner small-d matrix element \(d^{\ell}_{0\,0}(\beta)\).
 
     For the two lowest multipoles (ℓ = 0, 1) the element is returned from
@@ -56,7 +56,7 @@ def _d_0_0_ell_compute(beta, ell):
 
 @jit
 def _d_2_2_ell_compute(beta, ell):
-    """"
+    r""""
     Evaluate the Wigner small-d matrix element
     \(d^{\ell}_{2\,2}(\beta)\).
 
@@ -121,7 +121,7 @@ def _d_2_2_ell_compute(beta, ell):
 
 @jit
 def _d_2_m2_ell_compute(beta, ell):
-    """
+    r"""
     Evaluate the Wigner small-d matrix element
     \(d^{\ell}_{2,\,-2}(\beta)\).
 
@@ -188,7 +188,7 @@ def _d_2_m2_ell_compute(beta, ell):
 
 @jit
 def _d_2_0_ell_compute(beta, ell):
-    """
+    r"""
     Evaluate the Wigner small-d matrix element \(d^{\ell}_{20}(\beta)\).
 
     For the lowest multipoles (ℓ = 2, 3) the value is returned from a closed–

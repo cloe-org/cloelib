@@ -1,5 +1,5 @@
 """
-Profiling utilities for cloe-lib.
+Profiling utilities for cloelib.
 
 Provides decorators and helpers for runtime profiling using pyinstrument.
 """

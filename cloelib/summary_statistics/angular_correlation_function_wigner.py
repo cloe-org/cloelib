@@ -56,9 +56,8 @@ def _d_0_0_ell_compute(beta, ell):
 
 @jit
 def _d_2_2_ell_compute(beta, ell):
-    r""""
-    Evaluate the Wigner small-d matrix element
-    \(d^{\ell}_{2\,2}(\beta)\).
+    r"""
+    Evaluate the Wigner small-d matrix element \(d^{\ell}_{2\,2}(\beta)\).
 
     Closed-form expressions are returned for the first two multipoles
     (ℓ = 2, 3).  For higher orders a numerically stable three-term
@@ -122,8 +121,7 @@ def _d_2_2_ell_compute(beta, ell):
 @jit
 def _d_2_m2_ell_compute(beta, ell):
     r"""
-    Evaluate the Wigner small-d matrix element
-    \(d^{\ell}_{2,\,-2}(\beta)\).
+    Evaluate the Wigner small-d matrix element \(d^{\ell}_{2,\,-2}(\beta)\).
 
     For the first two multipoles (ℓ = 2, 3) the value is returned from
     closed-form expressions.  Higher orders are obtained with a stable

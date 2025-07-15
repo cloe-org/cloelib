@@ -13,23 +13,27 @@ import datetime
 PROFILE_OUTPUT_DIR = "profiling_results"
 PROFILER_INTERVAL = 0.001
 
-#class to avoid multiple call of the profiling in case of decorated nested fuctions
+
 class _profiling_active:
+"""class to avoid multiple call of the profiling in case of decorated nested fuctions"""
     is_active=False
     
-#check the env. var. 
+ 
 def _is_profiling_enabled():
+"""check the profiling is setted enabled"""
     return os.environ.get('ENABLE_PROFILING') == 'true'
 
-#get the output directory
+
 def _get_output():
+""" get the output directory"""
     env_val = os.environ.get('PROFILE_OUTPUT_DIR')
     if env_val: 
         return env_val
     return PROFILE_OUTPUT_DIR
 
-#get the sampling interval of pyinstrument (larger interval=lower overhead)
+
 def _get_pyinstrument_interval():
+""" get the sampling interval of pyinstrument (larger interval=lower overhead) """
     env_val = os.environ.get('PROFILING_INTERVAL')
     if env_val: 
         return float(env_val)
@@ -37,21 +41,26 @@ def _get_pyinstrument_interval():
 
 
 def enable_profiling():
+""" enable the time profiling """
     os.environ['ENABLE_PROFILING'] = 'true'
     print("Profiling: Enabled.")
 
 def disable_profiling():
+"""Disable the time profiling""" 
     if 'ENABLE_PROFILING' in os.environ:
         del os.environ['ENABLE_PROFILING']
     print("Profiling: Disabled.")
 
 def set_output(outdir):
+"""Set the output directory from the local path"""
     os.environ['PROFILE_OUTPUT_DIR'] = str(outdir)
 
 def set_interval(interval):
+"""Set the pyinstrument sampling interval"""
     os.environ['PROFILING_INTERVAL'] = str(interval)
 
 def profile_function(func):
+"""Decorator to profile a function's runtime using pyinstrument"""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if _is_profiling_enabled() and not _profiling_active.is_active:

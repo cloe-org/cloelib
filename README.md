@@ -43,6 +43,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | NA    | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)       | NA                       |
 
 We do not provide installation support for `PBJ` and `class`.
+Furthermore, it requires the installation of `pyinstrument` for the time profiling.
 
 ---
 
@@ -56,7 +57,7 @@ pip install .
 You can also install (some) supported dependencies:
 
 ```sh
-pip install .[camb,hmcode2020emu,comet-emu]
+pip install .[camb,hmcode2020emu,comet-emu,pyinstrument]
 ```
 
 **Note:** Some shells or terminals may not interpret the brackets correctly. If you encounter an error, try adding quotation marks:

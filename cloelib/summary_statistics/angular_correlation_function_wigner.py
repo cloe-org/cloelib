@@ -20,10 +20,26 @@ from cloelib.auxiliary.cache import memoize_jax
 @jit
 def _d_0_0_ell_compute(beta, ell):
     """
-    Compute d_00^ell(beta).
+    Evaluate the Wigner small-d matrix element \(d^{\ell}_{0\,0}(\beta)\).
 
-    The computation uses the Wigner d-matrix
-    recurrence relations in a JIT-compatible way.
+    For the two lowest multipoles (ℓ = 0, 1) the element is returned from
+    closed-form expressions.  Higher orders are computed with a stable
+    three-term recurrence that is compatible with ``jax.jit`` tracing.
+
+    Parameters
+    ----------
+    beta : float or jax.numpy.ndarray
+        Polar angle in **radians**.  May be a scalar or an array
+        broadcastable to the shape of *ell*.
+    ell : int or jax.numpy.ndarray
+        Total angular-momentum quantum number ``ℓ ≥ 0``.  Accepts a Python
+        ``int`` (known at compile time) or a 0-D JAX array.
+
+    Returns
+    -------
+    d00_ell : same type as *beta*
+        The value of \(d^{\ell}_{0\,0}(\beta)\), with dtype promotions
+        governed by JAX’s standard casting rules.
     """
     base_case_0 = np.ones_like(beta)
     base_case_1 = np.cos(beta)
@@ -40,11 +56,31 @@ def _d_0_0_ell_compute(beta, ell):
 
 @jit
 def _d_2_2_ell_compute(beta, ell):
-    """
-    Compute d_22^ell(beta).
+    """"
+    Evaluate the Wigner small-d matrix element
+    \(d^{\ell}_{2\,2}(\beta)\).
 
-    The computation uses recurrence for small ell
-    and an approximation for large ell, in a JIT-compatible way.
+    Closed-form expressions are returned for the first two multipoles
+    (ℓ = 2, 3).  For higher orders a numerically stable three-term
+    recurrence is used, and once ℓ exceeds a configurable threshold
+    (ℓ ≈ 30 000) the algorithm switches to an asymptotic two-term
+    approximation that remains compatible with ``jax.jit``.
+
+    Parameters
+    ----------
+    beta : float or jax.numpy.ndarray
+        Polar angle in **radians** at which the element is evaluated.
+        May be a scalar or an array broadcastable to the shape of
+        *ell*.
+    ell : int or jax.numpy.ndarray
+        Total angular-momentum quantum number ``ℓ ≥ 2``.  Can be a Python
+        ``int`` (traced at compile time) or a 0-D JAX array.
+
+    Returns
+    -------
+    d22_ell : same type as *beta*
+        The value of \(d^{\ell}_{2\,2}(\beta)\), with dtype promoted by
+        JAX according to its standard casting rules.
     """
     # Base cases
     base_case_2 = (1/4) * (1 + np.cos(beta))**2
@@ -86,10 +122,30 @@ def _d_2_2_ell_compute(beta, ell):
 @jit
 def _d_2_m2_ell_compute(beta, ell):
     """
-    Compute d_2-2^ell(beta).
+    Evaluate the Wigner small-d matrix element
+    \(d^{\ell}_{2,\,-2}(\beta)\).
 
-    The computation uses recurrence for small ell
-    and an approximation for large ell, in a JIT-compatible way.
+    For the first two multipoles (ℓ = 2, 3) the value is returned from
+    closed-form expressions.  Higher orders are obtained with a stable
+    three-term recurrence.  When ℓ exceeds a configurable threshold
+    (ℓ ≈ 30 000) the algorithm switches to an asymptotic two-term
+    approximation that remains compatible with ``jax.jit``.
+
+    Parameters
+    ----------
+    beta : float or jax.numpy.ndarray
+        Polar angle in **radians** at which the element is evaluated.
+        May be a scalar or an array broadcastable to the shape of
+        *ell*.
+    ell : int or jax.numpy.ndarray
+        Total angular-momentum quantum number ``ℓ ≥ 2``.  Can be a
+        Python ``int`` (traced at compile time) or a 0-D JAX array.
+
+    Returns
+    -------
+    d2m2_ell : same type as *beta*
+        The value of \(d^{\ell}_{2,\,-2}(\beta)\), with dtype promoted
+        by JAX according to its standard casting rules.
     """
     # Base cases
     base_case_2 = (1/4) * (1 - np.cos(beta))**2
@@ -133,10 +189,31 @@ def _d_2_m2_ell_compute(beta, ell):
 @jit
 def _d_2_0_ell_compute(beta, ell):
     """
-    Compute d_20^ell(beta).
+    Evaluate the Wigner small-d matrix element \(d^{\ell}_{20}(\beta)\).
 
-    The computation uses recurrence for small ell
-    and an approximation for large ell, in a JIT-compatible way.
+    For the lowest multipoles (ℓ = 2, 3) the value is returned from a closed–
+    form expression; higher orders are obtained recursively from
+    \(d^{\ell-1}_{20}\) and \(d^{\ell-2}_{20}\).
+    Beyond a configurable threshold (ℓ ≈ 30 000) the stable three-term
+    *approximation*
+    \(d^{\ell}_{20} ≈ 2\,d^{1}_{00}\,d^{\ell-1}_{20}-d^{\ell-2}_{20}\)
+    is used to avoid numerical overflow while remaining compatible with
+    `jax.jit`.
+
+    Parameters
+    ----------
+    beta : float or jax.numpy.ndarray
+        Polar angle in radians at which the element is evaluated.  May be a
+        scalar or an array broadcastable to the shape of *ell*.
+    ell : int or jax.numpy.ndarray
+        Total angular-momentum quantum number ℓ ≥ 2.  Can be a Python `int`
+        (traced at compile time) or a 0-D JAX array.
+
+    Returns
+    -------
+    d20_ell : same type as *beta*
+        The value of \(d^{\ell}_{20}(\beta)\), with dtype promoted by JAX
+        according to standard casting rules.
     """
     # Base cases
     base_case_2 = np.sqrt(3/8) * np.sin(beta)**2

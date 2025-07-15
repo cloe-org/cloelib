@@ -177,17 +177,19 @@ def _d_2_0_ell_compute(beta, ell):
 # -----------------------------------------------------------------------------------
 # Vectorized versions of Wigner d-matrix functions
 # -----------------------------------------------------------------------------------
-
+#define memoized versions of the Wigner d-matrix functions
 d_0_0_ell = memoize_jax(_d_0_0_ell_compute)
 d_2_2_ell = memoize_jax(_d_2_2_ell_compute)
 d_2_m2_ell = memoize_jax(_d_2_m2_ell_compute)
 d_2_0_ell = memoize_jax(_d_2_0_ell_compute)
 
+#define vectorized version of the Wigner d-matrix functions
 _d_0_0_vmap_compute = jax.vmap(jax.vmap(_d_0_0_ell_compute, (None, 0)), (0, None))
 _d_2_2_vmap_compute = jax.vmap(jax.vmap(_d_2_2_ell_compute, (None, 0)), (0, None))
 _d_2_m2_vmap_compute = jax.vmap(jax.vmap(_d_2_m2_ell_compute, (None, 0)), (0, None))
 _d_2_0_vmap_compute = jax.vmap(jax.vmap(_d_2_0_ell_compute, (None, 0)), (0, None))
 
+#define memoized versions of the vectorized Wigner d-matrix functions
 d_0_0_vmap = memoize_jax(_d_0_0_vmap_compute)
 d_2_2_vmap = memoize_jax(_d_2_2_vmap_compute)
 d_2_m2_vmap = memoize_jax(_d_2_m2_vmap_compute)

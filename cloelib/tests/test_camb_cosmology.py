@@ -194,5 +194,7 @@ def test_camb_growth_rate(camb_perturbation_instances, key, zs, ks):
     camb_instance = camb_perturbation_instances[key]
     assert hasattr(camb_instance, 'growth_rate')
     assert callable(camb_instance.growth_rate)
+    result = camb_instance.growth_rate()
+    assert isinstance(result, np.ndarray)
 
 

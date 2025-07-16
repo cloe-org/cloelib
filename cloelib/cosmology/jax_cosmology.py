@@ -530,6 +530,14 @@ class JAXNonLinearPerturbations:
         self.background = background
         self.linearperturbations = JAXLinearPerturbations(background)
 
+    def growth_factor(self, zs: np.ndarray, ks: np.ndarray = None) -> np.ndarray:
+        """Return the linear growth factor."""
+        return self.linearperturbations.growth_factor(zs, ks)
+    
+    def growth_rate(self, zs: np.ndarray) -> np.ndarray:
+        """Return the linear growth rate."""
+        return self.linearperturbations.growth_rate(zs)
+
     def _halofit_parameters(self, zs):
         """Compute the non linear scale, effective spectral index, spectral curvature."""
         # Step 1: Finding the non linear scale for which sigma(R)=1

@@ -178,6 +178,7 @@ def test_camb_matter_power_spectrum(camb_perturbation_instances, key, zs, ks):
     assert callable(camb_instance.matter_power_spectrum)
     result = camb_instance.matter_power_spectrum(zs, ks)
     assert isinstance(result, np.ndarray)
+    assert result.ndim == 2
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_camb_growth_factor(camb_perturbation_instances, key, zs, ks):

@@ -260,7 +260,7 @@ class CAMBLinearPerturbations:
             The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
-                        self.matter_power_spectrum(0.0, ks))
+                        self.matter_power_spectrum(np.ndarray([0]), ks))
 
         return D_z_k
 
@@ -371,5 +371,5 @@ class CAMBNonLinearPerturbations:
             The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
-                        self.matter_power_spectrum(0.0, ks))
+                        self.matter_power_spectrum(np.ndarray([0]), ks))
         return D_z_k

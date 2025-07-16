@@ -91,7 +91,7 @@ def test_camb_background_wa(camb_background_instance):
 def zs(scope="module"):
     return np.linspace(0, 2, 20)
 
-def test_omega_m(camb_background_instance, zs):
+def test_camb_omega_m(camb_background_instance, zs):
     """Test Omega_m returns an np.ndarray object of correct size."""
     assert hasattr(camb_background_instance, 'Omega_m')
     assert callable(camb_background_instance.Omega_m)
@@ -99,7 +99,7 @@ def test_omega_m(camb_background_instance, zs):
     assert isinstance(result, np.ndarray)
     assert len(result) == len(zs)
 
-def test_omega_b(camb_background_instance, zs):
+def test_camb_omega_b(camb_background_instance, zs):
     """Test Omega_b. 
 
     Check the method returns a np.ndarray of correct size,
@@ -113,7 +113,7 @@ def test_omega_b(camb_background_instance, zs):
     assert np.abs(result[0] - camb_background_instance.Omega_b0) < 1e-4
 
 @pytest.mark.parametrize("units", ["1/Mpc", "km/s/Mpc"])
-def test_hubble_parameter(camb_background_instance, zs, units):
+def test_camb_hubble_parameter(camb_background_instance, zs, units):
     """
     Test hubble_parameter.
 
@@ -128,7 +128,7 @@ def test_hubble_parameter(camb_background_instance, zs, units):
     if units == "km/s/Mpc":
         assert np.abs(result[0] - camb_background_instance.H0) < 1e-4
 
-def test_comoving_distance(camb_background_instance, zs):
+def test_camb_comoving_distance(camb_background_instance, zs):
     """Test comoving_distance returns a np.ndarray of correct size."""
     assert hasattr(camb_background_instance, 'comoving_distance')
     assert callable(camb_background_instance.comoving_distance)
@@ -136,7 +136,7 @@ def test_comoving_distance(camb_background_instance, zs):
     assert isinstance(result, np.ndarray)
     assert len(result) == len(zs)
 
-def test_transverse_comoving_distance(camb_background_instance, zs):
+def test_camb_transverse_comoving_distance(camb_background_instance, zs):
     """Test transverse_comoving_distance returns a np.ndarray of correct size."""
     assert hasattr(camb_background_instance, 'transverse_comoving_distance')
     assert callable(camb_background_instance.transverse_comoving_distance)
@@ -144,7 +144,7 @@ def test_transverse_comoving_distance(camb_background_instance, zs):
     assert isinstance(result, np.ndarray)
     assert len(result) == len(zs)
 
-def test_angular_diameter_distance(camb_background_instance, zs):
+def test_camb_angular_diameter_distance(camb_background_instance, zs):
     """Test angular_diameter_distance returns a np.ndarray of correct size."""
     assert hasattr(camb_background_instance, 'angular_diameter_distance')
     assert callable(camb_background_instance.angular_diameter_distance)
@@ -154,11 +154,17 @@ def test_angular_diameter_distance(camb_background_instance, zs):
 
 @pytest.fixture
 def camb_perturbation_instances(camb_background_instance, zs, scope="module"):
-    """Fixture to create the Linear and NonLinear instance of CAMBPerturnations."""
+    """Fixture to create the Linear and NonLinear instances of CAMBPerturbations."""
     camb_lin = CAMBLinearPerturbations(background=camb_background_instance, redshifts=zs)
     camb_non = CAMBNonLinearPerturbations(background=camb_background_instance, redshifts=zs, 
                                       nonlinear_model='mead2016')
     return {"Linear": camb_lin, "NonLinear": camb_non}
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_camb_perturbation_implements_protocol(camb_perturbation_instances, key):
+    """Test that the CAMBPerturbation instances adhere to the protocol."""
+    camb_instance = camb_perturbation_instances[key]
+    assert isinstance(camb_instance, Perturbations)
 
 @pytest.fixture
 def ks(scope="module"):
@@ -166,7 +172,7 @@ def ks(scope="module"):
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_camb_matter_power_spectrum(camb_perturbation_instances, key, zs, ks):
-    """Test matter_power_spectrum."""
+    """Test CAMB matter_power_spectrum."""
     camb_instance = camb_perturbation_instances[key]
     assert hasattr(camb_instance, 'matter_power_spectrum')
     assert callable(camb_instance.matter_power_spectrum)
@@ -174,8 +180,8 @@ def test_camb_matter_power_spectrum(camb_perturbation_instances, key, zs, ks):
     assert isinstance(result, np.ndarray)
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
-def test_growth_factor(camb_perturbation_instances, key, zs, ks):
-    """Test growth_factor."""
+def test_camb_growth_factor(camb_perturbation_instances, key, zs, ks):
+    """Test CAMB growth_factor."""
     camb_instance = camb_perturbation_instances[key]
     assert hasattr(camb_instance, 'growth_factor')
     assert callable(camb_instance.growth_factor)
@@ -183,8 +189,8 @@ def test_growth_factor(camb_perturbation_instances, key, zs, ks):
     assert isinstance(result, np.ndarray)
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
-def test_growth_rate(camb_perturbation_instances, key, zs, ks):
-    """Test growth_rate."""
+def test_camb_growth_rate(camb_perturbation_instances, key, zs, ks):
+    """Test CAMB growth_rate."""
     camb_instance = camb_perturbation_instances[key]
     assert hasattr(camb_instance, 'growth_rate')
     assert callable(camb_instance.growth_rate)

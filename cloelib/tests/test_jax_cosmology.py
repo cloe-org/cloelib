@@ -151,3 +151,48 @@ def test_jax_angular_diameter_distance(jax_background_instance, zs):
     result = jax_background_instance.angular_diameter_distance(zs)
     assert isinstance(result, np.ndarray)
     assert len(result) == len(zs)
+
+@pytest.fixture
+def jax_perturbation_instances(jax_background_instance, zs, scope="module"):
+    """Fixture to create the Linear and NonLinear instances of jaxPerturbations."""
+    jax_lin = JAXLinearPerturbations(background=jax_background_instance)
+    jax_non = JAXNonLinearPerturbations(background=jax_background_instance)
+    return {"Linear": jax_lin, "NonLinear": jax_non}
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_jax_perturbation_implements_protocol(jax_perturbation_instances, key):
+    """Test that the CAMBPerturbation instances adhere to the protocol."""
+    jax_instance = jax_perturbation_instances[key]
+    assert isinstance(jax_instance, Perturbations)
+
+@pytest.fixture
+def ks(scope="module"):
+    return np.logspace(np.log10(1e-4), np.log10(5), 20)
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_jax_matter_power_spectrum(jax_perturbation_instances, key, zs, ks):
+    """Test JAX matter_power_spectrum."""
+    jax_instance = jax_perturbation_instances[key]
+    assert hasattr(jax_instance, 'matter_power_spectrum')
+    assert callable(jax_instance.matter_power_spectrum)
+    result = jax_instance.matter_power_spectrum(zs, ks)
+    assert isinstance(result, np.ndarray)
+    assert result.ndim == 2
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_jax_growth_factor(jax_perturbation_instances, key, zs, ks):
+    """Test JAX growth_factor."""
+    jax_instance = jax_perturbation_instances[key]
+    assert hasattr(jax_instance, 'growth_factor')
+    assert callable(jax_instance.growth_factor)
+    result = jax_instance.growth_factor(zs, ks)
+    assert isinstance(result, np.ndarray)
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_jax_growth_rate(jax_perturbation_instances, key, zs, ks):
+    """Test JAX growth_rate."""
+    jax_instance = jax_perturbation_instances[key]
+    assert hasattr(jax_instance, 'growth_rate')
+    assert callable(jax_instance.growth_rate)
+    result = jax_instance.growth_rate(zs)
+    assert isinstance(result, np.ndarray)

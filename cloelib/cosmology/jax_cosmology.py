@@ -225,16 +225,14 @@ class JAXBackground:
 class JAXLinearPerturbations:
     """A wrapper for JAX linear perturbation calculations."""
 
-    def __init__(self, background: Background, redshifts: np.ndarray) -> None:
+    def __init__(self, background: Background) -> None:
         """
         Initialize the JAXLinearPerturbations class with a background instance.
 
         Args:
             background (Background): A Background instance.
-            redshifts (np.ndarray): Array of redshifts for the calculations.
         """
         self.background = background
-        self.z = redshifts
 
     def D_derivs(self, y, x):
         """Write documentation (TODO)."""
@@ -243,7 +241,7 @@ class JAXLinearPerturbations:
         r = 1.5 * self.background.Omega_m_a(x) / x / x
         return np.array([y[1], -q * y[1] + r * y[0]])
 
-    def growth_factor(self, zs):
+    def growth_factor(self, zs: np.ndarray, ks: np.ndarray = None):
         """Compute the growth factor."""
         atab = np.logspace(-3., 0.0, 128)
 
@@ -259,7 +257,7 @@ class JAXLinearPerturbations:
 
         return result
 
-    def growth_rate(self, zs):
+    def growth_rate(self, zs: np.ndarray):
         """Compute the growth rate."""
         atab = np.logspace(-3., 0.0, 256)
 
@@ -524,12 +522,13 @@ class JAXLinearPerturbations:
         pk = pk * pknorm/factor
         return pk.squeeze()
 
-class JAXNonLinearPerturbations(Perturbations):
+class JAXNonLinearPerturbations:
     """Class for perturbations cosmology using JAX, inheriting from Cosmology parent class."""
 
-    def __init__(self, linearperturbations : Perturbations):
+    def __init__(self, background : Background):
         """Initialse the class instance."""
-        self.linearperturbations = linearperturbations
+        self.background = background
+        self.linearperturbations = JAXLinearPerturbations(background)
 
     def _halofit_parameters(self, zs):
         """Compute the non linear scale, effective spectral index, spectral curvature."""

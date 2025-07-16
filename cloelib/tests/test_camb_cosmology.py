@@ -156,8 +156,8 @@ def test_camb_angular_diameter_distance(camb_background_instance, zs):
 def camb_perturbation_instances(camb_background_instance, zs, scope="module"):
     """Fixture to create the Linear and NonLinear instances of CAMBPerturbations."""
     camb_lin = CAMBLinearPerturbations(background=camb_background_instance, redshifts=zs)
-    camb_non = CAMBNonLinearPerturbations(background=camb_background_instance, redshifts=zs, 
-                                      nonlinear_model='mead2016')
+    camb_non = CAMBNonLinearPerturbations(background=camb_background_instance, redshifts=zs,
+                                          nonlinear_model='mead2016')
     return {"Linear": camb_lin, "NonLinear": camb_non}
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])

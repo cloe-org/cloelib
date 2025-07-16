@@ -1,0 +1,101 @@
+import pytest
+import numpy as np
+from cloelib.cosmology.cosmopower_cosmology import w0waCDM_Linear, w0waCDM_1mass_Linear, w0waCDM_3degen_Linear, LCDM_Linear, LCDM_1mass_Linear, LCDM_3degen_Linear
+from cloelib.cosmology.camb_cosmology import CAMBBackground
+
+H0 =  67.7
+h = H0/100.
+sigma8 = 0.8277
+omch2 = 0.12
+Omega_cdm0 = omch2/h**2
+ombh2 = 0.022
+Omega_b0 = ombh2/h**2
+Omega_k0 = 0.0
+w = -1.
+wa = 0.
+ns = 0.96
+mnu = 0.06
+As=2e-9
+
+
+@pytest.fixture
+def k_emu():
+    return np.logspace(-3, 1, 100)  # 100 k-values between 1e-3 and 10
+
+@pytest.fixture
+def z():
+    return np.linspace(0, 2, 10)  # 10 redshifts from z=0 to z=2
+
+@pytest.fixture
+def camb_instance():
+   
+    return CAMBBackground(H0=H0, Omega_b0=Omega_b0, Omega_cdm0=Omega_cdm0, 
+                               Omega_k0=Omega_k0,
+                               As=As, ns=ns, mnu=mnu, w0=w, wa=wa, 
+                               gamma_MG=0.0)
+
+def test_w0wa_emulator(camb_instance, z, k_emu):
+    emulator = w0waCDM_Linear(background=camb_instance, redshifts=z)
+    
+    # Call matter power spectrum
+    pk = emulator.matter_power_spectrum(0, k_emu)[0, :]
+
+    # Assertions
+    assert isinstance(pk, np.ndarray)
+    assert pk.shape[0] == len(k_emu)
+    assert np.all(pk > 0), "Power spectrum should be positive"
+
+def test_w0wa_1mass_emulator(camb_instance, z, k_emu):
+    emulator = w0waCDM_1mass_Linear(background=camb_instance, redshifts=z)
+    
+    # Call matter power spectrum
+    pk = emulator.matter_power_spectrum(0, k_emu)[0, :]
+
+    # Assertions
+    assert isinstance(pk, np.ndarray)
+    assert pk.shape[0] == len(k_emu)
+    assert np.all(pk > 0), "Power spectrum should be positive"
+
+def test_w0wa_3degen_emulator(camb_instance, z, k_emu):
+    emulator = w0waCDM_3degen_Linear(background=camb_instance, redshifts=z)
+    
+    # Call matter power spectrum
+    pk = emulator.matter_power_spectrum(0, k_emu)[0, :]
+
+    # Assertions
+    assert isinstance(pk, np.ndarray)
+    assert pk.shape[0] == len(k_emu)
+    assert np.all(pk > 0), "Power spectrum should be positive"
+
+def test_LCDM_emulator(camb_instance, z, k_emu):
+    emulator = LCDM_Linear(background=camb_instance, redshifts=z)
+    
+    # Call matter power spectrum
+    pk = emulator.matter_power_spectrum(0, k_emu)[0, :]
+
+    # Assertions
+    assert isinstance(pk, np.ndarray)
+    assert pk.shape[0] == len(k_emu)
+    assert np.all(pk > 0), "Power spectrum should be positive" 
+
+def test_LCDM_1mass_emulator(camb_instance, z, k_emu):
+    emulator = LCDM_1mass_Linear(background=camb_instance, redshifts=z)
+    
+    # Call matter power spectrum
+    pk = emulator.matter_power_spectrum(0, k_emu)[0, :]
+
+    # Assertions
+    assert isinstance(pk, np.ndarray)
+    assert pk.shape[0] == len(k_emu)
+    assert np.all(pk > 0), "Power spectrum should be positive"
+
+def test_LCDM_3degen_emulator(camb_instance, z, k_emu):
+    emulator = LCDM_3degen_Linear(background=camb_instance, redshifts=z)
+    
+    # Call matter power spectrum
+    pk = emulator.matter_power_spectrum(0, k_emu)[0, :]
+
+    # Assertions
+    assert isinstance(pk, np.ndarray)
+    assert pk.shape[0] == len(k_emu)
+    assert np.all(pk > 0), "Power spectrum should be positive"

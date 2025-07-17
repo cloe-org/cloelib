@@ -140,18 +140,6 @@ class Background(Protocol):
         """
         ...
 
-    def rho_crit(self, zs: T) -> T:
-        """
-        Retrieves the critical density as a function of redshift.
-        """
-        ...
-
-    def dV_dzdO(self, zs: T) -> T:
-        """
-        Volume element per redshit per solid angle.
-        """
-        ...
-
     @property
     def rdrag(self) -> float:
         """

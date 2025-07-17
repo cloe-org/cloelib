@@ -1,3 +1,10 @@
+"""Common cosmology derived functions."""
+# cloelib imports
+from cloelib.auxiliary import units
+
+# General imports
+import numpy as np
+
 def rho_crit(background, zs: np.ndarray) -> np.ndarray:
     """
     Returns the critical density as a function of redshift.

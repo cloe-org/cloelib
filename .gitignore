@@ -77,3 +77,4 @@ jax_cache/
 *.png
 *.jpg
 *.pdf
+*.xml

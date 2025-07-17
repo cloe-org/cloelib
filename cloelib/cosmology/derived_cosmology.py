@@ -4,10 +4,15 @@ def rho_crit(background, zs: np.ndarray) -> np.ndarray:
 
     Units: Mpc^{-3} Msun
 
-    Args:
-        zs (np.ndarray): Redshifts.
+    Parameters
+    ----------
+    background: Background
+        Background class containing cosmology
+    zs :np.ndarray
+        Redshifts.
 
-    Returns:
+    Returns
+    -------
         float: Critical density value at the specified redshift.
     """
     h_in_seconds = background.hubble_parameter(zs) / units.MPC_TO_KM
@@ -19,11 +24,15 @@ def dV_dzdO(background, zs: np.ndarray) -> np.ndarray:
     Returns the volume element per redshit per solid angle
     at the redshift requested.
 
+    Parameters
+    ----------
+    background: Background
+        Background class containing cosmology
+    zs :np.ndarray
+        Redshifts.
 
-    Args:
-        zs (np.ndarray): Array of redshifts.
-
-    Returns:
+    Returns
+    -------
         np.ndarray: volume element in Mpc^3 h^{-3}
     """
     return (
@@ -32,3 +41,29 @@ def dV_dzdO(background, zs: np.ndarray) -> np.ndarray:
         * background.comoving_distance(zs) ** 2.0
         * background.hubble_parameter(zs)
     )
+
+def rdrag_fitting_function(background, neff=3.046):
+    r"""Compute the sound horizon at drag epoch.
+
+    Uses the fitting formula Eq.17
+    of [1411.1074](https://arxiv.org/abs/1411.1074)
+
+    Parameters
+    ----------
+    background: Background
+        Background class containing cosmology
+    neff: float
+        Effective number of neutrinos.
+
+    Returns
+    -------
+    r_d: float
+        Sound horizon at drag epoch
+    """
+    omega_cb = background.Omega_cdm0 * background.h**2
+    omega_b = background.Omega_b0 * background.h**2
+    omega_nu = background.mnu * 93.14
+
+    r_d = 56.067 * np.exp(-49.7*(omega_nu+0.002)**2) / \
+        (omega_cb**0.2436 * omega_b**0.128876 * (1+(neff - 3.046)/30.6))
+    return r_d

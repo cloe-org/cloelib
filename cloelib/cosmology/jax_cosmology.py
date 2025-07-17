@@ -10,6 +10,7 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
 from cloelib.cosmology.cosmology import Perturbations
 #from cloelib.cosmology.cosmology import NonLinearPerturbations
+from cloelib.cosmology.derived_cosmology import rdrag_fitting_function
 
 # General imports
 import jax.numpy as np
@@ -227,7 +228,7 @@ class JAXBackground:
         """
         Sound horizon radius at last scattering.
         """
-        raise NotImplementedError("rdrag not implemented for jax yet.")
+        return rdrag_fitting_function(self)
 
 
 class JAXLinearPerturbations:

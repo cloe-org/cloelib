@@ -5,6 +5,8 @@ from cloelib.auxiliary import units
 # General imports
 import numpy as np
 
+_log10_GRAVITATIONAL_CONSTANT = np.log10(units.GRAVITATIONAL_CONSTANT)
+
 def rho_crit(background, zs: np.ndarray) -> np.ndarray:
     """
     Returns the critical density as a function of redshift.
@@ -22,8 +24,8 @@ def rho_crit(background, zs: np.ndarray) -> np.ndarray:
     -------
         float: Critical density value at the specified redshift.
     """
-    h_in_seconds = background.hubble_parameter(zs) / units.MPC_TO_KM
-    return 3.0 * h_in_seconds**2.0 / (8.0 * np.pi * units.GRAVITATIONAL_CONSTANT)
+    log10_h_in_seconds = np.log10(background.hubble_parameter(zs) / units.MPC_TO_KM)
+    return (3.0 / 8.0 / np.pi ) * 10**(2.0*log10_h_in_seconds-_log10_GRAVITATIONAL_CONSTANT)
 
 
 def dV_dzdO(background, zs: np.ndarray) -> np.ndarray:

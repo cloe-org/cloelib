@@ -255,8 +255,8 @@ class CLASSLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        return [self.results.scale_independent_growth_factor_f(zi)
-                for zi in self.z]
+        return np.array([self.results.scale_independent_growth_factor_f(zi)
+                for zi in self.z])
 
 class CLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
@@ -268,6 +268,9 @@ class CLASSNonLinearPerturbations:
         self.background = background
         self.z = redshifts
         self.kmax = 100
+
+        if nonlinear_model == None:
+            nonlinear_model = 'none'
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -338,7 +341,7 @@ class CLASSNonLinearPerturbations:
             The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
-                        self.matter_power_spectrum(0.0, ks))
+                        self.matter_power_spectrum(np.zeros_like(zs), ks))
 
         return D_z_k
     
@@ -351,6 +354,6 @@ class CLASSNonLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        return [self.results.scale_independent_growth_factor_f(zi)
-                for zi in self.z]
+        return np.array([self.results.scale_independent_growth_factor_f(zi)
+                for zi in self.z])
 

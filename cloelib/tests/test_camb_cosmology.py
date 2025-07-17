@@ -194,6 +194,7 @@ def test_camb_growth_factor(camb_perturbation_instances, key, zs, ks):
     assert callable(camb_instance.growth_factor)
     result = camb_instance.growth_factor(zs, ks)
     assert isinstance(result, np.ndarray)
+    assert result.ndim == 2
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_camb_growth_rate(camb_perturbation_instances, key, zs, ks):
@@ -203,5 +204,4 @@ def test_camb_growth_rate(camb_perturbation_instances, key, zs, ks):
     assert callable(camb_instance.growth_rate)
     result = camb_instance.growth_rate()
     assert isinstance(result, np.ndarray)
-
-
+    assert result.ndim == 1

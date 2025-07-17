@@ -157,3 +157,53 @@ def test_class_angular_diameter_distance(class_background_instance, zs):
     assert isinstance(result, np.ndarray)
     assert result.ndim == 1
     assert len(result) == len(zs)
+
+
+@pytest.fixture
+def class_perturbation_instances(class_background_instance, zs, scope="module"):
+    """Fixture to create the Linear and NonLinear instances of CLASSPerturbations."""
+    class_lin = CLASSLinearPerturbations(background=class_background_instance, redshifts=zs)
+    class_non = CLASSNonLinearPerturbations(background=class_background_instance, redshifts=zs,
+                                            nonlinear_model='halofit')
+    return {"Linear": class_lin, "NonLinear": class_non}
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_class_perturbation_implements_protocol(class_perturbation_instances, key):
+    """Test that the CLASSPerturbation instances adhere to the protocol."""
+    class_instance = class_perturbation_instances[key]
+    assert isinstance(class_instance, Perturbations)
+
+@pytest.fixture
+def ks(scope="module"):
+    return np.logspace(np.log10(1e-4), np.log10(5), 20)
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_class_matter_power_spectrum(class_perturbation_instances, key, zs, ks):
+    """Test CLASS matter_power_spectrum."""
+    class_instance = class_perturbation_instances[key]
+    assert hasattr(class_instance, 'matter_power_spectrum')
+    assert callable(class_instance.matter_power_spectrum)
+    result = class_instance.matter_power_spectrum(zs, ks)
+    assert isinstance(result, np.ndarray)
+    assert result.ndim == 2
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_class_growth_factor(class_perturbation_instances, key, zs, ks):
+    """Test CLASS growth_factor."""
+    class_instance = class_perturbation_instances[key]
+    assert hasattr(class_instance, 'growth_factor')
+    assert callable(class_instance.growth_factor)
+    result = class_instance.growth_factor(zs, ks)
+    assert isinstance(result, np.ndarray)
+    assert result.ndim == 2
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_class_growth_rate(class_perturbation_instances, key, zs, ks):
+    """Test CLASS growth_rate."""
+    class_instance = class_perturbation_instances[key]
+    assert hasattr(class_instance, 'growth_rate')
+    assert callable(class_instance.growth_rate)
+    result = class_instance.growth_rate()
+    assert isinstance(result, np.ndarray)
+    assert result.ndim == 1
+

@@ -170,7 +170,7 @@ class CLASSBackground:
         """
         Sound horizon radius at last scattering.
         """
-        raise NotImplementedError("rdrag not implemented for CLASS yet.")
+        return self.results.rs_drag()
 
 
 class CLASSLinearPerturbations:

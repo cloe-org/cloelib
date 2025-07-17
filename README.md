@@ -44,6 +44,8 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 
 We do not provide installation support for `PBJ` and `class`.
 
+Furthermore, it requires the installation of `pyinstrument` for the time profiling. It's an optional dependency and is not installed with the main cloelib package.
+
 ---
 
 ## 🚀 Installation  
@@ -56,7 +58,7 @@ pip install .
 You can also install (some) supported dependencies:
 
 ```sh
-pip install .[camb,hmcode2020emu,comet-emu]
+pip install .[camb,hmcode2020emu,comet-emu,pyinstrument]
 ```
 
 **Note:** Some shells or terminals may not interpret the brackets correctly. If you encounter an error, try adding quotation marks:

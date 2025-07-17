@@ -8,12 +8,12 @@ arguments include JAX ``DeviceArray`` objects.
 Background
 ----------
 JAX arrays are mutable and therefore *unhashable*, so they cannot be
-passed directly to ``functools.lru_cache``[19].  `memoize_jax` solves
+passed directly to ``functools.lru_cache``.  `memoize_jax` solves
 this by turning every array into a fully hashable key composed of its
 raw bytes, shape and dtype.  The wrapped function receives the original
 arrays, while cache lookup happens on the hashable representation.
 Internally the cache is maintained by ``functools.lru_cache`` with
-``maxsize=None`` (an unbounded cache)[16].
+``maxsize=None`` (an unbounded cache).
 """
 
 

@@ -16,6 +16,7 @@ import jax.lax as lx
 import functools
 import interpax
 from quadax import quadgk
+from typing import Optional
 
 class JAXBackground:
     """Class to define background cosmology using JAX,inheriting from Cosmology parent class."""
@@ -53,9 +54,9 @@ class JAXBackground:
         self.Omega_nu0 = self.mnu/(93.14*(self.h)**2)#this is a semplification, we are assuming
         #neutrinos are non relativistic
         self.Omega_m0 = self.Omega_b0+self.Omega_cdm0+self.Omega_nu0
-        self.sigma_8 = As_to_sigma8_max_precision(self.As, self.Omega_m0,
-                                                  self.Omega_b0, self.h, self.ns, 0.,
-                                                  self.w0, self.wa)
+        sigma_8 = As_to_sigma8_max_precision(self.As, self.Omega_m0,
+                                             self.Omega_b0, self.h, self.ns, 0.,
+                                             self.w0, self.wa)
 
         # Initialize JaxBgk parameters
         self.interface_args: dict = {'JAXparams': {}}  # Use a dictionary for CLASS parameters
@@ -70,7 +71,7 @@ class JAXBackground:
         self.interface_args['JAXparams']['A_s'] = self.As
         self.interface_args['JAXparams']['w0_fld'] = self.w0 # or w0
         self.interface_args['JAXparams']['wa_fld'] = self.wa # or wa
-        self.interface_args['JAXparams']['sigma_8'] = self.sigma_8 # or wa
+        self.interface_args['JAXparams']['sigma_8'] = sigma_8
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
@@ -234,7 +235,7 @@ class JAXLinearPerturbations:
         r = 1.5 * self.background.Omega_m_a(x) / x / x
         return np.array([y[1], -q * y[1] + r * y[0]])
 
-    def growth_factor(self, zs: np.ndarray, ks: np.ndarray = None):
+    def growth_factor(self, zs: np.ndarray, ks: Optional[np.ndarray] = None):
         """Compute the growth factor."""
         atab = np.logspace(-3., 0.0, 128)
 
@@ -495,7 +496,9 @@ class JAXLinearPerturbations:
         g = self.growth_factor(zs)
         t = self.transfer_Eisenstein_Hu(ks)
 
-        pknorm = self.background.sigma_8**2 / self.sigma8sqr()#previously self.sigmasqr(8.0)
+        sigma_8 = self.background.interface_args['JAXparams']['sigma_8']
+
+        pknorm = sigma_8**2 / self.sigma8sqr()#previously self.sigmasqr(8.0)
         # this means we have a 0.01% difference compared to the romberg calculation,
         # but it is much faster
 
@@ -524,7 +527,7 @@ class JAXNonLinearPerturbations:
         self.background = background
         self.linearperturbations = JAXLinearPerturbations(background)
 
-    def growth_factor(self, zs: np.ndarray, ks: np.ndarray = None) -> np.ndarray:
+    def growth_factor(self, zs: np.ndarray, ks: Optional[np.ndarray] = None) -> np.ndarray:
         """Return the linear growth factor."""
         return self.linearperturbations.growth_factor(zs, ks)
     

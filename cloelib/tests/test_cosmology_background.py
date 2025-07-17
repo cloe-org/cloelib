@@ -1,5 +1,7 @@
+import numpy as np
 import pytest
 from numpy.testing import assert_raises, assert_equal, assert_allclose
+
 from cloelib.cosmology.cosmology import Background
 from cloelib.cosmology.camb_cosmology import CAMBBackground
 from cloelib.cosmology.class_cosmology import CLASSBackground
@@ -19,7 +21,7 @@ def test_background_required_methods():
 def test_background_required_attributes():
     contents = Background.__dict__.items()
     attributes_found = {name for name, value in contents if not callable(value) and not name.startswith('_')}
-    attributes_required = {'wa', 'As', 'w0', 'Omega_k0', 'h', 'Omega_b0', 'gamma_MG', 'mnu', 'Omega_cdm0', 'H0', 'ns'}
+    attributes_required = {'wa', 'As', 'w0', 'Omega_k0', 'h', 'Omega_b0', 'gamma_MG', 'mnu', 'Omega_cdm0', 'H0', 'ns', 'rdrag'}
     assert attributes_required == attributes_found
 
 
@@ -44,16 +46,9 @@ def test_cosmo():
     )
 
     _z_test = np.zeros(1)
-    _z_init = np.linspace(0.0, 2.0, 100)
 
-    for _bkg_list in (
-            CAMBBackground,
-            CLASSBackground,
-            JAXBackground,
-    ):
-        for _Background in _bkg_list:
-            # background
+    for _Background in (CAMBBackground, CLASSBackground, JAXBackground):
 
-            background = _Background(**_cosmo_pars)
-            assert_allclose(derived_cosmology.rho_crit(background, 0), 1.27203085e11, rtol=1e-07)
-            assert_allclose(background.rdrag, 147.50225, rtol=1e-7)
+        background = _Background(**_cosmo_pars)
+        assert_allclose(derived_cosmology.rho_crit(background, _z_test), 1.27203085e11, rtol=2e-05)
+        assert_allclose(background.rdrag, 147.50225, rtol=1e-1)

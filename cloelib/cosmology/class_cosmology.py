@@ -51,7 +51,7 @@ class CLASSBackground:
         self.mnu = mnu
 
         # Initialize CLASS parameters
-        self.interface_args = {'CLASSparams': {}}  # Use a dictionary for CLASS parameters
+        self.interface_args: dict = {'CLASSparams': {}}  # Use a dictionary for CLASS parameters
         self.interface_args['CLASSparams']['H0'] = self.H0
         self.interface_args['CLASSparams']['omega_b'] = self.Omega_b0 * (self.h)**2
         self.interface_args['CLASSparams']['omega_cdm'] = self.Omega_cdm0 * (self.h)**2
@@ -71,11 +71,6 @@ class CLASSBackground:
         self.results = Class()
         self.results.set(self.interface_args['CLASSparams'])
         self.results.compute()
-
-    @property
-    def _interface_args(self) -> dict:
-        """Save internal structure format of interface codes."""
-        return self.interface_args
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
@@ -176,7 +171,7 @@ class CLASSLinearPerturbations:
         self.results = None  # Store CLASS results
 
         # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background._interface_args)
+        self.interface_args = copy.deepcopy(self.background.interface_args)
         self.interface_args['CLASSparams']['output'] = 'mPk, mTk'
         self.interface_args['CLASSparams']['P_k_max_1/Mpc'] = self.kmax
         self.interface_args['CLASSparams']['k_per_decade_for_bao'] = 70
@@ -275,7 +270,7 @@ class CLASSNonLinearPerturbations:
         self.kmax = 100
 
         # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background._interface_args)
+        self.interface_args = copy.deepcopy(self.background.interface_args)
         self.interface_args['CLASSparams']['output'] = 'mPk, mTk'
         self.interface_args['CLASSparams']['P_k_max_1/Mpc'] = self.kmax
         self.interface_args['CLASSparams']['k_per_decade_for_bao'] = 70

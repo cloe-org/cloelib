@@ -77,7 +77,7 @@ class Background(Protocol):
         ...
 
     @property
-    def _interface_args(self) -> dict:
+    def interface_args(self) -> dict:
         """Save internal structure format of possible interface codes."""
         ...
     

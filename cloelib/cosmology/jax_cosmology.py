@@ -8,8 +8,6 @@ All of the functions are completely differentiable.
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
-from cloelib.cosmology.cosmology import Perturbations
-#from cloelib.cosmology.cosmology import NonLinearPerturbations
 
 # General imports
 import jax.numpy as np
@@ -60,7 +58,7 @@ class JAXBackground:
                                                   self.w0, self.wa)
 
         # Initialize JaxBgk parameters
-        self.interface_args = {'JAXparams': {}}  # Use a dictionary for CLASS parameters
+        self.interface_args: dict = {'JAXparams': {}}  # Use a dictionary for CLASS parameters
         self.interface_args['JAXparams']['H0'] = self.H0
         self.interface_args['JAXparams']['Omega_b'] = self.Omega_b0
         self.interface_args['JAXparams']['Omega_cdm'] = self.Omega_cdm0
@@ -74,12 +72,7 @@ class JAXBackground:
         self.interface_args['JAXparams']['wa_fld'] = self.wa # or wa
         self.interface_args['JAXparams']['sigma_8'] = self.sigma_8 # or wa
 
-    @property
-    def _interface_args(self) -> dict:
-        """Save internal structure format of interface codes."""
-        return self.interface_args
-
-    def hubble_parameter(self, zs, units: str = "km/s/Mpc") -> np.ndarray:
+    def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
         Return the Hubble parameter as a function of redshift.
 
@@ -159,7 +152,7 @@ class JAXBackground:
 
         return lx.switch(index, [positive_case, negative_case, default_case],p)
 
-    def angular_diameter_distance(self, zs) -> np.ndarray:
+    def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
         Calculate the angular diameter distance for given redshifts.
 
@@ -466,7 +459,8 @@ class JAXLinearPerturbations:
         y = simps(int_sigma, np.log10(kmin), np.log10(kmax), N = 256)
         return 1.0 / (2.0 * np.pi**2.0) * y
 
-    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False):
+    def matter_power_spectrum(self, zs: np.ndarray, ks: np.ndarray,
+                              hubble_units = False, k_hunit = False):
         r"""Compute the linear matter power spectrum.
 
         Parameters
@@ -669,7 +663,8 @@ class JAXNonLinearPerturbations:
         pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
         return pk_nl.squeeze()
 
-    def matter_power_spectrum(self, zs, ks, hubble_units=False, k_hunit=False):
+    def matter_power_spectrum(self, zs: np.ndarray, ks: np.ndarray,
+                              hubble_units=False, k_hunit=False):
         """Compute the non-linear matter power spectrum.
 
         This function is just a wrapper over several nonlinear power spectra.

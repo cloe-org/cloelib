@@ -12,13 +12,14 @@ https://arxiv.org/pdf/1702.05301
 import jax.numpy as np
 import jax
 from jax import jit
+from typing import Tuple, Union
 
 from cloelib.observables.photo import ShearTracer #, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction
 from cloelib.auxiliary.cache import memoize_jax
 
 @jit
-def _d_0_0_ell_compute(beta, ell):
+def _d_0_0_ell_compute(beta: float, ell: int) -> float:
     r"""
     Evaluate the Wigner small-d matrix element \(d^{\ell}_{0\,0}(\beta)\).
 
@@ -55,7 +56,7 @@ def _d_0_0_ell_compute(beta, ell):
                                jax.lax.fori_loop(2, ell + 1, recurrence_fn, (base_case_1, base_case_0))[0]))
 
 @jit
-def _d_2_2_ell_compute(beta, ell):
+def _d_2_2_ell_compute(beta: float, ell: int) -> float:
     r"""
     Evaluate the Wigner small-d matrix element \(d^{\ell}_{2\,2}(\beta)\).
 
@@ -67,11 +68,11 @@ def _d_2_2_ell_compute(beta, ell):
 
     Parameters
     ----------
-    beta : float or jax.numpy.ndarray
+    beta : float
         Polar angle in **radians** at which the element is evaluated.
         May be a scalar or an array broadcastable to the shape of
         *ell*.
-    ell : int or jax.numpy.ndarray
+    ell : int
         Total angular-momentum quantum number ``ℓ ≥ 2``.  Can be a Python
         ``int`` (traced at compile time) or a 0-D JAX array.
 
@@ -119,7 +120,7 @@ def _d_2_2_ell_compute(beta, ell):
 
 
 @jit
-def _d_2_m2_ell_compute(beta, ell):
+def _d_2_m2_ell_compute(beta: float, ell: int) -> float:
     r"""
     Evaluate the Wigner small-d matrix element \(d^{\ell}_{2,\,-2}(\beta)\).
 
@@ -131,11 +132,11 @@ def _d_2_m2_ell_compute(beta, ell):
 
     Parameters
     ----------
-    beta : float or jax.numpy.ndarray
+    beta : float
         Polar angle in **radians** at which the element is evaluated.
         May be a scalar or an array broadcastable to the shape of
         *ell*.
-    ell : int or jax.numpy.ndarray
+    ell : int
         Total angular-momentum quantum number ``ℓ ≥ 2``.  Can be a
         Python ``int`` (traced at compile time) or a 0-D JAX array.
 
@@ -185,7 +186,7 @@ def _d_2_m2_ell_compute(beta, ell):
 
 
 @jit
-def _d_2_0_ell_compute(beta, ell):
+def _d_2_0_ell_compute(beta: float, ell: int) -> float:
     r"""
     Evaluate the Wigner small-d matrix element \(d^{\ell}_{20}(\beta)\).
 
@@ -200,10 +201,10 @@ def _d_2_0_ell_compute(beta, ell):
 
     Parameters
     ----------
-    beta : float or jax.numpy.ndarray
+    beta : float
         Polar angle in radians at which the element is evaluated.  May be a
         scalar or an array broadcastable to the shape of *ell*.
-    ell : int or jax.numpy.ndarray
+    ell : int
         Total angular-momentum quantum number ℓ ≥ 2.  Can be a Python `int`
         (traced at compile time) or a 0-D JAX array.
 

@@ -3,6 +3,11 @@ import numpy as np
 from cloelib.cosmology.cosmopower_cosmology import w0waCDM_Linear, w0waCDM_1mass_Linear, w0waCDM_3degen_Linear, LCDM_Linear, LCDM_1mass_Linear, LCDM_3degen_Linear
 # from cloelib.cosmology.camb_cosmology import CAMBBackground
 from cloelib.cosmology.cosmology import Background
+try:
+    import cosmopower
+    HAS_COSMOPOWER = True
+except ImportError:
+    HAS_COSMOPOWER = False
 
 H0 =  67.7
 h = H0/100.
@@ -17,6 +22,8 @@ wa = 0.
 ns = 0.96
 mnu = 0.06
 As=2e-9
+
+
 
 class DummyBackground:
     def __init__(self, H0, Omega_b0, Omega_cdm0, Omega_k0, As, ns, mnu, w0, wa):
@@ -53,7 +60,7 @@ def k_emu():
 def z():
     return np.linspace(0, 2, 10)  # 10 redshifts from z=0 to z=2
 
-
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_emulator(background_instance, z, k_emu):
     emulator = w0waCDM_Linear(background=background_instance, redshifts=z)
     
@@ -65,6 +72,7 @@ def test_w0wa_emulator(background_instance, z, k_emu):
     assert pk.shape[0] == len(k_emu)
     assert np.all(pk > 0), "Power spectrum should be positive"
 
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_1mass_emulator(background_instance, z, k_emu):
     emulator = w0waCDM_1mass_Linear(background=background_instance, redshifts=z)
     
@@ -76,6 +84,7 @@ def test_w0wa_1mass_emulator(background_instance, z, k_emu):
     assert pk.shape[0] == len(k_emu)
     assert np.all(pk > 0), "Power spectrum should be positive"
 
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_3degen_emulator(background_instance, z, k_emu):
     emulator = w0waCDM_3degen_Linear(background=background_instance, redshifts=z)
     
@@ -87,6 +96,7 @@ def test_w0wa_3degen_emulator(background_instance, z, k_emu):
     assert pk.shape[0] == len(k_emu)
     assert np.all(pk > 0), "Power spectrum should be positive"
 
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_LCDM_emulator(background_instance, z, k_emu):
     emulator = LCDM_Linear(background=background_instance, redshifts=z)
     
@@ -98,6 +108,7 @@ def test_LCDM_emulator(background_instance, z, k_emu):
     assert pk.shape[0] == len(k_emu)
     assert np.all(pk > 0), "Power spectrum should be positive" 
 
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_LCDM_1mass_emulator(background_instance, z, k_emu):
     emulator = LCDM_1mass_Linear(background=background_instance, redshifts=z)
     
@@ -109,6 +120,7 @@ def test_LCDM_1mass_emulator(background_instance, z, k_emu):
     assert pk.shape[0] == len(k_emu)
     assert np.all(pk > 0), "Power spectrum should be positive"
 
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_LCDM_3degen_emulator(background_instance, z, k_emu):
     emulator = LCDM_3degen_Linear(background=background_instance, redshifts=z)
     

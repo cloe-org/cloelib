@@ -187,20 +187,12 @@ class JAXBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return np.array([self.Omega_b0 * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
-
-    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
-        """
-        Returns the matter density (no neutrinos) as a function of redshift.
-
-        Args:
-            zs (np.ndarray): Array of redshifts.
-
-        Returns:
-            np.ndarray: Matter density values (no neutrinos).
-        """
-        _Omega_m_use = self.Omega_b0+self.Omega_cdm0
-        return np.array([(_Omega_m_use) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
+        return np.array(
+            [
+                self.Omega_b0 * (1 + z) ** 3 / (self.hubble_parameter(z) / self.H0) ** 2
+                for z in zs
+            ]
+        )
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """

@@ -3,6 +3,7 @@ from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
+
 # General imports
 import numpy as np
 from typing import Tuple, Optional
@@ -95,31 +96,6 @@ class HMemuLinearPerturbations:
 
         """
         return self.Pk_interp(zs, ks)
-
-    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
-        r"""Computes the linear matter power spectrum without neutrinos.
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
-        """
-        raise NotImplementedError("Not implemented for HMcode2020Emu.")
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """
@@ -265,31 +241,6 @@ class HMemuNonLinearPerturbations:
 
         """
         return self.Pk_interp(zs, ks)
-
-    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
-        r"""Computes the linear matter power spectrum without neutrinos.
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
-        """
-        raise NotImplementedError("Not implemented for HMcode2020Emu.")
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """

@@ -140,20 +140,6 @@ class CAMBBackground:
         """
         return self.results.angular_diameter_distance(zs)
 
-    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
-        """
-        Returns the matter density (no neutrinos) as a function of redshift.
-
-        Args:
-            zs (np.ndarray): Array of redshifts.
-
-        Returns:
-            np.ndarray: Matter density values (no neutrinos).
-        """
-        return self.results.get_Omega("cdm", z=zs) + self.results.get_Omega(
-            "baryon", z=zs
-        )
-
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
         Returns the matter density as a function of redshift.
@@ -164,7 +150,11 @@ class CAMBBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return self.Omega_m_cb(zs) + self.results.get_Omega("nu", z=zs)
+        return (
+            self.results.get_Omega("cdm", z=zs)
+            + self.results.get_Omega("baryon", z=zs)
+            + self.results.get_Omega("nu", z=zs)
+        )
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -270,41 +260,14 @@ class CAMBLinearPerturbations:
             and redshift
         """
         pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args['CAMBparams'],
-            nonlinear=False, extrap_kmax=self.kmax,
-            hubble_units=hubble_units, k_hunit=k_hunit,
-            var1="delta_tot", var2="delta_tot").P(zs, ks)
-        return pk_values
-
-    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False,
-                                 k_hunit=False) -> np.ndarray:
-        r"""Computes the linear matter power spectrum without neutrinos.
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
-        """
-        pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args['CAMBparams'],
-            nonlinear=False, extrap_kmax=self.kmax,
-            hubble_units=hubble_units, k_hunit=k_hunit,
-            var1="delta_nonu", var2="delta_nonu").P(zs, ks)
+            self.background.interface_args["CAMBparams"],
+            nonlinear=False,
+            extrap_kmax=self.kmax,
+            hubble_units=hubble_units,
+            k_hunit=k_hunit,
+            var1="delta_tot",
+            var2="delta_tot",
+        ).P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -408,41 +371,14 @@ class CAMBNonLinearPerturbations:
             and redshift
         """
         pk_values = self.results.get_matter_power_interpolator(
-            nonlinear=True, extrap_kmax=self.kmax,
-            hubble_units=hubble_units, k_hunit=k_hunit,
-            var1="delta_tot", var2="delta_tot").P(zs, ks)
+            nonlinear=True,
+            extrap_kmax=self.kmax,
+            hubble_units=hubble_units,
+            k_hunit=k_hunit,
+            var1="delta_tot",
+            var2="delta_tot",
+        ).P(zs, ks)
         return pk_values
-
-    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False,
-                                 k_hunit=False) -> np.ndarray:
-        r"""Computes the linear matter power spectrum without neutrinos.
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
-        """
-        pk_values = self.results.get_matter_power_interpolator(
-            nonlinear=True, extrap_kmax=self.kmax,
-            hubble_units=hubble_units, k_hunit=k_hunit,
-            var1="delta_nonu", var2="delta_nonu").P(zs, ks)
-        return pk_values
-
 
     def growth_rate(self) -> np.ndarray:
         """

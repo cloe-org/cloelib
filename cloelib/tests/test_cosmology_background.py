@@ -1,5 +1,10 @@
 import pytest
+from numpy.testing import assert_raises, assert_equal, assert_allclose
 from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.camb_cosmology import CAMBBackground
+from cloelib.cosmology.class_cosmology import CLASSBackground
+from cloelib.cosmology.jax_cosmology import JAXBackground
+from cloelib.cosmology import derived_cosmology
 
 
 def test_background_runtime():
@@ -17,3 +22,38 @@ def test_background_required_attributes():
     attributes_required = {'wa', 'As', 'w0', 'Omega_k0', 'h', 'Omega_b0', 'gamma_MG', 'mnu', 'Omega_cdm0', 'H0', 'ns'}
     assert attributes_required == attributes_found
 
+
+def test_cosmo():
+    # Cosmology parameters
+    print("# Cosmology parameters")
+    _H0 = 67.7
+    _h = _H0 / 100.0
+    _omch2 = 0.12
+    _ombh2 = 0.022
+    _cosmo_pars = dict(
+        H0=_H0,
+        Omega_cdm0=_omch2 / _h**2,
+        Omega_b0=_ombh2 / _h**2,
+        Omega_k0=0.0,
+        w0=-1.0,
+        wa=0.0,
+        ns=0.96,
+        mnu=0.1,
+        As=2e-9,
+        gamma_MG=0.0,
+    )
+
+    _z_test = np.zeros(1)
+    _z_init = np.linspace(0.0, 2.0, 100)
+
+    for _bkg_list in (
+            CAMBBackground,
+            CLASSBackground,
+            JAXBackground,
+    ):
+        for _Background in _bkg_list:
+            # background
+
+            background = _Background(**_cosmo_pars)
+            assert_allclose(derived_cosmology.rho_crit(background, 0), 1.27203085e11, rtol=1e-07)
+            assert_allclose(background.rdrag, 147.50225, rtol=1e-7)

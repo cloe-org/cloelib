@@ -3,7 +3,6 @@ from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
-
 # General imports
 import numpy as np
 from typing import Tuple, Optional
@@ -95,6 +94,7 @@ class HMemuLinearPerturbations:
             and redshift
 
         """
+
         return self.Pk_interp(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
@@ -240,6 +240,7 @@ class HMemuNonLinearPerturbations:
             and redshift
 
         """
+
         return self.Pk_interp(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:

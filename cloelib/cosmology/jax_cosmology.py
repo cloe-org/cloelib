@@ -187,12 +187,7 @@ class JAXBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return np.array(
-            [
-                self.Omega_b0 * (1 + z) ** 3 / (self.hubble_parameter(z) / self.H0) ** 2
-                for z in zs
-            ]
-        )
+        return np.array([self.Omega_b0 * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -204,7 +199,7 @@ class JAXBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return np.array([self.Omega_m0 * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
+        return np.array([(self.Omega_m0) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
 
     def w_a(self, a):
         return self.w0 + (1.0 - a) * self.wa  # Equation (6) in Linder (2003)
@@ -230,6 +225,7 @@ class JAXBackground:
         Sound horizon radius at last scattering.
         """
         raise NotImplementedError("rdrag not implemented for jax yet.")
+
 
 class JAXLinearPerturbations:
     def __init__(self, background: Background, redshifts: np.ndarray) -> None:
@@ -490,7 +486,6 @@ class JAXLinearPerturbations:
             and scale factor.
 
         """
-
         h = self.background.h
 
         def k_units_case(k):
@@ -671,7 +666,7 @@ class JAXNonLinearPerturbations(Perturbations):
         pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
         return pk_nl.squeeze()
 
-    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False):
+    def matter_power_spectrum(self, zs, ks, hubble_units=False, k_hunit=False):
         """Computes the non-linear matter power spectrum.
 
         This function is just a wrapper over several nonlinear power spectra.

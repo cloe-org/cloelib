@@ -151,7 +151,7 @@ class CLASSBackground:
             np.ndarray: Matter density values.
         """
         return np.array([self.results.Om_m(z) for z in zs])
-
+    
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
         Returns the baryon density as a function of redshift.
@@ -170,6 +170,7 @@ class CLASSBackground:
         Sound horizon radius at last scattering.
         """
         raise NotImplementedError("rdrag not implemented for CLASS yet.")
+
 
 class CLASSLinearPerturbations:
     def __init__(self, background : Background, redshifts: np.ndarray):
@@ -325,9 +326,7 @@ class CLASSNonLinearPerturbations:
         """
         if hubble_units == True or k_hunit == True:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_nonlinear = np.array(
-            [[self.results.pk(ki, zi) for ki in ks] for zi in zs]
-        )
+        self.Pk_nonlinear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
         # To match array convention of CAMB
         return self.Pk_nonlinear
 

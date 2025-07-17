@@ -16,7 +16,6 @@ import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
-
 @runtime_checkable
 class Background(Protocol):
 
@@ -26,14 +25,14 @@ class Background(Protocol):
         Hubble parameter at redshift 0 in km s-1 Mpc-1.
         """
         ...
-
+    
     @property
     def h(self) -> float:
         """
         Dimensionless Hubble constant
         """
         ...
-
+    
     @property
     def Omega_b0(self) -> float:
         """
@@ -103,7 +102,7 @@ class Background(Protocol):
         Save internal structure format of possible interface codes
         """
         ...
-
+    
     def Omega_b(self, zs: T) -> T:
         """
         Computes the matter density as a function of redshift.

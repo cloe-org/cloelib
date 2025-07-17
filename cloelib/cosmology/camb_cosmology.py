@@ -1,5 +1,5 @@
 # cloelib imports
-from cloelib.auxiliary import units
+from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
 
 # General imports
@@ -166,7 +166,9 @@ class CAMBBackground:
         Returns:
             np.ndarray: Baryonic density values at specified redshifts.
         """
-        return self.results.get_Omega("baryon", z=zs)
+        return (
+            self.results.get_Omega("baryon", z=zs)
+        )
 
     @property
     def rdrag(self) -> float:
@@ -226,14 +228,10 @@ class CAMBLinearPerturbations:
             and redshift
         """
         pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args["CAMBparams"],
-            nonlinear=False,
-            extrap_kmax=self.kmax,
-            hubble_units=hubble_units,
-            k_hunit=k_hunit,
-            var1="delta_tot",
-            var2="delta_tot",
-        ).P(zs, ks)
+            self.background.interface_args['CAMBparams'],
+            nonlinear=False, extrap_kmax=self.kmax,
+            hubble_units=hubble_units, k_hunit=k_hunit,
+            var1='delta_tot', var2='delta_tot').P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -337,13 +335,9 @@ class CAMBNonLinearPerturbations:
             and redshift
         """
         pk_values = self.results.get_matter_power_interpolator(
-            nonlinear=True,
-            extrap_kmax=self.kmax,
-            hubble_units=hubble_units,
-            k_hunit=k_hunit,
-            var1="delta_tot",
-            var2="delta_tot",
-        ).P(zs, ks)
+            nonlinear=True, extrap_kmax=self.kmax,
+            hubble_units=hubble_units, k_hunit=k_hunit,
+            var1='delta_tot', var2='delta_tot').P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:

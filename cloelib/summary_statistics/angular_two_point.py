@@ -1,8 +1,10 @@
+"""Module for angular two-point functions."""
 # cloelib imports
 from cloelib.observables.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.math_utils import simpsons_weights_jit
 
 # General imports
 import interpax
@@ -13,15 +15,14 @@ import jax
 
 ## Notes:
 
-- Two point asbtract class to compute two point functions
 - Note, change for T vartype
 
 """
 
 @jax.jit
-def Cl_integration(WT1, WT2, Pkl, H, chi2):
+def Cl_integration(WT1, WT2, Pkl, H, chi2, weights):
     """
-    Performs the integration to compute the angular power spectrum Cl.
+    Perform the integration to compute the angular power spectrum Cl.
 
     The integration is done using the unnormalized trapezoidal rule,
     utilizing the window functions, power spectrum, Hubble parameter,
@@ -33,16 +34,17 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2):
     - Pkl (jax.numpy.ndarray): Matter power spectrum interpolated on Limber grid.
     - H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
     - chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
+    - weights (jax.numpy.ndarray): Array of weights used for the fixed nodes integration.
 
     Returns:
     - jax.numpy.ndarray: Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
     """
-    return np.einsum('iz,jz,lz,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2)
+    return np.einsum('iz,jz,lz,z,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2, weights)
 
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
     """
-    Interpolates the matter power spectrum on a Limber grid.
+    Interpolate the matter power spectrum on a Limber grid.
 
     Utilizes interpax's 2D interpolation with Akima method to handle
     non-uniform grids in logarithmic space. Extrapolation is enabled
@@ -65,9 +67,11 @@ Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, Non
 
 
 class AngularTwoPoint:
+    """Two point asbtract class to compute two point functions."""
+
     def __init__(self, tracer1 : Tracer, tracer2 : Tracer):
         """
-        Initializes the AngularTwoPoint object.
+        Initialize the AngularTwoPoint instance.
 
         Checks if the tracers are compatible and sets the two tracers
         as instance attributes.
@@ -81,7 +85,7 @@ class AngularTwoPoint:
 
     def _matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells) -> jax.numpy.ndarray:
         """
-        Prepares the matter power spectrum grid for Limber approximation.
+        Prepare the matter power spectrum grid for Limber approximation.
 
         It calculates the k values on the Limber grid using the comoving
         distances and multipoles, then interpolates the matter power
@@ -104,7 +108,7 @@ class AngularTwoPoint:
 
     def get_Cl(self, ells, nl, ks)  -> jax.numpy.ndarray:
         """
-        Computes the angular power spectrum Cl using Limber approximation.
+        Compute the angular power spectrum Cl using Limber approximation.
 
         Combines the window functions of the tracers, interpolated matter power
         spectrum, Hubble parameter, and comoving distances to calculate the
@@ -135,13 +139,13 @@ class AngularTwoPoint:
         # Did it this way to avoid an if statement, but would be good to know how necessary this is
         prefactor_cell = ((prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle) *
                           (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle))
+        weights = simpsons_weights_jit(len(H))
 
-        return c_0*Cl_integration(WT1, WT2, Pkl, H, chi2)*dz*prefactor_cell[:, None, None]
+        return c_0*Cl_integration(WT1, WT2, Pkl, H, chi2, weights)*dz*prefactor_cell[:, None, None]
 
     def get_pseudo_Cl(self, nl, ks, mixing_matrix, n_ells_int=50)  -> jax.numpy.ndarray:
         """
-        Computes the angular power spectrum Cl using Limber approximation
-        convolved with the mixing matrices.
+        Compute the angular power spectrum Cl using Limber approximation convolved with the mixing matrices.
 
         Combines the window functions of the tracers, interpolated matter power
         spectrum, Hubble parameter, and comoving distances to calculate the

@@ -1,3 +1,4 @@
+"""Angular Correlation Function Protocol."""
 from typing import Protocol, Tuple, Union
 import jax.numpy as jnp
 
@@ -16,12 +17,8 @@ class AngularCorrelationFunction(Protocol):
     Implementations may return a single correlation function xi(theta)
     (e.g., galaxy clustering or galaxy-galaxy lensing) or a tuple
     (xi_plus, xi_minus) for spin-2 tracers (e.g., cosmic shear).
-
-    Methods
-    -------
-    get_xi(theta)
-        Returns the angular correlation function(s) at given separation(s).
     """
+
     def get_xi(
         self,
         theta: jnp.ndarray

@@ -1,0 +1,219 @@
+{
+  "projectName": "cloelib",
+  "projectOwner": "cloe-org",
+  "files": [
+    "README.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "ahallcosmo",
+      "name": "Alex Hall",
+      "avatar_url": "https://avatars.githubusercontent.com/u/59091484?v=4",
+      "profile": "http://alexhall.space",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "itutusaus",
+      "name": "itutusaus",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20775836?v=4",
+      "profile": "https://github.com/itutusaus",
+      "contributions": [
+        "review"
+      ]
+    },
+    {
+      "login": "llinke1",
+      "name": "Laila Linke",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42432333?v=4",
+      "profile": "https://github.com/llinke1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "DavidNavarroG",
+      "name": "David Navarro Gironés",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29857945?v=4",
+      "profile": "https://github.com/DavidNavarroG",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "stefanodavini",
+      "name": "stefanodavini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/206831738?v=4",
+      "profile": "https://github.com/stefanodavini",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
+    },
+    {
+      "login": "gcanasherrera",
+      "name": "Guadalupe Cañas-Herrera",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13239454?v=4",
+      "profile": "http://gcanasherrera.com",
+      "contributions": [
+        "code",
+        "maintenance",
+        "ideas",
+        "bug",
+        "content",
+        "data",
+        "doc",
+        "infra",
+        "projectManagement",
+        "question",
+        "test",
+        "talk"
+      ]
+    },
+    {
+      "login": "marcobonici",
+      "name": "Marco Bonici",
+      "avatar_url": "https://avatars.githubusercontent.com/u/58727599?v=4",
+      "profile": "https://marcobonici.github.io/",
+      "contributions": [
+        "code",
+        "maintenance",
+        "ideas",
+        "bug",
+        "content",
+        "doc",
+        "infra",
+        "projectManagement",
+        "question",
+        "test",
+        "talk"
+      ]
+    },
+    {
+      "login": "chiaramoretti",
+      "name": "Chiara Moretti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12472732?v=4",
+      "profile": "https://github.com/chiaramoretti",
+      "contributions": [
+        "code",
+        "maintenance",
+        "ideas",
+        "bug",
+        "content",
+        "doc",
+        "talk"
+      ]
+    },
+    {
+      "login": "AndreaPezzotta",
+      "name": "AndreaPezzotta",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29603598?v=4",
+      "profile": "https://github.com/AndreaPezzotta",
+      "contributions": [
+        "code",
+        "maintenance",
+        "ideas",
+        "bug",
+        "content",
+        "data",
+        "doc",
+        "talk"
+      ]
+    },
+    {
+      "login": "santiagocasas",
+      "name": "Santiago Casas",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6987716?v=4",
+      "profile": "http://www.cosmostat.org/people/santiago-casas",
+      "contributions": [
+        "code",
+        "maintenance",
+        "ideas"
+      ]
+    },
+    {
+      "login": "PedroCarrilho",
+      "name": "Pedro Carrilho",
+      "avatar_url": "https://avatars.githubusercontent.com/u/60090062?v=4",
+      "profile": "https://github.com/PedroCarrilho",
+      "contributions": [
+        "code",
+        "maintenance",
+        "ideas",
+        "bug",
+        "content",
+        "data",
+        "doc",
+        "talk"
+      ]
+    },
+    {
+      "login": "ntessore",
+      "name": "Nicolas Tessore",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3993688?v=4",
+      "profile": "http://ntessore.page",
+      "contributions": [
+        "tool",
+        "mentoring",
+        "code",
+        "review"
+      ]
+    },
+    {
+      "login": "sfarrens",
+      "name": "Samuel Farrens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6851839?v=4",
+      "profile": "http://sfarrens.github.io",
+      "contributions": [
+        "tool",
+        "mentoring",
+        "code",
+        "review"
+      ]
+    },
+    {
+      "login": "josecolomanadal",
+      "name": "Jose Coloma Nadal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/83759085?v=4",
+      "profile": "https://github.com/josecolomanadal",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "caspervedder",
+      "name": "Casper Vedder",
+      "avatar_url": "https://avatars.githubusercontent.com/u/187176614?v=4",
+      "profile": "https://github.com/caspervedder",
+      "contributions": [
+        "code",
+        "ideas",
+        "bug"
+      ]
+    },
+    {
+      "login": "nebblu",
+      "name": "Ben Bose",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45853389?v=4",
+      "profile": "https://benbose.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "didamarkovic",
+      "name": "Dida Markovic",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9950748?v=4",
+      "profile": "https://github.com/didamarkovic",
+      "contributions": [
+        "ideas",
+        "question"
+      ]
+    }
+  ]
+}

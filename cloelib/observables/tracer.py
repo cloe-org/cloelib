@@ -1,3 +1,4 @@
+"""Tracer protocol for different window functions."""
 # cloelib imports
 from cloelib.cosmology.cosmology import Perturbations
 
@@ -8,20 +9,13 @@ import jax.numpy as jnp # type: ignore
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
-"""
-
-## Notes:
-
-- Tracer protocol to implement different window functions
-
-"""
 
 class Tracer(Protocol):
+    """Tracer protocol to implement window functions."""
+
     @property
     def perturbations(self) -> Perturbations:
-        """
-        Stores perturbations obj
-        """
+        """Store perturbations obj."""
         ...
 
     def _window_integrand(self, z: T, zprime: T) -> T:
@@ -42,8 +36,8 @@ class Tracer(Protocol):
         ...
 
     def _get_prefactor(self, ell: T) -> T:
-        """
-        Computes the needed prefactor in Limber approximation.
+        r"""
+        Compute the needed prefactor in Limber approximation.
 
         Parameters
         ----------
@@ -59,7 +53,7 @@ class Tracer(Protocol):
 
     def get_window(self, z: T) -> T:
         """
-        Computes general window(s) given the selected tracer.
+        Compute general window(s) given the selected tracer.
 
         Parameters
         ----------

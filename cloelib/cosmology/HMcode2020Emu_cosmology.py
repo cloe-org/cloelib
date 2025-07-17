@@ -1,3 +1,4 @@
+"""Implementation of Background and Perturbation cosmology using HMcode2020Emu."""
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
@@ -27,8 +28,10 @@ except ImportError:
 """
 
 class HMemuLinearPerturbations:
-    def __init__(self, background : Background, redshifts: np.ndarray):
+    """Class for perturbations cosmology using HMemu, inheriting from Perturbations parent class."""
 
+    def __init__(self, background : Background, redshifts: np.ndarray):
+        """Intialize the HMemuLinearPerturbations instance."""
         assert background.Omega_k0 == 0, 'Non flat geometries not supported'
 
         self.z = redshifts[redshifts <= redshift_max]
@@ -77,7 +80,7 @@ class HMemuLinearPerturbations:
         self.Pk_interp = pk_interp
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-        r"""Computes the linear matter power spectrum.
+        r"""Compute the linear matter power spectrum.
 
         Parameters
         ----------
@@ -94,12 +97,11 @@ class HMemuLinearPerturbations:
             and redshift
 
         """
-
         return self.Pk_interp(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        """
-        Calculates the growth factor for given redshifts and wavenumbers.
+        r"""
+        Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
@@ -127,23 +129,24 @@ class HMemuLinearPerturbations:
 
     def growth_rate(self) -> np.ndarray:
         """
-        Calculates the growth rate for given redshifts and wavenumbers.
+        Calculate the growth rate for given redshifts and wavenumbers.
 
         Returns:
         --------
         np.ndarray
             The growth rate as a function of redshift and wavenumber.
         """
-
         self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
 
         return self.fsigma8/self.sigma8
 
 class HMemuNonLinearPerturbations:
+    """Class for non linear perturbations cosmology using HMemu, inheriting from Perturbations parent class."""
+
     def __init__(self, background : Background,
                  linearperturbations: Perturbations, redshifts: np.ndarray,
                  log10TAGN: Optional[float] = None):
-
+        """Initialize the HMemuNonLinearPerturbations intance."""
         assert background.Omega_k0 == 0, 'Non flat geometries not supported'
 
         redshift_max = \
@@ -223,7 +226,7 @@ class HMemuNonLinearPerturbations:
 
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-        r"""Computes the linear matter power spectrum.
+        r"""Compute the linear matter power spectrum.
 
         Parameters
         ----------
@@ -240,12 +243,11 @@ class HMemuNonLinearPerturbations:
             and redshift
 
         """
-
         return self.Pk_interp(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        """
-        Calculates the growth factor for given redshifts and wavenumbers.
+        r"""
+        Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
@@ -273,14 +275,13 @@ class HMemuNonLinearPerturbations:
 
     def growth_rate(self) -> np.ndarray:
         """
-        Calculates the growth rate for given redshifts and wavenumbers.
+        Calculate the growth rate for given redshifts and wavenumbers.
 
         Returns:
         --------
         np.ndarray
             The growth rate as a function of redshift and wavenumber.
         """
-
         self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
 
         return self.fsigma8/self.sigma8

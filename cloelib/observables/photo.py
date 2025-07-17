@@ -1,3 +1,9 @@
+"""
+Module with two classes for each observable tracer type: shear and galaxy positions.
+
+Both classes are compatible with the Tracer protocol.
+"""
+
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
@@ -12,26 +18,16 @@ import interpax # type: ignore
 import jax.lax as lx
 
 
-"""
-
-## Notes:
-
-- Define a class for each observable tracer type: shear and galaxy positions
-- Both classes are compatible with the Tracer protocol
-
-"""
-
 # UNITS
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 class ShearTracer:
+    """Class for the kernel for Cosmic Shear."""
+
     def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray,
                  nuisance_params: dict):
         r"""
-        A class to define the kernel for Cosmic Shear.
-
-        Initialize the class with given perturbations, redshift distribution,
-        intrinsic aligment models, and nuisance parameters.
+        Initialize the class instance.
 
         Parameters
         ----------
@@ -84,6 +80,7 @@ class ShearTracer:
         return np.einsum('ij, j->ij', self.dndz_shifted, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
+        """Compute the lensing efficiency in a redshift bin."""
         interpolator = interpax.Akima1DInterpolator(self.z, self.dndz_shifted[bin_idx,:])
         x = np.linspace(0., 4, 200)
         y = self.background.comoving_distance(x)
@@ -163,7 +160,7 @@ class ShearTracer:
         return np.einsum('ij, j->ij', efficiency, factor)
 
     def get_window(self, z):
-        r"""Window
+        r"""Compute the Window.
 
         Computes general window given the selected tracer
 
@@ -182,13 +179,12 @@ class ShearTracer:
         return total_window
 
 class PositionsTracer:
+    """Class to define the kernel for angular (galaxy) clustering."""
+
     def __init__(self, perturbations: Perturbations, dndz: np.ndarray, z: np.ndarray,
                  galaxy_bias_model: str, nuisance_params: dict):
         r"""
-        A class to define the kernel for angular (galaxy) clustering
-
-        Initialize the cosmology class with given perturbations, redshift distribution,
-        galaxy and magnification bias models, and nuisance parameters.
+        Initialize the class instance.
 
         Parameters
         ----------
@@ -243,10 +239,10 @@ class PositionsTracer:
                                self.flags['galaxy_bias_model'] == 'poly'])
         index = np.argwhere(conditions, size=1).squeeze()
 
-        self.bias_array = lx.switch(index, [per_bin_case, per_bin_int_case, poly_case])
+        self.bias_array = [per_bin_case, per_bin_int_case, poly_case][index]()
 
     def get_window_positions(self, z) -> np.ndarray:
-        r"""Galaxy Positions window function
+        r"""Galaxy Positions window function.
 
         Implements the galaxy clustering photometric window function.
 
@@ -279,7 +275,7 @@ class PositionsTracer:
                                ])
         index = np.argwhere(conditions, size=1).squeeze()
 
-        window_positions = lx.switch(index, [per_bin_case, z_func_case])
+        window_positions = [per_bin_case, z_func_case][index]()
 
         return window_positions
 
@@ -359,8 +355,8 @@ class PositionsTracer:
 
     def get_window(self, z) -> np.ndarray:
         """
-        Computes the angular photometric galaxy clustering window function,
-        including magnification bias.
+        Compute the angular photometric galaxy clustering window function.
+
         This function combines the galaxy clustering window and the magnification
         bias window to produce the final window function.
 

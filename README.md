@@ -43,7 +43,8 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | NA    | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)       | NA                       |
 
 We do not provide installation support for `PBJ` and `class`.
-Furthermore, it requires the installation of `pyinstrument` for the time profiling.
+
+Furthermore, it requires the installation of `pyinstrument` for the time profiling. It's an optional dependency and is not installed with the main cloelib package.
 
 ---
 

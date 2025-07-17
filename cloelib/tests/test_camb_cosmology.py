@@ -97,6 +97,7 @@ def test_camb_omega_m(camb_background_instance, zs):
     assert callable(camb_background_instance.Omega_m)
     result = camb_background_instance.Omega_m(zs)
     assert isinstance(result, np.ndarray)
+    assert result.ndim == 1
     assert len(result) == len(zs)
 
 def test_camb_omega_b(camb_background_instance, zs):
@@ -109,6 +110,7 @@ def test_camb_omega_b(camb_background_instance, zs):
     assert callable(camb_background_instance.Omega_b)
     result = camb_background_instance.Omega_b(zs)
     assert isinstance(result, np.ndarray)
+    assert result.ndim == 1
     assert len(result) == len(zs)
     assert np.abs(result[0] - camb_background_instance.Omega_b0) < 1e-4
 
@@ -124,6 +126,7 @@ def test_camb_hubble_parameter(camb_background_instance, zs, units):
     assert callable(camb_background_instance.hubble_parameter)
     result = camb_background_instance.hubble_parameter(zs, units)
     assert isinstance(result, np.ndarray)
+    assert result.ndim == 1
     assert len(result) == len(zs)
     if units == "km/s/Mpc":
         assert np.abs(result[0] - camb_background_instance.H0) < 1e-4
@@ -134,6 +137,7 @@ def test_camb_comoving_distance(camb_background_instance, zs):
     assert callable(camb_background_instance.comoving_distance)
     result = camb_background_instance.comoving_distance(zs)
     assert isinstance(result, np.ndarray)
+    assert result.ndim == 1
     assert len(result) == len(zs)
 
 def test_camb_transverse_comoving_distance(camb_background_instance, zs):
@@ -142,6 +146,7 @@ def test_camb_transverse_comoving_distance(camb_background_instance, zs):
     assert callable(camb_background_instance.transverse_comoving_distance)
     result = camb_background_instance.transverse_comoving_distance(zs)
     assert isinstance(result, np.ndarray)
+    assert result.ndim == 1
     assert len(result) == len(zs)
 
 def test_camb_angular_diameter_distance(camb_background_instance, zs):
@@ -150,6 +155,7 @@ def test_camb_angular_diameter_distance(camb_background_instance, zs):
     assert callable(camb_background_instance.angular_diameter_distance)
     result = camb_background_instance.angular_diameter_distance(zs)
     assert isinstance(result, np.ndarray)
+    assert result.ndim == 1
     assert len(result) == len(zs)
 
 @pytest.fixture

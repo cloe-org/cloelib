@@ -529,31 +529,6 @@ class JAXLinearPerturbations:
         pk = pk * pknorm/factor
         return pk.squeeze()
 
-    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
-        r"""Computes the linear matter power spectrum without neutrinos.
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
-        """
-        raise NotImplementedError("Not implemented for jax.")
-
 class JAXNonLinearPerturbations(Perturbations):
     def __init__(self, linearperturbations : Perturbations):
         r"""
@@ -702,31 +677,6 @@ class JAXNonLinearPerturbations(Perturbations):
         This function is just a wrapper over several nonlinear power spectra.
         """
         return jax.vmap(self.halofit, in_axes = (0, None, None, None))(zs, ks, hubble_units, k_hunit)
-
-    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
-        r"""Computes the linear matter power spectrum without neutrinos.
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
-        """
-        raise NotImplementedError("Not implemented for jax.")
 
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):
         Pk = jax.vmap(self.nonlinear_matter_power_spectrum,

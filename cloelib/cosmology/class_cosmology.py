@@ -214,7 +214,8 @@ class CLASSLinearPerturbations:
         """
         if hubble_units == True or k_hunit == True:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
+        self.Pk_linear = np.array(
+            [[self.results.pk(ki, zi) for ki in ks] for zi in zs]) # type: ignore[union-attr]
         # To match array convention of CAMB
         return self.Pk_linear
 
@@ -255,8 +256,7 @@ class CLASSLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        return np.array([self.results.scale_independent_growth_factor_f(zi)
-                for zi in self.z])
+        return np.array([self.results.scale_independent_growth_factor_f(zi) for zi in self.z]) # type: ignore[union-attr]
 
 class CLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""

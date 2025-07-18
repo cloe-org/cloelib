@@ -125,7 +125,7 @@ class CAMBBackground:
         """
         Return the effective number of relativistic species.
 
-        Assumes a standard value of T_ncdm = 0.71611 K for neutrinos.
+        Assumes a standard value of T_ncdm = 0.71611 for neutrinos.
         """
         T_ncdm = 0.71611  # Standard value for neutrino temperature in K
         return self.N_ur + self.N_mnu*np.power(T_ncdm, 4.)*np.power(4./11, -4./3)

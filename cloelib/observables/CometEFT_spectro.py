@@ -4,7 +4,7 @@
 from cloelib.cosmology.cosmology import Background
 
 # General imports
-from typing import Protocol, Union, TypeVar, Optional
+from typing import Protocol, Union, TypeVar, Optional, Sequence
 import numpy as np  # type: ignore
 from copy import deepcopy
 
@@ -37,7 +37,7 @@ class CometEFT_SpectroPower:
         self.parameters = {}
         self.parameters['wc'] = self.background.Omega_cdm0 * self.background.h**2
         self.parameters['wb'] = self.background.Omega_b0 * self.background.h**2
-        self.parameters['Mnu'] = self.background.mnu
+        self.parameters['Mnu'] = self._set_neutrino_parameters(self.background)
         self.parameters['ns'] = self.background.ns
         self.parameters['h'] = self.background.h
         self.parameters['As'] = self.background.As * 1e9
@@ -58,6 +58,40 @@ class CometEFT_SpectroPower:
             'c0': 'Pctr_c0', 'c2': 'Pctr_c2', 'c4': 'Pctr_c4',
             'b1-b1-cnlo': 'Pctr_b1b1cnlo', 'b1-cnlo': 'Pctr_b1cnlo', 'cnlo': 'Pctr_cnlo'
         }
+
+    def _set_neutrino_parameters(self, background: Background) -> float:
+        r"""Set neutrino parameters in the parameters dictionary.
+
+        This method adds neutrino parameters to the provided dictionary.
+        It also ensures consistency with the background cosmology.
+        Comet only supports a single species of neutrinos, so this method
+        throws an error if multiple neutrino species are provided.
+
+        Parameters
+        ----------
+        parameters: dict
+            Dictionary to which neutrino parameters will be added
+        """
+        if background.N_mnu > 1:
+            raise ValueError("Comet only supports a single species of neutrinos. "
+                             "Set N_mnu=1 in the Background class.")
+        if background.N_ur != 2.0308:
+            raise ValueError(
+                "Comet only supports a fixed number of relativistic species (N_ur=2.0308). "
+                "Set N_ur=2.0308 in the Background class."
+                )
+        if background.N_eff != 3.044:
+            raise ValueError(
+                "Comet only supports a fixed number of effective" 
+                "relativistic species (N_eff=3.044). "
+                "Ensure that N_eff=3.044 in the Background class."
+            )
+        if isinstance(background.mnu, Sequence) or isinstance(background.mnu, np.ndarray):
+            mnu_arg = float(np.sum(background.mnu))
+        else:
+            mnu_arg = float(background.mnu)
+        # returns the neutrino mass in eV
+        return mnu_arg
 
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields.

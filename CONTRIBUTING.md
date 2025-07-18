@@ -1,6 +1,6 @@
 # 👥 Contributing to cloelib
 
-Please read the overall contribution guidelines applicable to cloe-org before proceeding.
+Please **read [the overall contribution guidelines applicable to cloe-org](https://github.com/cloe-org/.github/tree/main/colprac) before proceeding**.
 
 ## Specific Guidelines for cloelib
 

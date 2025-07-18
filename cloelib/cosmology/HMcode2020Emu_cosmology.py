@@ -6,7 +6,7 @@ from cloelib.auxiliary.extrapolator import extend_spectra
 from scipy import interpolate
 # General imports
 import numpy as np
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Sequence
 from copy import deepcopy
 
 # Cosmology imports
@@ -43,7 +43,7 @@ class HMemuLinearPerturbations:
             'As': self.background.As,
             'ns': self.background.ns,
             'hubble': self.background.H0 / 100,
-            'neutrino_mass': self.background.mnu,
+            'neutrino_mass': _set_neutrino_masses(self.background),
             'w0': self.background.w0,
             'wa': self.background.wa,
         }
@@ -161,7 +161,7 @@ class HMemuNonLinearPerturbations:
             'As': self.background.As,
             'ns': self.background.ns,
             'hubble': self.background.H0 / 100,
-            'neutrino_mass': self.background.mnu,
+            'neutrino_mass': _set_neutrino_masses(self.background),
             'w0': self.background.w0,
             'wa': self.background.wa,
         }
@@ -285,3 +285,49 @@ class HMemuNonLinearPerturbations:
         self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
 
         return self.fsigma8/self.sigma8
+
+def _set_neutrino_masses(background: Background) -> float:
+    r"""Set neutrino masses in the parameters dictionary.
+
+    This method adds neutrino masses to the provided dictionary.
+    It also ensures consistency with the background cosmology.
+    HMcode2020Emu only supports a single species of neutrinos, so this method
+    throws an error if multiple neutrino species are provided.
+
+    Parameters
+    ----------
+    background: Background
+        Background class containing cosmology and background distances
+
+    Returns
+    -------
+    float
+        The total neutrino mass in eV.
+    """
+    if background.N_mnu > 1:
+        raise ValueError("HMcode2020Emu only supports a single species of neutrinos. "
+                            "Set N_mnu=1 in the Background class.")
+    if not np.isclose(background.N_ur, 2.0308, rtol=1e-4):
+        raise ValueError(
+            "HMcode2020Emu only supports a fixed number of relativistic species (N_ur=2.0308). "
+            "Set N_ur=2.0308 in the Background class."
+            "[Note that HMcode2020Emu actually sets N_ur=2.0328,"
+            "this will be fixed in a future release.]"
+            )
+    if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
+        raise ValueError(
+            "HMcode2020Emu only supports a fixed number of effective" 
+            f"relativistic species (N_eff=3.044). Found {background.N_eff} "
+            "Ensure that N_eff=3.044 in the Background class."
+            "[Note that HMcode2020Emu actually sets N_eff=3.046,"
+            "this will be fixed in a future release.]"
+        )
+    if isinstance(background.mnu, Sequence) or isinstance(background.mnu, np.ndarray):
+        raise ValueError(
+            "HMcode2020Emu only supports a single species of neutrinos. "
+            "Set N_mnu=1 in the Background class."
+        )
+    else:
+        mnu_arg = float(background.mnu)
+    # returns the neutrino mass in eV
+    return mnu_arg

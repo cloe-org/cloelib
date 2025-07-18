@@ -89,7 +89,10 @@ class CometEFT_SpectroPower:
                 "Ensure that N_eff=3.044 in the Background class."
             )
         if isinstance(background.mnu, Sequence) or isinstance(background.mnu, np.ndarray):
-            mnu_arg = float(np.sum(background.mnu))
+            raise ValueError(
+                "Comet only supports a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
         else:
             mnu_arg = float(background.mnu)
         # returns the neutrino mass in eV

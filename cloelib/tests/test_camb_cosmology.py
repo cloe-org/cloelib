@@ -174,7 +174,7 @@ def test_camb_perturbation_implements_protocol(camb_perturbation_instances, key)
 
 @pytest.fixture
 def ks(scope="module"):
-    return np.logspace(np.log10(1e-4), np.log10(5), 20)
+    return np.logspace(np.log10(1e-4), np.log10(5), 10)
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_camb_matter_power_spectrum(camb_perturbation_instances, key, zs, ks):
@@ -185,6 +185,7 @@ def test_camb_matter_power_spectrum(camb_perturbation_instances, key, zs, ks):
     result = camb_instance.matter_power_spectrum(zs, ks)
     assert isinstance(result, np.ndarray)
     assert result.ndim == 2
+    assert result.shape == (len(zs), len(ks))
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_camb_growth_factor(camb_perturbation_instances, key, zs, ks):
@@ -195,6 +196,7 @@ def test_camb_growth_factor(camb_perturbation_instances, key, zs, ks):
     result = camb_instance.growth_factor(zs, ks)
     assert isinstance(result, np.ndarray)
     assert result.ndim == 2
+    assert result.shape == (len(zs), len(ks))
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_camb_growth_rate(camb_perturbation_instances, key, zs, ks):

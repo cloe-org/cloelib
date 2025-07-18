@@ -175,7 +175,7 @@ def test_class_perturbation_implements_protocol(class_perturbation_instances, ke
 
 @pytest.fixture
 def ks(scope="module"):
-    return np.logspace(np.log10(1e-4), np.log10(5), 20)
+    return np.logspace(np.log10(1e-4), np.log10(5), 10)
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_class_matter_power_spectrum(class_perturbation_instances, key, zs, ks):
@@ -186,6 +186,7 @@ def test_class_matter_power_spectrum(class_perturbation_instances, key, zs, ks):
     result = class_instance.matter_power_spectrum(zs, ks)
     assert isinstance(result, np.ndarray)
     assert result.ndim == 2
+    assert result.shape == (len(zs), len(ks))
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_class_growth_factor(class_perturbation_instances, key, zs, ks):
@@ -196,6 +197,7 @@ def test_class_growth_factor(class_perturbation_instances, key, zs, ks):
     result = class_instance.growth_factor(zs, ks)
     assert isinstance(result, np.ndarray)
     assert result.ndim == 2
+    assert result.shape == (len(zs), len(ks))
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_class_growth_rate(class_perturbation_instances, key, zs, ks):
@@ -206,4 +208,3 @@ def test_class_growth_rate(class_perturbation_instances, key, zs, ks):
     result = class_instance.growth_rate()
     assert isinstance(result, np.ndarray)
     assert result.ndim == 1
-

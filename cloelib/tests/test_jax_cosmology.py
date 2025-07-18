@@ -167,7 +167,7 @@ def test_jax_perturbation_implements_protocol(jax_perturbation_instances, key):
 
 @pytest.fixture
 def ks(scope="module"):
-    return np.logspace(np.log10(1e-4), np.log10(5), 20)
+    return np.logspace(np.log10(1e-4), np.log10(5), 10)
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_jax_matter_power_spectrum(jax_perturbation_instances, key, zs, ks):
@@ -178,6 +178,7 @@ def test_jax_matter_power_spectrum(jax_perturbation_instances, key, zs, ks):
     result = jax_instance.matter_power_spectrum(zs, ks)
     assert isinstance(result, np.ndarray)
     assert result.ndim == 2
+    assert result.shape == (len(zs), len(ks))
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_jax_growth_factor(jax_perturbation_instances, key, zs, ks):
@@ -187,6 +188,8 @@ def test_jax_growth_factor(jax_perturbation_instances, key, zs, ks):
     assert callable(jax_instance.growth_factor)
     result = jax_instance.growth_factor(zs, ks)
     assert isinstance(result, np.ndarray)
+    assert result.ndim == 2
+    assert result.shape == (len(zs), len(ks))
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_jax_growth_rate(jax_perturbation_instances, key, zs, ks):
@@ -196,3 +199,5 @@ def test_jax_growth_rate(jax_perturbation_instances, key, zs, ks):
     assert callable(jax_instance.growth_rate)
     result = jax_instance.growth_rate(zs)
     assert isinstance(result, np.ndarray)
+    assert result.ndim == 1
+    

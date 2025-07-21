@@ -269,7 +269,7 @@ class CAMBNonLinearPerturbations:
     """A wrapper for CAMB nonlinear perturbation calculations."""
 
     def __init__(self, background: Background, redshifts: np.ndarray,
-                 nonlinear_model: Optional[str] = None, log10TAGN: float = None) -> None:
+                 nonlinear_model: Optional[str] = None, log10TAGN: Optional[float] = None) -> None:
         """
         Initialize the CAMBNonLinearPerturbations class with linear perturbation data.
 

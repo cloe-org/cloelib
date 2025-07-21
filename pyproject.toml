@@ -28,6 +28,10 @@ pytest-pydocstyle = "2.4.0"
 camb = ["camb"]
 hmcode2020emu = ["HMcode2020Emu"]
 comet-emu = ["comet-emu"]
+emantis = ["emantis"]
+
+[tool.poetry.dependencies.emantis]
+version = ">=1.2"
 
 [tool.poetry.dependencies.tensorflow]
 version = "==2.13"

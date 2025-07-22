@@ -1,9 +1,19 @@
 import numpy as np
-from cloelib.cosmology.emantis_cosmology import EmantisFofrNonLinearPerturbations
-from emantis.matter_power_spectrum import NonLinearMGBoostEmulator
+import pytest
 
 
-class TestBackground:
+try:
+    from emantis.matter_power_spectrum import NonLinearMGBoostEmulator
+    from cloelib.cosmology.emantis_cosmology import EmantisFofrNonLinearPerturbations
+
+except ModuleNotFoundError:
+    _EMANTIS_INSTALLED = False
+
+else:
+    _EMANTIS_INSTALLED = True
+
+
+class LCDMBackground:
 
     def __init__(self) -> None:
 
@@ -24,6 +34,10 @@ class LCDMNonLinearPerturbations:
         return np.ones((zs.shape[0], ks.shape[0]))
 
 
+@pytest.mark.skipif(
+    not _EMANTIS_INSTALLED,
+    reason="emantis is not installed",
+)
 def test_mg_boost_cloelib_vs_external():
     """Validate the nonlinear matter power spectrum boost.
 
@@ -38,7 +52,7 @@ def test_mg_boost_cloelib_vs_external():
     fR0 = -1e-5
 
     # Init. background.
-    background = TestBackground()
+    background = LCDMBackground()
 
     # Init. LCDM nonlinear perturbations.
     lcdm_nonlinear = LCDMNonLinearPerturbations()

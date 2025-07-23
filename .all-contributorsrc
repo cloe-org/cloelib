@@ -214,6 +214,17 @@
         "ideas",
         "question"
       ]
+    },
+    {
+      "login": "m-aguena",
+      "name": "Michel Aguena",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12038660?v=4",
+      "profile": "https://github.com/m-aguena",
+      "contributions": [
+        "code",
+        "test",
+        "ideas"
+      ]
     }
   ]
 }

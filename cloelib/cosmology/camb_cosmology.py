@@ -295,7 +295,9 @@ class CAMBNonLinearPerturbations:
         self.background.interface_args['CAMBparams'].WantTransfer = True
         
         if nonlinear_model is not None:
-            self.background.interface_args['CAMBparams'].NonLinearModel.set_params(halofit_version=nonlinear_model, HMCode_logT_AGN=log10TAGN)
+            self.background.interface_args['CAMBparams'].NonLinearModel.set_params(halofit_version=nonlinear_model)
+            if log10TAGN is not None:
+                self.background.interface_args['CAMBparams'].NonLinearModel.set_params(halofit_version=nonlinear_model, HMCode_logT_AGN=log10TAGN)
         else:
             self.background.interface_args['CAMBparams'].NonLinearModel.set_params()
 

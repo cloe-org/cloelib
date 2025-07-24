@@ -1,3 +1,4 @@
+"""Implementation of nonlinear Perturbation cosmology for f(R) gravity using the e-MANTIS emulator."""
 import numpy as np
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.cosmology.cosmology import Background, Perturbations
@@ -137,7 +138,6 @@ class EmantisFofrNonLinearPerturbations:
         pk: numpy.ndarray
             Nonlinear matter power spectrum at the input redshift and wavenumber values.
         """
-
         return self.pk_interp(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:

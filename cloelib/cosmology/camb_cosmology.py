@@ -49,7 +49,7 @@ class CAMBBackground:
         self.mnu = mnu
 
         # Initialize CAMB parameters
-        self.interface_args = {'CAMBparams': camb.CAMBparams()}
+        self.interface_args = {'CAMBparams': camb.CAMBparams()}  
         self.interface_args['CAMBparams'].set_cosmology(
             H0=self.H0,
             ombh2=self.Omega_b0 * (self.h) ** 2,
@@ -269,7 +269,7 @@ class CAMBNonLinearPerturbations:
     """A wrapper for CAMB nonlinear perturbation calculations."""
 
     def __init__(self, background: Background, redshifts: np.ndarray,
-                 nonlinear_model: Optional[str] = None) -> None:
+                 nonlinear_model: Optional[str] = None, log10TAGN: Optional[float] = None) -> None:
         """
         Initialize the CAMBNonLinearPerturbations class with linear perturbation data.
 
@@ -294,8 +294,12 @@ class CAMBNonLinearPerturbations:
         self.background.interface_args['CAMBparams'].Want_cl_2D_array = False
         self.background.interface_args['CAMBparams'].WantTransfer = True
         
-        if nonlinear_model:
+        if nonlinear_model is not None:
             self.background.interface_args['CAMBparams'].NonLinearModel.set_params(halofit_version=nonlinear_model)
+            if log10TAGN is not None:
+                self.background.interface_args['CAMBparams'].NonLinearModel.set_params(halofit_version=nonlinear_model, HMCode_logT_AGN=log10TAGN)
+        else:
+            self.background.interface_args['CAMBparams'].NonLinearModel.set_params()
 
         self.background.interface_args['CAMBparams'].set_matter_power(redshifts=redshifts, kmax=self.kmax)
 

@@ -167,9 +167,7 @@ class CLASSBackground:
 
     @property
     def rdrag(self) -> float:
-        """
-        Sound horizon radius at last scattering in Mpc.
-        """
+        """Sound horizon radius at last scattering in Mpc."""
         return self.results.rs_drag()
 
 

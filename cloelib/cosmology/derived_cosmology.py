@@ -9,7 +9,7 @@ _log10_GRAVITATIONAL_CONSTANT = np.log10(units.GRAVITATIONAL_CONSTANT)
 
 def rho_crit(background, zs: np.ndarray) -> np.ndarray:
     """
-    Returns the critical density as a function of redshift.
+    Return the critical density as a function of redshift.
 
     Units: Mpc^{-3} Msun
 
@@ -30,8 +30,7 @@ def rho_crit(background, zs: np.ndarray) -> np.ndarray:
 
 def dV_dzdO(background, zs: np.ndarray) -> np.ndarray:
     """
-    Returns the volume element per redshit per solid angle
-    at the redshift requested.
+    Return the volume element per redshit per solid angle at the redshift requested.
 
     Parameters
     ----------

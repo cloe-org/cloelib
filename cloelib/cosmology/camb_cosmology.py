@@ -164,9 +164,7 @@ class CAMBBackground:
 
     @property
     def rdrag(self) -> float:
-        """
-        Sound horizon radius at last scattering in Mpc.
-        """
+        """Sound horizon radius at last scattering in Mpc."""
         return self.results.get_derived_params()["rdrag"]
 
 

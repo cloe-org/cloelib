@@ -225,9 +225,7 @@ class JAXBackground:
 
     @property
     def rdrag(self) -> float:
-        """
-        Sound horizon radius at last scattering.
-        """
+        """Sound horizon radius at last scattering."""
         return rdrag_fitting_function(self)
 
 

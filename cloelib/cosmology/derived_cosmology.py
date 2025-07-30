@@ -67,7 +67,7 @@ def rdrag_fitting_function(background, neff=3.046):
     Returns
     -------
     r_d: float
-        Sound horizon at drag epoch
+        Sound horizon at drag epoch in Mpc
     """
     omega_cb = background.Omega_cdm0 * background.h**2
     omega_b = background.Omega_b0 * background.h**2

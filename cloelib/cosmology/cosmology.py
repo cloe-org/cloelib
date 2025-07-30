@@ -108,7 +108,7 @@ class Background(Protocol):
     @property
     def rdrag(self) -> float:
         """
-        Sound horizon radius at last scattering
+        Sound horizon radius at last scattering in Mpc.
         """
         ...
 

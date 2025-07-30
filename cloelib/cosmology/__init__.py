@@ -9,6 +9,6 @@ Supported External Codes:
 - **Perturbations**: `camb`, `class`, `HMCode2020emu`
 """
 
-__all__ = ['cosmology']#temporary fix, 'jax_cosmology']
+__all__ : list[str] = ['cosmology']
 
 from cloelib.cosmology import *

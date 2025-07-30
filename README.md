@@ -1,5 +1,43 @@
 # cloelib – The Library for the Cosmology Likelihood for Observables in Euclid  
 
+> ## 🚨⚠️ ATTENTION!
+> 
+> 🧹 A **Git history clean-up** is scheduled for **1st August 2025**.  
+> This operation will **rewrite commit history**. Please take action to avoid losing any work.
+> 
+> ---
+> 
+> ### 🦺 What you need to do *before* the change:
+> 
+> - If you have **uncommitted or unpushed work**, **back it up manually**  
+>   (e.g., copy the files to a separate folder outside your clone).
+> 
+> ---
+> 
+> ### ✅ What to do *after* the change:
+> 
+> 1. Delete your current clone:
+>    ```bash
+>    rm -rf cloelib/
+>    ```
+> 
+> 2. Clone the new repo:
+>    ```bash
+>    git clone git@github.com:cloe-org/cloelib.git
+>    ```
+> 
+> 3. Proceed through installation as described in the README.
+> 
+> 4. To port your previous code:
+>    - Create a **new branch**.
+>    - Copy over only the specific files you previously backed up.
+>    - **Do NOT copy the full old folder**, as this will also copy the old Git history.
+> 
+> ---
+> 
+> 📬 For any issues or questions, contact the maintainers.
+
+
 **cloelib** is a flexible and efficient library designed to compute cosmological observables for the **CLOE** (*Cosmology Likelihood for Observables in Euclid*) project. It is built for seamless integration with **Boltzmann solvers** and **JAX-based frameworks**, enabling automatic differentiation and modularity for the next generation of cosmological analyses.  
 
 We welcome feedback from the **Euclid community** and beyond to refine and improve this library!  
@@ -44,6 +82,8 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 
 We do not provide installation support for `PBJ` and `class`.
 
+Furthermore, it requires the installation of `pyinstrument` for the time profiling. It's an optional dependency and is not installed with the main cloelib package.
+
 ---
 
 ## 🚀 Installation  
@@ -56,7 +96,7 @@ pip install .
 You can also install (some) supported dependencies:
 
 ```sh
-pip install .[camb,hmcode2020emu,comet-emu]
+pip install .[camb,hmcode2020emu,comet-emu,pyinstrument]
 ```
 
 **Note:** Some shells or terminals may not interpret the brackets correctly. If you encounter an error, try adding quotation marks:
@@ -146,6 +186,9 @@ This project follows the [all-contributors](https://github.com/all-contributors/
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/caspervedder"><img src="https://avatars.githubusercontent.com/u/187176614?v=4?s=100" width="100px;" alt="Casper Vedder"/><br /><sub><b>Casper Vedder</b></sub></a><br /><a href="#code-caspervedder" title="Code">💻</a> <a href="#ideas-caspervedder" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-caspervedder" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://benbose.com/"><img src="https://avatars.githubusercontent.com/u/45853389?v=4?s=100" width="100px;" alt="Ben Bose"/><br /><sub><b>Ben Bose</b></sub></a><br /><a href="#code-nebblu" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/didamarkovic"><img src="https://avatars.githubusercontent.com/u/9950748?v=4?s=100" width="100px;" alt="Dida Markovic"/><br /><sub><b>Dida Markovic</b></sub></a><br /><a href="#ideas-didamarkovic" title="Ideas, Planning, & Feedback">🤔</a> <a href="#question-didamarkovic" title="Answering Questions">💬</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/m-aguena"><img src="https://avatars.githubusercontent.com/u/12038660?v=4?s=100" width="100px;" alt="Michel Aguena"/><br /><sub><b>Michel Aguena</b></sub></a><br /><a href="#code-m-aguena" title="Code">💻</a> <a href="#test-m-aguena" title="Tests">⚠️</a> <a href="#ideas-m-aguena" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ippoppi"><img src="https://avatars.githubusercontent.com/u/50492103?v=4?s=100" width="100px;" alt="Filippo Oppizzi"/><br /><sub><b>Filippo Oppizzi</b></sub></a><br /><a href="#code-ippoppi" title="Code">💻</a> <a href="#ideas-ippoppi" title="Ideas, Planning, & Feedback">🤔</a> <a href="#tool-ippoppi" title="Tools">🔧</a></td>
     </tr>
   </tbody>
 </table>

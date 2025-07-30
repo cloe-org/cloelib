@@ -8,8 +8,6 @@ All of the functions are completely differentiable.
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
-from cloelib.cosmology.cosmology import Perturbations
-#from cloelib.cosmology.cosmology import NonLinearPerturbations
 
 # General imports
 import jax.numpy as np
@@ -18,6 +16,7 @@ import jax.lax as lx
 import functools
 import interpax
 from quadax import quadgk
+from typing import Optional
 
 class JAXBackground:
     """Class to define background cosmology using JAX,inheriting from Cosmology parent class."""
@@ -55,12 +54,12 @@ class JAXBackground:
         self.Omega_nu0 = self.mnu/(93.14*(self.h)**2)#this is a semplification, we are assuming
         #neutrinos are non relativistic
         self.Omega_m0 = self.Omega_b0+self.Omega_cdm0+self.Omega_nu0
-        self.sigma_8 = As_to_sigma8_max_precision(self.As, self.Omega_m0,
-                                                  self.Omega_b0, self.h, self.ns, 0.,
-                                                  self.w0, self.wa)
+        sigma_8 = As_to_sigma8_max_precision(self.As, self.Omega_m0,
+                                             self.Omega_b0, self.h, self.ns, 0.,
+                                             self.w0, self.wa)
 
         # Initialize JaxBgk parameters
-        self.interface_args = {'JAXparams': {}}  # Use a dictionary for CLASS parameters
+        self.interface_args: dict = {'JAXparams': {}}  # Use a dictionary for CLASS parameters
         self.interface_args['JAXparams']['H0'] = self.H0
         self.interface_args['JAXparams']['Omega_b'] = self.Omega_b0
         self.interface_args['JAXparams']['Omega_cdm'] = self.Omega_cdm0
@@ -72,14 +71,9 @@ class JAXBackground:
         self.interface_args['JAXparams']['A_s'] = self.As
         self.interface_args['JAXparams']['w0_fld'] = self.w0 # or w0
         self.interface_args['JAXparams']['wa_fld'] = self.wa # or wa
-        self.interface_args['JAXparams']['sigma_8'] = self.sigma_8 # or wa
+        self.interface_args['JAXparams']['sigma_8'] = sigma_8
 
-    @property
-    def _interface_args(self) -> dict:
-        """Save internal structure format of interface codes."""
-        return self.interface_args
-
-    def hubble_parameter(self, zs, units: str = "km/s/Mpc") -> np.ndarray:
+    def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
         Return the Hubble parameter as a function of redshift.
 
@@ -159,7 +153,7 @@ class JAXBackground:
 
         return lx.switch(index, [positive_case, negative_case, default_case],p)
 
-    def angular_diameter_distance(self, zs) -> np.ndarray:
+    def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
         Calculate the angular diameter distance for given redshifts.
 
@@ -225,16 +219,14 @@ class JAXBackground:
 class JAXLinearPerturbations:
     """A wrapper for JAX linear perturbation calculations."""
 
-    def __init__(self, background: Background, redshifts: np.ndarray) -> None:
+    def __init__(self, background: Background) -> None:
         """
         Initialize the JAXLinearPerturbations class with a background instance.
 
         Args:
             background (Background): A Background instance.
-            redshifts (np.ndarray): Array of redshifts for the calculations.
         """
         self.background = background
-        self.z = redshifts
 
     def D_derivs(self, y, x):
         """Write documentation (TODO)."""
@@ -243,7 +235,7 @@ class JAXLinearPerturbations:
         r = 1.5 * self.background.Omega_m_a(x) / x / x
         return np.array([y[1], -q * y[1] + r * y[0]])
 
-    def growth_factor(self, zs):
+    def growth_factor(self, zs: np.ndarray, ks: Optional[np.ndarray] = None):
         """Compute the growth factor."""
         atab = np.logspace(-3., 0.0, 128)
 
@@ -259,7 +251,7 @@ class JAXLinearPerturbations:
 
         return result
 
-    def growth_rate(self, zs):
+    def growth_rate(self, zs: np.ndarray):
         """Compute the growth rate."""
         atab = np.logspace(-3., 0.0, 256)
 
@@ -468,7 +460,8 @@ class JAXLinearPerturbations:
         y = simps(int_sigma, np.log10(kmin), np.log10(kmax), N = 256)
         return 1.0 / (2.0 * np.pi**2.0) * y
 
-    def matter_power_spectrum(self, zs, ks,  hubble_units=False, k_hunit=False):
+    def matter_power_spectrum(self, zs: np.ndarray, ks: np.ndarray,
+                              hubble_units = False, k_hunit = False):
         r"""Compute the linear matter power spectrum.
 
         Parameters
@@ -503,7 +496,9 @@ class JAXLinearPerturbations:
         g = self.growth_factor(zs)
         t = self.transfer_Eisenstein_Hu(ks)
 
-        pknorm = self.background.sigma_8**2 / self.sigma8sqr()#previously self.sigmasqr(8.0)
+        sigma_8 = self.background.interface_args['JAXparams']['sigma_8']
+
+        pknorm = sigma_8**2 / self.sigma8sqr()#previously self.sigmasqr(8.0)
         # this means we have a 0.01% difference compared to the romberg calculation,
         # but it is much faster
 
@@ -524,12 +519,21 @@ class JAXLinearPerturbations:
         pk = pk * pknorm/factor
         return pk.squeeze()
 
-class JAXNonLinearPerturbations(Perturbations):
+class JAXNonLinearPerturbations:
     """Class for perturbations cosmology using JAX, inheriting from Cosmology parent class."""
 
-    def __init__(self, linearperturbations : Perturbations):
+    def __init__(self, background : Background):
         """Initialse the class instance."""
-        self.linearperturbations = linearperturbations
+        self.background = background
+        self.linearperturbations = JAXLinearPerturbations(background)
+
+    def growth_factor(self, zs: np.ndarray, ks: Optional[np.ndarray] = None) -> np.ndarray:
+        """Return the linear growth factor."""
+        return self.linearperturbations.growth_factor(zs, ks)
+    
+    def growth_rate(self, zs: np.ndarray) -> np.ndarray:
+        """Return the linear growth rate."""
+        return self.linearperturbations.growth_rate(zs)
 
     def _halofit_parameters(self, zs):
         """Compute the non linear scale, effective spectral index, spectral curvature."""
@@ -662,7 +666,8 @@ class JAXNonLinearPerturbations(Perturbations):
         pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
         return pk_nl.squeeze()
 
-    def matter_power_spectrum(self, zs, ks, hubble_units=False, k_hunit=False):
+    def matter_power_spectrum(self, zs: np.ndarray, ks: np.ndarray,
+                              hubble_units=False, k_hunit=False):
         """Compute the non-linear matter power spectrum.
 
         This function is just a wrapper over several nonlinear power spectra.

@@ -225,6 +225,17 @@
         "test",
         "ideas"
       ]
+    },
+    {
+      "login": "ippoppi",
+      "name": "Filippo Oppizzi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50492103?v=4",
+      "profile": "https://github.com/ippoppi",
+      "contributions": [
+        "code",
+        "ideas",
+        "tool"
+      ]
     }
   ]
 }

@@ -24,7 +24,7 @@ jobs:
 
       - name: Install prereq using pip
         run: |
-          pip install camb jax black
+          pip install camb jax classy black
 
       - name: Install dependencies
         run: python -m pip install .

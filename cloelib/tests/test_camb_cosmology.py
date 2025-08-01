@@ -29,7 +29,7 @@ def test_camb_background_required_methods():
 def test_camb_background_required_attributes(camb_background_instance):
     """Test that all required attributes are present."""
     attributes_required = {name for name, value in Background.__dict__.items() if not callable(value) and not name.startswith('_')}
-    contents = camb_background_instance.__dict__.items()
+    contents = ((name, getattr(camb_background_instance, name)) for name in dir(camb_background_instance))
     attributes_found = {name for name, value in contents if not callable(value) and not name.startswith('_')}
     assert attributes_required <= attributes_found
 

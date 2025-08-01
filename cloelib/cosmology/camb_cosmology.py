@@ -158,6 +158,11 @@ class CAMBBackground:
             self.results.get_Omega("baryon", z=zs)
         )
 
+    @property
+    def rdrag(self) -> float:
+        """Sound horizon radius at last scattering in Mpc."""
+        return self.results.get_derived_params()["rdrag"]
+
 
 class CAMBLinearPerturbations:
     """A wrapper for CAMB linear perturbation calculations."""

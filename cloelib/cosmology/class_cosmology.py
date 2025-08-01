@@ -160,6 +160,12 @@ class CLASSBackground:
         """
         return np.array([self.results.Om_b(z) for z in zs])
 
+    @property
+    def rdrag(self) -> float:
+        """Sound horizon radius at last scattering in Mpc."""
+        return self.results.rs_drag()
+
+
 class CLASSLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
 
@@ -356,4 +362,3 @@ class CLASSNonLinearPerturbations:
         """
         return np.array([self.results.scale_independent_growth_factor_f(zi)
                 for zi in self.z])
-

@@ -105,6 +105,12 @@ class Background(Protocol):
         """Calculate the angular diameter distance for given redshifts."""
         ...
 
+    @property
+    def rdrag(self) -> float:
+        """Sound horizon radius at last scattering in Mpc."""
+        ...
+
+
 @runtime_checkable
 class Perturbations(Protocol):
     """Protocol for Perturbation cosmology class."""

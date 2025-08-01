@@ -8,6 +8,7 @@ All of the functions are completely differentiable.
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.derived_cosmology import rdrag_fitting_function
 
 # General imports
 import jax.numpy as np
@@ -215,6 +216,12 @@ class JAXBackground:
         """Write documentation (TODO)."""
         OmDE = 1. - self.Omega_m0 - self.Omega_k0
         return OmDE * np.exp(self.f_de(a)) / self.Esqr(a)
+
+    @property
+    def rdrag(self) -> float:
+        """Sound horizon radius at last scattering."""
+        return rdrag_fitting_function(self)
+
 
 class JAXLinearPerturbations:
     """A wrapper for JAX linear perturbation calculations."""

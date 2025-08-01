@@ -47,7 +47,7 @@ def dV_dzdO(background, zs: np.ndarray) -> np.ndarray:
         units.SPEED_OF_LIGHT
         / 1.0e3
         * background.comoving_distance(zs) ** 2.0
-        * background.hubble_parameter(zs)
+        / background.hubble_parameter(zs)
     )
 
 def rdrag_fitting_function(background, neff=3.046):

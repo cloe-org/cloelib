@@ -29,7 +29,7 @@ def test_jax_background_required_methods():
 def test_jax_background_required_attributes(jax_background_instance):
     """Test that all required attributes are present."""
     attributes_required = {name for name, value in Background.__dict__.items() if not callable(value) and not name.startswith('_')}
-    contents = jax_background_instance.__dict__.items()
+    contents = ((name, getattr(camb_background_instance, name)) for name in dir(jax_background_instance))
     attributes_found = {name for name, value in contents if not callable(value) and not name.startswith('_')}
     assert attributes_required <= attributes_found
 

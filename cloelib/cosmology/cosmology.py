@@ -1,6 +1,6 @@
 """Protocols for Background and Perturbation cosmology classes.."""
 # General imports
-from typing import Protocol, Union, TypeVar, runtime_checkable
+from typing import Protocol, Union, TypeVar, Optional, runtime_checkable
 
 import numpy as np  # type: ignore
 import jax.numpy as jnp
@@ -77,7 +77,7 @@ class Background(Protocol):
         ...
 
     @property
-    def _interface_args(self) -> dict:
+    def interface_args(self) -> dict:
         """Save internal structure format of possible interface codes."""
         ...
     
@@ -124,7 +124,7 @@ class Perturbations(Protocol):
         """Calculate the growth factor for given redshifts and wavenumbers."""
         ...
 
-    def growth_rate(self, zs: T, ks: T) -> T:
+    def growth_rate(self, zs: Optional[T] = None, ks: Optional[T] = None) -> T:
         """Calculate the growth rate for given redshifts and wavenumbers."""
         ...
 

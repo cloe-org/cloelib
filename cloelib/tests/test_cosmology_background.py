@@ -27,7 +27,7 @@ def test_background_required_attributes():
     attributes_found = {name for name, value in contents if not callable(value)
                         and not name.startswith('_')}
     attributes_required = {'wa', 'As', 'w0', 'Omega_k0', 'h', 'Omega_b0', 'gamma_MG',
-                           'mnu', 'Omega_cdm0', 'H0', 'ns', 'interface_args'}
+                           'mnu', 'Omega_cdm0', 'H0', 'ns', 'interface_args', 'rdrag'}
     assert attributes_required == attributes_found
 
 

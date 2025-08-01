@@ -1,43 +1,5 @@
 # cloelib – The Library for the Cosmology Likelihood for Observables in Euclid  
 
-> ## 🚨⚠️ ATTENTION!
-> 
-> 🧹 A **Git history clean-up** is scheduled for **1st August 2025**.  
-> This operation will **rewrite commit history**. Please take action to avoid losing any work.
-> 
-> ---
-> 
-> ### 🦺 What you need to do *before* the change:
-> 
-> - If you have **uncommitted or unpushed work**, **back it up manually**  
->   (e.g., copy the files to a separate folder outside your clone).
-> 
-> ---
-> 
-> ### ✅ What to do *after* the change:
-> 
-> 1. Delete your current clone:
->    ```bash
->    rm -rf cloelib/
->    ```
-> 
-> 2. Clone the new repo:
->    ```bash
->    git clone git@github.com:cloe-org/cloelib.git
->    ```
-> 
-> 3. Proceed through installation as described in the README.
-> 
-> 4. To port your previous code:
->    - Create a **new branch**.
->    - Copy over only the specific files you previously backed up.
->    - **Do NOT copy the full old folder**, as this will also copy the old Git history.
-> 
-> ---
-> 
-> 📬 For any issues or questions, contact the maintainers.
-
-
 **cloelib** is a flexible and efficient library designed to compute cosmological observables for the **CLOE** (*Cosmology Likelihood for Observables in Euclid*) project. It is built for seamless integration with **Boltzmann solvers** and **JAX-based frameworks**, enabling automatic differentiation and modularity for the next generation of cosmological analyses.  
 
 We welcome feedback from the **Euclid community** and beyond to refine and improve this library!  

@@ -42,6 +42,12 @@ class ShearTracer:
         if 0. in z:
             raise ValueError("One of the z array elements is equal to zero, breaking Limber integration.")
         self.perturbations = perturbations
+        ####
+        if hasattr(self.perturbations, 'sigma_lensing') and callable(getattr(self.perturbations, 'sigma_lensing')):
+            self.sigma = self.perturbations.sigma_lensing
+        else:
+            self.sigma = lambda  *args, **kwargs: 1.0  # Default to no modification if sigma_lensing is not available
+        ####
         self.background = self.perturbations.background
         self.z = z
         self.nuisance_params = nuisance_params
@@ -156,6 +162,9 @@ class ShearTracer:
         Omega_m0 = self.background.Omega_m(0.0)
         factor = 3/2*(self.background.H0/c_0)**2*Omega_m0\
         *(1+z)*self.background.comoving_distance(z)
+        ### add for modified lensing potential ###
+        factor *= self.sigma(z)
+        ##########################################
         efficiency = self.get_lensing_efficiency(z)
         return np.einsum('ij, j->ij', efficiency, factor)
 

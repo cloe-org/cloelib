@@ -47,7 +47,7 @@ class CAMBBackground:
         self.wa = wa
         self.gamma_MG = gamma_MG
         self.mnu = mnu
-        self.Omega_m0 = self.Omega_m(np.array([0.]))[0] 
+
 
         # Initialize CAMB parameters
         self.interface_args: dict = {'CAMBparams': camb.CAMBparams()}
@@ -66,6 +66,8 @@ class CAMBBackground:
         
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args['CAMBparams'])
+        # tried to introduce Omega_m0 similar to JAXcosmology 
+        #self.Omega_m0 = self.Omega_m(np.array([0.]))[0] 
         
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:

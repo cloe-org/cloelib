@@ -94,7 +94,7 @@ class MGrowthLinearPerturbations:
 
         # Build background dict for MGrowth
         background ={
-            'Omega_m': self.background.Omega_m0,
+            'Omega_m': self.background.Omega_m(np.array([0.]))[0], 
             'h' : self.background.h,
             'w0': getattr(self.background, 'w0', -1.0),
             'wa': getattr(self.background, 'wa', 0.0),

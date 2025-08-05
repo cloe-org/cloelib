@@ -103,7 +103,7 @@ class MGrowthLinearPerturbations:
 
         # Build background dict for MGrowth
         background ={
-            'Omega_m': self.background.Omega_m(np.array([0.]))[0],
+            'Omega_m': self.background.Omega_m0,
             'h' : self.background.h,
             'w0': getattr(self.background, 'w0', -1.0),
             'wa': getattr(self.background, 'wa', 0.0),
@@ -164,12 +164,17 @@ class MGrowthLinearPerturbations:
         omegaL = (1.-omega0) * self.z_sorted**(3.*(1.+w0+wa)) * np.exp(3.*(-1.+1./(1.+self.z_sorted))*wa)
         omegaL0 = (1.-omega0) 
         E = np.sqrt(omega0*self.z_sorted**3 + omegaL)
-        mu_de = 1. + sigma0*(omegaL/E**2)/omegaL0
-        mu_interpolator = interpolate.interp1d(self.z_sorted, mu_de, bounds_error=False,
+        sigma_de = 1. + sigma0*(omegaL/E**2)/omegaL0
+        sigma_interpolator = interpolate.interp1d(self.z_sorted, sigma_de, bounds_error=False,
                 kind='cubic',
-                fill_value=(mu_de[0], mu_de[-1])) 
+                fill_value=(sigma_de[0], sigma_de[-1])) 
         # sigma as a function of z (redshift)
-        return  mu_interpolator  
+        return  sigma_interpolator  
+        #sigma_de_k = np.repeat(sigma_de[:, None], self.k_len, axis=1)
+        #sigma_interpolator = interpolate.RectBivariateSpline(self.z_sorted, self.k, sigma_de_k, kx=1, ky=1)
+        ## sigma as a function of z (redshift) and k
+        #return  sigma_interpolator 
+
 
     def _compute_growth_w0wacdm(self):    
         D_raw, f_raw = self.mg_cosmo.growth_parameters()

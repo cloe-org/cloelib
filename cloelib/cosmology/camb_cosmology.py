@@ -65,6 +65,7 @@ class CAMBBackground:
         
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args['CAMBparams'])
+        self.Omega_m0 = self.Omega_m(0.0)
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

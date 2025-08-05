@@ -75,15 +75,23 @@ class ShearTracer:
         -------
         window_IA: np.ndarray
         """
-        Omega_m0 = self.background.Omega_m(0.0)
+        #Omega_m0 = self.background.Omega_m(0.0)
+        Omega_m0 = self.background.Omega_m0
         Hz = self.perturbations.background.hubble_parameter(z)
         Dz = self.perturbations.growth_factor(self.perturbations.z, self.perturbations.k)[:,1]
         #TODO discuss whether we want growth factor to output a 1D or a 2D array
+        # We need 2D for scale-dependent theories !!!
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]
         Eta_IA = self.nuisance_params["EtaIA"]
         factor = -Hz/c_0*A_IA*C_IA*Omega_m0*(1+z)**Eta_IA/Dz
+        # dimensions (bin_i, z)
         return np.einsum('ij, j->ij', self.dndz_shifted, factor)
+        #factor_ = -Hz/c_0*A_IA*C_IA*Omega_m0*(1+z)**Eta_IA
+        # dimension (z, k)
+        #factor = factor_[:, None]/Dz
+        # dimensions (bin_i, z, k)
+        #return np.einsum('ij, jk->ijk', self.dndz_shifted, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
         """Compute the lensing efficiency in a redshift bin."""
@@ -159,9 +167,15 @@ class ShearTracer:
             1-D Numpy array of shear kernel values for specified bin
             at specified scale for the redshifts defined in z
         """
-        Omega_m0 = self.background.Omega_m(0.0)
+        #Omega_m0 = self.background.Omega_m(0.0)
+        Omega_m0 = self.background.Omega_m0
         factor = 3/2*(self.background.H0/c_0)**2*Omega_m0\
         *(1+z)*self.background.comoving_distance(z)
+        ### add for modified lensing potential ###
+        #factor *= self.sigma(z, self.perturbations.k)
+        ##########################################
+        #efficiency = self.get_lensing_efficiency(z)
+        #return np.einsum('ij, jk->ijk', efficiency, factor)
         ### add for modified lensing potential ###
         factor *= self.sigma(z)
         ##########################################
@@ -185,6 +199,7 @@ class ShearTracer:
         total_window = self.get_window_lensing(z) + self.get_window_IA(z)
         # Apply multiplicative bias
         total_window *= (1 + np.array(self.m_bias)[:, None])
+        # dimensions bin_i, z, (later add k)
         return total_window
 
 class PositionsTracer:
@@ -355,7 +370,8 @@ class PositionsTracer:
             1-D Numpy array of shear kernel values for specified bin
             at specified scale for the redshifts defined in z
         """
-        Omega_m0 = self.background.Omega_m(0.0)
+        #Omega_m0 = self.background.Omega_m(0.0)
+        Omega_m0 = self.background.Omega_m0
         factor = 3/2*(self.background.H0/c_0)**2*Omega_m0\
         *(1+z)\
             *self.background.comoving_distance(z)

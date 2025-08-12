@@ -60,6 +60,8 @@ class CLASSBackground:
 
         if np.sum(self.mnu) > 0 and self.N_mnu == 0:
             raise ValueError("If mnu is provided, N_mnu must be greater than 0.")
+        if self.N_mnu > 0 and np.sum(self.mnu) == 0:
+            raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
 
         # Initialize CLASS parameters
         self.interface_args: dict = {'CLASSparams': {}}  # Use a dictionary for CLASS parameters

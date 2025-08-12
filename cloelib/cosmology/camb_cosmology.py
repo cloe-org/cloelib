@@ -64,6 +64,8 @@ class CAMBBackground:
 
         if mnu_arg > 0 and self.N_mnu == 0:
             raise ValueError("If mnu is provided, N_mnu must be greater than 0.")
+        if self.N_mnu > 0 and np.sum(self.mnu) == 0:
+            raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
 
         # Initialize CAMB parameters
         self.interface_args: dict = {'CAMBparams': camb.CAMBparams()}

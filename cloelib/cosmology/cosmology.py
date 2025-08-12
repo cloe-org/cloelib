@@ -92,7 +92,7 @@ class Background(Protocol):
         ...
 
     @property
-    def _interface_args(self) -> dict:
+    def interface_args(self) -> dict:
         """Save internal structure format of possible interface codes."""
         ...
     
@@ -120,6 +120,12 @@ class Background(Protocol):
         """Calculate the angular diameter distance for given redshifts."""
         ...
 
+    @property
+    def rdrag(self) -> float:
+        """Sound horizon radius at last scattering in Mpc."""
+        ...
+
+
 @runtime_checkable
 class Perturbations(Protocol):
     """Protocol for Perturbation cosmology class."""
@@ -133,7 +139,7 @@ class Perturbations(Protocol):
         """Calculate the growth factor for given redshifts and wavenumbers."""
         ...
 
-    def growth_rate(self, zs: T, ks: T) -> T:
+    def growth_rate(self, zs: Optional[T] = None, ks: Optional[T] = None) -> T:
         """Calculate the growth rate for given redshifts and wavenumbers."""
         ...
 

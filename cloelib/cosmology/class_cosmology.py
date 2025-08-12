@@ -62,7 +62,7 @@ class CLASSBackground:
             raise ValueError("If mnu is provided, N_mnu must be greater than 0.")
 
         # Initialize CLASS parameters
-        self.interface_args = {'CLASSparams': {}}  # Use a dictionary for CLASS parameters
+        self.interface_args: dict = {'CLASSparams': {}}  # Use a dictionary for CLASS parameters
         self.interface_args['CLASSparams']['H0'] = self.H0
         self.interface_args['CLASSparams']['omega_b'] = self.Omega_b0 * (self.h)**2
         self.interface_args['CLASSparams']['omega_cdm'] = self.Omega_cdm0 * (self.h)**2
@@ -239,6 +239,11 @@ class CLASSBackground:
         """
         return np.array([self.results.Om_b(z) for z in zs])
 
+    @property
+    def rdrag(self) -> float:
+        """Sound horizon radius at last scattering in Mpc."""
+        return self.results.rs_drag()
+
 
 class CLASSLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
@@ -251,7 +256,7 @@ class CLASSLinearPerturbations:
         self.results = None  # Store CLASS results
 
         # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background._interface_args)
+        self.interface_args = copy.deepcopy(self.background.interface_args)
         self.interface_args['CLASSparams']['output'] = 'mPk, mTk'
         self.interface_args['CLASSparams']['P_k_max_1/Mpc'] = self.kmax
         self.interface_args['CLASSparams']['k_per_decade_for_bao'] = 70
@@ -295,7 +300,8 @@ class CLASSLinearPerturbations:
         """
         if hubble_units == True or k_hunit == True:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
+        self.Pk_linear = np.array(
+            [[self.results.pk(ki, zi) for ki in ks] for zi in zs]) # type: ignore[union-attr]
         # To match array convention of CAMB
         return self.Pk_linear
 
@@ -336,8 +342,7 @@ class CLASSLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        return [self.results.scale_independent_growth_factor_f(zi)
-                for zi in self.z]
+        return np.array([self.results.scale_independent_growth_factor_f(zi) for zi in self.z]) # type: ignore[union-attr]
 
 class CLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
@@ -350,8 +355,11 @@ class CLASSNonLinearPerturbations:
         self.z = redshifts
         self.kmax = 100
 
+        if nonlinear_model == None:
+            nonlinear_model = 'none'
+
         # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background._interface_args)
+        self.interface_args = copy.deepcopy(self.background.interface_args)
         self.interface_args['CLASSparams']['output'] = 'mPk, mTk'
         self.interface_args['CLASSparams']['P_k_max_1/Mpc'] = self.kmax
         self.interface_args['CLASSparams']['k_per_decade_for_bao'] = 70
@@ -419,7 +427,7 @@ class CLASSNonLinearPerturbations:
             The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
-                        self.matter_power_spectrum(0.0, ks))
+                        self.matter_power_spectrum(np.zeros_like(zs), ks))
 
         return D_z_k
     
@@ -432,6 +440,5 @@ class CLASSNonLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        return [self.results.scale_independent_growth_factor_f(zi)
-                for zi in self.z]
-
+        return np.array([self.results.scale_independent_growth_factor_f(zi)
+                for zi in self.z])

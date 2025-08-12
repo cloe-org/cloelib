@@ -1,6 +1,6 @@
 """Protocols for Background and Perturbation cosmology classes.."""
 # General imports
-from typing import Protocol, Union, Sequence, TypeVar, runtime_checkable
+from typing import Protocol, Union, Sequence, Optional, TypeVar, runtime_checkable
 
 import numpy as np  # type: ignore
 import jax.numpy as jnp

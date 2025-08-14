@@ -87,6 +87,66 @@ def test_camb_background_wa(camb_background_instance):
     assert isinstance(camb_background_instance.wa, float)
     assert camb_background_instance.wa == 0.
 
+def test_camb_background_N_mnu(camb_background_instance):
+    assert hasattr(camb_background_instance, 'N_mnu')
+    assert isinstance(camb_background_instance.N_mnu, int)
+    assert camb_background_instance.N_mnu == 0
+
+def test_camb_background_N_ur(camb_background_instance):
+    assert hasattr(camb_background_instance, 'N_ur')
+    assert isinstance(camb_background_instance.N_ur, float)
+    assert camb_background_instance.N_ur == 3.044
+
+def test_camb_background_N_eff(camb_background_instance):
+    assert hasattr(camb_background_instance, 'N_eff')
+    assert isinstance(camb_background_instance.N_eff, float)
+    assert camb_background_instance.N_eff == 3.044
+
+def test_camb_set_neutrino_parameters_degenerate():
+    bg = CAMBBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
+                        Omega_k0=0., As=2e-9, ns=0.96, mnu=0.3, w0=-1, wa=0, gamma_MG=0, N_mnu=3)
+    bg._set_neutrino_parameters()
+    params = bg.interface_args['CAMBparams']
+    assert params.nu_mass_eigenstates == 3
+    assert list(params.nu_mass_fractions) == [1/3]*3
+    assert list(params.nu_mass_degeneracies) == [1.0]*3
+    assert list(params.nu_mass_numbers) == [1]*3
+
+def test_camb_set_neutrino_parameters_non_degenerate():
+    bg = CAMBBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
+                        Omega_k0=0., As=2e-9, ns=0.96, mnu=np.array([0.05, 0.03]), w0=-1, wa=0, gamma_MG=0, N_mnu=2)
+    bg._set_neutrino_parameters()
+    params = bg.interface_args['CAMBparams']
+    assert params.nu_mass_eigenstates == 2
+    assert params.Transfer.accurate_massive_neutrinos is True
+    assert np.isclose(sum(list(params.nu_mass_fractions)), 1.0)
+    assert list(params.nu_mass_degeneracies) == [1.0]*2
+    assert list(params.nu_mass_numbers) == [1]*2
+
+def test_camb_set_neutrino_parameters_zero():
+    bg = CAMBBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
+                        Omega_k0=0., As=2e-9, ns=0.96, mnu=0.0, w0=-1, wa=0, gamma_MG=0, N_mnu=0)
+    bg._set_neutrino_parameters()
+    params = bg.interface_args['CAMBparams']
+    assert params.nu_mass_eigenstates == 0
+    assert list(params.nu_mass_fractions) == []
+    assert list(params.nu_mass_degeneracies) == []
+    assert list(params.nu_mass_numbers) == []
+
+def test_camb_set_neutrino_parameters_wrong_length():
+    with pytest.raises(ValueError):
+        bg = CAMBBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
+                            Omega_k0=0., As=2e-9, ns=0.96, mnu=[0.02, 0.04], w0=-1,
+                            wa=0, gamma_MG=0, N_mnu=3)
+        bg._set_neutrino_parameters()
+
+def test_camb_set_neutrino_parameters_wrong_type():
+    with pytest.raises(TypeError):
+        bg = CAMBBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
+                            Omega_k0=0., As=2e-9, ns=0.96, mnu=None, w0=-1,
+                            wa=0, gamma_MG=0, N_mnu=1)
+        bg._set_neutrino_parameters()
+
 @pytest.fixture
 def zs(scope="module"):
     return np.linspace(0, 2, 20)

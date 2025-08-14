@@ -142,7 +142,7 @@ class CAMBBackground:
         """
         if isinstance(self.mnu, float) and self.N_mnu >= 1:
             # user gave a total mnu but wants to use a degenerate mass case
-            self.interface_args['CAMBparams'].nu_mass_eigenstates = 1
+            self.interface_args['CAMBparams'].nu_mass_eigenstates = self.N_mnu
             mass_fraction = 1.0 / self.N_mnu
             self.interface_args['CAMBparams'].nu_mass_fractions = [mass_fraction] * self.N_mnu
             self.interface_args['CAMBparams'].nu_mass_degeneracies = [1.0] * self.N_mnu

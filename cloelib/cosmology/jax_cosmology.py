@@ -17,14 +17,15 @@ import jax.lax as lx
 import functools
 import interpax
 from quadax import quadgk
-from typing import Optional
+from typing import Optional, Union, Sequence
 
 class JAXBackground:
     """Class to define background cosmology using JAX,inheriting from Cosmology parent class."""
 
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
-                 As: float, ns: float, mnu: float,
-                 w0: float, wa: float, gamma_MG: float):
+                 As: float, ns: float, mnu: Union[float, Sequence[float], np.ndarray],
+                 w0: float, wa: float, gamma_MG: float,N_mnu: int, N_ur: Optional[float] = None,
+                 ) -> None:
         """
         Initialize the JAXBackground class.
 
@@ -35,11 +36,15 @@ class JAXBackground:
             Omega_k0(float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
-            mnu (float): Total sum of neutrino mass in [eV].
+            mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
+                Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the dark energy equation of state.
             gamma_MG (float): Modified gravity growth parameter.
-
+            N_mnu (int): Number of massive neutrino species.
+                Note that JaxBackground does not support N_mnu != 0.
+            N_ur (Optional[float]): Effective number of ultra-relativistic species.
+                If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
         """
         self.H0 = H0
         self.h = self.H0 / 100
@@ -51,7 +56,10 @@ class JAXBackground:
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = gamma_MG
-        self.mnu = mnu
+        self.N_mnu = N_mnu
+        self.mnu = self._set_neutrino_mass(mnu, N_mnu)
+        # This does not affect anything here, so if varied, raises an error
+        self._provided_N_ur = N_ur
         self.Omega_nu0 = self.mnu/(93.14*(self.h)**2)#this is a semplification, we are assuming
         #neutrinos are non relativistic
         self.Omega_m0 = self.Omega_b0+self.Omega_cdm0+self.Omega_nu0
@@ -73,6 +81,47 @@ class JAXBackground:
         self.interface_args['JAXparams']['w0_fld'] = self.w0 # or w0
         self.interface_args['JAXparams']['wa_fld'] = self.wa # or wa
         self.interface_args['JAXparams']['sigma_8'] = sigma_8
+
+    @property
+    def N_ur(self) -> None:
+        """Effective number of ultra-relativistic species.
+
+        Checks if N_ur is provided and raises an error if so.
+        FIXME: Not implemented, so this will always return None.
+        """
+        if self._provided_N_ur is not None:
+            raise ValueError("N_ur is not supported in JAXBackground. ")
+        return None
+
+    @property
+    def N_eff(self) -> float:
+        """Effective number of relativistic species.
+
+        FIXME: Not implemented, so this will always return the default 3.044.
+        """
+        return 3.044
+
+    def _set_neutrino_mass(self, mnu: Union[float, Sequence[float], np.ndarray], N_mnu: int) -> float:
+        """Set the neutrino masses for Jax Cosmology.
+
+        Placeholder function for future more complex implementation.
+        At the moment only sums if mass is an array and does checks
+        Note that the N_mnu has no impact in this cosmology backend for now.
+        """
+
+        # checks if mnu is provided and N_mnu is greater than 0
+        if N_mnu > 0 and mnu == 0:
+            raise ValueError("If N_mnu is not zero, mnu must be greater than 0.")
+
+        if isinstance(mnu, (np.ndarray, Sequence)):
+            # user passed an explicit list/array of masses
+            if len(mnu) != N_mnu:
+                # added for consistency
+                raise ValueError(f"Expected {N_mnu} individual neutrino masses, "
+                                     f"but got {len(mnu)}: {mnu}")
+            return np.sum(mnu)
+        else:
+            return mnu
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

@@ -16,7 +16,7 @@ def jax_background_instance(scope="module"):
     jax_instance = JAXBackground(H0=H0, Omega_b0=Omega_b0, Omega_cdm0=Omega_cdm0, 
                                    Omega_k0=0.,
                                    As=2e-9, ns=0.96, mnu=0., w0=-1.0, wa=0.0, 
-                                   gamma_MG=0.0)
+                                   gamma_MG=0.0, N_mnu=0,)
     return jax_instance
 
 def test_jax_background_required_methods():

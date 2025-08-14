@@ -108,7 +108,6 @@ class JAXBackground:
         At the moment only sums if mass is an array and does checks
         Note that the N_mnu has no impact in this cosmology backend for now.
         """
-
         # checks if mnu is provided and N_mnu is greater than 0
         if N_mnu > 0 and mnu == 0:
             raise ValueError("If N_mnu is not zero, mnu must be greater than 0.")

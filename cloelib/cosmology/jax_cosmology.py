@@ -118,7 +118,7 @@ class JAXBackground:
                 # added for consistency
                 raise ValueError(f"Expected {N_mnu} individual neutrino masses, "
                                      f"but got {len(mnu)}: {mnu}")
-            return float(np.sum(mnu))
+            return float(np.sum(np.array(mnu)))
         else:
             return mnu
 

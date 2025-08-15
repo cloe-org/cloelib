@@ -16,10 +16,13 @@ import jax.numpy as np
 import numpy as onp
 import jax
 import jax.lax as lx
+from jax.experimental import checkify as chk
 import functools
 import interpax
 from quadax import quadgk
 from typing import Optional, Union, Sequence
+
+ArrayLike = Union[float, Sequence[float], onp.ndarray, np.ndarray]
 
 class JAXBackground:
     """Class to define background cosmology using JAX,inheriting from Cosmology parent class."""
@@ -104,27 +107,35 @@ class JAXBackground:
         """
         return 3.044
 
-    def _set_neutrino_mass(self, mnu: Union[float, Sequence[float], np.ndarray, onp.ndarray], N_mnu: int) -> float:
+    def _set_neutrino_mass(self, mnu: ArrayLike, N_mnu: int) -> np.ndarray:
         """Set the neutrino masses for Jax Cosmology.
 
         Placeholder function for future more complex implementation.
-        At the moment only sums if mass is an array and does checks
+        At the moment only sums if mass is an array and does checks.
         Note that the N_mnu has no impact in this cosmology backend for now.
+
+        Args:
+            mnu: Neutrino mass (can be a single value or an array).
+            N_mnu: Number of neutrino species.
+
+        Returns:
+            Array: Total neutrino mass.
         """
-        if isinstance(mnu, (Sequence, list, tuple)) and not isinstance(mnu, (np.ndarray, onp.ndarray)):
-            if len(mnu) != N_mnu:
-                raise ValueError(f"Expected {N_mnu} individual neutrino masses, but got {len(mnu)}: {mnu}")
-            sum_masses = float(np.sum(np.array(mnu)).item())
-        elif isinstance(mnu, (np.ndarray, onp.ndarray)):
-            if mnu.shape[0] != N_mnu:
-                raise ValueError(f"Expected {N_mnu} individual neutrino masses, but got {len(mnu)}: {mnu}")
-            sum_masses = float(np.sum(mnu).item())
-        else:
-            sum_masses = float(mnu)
-        # checks if mnu is provided and N_mnu is greater than 0
-        if N_mnu > 0 and sum_masses == 0:
-            raise ValueError("If N_mnu is not zero, mnu must be greater than 0.")
-        return sum_masses
+        def core(mnu, N_mnu):
+            m = np.asarray(mnu, dtype=float)
+            s = np.sum(np.ravel(m))         # scalar or vector handled uniformly
+            size = m.size
+
+            # JIT-safe assertions (no Python control flow):
+            chk.check((size == 1) | (size == N_mnu), "size must be 1 or N_mnu")
+            chk.check((N_mnu == 0) | (s != 0.0), "if N_mnu>0 then sum(mnu)>0")
+
+            return s
+
+        err, out = chk.checkify(core)(mnu, N_mnu)
+        # host-side throw, still no Python if
+        err.throw()
+        return out
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

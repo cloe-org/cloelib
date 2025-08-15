@@ -12,6 +12,8 @@ from cloelib.cosmology.derived_cosmology import rdrag_fitting_function
 
 # General imports
 import jax.numpy as np
+# needed for type checking
+import numpy as onp
 import jax
 import jax.lax as lx
 import functools
@@ -77,6 +79,7 @@ class JAXBackground:
         self.interface_args['JAXparams']['Omega_nu0'] = self.Omega_nu0
         self.interface_args['JAXparams']['n_s'] = self.ns
         self.interface_args['JAXparams']['m_ncdm'] = self.mnu
+        self.interface_args['JAXparams']['N_ncdm'] = self.N_mnu
         self.interface_args['JAXparams']['A_s'] = self.As
         self.interface_args['JAXparams']['w0_fld'] = self.w0 # or w0
         self.interface_args['JAXparams']['wa_fld'] = self.wa # or wa
@@ -101,26 +104,27 @@ class JAXBackground:
         """
         return 3.044
 
-    def _set_neutrino_mass(self, mnu: Union[float, Sequence[float], np.ndarray], N_mnu: int) -> float:
+    def _set_neutrino_mass(self, mnu: Union[float, Sequence[float], np.ndarray, onp.ndarray], N_mnu: int) -> float:
         """Set the neutrino masses for Jax Cosmology.
 
         Placeholder function for future more complex implementation.
         At the moment only sums if mass is an array and does checks
         Note that the N_mnu has no impact in this cosmology backend for now.
         """
-        # checks if mnu is provided and N_mnu is greater than 0
-        if N_mnu > 0 and mnu == 0:
-            raise ValueError("If N_mnu is not zero, mnu must be greater than 0.")
-
-        if isinstance(mnu, (np.ndarray, Sequence)):
-            # user passed an explicit list/array of masses
+        if isinstance(mnu, (Sequence, list, tuple)) and not isinstance(mnu, (np.ndarray, onp.ndarray)):
             if len(mnu) != N_mnu:
-                # added for consistency
-                raise ValueError(f"Expected {N_mnu} individual neutrino masses, "
-                                     f"but got {len(mnu)}: {mnu}")
-            return float(np.sum(np.array(mnu)))
+                raise ValueError(f"Expected {N_mnu} individual neutrino masses, but got {len(mnu)}: {mnu}")
+            sum_masses = float(np.sum(np.array(mnu)).item())
+        elif isinstance(mnu, (np.ndarray, onp.ndarray)):
+            if mnu.shape[0] != N_mnu:
+                raise ValueError(f"Expected {N_mnu} individual neutrino masses, but got {len(mnu)}: {mnu}")
+            sum_masses = float(np.sum(mnu).item())
         else:
-            return mnu
+            sum_masses = float(mnu)
+        # checks if mnu is provided and N_mnu is greater than 0
+        if N_mnu > 0 and sum_masses == 0:
+            raise ValueError("If N_mnu is not zero, mnu must be greater than 0.")
+        return sum_masses
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

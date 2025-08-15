@@ -291,8 +291,8 @@ def _set_neutrino_masses(background: Background) -> float:
 
     This method adds neutrino masses to the provided dictionary.
     It also ensures consistency with the background cosmology.
-    HMcode2020Emu only supports a single species of neutrinos, so this method
-    throws an error if multiple neutrino species are provided.
+    HMcode2020Emu only supports a single species massive of neutrinos, so this method
+    throws an error if multiple massive neutrino species are provided.
 
     Parameters
     ----------

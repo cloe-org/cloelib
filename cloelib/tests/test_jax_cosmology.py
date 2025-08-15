@@ -59,7 +59,7 @@ def test_jax_background_Omega_cdm0(jax_background_instance):
 
 def test_jax_background_mnu(jax_background_instance):
     assert hasattr(jax_background_instance, 'mnu')
-    assert isinstance(jax_background_instance.mnu, float)
+    assert isinstance(jax_background_instance.mnu, np.ndarray)
     assert jax_background_instance.mnu == 0.
 
 def test_jax_background_Omega_k0(jax_background_instance):

@@ -23,14 +23,10 @@ except ImportError:
 """
 
 class CAMBNonLinearFLAMINGOPerturbations:
-    """A wrapper for CAMB nonlinear perturbation calculations with FLAMINGO correction for baryonic feedback"""
+    """A wrapper for CAMB nonlinear perturbation calculations with FLAMINGO correction for baryonic feedback."""
 
     def __init__(self, background: Background, redshifts: np.ndarray,
-                  fgas_sigma: float, Mstar_sigma: float, jet_fraction: float, nonlinear_model: Optional[str] = None,) -> None:                 
-        try:
-            self.flamingo_emulator =  fre.FlamingoBaryonResponseEmulator()
-        except ImportError:
-            raise ImportError("FlamingoBaryonResponseEmulator could not be initialized.")                                     
+                  fgas_sigma: float, Mstar_sigma: float, jet_fraction: float, nonlinear_model: Optional[str] = None,) -> None:                                                   
         """
         Initialize the CAMBNonLinearPerturbations with FlamingoBaryonRespnseEmulator instance.
 
@@ -55,6 +51,11 @@ class CAMBNonLinearFLAMINGOPerturbations:
         nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
                 Defaults to None, which uses the CAMB default model.
         """
+        try:
+            self.flamingo_emulator =  fre.FlamingoBaryonResponseEmulator()
+        except ImportError:
+            raise ImportError("FlamingoBaryonResponseEmulator could not be initialized.")   
+        
         self.background = background
         self.kmax = 500
         self.z = redshifts

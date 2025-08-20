@@ -24,6 +24,7 @@ jobs:
 
       - name: Install external prereq using pip
         run: |
+          pip install astropy
           pip install camb jax classy
 
       - name: Install dependencies
@@ -38,7 +39,7 @@ jobs:
         run: python -m pip install classy
 
       - name: Run tests
-        run: pytest
+        run: pytest cloelib/tests/
 
       - name: Run mypy
         run: mypy

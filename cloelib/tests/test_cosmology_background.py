@@ -18,7 +18,7 @@ def test_background_required_methods():
     methods_found = {name for name, value in contents if callable(value)
                      and not name.startswith('_')}
     methods_required = {'comoving_distance', 'hubble_parameter', 'angular_diameter_distance',
-                        'Omega_b', 'Omega_m', 'transverse_comoving_distance'}
+                        'Omega_b', 'Omega_m', 'Omega_m_cb', 'transverse_comoving_distance'}
     assert methods_required == methods_found
 
 

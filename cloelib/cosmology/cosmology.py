@@ -89,6 +89,10 @@ class Background(Protocol):
         """Compute the matter density as a function of redshift."""
         ...
 
+    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+        """Computes the matter density without neutrinos as a function of redshift."""
+        ...
+
     def hubble_parameter(self, zs: T, units: str = "km/s/Mpc") -> T:
         """Retrieve the hubble parameter as a function of redshift."""
         ...
@@ -130,4 +134,8 @@ class Perturbations(Protocol):
 
     def matter_power_spectrum(self, zs: T, ks: T) -> T:
         """Retrieve the matter power spectrum."""
+        ...
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        """Retrieves the matter power spectrum without neutrinos."""
         ...

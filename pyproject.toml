@@ -24,6 +24,8 @@ pytest = "8.3.5"
 pytest-cov = "6.1.1"
 pytest-pydocstyle = "2.4.0"
 mypy = "1.17"
+pyinstrument = "^4.6.2"
+elmapa = { git = "https://github.com/astro-ph/elmapa.git" }
 
 [tool.poetry.extras]
 camb = ["camb"]
@@ -43,4 +45,3 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 addopts = "--verbose --pydocstyle --cov=cloelib"
-

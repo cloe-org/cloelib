@@ -3,6 +3,33 @@ import pytest
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.cosmology.ReACTEmu_cosmology import MGemuNonlinearBoost, BoostedPerturbations
 
+import urllib.request
+import zipfile
+from pathlib import Path
+
+
+# -------------------------------
+# Download utility 
+# -------------------------------
+
+VALIDATION_URL = "https://drive.google.com/uc?id=16IftTSG1g7bVGhaajWJPSAln06XVOijI"
+
+
+def ensure_validation_data() -> Path:
+    """Download & extract validation_data.zip into the same directory as this test file."""
+    here = Path(__file__).parent
+    zip_path = here / "validation_data.zip"
+    extract_dir = here  # extract right here, so we get here/validation_data/...
+
+    if not (extract_dir / "validation_data").exists():
+        if not zip_path.exists():
+            print(f"Downloading validation dataset from {VALIDATION_URL} → {zip_path}")
+            urllib.request.urlretrieve(VALIDATION_URL, zip_path)
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            zf.extractall(extract_dir)
+
+    return extract_dir / "validation_data"
+
 
 # -------------------------------
 # Fixtures using actual CAMB class
@@ -91,12 +118,18 @@ def test_boosted_scalar_input():
 # -------------------------
 # Validation against external data
 # -------------------------
-@pytest.mark.parametrize("model_name,mgparam,file", [
-    ("fr", 1e-5, "validation_data/fR_validation_data.dat"),
-    ("dgp", 0.1, "validation_data/dgp_validation_data.dat"),
+@pytest.mark.parametrize("model_name,mgparam,filename", [
+    ("fr",  1e-5, "fR_validation_data.dat"),
+    ("dgp", 0.1,  "dgp_validation_data.dat"),
 ])
 
-def test_mg_boost_matches_validation(camb_background, camb_linear, model_name, mgparam, file):
+
+def test_mg_boost_matches_validation(camb_background, camb_linear, model_name, mgparam, filename):
+    
+    # Get external data directory (download & unzip if needed)
+    data_dir = ensure_validation_data()
+    data_path = data_dir / filename
+
     linear_pert, zs = camb_linear
 
     # Map the single scalar 'mgparam' into the new dict the class expects.
@@ -118,7 +151,8 @@ def test_mg_boost_matches_validation(camb_background, camb_linear, model_name, m
 
 
     # Load validation data
-    data = np.loadtxt(file)
+    data = np.loadtxt(str(data_path))
+
 
     # Original k in h/Mpc (from data)
     k_raw = data[:, 0]

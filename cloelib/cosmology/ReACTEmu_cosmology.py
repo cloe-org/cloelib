@@ -62,9 +62,11 @@ class MGemuNonlinearBoost:
         """
 
         self.background = background
+        self.gravity_model = gravity_model    # <-- set it
+
 
         # Cosmology import 
-        MG_emu = mgemu.MG_boost(model = gravity_model)
+        MG_emu = mgemu.MG_boost(model = self.gravity_model)
 
         # Setup redshifts to compute boost at 
         redshift_max = 2. # hard-coded for now as ReACT emulators will have this by default.

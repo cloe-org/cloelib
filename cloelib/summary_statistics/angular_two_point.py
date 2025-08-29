@@ -150,6 +150,7 @@ class AngularTwoPoint:
         c_0 * Cl_integration(WT1, WT2, Pkl, H, chi2, weights)
         * dz
         * prefactor_cell[:, None, None])
+        self.C_ell_calc = C_ell_calc
 
         n_bin = self.tracer1.n_z_bins
         C_ell_out = {}
@@ -194,7 +195,14 @@ class AngularTwoPoint:
             (ShearTracer, ShearTracer): she_she_rule,
         }
 
-        rule_fn = tracer_rules.get((type(self.tracer1), type(self.tracer2)))
+        # normalize the key so (A, B) and (B, A) are both supported
+        key = (type(self.tracer1), type(self.tracer2))
+        if key not in tracer_rules and key[::-1] in tracer_rules:
+            key = key[::-1]
+
+        rule_fn = tracer_rules.get(key)
+        if rule_fn is None:
+            raise ValueError(f"No rule defined for tracers {type(self.tracer1)}, {type(self.tracer2)}")
 
         # Vectorized update of C_ell_out using dictionary comprehensions
         C_ell_out = {

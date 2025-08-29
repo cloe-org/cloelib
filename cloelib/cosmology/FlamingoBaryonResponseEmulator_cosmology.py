@@ -113,7 +113,9 @@ class CAMBNonLinearFLAMINGOPerturbations:
             nonlinear=True, extrap_kmax=self.kmax,
             hubble_units=hubble_units, k_hunit=k_hunit,
             var1='delta_tot', var2='delta_tot').P(zs, ks) 
-        flamingo_correction = self.baryonic_suppression(zs, ks,k_hunit=k_hunit)    
+        flamingo_correction = self.baryonic_suppression(zs, ks,k_hunit=k_hunit) 
+        #The emulator sometimes return unphysical negative supression values for the highest wave numbers
+        flamingo_correction[flamingo_correction< 0] = 1e-2
         return pk_values*flamingo_correction        
 
     def growth_rate(self) -> np.ndarray:
@@ -176,14 +178,10 @@ class CAMBNonLinearFLAMINGOPerturbations:
         -------
         baryon_ratio: np.array
             The baryonic response at the modes k specified in the input.
-
-        Raises
-        ------
-        ValueError
-            When the input redshift is not in the range [0, 3].
-
         """        
-        response = np.ones((len(zs),len(ks)))
+        zs = np.atleast_1d(zs)
+        ks = np.atleast_1d(ks)        
+        response = np.ones((zs.size, ks.size))
         if k_hunit:      
             for i in range(len(zs)): #FLAMINGO emulator only takes one redshift per call
             	response[i,:] = self.flamingo_emulator.predict(ks, zs[i], self.fgas, self.Mstar, self.jet)     
@@ -218,14 +216,10 @@ class CAMBNonLinearFLAMINGOPerturbations:
         baryon_ratio_variance: np.array
             The estimated variance of the baryonic response from the emulator
             at the modes k specified in the input.
-
-        Raises
-        ------
-        ValueError
-            When the input redshift is not in the range [0, 3].
-
         """ 
-        response = np.ones((len(zs),len(ks)))             
+        zs = np.atleast_1d(zs)
+        ks = np.atleast_1d(ks)        
+        response = np.ones((zs.size, ks.size))          
         if k_hunit:      
             for i in range(len(zs)): #FLAMINGO emulator only takes one redshift per call
             	response[i,:] = self.flamingo_emulator.predict_with_variance(ks, zs[i], self.fgas, self.Mstar, self.jet)     

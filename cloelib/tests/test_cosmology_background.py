@@ -4,7 +4,7 @@ from numpy.testing import assert_raises, assert_equal, assert_allclose
 
 from cloelib.cosmology.cosmology import Background
 from cloelib.cosmology.camb_cosmology import CAMBBackground
-from cloelib.cosmology.class_cosmology import CLASSBackground
+#from cloelib.cosmology.class_cosmology import CLASSBackground
 from cloelib.cosmology.jax_cosmology import JAXBackground
 from cloelib.cosmology import derived_cosmology
 

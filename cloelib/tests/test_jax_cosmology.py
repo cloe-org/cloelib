@@ -1,5 +1,5 @@
 import pytest
-import jax.numpy as np
+import jax.numpy as jnp
 
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.cosmology.jax_cosmology import JAXBackground, JAXLinearPerturbations, JAXNonLinearPerturbations
@@ -59,7 +59,7 @@ def test_jax_background_Omega_cdm0(jax_background_instance):
 
 def test_jax_background_mnu(jax_background_instance):
     assert hasattr(jax_background_instance, 'mnu')
-    assert isinstance(jax_background_instance.mnu, np.ndarray)
+    assert isinstance(jax_background_instance.mnu, jnp.ndarray)
     assert jax_background_instance.mnu == 0.
 
 def test_jax_background_Omega_k0(jax_background_instance):
@@ -114,9 +114,9 @@ def test_set_neutrino_mass_degenerate():
 
 def test_set_neutrino_mass_array():
     bg = JAXBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                       Omega_k0=0., As=2e-9, ns=0.96, mnu=np.array([0.05, 0.03]), w0=-1, wa=0,
+                       Omega_k0=0., As=2e-9, ns=0.96, mnu=jnp.array([0.05, 0.03]), w0=-1, wa=0,
                        gamma_MG=0, N_mnu=2)
-    result = bg._set_neutrino_mass(np.array([0.05, 0.03]), 2)
+    result = bg._set_neutrino_mass(jnp.array([0.05, 0.03]), 2)
     assert float(result) == pytest.approx(0.08)
 
 def test_set_neutrino_mass_sequence():
@@ -141,67 +141,67 @@ def test_set_neutrino_mass_zero_mass_with_species():
 
 @pytest.fixture
 def zs(scope="module"):
-    return np.linspace(0, 2, 20)
+    return jnp.linspace(0, 2, 20)
 
 def test_jax_omega_m(jax_background_instance, zs):
-    """Test Omega_m returns an np.ndarray object of correct size."""
+    """Test Omega_m returns an jnp.ndarray object of correct size."""
     assert hasattr(jax_background_instance, 'Omega_m')
     assert callable(jax_background_instance.Omega_m)
     result = jax_background_instance.Omega_m(zs)
-    assert isinstance(result, np.ndarray)
+    assert isinstance(result, jnp.ndarray)
     assert len(result) == len(zs)
 
 def test_jax_omega_b(jax_background_instance, zs):
     """Test Omega_b. 
 
-    Check the method returns a np.ndarray of correct size,
+    Check the method returns a jnp.ndarray of correct size,
     and at redshift zero the value is almost equal to Omega_b0.
     """
     assert hasattr(jax_background_instance, 'Omega_b')
     assert callable(jax_background_instance.Omega_b)
     result = jax_background_instance.Omega_b(zs)
-    assert isinstance(result, np.ndarray)
+    assert isinstance(result, jnp.ndarray)
     assert len(result) == len(zs)
-    assert np.abs(result[0] - jax_background_instance.Omega_b0) < 1e-4
+    assert jnp.abs(result[0] - jax_background_instance.Omega_b0) < 1e-4
 
 @pytest.mark.parametrize("units", ["1/Mpc", "km/s/Mpc"])
 def test_jax_hubble_parameter(jax_background_instance, zs, units):
     """
     Test hubble_parameter.
 
-    Check the method returns a np.ndarray of correct size,
+    Check the method returns a jnp.ndarray of correct size,
     and at redshift zero the value is almost equal to H0.
     """
     assert hasattr(jax_background_instance, 'hubble_parameter')
     assert callable(jax_background_instance.hubble_parameter)
     result = jax_background_instance.hubble_parameter(zs, units)
-    assert isinstance(result, np.ndarray)
+    assert isinstance(result, jnp.ndarray)
     assert len(result) == len(zs)
     if units == "km/s/Mpc":
-        assert np.abs(result[0] - jax_background_instance.H0) < 1e-4
+        assert jnp.abs(result[0] - jax_background_instance.H0) < 1e-4
 
 def test_jax_comoving_distance(jax_background_instance, zs):
-    """Test comoving_distance returns a np.ndarray of correct size."""
+    """Test comoving_distance returns a jnp.ndarray of correct size."""
     assert hasattr(jax_background_instance, 'comoving_distance')
     assert callable(jax_background_instance.comoving_distance)
     result = jax_background_instance.comoving_distance(zs)
-    assert isinstance(result, np.ndarray)
+    assert isinstance(result, jnp.ndarray)
     assert len(result) == len(zs)
 
 def test_jax_transverse_comoving_distance(jax_background_instance, zs):
-    """Test transverse_comoving_distance returns a np.ndarray of correct size."""
+    """Test transverse_comoving_distance returns a jnp.ndarray of correct size."""
     assert hasattr(jax_background_instance, 'transverse_comoving_distance')
     assert callable(jax_background_instance.transverse_comoving_distance)
     result = jax_background_instance.transverse_comoving_distance(zs)
-    assert isinstance(result, np.ndarray)
+    assert isinstance(result, jnp.ndarray)
     assert len(result) == len(zs)
 
 def test_jax_angular_diameter_distance(jax_background_instance, zs):
-    """Test angular_diameter_distance returns a np.ndarray of correct size."""
+    """Test angular_diameter_distance returns a jnp.ndarray of correct size."""
     assert hasattr(jax_background_instance, 'angular_diameter_distance')
     assert callable(jax_background_instance.angular_diameter_distance)
     result = jax_background_instance.angular_diameter_distance(zs)
-    assert isinstance(result, np.ndarray)
+    assert isinstance(result, jnp.ndarray)
     assert len(result) == len(zs)
 
 @pytest.fixture
@@ -219,7 +219,7 @@ def test_jax_perturbation_implements_protocol(jax_perturbation_instances, key):
 
 @pytest.fixture
 def ks(scope="module"):
-    return np.logspace(np.log10(1e-4), np.log10(5), 10)
+    return jnp.logspace(jnp.log10(1e-4), jnp.log10(5), 10)
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_jax_matter_power_spectrum(jax_perturbation_instances, key, zs, ks):
@@ -228,7 +228,7 @@ def test_jax_matter_power_spectrum(jax_perturbation_instances, key, zs, ks):
     assert hasattr(jax_instance, 'matter_power_spectrum')
     assert callable(jax_instance.matter_power_spectrum)
     result = jax_instance.matter_power_spectrum(zs, ks)
-    assert isinstance(result, np.ndarray)
+    assert isinstance(result, jnp.ndarray)
     assert result.ndim == 2
     assert result.shape == (len(zs), len(ks))
 
@@ -239,7 +239,7 @@ def test_jax_growth_factor(jax_perturbation_instances, key, zs, ks):
     assert hasattr(jax_instance, 'growth_factor')
     assert callable(jax_instance.growth_factor)
     result = jax_instance.growth_factor(zs, ks)
-    assert isinstance(result, np.ndarray)
+    assert isinstance(result, jnp.ndarray)
     # allow the following test after jax cosmology homogenization
     # assert result.ndim == 2
     # assert result.shape == (len(zs), len(ks))
@@ -251,6 +251,6 @@ def test_jax_growth_rate(jax_perturbation_instances, key, zs, ks):
     assert hasattr(jax_instance, 'growth_rate')
     assert callable(jax_instance.growth_rate)
     result = jax_instance.growth_rate(zs)
-    assert isinstance(result, np.ndarray)
+    assert isinstance(result, jnp.ndarray)
     assert result.ndim == 1
     

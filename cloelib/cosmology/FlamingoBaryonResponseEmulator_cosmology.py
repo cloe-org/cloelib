@@ -180,7 +180,7 @@ class CAMBNonLinearFLAMINGOPerturbations:
         zs = np.atleast_1d(zs)
         ks = np.atleast_1d(ks)        
         response = np.ones((zs.size, ks.size))
-        if k_hunit:      
+        if k_hunit:
             for i in range(len(zs)): #FLAMINGO emulator only takes one redshift per call
                 if zs[i] <= 3.:
                     response[i,:] = self.flamingo_emulator.predict(ks, zs[i], self.fgas, self.Mstar, self.jet)
@@ -188,7 +188,7 @@ class CAMBNonLinearFLAMINGOPerturbations:
                     response[i,ks>10**1.5] = self.flamingo_emulator.predict(10**1.5, zs[i], self.fgas, self.Mstar, self.jet)
             response[zs>3,:] = 1. #At redshifts beyond which the emulator is trained the response is set to 1. 
             return response	     
-        else:
+        else:      
             for i in range(len(zs)): #FLAMINGO emulator only takes one redshift per call
                 if zs[i] <= 3.:
                     response[i,:] = self.flamingo_emulator.predict(ks/self.background.H0*100, zs[i], self.fgas, self.Mstar, self.jet) 
@@ -197,7 +197,7 @@ class CAMBNonLinearFLAMINGOPerturbations:
             response[zs>3,:] = 1.           
             return response
             
-    def baryonic_suppression_with_variance(self, zs: np.array, ks: np.array, float, k_hunit=False) -> tuple[np.array, np.array]:
+    def baryonic_suppression_with_variance(self, zs: np.array, ks: np.array, k_hunit=False) -> tuple[np.array, np.array]:
         """
         Return the predicted baryonic response as well as the variance around the prediction for a set of comoving modes, redshift, and galaxy formation model (three parameters).
 
@@ -225,13 +225,22 @@ class CAMBNonLinearFLAMINGOPerturbations:
         """ 
         zs = np.atleast_1d(zs)
         ks = np.atleast_1d(ks)        
-        response = np.ones((zs.size, ks.size))          
-        if k_hunit:      
+        response = np.ones((zs.size, ks.size)) 
+        variance = np.ones((zs.size, ks.size))       
+        if k_hunit:
             for i in range(len(zs)): #FLAMINGO emulator only takes one redshift per call
-            	response[i,:] = self.flamingo_emulator.predict_with_variance(ks, zs[i], self.fgas, self.Mstar, self.jet)     
-            return response	     
-        else:
+                if zs[i] <= 3.:
+                    response[i,:], variance[i,:] = self.flamingo_emulator.predict_with_variance(ks, zs[i], self.fgas, self.Mstar, self.jet)
+                    #Values at larger k range than on which the emulator was trained are set to the maximal wave number on which it was trained
+                    response[i,ks>10**1.5], variance[i,ks>10**1.5]  = self.flamingo_emulator.predict_with_variance(10**1.5, zs[i], self.fgas, self.Mstar, self.jet)
+            response[zs>3,:] = 1. #At redshifts beyond which the emulator is trained the response is set to 1. 
+            return response,variance	     
+        else:      
             for i in range(len(zs)): #FLAMINGO emulator only takes one redshift per call
-                response[i,:] = self.flamingo_emulator.predict_with_variance(ks*self.background.H0/100, zs[i], self.fgas, self.Mstar, self.jet) 
-            return response        
+                if zs[i] <= 3.:
+                    response[i,:], variance[i,:]  = self.flamingo_emulator.predict_with_variance(ks/self.background.H0*100, zs[i], self.fgas, self.Mstar, self.jet) 
+                    #Values at larger k range than on which the emulator was trained are set to the maximal wave number on which it was trained
+                    response[i,ks/self.background.H0*100>10**1.5], variance[i,ks/self.background.H0*100>10**1.5]  = self.flamingo_emulator.predict_with_variance(10**1.5, zs[i], self.fgas, self.Mstar, self.jet)                
+            response[zs>3,:] = 1.           
+            return response,variance
 

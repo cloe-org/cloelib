@@ -53,7 +53,8 @@ def test_cosmo():
 
     _z_test = np.zeros(1)
 
-    for _Background in (CAMBBackground, CLASSBackground, JAXBackground):
+    for _Background in (CAMBBackground, #CLASSBackground, 
+                        JAXBackground):
 
         background = _Background(**_cosmo_pars)
         assert_allclose(

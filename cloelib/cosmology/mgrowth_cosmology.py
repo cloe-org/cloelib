@@ -1,3 +1,4 @@
+"""Implementation of Linear Perturbation in extended cosmologies."""
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
@@ -23,14 +24,14 @@ except ImportError:
 """
 
 class MGrowthLinearPerturbations:
+    """Class for linear perturbations using MGrowth, inheriting from Perturbations parent class."""
+
     def __init__(self, background : Background, 
                  base_linear_perturbations: Perturbations, 
                  #redshifts: np.ndarray, 
                  gravity_model: str, 
                  mgpars: dict):
-        """
-        Initializes the MGLinearPerturbations class to compute modified gravity (MG)
-        linear growth and rescaled matter power spectrum.
+        """Initialize the MGLinearPerturbations class to compute linear growth in modified gravity (MG).
 
         This class augments a standard LCDM linear perturbation object with
         modifications to the growth factor and power spectrum using the MGrowth
@@ -42,7 +43,7 @@ class MGrowthLinearPerturbations:
             A cosmological background instance containing parameters such as
             Omega_m, h, w0, and wa.
 
-        base_linear_perturbations: Perturbations
+        base_linear_perturbations : Perturbations
             A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline.
 
         zs : np.ndarray
@@ -53,25 +54,19 @@ class MGrowthLinearPerturbations:
             Examples: 'w0wacdm', 'fr', 'dgp', 'ide', 'gamma', 'gammaz', 'musigma-de'.
 
         mgpars : dictionary of the extended parameters
-            Primary MG parameter 
             Examples: fR0 for f(R), omegarc for DGP, gamma0/gamma1 for Linder models, mu0/Sigma0 or binned values for mu-Sigma, xi for IDE,
             scrrening parameters etc.
-
-
 
         Notes
         -----
         This class ensures:
         - Redshifts are reversed to match MGrowth's expected ascending scale factors.
-        - An interpolator for the gravitaional potential modification is computed.
+        - An interpolator for the gravitational potential modification is computed.
         - If the model is scale-dependent (like f(R)), the returned growth factor D(z, k)
-          is reshaped and ordered to match the base perturbation object's (z, k) convention.
+        is reshaped and ordered to match the base perturbation object's (z, k) convention.
         - The LCDM growth used for rescaling is also computed using MGrowth to maintain
-          internal consistency.
-
+        internal consistency.
         """
-
-
         assert background.Omega_k0 == 0, 'Non flat geometries not supported'
 
 
@@ -212,7 +207,7 @@ class MGrowthLinearPerturbations:
         return np.repeat(D_raw[::-1, None], self.k_len, axis=1), np.repeat(f_raw[::-1, None], self.k_len, axis=1)  
 
     def _compute_growth(self, bg_dict):
-        """Handles model-specific MGrowth and LCDM growth evaluation."""
+        """Handle model-specific MGrowth and LCDM growth evaluation."""
         D_mg, f_mg = self._compute_growth_generic()
 
         # Get LCDM growth and construct array over k to be applied as normalisation
@@ -232,58 +227,56 @@ class MGrowthLinearPerturbations:
 
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        """
-        Calculates the growth factor for given redshifts and wavenumbers,
-        and normalizes as for :math:`D(z)/D(0)`.
+        """Calculate the growth factor D(z, k) normalized to D(0).
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         zs : array_like
             Redshifts at which to calculate the growth factor.
         ks : array_like
             Wavenumbers at which to calculate the growth factor.
 
-        Returns:
-        --------
+        Returns
+        -------
         np.ndarray
             The growth factor as a function of redshift and wavenumber.
         """
-        
-
         return self.dz_norm_dz0_interp(zs, ks)
 
     def growth_rate(self, zs, ks) -> np.ndarray:
-        """
-        Calculates the growth rate for given redshifts and wavenumbers.
+        """Calculate the growth rate f(z, k) for given redshifts and wavenumbers.
 
-        Returns:
-        --------
+        Parameters
+        ----------
+        zs : array_like
+            Redshifts at which to calculate the growth rate.
+        ks : array_like
+            Wavenumbers at which to calculate the growth rate.
+
+        Returns
+        -------
         np.ndarray
             The growth rate as a function of redshift and wavenumber.
         """
-
         return self.fz_interp(zs, ks)
 
         
         
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-        r"""Computes the linear matter power spectrum.
+        """Compute the linear matter power spectrum.
 
         Parameters
         ----------
-        ks: numpy.ndarray
-            Wave number in h Mpc^{-1}
-
-        zs: numpy.ndarray
-            redshifts
+        ks : numpy.ndarray
+            Wavenumber in h Mpc^{-1}.
+        zs : numpy.ndarray
+            Redshifts.
 
         Returns
         -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
-
+        np.ndarray
+            Linear matter power spectrum at the specified redshifts and scales.
         """
         ps_base = self.base.matter_power_spectrum(0., ks)
         return self.dz_norm_lcdm_interp(zs, ks)**2 * ps_base

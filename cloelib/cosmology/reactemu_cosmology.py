@@ -1,3 +1,4 @@
+"""Implementation of Nonlinear Perturbation in extended cosmologies with ReACT."""
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
@@ -17,21 +18,17 @@ import MGEmu as mgemu
 
 
 class MGemuNonlinearBoost:
+    """Class for nonlinear boost using MGEmu: Boost = PNL_MG/PNL_ΛCDM."""
+
     def __init__(self, background : Background,
                  linearperturbations: Perturbations, zs: np.ndarray, 
                  gravity_model: str = 'fr',
                   mgpars: dict = {}):
-        
+        """Initialize the MGemuNonlinearBoost class to compute modified gravity (MG) nonlinear boost from emulators based on the Halo Model Reaction (https://arxiv.org/abs/1812.05594).
 
-        """
-        Initializes the MGemuNonlinearBoost class to compute modified gravity (MG)
-        nonlinear boost from emulators based on the Halo Model Reaction (https://arxiv.org/abs/1812.05594)
-
-        These emulators were created based on training data produced using ReACT (https://arxiv.org/abs/2005.12184)
-
+        These emulators were created based on training data produced using ReACT (https://arxiv.org/abs/2005.12184).
         This class allows for f(R), DGP, IDE, and other parameterized gravity models 
-
-        See https://github.com/nebblu/MGEmus/tree/main for more details 
+        See https://github.com/nebblu/MGEmus/tree/main for more details. 
 
         Parameters
         ----------
@@ -40,7 +37,7 @@ class MGemuNonlinearBoost:
             Omega_b0, Omega_cdm0, H0, ns, mnu, w0, and wa.
 
         linearperturbations : Perturbations
-            A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline.
+            A standard linear perturbation object (e.g. from CAMB) used as the ΛCDM baseline.
 
         zs : np.ndarray
             Array of redshifts at which to compute the MG corrections.
@@ -55,7 +52,6 @@ class MGemuNonlinearBoost:
             mu0/Sigma0.
 
         """
-
         self.background = background
 
         # Cosmology imports
@@ -185,7 +181,7 @@ class MGemuNonlinearBoost:
 
 
     def mg_spectrum_boost(self, zs, ks) -> np.ndarray:
-        r"""Computes the nonlinear matter power spectrum boost.
+        """Compute the nonlinear matter power spectrum boost.
 
         Parameters
         ----------
@@ -202,29 +198,38 @@ class MGemuNonlinearBoost:
             and redshift
 
         """
-
         return self.MGboost_interp(zs, ks)
 
 
 
 class BoostedPerturbations:
+    """Class for nonlinear perturbations using MGEmu, inheriting from Perturbations parent class."""
+
     def __init__(self, base_lin_perturbations, 
                  base_perturbations, boost_interp):
-        """
-        Applies the nonlinear boost to the LCDM nonlinear spectrum given in base_perturbations 
+        """Apply the nonlinear boost to the ΛCDM nonlinear spectrum given in base_perturbations.
+
+        This initializes the BoostedPerturbations class, which applies a nonlinear boost 
+        to the ΛCDM nonlinear spectrum provided by the base_perturbations object. The boost 
+        is determined by the boost_interp function or interpolator.
 
         Parameters
         ----------
-        base_perturbations : object
-            An object with a `matter_power_spectrum(z, k)` method.
-        
-        boost_interp : callable
-            A function or interpolator B(z, k) that returns the nonlinear boost.
-        """
+        base_lin_perturbations : object
+            An object representing the linear perturbations, which may include methods 
+            like `sigma_lensing` for lensing calculations.
 
+        base_perturbations : object
+            An object with a `matter_power_spectrum(z, k)` method that provides the 
+            nonlinear matter power spectrum for the ΛCDM model.
+
+        boost_interp : callable
+            A function or interpolator B(z, k) that returns the nonlinear boost 
+            to be applied to the ΛCDM spectrum.
+        """
         self.background = base_perturbations.background
         assert self.background.Omega_k0 == 0, 'Non flat geometries not supported'
-        assert self.background.w0==-1.0 and self.background.wa==0.0, 'All emulators are trained for LCDM background'
+        assert self.background.w0==-1.0 and self.background.wa==0.0, 'All emulators are trained for ΛCDM background'
 
 
         self.base_lin = base_lin_perturbations
@@ -240,8 +245,7 @@ class BoostedPerturbations:
         self.z = getattr(base_perturbations, 'z', None)
 
     def matter_power_spectrum(self, z, k):
-        """
-        Returns boosted nonlinear matter power spectrum P(k, z)
+        """Return boosted nonlinear matter power spectrum P(k, z).
 
         Parameters:
             z : float or np.ndarray
@@ -276,8 +280,7 @@ class BoostedPerturbations:
     
   
     def growth_factor(self, zs, ks) -> np.ndarray:
-        r"""
-        Calculate the growth factor for given redshifts and wavenumbers.
+        r"""Calculate the growth factor for given redshifts and wavenumbers.
 
         .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\

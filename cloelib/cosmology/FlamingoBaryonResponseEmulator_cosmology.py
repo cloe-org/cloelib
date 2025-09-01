@@ -114,8 +114,6 @@ class CAMBNonLinearFLAMINGOPerturbations:
             hubble_units=hubble_units, k_hunit=k_hunit,
             var1='delta_tot', var2='delta_tot').P(zs, ks) 
         flamingo_correction = self.baryonic_suppression(zs, ks,k_hunit=k_hunit) 
-        #The emulator sometimes return unphysical negative supression values for the highest wave numbers
-        flamingo_correction[flamingo_correction< 0] = 1e-2
         return pk_values*flamingo_correction        
 
     def growth_rate(self) -> np.ndarray:
@@ -184,11 +182,19 @@ class CAMBNonLinearFLAMINGOPerturbations:
         response = np.ones((zs.size, ks.size))
         if k_hunit:      
             for i in range(len(zs)): #FLAMINGO emulator only takes one redshift per call
-            	response[i,:] = self.flamingo_emulator.predict(ks, zs[i], self.fgas, self.Mstar, self.jet)     
+                if zs[i] <= 3.:
+                    response[i,:] = self.flamingo_emulator.predict(ks, zs[i], self.fgas, self.Mstar, self.jet)
+                    #Values at larger k range than on which the emulator was trained are set to the maximal wave number on which it was trained
+                    response[i,ks>10**1.5] = self.flamingo_emulator.predict(10**1.5, zs[i], self.fgas, self.Mstar, self.jet)
+            response[zs>3,:] = 1. #At redshifts beyond which the emulator is trained the response is set to 1. 
             return response	     
         else:
             for i in range(len(zs)): #FLAMINGO emulator only takes one redshift per call
-                response[i,:] = self.flamingo_emulator.predict(ks*self.background.H0/100, zs[i], self.fgas, self.Mstar, self.jet) 
+                if zs[i] <= 3.:
+                    response[i,:] = self.flamingo_emulator.predict(ks/self.background.H0*100, zs[i], self.fgas, self.Mstar, self.jet) 
+                    #Values at larger k range than on which the emulator was trained are set to the maximal wave number on which it was trained
+                    response[i,ks/self.background.H0*100>10**1.5] = self.flamingo_emulator.predict(10**1.5, zs[i], self.fgas, self.Mstar, self.jet)                
+            response[zs>3,:] = 1.           
             return response
             
     def baryonic_suppression_with_variance(self, zs: np.array, ks: np.array, float, k_hunit=False) -> tuple[np.array, np.array]:

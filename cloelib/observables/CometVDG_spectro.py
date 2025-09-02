@@ -65,6 +65,7 @@ class CometVDG_SpectroPower:
         It also ensures consistency with the background cosmology.
         Comet only supports a single species of neutrinos, so this method
         throws an error if multiple neutrino species are provided.
+        Note that Comet supports mnu=0.0 (N_mnu=0).
 
         Parameters
         ----------
@@ -72,15 +73,9 @@ class CometVDG_SpectroPower:
             Dictionary to which neutrino parameters will be added
         """
         if background.N_mnu > 1:
-            raise ValueError("Comet only supports a single species of neutrinos. "
+            raise ValueError("Comet only supports max a single species of neutrinos. "
                              "Set N_mnu=1 in the Background class.")
-        if not np.isclose(background.N_ur, 2.0308, rtol=1e-4):
-            raise ValueError(
-                "Comet only supports a fixed number of relativistic species (N_ur=2.0308). "
-                "Set N_ur=2.0308 in the Background class."
-                "[Note that Comet actually sets N_ur=2.0298,"
-                "this will be fixed in a future release.]"
-                )
+
         if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
             raise ValueError(
                 "Comet only supports a fixed number of effective" 
@@ -88,7 +83,10 @@ class CometVDG_SpectroPower:
                 "Ensure that N_eff=3.044 in the Background class."
             )
         if isinstance(background.mnu, Sequence) or isinstance(background.mnu, np.ndarray):
-            mnu_arg = float(np.sum(background.mnu))
+            raise ValueError(
+                "Comet only supports a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
         else:
             mnu_arg = float(background.mnu)
         # returns the neutrino mass in eV

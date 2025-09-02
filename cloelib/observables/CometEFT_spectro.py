@@ -74,7 +74,7 @@ class CometEFT_SpectroPower:
             Dictionary to which neutrino parameters will be added
         """
         if background.N_mnu > 1:
-            raise ValueError("Comet only supports a single species of neutrinos. "
+            raise ValueError("Comet supports max a single species of neutrinos. "
                              "Set N_mnu=1 in the Background class.")
         if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
             raise ValueError(

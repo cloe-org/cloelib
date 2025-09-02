@@ -59,6 +59,9 @@ def test_cosmo():
         assert_allclose(
             derived_cosmology.rho_crit(background, _z_test), 1.27203085e11, rtol=2e-05
         )
+        assert_allclose(
+            derived_cosmology.dV_dzdO(background, _z_test+1), 2.853696e10, rtol=3e-04
+        )
 
         # to be fixed in another PR
         if _Background != JAXBackground:

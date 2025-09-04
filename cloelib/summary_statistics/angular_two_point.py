@@ -24,7 +24,7 @@ from elmapa.angular_two_point import Map
 """
 
 @jax.jit
-def Cl_integration(WT1, WT2, Pkl, H, chi2, weights):
+def Cl_integration(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray:
     """
     Perform the integration to compute the angular power spectrum Cl.
 
@@ -46,7 +46,7 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2, weights):
     return np.einsum('iz,jz,lz,z,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2, weights)
 
 @jax.jit
-def Pkl_interp(k_l, z_l, ks, zs, Pk):
+def Pkl_interp(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
     """
     Interpolate the matter power spectrum on a Limber grid.
 
@@ -111,7 +111,7 @@ class AngularTwoPoint:
         return Pkl
         
     @profile_function
-    def get_Cl(self, ells, nl, ks)  -> jax.numpy.ndarray:
+    def get_Cl(self, ells, nl, ks)  -> dict:
         """
         Compute the angular power spectrum Cl using Limber approximation.
 
@@ -157,7 +157,7 @@ class AngularTwoPoint:
 
         # Prepare dictionary with tuples as keys for the output
         # This is to match the expected output format of the mixing matrices
-        # in the euclidlib internal format (elmapa)
+        # in the cosmolib format
 
         # Keep in mind that the output is a dictionary with keys
         # like ('POS', 'POS', i, j) or ('SHE', 'SHE', i, j) where i and j
@@ -212,8 +212,8 @@ class AngularTwoPoint:
             for k, v in rule_fn(C_ell_calc, i, j).items()
         }
 
-        # Use dictionary comprehension for elmapa_Cls creation
-        elmapa_Cls = {
+        # Use dictionary comprehension for cosmolib_Cls creation
+        cosmolib_Cls = {
             key: Map(
             array=array,
             axis=None,
@@ -224,9 +224,9 @@ class AngularTwoPoint:
             )
             for key, array in C_ell_out.items()
         }
-        return elmapa_Cls
+        return cosmolib_Cls
 
-    def get_pseudo_Cl(self, nl, ks, mixing_matrix) -> jax.numpy.ndarray:
+    def get_pseudo_Cl(self, nl, ks, mixing_matrix) -> dict:
         """
         Compute the pseudo angular power spectrum Cl convolved with the mixing matrices.
 
@@ -249,13 +249,12 @@ class AngularTwoPoint:
         if tracer_types not in tracer_keys:
             raise ValueError("Unsupported tracer pair for mixing matrix.")
         key_type = tracer_keys[tracer_types]
-        ellmax = mixing_matrix[key_type + (1, 1)].upper[-1]
-
+        ellmax = mixing_matrix[key_type + (1, 1)].shape[-1] # mixing matrices will be computed for higher \ell than .upper
+        ell = np.arange(0, ellmax)
         # Compute Cls up to ellmax
-        C_ell_calc = self.get_Cl(np.arange(0, ellmax), nl, ks)
+        C_ell_calc = self.get_Cl(ell, nl, ks)
         n_bin = self.tracer1.n_z_bins
         C_ell_out = {}
-
         # Helper for POS-SHE symmetry
         def fill_pos_she(i, j):
             for a, b in [(i, j), (j, i)]:
@@ -282,15 +281,23 @@ class AngularTwoPoint:
             for i in range(1, n_bin + 1):
                 for j in range(i, n_bin + 1):
                     key = ('SHE', 'SHE', i, j)
-                    arr = np.zeros((2, 2, C_ell_calc[key].ell.shape[0]))
-                    arr = arr.at[0, 0, :].set(mixing_matrix[key].array[0] @ C_ell_calc[key].array[0, 0])
-                    arr = arr.at[1, 1, :].set(mixing_matrix[key].array[0] @ C_ell_calc[key].array[1, 1])
-                    arr = arr.at[1, 0, :].set(mixing_matrix[key].array[1] @ C_ell_calc[key].array[1, 0])
-                    arr = arr.at[0, 1, :].set(mixing_matrix[key].array[1] @ C_ell_calc[key].array[0, 1])
+                    arr = np.zeros((2, 2, mixing_matrix[key].ell.shape[0]))
+                    arr = arr.at[0, 0, :].set(
+                        mixing_matrix[key].array[0] @ C_ell_calc[key].array[0, 0] + \
+                        mixing_matrix[key].array[1] @ C_ell_calc[key].array[1, 1])
+
+                    arr = arr.at[0, 1, :].set(mixing_matrix[key].array[2] @ C_ell_calc[key].array[0, 1])
+
+                    arr = arr.at[1, 0, :].set(mixing_matrix[key].array[2] @ C_ell_calc[key].array[1, 0])  
+
+                    arr = arr.at[1, 1, :].set(
+                        mixing_matrix[key].array[0] @ C_ell_calc[key].array[1, 1] + \
+                        mixing_matrix[key].array[1] @ C_ell_calc[key].array[1, 1])
+                             
                     C_ell_out[key] = arr
 
         # Wrap results in Map objects
-        elmapa_Cls = {
+        cosmolib_Cls = {
             key: Map(
                 array=array,
                 axis=None,
@@ -301,4 +308,4 @@ class AngularTwoPoint:
             )
             for key, array in C_ell_out.items()
         }
-        return elmapa_Cls
+        return cosmolib_Cls

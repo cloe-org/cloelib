@@ -57,7 +57,6 @@ def dV_dzdO(background, zs: np.ndarray, hubble_units=False) -> np.ndarray:
     return _dV_dzdO
 
 
-
 def rdrag_fitting_function(background, neff=3.046):
     r"""Compute the sound horizon at drag epoch.
 

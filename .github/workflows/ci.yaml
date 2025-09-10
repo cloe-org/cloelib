@@ -42,7 +42,7 @@ jobs:
 
       - name: Run mypy
         run: mypy
-        
+
       - name: Install pre-commit
         run: |
           pip install pre-commit
@@ -69,3 +69,4 @@ jobs:
         run: |
           pip install pre-commit
           pre-commit run --all-files --show-diff-on-failure
+          

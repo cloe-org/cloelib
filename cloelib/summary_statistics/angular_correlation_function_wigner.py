@@ -170,7 +170,7 @@ def _d_2_m2_ell_compute(beta: float, ell: int) -> float:
         return new_val, prev
 
     # Approximation for large ell (fixed to explicitly pass `beta`)
-    def approximation_fn(vals):
+    def approximation_fn(ell, vals):
         prev, prev2 = vals
         new_val = 2 * _d_0_0_ell_compute(beta, 1) * prev - prev2
         return new_val, prev

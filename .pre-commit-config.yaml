@@ -28,3 +28,17 @@ repos:
       - id: mixed-line-ending
         args: [--fix=lf]
       - id: trailing-whitespace
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1
+    hooks:
+      - id: mypy
+        name: mypy
+        language_version: python3
+        pass_filenames: false # don't add staged files
+        args:
+          - "--config-file=mypy.ini"
+          - "cloelib/cosmology/cosmology.py"
+          - "cloelib/cosmology/camb_cosmology.py"
+          - "cloelib/cosmology/class_cosmology.py"
+          - "cloelib/cosmology/jax_cosmology.py"

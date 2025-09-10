@@ -1,9 +1,8 @@
 from cloelib.auxiliary.systematics import shift_dndz_jax
-
 import jax.numpy as jnp
 
 
-def test_shift_dndz_jax():
+def test_shift_dndz_jax() -> None:
     z = jnp.linspace(0.0, 5.0, 500)
     dz = jnp.array([0.1, -0.2, 0.0])
 

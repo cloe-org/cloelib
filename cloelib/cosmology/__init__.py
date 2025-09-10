@@ -9,6 +9,8 @@ Supported External Codes:
 - **Perturbations**: `camb`, `class`, `HMCode2020emu`
 """
 
-__all__ : list[str] = ['cosmology']
+from cloelib.cosmology.cosmology import (
+    Cosmology,
+)  # explicit import of the class or function you need
 
-from cloelib.cosmology import *
+__all__: list[str] = ["Cosmology"]

@@ -10,6 +10,7 @@ import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
+
 class SpectroPower(Protocol):
     r"""Protocol to define the :math:`P(k,\mu)` interface."""
 

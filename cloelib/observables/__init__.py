@@ -7,6 +7,3 @@ The SpectroPower protocol is used to define Spectroscopic observables.
 Supported External Codes:
 - **SpectroPower**: `comet-emu`, `PBJ`
 """
-
-from cloelib.observables.tracer import *
-

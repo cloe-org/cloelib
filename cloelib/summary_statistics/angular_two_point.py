@@ -13,7 +13,7 @@ import jax.numpy as np
 import jax
 
 # results imports
-from elmapa.angular_two_point import Map
+from cosmolib.data import AngularPowerSpectrum
 
 """
 

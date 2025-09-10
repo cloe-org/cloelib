@@ -1,4 +1,5 @@
 """Module for angular two-point functions."""
+
 # cloelib imports
 from cloelib.observables.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
@@ -12,13 +13,6 @@ import interpax
 import jax.numpy as np
 import jax
 
-"""
-
-## Notes:
-
-- Note, change for T vartype
-
-"""
 
 @jax.jit
 def Cl_integration(WT1, WT2, Pkl, H, chi2, weights):
@@ -40,7 +34,8 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2, weights):
     Returns:
     - jax.numpy.ndarray: Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
     """
-    return np.einsum('iz,jz,lz,z,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2, weights)
+    return np.einsum("iz,jz,lz,z,z,z->lij", WT1, WT2, Pkl, 1 / H, 1 / chi2, weights)
+
 
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
@@ -61,8 +56,16 @@ def Pkl_interp(k_l, z_l, ks, zs, Pk):
     Returns:
     - jax.numpy.ndarray: Interpolated power spectrum on the Limber grid.
     """
-    return 10**interpax.interp2d(jax.numpy.log10(k_l), z_l, jax.numpy.log10(ks),  zs,
-                                 jax.numpy.log10(Pk), method="akima", extrap=True)
+    return 10 ** interpax.interp2d(
+        jax.numpy.log10(k_l),
+        z_l,
+        jax.numpy.log10(ks),
+        zs,
+        jax.numpy.log10(Pk),
+        method="akima",
+        extrap=True,
+    )
+
 
 Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))
 
@@ -70,7 +73,7 @@ Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, Non
 class AngularTwoPoint:
     """Two point asbtract class to compute two point functions."""
 
-    def __init__(self, tracer1 : Tracer, tracer2 : Tracer):
+    def __init__(self, tracer1: Tracer, tracer2: Tracer):
         """
         Initialize the AngularTwoPoint instance.
 
@@ -84,7 +87,9 @@ class AngularTwoPoint:
         self.tracer1 = tracer1
         self.tracer2 = tracer2
 
-    def _matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells) -> jax.numpy.ndarray:
+    def _matter_power_spectrum_limber_grid(
+        self, z_l, ks, zs, ells
+    ) -> jax.numpy.ndarray:
         """
         Prepare the matter power spectrum grid for Limber approximation.
 
@@ -106,9 +111,9 @@ class AngularTwoPoint:
         Pk = self.tracer1.perturbations.matter_power_spectrum(zs, ks)
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
         return Pkl
-        
+
     @profile_function
-    def get_Cl(self, ells, nl, ks)  -> jax.numpy.ndarray:
+    def get_Cl(self, ells, nl, ks) -> jax.numpy.ndarray:
         """
         Compute the angular power spectrum Cl using Limber approximation.
 
@@ -126,71 +131,114 @@ class AngularTwoPoint:
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
-        dz = self.tracer1.z[1]-self.tracer1.z[0]
-        H = self.tracer1.perturbations.background.hubble_parameter(zs_calc, units = "km/s/Mpc")
+        dz = self.tracer1.z[1] - self.tracer1.z[0]
+        H = self.tracer1.perturbations.background.hubble_parameter(
+            zs_calc, units="km/s/Mpc"
+        )
         chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
         chi2 = chi**2
         WT1 = self.tracer1.get_window(zs_calc)
         WT2 = self.tracer2.get_window(zs_calc)
-        Pkl = self._matter_power_spectrum_limber_grid(zs_calc, ks, self.tracer1.perturbations.z, ells)
+        Pkl = self._matter_power_spectrum_limber_grid(
+            zs_calc, ks, self.tracer1.perturbations.z, ells
+        )
         # Added the prefactor here as this is where we have access to ells.
         # There may be a more efficient way to do the multiplication
-        prefactor = \
-            (np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0)) /
-             (ells + 0.5) ** 2)
+        prefactor = (
+            np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
+            / (ells + 0.5) ** 2
+        )
         # Did it this way to avoid an if statement, but would be good to know how necessary this is
-        prefactor_cell = ((prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle) *
-                          (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle))
+        prefactor_cell = (
+            prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle
+        ) * (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle)
         weights = simpsons_weights_jit(len(H))
 
-        return c_0*Cl_integration(WT1, WT2, Pkl, H, chi2, weights)*dz*prefactor_cell[:, None, None]
+        return (
+            c_0
+            * Cl_integration(WT1, WT2, Pkl, H, chi2, weights)
+            * dz
+            * prefactor_cell[:, None, None]
+        )
 
-    def get_pseudo_Cl(self, nl, ks, mixing_matrix, n_ells_int=50)  -> jax.numpy.ndarray:
-        """
-        Compute the angular power spectrum Cl using Limber approximation convolved with the mixing matrices.
 
-        Combines the window functions of the tracers, interpolated matter power
-        spectrum, Hubble parameter, and comoving distances to calculate the
-        two-point angular statistics.
+def get_pseudo_Cl(self, nl, ks, mixing_matrix, n_ells_int=50) -> jax.numpy.ndarray:
+    """
+    Compute the angular power spectrum Cl using Limber approximation convolved with the mixing matrices.
 
-        Parameters:
-        - nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
-        - ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
-        - ks (numpy.ndarray): Mixing matrices in the euclidlib internal format.
-        - n_ells_int (int): number of multiples to calculate.
+    Combines the window functions of the tracers, interpolated matter power
+    spectrum, Hubble parameter, and comoving distances to calculate the
+    two-point angular statistics.
 
-        Returns:
-        - jax.numpy.ndarray: Pseudo angular power spectrum Cl for the given multipoles.
-        """
-        ellmax = mixing_matrix[('POS', 'POS', 1, 1)].ell[-1]
-        ells_calc = np.geomspace(1,ellmax+1,n_ells_int)
-        C_ell_calc = self.get_Cl(ells_calc, nl, ks)
-        C_ell_base = interpax.interp1d(np.arange(ellmax + 1),ells_calc,C_ell_calc,extrap=True)
-        n_bin = C_ell_base.shape[2]
+    Parameters:
+    - nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
+    - ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+    - mixing_matrix (numpy.ndarray): Mixing matrices in the euclidlib internal format.
+    - n_ells_int (int): number of multiples to calculate.
 
-        C_ell_out = {}
-        if (type(self.tracer1) == PositionsTracer) and (type(self.tracer2) == PositionsTracer):
-            for i in range(1, n_bin+1):
-                for j in range(i, n_bin+1):
-                    C_ell_out[('POS','POS',i,j)] = mixing_matrix[('POS','POS',i,j)].array @ C_ell_base[:,i-1,j-1]
+    Returns:
+    - jax.numpy.ndarray: Pseudo angular power spectrum Cl for the given multipoles.
+    """
+    ellmax = mixing_matrix[("POS", "POS", 1, 1)].ell[-1]
+    ells_calc = np.geomspace(1, ellmax + 1, n_ells_int)
+    C_ell_calc = self.get_Cl(ells_calc, nl, ks)
+    C_ell_base = interpax.interp1d(
+        np.arange(ellmax + 1), ells_calc, C_ell_calc, extrap=True
+    )
+    n_bin = C_ell_base.shape[2]
 
-        elif (type(self.tracer1) == PositionsTracer) and (type(self.tracer2) == ShearTracer):
-            for i in range(1, n_bin+1):
-                for j in range(i, n_bin+1):
-                    C_ell_out[('POS','SHE',i,j)] = mixing_matrix[('POS','SHE',i,j)].array @ C_ell_base[:,i-1,j-1]
-                    C_ell_out[('POS','SHE',j,i)] = mixing_matrix[('POS','SHE',j,i)].array @ C_ell_base[:,j-1,i-1]
+    C_ell_out = {}
 
-        elif (type(self.tracer1) == ShearTracer) and (type(self.tracer2) == PositionsTracer):
-            for i in range(1, n_bin+1):
-                for j in range(i, n_bin+1):
-                    C_ell_out[('POS','SHE',j,i)] = mixing_matrix[('POS','SHE',j,i)].array @ C_ell_base[:,i-1,j-1]
-                    C_ell_out[('POS','SHE',i,j)] = mixing_matrix[('POS','SHE',i,j)].array @ C_ell_base[:,j-1,i-1]
+    if isinstance(self.tracer1, PositionsTracer) and isinstance(
+        self.tracer2, PositionsTracer
+    ):
+        for i in range(1, n_bin + 1):
+            for j in range(i, n_bin + 1):
+                C_ell_out[("POS", "POS", i, j)] = (
+                    mixing_matrix[("POS", "POS", i, j)].array
+                    @ C_ell_base[:, i - 1, j - 1]
+                )
 
-        elif (type(self.tracer1) == ShearTracer) and (type(self.tracer2) == ShearTracer):
-            for i in range(1, n_bin+1):
-                for j in range(i, n_bin+1):
-                    C_ell_out[('SHE','SHE',i,j)] = np.stack([
-                        mixing_matrix[('SHE','SHE',i,j)].array[0] @ C_ell_base[:,i-1,j-1],
-                        mixing_matrix[('SHE','SHE',i,j)].array[1] @ C_ell_base[:,i-1,j-1]
-                            ])
-        return C_ell_out
+    elif isinstance(self.tracer1, PositionsTracer) and isinstance(
+        self.tracer2, ShearTracer
+    ):
+        for i in range(1, n_bin + 1):
+            for j in range(i, n_bin + 1):
+                C_ell_out[("POS", "SHE", i, j)] = (
+                    mixing_matrix[("POS", "SHE", i, j)].array
+                    @ C_ell_base[:, i - 1, j - 1]
+                )
+                C_ell_out[("POS", "SHE", j, i)] = (
+                    mixing_matrix[("POS", "SHE", j, i)].array
+                    @ C_ell_base[:, j - 1, i - 1]
+                )
+
+    elif isinstance(self.tracer1, ShearTracer) and isinstance(
+        self.tracer2, PositionsTracer
+    ):
+        for i in range(1, n_bin + 1):
+            for j in range(i, n_bin + 1):
+                C_ell_out[("POS", "SHE", j, i)] = (
+                    mixing_matrix[("POS", "SHE", j, i)].array
+                    @ C_ell_base[:, i - 1, j - 1]
+                )
+                C_ell_out[("POS", "SHE", i, j)] = (
+                    mixing_matrix[("POS", "SHE", i, j)].array
+                    @ C_ell_base[:, j - 1, i - 1]
+                )
+
+    elif isinstance(self.tracer1, ShearTracer) and isinstance(
+        self.tracer2, ShearTracer
+    ):
+        for i in range(1, n_bin + 1):
+            for j in range(i, n_bin + 1):
+                C_ell_out[("SHE", "SHE", i, j)] = np.stack(
+                    [
+                        mixing_matrix[("SHE", "SHE", i, j)].array[0]
+                        @ C_ell_base[:, i - 1, j - 1],
+                        mixing_matrix[("SHE", "SHE", i, j)].array[1]
+                        @ C_ell_base[:, i - 1, j - 1],
+                    ]
+                )
+
+    return C_ell_out

@@ -13,7 +13,7 @@ import jax.numpy as np
 import jax
 
 # results imports
-from elmapa.angular_two_point import Map
+from cosmolib.data import AngularPowerSpectrum
 
 """
 
@@ -214,7 +214,7 @@ class AngularTwoPoint:
 
         # Use dictionary comprehension for cosmolib_Cls creation
         cosmolib_Cls = {
-            key: Map(
+            key: AngularPowerSpectrum(
             array=array,
             axis=None,
             lower=None,
@@ -298,7 +298,7 @@ class AngularTwoPoint:
 
         # Wrap results in Map objects
         cosmolib_Cls = {
-            key: Map(
+            key: AngularPowerSpectrum(
                 array=array,
                 axis=None,
                 lower=None,

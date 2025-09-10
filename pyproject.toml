@@ -25,7 +25,7 @@ pytest-cov = "6.1.1"
 pytest-pydocstyle = "2.4.0"
 mypy = "1.17"
 pyinstrument = "^4.6.2"
-elmapa = { git = "https://github.com/astro-ph/elmapa.git" }
+cosmolib = { git = "https://github.com/astro-ph/cosmolib.git" }
 
 [tool.poetry.extras]
 camb = ["camb"]

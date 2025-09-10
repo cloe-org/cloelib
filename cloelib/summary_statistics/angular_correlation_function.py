@@ -1,6 +1,8 @@
 """Angular Correlation Function Protocol."""
+
 from typing import Protocol, Tuple, Union
 import jax.numpy as jnp
+
 
 class AngularCorrelationFunction(Protocol):
     """
@@ -20,8 +22,7 @@ class AngularCorrelationFunction(Protocol):
     """
 
     def get_xi(
-        self,
-        theta: jnp.ndarray
+        self, theta: jnp.ndarray
     ) -> Union[jnp.ndarray, Tuple[jnp.ndarray, jnp.ndarray]]:
         """
         Compute the angular correlation function(s) at angle theta.

@@ -1,4 +1,5 @@
 """Module for angular two-point functions."""
+
 # cloelib imports
 from cloelib.observables.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
@@ -43,7 +44,8 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray:
     Returns:
     - jax.numpy.ndarray: Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
     """
-    return np.einsum('iz,jz,lz,z,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2, weights)
+    return np.einsum("iz,jz,lz,z,z,z->lij", WT1, WT2, Pkl, 1 / H, 1 / chi2, weights)
+
 
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
@@ -64,8 +66,16 @@ def Pkl_interp(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
     Returns:
     - jax.numpy.ndarray: Interpolated power spectrum on the Limber grid.
     """
-    return 10**interpax.interp2d(jax.numpy.log10(k_l), z_l, jax.numpy.log10(ks),  zs,
-                                 jax.numpy.log10(Pk), method="akima", extrap=True)
+    return 10 ** interpax.interp2d(
+        jax.numpy.log10(k_l),
+        z_l,
+        jax.numpy.log10(ks),
+        zs,
+        jax.numpy.log10(Pk),
+        method="akima",
+        extrap=True,
+    )
+
 
 Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))
 
@@ -73,7 +83,7 @@ Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, Non
 class AngularTwoPoint:
     """Two point asbtract class to compute two point functions."""
 
-    def __init__(self, tracer1 : Tracer, tracer2 : Tracer):
+    def __init__(self, tracer1: Tracer, tracer2: Tracer):
         """
         Initialize the AngularTwoPoint instance.
 
@@ -87,7 +97,9 @@ class AngularTwoPoint:
         self.tracer1 = tracer1
         self.tracer2 = tracer2
 
-    def _matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells) -> jax.numpy.ndarray:
+    def _matter_power_spectrum_limber_grid(
+        self, z_l, ks, zs, ells
+    ) -> jax.numpy.ndarray:
         """
         Prepare the matter power spectrum grid for Limber approximation.
 
@@ -109,7 +121,7 @@ class AngularTwoPoint:
         Pk = self.tracer1.perturbations.matter_power_spectrum(zs, ks)
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
         return Pkl
-        
+
     @profile_function
     def get_Cl(self, ells, nl, ks)  -> dict:
         """
@@ -129,21 +141,27 @@ class AngularTwoPoint:
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
-        dz = self.tracer1.z[1]-self.tracer1.z[0]
-        H = self.tracer1.perturbations.background.hubble_parameter(zs_calc, units = "km/s/Mpc")
+        dz = self.tracer1.z[1] - self.tracer1.z[0]
+        H = self.tracer1.perturbations.background.hubble_parameter(
+            zs_calc, units="km/s/Mpc"
+        )
         chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
         chi2 = chi**2
         WT1 = self.tracer1.get_window(zs_calc)
         WT2 = self.tracer2.get_window(zs_calc)
-        Pkl = self._matter_power_spectrum_limber_grid(zs_calc, ks, self.tracer1.perturbations.z, ells)
+        Pkl = self._matter_power_spectrum_limber_grid(
+            zs_calc, ks, self.tracer1.perturbations.z, ells
+        )
         # Added the prefactor here as this is where we have access to ells.
         # There may be a more efficient way to do the multiplication
-        prefactor = \
-            (np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0)) /
-             (ells + 0.5) ** 2)
+        prefactor = (
+            np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
+            / (ells + 0.5) ** 2
+        )
         # Did it this way to avoid an if statement, but would be good to know how necessary this is
-        prefactor_cell = ((prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle) *
-                          (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle))
+        prefactor_cell = (
+            prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle
+        ) * (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle)
         weights = simpsons_weights_jit(len(H))
 
         C_ell_calc = (

@@ -24,6 +24,7 @@ from cosmolib.data import AngularPowerSpectrum
 
 """
 
+
 @jax.jit
 def Cl_integration(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray:
     """
@@ -123,7 +124,7 @@ class AngularTwoPoint:
         return Pkl
 
     @profile_function
-    def get_Cl(self, ells, nl, ks)  -> dict:
+    def get_Cl(self, ells, nl, ks) -> dict:
         """
         Compute the angular power spectrum Cl using Limber approximation.
 
@@ -165,9 +166,11 @@ class AngularTwoPoint:
         weights = simpsons_weights_jit(len(H))
 
         C_ell_calc = (
-        c_0 * Cl_integration(WT1, WT2, Pkl, H, chi2, weights)
-        * dz
-        * prefactor_cell[:, None, None])
+            c_0
+            * Cl_integration(WT1, WT2, Pkl, H, chi2, weights)
+            * dz
+            * prefactor_cell[:, None, None]
+        )
         self.C_ell_calc = C_ell_calc
 
         n_bin = self.tracer1.n_z_bins
@@ -182,11 +185,11 @@ class AngularTwoPoint:
         # are the bin indices.
 
         # SHE - SHE returns an array of shape (2, 2, len(ells))
-            # Why? Because it expects B-modes. Currently, the B-modes are not implemented,
-            # so the second, third and fourth dimensions are filled with zeros.
+        # Why? Because it expects B-modes. Currently, the B-modes are not implemented,
+        # so the second, third and fourth dimensions are filled with zeros.
         # POS - SHE returns an array of shape (2, len(ells))
-            # Why? Because it expects the cross-correlation between positions and shear.
-            # so the second dimension is filled with zeros.
+        # Why? Because it expects the cross-correlation between positions and shear.
+        # so the second dimension is filled with zeros.
         # POS - POS returns an array of shape (len(ells))
 
         def pos_pos_rule(C, i, j):
@@ -195,7 +198,7 @@ class AngularTwoPoint:
         def pos_she_rule(C, i, j):
             block1 = C[:, i - 1, j - 1]
             block2 = C[:, j - 1, i - 1]
-            
+
             return {
                 ("POS", "SHE", j, i): np.stack([block1, np.zeros_like(block1)]),
                 ("POS", "SHE", i, j): np.stack([block2, np.zeros_like(block2)]),
@@ -220,7 +223,9 @@ class AngularTwoPoint:
 
         rule_fn = tracer_rules.get(key)
         if rule_fn is None:
-            raise ValueError(f"No rule defined for tracers {type(self.tracer1)}, {type(self.tracer2)}")
+            raise ValueError(
+                f"No rule defined for tracers {type(self.tracer1)}, {type(self.tracer2)}"
+            )
 
         # Vectorized update of C_ell_out using dictionary comprehensions
         C_ell_out = {
@@ -233,12 +238,12 @@ class AngularTwoPoint:
         # Use dictionary comprehension for cosmolib_Cls creation
         cosmolib_Cls = {
             key: AngularPowerSpectrum(
-            array=array,
-            axis=None,
-            lower=None,
-            upper=None,
-            ell=ells,
-            software='cloelib, `get_Cl` method',
+                array=array,
+                axis=None,
+                lower=None,
+                upper=None,
+                ell=ells,
+                software="cloelib, `get_Cl` method",
             )
             for key, array in C_ell_out.items()
         }
@@ -259,38 +264,45 @@ class AngularTwoPoint:
         # Determine ellmax from mixing_matrix based on tracer types
         tracer_types = (type(self.tracer1), type(self.tracer2))
         tracer_keys = {
-            (PositionsTracer, PositionsTracer): ('POS', 'POS'),
-            (PositionsTracer, ShearTracer): ('POS', 'SHE'),
-            (ShearTracer, PositionsTracer): ('POS', 'SHE'),
-            (ShearTracer, ShearTracer): ('SHE', 'SHE'),
+            (PositionsTracer, PositionsTracer): ("POS", "POS"),
+            (PositionsTracer, ShearTracer): ("POS", "SHE"),
+            (ShearTracer, PositionsTracer): ("POS", "SHE"),
+            (ShearTracer, ShearTracer): ("SHE", "SHE"),
         }
         if tracer_types not in tracer_keys:
             raise ValueError("Unsupported tracer pair for mixing matrix.")
         key_type = tracer_keys[tracer_types]
-        ellmax = mixing_matrix[key_type + (1, 1)].shape[-1] # mixing matrices will be computed for higher \ell than .upper
+        ellmax = mixing_matrix[key_type + (1, 1)].shape[
+            -1
+        ]  # mixing matrices will be computed for higher \ell than .upper
         ell = np.arange(0, ellmax)
         # Compute Cls up to ellmax
         C_ell_calc = self.get_Cl(ell, nl, ks)
         n_bin = self.tracer1.n_z_bins
         C_ell_out = {}
+
         # Helper for POS-SHE symmetry
         def fill_pos_she(i, j):
             for a, b in [(i, j), (j, i)]:
-                arr = np.zeros((2, C_ell_calc[('POS', 'SHE', a, b)].ell.shape[0]))
+                arr = np.zeros((2, C_ell_calc[("POS", "SHE", a, b)].ell.shape[0]))
                 for idx in [0, 1]:
                     arr = arr.at[idx].set(
-                        mixing_matrix[('POS', 'SHE', a, b)] @ C_ell_calc[('POS', 'SHE', a, b)].array[idx]
+                        mixing_matrix[("POS", "SHE", a, b)]
+                        @ C_ell_calc[("POS", "SHE", a, b)].array[idx]
                     )
-                C_ell_out[('POS', 'SHE', a, b)] = arr
+                C_ell_out[("POS", "SHE", a, b)] = arr
 
         # Main logic for each tracer combination
         if tracer_types == (PositionsTracer, PositionsTracer):
             for i in range(1, n_bin + 1):
                 for j in range(i, n_bin + 1):
-                    key = ('POS', 'POS', i, j)
+                    key = ("POS", "POS", i, j)
                     C_ell_out[key] = mixing_matrix[key].array @ C_ell_calc[key].array
 
-        elif tracer_types in [(PositionsTracer, ShearTracer), (ShearTracer, PositionsTracer)]:
+        elif tracer_types in [
+            (PositionsTracer, ShearTracer),
+            (ShearTracer, PositionsTracer),
+        ]:
             for i in range(1, n_bin + 1):
                 for j in range(i, n_bin + 1):
                     fill_pos_she(i, j)
@@ -298,20 +310,26 @@ class AngularTwoPoint:
         elif tracer_types == (ShearTracer, ShearTracer):
             for i in range(1, n_bin + 1):
                 for j in range(i, n_bin + 1):
-                    key = ('SHE', 'SHE', i, j)
+                    key = ("SHE", "SHE", i, j)
                     arr = np.zeros((2, 2, mixing_matrix[key].ell.shape[0]))
                     arr = arr.at[0, 0, :].set(
-                        mixing_matrix[key].array[0] @ C_ell_calc[key].array[0, 0] + \
-                        mixing_matrix[key].array[1] @ C_ell_calc[key].array[1, 1])
+                        mixing_matrix[key].array[0] @ C_ell_calc[key].array[0, 0]
+                        + mixing_matrix[key].array[1] @ C_ell_calc[key].array[1, 1]
+                    )
 
-                    arr = arr.at[0, 1, :].set(mixing_matrix[key].array[2] @ C_ell_calc[key].array[0, 1])
+                    arr = arr.at[0, 1, :].set(
+                        mixing_matrix[key].array[2] @ C_ell_calc[key].array[0, 1]
+                    )
 
-                    arr = arr.at[1, 0, :].set(mixing_matrix[key].array[2] @ C_ell_calc[key].array[1, 0])  
+                    arr = arr.at[1, 0, :].set(
+                        mixing_matrix[key].array[2] @ C_ell_calc[key].array[1, 0]
+                    )
 
                     arr = arr.at[1, 1, :].set(
-                        mixing_matrix[key].array[0] @ C_ell_calc[key].array[1, 1] + \
-                        mixing_matrix[key].array[1] @ C_ell_calc[key].array[1, 1])
-                             
+                        mixing_matrix[key].array[0] @ C_ell_calc[key].array[1, 1]
+                        + mixing_matrix[key].array[1] @ C_ell_calc[key].array[1, 1]
+                    )
+
                     C_ell_out[key] = arr
 
         # Wrap results in Map objects
@@ -322,7 +340,7 @@ class AngularTwoPoint:
                 lower=None,
                 upper=None,
                 ell=mixing_matrix[key].ell,
-                software='cloelib, `get_pseudo_Cl` method',
+                software="cloelib, `get_pseudo_Cl` method",
             )
             for key, array in C_ell_out.items()
         }

@@ -1,0 +1,52 @@
+name: Docs
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install MkDocs and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs-material mkdocstrings[python] mike
+          pip install -e .
+
+      - name: Fetch gh-pages history
+        run: git fetch origin gh-pages --depth=1 || true
+
+      - name: Configure git author
+        run: |
+          git config --local user.name  "${{ github.actor }}"
+          git config --local user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
+      - name: Deploy documentation
+        run: |
+          BRANCH="${GITHUB_REF#refs/heads/}"
+
+          if [[ "$BRANCH" == "develop" ]]; then
+            echo "Deploying dev docs from develop branch"
+            mike deploy --push --update-aliases dev latest
+          elif [[ "$BRANCH" == "main" ]]; then
+            echo "Deploying stable docs from main branch"
+            mike deploy --push --update-aliases stable
+            mike set-default --push stable
+          else
+            echo "Branch $BRANCH is not configured for doc deploy"
+            exit 0
+          fi

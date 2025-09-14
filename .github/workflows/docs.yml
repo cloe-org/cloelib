@@ -21,6 +21,11 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopenblas-dev gfortran
+
       - name: Install MkDocs and dependencies
         run: |
           python -m pip install --upgrade pip

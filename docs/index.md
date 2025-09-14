@@ -4,8 +4,10 @@ Welcome to cloelib - Cosmological Libraries for Observational Emulators.
 
 ## Installation
 
+Clone the `cloelib` repository and then execute the following command:
+
 ```bash
-pip install cloelib
+pip install .
 ```
 
 ## Quick Start

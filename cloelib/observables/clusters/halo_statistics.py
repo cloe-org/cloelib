@@ -1,5 +1,5 @@
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.cosmology import derived_cosmology as dc
+from cloelib.cosmology import derived_cosmology
 
 import numpy as np
 from scipy.integrate import simpson as simps
@@ -211,7 +211,7 @@ class HaloStatistics:
             Radius in h^{-1} Mpc
         """
         rho_m_0 = (
-            dc.rho_crit(self.background, 0.0)
+            derived_cosmology.rho_crit(self.background, 0.0)
             * self._Omega_m(0.0)
             / self.background.h**2.0
         )
@@ -436,7 +436,7 @@ class HaloStatistics:
             Units: h^4 Mpc^{-3} Ms^{-1}.
         """
         dlnsigmadlnR = self.dlns_dlnR(z, M)
-        rho_mean_0 = self._Omega_m(0) * dc.rho_crit(self.background, 0.0)
+        rho_mean_0 = self._Omega_m(0) * derived_cosmology.rho_crit(self.background, 0.0)
         rho_mean_0 /= self.background.h**2.0
 
         return rho_mean_0 / M**2.0 * self.f_sigma_nu(z, M) * dlnsigmadlnR / (-3)

@@ -8,7 +8,7 @@ from cloelib.cosmology.camb_cosmology import (
     CAMBLinearPerturbations,
     CAMBNonLinearPerturbations,
 )
-from cloelib.cosmology import derived_cosmology as dc
+from cloelib.cosmology import derived_cosmology
 
 
 def test_cosmo():
@@ -39,7 +39,7 @@ def test_cosmo():
         _cosmo_pars["Omega_cdm0"] + _cosmo_pars["Omega_b0"],
         rtol=1e-03,
     )
-    assert_allclose(dc.rho_crit(background, 0), 1.27203085e11, rtol=1e-03)
+    assert_allclose(derived_cosmology.rho_crit(background, 0), 1.27203085e11, rtol=1e-03)
     assert_allclose(background.rdrag, 147.50225, rtol=1e-05)
 
     # camb linear

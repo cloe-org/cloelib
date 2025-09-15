@@ -9,7 +9,7 @@ from scipy import interpolate
 
 from ...auxiliary import units
 from .halo_statistics import HaloStatistics
-from cloelib.cosmology import derived_cosmology as dc
+from cloelib.cosmology import derived_cosmology
 
 
 def _bessel_j2(x):
@@ -444,7 +444,7 @@ class Profile:
         """
         densityThreshold = np.atleast_1d(
             self.halostatistics.get_Delta_crit(z)
-            * dc.rho_crit(self.background, z)
+            * derived_cosmology.rho_crit(self.background, z)
             / self.background.h**2.0
         )[:, np.newaxis, np.newaxis]
 
@@ -613,7 +613,7 @@ class Profile:
         D_A_outshape = D_A[:, np.newaxis, np.newaxis]
         rho_m_outshape = (
             self.background.Omega_m(z)
-            * dc.rho_crit(self.background, z)
+            * derived_cosmology.rho_crit(self.background, z)
             / self.background.h**2
         )[:, np.newaxis, np.newaxis]
 

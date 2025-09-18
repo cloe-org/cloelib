@@ -1,6 +1,6 @@
 # cloelib
 
-Welcome to cloelib - Cosmological Libraries for Observational Emulators.
+Welcome to cloelib - The Library for the Cosmology Likelihood for Observables in Euclid 
 
 ## Installation
 

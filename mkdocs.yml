@@ -1,11 +1,11 @@
 site_name: cloelib
-site_description: Cosmological Libraries for Observational Emulators
-site_author: Your Organization
-site_url: https://yourusername.github.io/cloelib/
+site_description: The Library for the Cosmology Likelihood for Observables in Euclid
+site_author: cloe-org
+site_url: https://cloe-org.github.io/cloelib/dev/
 
-repo_name: yourusername/cloelib
-repo_url: https://github.com/yourusername/cloelib
-edit_uri: edit/main/docs/
+repo_name: cloe-org/cloelib
+repo_url: https://github.com/cloe-org/cloelib
+edit_uri: https://github.com/cloe-org/cloelib/docs
 
 theme:
   name: material
@@ -37,8 +37,12 @@ plugins:
       handlers:
         python:
           options:
-            docstring_style: google
+            docstring_style: google        # Use Google-style docstrings
             show_source: false
+            show_signature: true          # Show function/method signatures
+            show_type_annotations: true   # Show type hints in signatures
+            show_root_heading: false      # Avoid duplicate top-level heading
+            merge_init_into_class: true   # Include __init__ docstrings in class
 
 markdown_extensions:
   - admonition
@@ -60,4 +64,4 @@ nav:
   - Home: index.md
   - API Reference: api.md
 
-copyright: Copyright &copy; 2024 Your Organization
+copyright: Copyright 2025 cloe-org

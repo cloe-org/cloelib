@@ -23,6 +23,8 @@ scipy = "<1.14"
 pytest = "8.3.5"
 pytest-cov = "6.1.1"
 mypy = "1.17"
+pyinstrument = "^4.6.2"
+cosmolib = { git = "https://github.com/astro-ph/cosmolib.git" }
 
 [tool.poetry.extras]
 camb = ["camb"]

@@ -1,14 +1,3 @@
-"""
-Angular correlation function implementation using Wigner small-d matrices.
-
-This module provides `AngularCorrelationFunctionWigner`, a class that computes
-two-point angular correlation functions xi(theta) from angular power spectra Cl,
-using spherical harmonic transforms involving Wigner d-matrices.
-
-The Wigner d-matrices follow the recurrence relations from:
-https://arxiv.org/pdf/1702.05301
-"""
-
 import jax.numpy as np
 import jax
 from jax import jit
@@ -262,9 +251,6 @@ def _d_2_0_ell_compute(beta: float, ell: int) -> float:
     )
 
 
-# -----------------------------------------------------------------------------------
-# Vectorized versions of Wigner d-matrix functions
-# -----------------------------------------------------------------------------------
 # define memoized versions of the Wigner d-matrix functions
 d_0_0_ell = memoize_jax(_d_0_0_ell_compute)
 d_2_2_ell = memoize_jax(_d_2_2_ell_compute)
@@ -284,9 +270,6 @@ d_2_m2_vmap = memoize_jax(_d_2_m2_vmap_compute)
 d_2_0_vmap = memoize_jax(_d_2_0_vmap_compute)
 
 
-# -----------------------------------------------------------------------------------
-# Angular correlation function using Wigner d-matrices
-# -----------------------------------------------------------------------------------
 class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
     """Correlation function implementation using Wigner small-d matrices."""
 

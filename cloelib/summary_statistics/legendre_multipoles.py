@@ -1,4 +1,5 @@
 """Module to compute Legendre multipoles."""
+
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.observables.spectro import SpectroPower
@@ -6,20 +7,20 @@ from cloelib.summary_statistics.APDistortion import APDistortion
 from cloelib.auxiliary.math_utils import legendre
 
 # General imports
-from typing import Protocol, Union, TypeVar, Optional, Generic
+from typing import Optional
 import numpy as np
-import jax.numpy as jnp
-from scipy import integrate
-from scipy.special import roots_legendre
 
 
 class LegendreMultipoles:
     """Class to compute spectroscopic Legendre multipoles of the galaxy power spectrum."""
 
-    def __init__(self, spectro_power: SpectroPower,
-                 background_fiducial: Background,
-                 parameters: dict,
-                 nbar: float):
+    def __init__(
+        self,
+        spectro_power: SpectroPower,
+        background_fiducial: Background,
+        parameters: dict,
+        nbar: float,
+    ):
         """Initialize the class instance.
 
         Parameters
@@ -67,8 +68,9 @@ class LegendreMultipoles:
             param = np.array([param])
         return np.asarray(param)
 
-    def _k_AP(self, k: np.ndarray, mu: np.ndarray, zs: float,
-              use_AP: Optional[bool] = True) -> np.ndarray:
+    def _k_AP(
+        self, k: np.ndarray, mu: np.ndarray, zs: float, use_AP: Optional[bool] = True
+    ) -> np.ndarray:
         r"""AP-distorted wavenumber.
 
         .. math::
@@ -92,10 +94,11 @@ class LegendreMultipoles:
         """
         q_tr = self.ap_distortion.q_AP_tr(zs) if use_AP else 1.0
         q_lo = self.ap_distortion.q_AP_lo(zs) if use_AP else 1.0
-        return np.outer(k, np.sqrt(mu**2 / q_lo**2 + (1.0-mu**2) / q_tr**2))
+        return np.outer(k, np.sqrt(mu**2 / q_lo**2 + (1.0 - mu**2) / q_tr**2))
 
-    def _mu_AP(self, mu: np.ndarray, zs: float,
-               use_AP: Optional[bool] = True) -> np.ndarray:
+    def _mu_AP(
+        self, mu: np.ndarray, zs: float, use_AP: Optional[bool] = True
+    ) -> np.ndarray:
         r"""AP-distorted angle (cosinus) to the line of sight.
 
         .. math::
@@ -117,7 +120,7 @@ class LegendreMultipoles:
         """
         q_tr = self.ap_distortion.q_AP_tr(zs) if use_AP else 1.0
         q_lo = self.ap_distortion.q_AP_lo(zs) if use_AP else 1.0
-        return mu / q_lo / np.sqrt(mu**2 / q_lo**2 + (1.0-mu**2) / q_tr**2)
+        return mu / q_lo / np.sqrt(mu**2 / q_lo**2 + (1.0 - mu**2) / q_tr**2)
 
     def _damping_function(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""Damping function due to GCsp redshift uncertainty.
@@ -133,10 +136,13 @@ class LegendreMultipoles:
         damping_function: np.ndarray
             Damping function due to GCsp redshift uncertainty
         """
-        sigma_z = self.parameters['sigmaz']
-        sigma_r = 299792.458 * sigma_z / \
-            self.background_fiducial.hubble_parameter(self.redshift)
-        return np.exp(-k**2 * mu**2 * sigma_r**2)
+        sigma_z = self.parameters["sigmaz"]
+        sigma_r = (
+            299792.458
+            * sigma_z
+            / self.background_fiducial.hubble_parameter(self.redshift)
+        )
+        return np.exp(-(k**2) * mu**2 * sigma_r**2)
 
     def _Pk2d_noise(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""2D power spectrum from expansion of stochastic field.
@@ -152,9 +158,11 @@ class LegendreMultipoles:
         Pk2d_noise: np.ndarray
             2D power spectrum from expansion of stochastic field
         """
-        noise = (self.parameters['NP0'] * self._Pk2d_noise_k0(k)
-                 + self.parameters['NP20'] * self._Pk2d_noise_k0(k)
-                 + self.parameters['NP22'] * self._Pk2d_noise_k2mu2(k, mu))
+        noise = (
+            self.parameters["NP0"] * self._Pk2d_noise_k0(k)
+            + self.parameters["NP20"] * self._Pk2d_noise_k0(k)
+            + self.parameters["NP22"] * self._Pk2d_noise_k2mu2(k, mu)
+        )
         return noise
 
     def _Pk2d_noise_k0(self, k: np.ndarray) -> np.ndarray:
@@ -218,14 +226,16 @@ class LegendreMultipoles:
         Pk2d_tot: np.ndarray
             Total 2D power spectrum (including RSD, systematics, and noise)
         """
-        return (self.spectro_power.Pk2d_rsd(k, mu) *
-                self._damping_function(k, mu) *
-                (1.0 - self.parameters['fout'])**2 +
-                self._Pk2d_noise(k, mu))
+        return self.spectro_power.Pk2d_rsd(k, mu) * self._damping_function(k, mu) * (
+            1.0 - self.parameters["fout"]
+        ) ** 2 + self._Pk2d_noise(k, mu)
 
-    def power_multipoles(self, k: np.ndarray,
-                         ells: Optional[np.ndarray] = None,
-                         use_AP: Optional[bool] = True) -> dict:
+    def power_multipoles(
+        self,
+        k: np.ndarray,
+        ells: Optional[np.ndarray] = None,
+        use_AP: Optional[bool] = True,
+    ) -> dict:
         r"""Power spectrum Legendre multipoles.
 
         Parameters
@@ -241,25 +251,33 @@ class LegendreMultipoles:
         multipoles: dict
             Power spectrum Legendre multipoles
         """
-        ells = self._ensure_array(ells) if ells is not None else np.array([0,2,4])
-        AP_factor = (self.ap_distortion.q_AP_tr(self.redshift)**2 *
-                     self.ap_distortion.q_AP_lo(self.redshift) if use_AP else 1.0)
-        prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / \
-            AP_factor
+        ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
+        AP_factor = (
+            self.ap_distortion.q_AP_tr(self.redshift) ** 2
+            * self.ap_distortion.q_AP_lo(self.redshift)
+            if use_AP
+            else 1.0
+        )
+        prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / AP_factor
         kAP = self._k_AP(k, self.mu_grid, self.redshift, use_AP=use_AP)
         muAP = self._mu_AP(self.mu_grid, self.redshift, use_AP=use_AP)
         Pk2d_tot = self._Pk2d_tot(kAP, muAP)
         multipoles = {}
-        for i,ell in enumerate(ells):
+        for i, ell in enumerate(ells):
             leg = legendre(ell, self.mu_grid)
-            multipoles[f'ell{ell}'] = \
-                np.einsum("ab,b,b->a", Pk2d_tot, leg, self.mu_weights)
-            multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
+            multipoles[f"ell{ell}"] = np.einsum(
+                "ab,b,b->a", Pk2d_tot, leg, self.mu_weights
+            )
+            multipoles[f"ell{ell}"] *= 2.0 * prefactors[i]
         return multipoles
 
-    def power_term_multipoles(self, k: np.ndarray, term_list: list,
-                              ells: Optional[np.ndarray] = None,
-                              use_AP: Optional[bool] = True) -> dict:
+    def power_term_multipoles(
+        self,
+        k: np.ndarray,
+        term_list: list,
+        ells: Optional[np.ndarray] = None,
+        use_AP: Optional[bool] = True,
+    ) -> dict:
         r"""Power spectrum Legendre multipoles of specified terms.
 
         Parameters
@@ -277,41 +295,54 @@ class LegendreMultipoles:
         multipoles: dict
             Power spectrum Legendre multipoles of specified terms
         """
-        ells = self._ensure_array(ells) \
-            if ells is not None else np.array([0,2,4])
-        AP_factor = (self.ap_distortion.q_AP_tr(self.redshift)**2 *
-                     self.ap_distortion.q_AP_lo(self.redshift) if use_AP else 1.0)
-        prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / \
-            AP_factor
+        ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
+        AP_factor = (
+            self.ap_distortion.q_AP_tr(self.redshift) ** 2
+            * self.ap_distortion.q_AP_lo(self.redshift)
+            if use_AP
+            else 1.0
+        )
+        prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / AP_factor
         kAP = self._k_AP(k, self.mu_grid, self.redshift, use_AP=use_AP)
         muAP = self._mu_AP(self.mu_grid, self.redshift, use_AP=use_AP)
         Pk2d = np.empty((len(term_list), len(k), len(self.mu_grid)))
-        rsd_ids = [index for index, term in enumerate(term_list)
-                   if 'noise' not in term]
+        rsd_ids = [index for index, term in enumerate(term_list) if "noise" not in term]
         if rsd_ids:
             Pk2d[rsd_ids] = self.spectro_power.Pk2d_term_rsd(
-                kAP, muAP, term_list=[term_list[index] for index in rsd_ids])
-        noise_ids = [index for index in range(len(term_list))
-                     if index not in rsd_ids]
+                kAP, muAP, term_list=[term_list[index] for index in rsd_ids]
+            )
+        noise_ids = [index for index in range(len(term_list)) if index not in rsd_ids]
         if noise_ids:
-            noise_func = {'noise_k0': self._Pk2d_noise_k0,
-                          'noise_k2': self._Pk2d_noise_k2,
-                          'noise_k2mu2': self._Pk2d_noise_k2mu2}
-            Pk2d[noise_ids] = np.array([
-                noise_func[term_list[index]](kAP, muAP)
-                if term_list[index]=='noise_k2mu2'
-                else noise_func[term_list[index]](kAP) for index in noise_ids])
+            noise_func = {
+                "noise_k0": self._Pk2d_noise_k0,
+                "noise_k2": self._Pk2d_noise_k2,
+                "noise_k2mu2": self._Pk2d_noise_k2mu2,
+            }
+            Pk2d[noise_ids] = np.array(
+                [
+                    (
+                        noise_func[term_list[index]](kAP, muAP)
+                        if term_list[index] == "noise_k2mu2"
+                        else noise_func[term_list[index]](kAP)
+                    )
+                    for index in noise_ids
+                ]
+            )
         multipoles = {}
-        for i,ell in enumerate(ells):
+        for i, ell in enumerate(ells):
             leg = legendre(ell, self.mu_grid)
-            multipoles[f'ell{ell}'] = \
-                np.einsum("abc,c,c->ab", Pk2d, leg, self.mu_weights)
-            multipoles[f'ell{ell}'] *= (2.0 * prefactors[i])
+            multipoles[f"ell{ell}"] = np.einsum(
+                "abc,c,c->ab", Pk2d, leg, self.mu_weights
+            )
+            multipoles[f"ell{ell}"] *= 2.0 * prefactors[i]
         return multipoles
 
-    def convolved_power_multipoles(self, mixing_matrix: dict,
-                                   ells: Optional[np.ndarray] = None,
-                                   use_AP: Optional[bool] = True) -> dict:
+    def convolved_power_multipoles(
+        self,
+        mixing_matrix: dict,
+        ells: Optional[np.ndarray] = None,
+        use_AP: Optional[bool] = True,
+    ) -> dict:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
 
         Parameters
@@ -330,32 +361,40 @@ class LegendreMultipoles:
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
 
-        kin_arrays = [mixing_matrix[f'kin{ell}'] for ell in ells_tot]
+        kin_arrays = [mixing_matrix[f"kin{ell}"] for ell in ells_tot]
 
         if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
             multipoles_in = self.power_multipoles(
-                k=kin_arrays[0], ells=ells_tot, use_AP=use_AP)
+                k=kin_arrays[0], ells=ells_tot, use_AP=use_AP
+            )
         else:
             multipoles_in = {
-                f'ell{ell}':
-                    self.power_multipoles(k=kin_arrays[i], ells=[ell],
-                                          use_AP=use_AP)[f'ell{ell}']
-                for i, ell in enumerate(ells_tot)}
+                f"ell{ell}": self.power_multipoles(
+                    k=kin_arrays[i], ells=[ell], use_AP=use_AP
+                )[f"ell{ell}"]
+                for i, ell in enumerate(ells_tot)
+            }
 
         multipoles_out = {}
-        multipoles_out['k'] = mixing_matrix['kout']
+        multipoles_out["k"] = mixing_matrix["kout"]
         for ell in ells:
-            multipoles_out[f'ell{ell}'] = (
-                sum(np.dot(mixing_matrix[f'W{ell}{ell_prime}'],
-                           multipoles_in[f'ell{ell_prime}'])
-                    for ell_prime in ells_tot))
+            multipoles_out[f"ell{ell}"] = sum(
+                np.dot(
+                    mixing_matrix[f"W{ell}{ell_prime}"],
+                    multipoles_in[f"ell{ell_prime}"],
+                )
+                for ell_prime in ells_tot
+            )
 
         return multipoles_out
 
-    def convolved_power_term_multipoles(self, mixing_matrix: dict,
-                                        term_list: list,
-                                        ells: Optional[np.ndarray] = None,
-                                        use_AP: Optional[bool] = True) -> dict:
+    def convolved_power_term_multipoles(
+        self,
+        mixing_matrix: dict,
+        term_list: list,
+        ells: Optional[np.ndarray] = None,
+        use_AP: Optional[bool] = True,
+    ) -> dict:
         r"""Convolved power spectrum multipoles of specified terms.
 
         Parameters
@@ -376,26 +415,29 @@ class LegendreMultipoles:
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
 
-        kin_arrays = [mixing_matrix[f'kin{ell}'] for ell in ells_tot]
+        kin_arrays = [mixing_matrix[f"kin{ell}"] for ell in ells_tot]
 
         if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
             multipoles_in = self.power_term_multipoles(
-                k=kin_arrays[0], term_list=term_list,
-                ells=ells_tot, use_AP=use_AP)
+                k=kin_arrays[0], term_list=term_list, ells=ells_tot, use_AP=use_AP
+            )
         else:
             multipoles_in = {
-                f'ell{ell}':
-                    self.power_term_multipoles(k=kin_arrays[i],
-                                               term_list=term_list, ells=[ell],
-                                               use_AP=use_AP)[f'ell{ell}']
-                for i, ell in enumerate(ells_tot)}
+                f"ell{ell}": self.power_term_multipoles(
+                    k=kin_arrays[i], term_list=term_list, ells=[ell], use_AP=use_AP
+                )[f"ell{ell}"]
+                for i, ell in enumerate(ells_tot)
+            }
 
         multipoles_out = {}
-        multipoles_out['k'] = mixing_matrix['kout']
+        multipoles_out["k"] = mixing_matrix["kout"]
         for ell in ells:
-            multipoles_out[f'ell{ell}'] = (
-                sum(np.dot(mixing_matrix[f'W{ell}{ell_prime}'],
-                           multipoles_in[f'ell{ell_prime}'].T).T
-                    for ell_prime in ells_tot))
+            multipoles_out[f"ell{ell}"] = sum(
+                np.dot(
+                    mixing_matrix[f"W{ell}{ell_prime}"],
+                    multipoles_in[f"ell{ell_prime}"].T,
+                ).T
+                for ell_prime in ells_tot
+            )
 
         return multipoles_out

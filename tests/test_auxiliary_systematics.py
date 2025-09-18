@@ -19,9 +19,9 @@ def test_shift_dndz_jax():
     integral = (-0.5 * (shifted[:, 0] + shifted[:, -1]) + jnp.sum(shifted, axis=1)) * (
         z[1] - z[0]
     )
-    assert jnp.allclose(
-        integral, 1.0, rtol=1e-3
-    ), "Output distributions are not normalized"
+    assert jnp.allclose(integral, 1.0, rtol=1e-3), (
+        "Output distributions are not normalized"
+    )
 
     # Optional: check zero-padding outside bounds
     assert jnp.all(shifted[:, 0] < 1e-4), "Left edge should be near zero"

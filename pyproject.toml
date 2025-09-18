@@ -22,7 +22,6 @@ quadax = "0.2.7"
 scipy = "<1.14"
 pytest = "8.3.5"
 pytest-cov = "6.1.1"
-pytest-pydocstyle = "2.4.0"
 mypy = "1.17"
 pyinstrument = "^4.6.2"
 cosmolib = { git = "https://github.com/astro-ph/cosmolib.git" }
@@ -44,4 +43,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-addopts = "--verbose --pydocstyle --cov=cloelib"
+addopts = "--verbose --cov=cloelib"

@@ -1,38 +1,48 @@
 ## 🚀 Pull Request Checklist
 
 ### ✅ Summary
+
 <!-- Briefly describe the purpose of this pull request. What problem does it solve? -->
 
 ### 🔄 Changes
+
 <!-- List the major changes in this PR. Bullet points preferred. -->
+
 - [ ] Feature 1
 - [ ] Feature 2
 - [ ] Bug fix 1
 - [ ] Other improvements
 
 ### 🛠 How to Test
+
 <!-- Provide steps to test the changes. Include commands if applicable. -->
 
 ### 📝 Documentation
+
 - [ ] This PR updates documentation
 - [ ] This PR does not require documentation changes
 - [ ] Issue created for documentation update: Don't forget to link the task!
 
 ### 🏗 Related Issues
+
 <!-- Link related issues. Use closing keywords if applicable. -->
+
 Resolves #IssueNumber
 Fixes #IssueNumber
 Follow-ups #IssueNumber
 
 ### 📸 Screenshots (if applicable)
+
 <!-- Upload screenshots to show scientific plots or other graphics -->
 
 ### 📌 Additional Notes
+
 <!-- Add any additional context, comments, or concerns here. -->
 
 ---
 
 ### ✅ PR Checklist for Developers
+
 - [ ] I have titled this PR before merging as "gh-#:", where "#" represents the task it closes
 - [ ] My code follows the repository's coding style
 - [ ] I have tested my changes locally
@@ -43,6 +53,7 @@ Follow-ups #IssueNumber
 - [ ] I have consistently updated the GitHub information for the project, including milestones, task types, and other relevant details.
 
 ### ✅ PR Checklist for Reviewers
+
 - [ ] The next PR targets the correct branch
 - [ ] CI tests have run and passed for the latest commit on the source branch
 - [ ] Check that the code can still be installed if new packages are imported

@@ -10,4 +10,12 @@ from .profiling import (
     set_interval,
     set_output,
     profile_function,
- )
+)
+
+__all__ = [
+    "enable_profiling",
+    "disable_profiling",
+    "set_interval",
+    "set_output",
+    "profile_function",
+]

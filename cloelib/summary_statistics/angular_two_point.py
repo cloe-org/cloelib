@@ -16,14 +16,6 @@ import jax
 # results imports
 from cosmolib.data import AngularPowerSpectrum
 
-"""
-
-## Notes:
-
-- Note, change for T vartype
-
-"""
-
 
 @jax.jit
 def Cl_integration(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray:

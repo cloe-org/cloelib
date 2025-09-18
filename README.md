@@ -4,8 +4,11 @@
 
 We welcome feedback from the **Euclid community** and beyond to refine and improve this library!
 
-[![CI](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml)
-[![pydocstyle](https://img.shields.io/badge/pydocstyle-enabled-AD4CD3)](http://www.pydocstyle.org/en/stable/)
+[![CI](https://github.com/cloe-org/cloelike/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/cloe-org/cloelike/actions/workflows/ci.yml)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
+[![Tests: pytest](https://img.shields.io/badge/tests-pytest-blue?logo=pytest)](https://docs.pytest.org/)
+[![Linting: Ruff](https://img.shields.io/badge/linting-ruff-purple?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
+[![Code Style: Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg?logo=prettier&logoColor=white)](https://prettier.io/)
 
 ---
 
@@ -162,6 +165,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/didamarkovic"><img src="https://avatars.githubusercontent.com/u/9950748?v=4?s=100" width="100px;" alt="Dida Markovic"/><br /><sub><b>Dida Markovic</b></sub></a><br /><a href="#ideas-didamarkovic" title="Ideas, Planning, & Feedback">🤔</a> <a href="#question-didamarkovic" title="Answering Questions">💬</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/m-aguena"><img src="https://avatars.githubusercontent.com/u/12038660?v=4?s=100" width="100px;" alt="Michel Aguena"/><br /><sub><b>Michel Aguena</b></sub></a><br /><a href="#code-m-aguena" title="Code">💻</a> <a href="#test-m-aguena" title="Tests">⚠️</a> <a href="#ideas-m-aguena" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ippoppi"><img src="https://avatars.githubusercontent.com/u/50492103?v=4?s=100" width="100px;" alt="Filippo Oppizzi"/><br /><sub><b>Filippo Oppizzi</b></sub></a><br /><a href="#code-ippoppi" title="Code">💻</a> <a href="#ideas-ippoppi" title="Ideas, Planning, & Feedback">🤔</a> <a href="#tool-ippoppi" title="Tools">🔧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://jaimeruizzapatero.net/"><img src="https://avatars.githubusercontent.com/u/39957598?v=4?s=100" width="100px;" alt="Jaime RZ"/><br /><sub><b>Jaime RZ</b></sub></a><br /><a href="#ideas-JaimeRZP" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>

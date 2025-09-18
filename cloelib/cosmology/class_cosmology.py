@@ -279,9 +279,8 @@ class CLASSLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        return np.array(
-            [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]
-        )  # type: ignore[union-attr]
+        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        return np.array(arr)
 
 
 class CLASSNonLinearPerturbations:
@@ -388,6 +387,5 @@ class CLASSNonLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        return np.array(
-            [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]
-        )
+        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        return np.array(arr)

@@ -247,6 +247,17 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "arthurmloureiro",
+      "name": "Arthur Loureiro",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6471279?v=4",
+      "profile": "http://arthurmloureiro.github.io",
+      "contributions": [
+        "code",
+        "ideas",
+        "doc"
+      ]
     }
   ]
 }

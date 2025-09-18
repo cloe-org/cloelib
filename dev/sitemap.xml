@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://yourusername.github.io/cloelib/dev/</loc>
-         <lastmod>2025-09-14</lastmod>
+         <loc>https://cloe-org.github.io/cloelib/dev/dev/</loc>
+         <lastmod>2025-09-18</lastmod>
     </url>
     <url>
-         <loc>https://yourusername.github.io/cloelib/dev/api/</loc>
-         <lastmod>2025-09-14</lastmod>
+         <loc>https://cloe-org.github.io/cloelib/dev/dev/api/</loc>
+         <lastmod>2025-09-18</lastmod>
     </url>
 </urlset>

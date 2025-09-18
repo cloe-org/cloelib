@@ -188,20 +188,14 @@
       "name": "Filippo Oppizzi",
       "avatar_url": "https://avatars.githubusercontent.com/u/50492103?v=4",
       "profile": "https://github.com/ippoppi",
-      "contributions": [
-        "code",
-        "ideas",
-        "tool"
-      ]
+      "contributions": ["code", "ideas", "tool"]
     },
     {
       "login": "JaimeRZP",
       "name": "Jaime RZ",
       "avatar_url": "https://avatars.githubusercontent.com/u/39957598?v=4",
       "profile": "https://jaimeruizzapatero.net/",
-      "contributions": [
-        "ideas"
-      ]
+      "contributions": ["ideas"]
     }
   ]
 }

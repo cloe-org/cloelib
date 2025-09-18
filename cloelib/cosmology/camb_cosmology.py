@@ -1,11 +1,11 @@
 """Implementation of Background and Perturbation cosmology using CAMB."""
+
 # cloelib imports
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
 
 # General imports
 import numpy as np
-from typing import Tuple, Optional
+from typing import Optional
 
 # Cosmology imports
 try:
@@ -18,9 +18,19 @@ except ImportError as e:
 class CAMBBackground:
     """A wrapper for CAMB background cosmological calculations."""
 
-    def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
-                 As: float, ns: float, mnu: float,
-                 w0: float, wa: float, gamma_MG: float) -> None:
+    def __init__(
+        self,
+        H0: float,
+        Omega_b0: float,
+        Omega_cdm0: float,
+        Omega_k0: float,
+        As: float,
+        ns: float,
+        mnu: float,
+        w0: float,
+        wa: float,
+        gamma_MG: float,
+    ) -> None:
         """
         Initialize the CAMBBackground instance with cosmological parameters.
 
@@ -49,22 +59,23 @@ class CAMBBackground:
         self.mnu = mnu
 
         # Initialize CAMB parameters
-        self.interface_args: dict = {'CAMBparams': camb.CAMBparams()}
+        self.interface_args: dict = {"CAMBparams": camb.CAMBparams()}
 
-        self.interface_args['CAMBparams'].set_cosmology(
+        self.interface_args["CAMBparams"].set_cosmology(
             H0=self.H0,
             ombh2=self.Omega_b0 * (self.h) ** 2,
             omch2=self.Omega_cdm0 * (self.h) ** 2,
             omk=self.Omega_k0,
-            mnu = self.mnu
+            mnu=self.mnu,
         )
         # Set initial conditions and dark energy
-        self.interface_args['CAMBparams'].set_dark_energy(w=self.w0, wa=self.wa,
-                                                          dark_energy_model='ppf')
-        self.interface_args['CAMBparams'].InitPower.set_params(As=self.As, ns=self.ns)
-        
+        self.interface_args["CAMBparams"].set_dark_energy(
+            w=self.w0, wa=self.wa, dark_energy_model="ppf"
+        )
+        self.interface_args["CAMBparams"].InitPower.set_params(As=self.As, ns=self.ns)
+
         # Call CAMB to compute the background
-        self.results = camb.get_background(self.interface_args['CAMBparams'])
+        self.results = camb.get_background(self.interface_args["CAMBparams"])
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
@@ -81,7 +92,9 @@ class CAMBBackground:
             return self.results.h_of_z(zs)
         if units == "km/s/Mpc":
             return self.results.hubble_parameter(zs)
-        raise ValueError("Unsupported units for hubble_parameter. Choose '1/Mpc' or 'km/s/Mpc'.")
+        raise ValueError(
+            "Unsupported units for hubble_parameter. Choose '1/Mpc' or 'km/s/Mpc'."
+        )
 
     def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -154,9 +167,7 @@ class CAMBBackground:
         Returns:
             np.ndarray: Baryonic density values at specified redshifts.
         """
-        return (
-            self.results.get_Omega("baryon", z=zs)
-        )
+        return self.results.get_Omega("baryon", z=zs)
 
     @property
     def rdrag(self) -> float:
@@ -178,25 +189,28 @@ class CAMBLinearPerturbations:
         self.background = background
 
         # Avoid unnecessary computations
-        self.background.interface_args['CAMBparams'].WantCls = False
-        self.background.interface_args['CAMBparams'].DoLensing = False
-        self.background.interface_args['CAMBparams'].Want_CMB = False
-        self.background.interface_args['CAMBparams'].Want_CMB_lensing = False
-        self.background.interface_args['CAMBparams'].Want_cl_2D_array = False
-        self.background.interface_args['CAMBparams'].WantTransfer = True
+        self.background.interface_args["CAMBparams"].WantCls = False
+        self.background.interface_args["CAMBparams"].DoLensing = False
+        self.background.interface_args["CAMBparams"].Want_CMB = False
+        self.background.interface_args["CAMBparams"].Want_CMB_lensing = False
+        self.background.interface_args["CAMBparams"].Want_cl_2D_array = False
+        self.background.interface_args["CAMBparams"].WantTransfer = True
 
-        self.kmax = 300.
+        self.kmax = 300.0
         self.z = redshifts
 
-        self.background.interface_args['CAMBparams'].set_matter_power(
-            redshifts=redshifts, kmax=self.kmax)
-        self.results = camb.get_results(self.background.interface_args['CAMBparams'])
+        self.background.interface_args["CAMBparams"].set_matter_power(
+            redshifts=redshifts, kmax=self.kmax
+        )
+        self.results = camb.get_results(self.background.interface_args["CAMBparams"])
 
         self.k, _, self.Pk = self.results.get_linear_matter_power_spectrum(
-            hubble_units=False, k_hunit=False)
+            hubble_units=False, k_hunit=False
+        )
 
-    def matter_power_spectrum(self, zs: np.ndarray, ks: np.ndarray, hubble_units=False,
-                              k_hunit=False) -> np.ndarray:
+    def matter_power_spectrum(
+        self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
         r"""Compute the linear matter power spectrum.
 
         Parameters
@@ -220,10 +234,14 @@ class CAMBLinearPerturbations:
             and redshift
         """
         pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args['CAMBparams'],
-            nonlinear=False, extrap_kmax=self.kmax,
-            hubble_units=hubble_units, k_hunit=k_hunit,
-            var1='delta_tot', var2='delta_tot').P(zs, ks)
+            self.background.interface_args["CAMBparams"],
+            nonlinear=False,
+            extrap_kmax=self.kmax,
+            hubble_units=hubble_units,
+            k_hunit=k_hunit,
+            var1="delta_tot",
+            var2="delta_tot",
+        ).P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -233,7 +251,7 @@ class CAMBLinearPerturbations:
         Returns:
             np.ndarray: growth rate.
         """
-        f_z = self.results.get_fsigma8()/self.results.get_sigma8()
+        f_z = self.results.get_fsigma8() / self.results.get_sigma8()
         # Reversing array because camb re-sorts redshifts when power spectrum is computed
         return f_z[::-1]
 
@@ -260,8 +278,10 @@ class CAMBLinearPerturbations:
         np.ndarray
             The growth factor at the specified redshift and wavenumber.
         """
-        D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
-                        self.matter_power_spectrum(np.array([0.0]), ks)[0])
+        D_z_k = np.sqrt(
+            self.matter_power_spectrum(zs, ks)
+            / self.matter_power_spectrum(np.array([0.0]), ks)[0]
+        )
 
         return D_z_k
 
@@ -269,8 +289,13 @@ class CAMBLinearPerturbations:
 class CAMBNonLinearPerturbations:
     """A wrapper for CAMB nonlinear perturbation calculations."""
 
-    def __init__(self, background: Background, redshifts: np.ndarray,
-                 nonlinear_model: Optional[str] = None, log10TAGN: Optional[float] = None) -> None:
+    def __init__(
+        self,
+        background: Background,
+        redshifts: np.ndarray,
+        nonlinear_model: Optional[str] = None,
+        log10TAGN: Optional[float] = None,
+    ) -> None:
         """
         Initialize the CAMBNonLinearPerturbations class with linear perturbation data.
 
@@ -285,34 +310,41 @@ class CAMBNonLinearPerturbations:
         self.z = redshifts
 
         # Configure CAMB parameters for nonlinear calculations
-        self.background.interface_args['CAMBparams'].NonLinear = model.NonLinear_both
+        self.background.interface_args["CAMBparams"].NonLinear = model.NonLinear_both
 
         # Avoid unnecessary computations
-        self.background.interface_args['CAMBparams'].WantCls = False
-        self.background.interface_args['CAMBparams'].DoLensing = False
-        self.background.interface_args['CAMBparams'].Want_CMB = False
-        self.background.interface_args['CAMBparams'].Want_CMB_lensing = False
-        self.background.interface_args['CAMBparams'].Want_cl_2D_array = False
-        self.background.interface_args['CAMBparams'].WantTransfer = True
-        
-        if nonlinear_model is not None:
-            self.background.interface_args['CAMBparams'].NonLinearModel.set_params(halofit_version=nonlinear_model)
-            if log10TAGN is not None:
-                self.background.interface_args['CAMBparams'].NonLinearModel.set_params(halofit_version=nonlinear_model, HMCode_logT_AGN=log10TAGN)
-        else:
-            self.background.interface_args['CAMBparams'].NonLinearModel.set_params()
+        self.background.interface_args["CAMBparams"].WantCls = False
+        self.background.interface_args["CAMBparams"].DoLensing = False
+        self.background.interface_args["CAMBparams"].Want_CMB = False
+        self.background.interface_args["CAMBparams"].Want_CMB_lensing = False
+        self.background.interface_args["CAMBparams"].Want_cl_2D_array = False
+        self.background.interface_args["CAMBparams"].WantTransfer = True
 
-        self.background.interface_args['CAMBparams'].set_matter_power(redshifts=redshifts, kmax=self.kmax)
+        if nonlinear_model is not None:
+            self.background.interface_args["CAMBparams"].NonLinearModel.set_params(
+                halofit_version=nonlinear_model
+            )
+            if log10TAGN is not None:
+                self.background.interface_args["CAMBparams"].NonLinearModel.set_params(
+                    halofit_version=nonlinear_model, HMCode_logT_AGN=log10TAGN
+                )
+        else:
+            self.background.interface_args["CAMBparams"].NonLinearModel.set_params()
+
+        self.background.interface_args["CAMBparams"].set_matter_power(
+            redshifts=redshifts, kmax=self.kmax
+        )
 
         # Compute nonlinear perturbations
-        self.results = camb.get_results(self.background.interface_args['CAMBparams'])
+        self.results = camb.get_results(self.background.interface_args["CAMBparams"])
 
         self.k, _, self.Pk = self.results.get_nonlinear_matter_power_spectrum(
-            hubble_units=False, k_hunit=False)
+            hubble_units=False, k_hunit=False
+        )
 
-
-    def matter_power_spectrum(self, zs: np.ndarray, ks: np.ndarray,
-                              hubble_units=False, k_hunit=False) -> np.ndarray:
+    def matter_power_spectrum(
+        self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
         r"""Compute the nonlinear matter power spectrum.
 
         Parameters
@@ -336,9 +368,13 @@ class CAMBNonLinearPerturbations:
             and redshift
         """
         pk_values = self.results.get_matter_power_interpolator(
-            nonlinear=True, extrap_kmax=self.kmax,
-            hubble_units=hubble_units, k_hunit=k_hunit,
-            var1='delta_tot', var2='delta_tot').P(zs, ks)
+            nonlinear=True,
+            extrap_kmax=self.kmax,
+            hubble_units=hubble_units,
+            k_hunit=k_hunit,
+            var1="delta_tot",
+            var2="delta_tot",
+        ).P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -348,7 +384,7 @@ class CAMBNonLinearPerturbations:
         Returns:
             np.ndarray: growth rate.
         """
-        f_z = self.results.get_fsigma8()/self.results.get_sigma8()
+        f_z = self.results.get_fsigma8() / self.results.get_sigma8()
         # Reversing array because camb re-sorts redshifts when power spectrum is computed
         return f_z[::-1]
 
@@ -375,6 +411,8 @@ class CAMBNonLinearPerturbations:
         np.ndarray
             The growth factor at the specified redshift and wavenumber.
         """
-        D_z_k = np.sqrt(self.matter_power_spectrum(zs, ks) / \
-                        self.matter_power_spectrum(np.array([0.0]), ks)[0])
+        D_z_k = np.sqrt(
+            self.matter_power_spectrum(zs, ks)
+            / self.matter_power_spectrum(np.array([0.0]), ks)[0]
+        )
         return D_z_k

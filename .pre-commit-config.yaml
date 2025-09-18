@@ -1,33 +1,38 @@
----
-ci:
-  autofix_prs: false
-  autoupdate_commit_msg: "pre-commit.ci: update pre-commit hooks"
-  autofix_commit_msg: "pre-commit.ci: style fixes"
-
 repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.13
+    hooks:
+      - id: ruff-check
+        args: [--fix, --unsafe-fixes]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: check-added-large-files
       - id: check-case-conflict
+      - id: check-docstring-first
       - id: check-merge-conflict
-      - id: check-symlinks
-      - id: check-yaml
-      - id: debug-statements
+      - id: check-toml
       - id: end-of-file-fixer
       - id: mixed-line-ending
-        args:
-          - --fix=lf
+        args: [--fix=lf]
       - id: trailing-whitespace
-  - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.10.0
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1
     hooks:
-      - id: python-check-blanket-type-ignore
-      - id: rst-backticks
-      - id: rst-directive-colons
-      - id: rst-inline-touching-normal
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.3
-    hooks:
-      - id: ruff
-      - id: ruff-format
+      - id: mypy
+        name: mypy
+        language_version: python3
+        pass_filenames: false # don't add staged files
+        args:
+          - "--config-file=mypy.ini"
+          - "cloelib/cosmology/cosmology.py"
+          - "cloelib/cosmology/camb_cosmology.py"
+          - "cloelib/cosmology/class_cosmology.py"
+          - "cloelib/cosmology/jax_cosmology.py"

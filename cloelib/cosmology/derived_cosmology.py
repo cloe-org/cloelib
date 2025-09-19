@@ -57,9 +57,8 @@ def dV_dzdO(background, zs: np.ndarray, hubble_units=False) -> np.ndarray:
         / background.hubble_parameter(zs)
     )
     if hubble_units:
-        _dV_dzdO *= (background.H0/100.0)**3.0
+        _dV_dzdO *= (background.H0 / 100.0) ** 3.0
     return _dV_dzdO
-
 
 
 def rdrag_fitting_function(background, neff=3.046):

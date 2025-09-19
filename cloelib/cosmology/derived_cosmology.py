@@ -1,4 +1,5 @@
 """Common cosmology derived functions."""
+
 # cloelib imports
 from cloelib.auxiliary import units
 
@@ -6,6 +7,7 @@ from cloelib.auxiliary import units
 import numpy as np
 
 _log10_GRAVITATIONAL_CONSTANT = np.log10(units.GRAVITATIONAL_CONSTANT)
+
 
 def rho_crit(background, zs: np.ndarray) -> np.ndarray:
     """
@@ -25,7 +27,9 @@ def rho_crit(background, zs: np.ndarray) -> np.ndarray:
         float: Critical density value at the specified redshift.
     """
     log10_h_in_seconds = np.log10(background.hubble_parameter(zs) / units.MPC_TO_KM)
-    return (3.0 / 8.0 / np.pi ) * 10**(2.0*log10_h_in_seconds-_log10_GRAVITATIONAL_CONSTANT)
+    return (3.0 / 8.0 / np.pi) * 10 ** (
+        2.0 * log10_h_in_seconds - _log10_GRAVITATIONAL_CONSTANT
+    )
 
 
 def dV_dzdO(background, zs: np.ndarray, hubble_units=False) -> np.ndarray:
@@ -57,6 +61,7 @@ def dV_dzdO(background, zs: np.ndarray, hubble_units=False) -> np.ndarray:
     return _dV_dzdO
 
 
+
 def rdrag_fitting_function(background, neff=3.046):
     r"""Compute the sound horizon at drag epoch.
 
@@ -79,6 +84,9 @@ def rdrag_fitting_function(background, neff=3.046):
     omega_b = background.Omega_b0 * background.h**2
     omega_nu = background.mnu * 93.14
 
-    r_d = 56.067 * np.exp(-49.7*(omega_nu+0.002)**2) / \
-        (omega_cb**0.2436 * omega_b**0.128876 * (1+(neff - 3.046)/30.6))
+    r_d = (
+        56.067
+        * np.exp(-49.7 * (omega_nu + 0.002) ** 2)
+        / (omega_cb**0.2436 * omega_b**0.128876 * (1 + (neff - 3.046) / 30.6))
+    )
     return r_d

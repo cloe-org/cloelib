@@ -97,9 +97,10 @@ def test_jax_background_Omega_cdm0(jax_background_instance):
 
 
 def test_jax_background_mnu(jax_background_instance):
-    assert hasattr(jax_background_instance, 'mnu')
+    assert hasattr(jax_background_instance, "mnu")
     assert isinstance(jax_background_instance.mnu, jnp.ndarray)
-    assert jax_background_instance.mnu == 0.
+    assert jax_background_instance.mnu == 0.0
+
 
 def test_jax_background_Omega_k0(jax_background_instance):
     assert hasattr(jax_background_instance, "Omega_k0")
@@ -132,56 +133,127 @@ def test_jax_background_wa(jax_background_instance):
 
 
 def test_jax_background_N_mnu(jax_background_instance):
-    assert hasattr(jax_background_instance, 'N_mnu')
+    assert hasattr(jax_background_instance, "N_mnu")
     assert isinstance(jax_background_instance.N_mnu, int)
     assert jax_background_instance.N_mnu == 0
 
+
 def test_jax_background_N_ur(jax_background_instance):
-    assert hasattr(jax_background_instance, 'N_ur')
+    assert hasattr(jax_background_instance, "N_ur")
     assert jax_background_instance.N_ur is None
 
+
 def test_jax_background_N_eff(jax_background_instance):
-    assert hasattr(jax_background_instance, 'N_eff')
+    assert hasattr(jax_background_instance, "N_eff")
     assert isinstance(jax_background_instance.N_eff, float)
     assert jax_background_instance.N_eff == 3.044
 
+
 def test_set_neutrino_mass_single_float():
-    bg = JAXBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                       Omega_k0=0., As=2e-9, ns=0.96, mnu=0.1, w0=-1, wa=0, gamma_MG=0, N_mnu=1)
+    bg = JAXBackground(
+        H0=67.7,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=0.1,
+        w0=-1,
+        wa=0,
+        gamma_MG=0,
+        N_mnu=1,
+    )
     assert bg._set_neutrino_mass(0.1, 1) == 0.1
 
+
 def test_set_neutrino_mass_degenerate():
-    bg = JAXBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                       Omega_k0=0., As=2e-9, ns=0.96, mnu=0.3, w0=-1, wa=0, gamma_MG=0, N_mnu=3)
+    bg = JAXBackground(
+        H0=67.7,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=0.3,
+        w0=-1,
+        wa=0,
+        gamma_MG=0,
+        N_mnu=3,
+    )
     # For JAX, degenerate means sum of masses
     assert bg._set_neutrino_mass([0.1, 0.1, 0.1], 3) == pytest.approx(0.3)
 
+
 def test_set_neutrino_mass_array():
-    bg = JAXBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                       Omega_k0=0., As=2e-9, ns=0.96, mnu=jnp.array([0.05, 0.03]), w0=-1, wa=0,
-                       gamma_MG=0, N_mnu=2)
+    bg = JAXBackground(
+        H0=67.7,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=jnp.array([0.05, 0.03]),
+        w0=-1,
+        wa=0,
+        gamma_MG=0,
+        N_mnu=2,
+    )
     result = bg._set_neutrino_mass(jnp.array([0.05, 0.03]), 2)
     assert float(result) == pytest.approx(0.08)
 
+
 def test_set_neutrino_mass_sequence():
-    bg = JAXBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                       Omega_k0=0., As=2e-9, ns=0.96, mnu=[0.02, 0.04, 0.06], w0=-1, wa=0,
-                       gamma_MG=0, N_mnu=3)
+    bg = JAXBackground(
+        H0=67.7,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=[0.02, 0.04, 0.06],
+        w0=-1,
+        wa=0,
+        gamma_MG=0,
+        N_mnu=3,
+    )
     assert bg._set_neutrino_mass([0.02, 0.04, 0.06], 3) == pytest.approx(0.12)
+
 
 def test_set_neutrino_mass_wrong_length():
     with pytest.raises(ValueError):
-        bg = JAXBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                           Omega_k0=0., As=2e-9, ns=0.96, mnu=[0.02, 0.04], w0=-1, wa=0,
-                           gamma_MG=0, N_mnu=3)
+        bg = JAXBackground(
+            H0=67.7,
+            Omega_b0=0.022 / 0.677**2,
+            Omega_cdm0=0.12 / 0.677**2,
+            Omega_k0=0.0,
+            As=2e-9,
+            ns=0.96,
+            mnu=[0.02, 0.04],
+            w0=-1,
+            wa=0,
+            gamma_MG=0,
+            N_mnu=3,
+        )
         bg._set_neutrino_mass([0.02, 0.04], 3)
+
 
 def test_set_neutrino_mass_zero_mass_with_species():
     with pytest.raises(ValueError):
-        bg = JAXBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                           Omega_k0=0., As=2e-9, ns=0.96, mnu=0.0, w0=-1, wa=0,
-                           gamma_MG=0, N_mnu=2)
+        bg = JAXBackground(
+            H0=67.7,
+            Omega_b0=0.022 / 0.677**2,
+            Omega_cdm0=0.12 / 0.677**2,
+            Omega_k0=0.0,
+            As=2e-9,
+            ns=0.96,
+            mnu=0.0,
+            w0=-1,
+            wa=0,
+            gamma_MG=0,
+            N_mnu=2,
+        )
         bg._set_neutrino_mass(0.0, 2)
+
 
 @pytest.fixture
 def zs(scope="module"):

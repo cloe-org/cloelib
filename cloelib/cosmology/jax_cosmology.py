@@ -12,6 +12,7 @@ from cloelib.cosmology.derived_cosmology import rdrag_fitting_function
 
 # General imports
 import jax.numpy as jnp
+
 # needed for type checking
 import numpy as np
 import jax
@@ -105,7 +106,7 @@ class JAXBackground:
         self.interface_args["JAXparams"]["Omega_nu0"] = self.Omega_nu0
         self.interface_args["JAXparams"]["n_s"] = self.ns
         self.interface_args["JAXparams"]["m_ncdm"] = self.mnu
-        self.interface_args['JAXparams']['N_ncdm'] = self.N_mnu
+        self.interface_args["JAXparams"]["N_ncdm"] = self.N_mnu
         self.interface_args["JAXparams"]["A_s"] = self.As
         self.interface_args["JAXparams"]["w0_fld"] = self.w0  # or w0
         self.interface_args["JAXparams"]["wa_fld"] = self.wa  # or wa
@@ -144,9 +145,10 @@ class JAXBackground:
         Returns:
             Array: Total neutrino mass.
         """
+
         def core(mnu, N_mnu):
             m = jnp.asarray(mnu, dtype=float)
-            s = jnp.sum(jnp.ravel(m))         # scalar or vector handled uniformly
+            s = jnp.sum(jnp.ravel(m))  # scalar or vector handled uniformly
             size = m.size
 
             # JIT-safe assertions (no Python control flow):
@@ -467,7 +469,9 @@ class JAXLinearPerturbations:
             2.0
             / (3.0 * k_eq)
             * jnp.sqrt(6.0 / R_eq)
-            * jnp.log((jnp.sqrt(1.0 + R_d) + jnp.sqrt(R_eq + R_d)) / (1.0 + jnp.sqrt(R_eq)))
+            * jnp.log(
+                (jnp.sqrt(1.0 + R_d) + jnp.sqrt(R_eq + R_d)) / (1.0 + jnp.sqrt(R_eq))
+            )
         )
         # Eq. (7) but in [hMpc^{-1}]
         k_silk = (
@@ -499,7 +503,6 @@ class JAXLinearPerturbations:
             * (self.background.h)
             * (alpha_gamma + (1.0 - alpha_gamma) / (1.0 + (0.43 * ks * sh_d) ** 4))
         )
-
 
         a1 = jnp.power(46.9 * w_m, 0.670) * (1.0 + jnp.power(32.1 * w_m, -0.532))
         a2 = jnp.power(12.0 * w_m, 0.424) * (1.0 + jnp.power(45.0 * w_m, -0.582))

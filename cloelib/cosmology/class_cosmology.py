@@ -19,9 +19,11 @@ except ImportError as e:
 class CLASSBackground:
     """A wrapper for CLASS background cosmological calculations."""
 
-    c0 = SPEED_OF_LIGHT/1000
+    c0 = SPEED_OF_LIGHT / 1000
+
     def __init__(
-        self, H0: float,
+        self,
+        H0: float,
         Omega_b0: float,
         Omega_cdm0: float,
         Omega_k0: float,
@@ -78,13 +80,15 @@ class CLASSBackground:
             "CLASSparams": {}
         }  # Use a dictionary for CLASS parameters
         self.interface_args["CLASSparams"]["H0"] = self.H0
-        self.interface_args["CLASSparams"]["omega_b"] = self.Omega_b0 * (self.h)**2
-        self.interface_args["CLASSparams"]["omega_cdm"] = self.Omega_cdm0 * (self.h)**2
+        self.interface_args["CLASSparams"]["omega_b"] = self.Omega_b0 * (self.h) ** 2
+        self.interface_args["CLASSparams"]["omega_cdm"] = (
+            self.Omega_cdm0 * (self.h) ** 2
+        )
         self.interface_args["CLASSparams"]["Omega_k"] = self.Omega_k0
         self.interface_args["CLASSparams"]["n_s"] = self.ns
         self.interface_args["CLASSparams"]["A_s"] = self.As
-        self.interface_args["CLASSparams"]["w0_fld"] = self.w0 # or w0
-        self.interface_args["CLASSparams"]["wa_fld"] = self.wa # or wa
+        self.interface_args["CLASSparams"]["w0_fld"] = self.w0  # or w0
+        self.interface_args["CLASSparams"]["wa_fld"] = self.wa  # or wa
         # To get correct perturbations for w0wa
         self.interface_args["CLASSparams"]["use_ppf"] = "yes"
         # To avoid using a cosmological constant
@@ -129,8 +133,11 @@ class CLASSBackground:
         elif self.N_mnu == 3:
             return 0.0044
         else:
-            raise ValueError(f"Unsupported number of massive neutrino species: {self.N_mnu}. "
-                             "N_ur can only be inferred for 0, 1, 2, or 3 massive neutrino species.")
+            raise ValueError(
+                f"Unsupported number of massive neutrino species: {self.N_mnu}. "
+                "N_ur can only be inferred for 0, 1, 2, or 3 massive neutrino species."
+            )
+
     @property
     def N_eff(self) -> float:
         """
@@ -157,8 +164,10 @@ class CLASSBackground:
         elif isinstance(self.mnu, (np.ndarray, Sequence)):
             # user passed an explicit list/array of masses
             if len(self.mnu) != self.N_mnu:
-                    raise ValueError(f"Expected {self.N_mnu} individual neutrino masses, "
-                                     f"but got {len(self.mnu)}: {self.mnu}")
+                raise ValueError(
+                    f"Expected {self.N_mnu} individual neutrino masses, "
+                    f"but got {len(self.mnu)}: {self.mnu}"
+                )
 
             m_ncdm_str = ",".join(f"{mass:g}" for mass in self.mnu)
             return m_ncdm_str
@@ -281,7 +290,6 @@ class CLASSLinearPerturbations:
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
         self.results.compute()
-
 
     @property
     def _interface_args(self) -> dict:

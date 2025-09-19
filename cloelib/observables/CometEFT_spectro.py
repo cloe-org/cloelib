@@ -4,7 +4,7 @@
 from cloelib.cosmology.cosmology import Background
 
 # General imports
-from typing import Protocol, Union, TypeVar, Optional, Sequence
+from typing import Sequence
 import numpy as np  # type: ignore
 
 # Cosmology imports
@@ -84,15 +84,19 @@ class CometEFT_SpectroPower:
             Dictionary to which neutrino parameters will be added
         """
         if background.N_mnu > 1:
-            raise ValueError("Comet supports max a single species of neutrinos. "
-                             "Set N_mnu=1 in the Background class.")
+            raise ValueError(
+                "Comet supports max a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
         if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
             raise ValueError(
-                "Comet only supports a fixed number of effective" 
+                "Comet only supports a fixed number of effective"
                 f"relativistic species (N_eff=3.044). Found {background.N_eff} "
                 "Ensure that N_eff=3.044 in the Background class."
             )
-        if isinstance(background.mnu, Sequence) or isinstance(background.mnu, np.ndarray):
+        if isinstance(background.mnu, Sequence) or isinstance(
+            background.mnu, np.ndarray
+        ):
             raise ValueError(
                 "Comet only supports a single species of neutrinos. "
                 "Set N_mnu=1 in the Background class."
@@ -117,15 +121,19 @@ class CometEFT_SpectroPower:
             Dictionary to which neutrino parameters will be added
         """
         if background.N_mnu > 1:
-            raise ValueError("Comet supports max a single species of neutrinos. "
-                             "Set N_mnu=1 in the Background class.")
+            raise ValueError(
+                "Comet supports max a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
         if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
             raise ValueError(
-                "Comet only supports a fixed number of effective" 
+                "Comet only supports a fixed number of effective"
                 f"relativistic species (N_eff=3.044). Found {background.N_eff} "
                 "Ensure that N_eff=3.044 in the Background class."
             )
-        if isinstance(background.mnu, Sequence) or isinstance(background.mnu, np.ndarray):
+        if isinstance(background.mnu, Sequence) or isinstance(
+            background.mnu, np.ndarray
+        ):
             raise ValueError(
                 "Comet only supports a single species of neutrinos. "
                 "Set N_mnu=1 in the Background class."

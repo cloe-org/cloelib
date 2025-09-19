@@ -288,7 +288,7 @@ class HMemuNonLinearPerturbations:
         self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
 
         return self.fsigma8 / self.sigma8
-      
+
     def sigma8_0(self) -> float:
         """
         Calculate the sigma8 value for the current cosmology.
@@ -307,7 +307,6 @@ class HMemuNonLinearPerturbations:
                 self.params_hm_emu[k] = np.pad(v, (0, pad_size), mode="edge")
         self.sigma8_0, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
         return self.sigma8_0[0]
-
 
 
 def _set_neutrino_masses(background: Background) -> float:
@@ -329,18 +328,20 @@ def _set_neutrino_masses(background: Background) -> float:
         The total neutrino mass in eV.
     """
     if background.N_mnu > 1:
-        raise ValueError("HMcode2020Emu only supports a single species of neutrinos. "
-                            "Set N_mnu=1 in the Background class.")
+        raise ValueError(
+            "HMcode2020Emu only supports a single species of neutrinos. "
+            "Set N_mnu=1 in the Background class."
+        )
     if not np.isclose(background.N_ur, 2.0308, rtol=1e-4):
         raise ValueError(
             "HMcode2020Emu only supports a fixed number of relativistic species (N_ur=2.0308). "
             "Set N_ur=2.0308 in the Background class."
             "[Note that HMcode2020Emu actually sets N_ur=2.0328,"
             "this will be fixed in a future release.]"
-            )
+        )
     if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
         raise ValueError(
-            "HMcode2020Emu only supports a fixed number of effective" 
+            "HMcode2020Emu only supports a fixed number of effective"
             f"relativistic species (N_eff=3.044). Found {background.N_eff} "
             "Ensure that N_eff=3.044 in the Background class."
             "[Note that HMcode2020Emu actually sets N_eff=3.046,"

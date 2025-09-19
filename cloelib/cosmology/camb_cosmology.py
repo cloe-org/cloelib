@@ -5,7 +5,7 @@ from cloelib.cosmology.cosmology import Background
 
 # General imports
 import numpy as np
-from typing import Tuple, Optional, Union, Sequence
+from typing import Optional, Union, Sequence
 
 # Cosmology imports
 try:
@@ -29,8 +29,9 @@ class CAMBBackground:
         mnu: Union[float, Sequence[float], np.ndarray],
         w0: float,
         wa: float,
-        gamma_MG: float, N_mnu: int, N_ur: Optional[float] = None
-                 ,
+        gamma_MG: float,
+        N_mnu: int,
+        N_ur: Optional[float] = None,
     ) -> None:
         """
         Initialize the CAMBBackground instance with cosmological parameters.
@@ -85,8 +86,8 @@ class CAMBBackground:
             ombh2=self.Omega_b0 * (self.h) ** 2,
             omch2=self.Omega_cdm0 * (self.h) ** 2,
             omk=self.Omega_k0,
-            mnu = mnu_arg,
-            num_massive_neutrinos= self.N_mnu,
+            mnu=mnu_arg,
+            num_massive_neutrinos=self.N_mnu,
         )
 
         # setting the neutrino parameters
@@ -131,8 +132,10 @@ class CAMBBackground:
         elif self.N_mnu == 3:
             return 0.0044
         else:
-            raise ValueError(f"Unsupported number of massive neutrino species: {self.N_mnu}. "
-                             "N_ur can only be inferred for 0, 1, 2, or 3 massive neutrino species.")
+            raise ValueError(
+                f"Unsupported number of massive neutrino species: {self.N_mnu}. "
+                "N_ur can only be inferred for 0, 1, 2, or 3 massive neutrino species."
+            )
 
     @property
     def N_eff(self) -> float:
@@ -142,106 +145,39 @@ class CAMBBackground:
         Assumes a standard value of T_ncdm = 0.71611 for neutrinos.
         """
         T_ncdm = 0.71611  # Standard value for neutrino temperature in K
-        return self.N_ur + self.N_mnu*np.power(T_ncdm, 4.)*np.power(4./11, -4./3)
+        return self.N_ur + self.N_mnu * np.power(T_ncdm, 4.0) * np.power(
+            4.0 / 11, -4.0 / 3
+        )
 
     def _set_neutrino_parameters(self) -> None:
         """Set the neutrino mass parameters in the CAMB interface arguments.
 
         This method handles both degenerate and non-degenerate neutrino mass cases.
-        If the non-degenerate case is used (mnu is an array), 
+        If the non-degenerate case is used (mnu is an array),
         it will set accurate_massive_neutrinos = True.
         """
         if isinstance(self.mnu, float) and self.N_mnu >= 1:
             # user gave a total mnu but wants to use a degenerate mass case
             self.interface_args["CAMBparams"].nu_mass_eigenstates = self.N_mnu
             mass_fraction = 1.0 / self.N_mnu
-            self.interface_args["CAMBparams"].nu_mass_fractions = [mass_fraction] * self.N_mnu
+            self.interface_args["CAMBparams"].nu_mass_fractions = [
+                mass_fraction
+            ] * self.N_mnu
             self.interface_args["CAMBparams"].nu_mass_degeneracies = [1.0] * self.N_mnu
             self.interface_args["CAMBparams"].nu_mass_numbers = [1] * self.N_mnu
         elif isinstance(self.mnu, (np.ndarray, Sequence)):
             # non-degenerate case
             sum_mnu = np.sum(self.mnu)
             if len(self.mnu) != self.N_mnu:
-                raise ValueError(f"Expected {self.N_mnu} individual neutrino masses, "
-                                     f"but got {len(self.mnu)}: {self.mnu}")
+                raise ValueError(
+                    f"Expected {self.N_mnu} individual neutrino masses, "
+                    f"but got {len(self.mnu)}: {self.mnu}"
+                )
             self.interface_args["CAMBparams"].nu_mass_eigenstates = self.N_mnu
             self.interface_args["CAMBparams"].Transfer.accurate_massive_neutrinos = True
-            self.interface_args["CAMBparams"].nu_mass_fractions = [mass / sum_mnu for mass in self.mnu]
-            self.interface_args["CAMBparams"].nu_mass_degeneracies = [1.0] * self.N_mnu
-            self.interface_args["CAMBparams"].nu_mass_numbers = [1] * self.N_mnu
-        elif isinstance(self.mnu, float) and self.N_mnu == 0:
-            # no neutrinos, set to zero
-            self.interface_args["CAMBparams"].nu_mass_eigenstates = 0
-            self.interface_args["CAMBparams"].nu_mass_fractions = []
-            self.interface_args["CAMBparams"].nu_mass_degeneracies = []
-            self.interface_args["CAMBparams"].nu_mass_numbers = []
-        else:
-            raise TypeError("mnu must be a float, numpy.ndarray or Sequence of floats")
-
-    @property
-    def _interface_args(self) -> dict:
-        """Save internal structure format of interface codes."""
-        return self.interface_args
-
-    @property
-    def N_ur(self) -> float:
-        """Effective number of ultra-relativistic species.
-
-        If the user gave one, return it; otherwise infer from other parameters such that
-        N_eff = 3.044 for the standard model of cosmology.
-        """
-        if self._provided_N_ur is not None:
-            return self._provided_N_ur
-
-        # If N_ur is not provided, we assume the standard model of cosmology
-        # where N_eff = 3.044 (including photons, neutrinos, and their contributions)
-        # This is a common assumption in cosmology.
-        # Values are taken from the CLASS documentation.
-        if self.N_mnu == 0:
-            return 3.044
-        elif self.N_mnu == 1:
-            return 2.0308
-        elif self.N_mnu == 2:
-            return 1.0176
-        elif self.N_mnu == 3:
-            return 0.0044
-        else:
-            raise ValueError(f"Unsupported number of massive neutrino species: {self.N_mnu}. "
-                             "N_ur can only be inferred for 0, 1, 2, or 3 massive neutrino species.")
-
-    @property
-    def N_eff(self) -> float:
-        """
-        Return the effective number of relativistic species.
-
-        Assumes a standard value of T_ncdm = 0.71611 for neutrinos.
-        """
-        T_ncdm = 0.71611  # Standard value for neutrino temperature in K
-        return self.N_ur + self.N_mnu*np.power(T_ncdm, 4.)*np.power(4./11, -4./3)
-
-    def _set_neutrino_parameters(self) -> None:
-        """Set the neutrino mass parameters in the CAMB interface arguments.
-
-        This method handles both degenerate and non-degenerate neutrino mass cases.
-        If the non-degenerate case is used (mnu is an array), 
-        it will set accurate_massive_neutrinos = True.
-        """
-        if isinstance(self.mnu, float) and self.N_mnu >= 1:
-            # user gave a total mnu but wants to use a degenerate mass case
-            self.interface_args["CAMBparams"].nu_mass_eigenstates = self.N_mnu
-            mass_fraction = 1.0 / self.N_mnu
-            self.interface_args["CAMBparams"].nu_mass_fractions = [mass_fraction] * self.N_mnu
-            self.interface_args["CAMBparams"].nu_mass_degeneracies = [1.0] * self.N_mnu
-            self.interface_args["CAMBparams"].nu_mass_numbers = [1] * self.N_mnu
-        elif isinstance(self.mnu, (np.ndarray, Sequence)):
-            # non-degenerate case
-            sum_mnu = np.sum(self.mnu)
-            if len(self.mnu) != self.N_mnu:
-                raise ValueError(f"Expected {self.N_mnu} individual neutrino masses, "
-                                     f"but got {len(self.mnu)}: {self.mnu}")
-            self.interface_args["CAMBparams"].nu_mass_eigenstates = self.N_mnu
-            self.interface_args["CAMBparams"].Transfer.accurate_massive_neutrinos = True
-            self.interface_args["CAMBparams"].nu_mass_fractions = [mass / sum_mnu for mass in self.mnu]
+            self.interface_args["CAMBparams"].nu_mass_fractions = [
+                mass / sum_mnu for mass in self.mnu
+            ]
             self.interface_args["CAMBparams"].nu_mass_degeneracies = [1.0] * self.N_mnu
             self.interface_args["CAMBparams"].nu_mass_numbers = [1] * self.N_mnu
         elif isinstance(self.mnu, float) and self.N_mnu == 0:

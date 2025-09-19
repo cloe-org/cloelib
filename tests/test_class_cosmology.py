@@ -133,55 +133,126 @@ def test_class_background_wa(class_background_instance):
 
 
 def test_class_background_N_mnu(class_background_instance):
-    assert hasattr(class_background_instance, 'N_mnu')
+    assert hasattr(class_background_instance, "N_mnu")
     assert isinstance(class_background_instance.N_mnu, int)
     assert class_background_instance.N_mnu == 0
 
+
 def test_class_background_N_ur(class_background_instance):
-    assert hasattr(class_background_instance, 'N_ur')
+    assert hasattr(class_background_instance, "N_ur")
     assert isinstance(class_background_instance.N_ur, float)
     assert class_background_instance.N_ur == 3.044
 
+
 def test_class_background_N_eff(class_background_instance):
-    assert hasattr(class_background_instance, 'N_eff')
+    assert hasattr(class_background_instance, "N_eff")
     assert isinstance(class_background_instance.N_eff, float)
     assert class_background_instance.N_eff == 3.044
 
+
 def test_set_neutrino_masses_single_float():
-    bg = CLASSBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                         Omega_k0=0., As=2e-9, ns=0.96, mnu=0.1, w0=-1, wa=0, gamma_MG=0, N_mnu=1)
+    bg = CLASSBackground(
+        H0=67.7,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=0.1,
+        w0=-1,
+        wa=0,
+        gamma_MG=0,
+        N_mnu=1,
+    )
     assert bg._set_neutrino_masses() == "0.1"
 
+
 def test_set_neutrino_masses_degenerate():
-    bg = CLASSBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                         Omega_k0=0., As=2e-9, ns=0.96, mnu=0.3, w0=-1, wa=0, gamma_MG=0, N_mnu=3)
+    bg = CLASSBackground(
+        H0=67.7,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=0.3,
+        w0=-1,
+        wa=0,
+        gamma_MG=0,
+        N_mnu=3,
+    )
     assert bg._set_neutrino_masses() == "0.1,0.1,0.1"
 
+
 def test_set_neutrino_masses_array():
-    bg = CLASSBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                         Omega_k0=0., As=2e-9, ns=0.96, mnu=np.array([0.05, 0.03]), w0=-1, wa=0,
-                         gamma_MG=0, N_mnu=2)
+    bg = CLASSBackground(
+        H0=67.7,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=np.array([0.05, 0.03]),
+        w0=-1,
+        wa=0,
+        gamma_MG=0,
+        N_mnu=2,
+    )
     assert bg._set_neutrino_masses() == "0.05,0.03"
 
+
 def test_set_neutrino_masses_sequence():
-    bg = CLASSBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                         Omega_k0=0., As=2e-9, ns=0.96, mnu=[0.02, 0.04, 0.06], w0=-1, wa=0,
-                         gamma_MG=0, N_mnu=3)
+    bg = CLASSBackground(
+        H0=67.7,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=[0.02, 0.04, 0.06],
+        w0=-1,
+        wa=0,
+        gamma_MG=0,
+        N_mnu=3,
+    )
     assert bg._set_neutrino_masses() == "0.02,0.04,0.06"
+
 
 def test_set_neutrino_masses_wrong_length():
     with pytest.raises(ValueError):
-        bg = CLASSBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                            Omega_k0=0., As=2e-9, ns=0.96, mnu=[0.02, 0.04], w0=-1, wa=0,
-                            gamma_MG=0, N_mnu=3)
+        bg = CLASSBackground(
+            H0=67.7,
+            Omega_b0=0.022 / 0.677**2,
+            Omega_cdm0=0.12 / 0.677**2,
+            Omega_k0=0.0,
+            As=2e-9,
+            ns=0.96,
+            mnu=[0.02, 0.04],
+            w0=-1,
+            wa=0,
+            gamma_MG=0,
+            N_mnu=3,
+        )
         bg._set_neutrino_masses()
+
 
 def test_set_neutrino_masses_wrong_type():
     with pytest.raises(TypeError):
-        bg = CLASSBackground(H0=67.7, Omega_b0=0.022/0.677**2, Omega_cdm0=0.12/0.677**2,
-                            Omega_k0=0., As=2e-9, ns=0.96, mnu=None, w0=-1, wa=0,
-                            gamma_MG=0, N_mnu=1)
+        bg = CLASSBackground(
+            H0=67.7,
+            Omega_b0=0.022 / 0.677**2,
+            Omega_cdm0=0.12 / 0.677**2,
+            Omega_k0=0.0,
+            As=2e-9,
+            ns=0.96,
+            mnu=None,
+            w0=-1,
+            wa=0,
+            gamma_MG=0,
+            N_mnu=1,
+        )
         bg._set_neutrino_masses()
+
 
 @pytest.fixture
 def zs(scope="module"):

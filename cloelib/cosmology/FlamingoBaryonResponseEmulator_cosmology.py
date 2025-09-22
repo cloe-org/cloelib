@@ -157,6 +157,9 @@ class CAMBNonLinearFLAMINGOPerturbations:
     def baryonic_suppression(self, zs: np.array, ks: np.array, k_hunit=False) -> np.ndarray:
         """
         Return the predicted baryonic response for a set of comoving modes, redshift, and galaxy formation model (three parameters).
+        
+        For redshifts z > 3 (outside the training range), the response is fixed to 1.  
+        For wavenumbers k > 10^1.5 (outside the training range), the response is set to its value at the maximum trained wavenumber.
 
         Parameters
         ----------
@@ -200,6 +203,9 @@ class CAMBNonLinearFLAMINGOPerturbations:
     def baryonic_suppression_with_variance(self, zs: np.array, ks: np.array, k_hunit=False) -> tuple[np.array, np.array]:
         """
         Return the predicted baryonic response as well as the variance around the prediction for a set of comoving modes, redshift, and galaxy formation model (three parameters).
+
+        For redshifts z > 3 (outside the training range), the response is fixed to 1.  
+        For wavenumbers k > 10^1.5 (outside the training range), the response is set to its value at the maximum trained wavenumber.
 
         Parameters
         ----------

@@ -276,7 +276,7 @@ class AngularTwoPoint:
         # Helper for POS-SHE symmetry
         def fill_pos_she(i, j):
             for a, b in [(i, j), (j, i)]:
-                arr = np.zeros((2, C_ell_calc[("POS", "SHE", a, b)].ell.shape[0]))
+                arr = np.zeros((2, mixing_matrix[("POS", "SHE", a, b)].ell.shape[0]))
                 for idx in [0, 1]:
                     arr = arr.at[idx].set(
                         mixing_matrix[("POS", "SHE", a, b)]

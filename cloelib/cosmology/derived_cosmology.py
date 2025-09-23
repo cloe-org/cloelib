@@ -32,7 +32,7 @@ def rho_crit(background, zs: np.ndarray) -> np.ndarray:
     )
 
 
-def dV_dzdO(background, zs: np.ndarray) -> np.ndarray:
+def dV_dzdO(background, zs: np.ndarray, hubble_units=False) -> np.ndarray:
     """
     Return the volume element per redshit per solid angle at the redshift requested.
 
@@ -42,17 +42,23 @@ def dV_dzdO(background, zs: np.ndarray) -> np.ndarray:
         Background class containing cosmology
     zs :np.ndarray
         Redshifts.
+    hubble_units: (Optional) bool
+        Flag to specify if output in h units, defaults to False
+
 
     Returns
     -------
         np.ndarray: volume element in Mpc^3 h^{-3}
     """
-    return (
+    _dV_dzdO = (
         units.SPEED_OF_LIGHT
         / 1.0e3
         * background.comoving_distance(zs) ** 2.0
-        * background.hubble_parameter(zs)
+        / background.hubble_parameter(zs)
     )
+    if hubble_units:
+        _dV_dzdO *= (background.H0 / 100.0) ** 3.0
+    return _dV_dzdO
 
 
 def rdrag_fitting_function(background, neff=3.046):

@@ -79,6 +79,11 @@ class CometVDG_SpectroPower:
         ----------
         parameters: dict
             Dictionary to which neutrino parameters will be added
+
+        Returns
+        -------
+        mnu_arg: float
+            Neutrino mass in eV
         """
         if background.N_mnu > 1:
             raise ValueError(

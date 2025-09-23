@@ -320,7 +320,7 @@ def _set_neutrino_masses(background: Background) -> float:
     Parameters
     ----------
     background: Background
-        Background class containing cosmology and background distances
+        Background class containing cosmology and background quantities
 
     Returns
     -------

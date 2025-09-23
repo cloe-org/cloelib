@@ -97,6 +97,8 @@ class CLASSBackground:
         # Set neutrino parameters
         if self.N_mnu > 0:
             self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
+        else:
+            self.interface_args["CLASSparams"]["m_ncdm"] = 0.0
         self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
         self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
 

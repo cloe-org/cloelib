@@ -8,7 +8,3 @@ Supported External Codes:
 - **Background**: `camb`, `class`
 - **Perturbations**: `camb`, `class`, `HMCode2020emu`
 """
-
-__all__ = ['cosmology']#temporary fix, 'jax_cosmology']
-
-from cloelib.cosmology import *

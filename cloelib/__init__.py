@@ -21,7 +21,4 @@ License:
 This project is licensed under the MIT LICENSE.
 """
 
-__all__ = []
-
-from cloelib.cosmology import *
-from cloelib.observables import *
+__all__: list[str] = []

@@ -1,13 +1,7 @@
-"""Protocols for Background and Perturbation cosmology classes.."""
-# General imports
-from typing import Protocol, Union, TypeVar, runtime_checkable
+"""Protocols for Background and Perturbation cosmology classes.
 
-import numpy as np  # type: ignore
-import jax.numpy as jnp
-
-"""
 ## Notes:
- 
+
 - Refactored cosmology.py from the original CLOE to provide a more flexible framework,
   enabling seamless integration with external cosmological codes while removing dependency on Cobaya.
 
@@ -15,7 +9,14 @@ import jax.numpy as jnp
   providing a unified and extensible template for interaction.
 """
 
+# General imports
+from typing import Protocol, Union, TypeVar, Optional, runtime_checkable
+
+import numpy as np  # type: ignore
+import jax.numpy as jnp
+
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
+
 
 @runtime_checkable
 class Background(Protocol):
@@ -25,12 +26,12 @@ class Background(Protocol):
     def H0(self) -> float:
         """Hubble parameter at redshift 0 in km s-1 Mpc-1."""
         ...
-    
+
     @property
     def h(self) -> float:
         """Dimensionless Hubble constant."""
         ...
-    
+
     @property
     def Omega_b0(self) -> float:
         """Omega baryon; the baryon density/critical density at z=0."""
@@ -77,10 +78,10 @@ class Background(Protocol):
         ...
 
     @property
-    def _interface_args(self) -> dict:
+    def interface_args(self) -> dict:
         """Save internal structure format of possible interface codes."""
         ...
-    
+
     def Omega_b(self, zs: T) -> T:
         """Compute the matter density as a function of redshift."""
         ...
@@ -105,6 +106,12 @@ class Background(Protocol):
         """Calculate the angular diameter distance for given redshifts."""
         ...
 
+    @property
+    def rdrag(self) -> float:
+        """Sound horizon radius at last scattering in Mpc."""
+        ...
+
+
 @runtime_checkable
 class Perturbations(Protocol):
     """Protocol for Perturbation cosmology class."""
@@ -118,7 +125,7 @@ class Perturbations(Protocol):
         """Calculate the growth factor for given redshifts and wavenumbers."""
         ...
 
-    def growth_rate(self, zs: T, ks: T) -> T:
+    def growth_rate(self, zs: Optional[T] = None, ks: Optional[T] = None) -> T:
         """Calculate the growth rate for given redshifts and wavenumbers."""
         ...
 

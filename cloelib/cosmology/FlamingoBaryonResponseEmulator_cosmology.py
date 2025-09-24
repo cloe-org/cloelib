@@ -1,4 +1,12 @@
-"""Implementation of baryon correction of the matter power spectrum from FlamingoBaryonResponseEmulator on top of CAMB."""
+"""
+Implementation of baryon correction of the matter power spectrum from FlamingoBaryonResponseEmulator on top of CAMB.
+
+
+## Notes:
+
+- Adapted from FlamingoBaryonResponseEmulator/flamingo_response_emulator.py
+- Adapted from cloelib/cloelib/cosmology/camb_cosmology.py
+"""
 
 # General imports
 import numpy as np
@@ -16,14 +24,6 @@ try:
     import FlamingoBaryonResponseEmulator as fre
 except ImportError:
     raise ImportError("FlamingoBaryonResponseEmulator could not be imported.")
-"""
-
-## Notes:
-
-- Adapted from FlamingoBaryonResponseEmulator/flamingo_response_emulator.py
-- Adapted from cloelib/cloelib/cosmology/camb_cosmology.py
-
-"""
 
 
 class CAMBNonLinearFLAMINGOPerturbations:

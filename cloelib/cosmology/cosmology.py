@@ -10,7 +10,7 @@
 """
 
 # General imports
-from typing import Protocol, Union, TypeVar, Optional, runtime_checkable
+from typing import Protocol, Union, Sequence, TypeVar, Optional, runtime_checkable
 
 import numpy as np  # type: ignore
 import jax.numpy as jnp
@@ -43,8 +43,23 @@ class Background(Protocol):
         ...
 
     @property
-    def mnu(self) -> float:
-        """Total neutrino mass in eV."""
+    def mnu(self) -> Union[float, Sequence[float], T]:
+        """Total neutrino mass in eV (float) or an array of individual neutrino masses in eV."""
+        ...
+
+    @property
+    def N_ur(self) -> float:
+        """Effective number of ultra-relativistic species. As defined by CLASS."""
+        ...
+
+    @property
+    def N_eff(self) -> float:
+        """Effective number of relativistic species."""
+        ...
+
+    @property
+    def N_mnu(self) -> int:
+        """Integer number of massive neutrino species."""
         ...
 
     @property

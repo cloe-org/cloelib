@@ -11,13 +11,19 @@ from cloelib.cosmology.cosmology import Background
 from cloelib.cosmology.derived_cosmology import rdrag_fitting_function
 
 # General imports
-import jax.numpy as np
+import jax.numpy as jnp
+
+# needed for type checking
+import numpy as np
 import jax
 import jax.lax as lx
+from jax.experimental import checkify as chk
 import functools
 import interpax
 from quadax import quadgk
-from typing import Optional
+from typing import Optional, Union, Sequence
+
+ArrayLike = Union[float, Sequence[float], np.ndarray, jnp.ndarray]
 
 
 class JAXBackground:
@@ -31,10 +37,12 @@ class JAXBackground:
         Omega_k0: float,
         As: float,
         ns: float,
-        mnu: float,
+        mnu: Union[float, Sequence[float], jnp.ndarray],
         w0: float,
         wa: float,
         gamma_MG: float,
+        N_mnu: int,
+        N_ur: Optional[float] = None,
     ):
         """
         Initialize the JAXBackground class.
@@ -46,11 +54,15 @@ class JAXBackground:
             Omega_k0(float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
-            mnu (float): Total sum of neutrino mass in [eV].
+            mnu (Union[float, Sequence[float], jnp.ndarray]): Total neutrino mass in eV.
+                Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the dark energy equation of state.
             gamma_MG (float): Modified gravity growth parameter.
-
+            N_mnu (int): Number of massive neutrino species.
+                Note that JaxBackground does not support N_mnu != 0.
+            N_ur (Optional[float]): Effective number of ultra-relativistic species.
+                If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
         """
         self.H0 = H0
         self.h = self.H0 / 100
@@ -62,7 +74,10 @@ class JAXBackground:
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = gamma_MG
-        self.mnu = mnu
+        self.N_mnu = N_mnu
+        self.mnu = self._set_neutrino_mass(mnu, N_mnu)
+        # This does not affect anything here, so if varied, raises an error
+        self._provided_N_ur = N_ur
         self.Omega_nu0 = self.mnu / (
             93.14 * (self.h) ** 2
         )  # this is a semplification, we are assuming
@@ -74,7 +89,7 @@ class JAXBackground:
             self.Omega_b0,
             self.h,
             self.ns,
-            0.0,
+            self.mnu,
             self.w0,
             self.wa,
         )
@@ -91,12 +106,63 @@ class JAXBackground:
         self.interface_args["JAXparams"]["Omega_nu0"] = self.Omega_nu0
         self.interface_args["JAXparams"]["n_s"] = self.ns
         self.interface_args["JAXparams"]["m_ncdm"] = self.mnu
+        self.interface_args["JAXparams"]["N_ncdm"] = self.N_mnu
         self.interface_args["JAXparams"]["A_s"] = self.As
         self.interface_args["JAXparams"]["w0_fld"] = self.w0  # or w0
         self.interface_args["JAXparams"]["wa_fld"] = self.wa  # or wa
         self.interface_args["JAXparams"]["sigma_8"] = sigma_8
 
-    def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
+    @property
+    def N_ur(self) -> None:
+        """Effective number of ultra-relativistic species.
+
+        Checks if N_ur is provided and raises an error if so.
+        FIXME: Not implemented, so this will always return None.
+        """
+        if self._provided_N_ur is not None:
+            raise ValueError("N_ur is not supported in JAXBackground. ")
+        return None
+
+    @property
+    def N_eff(self) -> float:
+        """Effective number of relativistic species.
+
+        FIXME: Not implemented, so this will always return the default 3.044.
+        """
+        return 3.044
+
+    def _set_neutrino_mass(self, mnu: ArrayLike, N_mnu: int) -> jnp.ndarray:
+        """Set the neutrino masses for Jax Cosmology.
+
+        Placeholder function for future more complex implementation.
+        At the moment only sums if mass is an array and does checks.
+        Note that the N_mnu has no impact in this cosmology backend for now.
+
+        Args:
+            mnu: Neutrino mass (can be a single value or an array).
+            N_mnu: Number of neutrino species.
+
+        Returns:
+            Array: Total neutrino mass.
+        """
+
+        def core(mnu, N_mnu):
+            m = jnp.asarray(mnu, dtype=float)
+            s = jnp.sum(jnp.ravel(m))  # scalar or vector handled uniformly
+            size = m.size
+
+            # JIT-safe assertions (no Python control flow):
+            chk.check((size == 1) | (size == N_mnu), "size must be 1 or N_mnu")
+            chk.check((N_mnu == 0) | (s != 0.0), "if N_mnu>0 then sum(mnu)>0")
+
+            return s
+
+        err, out = chk.checkify(core)(mnu, N_mnu)
+        # host-side throw, still no Python if
+        err.throw()
+        return out
+
+    def hubble_parameter(self, zs: jnp.ndarray, units: str = "km/s/Mpc") -> jnp.ndarray:
         """
         Return the Hubble parameter as a function of redshift.
 
@@ -112,12 +178,12 @@ class JAXBackground:
         Omega_m0 = (
             self.Omega_b0 + self.Omega_cdm0 + self.mnu / (93.14 * (self.H0 / 100) ** 2)
         )
-        x = self.H0 * np.sqrt(
-            Omega_m0 * np.power(1 + zs, 3)
-            + (self.Omega_k0) * np.power(1 + zs, 2)
+        x = self.H0 * jnp.sqrt(
+            Omega_m0 * jnp.power(1 + zs, 3)
+            + (self.Omega_k0) * jnp.power(1 + zs, 2)
             + (1 - Omega_m0 - self.Omega_k0)
-            * np.power(1 + zs, 3 * (1 + self.w0 + self.wa))
-            * np.exp(-3 * self.wa * zs / (1 + zs))
+            * jnp.power(1 + zs, 3 * (1 + self.w0 + self.wa))
+            * jnp.exp(-3 * self.wa * zs / (1 + zs))
         )
 
         def default_case(x):
@@ -126,12 +192,12 @@ class JAXBackground:
         def one_Mpc_case(x):
             return x / c_0
 
-        conditions = np.array([units == "km/s/Mpc", units == "1/Mpc"])
-        index = np.argwhere(conditions, size=1).squeeze()
+        conditions = jnp.array([units == "km/s/Mpc", units == "1/Mpc"])
+        index = jnp.argwhere(conditions, size=1).squeeze()
 
         return lx.switch(index, [default_case, one_Mpc_case], x)
 
-    def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
+    def comoving_distance(self, zs: jnp.ndarray) -> jnp.ndarray:
         """
         Calculate the comoving distance for given redshifts.
 
@@ -142,7 +208,7 @@ class JAXBackground:
 
         Returns:
         --------
-        np.ndarray
+        jnp.ndarray
             The comoving distance as a function of redshift.
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
@@ -154,10 +220,10 @@ class JAXBackground:
             y, _ = quadgk(fun, [0.0, x])
             return y
 
-        y = np.array([myquad(myz, fun) for myz in zs])
+        y = jnp.array([myquad(myz, fun) for myz in zs])
         return y * c_0
 
-    def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
+    def transverse_comoving_distance(self, zs: jnp.ndarray) -> jnp.ndarray:
         """
         Return the transverse comoving distance between two redshifts.
 
@@ -165,28 +231,28 @@ class JAXBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Transverse comoving distance values.
+            jnp.ndarray: Transverse comoving distance values.
         """
         delta_z = self.comoving_distance(zs)
-        p = np.concatenate([np.array([self.Omega_k0]), delta_z], axis=0)
+        p = jnp.concatenate([jnp.array([self.Omega_k0]), delta_z], axis=0)
 
         def default_case(p):
             return p[1:]
 
         def positive_case(p):
-            return np.sinh(np.sqrt(p[0]) * p[1:]) / np.sqrt(p[0])
+            return jnp.sinh(jnp.sqrt(p[0]) * p[1:]) / jnp.sqrt(p[0])
 
         def negative_case(p):
-            return np.sin(np.sqrt(-p[0]) * p[1:]) / np.sqrt(-p[0])
+            return jnp.sin(jnp.sqrt(-p[0]) * p[1:]) / jnp.sqrt(-p[0])
 
-        conditions = np.array(
+        conditions = jnp.array(
             [self.Omega_k0 > 0.0, self.Omega_k0 < 0.0, self.Omega_k0 == 0.0]
         )
-        index = np.argwhere(conditions, size=1).squeeze()
+        index = jnp.argwhere(conditions, size=1).squeeze()
 
         return lx.switch(index, [positive_case, negative_case, default_case], p)
 
-    def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
+    def angular_diameter_distance(self, zs: jnp.ndarray) -> jnp.ndarray:
         """
         Calculate the angular diameter distance for given redshifts.
 
@@ -197,12 +263,12 @@ class JAXBackground:
 
         Returns:
         --------
-        np.ndarray
+        jnp.ndarray
             The angular diameter distance as a function of redshift.
         """
         return self.transverse_comoving_distance(zs) / (1 + zs)
 
-    def Omega_b(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_b(self, zs: jnp.ndarray) -> jnp.ndarray:
         """
         Return the baryon density as a function of redshift.
 
@@ -210,16 +276,16 @@ class JAXBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Matter density values.
+            jnp.ndarray: Matter density values.
         """
-        return np.array(
+        return jnp.array(
             [
                 self.Omega_b0 * (1 + z) ** 3 / (self.hubble_parameter(z) / self.H0) ** 2
                 for z in zs
             ]
         )
 
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: jnp.ndarray) -> jnp.ndarray:
         """
         Return the matter density as a function of redshift.
 
@@ -227,9 +293,9 @@ class JAXBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Matter density values.
+            jnp.ndarray: Matter density values.
         """
-        return np.array(
+        return jnp.array(
             [
                 (self.Omega_m0)
                 * (1 + z) ** 3
@@ -244,25 +310,25 @@ class JAXBackground:
 
     def f_de(self, a):
         """Write documentation (TODO)."""
-        return -3.0 * (1.0 + self.w0 + self.wa) * np.log(a) + 3.0 * self.wa * (a - 1.0)
+        return -3.0 * (1.0 + self.w0 + self.wa) * jnp.log(a) + 3.0 * self.wa * (a - 1.0)
 
     def Esqr(self, a):
         """Write documentation (TODO)."""
         OmDE = 1.0 - self.Omega_m0 - self.Omega_k0
         return (
-            self.Omega_m0 * np.power(a, -3)
-            + self.Omega_k0 * np.power(a, -2)
-            + OmDE * np.exp(self.f_de(a))
+            self.Omega_m0 * jnp.power(a, -3)
+            + self.Omega_k0 * jnp.power(a, -2)
+            + OmDE * jnp.exp(self.f_de(a))
         )
 
     def Omega_m_a(self, a):
         """Write documentation (TODO)."""
-        return self.Omega_m0 * np.power(a, -3) / self.Esqr(a)
+        return self.Omega_m0 * jnp.power(a, -3) / self.Esqr(a)
 
     def Omega_de_a(self, a):
         """Write documentation (TODO)."""
         OmDE = 1.0 - self.Omega_m0 - self.Omega_k0
-        return OmDE * np.exp(self.f_de(a)) / self.Esqr(a)
+        return OmDE * jnp.exp(self.f_de(a)) / self.Esqr(a)
 
     @property
     def rdrag(self) -> float:
@@ -293,15 +359,15 @@ class JAXLinearPerturbations:
             )
         ) / x
         r = 1.5 * self.background.Omega_m_a(x) / x / x
-        return np.array([y[1], -q * y[1] + r * y[0]])
+        return jnp.array([y[1], -q * y[1] + r * y[0]])
 
-    def growth_factor(self, zs: np.ndarray, ks: Optional[np.ndarray] = None):
+    def growth_factor(self, zs: jnp.ndarray, ks: Optional[jnp.ndarray] = None):
         """Compute the growth factor."""
-        atab = np.logspace(-3.0, 0.0, 128)
+        atab = jnp.logspace(-3.0, 0.0, 128)
 
         a_s = a_z(zs)
 
-        y0 = np.array([atab[0], 1.0])
+        y0 = jnp.array([atab[0], 1.0])
 
         def fn(x, y):
             return self.D_derivs(x, y)
@@ -314,13 +380,13 @@ class JAXLinearPerturbations:
 
         return result
 
-    def growth_rate(self, zs: np.ndarray):
+    def growth_rate(self, zs: jnp.ndarray):
         """Compute the growth rate."""
-        atab = np.logspace(-3.0, 0.0, 256)
+        atab = jnp.logspace(-3.0, 0.0, 256)
 
         a_s = a_z(zs)
 
-        y0 = np.array([atab[0], 1.0])
+        y0 = jnp.array([atab[0], 1.0])
 
         def fn(x, y):
             return self.D_derivs(x, y)
@@ -385,13 +451,13 @@ class JAXLinearPerturbations:
         z_eq = 2.50e4 * w_m / (T_2_7_sqr) ** 2  # Eq. (2)
 
         # z drag from Eq. (4)
-        b1 = 0.313 * np.power(w_m, -0.419) * (1.0 + 0.607 * np.power(w_m, 0.674))
-        b2 = 0.238 * np.power(w_m, 0.223)
+        b1 = 0.313 * jnp.power(w_m, -0.419) * (1.0 + 0.607 * jnp.power(w_m, 0.674))
+        b2 = 0.238 * jnp.power(w_m, 0.223)
         z_d = (
             1291.0
-            * np.power(w_m, 0.251)
-            / (1.0 + 0.659 * np.power(w_m, 0.828))
-            * (1.0 + b1 * np.power(w_b, b2))
+            * jnp.power(w_m, 0.251)
+            / (1.0 + 0.659 * jnp.power(w_m, 0.828))
+            * (1.0 + b1 * jnp.power(w_b, b2))
         )
 
         # Ratio of the baryon to photon momentum density at z_d  Eq. (5)
@@ -402,24 +468,26 @@ class JAXLinearPerturbations:
         sh_d = (
             2.0
             / (3.0 * k_eq)
-            * np.sqrt(6.0 / R_eq)
-            * np.log((np.sqrt(1.0 + R_d) + np.sqrt(R_eq + R_d)) / (1.0 + np.sqrt(R_eq)))
+            * jnp.sqrt(6.0 / R_eq)
+            * jnp.log(
+                (jnp.sqrt(1.0 + R_d) + jnp.sqrt(R_eq + R_d)) / (1.0 + jnp.sqrt(R_eq))
+            )
         )
         # Eq. (7) but in [hMpc^{-1}]
         k_silk = (
             1.6
-            * np.power(w_b, 0.52)
-            * np.power(w_m, 0.73)
-            * (1.0 + np.power(10.4 * w_m, -0.95))
+            * jnp.power(w_b, 0.52)
+            * jnp.power(w_m, 0.73)
+            * (1.0 + jnp.power(10.4 * w_m, -0.95))
             / (self.background.h)
         )
         #############################################
 
         alpha_gamma = (
             1.0
-            - 0.328 * np.log(431.0 * w_m) * w_b / w_m
+            - 0.328 * jnp.log(431.0 * w_m) * w_b / w_m
             + 0.38
-            * np.log(22.3 * w_m)
+            * jnp.log(22.3 * w_m)
             * (
                 self.background.Omega_b0
                 / (
@@ -436,20 +504,20 @@ class JAXLinearPerturbations:
             * (alpha_gamma + (1.0 - alpha_gamma) / (1.0 + (0.43 * ks * sh_d) ** 4))
         )
 
-        a1 = np.power(46.9 * w_m, 0.670) * (1.0 + np.power(32.1 * w_m, -0.532))
-        a2 = np.power(12.0 * w_m, 0.424) * (1.0 + np.power(45.0 * w_m, -0.582))
-        alpha_c = np.power(a1, -fb) * np.power(a2, -(fb**3))
-        b1 = 0.944 / (1.0 + np.power(458.0 * w_m, -0.708))
-        b2 = np.power(0.395 * w_m, -0.0266)
-        beta_c = 1.0 + b1 * (np.power(fc, b2) - 1.0)
+        a1 = jnp.power(46.9 * w_m, 0.670) * (1.0 + jnp.power(32.1 * w_m, -0.532))
+        a2 = jnp.power(12.0 * w_m, 0.424) * (1.0 + jnp.power(45.0 * w_m, -0.582))
+        alpha_c = jnp.power(a1, -fb) * jnp.power(a2, -(fb**3))
+        b1 = 0.944 / (1.0 + jnp.power(458.0 * w_m, -0.708))
+        b2 = jnp.power(0.395 * w_m, -0.0266)
+        beta_c = 1.0 + b1 * (jnp.power(fc, b2) - 1.0)
         beta_c = 1.0 / beta_c
 
         # EH98 (19). [k] = h/Mpc
         def T_tilde(k1, alpha, beta):
             # EH98 (10); [q] = 1 BUT [k] = h/Mpc
             q = k1 / (13.41 * k_eq)
-            L = np.log(np.exp(1.0) + 1.8 * beta * q)
-            C = 14.2 / alpha + 386.0 / (1.0 + 69.9 * np.power(q, 1.08))
+            L = jnp.log(jnp.exp(1.0) + 1.8 * beta * q)
+            C = 14.2 / alpha + 386.0 / (1.0 + 69.9 * jnp.power(q, 1.08))
             T0 = L / (L + C * q * q)
             return T0
 
@@ -460,22 +528,22 @@ class JAXLinearPerturbations:
         # Baryon transfer function
         # EH98 (19, 14, 21)
         y = (1.0 + z_eq) / (1.0 + z_d)
-        x = np.sqrt(1.0 + y)
-        G_EH98 = y * (-6.0 * x + (2.0 + 3.0 * y) * np.log((x + 1.0) / (x - 1.0)))
-        alpha_b = 2.07 * k_eq * sh_d * np.power(1.0 + R_d, -0.75) * G_EH98
+        x = jnp.sqrt(1.0 + y)
+        G_EH98 = y * (-6.0 * x + (2.0 + 3.0 * y) * jnp.log((x + 1.0) / (x - 1.0)))
+        alpha_b = 2.07 * k_eq * sh_d * jnp.power(1.0 + R_d, -0.75) * G_EH98
 
-        beta_node = 8.41 * np.power(w_m, 0.435)
-        tilde_s = sh_d / np.power(1.0 + (beta_node / (ks * sh_d)) ** 3, 1.0 / 3.0)
+        beta_node = 8.41 * jnp.power(w_m, 0.435)
+        tilde_s = sh_d / jnp.power(1.0 + (beta_node / (ks * sh_d)) ** 3, 1.0 / 3.0)
 
-        beta_b = 0.5 + fb + (3.0 - 2.0 * fb) * np.sqrt((17.2 * w_m) ** 2 + 1.0)
+        beta_b = 0.5 + fb + (3.0 - 2.0 * fb) * jnp.sqrt((17.2 * w_m) ** 2 + 1.0)
 
         # [tilde_s] = Mpc/h
         Tb = (
             T_tilde(ks, 1.0, 1.0) / (1.0 + (ks * sh_d / 5.2) ** 2)
             + alpha_b
             / (1.0 + (beta_b / (ks * sh_d)) ** 3)
-            * np.exp(-np.power(ks / k_silk, 1.4))
-        ) * np.sinc(ks * tilde_s / np.pi)
+            * jnp.exp(-jnp.power(ks / k_silk, 1.4))
+        ) * jnp.sinc(ks * tilde_s / jnp.pi)
 
         # Total transfer function
         res = fb * Tb + fc * Tc
@@ -504,15 +572,15 @@ class JAXLinearPerturbations:
         """
 
         def int_sigma(logk):
-            k = np.exp(logk)
+            k = jnp.exp(logk)
             x = k * R
-            w = 3.0 * (np.sin(x) - x * np.cos(x)) / (x * x * x)
+            w = 3.0 * (jnp.sin(x) - x * jnp.cos(x)) / (x * x * x)
             pk = self.transfer_Eisenstein_Hu(k) ** 2 * self.primordial_matter_power(k)
             return k * (k * w) ** 2 * pk
 
-        y = romb(int_sigma, np.log10(kmin), np.log10(kmax), divmax=7)
+        y = romb(int_sigma, jnp.log10(kmin), jnp.log10(kmax), divmax=7)
 
-        return 1.0 / (2.0 * np.pi**2.0) * y
+        return 1.0 / (2.0 * jnp.pi**2.0) * y
 
     def sigma8sqr(self, kmin=0.0001, kmax=100.0):
         r"""Compute the energy of the fluctuations within a sphere of R h^{-1} Mpc.
@@ -530,17 +598,17 @@ class JAXLinearPerturbations:
         R = 8
 
         def int_sigma(logk):
-            k = np.exp(logk)
+            k = jnp.exp(logk)
             x = k * R
-            w = 3.0 * (np.sin(x) - x * np.cos(x)) / (x * x * x)
+            w = 3.0 * (jnp.sin(x) - x * jnp.cos(x)) / (x * x * x)
             pk = self.transfer_Eisenstein_Hu(k) ** 2 * self.primordial_matter_power(k)
             return k * (k * w) ** 2 * pk
 
-        y = simps(int_sigma, np.log10(kmin), np.log10(kmax), N=256)
-        return 1.0 / (2.0 * np.pi**2.0) * y
+        y = simps(int_sigma, jnp.log10(kmin), jnp.log10(kmax), N=256)
+        return 1.0 / (2.0 * jnp.pi**2.0) * y
 
     def matter_power_spectrum(
-        self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False
+        self, zs: jnp.ndarray, ks: jnp.ndarray, hubble_units=False, k_hunit=False
     ):
         r"""Compute the linear matter power spectrum.
 
@@ -567,12 +635,12 @@ class JAXLinearPerturbations:
         def kh_units_case(k):
             return k
 
-        conditions = np.array([not k_hunit, k_hunit])
-        index = np.argwhere(conditions, size=1).squeeze()
+        conditions = jnp.array([not k_hunit, k_hunit])
+        index = jnp.argwhere(conditions, size=1).squeeze()
 
-        ks = np.atleast_1d(ks)
+        ks = jnp.atleast_1d(ks)
         ks = lx.switch(index, [k_units_case, kh_units_case], ks)
-        zs = np.atleast_1d(zs)
+        zs = jnp.atleast_1d(zs)
         g = self.growth_factor(zs)
         t = self.transfer_Eisenstein_Hu(ks)
 
@@ -582,7 +650,7 @@ class JAXLinearPerturbations:
         # this means we have a 0.01% difference compared to the romberg calculation,
         # but it is much faster
 
-        pk = np.outer(g**2, self.primordial_matter_power(ks) * t**2)
+        pk = jnp.outer(g**2, self.primordial_matter_power(ks) * t**2)
 
         def hMpc_units_case(h):
             return h * h * h
@@ -590,8 +658,8 @@ class JAXLinearPerturbations:
         def Mpc_units_case(h):
             return 1.0
 
-        conditions = np.array([not hubble_units, hubble_units])
-        index = np.argwhere(conditions, size=1).squeeze()
+        conditions = jnp.array([not hubble_units, hubble_units])
+        index = jnp.argwhere(conditions, size=1).squeeze()
 
         factor = lx.switch(index, [hMpc_units_case, Mpc_units_case], h)
 
@@ -609,12 +677,12 @@ class JAXNonLinearPerturbations:
         self.linearperturbations = JAXLinearPerturbations(background)
 
     def growth_factor(
-        self, zs: np.ndarray, ks: Optional[np.ndarray] = None
-    ) -> np.ndarray:
+        self, zs: jnp.ndarray, ks: Optional[jnp.ndarray] = None
+    ) -> jnp.ndarray:
         """Return the linear growth factor."""
         return self.linearperturbations.growth_factor(zs, ks)
 
-    def growth_rate(self, zs: np.ndarray) -> np.ndarray:
+    def growth_rate(self, zs: jnp.ndarray) -> jnp.ndarray:
         """Return the linear growth rate."""
         return self.linearperturbations.growth_rate(zs)
 
@@ -622,52 +690,52 @@ class JAXNonLinearPerturbations:
         """Compute the non linear scale, effective spectral index, spectral curvature."""
         # Step 1: Finding the non linear scale for which sigma(R)=1
         # That's our search range for the non linear scale
-        logr = np.linspace(np.log(1e-4), np.log(1e1), 256)
+        logr = jnp.linspace(jnp.log(1e-4), jnp.log(1e1), 256)
 
         # TODO: implement a better root finding algorithm to compute the non linear scale
         @jax.vmap
         def R_nl(zs):
             def int_sigma(logk):
-                k = np.exp(logk)
-                r = np.exp(logr)
-                y = np.outer(k, r)
+                k = jnp.exp(logk)
+                r = jnp.exp(logr)
+                y = jnp.outer(k, r)
                 pk = self.linearperturbations.matter_power_spectrum(0.0, k)
-                g = self.linearperturbations.growth_factor(np.atleast_1d(zs))
+                g = self.linearperturbations.growth_factor(jnp.atleast_1d(zs))
                 return (
-                    np.expand_dims(pk * k**3, axis=1)
-                    * np.exp(-(y**2))
-                    / (2.0 * np.pi**2)
+                    jnp.expand_dims(pk * k**3, axis=1)
+                    * jnp.exp(-(y**2))
+                    / (2.0 * jnp.pi**2)
                     * g**2
                 )
 
-            sigma = simps(int_sigma, np.log(1e-4), np.log(1e4), 256)
-            root = interp(np.atleast_1d(1.0), sigma, logr)
-            return np.exp(root).clip(
+            sigma = simps(int_sigma, jnp.log(1e-4), jnp.log(1e4), 256)
+            root = interp(jnp.atleast_1d(1.0), sigma, logr)
+            return jnp.exp(root).clip(
                 1e-6
             )  # To ensure that the root is not too close to zero
 
         # Compute non linear scale
-        k_nl = 1.0 / R_nl(np.atleast_1d(zs)).squeeze()
+        k_nl = 1.0 / R_nl(jnp.atleast_1d(zs)).squeeze()
 
         # Step 2: Retrieve the spectral index and spectral curvature
         def integrand(logk):
-            k = np.exp(logk)
-            y = np.outer(k, 1.0 / k_nl)
+            k = jnp.exp(logk)
+            y = jnp.outer(k, 1.0 / k_nl)
             pk = self.linearperturbations.matter_power_spectrum(0.0, k)
-            g = np.expand_dims(
-                self.linearperturbations.growth_factor(np.atleast_1d(zs)), 0
+            g = jnp.expand_dims(
+                self.linearperturbations.growth_factor(jnp.atleast_1d(zs)), 0
             )
             res = (
-                np.expand_dims(pk * k**3, axis=1)
-                * np.exp(-(y**2))
+                jnp.expand_dims(pk * k**3, axis=1)
+                * jnp.exp(-(y**2))
                 * g**2
-                / (2.0 * np.pi**2)
+                / (2.0 * jnp.pi**2)
             )
             dneff_dlogk = 2 * res * y**2
             dC_dlogk = 4 * res * (y**2 - y**4)
-            return np.stack([dneff_dlogk, dC_dlogk], axis=1)
+            return jnp.stack([dneff_dlogk, dC_dlogk], axis=1)
 
-        res = simps(integrand, np.log(1e-4), np.log(1e4), 256)
+        res = simps(integrand, jnp.log(1e-4), jnp.log(1e4), 256)
 
         n_eff = res[0] - 3.0
         C = res[0] ** 2 + res[1]
@@ -675,7 +743,7 @@ class JAXNonLinearPerturbations:
 
     def halofit(self, zs, ks, hubble_units=False, k_hunit=False):
         """Write documentation (TODO)."""
-        zs = np.atleast_1d(zs)
+        zs = jnp.atleast_1d(zs)
         a_s = a_z(zs)
 
         # Compute the linear power spectrum
@@ -705,7 +773,7 @@ class JAXNonLinearPerturbations:
         )
         c_n = 10 ** (0.3698 + 2.0404 * n + 0.8161 * n**2 + 0.5869 * C)
         gamma_n = 0.1971 - 0.0843 * n + 0.8460 * C
-        alpha_n = np.abs(6.0835 + 1.3373 * n - 0.1959 * n**2 - 5.5274 * C)
+        alpha_n = jnp.abs(6.0835 + 1.3373 * n - 0.1959 * n**2 - 5.5274 * C)
         beta_n = (
             2.0379
             - 0.7354 * n
@@ -731,12 +799,12 @@ class JAXNonLinearPerturbations:
         def f(x):
             return x / 4.0 + x**2 / 8.0
 
-        d2l = ks**3 * pklin / (2.0 * np.pi**2)
+        d2l = ks**3 * pklin / (2.0 * jnp.pi**2)
 
         y = ks / k_nl
 
         # Eq C2
-        d2q = d2l * ((1.0 + d2l) ** beta_n / (1 + alpha_n * d2l)) * np.exp(-f(y))
+        d2q = d2l * ((1.0 + d2l) ** beta_n / (1 + alpha_n * d2l)) * jnp.exp(-f(y))
         d2hprime = (
             a_n
             * y ** (3 * f1)
@@ -745,11 +813,11 @@ class JAXNonLinearPerturbations:
         d2h = d2hprime / (1.0 + mu_n / y + nu_n / y**2)
         # Eq. C1
         d2nl = d2q + d2h
-        pk_nl = 2.0 * np.pi**2 / ks**3 * d2nl
+        pk_nl = 2.0 * jnp.pi**2 / ks**3 * d2nl
         return pk_nl.squeeze()
 
     def matter_power_spectrum(
-        self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False
+        self, zs: jnp.ndarray, ks: jnp.ndarray, hubble_units=False, k_hunit=False
     ):
         """Compute the non-linear matter power spectrum.
 
@@ -765,7 +833,7 @@ class JAXNonLinearPerturbations:
         chi = self.linearperturbations.linearperturbations.background.comoving_distance(
             zs
         )
-        k_lz = np.expand_dims((ells + 0.5), 1) / chi
+        k_lz = jnp.expand_dims((ells + 0.5), 1) / chi
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
         return Pkl
 
@@ -776,9 +844,9 @@ def simps(f, a, b, N=128):
     if N % 2 == 1:
         raise ValueError("N must be an even integer.")
     dx = (b - a) / N
-    x = np.linspace(a, b, N + 1)
+    x = jnp.linspace(a, b, N + 1)
     y = f(x)
-    S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
+    S = dx / 3 * jnp.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
     return S
 
 
@@ -796,14 +864,14 @@ def odeint(fn, y0, t):
         y = y + 1.0 / 6.0 * h * (k1 + 2 * k2 + 2 * k3 + k4)
         return (y, t), y
 
-    (yf, _), y = lx.scan(rk4, (y0, np.array(t[0])), t)
+    (yf, _), y = lx.scan(rk4, (y0, jnp.array(t[0])), t)
     return y
 
 
 @functools.partial(jax.vmap, in_axes=(0, None, None))
 def interp(x, xp, fp):
     """
-    Compute a linear interpolation (equivalent of np.interp).
+    Compute a linear interpolation (equivalent of jnp.interp).
 
     We are not doing any checks, so make sure your query points are lying
     inside the array.
@@ -813,16 +881,16 @@ def interp(x, xp, fp):
     x, xp, fp need to be 1d arrays
     """
     # First we find the nearest neighbour
-    ind = np.argmin((x - xp) ** 2)
+    ind = jnp.argmin((x - xp) ** 2)
 
     # Perform linear interpolation
-    ind = np.clip(ind, 1, len(xp) - 2)
+    ind = jnp.clip(ind, 1, len(xp) - 2)
 
     xi = xp[ind]
     # Figure out if we are on the right or the left of nearest
-    s = np.sign(np.clip(x, xp[1], xp[-2]) - xi).astype(np.int32)
-    a = (fp[ind + np.copysign(1, s).astype(np.int32)] - fp[ind]) / (
-        xp[ind + np.copysign(1, s).astype(np.int32)] - xp[ind]
+    s = jnp.sign(jnp.clip(x, xp[1], xp[-2]) - xi).astype(jnp.int32)
+    a = (fp[ind + jnp.copysign(1, s).astype(jnp.int32)] - fp[ind]) / (
+        xp[ind + jnp.copysign(1, s).astype(jnp.int32)] - xp[ind]
     )
     b = fp[ind] - a * xp[ind]
     return a * x + b
@@ -895,7 +963,7 @@ def romb(function, a, b, args=(), divmax=6, return_error=False):
     Integrate a gaussian from 0 to 1 and compare to the error function.
     >>> from scipy import integrate
     >>> from scipy.special import erf
-    >>> gaussian = lambda x: 1/np.sqrt(np.pi) * np.exp(-x**2)
+    >>> gaussian = lambda x: 1/np.sqrt(np.pi) * jnp.exp(-x**2)
     >>> result = integrate.romberg(gaussian, 0, 1, show=True)
     Romberg integration of <function vfunc at ...> from [0, 1]
     ::
@@ -917,8 +985,8 @@ def romb(function, a, b, args=(), divmax=6, return_error=False):
     intrange = b - a
     ordsum = _difftrap1(vfunc, interval)
     result = intrange * ordsum
-    state = np.repeat(np.atleast_1d(result), divmax + 1, axis=-1)
-    err = np.inf
+    state = jnp.repeat(jnp.atleast_1d(result), divmax + 1, axis=-1)
+    err = jnp.inf
 
     def scan_fn(carry, y):
         x, k = carry
@@ -932,9 +1000,9 @@ def romb(function, a, b, args=(), divmax=6, return_error=False):
         x = intrange * ordsum / n
         _, new_state = jax.lax.scan(scan_fn, (x, 0), state[:-1])
 
-        new_state = np.concatenate([np.atleast_1d(x), new_state])
+        new_state = jnp.concatenate([jnp.atleast_1d(x), new_state])
 
-        err = np.abs(state[i - 1] - new_state[i])
+        err = jnp.abs(state[i - 1] - new_state[i])
         state = new_state
 
     if return_error:
@@ -977,8 +1045,8 @@ def _difftrapn(function, interval, numtraps):
     numtosum = numtraps // 2
     h = (1.0 * interval[1] - 1.0 * interval[0]) / numtosum
     lox = interval[0] + 0.5 * h
-    points = lox + h * np.arange(0, numtosum)
-    s = np.sum(function(points))
+    points = lox + h * jnp.arange(0, numtosum)
+    s = jnp.sum(function(points))
     return s
 
 
@@ -986,7 +1054,7 @@ def _difftrapn(function, interval, numtraps):
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
     """Write documentation (TODO)."""
     return 10 ** interpax.interp2d(
-        np.log10(k_l), z_l, np.log10(ks), zs, np.log10(Pk), method="cubic"
+        jnp.log10(k_l), z_l, jnp.log10(ks), zs, jnp.log10(Pk), method="cubic"
     )
 
 
@@ -1012,7 +1080,7 @@ def As_to_sigma8_max_precision(As, Om, Ob, h, ns, mnu, w0, wa):
         :sigma8 (float): Root-mean-square density fluctuation when the linearly
             evolved field is smoothed with a top-hat filter of radius 8 Mpc/h
     """
-    b = np.array(
+    b = jnp.array(
         [
             0.0246,
             2.1062,
@@ -1055,29 +1123,29 @@ def As_to_sigma8_max_precision(As, Om, Ob, h, ns, mnu, w0, wa):
     )
 
     term1_inner = Om * b[1] + (
-        b[2] * mnu - b[3] * ns + np.log(b[4] * h - b[5] * mnu)
+        b[2] * mnu - b[3] * ns + jnp.log(b[4] * h - b[5] * mnu)
     ) * (b[6] * h + b[7] * mnu - b[8] * ns + 1)
     term1 = b[0] * term1_inner
 
     term2 = b[9] * h - mnu
 
-    term3_inner1 = (b[12] * w0 - b[13] * wa - np.log(Om * b[14])) * (
-        Om * b[15] + b[16] * w0 + b[17] * wa + np.log(-b[18] * w0 - b[19] * wa)
+    term3_inner1 = (b[12] * w0 - b[13] * wa - jnp.log(Om * b[14])) * (
+        Om * b[15] + b[16] * w0 + b[17] * wa + jnp.log(-b[18] * w0 - b[19] * wa)
     )
-    term3_inner2 = np.log(Om * b[20] + np.log(-b[21] * w0 - b[22] * wa))
+    term3_inner2 = jnp.log(Om * b[20] + jnp.log(-b[21] * w0 - b[22] * wa))
     term3 = (
         b[10] * w0
         - b[11] * mnu
         - term3_inner1
         - term3_inner2
-        + np.log(-b[23] * w0 - b[24] * wa)
+        + jnp.log(-b[23] * w0 - b[24] * wa)
     )
 
-    term4_inner1 = Ob * b[30] - b[31] * h - np.log(Om * b[32])
+    term4_inner1 = Ob * b[30] - b[31] * h - jnp.log(Om * b[32])
     term4_inner2 = Om * b[33] - b[34] * h - b[35] * mnu - b[36] * ns
     term4 = (
         b[25] * mnu
-        - np.sqrt(Ob) * b[26]
+        - jnp.sqrt(Ob) * b[26]
         - Ob * b[27]
         + Om * b[28]
         - b[29] * h
@@ -1087,4 +1155,4 @@ def As_to_sigma8_max_precision(As, Om, Ob, h, ns, mnu, w0, wa):
 
     result = term1 * term2 * term3 * term4
 
-    return result * np.sqrt(As * 10**9)
+    return result * jnp.sqrt(As * 10**9)

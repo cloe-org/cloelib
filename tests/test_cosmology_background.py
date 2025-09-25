@@ -47,6 +47,9 @@ def test_background_required_attributes():
         "Omega_cdm0",
         "H0",
         "ns",
+        "N_ur",
+        "N_mnu",
+        "N_eff",
         "interface_args",
         "rdrag",
     }
@@ -71,6 +74,7 @@ def test_cosmo():
         mnu=0.1,
         As=2e-9,
         gamma_MG=0.0,
+        N_mnu=1,
     )
 
     _z_test = np.zeros(1)

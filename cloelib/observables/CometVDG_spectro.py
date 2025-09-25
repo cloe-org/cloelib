@@ -4,6 +4,7 @@
 from cloelib.cosmology.cosmology import Background
 
 # General imports
+from typing import Sequence
 import numpy as np  # type: ignore
 
 # Cosmology imports
@@ -35,7 +36,7 @@ class CometVDG_SpectroPower:
         self.parameters = {}
         self.parameters["wc"] = self.background.Omega_cdm0 * self.background.h**2
         self.parameters["wb"] = self.background.Omega_b0 * self.background.h**2
-        self.parameters["Mnu"] = self.background.mnu
+        self.parameters["Mnu"] = self._set_neutrino_parameters(self.background)
         self.parameters["ns"] = self.background.ns
         self.parameters["h"] = self.background.h
         self.parameters["As"] = self.background.As * 1e9
@@ -64,6 +65,125 @@ class CometVDG_SpectroPower:
             "c2": "Pctr_c2",
             "c4": "Pctr_c4",
         }
+
+    def _set_neutrino_parameters(self, background: Background) -> float:
+        r"""Set neutrino parameters in the parameters dictionary.
+
+        This method adds neutrino parameters to the provided dictionary.
+        It also ensures consistency with the background cosmology.
+        Comet only supports a single species of neutrinos, so this method
+        throws an error if multiple neutrino species are provided.
+        Note that Comet supports mnu=0.0 (N_mnu=0).
+
+        Parameters
+        ----------
+        parameters: dict
+            Dictionary to which neutrino parameters will be added
+
+        Returns
+        -------
+        mnu_arg: float
+            Neutrino mass in eV
+        """
+        if background.N_mnu > 1:
+            raise ValueError(
+                "Comet only supports max a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
+
+        if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
+            raise ValueError(
+                "Comet only supports a fixed number of effective"
+                f"relativistic species (N_eff=3.044). Found {background.N_eff} "
+                "Ensure that N_eff=3.044 in the Background class."
+            )
+        if isinstance(background.mnu, Sequence) or isinstance(
+            background.mnu, np.ndarray
+        ):
+            raise ValueError(
+                "Comet only supports a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
+        else:
+            mnu_arg = float(background.mnu)
+        # returns the neutrino mass in eV
+        return mnu_arg
+
+    def _set_neutrino_parameters(self, background: Background) -> float:
+        r"""Set neutrino parameters in the parameters dictionary.
+
+        This method adds neutrino parameters to the provided dictionary.
+        It also ensures consistency with the background cosmology.
+        Comet only supports a single species of neutrinos, so this method
+        throws an error if multiple neutrino species are provided.
+        Note that Comet supports mnu=0.0 (N_mnu=0).
+
+        Parameters
+        ----------
+        parameters: dict
+            Dictionary to which neutrino parameters will be added
+        """
+        if background.N_mnu > 1:
+            raise ValueError(
+                "Comet only supports max a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
+
+        if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
+            raise ValueError(
+                "Comet only supports a fixed number of effective"
+                f"relativistic species (N_eff=3.044). Found {background.N_eff} "
+                "Ensure that N_eff=3.044 in the Background class."
+            )
+        if isinstance(background.mnu, Sequence) or isinstance(
+            background.mnu, np.ndarray
+        ):
+            raise ValueError(
+                "Comet only supports a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
+        else:
+            mnu_arg = float(background.mnu)
+        # returns the neutrino mass in eV
+        return mnu_arg
+
+    def _set_neutrino_parameters(self, background: Background) -> float:
+        r"""Set neutrino parameters in the parameters dictionary.
+
+        This method adds neutrino parameters to the provided dictionary.
+        It also ensures consistency with the background cosmology.
+        Comet only supports a single species of neutrinos, so this method
+        throws an error if multiple neutrino species are provided.
+        Note that Comet supports mnu=0.0 (N_mnu=0).
+
+        Parameters
+        ----------
+        parameters: dict
+            Dictionary to which neutrino parameters will be added
+        """
+        if background.N_mnu > 1:
+            raise ValueError(
+                "Comet only supports max a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
+
+        if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
+            raise ValueError(
+                "Comet only supports a fixed number of effective"
+                f"relativistic species (N_eff=3.044). Found {background.N_eff} "
+                "Ensure that N_eff=3.044 in the Background class."
+            )
+        if isinstance(background.mnu, Sequence) or isinstance(
+            background.mnu, np.ndarray
+        ):
+            raise ValueError(
+                "Comet only supports a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
+        else:
+            mnu_arg = float(background.mnu)
+        # returns the neutrino mass in eV
+        return mnu_arg
 
     def _Winfty(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""Large-scale limit of the velocity difference generating function.

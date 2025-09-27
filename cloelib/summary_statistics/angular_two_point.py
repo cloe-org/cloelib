@@ -239,6 +239,7 @@ class AngularTwoPoint:
             )
             for key, array in C_ell_out.items()
         }
+        self.C_ell_calc = C_ell_calc
         return cosmolib_Cls
 
     def get_pseudo_Cl(self, nl, ks, mixing_matrix) -> dict:

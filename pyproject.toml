@@ -15,9 +15,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-interpax = "0.3.3"
+interpax = "^0.3.3"
 jax = "0.4.38"
-numpy = "<2.0"
+numpy = "^2.0"
 quadax = "0.2.7"
 scipy = "<1.14"
 pytest = "8.3.5"
@@ -32,7 +32,7 @@ hmcode2020emu = ["HMcode2020Emu"]
 comet-emu = ["comet-emu"]
 
 [tool.poetry.dependencies.tensorflow]
-version = "==2.13"
+version = "^2.13"
 optional = true
 
 [tool.poetry.dependencies.HMcode2020Emu]

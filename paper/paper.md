@@ -181,14 +181,14 @@ The architecture of `cloelib` leverages Python protocols (PEP 544) to define int
 
 | Backend / Emulator | Observable Type | Configuration | Runtime (s) | Speedup vs. Baseline | Memory Usage (MB) | Notes |
 | ------------------ | --------------- | ------------- | ----------- | -------------------- | ----------------- | ----- |
-| CAMB               | Cℓ              | Default       |             |                      |                   |       |
-| CLASS              | Cℓ              | Default       |             |                      |                   |       |
-| HMCode2020Emu      | Cℓ              | Default       |             |                      |                   |       |
-| COMET              | Pℓ              | Default       |             |                      |                   |       |
-| CosmoPower         | Cℓ              | Default       |             |                      |                   |       |
-| BACCO              | Cℓ              | Default       |             |                      |                   |       |
-| Capse.jl           | Cℓ              | Default       |             |                      |                   |       |
-| Effort.jl          | Pℓ              | Default       |             |                      |                   |       |
+| CAMB               | Cell            | Default       |             |                      |                   |       |
+| CLASS              | Cell            | Default       |             |                      |                   |       |
+| HMCode2020Emu      | Cell            | Default       |             |                      |                   |       |
+| COMET              | Pell            | Default       |             |                      |                   |       |
+| CosmoPower         | Cell            | Default       |             |                      |                   |       |
+| BACCO              | Cell            | Default       |             |                      |                   |       |
+| Capse.jl           | Cell            | Default       |             |                      |                   |       |
+| Effort.jl          | Pell            | Default       |             |                      |                   |       |
 
 ## Author Contributions
 

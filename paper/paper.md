@@ -1,5 +1,5 @@
 ---
-title: 'cloelib: A Flexible Python Library for Computing Cosmological Observables in the Euclid Era'
+title: "cloelib: A Flexible Python Library for Computing Cosmological Observables in the Euclid Era"
 tags:
   - Python
   - cosmology
@@ -28,18 +28,18 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 6
 affiliations:
- - name: University of Waterloo, Canada
-   index: 1
- - name: University of Edinburgh, United Kingdom
-   index: 2
- - name: University of Edinburgh, United Kingdom
-   index: 3
- - name: RWTH Aachen University, Germany
-   index: 4
- - name: SISSA, Italy
-   index: 5
- - name: INAF, Italy
-   index: 6
+  - name: University of Waterloo, Canada
+    index: 1
+  - name: University of Edinburgh, United Kingdom
+    index: 2
+  - name: University of Edinburgh, United Kingdom
+    index: 3
+  - name: RWTH Aachen University, Germany
+    index: 4
+  - name: SISSA, Italy
+    index: 5
+  - name: INAF, Italy
+    index: 6
 date: 26 September 2025
 bibliography: paper.bib
 ---
@@ -54,17 +54,16 @@ The field of observational cosmology is rapidly evolving with the advent of next
 
 `cloelib` fills this gap by providing a uniquely flexible and extensible framework for cosmological inference. Similarly to [CITE PYCCL, CAMB SOURCES, COSMOSIS], it supports the computation of large-scale structure main observables, including cosmic shear and galaxy clustering, using both photometric and spectroscopic redshifts. Yet, `cloelib` is the first and only large-scale structure code in the cosmology community to implement a unified interface to multiple cosmological backends using Python protocols [CITE PROTOCOLS]. This design enables researchers to seamlessly switch between different theoretical implementations—such as Boltzmann solvers or emulators—without modifying their analysis pipelines or the internal workings of `cloelib` for computing theoretical predictions. This level of modularity and interoperability is unprecedented, significantly lowering the barrier to the inclusion of other pipelines for rapid experimentation in cosmological analyses.
 
-The library interfaces with several well-established Boltzmann solvers, including CAMB [@Lewis:2000], CLASS [@Blas:2011], and their extensions [CITE, e.g., EFTCAMB]. It also supports state-of-the-art emulators, such as HMCode2020Emu [@Mead:2021; CITE MARIA], COMET [@Eggemeier:2022; @Pezzotta:2025] for clustering observables with massive neutrinos, CosmoPower [@SpurioMancini:2021], BACCO [@Angulo:2020], Capse.jl [@Bonici2024Capse], and Effort.jl [@Bonici:2025]. These emulators offer orders-of-magnitude speedups in cosmological computations while maintaining percent-level accuracy, making them essential tools for modern inference pipelines. This modularity and performance make `cloelib` particularly well-suited for systematic studies, model comparison, and robust cross-validation of cosmological results.
+The library interfaces with several well-established Boltzmann solvers, including CAMB [@Lewis:2000], CLASS [@Blas:2011], and their extensions [CITE, e.g., EFTCAMB]. Moreoever, it interfaces with PBJ [CITE] for spectroscopic clustering. It also supports state-of-the-art emulators, such as HMCode2020Emu [@Mead:2021; CITE MARIA], COMET [@Eggemeier:2022; @Pezzotta:2025] for clustering observables with massive neutrinos, CosmoPower [@SpurioMancini:2021], BACCO [@Angulo:2020], Capse.jl [@Bonici2024Capse], and Effort.jl [@Bonici:2025]. These emulators offer orders-of-magnitude speedups in cosmological computations while maintaining percent-level accuracy, making them essential tools for modern inference pipelines. This modularity and performance make `cloelib` particularly well-suited for systematic studies, model comparison, and robust cross-validation of cosmological results.
 
 Furthermore, a key innovation of `cloelib` is its native integration with JAX [@jax2018github], which enables automatic differentiation of cosmological observables. This transforms traditionally rigid, black-box cosmological pipelines into fully differentiable programs, unlocking entirely new capabilities for modern inference. In particular, it makes `cloelib` uniquely suited for gradient-based optimization, Hamiltonian Monte Carlo, and the seamless integration of neural networks into cosmological models. These methods are often infeasible with traditional software due to the lack of differentiability and performance constraints. `cloelib` has already been used to develop neural network emulators for cosmological observables and to prototype novel inference techniques that would be computationally prohibitive using existing tools.
 
 The modular architecture of `cloelib` is built around a clear separation of concerns, organizing functionality into distinct components: cosmological backgrounds (e.g., background expansion and distances), perturbation theory (e.g., matter power spectra), observables (e.g., cosmic shear and galaxy clustering), and summary statistics (e.g., angular power spectra and correlation functions). This design allows researchers to flexibly mix and match different theoretical models and numerical approximations, supporting both standard analyses and experimental workflows. For example, users can compute angular power spectra using the Limber approximation with any combination of supported Boltzmann solvers and non-linear models, or define custom window functions for specific survey geometries.
-Crucially, each module in `cloelib` is defined by a Python protocol, enabling a "plug-and-play" approach: users can include only the components they need, choose among interchangeable backends, and match them as desired—all without altering the core logic of their pipeline. This architecture enforces modularity by design, ensuring robustness, reusability, and ease of experimentation. 
+Crucially, each module in `cloelib` is defined by a Python protocol, enabling a "plug-and-play" approach: users can include only the components they need, choose among interchangeable backends, and match them as desired—all without altering the core logic of their pipeline. This architecture enforces modularity by design, ensuring robustness, reusability, and ease of experimentation.
 
 In addition, `cloelib` serves the practical needs of both the Euclid collaboration and the wider cosmology community by offering implementations of survey-specific systematics, Alcock–Paczynski corrections, and Baryon Acoustic Oscillation (BAO) feature extraction. The library works seamlessly with `cloelike`, its companion likelihood module, which supports the computation of likelihoods for Euclid observables such as 2×2pt and 3×2pt photometric correlations, spectroscopic galaxy clustering and BAO, as well as their combinations. Together, these tools enable end-to-end cosmological analyses, covering the full chain from observable computation to likelihood evaluation and Monte Carlo sampling for parameter inference.
 
 Beyond its scientific scope, `cloelib` is optimized for efficiency, with native source code implementations of theoretical predictions and advanced caching mechanisms that accelerate computation rather than hinder it. It also integrates comprehensive testing infrastructure and performance profiling tools, aligned with state-of-the-art software development practices, to ensure reliability and scalability in production-level applications. By combining theoretical flexibility, computational performance, and modern programming standards with an Open Science ethos, `cloelib` makes a substantial contribution to the computational framework required for precision cosmology and is poised to become a cornerstone for large-scale structure analyses in the decade ahead.
-
 
 # Usage Examples
 
@@ -180,34 +179,31 @@ The architecture of `cloelib` leverages Python protocols (PEP 544) to define int
 
 ## Scaling tests and time performance
 
-| Backend / Emulator | Observable Type        | Configuration | Runtime (s) | Speedup vs. Baseline | Memory Usage (MB) | Notes |
-| ------------------ | ---------------------- | ------------- | ----------- | -------------------- | ----------------- | ----- |
-| CAMB               | Cℓ                     | Default       |             |                      |                   |       |
-| CLASS              | Cℓ                     | Default       |             |                      |                   |       |
-| HMCode2020Emu      | Cℓ                     | Default       |             |                      |                   |       |
-| COMET              | Pℓ                     | Default       |             |                      |                   |       |
-| CosmoPower         | Cℓ                     | Default       |             |                      |                   |       |
-| BACCO              | Cℓ                     | Default       |             |                      |                   |       |
-| Capse.jl           | Cℓ                     | Default       |             |                      |                   |       |
-| Effort.jl          | Pℓ                     | Default       |             |                      |                   |       |
-
+| Backend / Emulator | Observable Type | Configuration | Runtime (s) | Speedup vs. Baseline | Memory Usage (MB) | Notes |
+| ------------------ | --------------- | ------------- | ----------- | -------------------- | ----------------- | ----- |
+| CAMB               | Cℓ              | Default       |             |                      |                   |       |
+| CLASS              | Cℓ              | Default       |             |                      |                   |       |
+| HMCode2020Emu      | Cℓ              | Default       |             |                      |                   |       |
+| COMET              | Pℓ              | Default       |             |                      |                   |       |
+| CosmoPower         | Cℓ              | Default       |             |                      |                   |       |
+| BACCO              | Cℓ              | Default       |             |                      |                   |       |
+| Capse.jl           | Cℓ              | Default       |             |                      |                   |       |
+| Effort.jl          | Pℓ              | Default       |             |                      |                   |       |
 
 ## Author Contributions
 
 In accordance with JOSS guidelines, we provide a description of individual contributions. The authors are listed in alphabetical order. Tier 1 corresponds to the core maintainers of the **cloe-org** team, who are responsible for the long-term sustainability of the `cloelib` package, including reviewing pull requests and leading technical discussions.
 
-* **M. Bonici**: TBA
-* **G. Cañas-Herrera**: TBA
-* **P. Carrilho**: TBA
-* **S. Casas**: TBA
-* **C. Moretti**: TBA
-* **A. Pezzotta**: TBA
-
-
+- **M. Bonici**: TBA
+- **G. Cañas-Herrera**: TBA
+- **P. Carrilho**: TBA
+- **S. Casas**: TBA
+- **C. Moretti**: TBA
+- **A. Pezzotta**: TBA
 
 # Acknowledgements
 
 We acknowledge the support of the Euclid Consortium and thank the CLOE software development team for their foundational work. We are grateful to S. Farrens and N. Tessore for technical guidance, and to the broader community for testing and feedback.
-(GCH: every contributor that has modified code should be added to the paper authors)
+(GCH: every contributor that has modified code should be added to the paper authors, and that should include Sam and Nic)
 
 # References

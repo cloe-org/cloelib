@@ -313,6 +313,8 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         elif isinstance(angular_two_point.tracer1, ShearTracer) and isinstance(
             angular_two_point.tracer2, PositionsTracer
         ):
+            # the order of this tuple does not matter
+            # cosmolib format only supports ("POS", "SHE")
             self.keys = ("POS", "SHE")
         else:
             raise ValueError("Unsupported tracer combination")

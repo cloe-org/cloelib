@@ -2,7 +2,7 @@ import jax.numpy as np
 import jax
 from jax import jit
 
-from cloelib.observables.photo import ShearTracer  # , PositionsTracer
+from cloelib.observables.photo import ShearTracer, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction
 from cloelib.auxiliary.cache import memoize_jax
 
@@ -298,6 +298,26 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         # Determine spin values based on tracer type
         self.s1 = 2 if isinstance(angular_two_point.tracer1, ShearTracer) else 0
         self.s2 = 2 if isinstance(angular_two_point.tracer2, ShearTracer) else 0
+        if isinstance(angular_two_point.tracer1, ShearTracer) and isinstance(
+            angular_two_point.tracer2, ShearTracer
+        ):
+            self.keys = ("SHE", "SHE")
+        elif isinstance(angular_two_point.tracer1, PositionsTracer) and isinstance(
+            angular_two_point.tracer2, PositionsTracer
+        ):
+            self.keys = ("POS", "POS")
+        elif isinstance(angular_two_point.tracer1, PositionsTracer) and isinstance(
+            angular_two_point.tracer2, ShearTracer
+        ):
+            self.keys = ("POS", "SHE")
+        elif isinstance(angular_two_point.tracer1, ShearTracer) and isinstance(
+            angular_two_point.tracer2, PositionsTracer
+        ):
+            # the order of this tuple does not matter
+            # cosmolib format only supports ("POS", "SHE")
+            self.keys = ("POS", "SHE")
+        else:
+            raise ValueError("Unsupported tracer combination")
 
     def get_xi(self, theta):
         """
@@ -316,8 +336,9 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
                 (jax.numpy.ndarray, jax.numpy.ndarray): Computed xi_+(theta) and xi_-(theta).
         """
         # Compute Cl using the AngularTwoPoint instance
-        Cl_EE = self.angular_two_point.get_Cl(self.ells, nl=0, ks=self.ks)
+        self.angular_two_point.get_Cl(self.ells, nl=0, ks=self.ks)
 
+        Cl_EE = self.angular_two_point.C_ell_calc
         Cl_BB = np.zeros_like(Cl_EE)  # No B-modes included, set to zero for now
         Cl_EB = np.zeros_like(Cl_EE)
         Cl_BE = np.zeros_like(Cl_EE)
@@ -353,12 +374,13 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
 
         # Vectorized computation over (theta, tomo1, tomo2)
         # Compute xi_plus
-        xi_plus = np.einsum("ell,ellij,θell->θij", prefactor, Cl_plus, d_ell_theta_plus)
+
+        xi_plus = np.einsum("L,LIJ,TL->TIJ", prefactor, Cl_plus, d_ell_theta_plus)
 
         # Compute xi_minus if we have a spin2 tracer
         if self.s2 == 2:
             xi_minus = (-1) ** self.s2 * np.einsum(
-                "ell,ellij,θell->θij", prefactor, Cl_minus, d_ell_theta_minus
+                "L,LIJ,TL->TIJ", prefactor, Cl_minus, d_ell_theta_minus
             )
             return xi_plus, xi_minus
         else:

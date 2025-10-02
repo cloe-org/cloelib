@@ -2,7 +2,6 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
-from cloelib.auxiliary.cosmology_operations import compute_sigma8
 # General imports
 import numpy as np
 from typing import Optional, Union, Sequence
@@ -309,6 +308,8 @@ class CAMBLinearPerturbations:
         self.background.interface_args["CAMBparams"].WantTransfer = True
 
         self.kmax = 300.0
+        if 0.001 < redshifts.min():
+            raise ValueError("0.0 must be included in redshifts for proper interpolation to small redshifts")
         self.z = redshifts
 
         self.background.interface_args["CAMBparams"].set_matter_power(
@@ -320,9 +321,7 @@ class CAMBLinearPerturbations:
             hubble_units=False, k_hunit=False
         )
         
-        ks = self.results.get_linear_matter_power_spectrum(hubble_units=True, k_hunit=True)[0]
-        self.sigma8_0 = compute_sigma8(ks = ks,
-                                       linear_Pk = self.results.get_matter_power_interpolator(nonlinear=False, hubble_units=True, k_hunit=True).P(0,ks))
+        self.sigma8_0 = self.results.get_sigma8().max()
 
     def matter_power_spectrum(
         self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False
@@ -423,6 +422,8 @@ class CAMBNonLinearPerturbations:
         """
         self.background = background
         self.kmax = 500
+        if 0.001 < redshifts.min():
+            raise ValueError("0.0 must be included in redshifts for proper interpolation to small redshifts")
         self.z = redshifts
 
         # Configure CAMB parameters for nonlinear calculations
@@ -458,9 +459,7 @@ class CAMBNonLinearPerturbations:
             hubble_units=False, k_hunit=False
         )
         
-        ks = self.results.get_linear_matter_power_spectrum(hubble_units=True, k_hunit=True)[0]
-        self.sigma8_0 = compute_sigma8(ks = ks,
-                                       linear_Pk = self.results.get_matter_power_interpolator(nonlinear=False, hubble_units=True, k_hunit=True).P(0,ks))
+        self.sigma8_0 = self.results.get_sigma8().max()
         
         
 

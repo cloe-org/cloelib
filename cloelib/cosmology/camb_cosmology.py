@@ -2,7 +2,7 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
-
+from cloelib.auxiliary.cosmology_operations import compute_sigma8
 # General imports
 import numpy as np
 from typing import Optional, Union, Sequence
@@ -319,6 +319,10 @@ class CAMBLinearPerturbations:
         self.k, _, self.Pk = self.results.get_linear_matter_power_spectrum(
             hubble_units=False, k_hunit=False
         )
+        
+        ks = self.results.get_linear_matter_power_spectrum(hubble_units=True, k_hunit=True)[0]
+        self.sigma8_0 = compute_sigma8(ks = ks,
+                                       linear_Pk = self.results.get_matter_power_interpolator(nonlinear=False, hubble_units=True, k_hunit=True).P(0,ks))
 
     def matter_power_spectrum(
         self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False
@@ -453,6 +457,12 @@ class CAMBNonLinearPerturbations:
         self.k, _, self.Pk = self.results.get_nonlinear_matter_power_spectrum(
             hubble_units=False, k_hunit=False
         )
+        
+        ks = self.results.get_linear_matter_power_spectrum(hubble_units=True, k_hunit=True)[0]
+        self.sigma8_0 = compute_sigma8(ks = ks,
+                                       linear_Pk = self.results.get_matter_power_interpolator(nonlinear=False, hubble_units=True, k_hunit=True).P(0,ks))
+        
+        
 
     def matter_power_spectrum(
         self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False

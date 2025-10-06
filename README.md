@@ -169,6 +169,9 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://jaimeruizzapatero.net/"><img src="https://avatars.githubusercontent.com/u/39957598?v=4?s=100" width="100px;" alt="Jaime RZ"/><br /><sub><b>Jaime RZ</b></sub></a><br /><a href="#ideas-JaimeRZP" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://arthurmloureiro.github.io"><img src="https://avatars.githubusercontent.com/u/6471279?v=4?s=100" width="100px;" alt="Arthur Loureiro"/><br /><sub><b>Arthur Loureiro</b></sub></a><br /><a href="#code-arthurmloureiro" title="Code">💻</a> <a href="#ideas-arthurmloureiro" title="Ideas, Planning, & Feedback">🤔</a> <a href="#doc-arthurmloureiro" title="Documentation">📖</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/pburger112"><img src="https://avatars.githubusercontent.com/u/51719634?v=4?s=100" width="100px;" alt="Pierre Burger"/><br /><sub><b>Pierre Burger</b></sub></a><br /><a href="#code-pburger112" title="Code">💻</a> <a href="#ideas-pburger112" title="Ideas, Planning, & Feedback">🤔</a></td>
+    </tr>
   </tbody>
 </table>
 

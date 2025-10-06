@@ -5,7 +5,6 @@ from cloelib.cosmology.cosmology import Background
 # General imports
 import numpy as np
 from typing import Optional, Union, Sequence
-import copy
 import warnings
 
 # Cosmology imports

@@ -2,6 +2,7 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
+
 # General imports
 import numpy as np
 from typing import Optional, Union, Sequence
@@ -310,7 +311,9 @@ class CAMBLinearPerturbations:
 
         self.kmax = 300.0
         if 0.001 < abs(redshifts.min()):
-            warnings.warn("lowest redshift should be close to 0.0 for proper interpolation to small redshifts and the computation of simga8(z=0).")
+            warnings.warn(
+                "lowest redshift should be close to 0.0 for proper interpolation to small redshifts and the computation of simga8(z=0)."
+            )
         self.z = redshifts
 
         self.background.interface_args["CAMBparams"].set_matter_power(
@@ -321,8 +324,7 @@ class CAMBLinearPerturbations:
         self.k, _, self.Pk = self.results.get_linear_matter_power_spectrum(
             hubble_units=False, k_hunit=False
         )
-        
-    
+
         self.sigma8_0 = self.results.get_sigma8().max()
 
     def matter_power_spectrum(
@@ -425,7 +427,9 @@ class CAMBNonLinearPerturbations:
         self.background = background
         self.kmax = 500
         if 0.001 < abs(redshifts.min()):
-            warnings.warn("lowest redshift should be close to 0.0 for proper interpolation to small redshifts and the computation of simga8(z=0).")
+            warnings.warn(
+                "lowest redshift should be close to 0.0 for proper interpolation to small redshifts and the computation of simga8(z=0)."
+            )
         self.z = redshifts
 
         # Configure CAMB parameters for nonlinear calculations
@@ -460,11 +464,8 @@ class CAMBNonLinearPerturbations:
         self.k, _, self.Pk = self.results.get_nonlinear_matter_power_spectrum(
             hubble_units=False, k_hunit=False
         )
-        
-        
+
         self.sigma8_0 = self.results.get_sigma8().max()
-        
-        
 
     def matter_power_spectrum(
         self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False

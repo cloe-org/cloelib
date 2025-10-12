@@ -87,7 +87,7 @@ class MGemuNonlinearBoost:
         }
 
 
-        # Explicit bounds (if we homogenise the emulators this is fine, but otherwise should be able to call the bounds via cosmopower somehow)
+        # Explicit bounds (if we homogenise the emulators this is fine, but otherwise should be able to call the bounds via MGEmu)
         # names of parameters in which emulators were trained
         # later adapt for different emulator-ranges
         mg_bounds = {
@@ -227,16 +227,17 @@ class BoostedPerturbations:
             A function or interpolator B(z, k) that returns the nonlinear boost 
             to be applied to the ΛCDM spectrum.
         """
-        self.background = base_perturbations.background
-        assert self.background.Omega_k0 == 0, 'Non flat geometries not supported'
-        assert self.background.w0==-1.0 and self.background.wa==0.0, 'All emulators are trained for ΛCDM background'
+        # Linear with MGrowth has w0waCDM background
+        self.background = base_lin_perturbations.background
+        # assert self.background.Omega_k0 == 0, 'Non flat geometries not supported'
+        # assert self.background.w0==-1.0 and self.background.wa==0.0, 'All emulators are trained for ΛCDM background'
 
 
         self.base_lin = base_lin_perturbations
         if hasattr(base_lin_perturbations, 'sigma_lensing') and callable(getattr(base_lin_perturbations, 'sigma_lensing')):
             self.sigma_lensing = base_lin_perturbations.sigma_lensing
 
-
+        # Nonlinear perturbations must be LCDM
         self.base = base_perturbations
         self.boost_interp = boost_interp
 

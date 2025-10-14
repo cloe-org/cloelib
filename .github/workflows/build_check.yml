@@ -28,7 +28,7 @@ jobs:
     - name: Run the unit tests
       run: |
         pip install pytest pytest-cov
-        pytest tests_cluster/ --cov=cloelib/
+        pytest tests_cluster/ --cov=cloelib/ --ignore=tests_cluster/benchmark_values.py
       env:
         DISPLAY: test
 #    - name: Install Sphinx prereq

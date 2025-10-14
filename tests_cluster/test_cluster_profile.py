@@ -3,9 +3,8 @@
 import numpy as np
 from numpy.testing import assert_raises, assert_equal, assert_allclose
 
-from cloelib.observables.clusters.halo_statistics import (
-    HaloStatisticsCastro,
-)
+from cloelib.observables.clusters.halo_statistics import HaloStatistics
+from cloelib.observables.clusters.castro_hmf_bias import CastroHMFBias
 from cloelib.observables.clusters.profile import ProfileNFW, ProfileBMO
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 
@@ -32,8 +31,9 @@ def _get_castro_hs():
 
     background = CAMBBackground(**_cosmo_pars)
     perturbations = CAMBLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
+    HS = HaloStatistics(perturbations, overdensity_type="vir")
 
-    return HaloStatisticsCastro(perturbations, overdensity_type="vir")
+    return CastroHMFBias(HS)
 
 
 def test_array_shapes():
@@ -52,6 +52,7 @@ def test_array_shapes():
         sigma_nz=0.3,
         alpha_nz=0.4,
     )
+
     profile_nfw = ProfileNFW(HS_castro, **_prof_kwargs)
 
     R_test = np.linspace(0.01, 1.0, 9)

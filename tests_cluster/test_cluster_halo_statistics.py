@@ -1,13 +1,11 @@
-#import jax.numpy as np
+# import jax.numpy as np
 
 import numpy as np
 from numpy.testing import assert_raises, assert_equal, assert_allclose
 
-from cloelib.observables.clusters.halo_statistics import (
-    HaloStatistics,
-    HaloStatisticsTinker,
-    HaloStatisticsCastro,
-)
+from cloelib.observables.clusters.halo_statistics import HaloStatistics
+from cloelib.observables.clusters.castro_hmf_bias import CastroHMFBias
+from cloelib.observables.clusters.tinker_hmf_bias import TinkerHMFBias
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 
 
@@ -37,8 +35,8 @@ def test_halostatistics():
     # HaloStatistics
     print("# HaloStatistics")
     HS = HaloStatistics(perturbations, overdensity_type="vir")
-    HS_tinker = HaloStatisticsTinker(perturbations, overdensity_type="vir")
-    HS_castro = HaloStatisticsCastro(perturbations, overdensity_type="vir")
+    HS_tinker = TinkerHMFBias(HS)
+    HS_castro = CastroHMFBias(HS)
 
     # tests
     z_test = np.linspace(0.01, 1.0, 5)
@@ -53,10 +51,10 @@ def test_halostatistics():
     _ref = [-0.0002, -0.001125, -0.006324, -0.035485, -0.186105]
     assert_allclose(dWdx[0], _ref, atol=5e-07)
     print("    radius_M")
-    _ref = [ 6.513845,  7.891703,  9.561017, 11.583437, 14.033654]
+    _ref = [6.513845, 7.891703, 9.561017, 11.583437, 14.033654]
     assert_allclose(HS.radius_M(M_test), _ref)
     print("    delta_c")
-    _ref = [1.67614 , 1.679731, 1.681962, 1.683365, 1.684267]
+    _ref = [1.67614, 1.679731, 1.681962, 1.683365, 1.684267]
     assert_allclose(HS.delta_c(z_test), _ref, rtol=5e-7)
     print("    get_Delta_crit")
     _ref = [103.543328, 123.635875, 139.317406, 150.428862, 158.024219]
@@ -71,7 +69,7 @@ def test_halostatistics():
     _ref = [1.851075, 2.103741, 2.407783, 2.776472, 3.227135]
     assert_allclose(HS.nu_z_M(z_test, M_test)[0], _ref, rtol=5e-3)
     print("    dlns_dlnR")
-    _ref = [-0.649273, -0.684757, -0.722659, -0.76278 , -0.805423]
+    _ref = [-0.649273, -0.684757, -0.722659, -0.76278, -0.805423]
     assert_allclose(HS.dlns_dlnR(z_test, M_test)[0], _ref, rtol=1e-3)
 
     print("    bias Tinker")

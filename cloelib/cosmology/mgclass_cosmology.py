@@ -1,4 +1,5 @@
 """Implementation of Background and Perturbation cosmology using MGCLASS, a patch to CLASS for modified gravity models."""
+
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
@@ -6,9 +7,7 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 # General imports
 import numpy as np
 import copy
-from typing import Tuple, Optional
-import interpax
-from scipy.interpolate import UnivariateSpline
+from typing import Optional, Union, Sequence
 
 # Cosmology imports
 try:
@@ -21,11 +20,12 @@ class CLASSBackground:
     
     c0 = SPEED_OF_LIGHT/1000
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
-                 As: float, ns: float, mnu: float, 
-                 w0: float, wa: float, gamma_MG: float, mg_ansatz: str, mg_z_init: float,
-                 mg_params: dict   ) -> None:
+                 As: float, ns: float, mnu: Union[float, Sequence[float], np.ndarray],
+                 w0: float, wa: float, gamma_MG: float,
+                 mg_ansatz: str, mg_z_init: float, mg_params: dict,
+                 N_mnu: int, N_ur: Optional[float] = None) -> None:
         """
-        Initializes the CLASSBackground class with cosmological parameters.
+        Initialize the CLASSBackground class with cosmological parameters.
 
         Args:
             H0 (float): Hubble parameter at z=0 in km/s/Mpc.
@@ -34,10 +34,14 @@ class CLASSBackground:
             Omega_k0 (float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
-            mnu (float): Sum of neutrino masses in [eV].
+            mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
+                Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the equation of state.
             gamma_MG (float): Modified gravity growth parameter (not directly used in CLASS, but kept for protocol compliance).
+            N_mnu (int): Number of massive neutrino species.
+            N_ur (Optional[float]): Effective number of ultra-relativistic species.
+                If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
             mg_ansatz (str): Modified gravity model name
             mg_z_init (float): Redshift at which the MG model starts applying
             mg_params (dict): dictionary for an MGCLASS model parameters
@@ -53,6 +57,15 @@ class CLASSBackground:
         self.wa = wa
         self.gamma_MG = gamma_MG  # Kept for protocol, but CLASS doesn't directly use it
         self.mnu = mnu
+        self.N_mnu = N_mnu
+        # We can set N_ur to a default value if not provided
+        self._provided_N_ur = N_ur
+
+        if np.sum(self.mnu) > 0 and self.N_mnu == 0:
+            raise ValueError("If mnu is provided, N_mnu must be greater than 0.")
+        if self.N_mnu > 0 and np.sum(self.mnu) == 0:
+            raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
+
         self.mg_ansatz = mg_ansatz
         self.mg_z_init = mg_z_init
         self.mg_params = mg_params
@@ -64,15 +77,20 @@ class CLASSBackground:
         self.interface_args['CLASSparams']['omega_cdm'] = self.Omega_cdm0 * (self.h)**2
         self.interface_args['CLASSparams']['Omega_k'] = self.Omega_k0
         self.interface_args['CLASSparams']['n_s'] = self.ns
-        self.interface_args['CLASSparams']['m_ncdm'] = self.mnu
         self.interface_args['CLASSparams']['A_s'] = self.As
         self.interface_args['CLASSparams']['w0_fld'] = self.w0 # or w0
         self.interface_args['CLASSparams']['wa_fld'] = self.wa # or wa
         # To get correct perturbations for w0wa
         self.interface_args['CLASSparams']['use_ppf'] = "yes"
         # To avoid using a cosmological constant
-        self.interface_args['CLASSparams']['Omega_Lambda'] = 0. 
-        self.interface_args['CLASSparams']['N_ncdm'] = 1 
+        self.interface_args['CLASSparams']['Omega_Lambda'] = 0.
+
+        # Set neutrino parameters
+        if self.N_mnu > 0:
+            self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
+        self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
+        self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
+
         # To use the appropriate gauge where MGCLASS modified gravity is implemented
         self.interface_args['CLASSparams']['gauge'] = "newtonian"
         self.interface_args['CLASSparams']['mg_z_init'] = self.mg_z_init 
@@ -91,11 +109,75 @@ class CLASSBackground:
         """
         Save internal structure format of interface codes
         """
-        return self.interface_args    
+        return self.interface_args
+
+    @property
+    def N_ur(self) -> float:
+        """Effective number of ultra-relativistic species.
+
+        If the user gave one, return it; otherwise infer from other parameters such that
+        N_eff = 3.044 for the standard model of cosmology.
+        """
+        if self._provided_N_ur is not None:
+            return self._provided_N_ur
+
+        # If N_ur is not provided, we assume the standard model of cosmology
+        # where N_eff = 3.044 (including photons, neutrinos, and their contributions)
+        # This is a common assumption in cosmology.
+        # Values are taken from the CLASS documentation.
+        if self.N_mnu == 0:
+            return 3.044
+        elif self.N_mnu == 1:
+            return 2.0308
+        elif self.N_mnu == 2:
+            return 1.0176
+        elif self.N_mnu == 3:
+            return 0.0044
+        else:
+            raise ValueError(
+                f"Unsupported number of massive neutrino species: {self.N_mnu}. "
+                "N_ur can only be inferred for 0, 1, 2, or 3 massive neutrino species."
+            )
+
+    @property
+    def N_eff(self) -> float:
+        """
+        Return the effective number of relativistic species.
+
+        Assumes a standard value of T_ncdm = 0.71611 K for neutrinos.
+        """
+        return self.results.Neff()
+
+    def _set_neutrino_masses(self) -> str:
+        """Set the neutrino masses in the CLASS parameters.
+
+        This is a helper method to ensure that the neutrino masses are set correctly.
+        """
+        # neutrino parameters require more care
+        if isinstance(self.mnu, float) and self.N_mnu > 1:
+            # user gave a total mnu but wants to use a degenerate mass case
+            per_mass = self.mnu / self.N_mnu
+            m_ncdm_str = ",".join(f"{per_mass:g}" for _ in range(self.N_mnu))
+            return m_ncdm_str
+        elif isinstance(self.mnu, float) and self.N_mnu == 1:
+            # single species case
+            return f"{self.mnu:g}"
+        elif isinstance(self.mnu, (np.ndarray, Sequence)):
+            # user passed an explicit list/array of masses
+            if len(self.mnu) != self.N_mnu:
+                raise ValueError(
+                    f"Expected {self.N_mnu} individual neutrino masses, "
+                    f"but got {len(self.mnu)}: {self.mnu}"
+                )
+
+            m_ncdm_str = ",".join(f"{mass:g}" for mass in self.mnu)
+            return m_ncdm_str
+        else:
+            raise TypeError("mnu must be a float, numpy.ndarray or Sequence of floats")
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
-        Returns the Hubble parameter as a function of redshift.
+        Return the Hubble parameter as a function of redshift.
         Args:
             zs (np.ndarray): Array of redshifts.
             units (str): Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').
@@ -113,7 +195,7 @@ class CLASSBackground:
 
     def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the comoving distance as a function of redshift.
+        Return the comoving distance as a function of redshift.
         Args:
             zs (np.ndarray): Array of redshifts.
 
@@ -124,12 +206,12 @@ class CLASSBackground:
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the transverse comoving distance between two redshifts.
+        Return the transverse comoving distance between two redshifts.
 
         Args:
             zs (np.ndarray): Array of redshifts.
 
-        Returns:
+        Return:
             np.ndarray: Transverse comoving distance values.
         """
         x = self.comoving_distance(zs)
@@ -156,7 +238,7 @@ class CLASSBackground:
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the matter density as a function of redshift.
+        Return the matter density as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -168,7 +250,7 @@ class CLASSBackground:
     
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the baryon density as a function of redshift.
+        Return the baryon density as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -181,12 +263,13 @@ class CLASSBackground:
     @property
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering in Mpc."""
-        return self.results.rs_drag()    
+        return self.results.rs_drag()
+
 
 class CLASSLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
 
-    def __init__(self, background : Background, redshifts: np.ndarray):
+    def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the CLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
@@ -194,7 +277,7 @@ class CLASSLinearPerturbations:
         self.results = None  # Store CLASS results
 
         # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background._interface_args)
+        self.interface_args = copy.deepcopy(self.background.interface_args)
         self.interface_args['CLASSparams']['output'] = 'mPk, mTk'
         self.interface_args['CLASSparams']['P_k_max_1/Mpc'] = self.kmax
         self.interface_args['CLASSparams']['k_per_decade_for_bao'] = 70
@@ -298,7 +381,7 @@ class CLASSNonLinearPerturbations:
             nonlinear_model = 'none'
 
         # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background._interface_args)
+        self.interface_args = copy.deepcopy(self.background.interface_args)
         self.interface_args['CLASSparams']['output'] = 'mPk, mTk'
         self.interface_args['CLASSparams']['P_k_max_1/Mpc'] = self.kmax
         self.interface_args['CLASSparams']['k_per_decade_for_bao'] = 70

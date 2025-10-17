@@ -103,7 +103,7 @@ class CLASSBackground:
         self.results = Class()
         self.results.set(self.interface_args['CLASSparams'])
         self.results.compute()
-        
+
     @property
     def _interface_args(self) -> dict:
         """
@@ -368,7 +368,7 @@ class CLASSLinearPerturbations:
 
 class CLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
-    
+
     def __init__(self, background : Background,
                  redshifts: np.ndarray,
                  nonlinear_model: Optional[str] = None):
@@ -376,7 +376,7 @@ class CLASSNonLinearPerturbations:
         self.background = background
         self.z = redshifts
         self.kmax = 100
-        
+
         if nonlinear_model == None:
             nonlinear_model = 'none'
 
@@ -398,7 +398,7 @@ class CLASSNonLinearPerturbations:
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
                               k_hunit=False) -> np.ndarray:
         """Calculate the CLASS non-linear matter power spectrum.
-        
+
         Parameters
         ----------
         zs: numpy.ndarray

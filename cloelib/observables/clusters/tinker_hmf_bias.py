@@ -1,7 +1,7 @@
 import numpy as np
 
-from cloelib.observables.clusters.halo_statistics import HaloStatistics
 from cloelib.cosmology import derived_cosmology
+from cloelib.observables.clusters.halo_statistics import HaloStatistics
 
 
 class TinkerHMFBias:

@@ -1,11 +1,10 @@
 import numpy as np
-from scipy.stats import skewnorm
-from scipy.integrate import simpson as simps
 from astropy import units as ap_units
 from scipy import interpolate
 from scipy.integrate import quad_vec
+from scipy.integrate import simpson as simps
 from scipy.special import j0, j1
-from scipy import interpolate
+from scipy.stats import skewnorm
 
 from cloelib.auxiliary import units
 from cloelib.cosmology import derived_cosmology

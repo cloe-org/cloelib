@@ -1,11 +1,12 @@
+# import jax.numpy as np
+import numpy as np
+from scipy.integrate import simpson as simps
+from scipy.special import erf, spherical_jn
+
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.observables.clusters.selection_function import SelectionFunction
 
 from ...auxiliary import units
-from scipy.special import erf
-import jax.numpy as np
-from scipy.integrate import simpson as simps
-from scipy.special import spherical_jn
 
 
 class HaloClustering:
@@ -70,14 +71,10 @@ class HaloClustering:
             self.APcorr_func(z)[:, np.newaxis, np.newaxis] * r
         )  # AP correction (adds a redshift dependence)
 
-
         r3_TH_filter = (
             r_z**3
             * 3.0
-            * (
-                np.sin(k * r_z)
-                - k * r_z * np.cos(k * r_z)
-            )
+            * (np.sin(k * r_z) - k * r_z * np.cos(k * r_z))
             / (k * r_z) ** 3.0
         )
 
@@ -85,18 +82,12 @@ class HaloClustering:
             r_z[:, 1:, :] ** 3 - r_z[:, :-1, :] ** 3
         )
 
-        V_rad = (
-            4.0
-            * np.pi
-            / 3.0
-            * ((r_z[:, 1:, 0]) ** 3 - (r_z[:, :-1, 0]) ** 3)
-        )
+        V_rad = 4.0 * np.pi / 3.0 * ((r_z[:, 1:, 0]) ** 3 - (r_z[:, :-1, 0]) ** 3)
 
         return W_rad, V_rad
 
-
     # cosmo correction (isotropic AP)
-    def APcorr_func(self,  z: np.ndarray) -> np.ndarray:
+    def APcorr_func(self, z: np.ndarray) -> np.ndarray:
         """
         Compute the correction that accounts for the wrong cosmology assumed in the measurement of the 2ptCF
         See https://arxiv.org/pdf/1511.00012.pdf (Sect. 4.3.1) for details.
@@ -114,13 +105,13 @@ class HaloClustering:
         """
 
         # units don't matter here, they cancel out
-        
-        z[z==0] = 1e-5
-        
+
+        z[z == 0] = 1e-5
+
         # isotropic volume distance
         Dv = (
             (1 + z) ** 2
-            * self.background.angular_diameter_distance(z) ** 2 
+            * self.background.angular_diameter_distance(z) ** 2
             * units.SPEED_OF_LIGHT
             * z
             / self.background.hubble_parameter(z)
@@ -272,10 +263,10 @@ class HaloClustering:
             )
         )
 
-        # correct for numerical inaccuracy                                                                                                                                                                           
+        # correct for numerical inaccuracy
+        # note: for jax, use corr1 = corr1.at[idx].set(2 / 3.0)
         idx = erf_ks < 0.02
-        corr1 = corr1.at[idx].set(2/3.)
-        corr2 = corr2.at[idx].set(1/5.)
+        corr1[idx] = 2 / 3.0
+        corr2[idx] = 1 / 5.0
 
-        
         return corr0, corr1, corr2

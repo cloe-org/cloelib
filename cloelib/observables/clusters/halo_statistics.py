@@ -1,9 +1,9 @@
-from cloelib.cosmology.cosmology import Perturbations
-from cloelib.cosmology import derived_cosmology
-
 import numpy as np
 from scipy import interpolate
 from scipy.integrate import simpson as simps
+
+from cloelib.cosmology import derived_cosmology
+from cloelib.cosmology.cosmology import Perturbations
 
 
 class HaloStatistics:

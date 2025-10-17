@@ -2,8 +2,8 @@ import numpy as np
 from scipy import interpolate
 from scipy.special import gamma
 
-from cloelib.observables.clusters.halo_statistics import HaloStatistics
 from cloelib.cosmology import derived_cosmology
+from cloelib.observables.clusters.halo_statistics import HaloStatistics
 
 
 class CastroHMFBias:

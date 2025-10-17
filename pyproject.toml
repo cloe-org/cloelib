@@ -44,3 +44,8 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 addopts = "--verbose --pydocstyle --cov=cloelib"
 
+[tool.black]
+force-exclude = "tests_cluster/benchmark_values.py"
+
+[tool.isort]
+profile = "black"

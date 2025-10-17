@@ -1,14 +1,25 @@
 # General imports
-import jax.numpy as np # type: ignore
+# import jax.numpy as np
+import numpy as np
 
 
 class SelectionFunction:
-    def __init__(self, A_l: float, B_l: float, C_l: float,
-                 sig_A_l: float, sig_B_l: float, sig_C_l: float, 
-                 sig_lambda_norm: float, sig_lambda_z: float, 
-                 sig_lambda_exponent: float, sig_z_z: float,
-                 sig_z_lambda: float, M_piv: float = 3.0e14,
-                 z_piv: float = 0.45):
+    def __init__(
+        self,
+        A_l: float,
+        B_l: float,
+        C_l: float,
+        sig_A_l: float,
+        sig_B_l: float,
+        sig_C_l: float,
+        sig_lambda_norm: float,
+        sig_lambda_z: float,
+        sig_lambda_exponent: float,
+        sig_z_z: float,
+        sig_z_lambda: float,
+        M_piv: float = 3.0e14,
+        z_piv: float = 0.45,
+    ):
         r"""
         Class defining the selection function of galaxy clusters, including
         sample purity, completeness, mass-observable relation, and
@@ -59,7 +70,7 @@ class SelectionFunction:
         self.sig_z_lambda = sig_z_lambda
         self.M_piv = M_piv
         self.z_piv = z_piv
-        
+
     def lnlambda(self, z, M):
         r"""
         Mean of the richness-mass relation PDF.
@@ -160,7 +171,7 @@ class SelectionFunction:
         Returns
         -------
         scatter_lbobs_lbdz: numpy.ndarray
-            scatter_lbobs_lbdz[i,j], where i is the true redshift axis 
+            scatter_lbobs_lbdz[i,j], where i is the true redshift axis
             and j is the true richness axis
         """
         return (

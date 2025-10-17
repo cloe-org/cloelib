@@ -1,8 +1,8 @@
 # General imports
-from typing import Protocol, Union, TypeVar, runtime_checkable
+from typing import Protocol, TypeVar, Union, runtime_checkable
 
-import numpy as np  # type: ignore
 import jax.numpy as jnp
+import numpy as np  # type: ignore
 
 """
 - Introducing a protocol for the halo statistics part that we might have many versions of it.
@@ -20,7 +20,7 @@ class HMFBias(Protocol):
     def bias(self, z: T, M: T) -> T:
         r"""Computes the halo bias."""
         ...
-        
+
     def dn_dm(self, z, M):
         r"""Derivative of the number density.
 
@@ -40,4 +40,4 @@ class HMFBias(Protocol):
             dn_dm[i,j], where i is the redshift axis and j the mass axis.
             Units: h^4 Mpc^{-3} Ms^{-1}.
         """
-        ...    
+        ...

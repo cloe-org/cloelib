@@ -1,18 +1,16 @@
 # import jax.numpy as np
+import benchmark_values
 import numpy as np
-
-from numpy.testing import assert_raises, assert_equal, assert_allclose
+from numpy.testing import assert_allclose, assert_equal, assert_raises
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
-from cloelib.observables.clusters.selection_function import SelectionFunction
-from cloelib.observables.clusters.halo_statistics import HaloStatistics
 from cloelib.observables.clusters.castro_hmf_bias import CastroHMFBias
-from cloelib.observables.clusters.profile import ProfileNFW
 from cloelib.observables.clusters.clustering import HaloClustering
 from cloelib.observables.clusters.covariance import HaloCovariance
+from cloelib.observables.clusters.halo_statistics import HaloStatistics
+from cloelib.observables.clusters.profile import ProfileNFW
+from cloelib.observables.clusters.selection_function import SelectionFunction
 from cloelib.summary_statistics.clusters.cluster_statistics import ClusterStatistics
-
-import benchmark_values
 
 
 def test_clustersummmarystatitistics():

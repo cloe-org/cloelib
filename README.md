@@ -171,6 +171,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pburger112"><img src="https://avatars.githubusercontent.com/u/51719634?v=4?s=100" width="100px;" alt="Pierre Burger"/><br /><sub><b>Pierre Burger</b></sub></a><br /><a href="#code-pburger112" title="Code">💻</a> <a href="#ideas-pburger112" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/JegerBroxterman"><img src="https://avatars.githubusercontent.com/u/115992884?v=4?s=100" width="100px;" alt="Jeger Broxterman"/><br /><sub><b>Jeger Broxterman</b></sub></a><br /><a href="#bug-JegerBroxterman" title="Bug reports">🐛</a></td>
     </tr>
   </tbody>
 </table>

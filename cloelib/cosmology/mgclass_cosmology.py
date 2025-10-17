@@ -201,7 +201,7 @@ class CLASSBackground:
 
         Returns:
             np.ndarray: Comoving distance values.
-        """        
+        """
         return self.results.z_of_r(zs)[0]
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
@@ -223,7 +223,7 @@ class CLASSBackground:
         else:
             y = np.sin(np.sqrt(-self.Omega_k0) * x) / np.sqrt(-self.Omega_k0)
 
-        return y 
+        return y
 
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -247,7 +247,7 @@ class CLASSBackground:
             np.ndarray: Matter density values.
         """
         return np.array([self.results.Om_m(z) for z in zs])
-    
+
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the baryon density as a function of redshift.
@@ -259,7 +259,7 @@ class CLASSBackground:
             np.ndarray: Matter density values.
         """
         return np.array([self.results.Om_b(z) for z in zs])
-        
+
     @property
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering in Mpc."""
@@ -293,11 +293,11 @@ class CLASSLinearPerturbations:
     def _interface_args(self) -> dict:
         """Save internal structure format of interface codes"""
         return self.interface_args
-    
+
     def matter_power_spectrum(self, zs, ks, hubble_units=False,
                               k_hunit=False) -> np.ndarray:
         """Calculate the CLASS linear matter power spectrum.
-        
+
         Parameters
         ----------
         zs: numpy.ndarray
@@ -334,7 +334,7 @@ class CLASSLinearPerturbations:
             /P_{\rm \delta\delta}(z=0, k)}\\
 
         and normalizes as for :math:`D(z)/D(0)`.
-        
+
         Parameters
         ----------
         zs: numpy.ndarray
@@ -352,7 +352,7 @@ class CLASSLinearPerturbations:
                         self.matter_power_spectrum(np.zeros_like(zs), ks))
 
         return D_z_k
-    
+
     def growth_rate(self) -> np.ndarray:
         """
         Calculate the growth rate f(z).
@@ -363,7 +363,7 @@ class CLASSLinearPerturbations:
             Scale-independent growth rate f(z)
         """
         D_z_k0 = self.growth_factor(self.z,np.array([1.e-2]))
-                
+
         return -(1 + self.z) / D_z_k0[:,0] * np.gradient(D_z_k0[:,0], self.z[1] - self.z[0])
 
 class CLASSNonLinearPerturbations:
@@ -434,7 +434,7 @@ class CLASSNonLinearPerturbations:
             /P_{\rm \delta\delta}(z=0, k)}\\
 
         and normalizes as for :math:`D(z)/D(0)`.
-        
+
         Parameters
         ----------
         zs: numpy.ndarray

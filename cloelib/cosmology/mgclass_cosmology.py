@@ -17,7 +17,7 @@ except ImportError as e:
 
 class CLASSBackground:
     """A wrapper for CLASS background cosmological calculations."""
-    
+
     c0 = SPEED_OF_LIGHT/1000
     def __init__(self, H0: float, Omega_b0: float, Omega_cdm0: float, Omega_k0: float,
                  As: float, ns: float, mnu: Union[float, Sequence[float], np.ndarray],

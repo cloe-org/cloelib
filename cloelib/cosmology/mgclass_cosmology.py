@@ -93,7 +93,7 @@ class CLASSBackground:
 
         # To use the appropriate gauge where MGCLASS modified gravity is implemented
         self.interface_args['CLASSparams']['gauge'] = "newtonian"
-        self.interface_args['CLASSparams']['mg_z_init'] = self.mg_z_init 
+        self.interface_args['CLASSparams']['mg_z_init'] = self.mg_z_init
         self.interface_args['CLASSparams']['mg_ansatz'] = self.mg_ansatz
         # Use a dictionary for an MGCLASS model parameters
         for mgparam in self.mg_params.keys():
@@ -369,7 +369,7 @@ class CLASSLinearPerturbations:
 class CLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
     
-    def __init__(self, background : Background,  
+    def __init__(self, background : Background,
                  redshifts: np.ndarray,
                  nonlinear_model: Optional[str] = None):
         """Initialize the CLASSNonLinearPerturbation instance."""

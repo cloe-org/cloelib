@@ -1,6 +1,7 @@
 """Module for Chebyshev polynomial."""
 
 import scipy
+import jax
 import numpy as np
 import jax.numpy as jnp
 from jax import Array
@@ -30,9 +31,9 @@ def chebyshev_coefficients(f_values: Array) -> Array:
         Chebyshev coefficients.
     """
     N = len(f_values)
-    c = scipy.fft.dct(f_values, type=1) / (N - 1)
-    c[0] /= 2
-    c[-1] /= 2
+    c = jax.scipy.fft.dct(f_values, type=2, norm=None) / N
+    c = c.at[0].multiply(0.5)
+    c = c.at[N].multiply(0.5)
     return c
 
 def chebyshev_interpolation(x: Array, c: Array) -> Array:
@@ -46,6 +47,8 @@ def chebyshev_interpolation(x: Array, c: Array) -> Array:
         Interpolated values at points x.
     """
     return np.polynomial.chebyshev.chebval(x, c)
+
+
 
 
 

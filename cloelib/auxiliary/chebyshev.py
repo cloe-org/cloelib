@@ -15,7 +15,7 @@ def chebyshev_points(n: int) -> Array:
         dtype: The desired array type (jnp.ndarray or np.ndarray).
 
     Returns:
-        An array of Chebyshev points of the specified type.
+        Array of Chebyshev points.
     """
     k = jnp.arange(n)
     points = jnp.cos(jnp.pi * (2 * k + 1) / (2 * n))
@@ -31,7 +31,7 @@ def chebyshev_points_interval(n: int, a: float, b: float) -> Array:
         b: End of the interval.
 
     Returns:
-        An array of Chebyshev points on the interval [a, b].
+        Array of Chebyshev points on the interval [a, b].
     """
     cheb_pts = chebyshev_points(n)
     mapped_pts = 0.5 * (b - a) * (cheb_pts + 1) + a
@@ -43,7 +43,7 @@ def chebyshev_coefficients(f_values: Array) -> Array:
     Args:
         f_values: Function values at Chebyshev points.
     Returns:
-        Chebyshev coefficients.
+        Array of Chebyshev coefficients.
     """
     N = len(f_values)
     c = jax.scipy.fft.dct(f_values, type=2, norm=None) / N
@@ -59,7 +59,7 @@ def chebyshev_interpolation(x: Array, c: Array) -> Array:
         x: Points where to evaluate the interpolation.
 
     Returns:
-        Interpolated values at points x.
+        Array of interpolated values at points x.
     """
     x_scaled = (2 * x - (x.min() + x.max())) / (x.max() - x.min())
     return np.polynomial.chebyshev.chebval(x_scaled, c)

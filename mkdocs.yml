@@ -45,14 +45,12 @@ plugins:
             docstring_style: google        # Use Google-style docstrings
             show_source: false
             show_signature: true          # Show function/method signatures
-            show_root_heading: false      # Avoid duplicate top-level heading
-            show_root_members: false
+            show_root_heading: true      # Avoid duplicate top-level heading
             heading_level: 2              
             members_order: source         # could be alphabetical
             merge_init_into_class: true   # Include __init__ docstrings in class
             show_submodules: true         # Display the submodules
 
-            show_type_annotations: true   # Show type hints in signatures
             show_signature_type_parameters: true
             parameter_headings: true
             type_parameter_headings: true

@@ -5889,8 +5889,10 @@ print("%g %g" % (2</em>result, erf(1)))
 <p>The package provides photometric and spectroscopic observables.
 The Tracer protocol is used to define Photometric observables.
 The SpectroPower protocol is used to define Spectroscopic observables.</p>
-<p>Supported External Codes:
-- <strong>SpectroPower</strong>: <code>comet-emu</code>, <code>PBJ</code></p>
+<p>Supported External Codes:</p>
+<ul>
+<li><strong>SpectroPower</strong>: <code>comet-emu</code>, <code>PBJ</code></li>
+</ul>
 
           
 
@@ -6117,17 +6119,37 @@ The SpectroPower protocol is used to define Spectroscopic observables.</p>
 
 
 <a href="#cloelib.observables.Tracer.get_window" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><span title="cloelib.observables.Tracer.get_window(z)">z</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.Tracer.get_window(z)">z</a></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Compute general window(s) given the selected tracer.</p>
-<h6 id="cloelib.observables.Tracer.get_window--parameters">Parameters<a class="headerlink" href="#cloelib.observables.Tracer.get_window--parameters" title="Permanent link">&para;</a></h6>
-<p>z: float
-    Redshift at which window kernel is being evaluated</p>
-<h6 id="cloelib.observables.Tracer.get_window--returns">Returns<a class="headerlink" href="#cloelib.observables.Tracer.get_window--returns" title="Permanent link">&para;</a></h6>
-<p>window: np.ndarray</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.Tracer.get_window(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.Tracer.get_window(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which window kernel is being evaluated</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>window</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6188,21 +6210,43 @@ The SpectroPower protocol is used to define Spectroscopic observables.</p>
 
 
 <a href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CometEFT_SpectroPower</span><span class="p">(</span><span class="n"><span title="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(RSD_parameters)">RSD_parameters</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(redshift)">redshift</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CometEFT_SpectroPower</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(RSD_parameters)">RSD_parameters</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(redshift)">redshift</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
 
-        <p>Class to retrieve :math:<code>P(k,\mu)</code> (including RSD) with the EFT model from COMET.</p>
+        <p>Class to retrieve <span class="arithmatex">\(P(k,\mu)\)</span> (including RSD) with the EFT model from COMET.</p>
 
-        <h6 id="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower--parameters">Parameters<a class="headerlink" href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower--parameters" title="Permanent link">&para;</a></h6>
-<p>background: Background
-    Background class containing cosmology and background distances
-RSD_parameters: dict
-    Dictionary containing bias and counterterm parameters
-redshift: float
-    Redshift at which to evaluate :math:<code>P(k,\mu)</code></p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(background)" class="doc doc-heading doc-heading-parameter">              <b><code>background</code></b>
+<a href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(background)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Background class containing cosmology and background distances</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(RSD_parameters)" class="doc doc-heading doc-heading-parameter">              <b><code>RSD_parameters</code></b>
+<a href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(RSD_parameters)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="dict">dict</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Dictionary containing bias and counterterm parameters</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(redshift)" class="doc doc-heading doc-heading-parameter">              <b><code>redshift</code></b>
+<a href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower(redshift)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which to evaluate <span class="arithmatex">\(P(k,\mu)\)</span></p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6234,21 +6278,45 @@ redshift: float
 
 
 <a href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_rsd" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_rsd(k)">k</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_rsd(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_rsd</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_rsd(k)">k</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_rsd(mu)">mu</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>2D power spectrum from couplings of density and velocity fields.</p>
-<h6 id="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_rsd--parameters" title="Permanent link">&para;</a></h6>
-<p>k: np.ndarray
-    Wavenumber
-mu: np.ndarray
-    Angle (cosinus) to the line of sight
-Returns</p>
-<hr />
-<p>Pk2d_rsd: np.ndarray
-    2D power spectrum from couplings of density and velocity fields</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_rsd(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_rsd(k)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_rsd(mu)" class="doc doc-heading doc-heading-parameter">              <b><code>mu</code></b>
+<a href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_rsd(mu)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Angle (cosinus) to the line of sight</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Pk2d_rsd</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>2D power spectrum from couplings of density and velocity fields</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6264,23 +6332,53 @@ Returns</p>
 
 
 <a href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_term_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(k)">k</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(term_list)">term_list</span></span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_term_rsd</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(k)">k</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(mu)">mu</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(term_list)">term_list</a></span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>2D power spectrum for a subset of specific diagrams of the loop expansion.</p>
-<h6 id="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd--parameters" title="Permanent link">&para;</a></h6>
-<p>k: np.ndarray
-    Wavenumber
-mu: np.ndarray
-    Angle (cosinus) to the line of sight
-term_list: list
-    Identifiers of loop diagrams
-Returns</p>
-<hr />
-<p>Pk2d_term_rsd: np.ndarray
-    2D power spectrum of specific terms</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(k)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(mu)" class="doc doc-heading doc-heading-parameter">              <b><code>mu</code></b>
+<a href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(mu)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Angle (cosinus) to the line of sight</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(term_list)" class="doc doc-heading doc-heading-parameter">              <b><code>term_list</code></b>
+<a href="#cloelib.observables.CometEFT_spectro.CometEFT_SpectroPower.Pk2d_term_rsd(term_list)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="list">list</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Identifiers of loop diagrams</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Pk2d_term_rsd</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>2D power spectrum of specific terms</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6348,21 +6446,43 @@ Returns</p>
 
 
 <a href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CometVDG_SpectroPower</span><span class="p">(</span><span class="n"><span title="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(RSD_parameters)">RSD_parameters</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(redshift)">redshift</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CometVDG_SpectroPower</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(RSD_parameters)">RSD_parameters</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(redshift)">redshift</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
 
-        <p>Class to retrieve :math:<code>P(k,\mu)</code> (including RSD) with the VDG model from COMET.</p>
+        <p>Class to retrieve <span class="arithmatex">\(P(k,\mu)\)</span> (including RSD) with the VDG model from COMET.</p>
 
-        <h6 id="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower--parameters">Parameters<a class="headerlink" href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower--parameters" title="Permanent link">&para;</a></h6>
-<p>background: Background
-    Background class containing cosmology and background distances
-RSD_parameters: dict
-    Dictionary containing bias and counterterm parameters
-redshift: float
-    Redshift at which to evaluate :math:<code>P(k,\mu)</code></p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(background)" class="doc doc-heading doc-heading-parameter">              <b><code>background</code></b>
+<a href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(background)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Background class containing cosmology and background distances</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(RSD_parameters)" class="doc doc-heading doc-heading-parameter">              <b><code>RSD_parameters</code></b>
+<a href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(RSD_parameters)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="dict">dict</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Dictionary containing bias and counterterm parameters</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(redshift)" class="doc doc-heading doc-heading-parameter">              <b><code>redshift</code></b>
+<a href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower(redshift)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which to evaluate <span class="arithmatex">\(P(k,\mu)\)</span></p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6394,21 +6514,45 @@ redshift: float
 
 
 <a href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_rsd" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_rsd(k)">k</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_rsd(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_rsd</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_rsd(k)">k</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_rsd(mu)">mu</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>2D power spectrum from couplings of density and velocity fields.</p>
-<h6 id="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_rsd--parameters" title="Permanent link">&para;</a></h6>
-<p>k: np.ndarray
-    Wavenumber
-mu: np.ndarray
-    Angle (cosinus) to the line of sight
-Returns</p>
-<hr />
-<p>Pk2d_rsd: np.ndarray
-    2D power spectrum from couplings of density and velocity fields</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_rsd(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_rsd(k)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_rsd(mu)" class="doc doc-heading doc-heading-parameter">              <b><code>mu</code></b>
+<a href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_rsd(mu)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Angle (cosinus) to the line of sight</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Pk2d_rsd</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>2D power spectrum from couplings of density and velocity fields</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6424,23 +6568,53 @@ Returns</p>
 
 
 <a href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_term_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(k)">k</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(term_list)">term_list</span></span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_term_rsd</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(k)">k</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(mu)">mu</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(term_list)">term_list</a></span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>2D power spectrum for a subset of specific diagrams of the loop expansion.</p>
-<h6 id="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd--parameters" title="Permanent link">&para;</a></h6>
-<p>k: np.ndarray
-    Wavenumber
-mu: np.ndarray
-    Angle (cosinus) to the line of sight
-term_list: list
-    Identifiers of loop diagrams
-Returns</p>
-<hr />
-<p>Pk2d_term_rsd: np.ndarray
-    2D power spectrum of specific terms</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(k)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(mu)" class="doc doc-heading doc-heading-parameter">              <b><code>mu</code></b>
+<a href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(mu)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Angle (cosinus) to the line of sight</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(term_list)" class="doc doc-heading doc-heading-parameter">              <b><code>term_list</code></b>
+<a href="#cloelib.observables.CometVDG_spectro.CometVDG_SpectroPower.Pk2d_term_rsd(term_list)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="list">list</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Identifiers of loop diagrams</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Pk2d_term_rsd</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>2D power spectrum of specific terms</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6508,22 +6682,45 @@ Returns</p>
 
 
 <a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PBJSpectroPower</span><span class="p">(</span><span class="n"><span title="cloelib.observables.PBJ_spectro.PBJSpectroPower(linear_perturbations)">linear_perturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.PBJ_spectro.PBJSpectroPower(nuisance_parameters)">nuisance_parameters</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PBJSpectroPower</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(linear_perturbations)">linear_perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(nuisance_parameters)">nuisance_parameters</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
 
-        <p>Class to retrieve :math:<code>P(k,\mu)</code> with the EFT model from PBJ.</p>
+        <p>Class to retrieve <span class="arithmatex">\(P(k,\mu)\)</span> with the EFT model from PBJ.</p>
 
-        <h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower--parameters">Parameters<a class="headerlink" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower--parameters" title="Permanent link">&para;</a></h6>
-<p>linear_perturbations: Perturbations
-    Perturbations object containing cosmology, linear power spectrum,
-    redshift and growth functions
-nuisance_parameters: dict
-    Dictionary containing bias and counterterm parameters
-redshift: float
-    Redshift at which to evaluate :math:<code>P(k,\mu)</code></p>
+        <h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower--this-docstring-does-not-correspond-to-the-function">This docstring does not correspond to the function<a class="headerlink" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower--this-docstring-does-not-correspond-to-the-function" title="Permanent link">&para;</a></h6>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.PBJ_spectro.PBJSpectroPower(linear_perturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>linear_perturbations</code></b>
+<a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(linear_perturbations)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Perturbations object containing cosmology, linear power spectrum,
+redshift and growth functions</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.PBJ_spectro.PBJSpectroPower(nuisance_parameters)" class="doc doc-heading doc-heading-parameter">              <b><code>nuisance_parameters</code></b>
+<a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(nuisance_parameters)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="dict">dict</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Dictionary containing bias and counterterm parameters</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.PBJ_spectro.PBJSpectroPower(redshift)" class="doc doc-heading doc-heading-parameter">              <b><code>redshift</code></b>
+<a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(redshift)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which to evaluate <span class="arithmatex">\(P(k,\mu)\)</span></p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6555,22 +6752,54 @@ redshift: float
 
 
 <a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd(k)">k</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_rsd</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd(k)">k</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd(mu)">mu</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>2D power spectrum from couplings of density and velocity fields.</p>
-<h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd--parameters" title="Permanent link">&para;</a></h6>
-<p>k: np.ndarray
-    Wavenumber
-mu: np.ndarray
-    Angle (cosinus) to the line of sight
-parameters: dict
-    Ensemble of cosmological and nuisance parameters</p>
-<h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd--returns">Returns<a class="headerlink" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd--returns" title="Permanent link">&para;</a></h6>
-<p>Pk2d_rsd: np.ndarray
-    2D power spectrum from couplings of density and velocity fields</p>
+<h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd--this-docstring-does-not-correspond-to-the-function">This docstring does not correspond to the function<a class="headerlink" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd--this-docstring-does-not-correspond-to-the-function" title="Permanent link">&para;</a></h6>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd(k)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd(mu)" class="doc doc-heading doc-heading-parameter">              <b><code>mu</code></b>
+<a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd(mu)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Angle (cosinus) to the line of sight</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd(parameters)" class="doc doc-heading doc-heading-parameter">              <b><code>parameters</code></b>
+<a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_rsd(parameters)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="dict">dict</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Ensemble of cosmological and nuisance parameters</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Pk2d_rsd</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>2D power spectrum from couplings of density and velocity fields</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6586,22 +6815,53 @@ parameters: dict
 
 
 <a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_X_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(k)">k</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(X)">X</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_X_rsd</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(k)">k</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(mu)">mu</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(X)">X</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>2D power spectrum for the specific diagram X.</p>
-<h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd--parameters" title="Permanent link">&para;</a></h6>
-<p>k: np.ndarray
-    Wavenumber
-mu: np.ndarray
-    Angle (cosinus) to the line of sight
-X: str
-    Identifier of loop diagram</p>
-<h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd--returns">Returns<a class="headerlink" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd--returns" title="Permanent link">&para;</a></h6>
-<p>PX2d_rsd: np.ndarray
-    2D power spectrum of term X</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(k)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(mu)" class="doc doc-heading doc-heading-parameter">              <b><code>mu</code></b>
+<a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(mu)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Angle (cosinus) to the line of sight</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(X)" class="doc doc-heading doc-heading-parameter">              <b><code>X</code></b>
+<a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower.Pk2d_X_rsd(X)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="str">str</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Identifier of loop diagram</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>PX2d_rsd</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>2D power spectrum of term X</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6670,7 +6930,7 @@ X: str
 
 
 <a href="#cloelib.observables.photo.ShearTracer" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ShearTracer</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.ShearTracer(perturbations)">perturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.ShearTracer(dndz)">dndz</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.ShearTracer(z)">z</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.ShearTracer(nuisance_params)">nuisance_params</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ShearTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.ShearTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.ShearTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.ShearTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.ShearTracer(nuisance_params)">nuisance_params</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6678,14 +6938,36 @@ X: str
 
         <p>Class for the kernel for Cosmic Shear.</p>
 
-        <h6 id="cloelib.observables.photo.ShearTracer--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.ShearTracer--parameters" title="Permanent link">&para;</a></h6>
-<p>perturbations : object
-    An object from NonLinearPerturbations class
-dndz : np.ndarray
-    A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
-    It is expected to be normalised.
-z : np.ndarray
-    A 1-dimensional array representing the redshift values corresponding to the <code>dndz</code> array.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.photo.ShearTracer(perturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>perturbations</code></b>
+<a href="#cloelib.observables.photo.ShearTracer(perturbations)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="object">object</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>An object from NonLinearPerturbations class</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.photo.ShearTracer(dndz)" class="doc doc-heading doc-heading-parameter">              <b><code>dndz</code></b>
+<a href="#cloelib.observables.photo.ShearTracer(dndz)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
+It is expected to be normalised.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.photo.ShearTracer(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.photo.ShearTracer(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A 1-dimensional array representing the redshift values corresponding to the <code>dndz</code> array.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6717,18 +6999,38 @@ z : np.ndarray
 
 
 <a href="#cloelib.observables.photo.ShearTracer.get_window_IA" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_IA</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.ShearTracer.get_window_IA(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_IA</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.ShearTracer.get_window_IA(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Window integrand.</p>
 <p>Calculates IA window</p>
-<h6 id="cloelib.observables.photo.ShearTracer.get_window_IA--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.ShearTracer.get_window_IA--parameters" title="Permanent link">&para;</a></h6>
-<p>z: float
-    Redshift at which kernel is being evaluated</p>
-<h6 id="cloelib.observables.photo.ShearTracer.get_window_IA--returns">Returns<a class="headerlink" href="#cloelib.observables.photo.ShearTracer.get_window_IA--returns" title="Permanent link">&para;</a></h6>
-<p>window_IA: np.ndarray</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.ShearTracer.get_window_IA(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.photo.ShearTracer.get_window_IA(z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which kernel is being evaluated</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>window_IA</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6765,7 +7067,7 @@ z : np.ndarray
 
 
 <a href="#cloelib.observables.photo.ShearTracer.get_lensing_efficiency" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_lensing_efficiency</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.ShearTracer.get_lensing_efficiency(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_lensing_efficiency</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.ShearTracer.get_lensing_efficiency(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6773,15 +7075,34 @@ z : np.ndarray
         <p>Compute the lensing efficiency kernel for each redshift bin.</p>
 <p>This function calculates the geometric lensing kernel W(χ), which weights the contribution
 of matter at different redshifts to the weak lensing signal, for a given redshift grid <code>z</code>.</p>
-<h6 id="cloelib.observables.photo.ShearTracer.get_lensing_efficiency--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.ShearTracer.get_lensing_efficiency--parameters" title="Permanent link">&para;</a></h6>
-<p>z : np.ndarray
-    1D array of redshift values (must be evenly spaced). Used to compute comoving distances
-    and define integration domain.</p>
-<h6 id="cloelib.observables.photo.ShearTracer.get_lensing_efficiency--returns">Returns<a class="headerlink" href="#cloelib.observables.photo.ShearTracer.get_lensing_efficiency--returns" title="Permanent link">&para;</a></h6>
-<p>np.ndarray
-    2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
-    for each redshift bin over the evaluation grid.</p>
-<h6 id="cloelib.observables.photo.ShearTracer.get_lensing_efficiency--notes">Notes<a class="headerlink" href="#cloelib.observables.photo.ShearTracer.get_lensing_efficiency--notes" title="Permanent link">&para;</a></h6>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.ShearTracer.get_lensing_efficiency(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.photo.ShearTracer.get_lensing_efficiency(z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>1D array of redshift values (must be evenly spaced). Used to compute comoving distances
+and define integration domain.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
+for each redshift bin over the evaluation grid.</p>
+          </div>
+        </li>
+    </ul>
+        <h6 id="cloelib.observables.photo.ShearTracer.get_lensing_efficiency--notes">Notes<a class="headerlink" href="#cloelib.observables.photo.ShearTracer.get_lensing_efficiency--notes" title="Permanent link">&para;</a></h6>
 <ul>
 <li>Assumes <code>z</code> is evenly spaced; spacing is inferred as <code>z[1] - z[0]</code>.</li>
 <li>Uses a precomputed Simpson rule weight matrix (<code>cached_stacked_simpson</code>) for integration.</li>
@@ -6803,7 +7124,7 @@ of matter at different redshifts to the weak lensing signal, for a given redshif
 
 
 <a href="#cloelib.observables.photo.ShearTracer.get_window_lensing" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_lensing</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.ShearTracer.get_window_lensing(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_lensing</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.ShearTracer.get_window_lensing(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6812,22 +7133,42 @@ of matter at different redshifts to the weak lensing signal, for a given redshif
 <p>Calculates the weak lensing shear kernel for a given tomographic bin
 distribution.
 Uses broadcasting to compute a 2D-array of integrands and then applies
-:obj:<code>np.trapz</code> on the array along one axis.</p>
-<p>.. math::
+<code>np.trapz</code> on the array along one axis.</p>
+<div class="arithmatex">\[
     W_{i}^{\gamma}(\ell, z, k) =
     \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
     \Omega_{{\rm m},0} (1 + z)
     f_K\left[\tilde{r}(z)\right]
     \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
     \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-    {f_K\left[\tilde{r}(z^{\prime})\right]}}\</p>
-<h6 id="cloelib.observables.photo.ShearTracer.get_window_lensing--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.ShearTracer.get_window_lensing--parameters" title="Permanent link">&para;</a></h6>
-<p>z: numpy.ndarray of float
-    Redshift at which weight is evaluated.</p>
-<h6 id="cloelib.observables.photo.ShearTracer.get_window_lensing--returns">Returns<a class="headerlink" href="#cloelib.observables.photo.ShearTracer.get_window_lensing--returns" title="Permanent link">&para;</a></h6>
-<p>Shear kernel: numpy.ndarray
-    1-D Numpy array of shear kernel values for specified bin
-    at specified scale for the redshifts defined in z</p>
+    {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
+\]</div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.ShearTracer.get_window_lensing(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.photo.ShearTracer.get_window_lensing(z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which weight is evaluated (<code>float</code> type).</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>1-D Numpy array of shear kernel values for specified bin
+at specified scale for the redshifts defined in z</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6843,18 +7184,38 @@ Uses broadcasting to compute a 2D-array of integrands and then applies
 
 
 <a href="#cloelib.observables.photo.ShearTracer.get_window" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.ShearTracer.get_window(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.ShearTracer.get_window(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Compute the Window.</p>
 <p>Computes general window given the selected tracer</p>
-<h6 id="cloelib.observables.photo.ShearTracer.get_window--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.ShearTracer.get_window--parameters" title="Permanent link">&para;</a></h6>
-<p>z: float
-    Redshift at which window kernel is being evaluated</p>
-<h6 id="cloelib.observables.photo.ShearTracer.get_window--returns">Returns<a class="headerlink" href="#cloelib.observables.photo.ShearTracer.get_window--returns" title="Permanent link">&para;</a></h6>
-<p>window: np.ndarray</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.ShearTracer.get_window(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.photo.ShearTracer.get_window(z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which window kernel is being evaluated</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>window</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6879,7 +7240,7 @@ Uses broadcasting to compute a 2D-array of integrands and then applies
 
 
 <a href="#cloelib.observables.photo.PositionsTracer" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.PositionsTracer(perturbations)">perturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer(dndz)">dndz</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer(z)">z</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer(nuisance_params)">nuisance_params</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(nuisance_params)">nuisance_params</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6887,18 +7248,53 @@ Uses broadcasting to compute a 2D-array of integrands and then applies
 
         <p>Class to define the kernel for angular (galaxy) clustering.</p>
 
-        <h6 id="cloelib.observables.photo.PositionsTracer--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer--parameters" title="Permanent link">&para;</a></h6>
-<p>perturbations : :class:<code>LinearPerturbations</code> or :class:<code>NonLinearPerturbations</code>
-    An object from NonLinearPerturbations class
-dndz : np.ndarray
-    A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
-    It is expected to be normalised.
-z : np.ndarray
-    A 1-dimensional array representing the redshift values corresponding to the <code>dndz</code> array.
-galaxy_bias_model : str
-    A string specifying the model used to describe the galaxy bias
-nuisance_params : dict
-    A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.</p>
+        <h6 id="cloelib.observables.photo.PositionsTracer--this-docstring-should-be-checked-i-replaced-linearperturbations-or-nonlinearperturbations-with-perturbations-as-the-type-of-perturbations-in-the-parameters-list-doc">This docstring should be checked. I replaced LinearPerturbations or NonLinearPerturbations with Perturbations as the type of perturbations in the parameters list doc.<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer--this-docstring-should-be-checked-i-replaced-linearperturbations-or-nonlinearperturbations-with-perturbations-as-the-type-of-perturbations-in-the-parameters-list-doc" title="Permanent link">&para;</a></h6>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.photo.PositionsTracer(perturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>perturbations</code></b>
+<a href="#cloelib.observables.photo.PositionsTracer(perturbations)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>An object from NonLinearPerturbations class</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.photo.PositionsTracer(dndz)" class="doc doc-heading doc-heading-parameter">              <b><code>dndz</code></b>
+<a href="#cloelib.observables.photo.PositionsTracer(dndz)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
+It is expected to be normalised.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.photo.PositionsTracer(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.photo.PositionsTracer(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A 1-dimensional array representing the redshift values corresponding to the <code>dndz</code> array.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.photo.PositionsTracer(galaxy_bias_model)" class="doc doc-heading doc-heading-parameter">              <b><code>galaxy_bias_model</code></b>
+<a href="#cloelib.observables.photo.PositionsTracer(galaxy_bias_model)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="str">str</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A string specifying the model used to describe the galaxy bias</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.photo.PositionsTracer(nuisance_params)" class="doc doc-heading doc-heading-parameter">              <b><code>nuisance_params</code></b>
+<a href="#cloelib.observables.photo.PositionsTracer(nuisance_params)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="dict">dict</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6930,21 +7326,41 @@ nuisance_params : dict
 
 
 <a href="#cloelib.observables.photo.PositionsTracer.get_window_positions" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_positions</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_window_positions(z)">z</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_positions</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer.get_window_positions(z)">z</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Galaxy Positions window function.</p>
 <p>Implements the galaxy clustering photometric window function.</p>
-<p>.. math::
-    W_i^G(z) &amp;= \frac{n_i(z)}{\bar{n_i}}\frac{H(z)}{c}\</p>
-<h6 id="cloelib.observables.photo.PositionsTracer.get_window_positions--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window_positions--parameters" title="Permanent link">&para;</a></h6>
-<p>z: numpy.ndarray of float or float
-   Redshift at which to evaluate distribution</p>
-<h6 id="cloelib.observables.photo.PositionsTracer.get_window_positions--returns">Returns<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window_positions--returns" title="Permanent link">&para;</a></h6>
-<p>window_positions: numpy.ndarray
-   Window function for angular photometric galaxy clustering</p>
+<div class="arithmatex">\[
+    W_i^G(z) = \frac{n_i(z)}{\bar{n_i}}\frac{H(z)}{c}\\
+\]</div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window_positions(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.photo.PositionsTracer.get_window_positions(z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span> | <span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which to evaluate distribution (array of <code>float</code> or <code>float</code>)</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>window_positions</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>Window function for angular photometric galaxy clustering</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -6960,7 +7376,7 @@ nuisance_params : dict
 
 
 <a href="#cloelib.observables.photo.PositionsTracer.get_magnification_efficiency" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_magnification_efficiency</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_magnification_efficiency(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_magnification_efficiency</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer.get_magnification_efficiency(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6968,15 +7384,34 @@ nuisance_params : dict
         <p>Compute the magnification efficiency kernel for each redshift bin.</p>
 <p>This function calculates the geometric lensing kernel W(χ), which weights the contribution
 of matter at different redshifts to the weak lensing signal, for a given redshift grid <code>z</code>.</p>
-<h6 id="cloelib.observables.photo.PositionsTracer.get_magnification_efficiency--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_magnification_efficiency--parameters" title="Permanent link">&para;</a></h6>
-<p>z : np.ndarray
-    1D array of redshift values (must be evenly spaced). Used to compute comoving distances
-    and define integration domain.</p>
-<h6 id="cloelib.observables.photo.PositionsTracer.get_magnification_efficiency--returns">Returns<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_magnification_efficiency--returns" title="Permanent link">&para;</a></h6>
-<p>np.ndarray
-    2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
-    for each redshift bin over the evaluation grid.</p>
-<h6 id="cloelib.observables.photo.PositionsTracer.get_magnification_efficiency--notes">Notes<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_magnification_efficiency--notes" title="Permanent link">&para;</a></h6>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.PositionsTracer.get_magnification_efficiency(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.photo.PositionsTracer.get_magnification_efficiency(z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>1D array of redshift values (must be evenly spaced). Used to compute comoving distances
+and define integration domain.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
+for each redshift bin over the evaluation grid.</p>
+          </div>
+        </li>
+    </ul>
+        <h6 id="cloelib.observables.photo.PositionsTracer.get_magnification_efficiency--notes">Notes<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_magnification_efficiency--notes" title="Permanent link">&para;</a></h6>
 <ul>
 <li>Assumes <code>z</code> is evenly spaced; spacing is inferred as <code>z[1] - z[0]</code>.</li>
 <li>Uses a precomputed Simpson rule weight matrix (<code>cached_stacked_simpson</code>) for integration.</li>
@@ -6998,7 +7433,7 @@ of matter at different redshifts to the weak lensing signal, for a given redshif
 
 
 <a href="#cloelib.observables.photo.PositionsTracer.get_window_magnification" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_magnification</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_window_magnification(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_magnification</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer.get_window_magnification(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -7007,28 +7442,61 @@ of matter at different redshifts to the weak lensing signal, for a given redshif
 <p>Calculates the weak lensing shear kernel for a given tomographic bin
 distribution.
 Uses broadcasting to compute a 2D-array of integrands and then applies
-:obj:<code>np.trapz</code> on the array along one axis.</p>
-<p>.. math::
+<code>np.trapz</code> on the array along one axis.</p>
+<div class="arithmatex">\[
     W_{i}^{\gamma}(\ell, z, k) =
     \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
     \Omega_{{\rm m},0} b_{\rm mag, i} (1 + z)
     f_K\left[\tilde{r}(z)\right]
     \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
     \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-    {f_K\left[\tilde{r}(z^{\prime})\right]}}\</p>
-<h6 id="cloelib.observables.photo.PositionsTracer.get_window_magnification--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window_magnification--parameters" title="Permanent link">&para;</a></h6>
-<p>z: numpy.ndarray of float
-    Redshift at which weight is evaluated.
-bin_i: int
-    Index of desired tomographic bin.
-    Tomographic bin indices start from 1
-k: float
-    Wavenumber at which to evaluate the Modified Gravity
-    :math:<code>\Sigma(z,k)</code> function</p>
-<h6 id="cloelib.observables.photo.PositionsTracer.get_window_magnification--returns">Returns<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window_magnification--returns" title="Permanent link">&para;</a></h6>
-<p>Shear kernel: numpy.ndarray
-    1-D Numpy array of shear kernel values for specified bin
-    at specified scale for the redshifts defined in z</p>
+    {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
+\]</div>
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window_magnification--this-docstring-does-not-correspond-to-the-function">This docstring does not correspond to the function<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window_magnification--this-docstring-does-not-correspond-to-the-function" title="Permanent link">&para;</a></h6>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window_magnification(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.photo.PositionsTracer.get_window_magnification(z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which weight is evaluated (array of <code>float</code>).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window_magnification(bin_i)" class="doc doc-heading doc-heading-parameter">              <b><code>bin_i</code></b>
+<a href="#cloelib.observables.photo.PositionsTracer.get_window_magnification(bin_i)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="int">int</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Index of desired tomographic bin.
+Tomographic bin indices start from 1</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window_magnification(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.observables.photo.PositionsTracer.get_window_magnification(k)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber at which to evaluate the Modified Gravity
+<span class="arithmatex">\(\Sigma(z,k)\)</span> function</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>1-D Numpy array of shear kernel values for specified bin
+at specified scale for the redshifts defined in z</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -7044,7 +7512,7 @@ k: float
 
 
 <a href="#cloelib.observables.photo.PositionsTracer.get_window" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_window(z)">z</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer.get_window(z)">z</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -7052,11 +7520,31 @@ k: float
         <p>Compute the angular photometric galaxy clustering window function.</p>
 <p>This function combines the galaxy clustering window and the magnification
 bias window to produce the final window function.</p>
-<h6 id="cloelib.observables.photo.PositionsTracer.get_window--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window--parameters" title="Permanent link">&para;</a></h6>
-<p>z: float
-    Redshift at which window kernel is being evaluated</p>
-<h6 id="cloelib.observables.photo.PositionsTracer.get_window--returns">Returns<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window--returns" title="Permanent link">&para;</a></h6>
-<p>window: np.ndarray</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.photo.PositionsTracer.get_window(z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which window kernel is being evaluated</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>window</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -7129,7 +7617,7 @@ bias window to produce the final window function.</p>
     <div class="doc doc-contents ">
 
 
-        <p>Protocol to define the :math:<code>P(k,\mu)</code> interface.</p>
+        <p>Protocol to define the <span class="arithmatex">\(P(k,\mu)\)</span> interface.</p>
 
           
 
@@ -7186,21 +7674,45 @@ bias window to produce the final window function.</p>
 
 
 <a href="#cloelib.observables.spectro.SpectroPower.Pk2d_rsd" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.observables.spectro.SpectroPower.Pk2d_rsd(k)">k</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.spectro.SpectroPower.Pk2d_rsd(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="o">**</span><span class="n"><span title="cloelib.observables.spectro.SpectroPower.Pk2d_rsd(**args)">args</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_rsd</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.spectro.SpectroPower.Pk2d_rsd(k)">k</a></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.spectro.SpectroPower.Pk2d_rsd(mu)">mu</a></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="o">**</span><span class="n"><span title="cloelib.observables.spectro.SpectroPower.Pk2d_rsd(**args)">args</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>2D power spectrum from couplings of density and velocity fields.</p>
-<h6 id="cloelib.observables.spectro.SpectroPower.Pk2d_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.observables.spectro.SpectroPower.Pk2d_rsd--parameters" title="Permanent link">&para;</a></h6>
-<p>k: numpy.ndarray or jax.numpy.ndarray
-    Wavenumber
-mu: numpy.ndarray or jax.numpy.ndarray
-    Angle (cosinus) to the line of sight
-Returns</p>
-<hr />
-<p>Pk2d_rsd: numpy.ndarray or jax.numpy.ndarray
-    2D power spectrum from couplings of density and velocity fields</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.spectro.SpectroPower.Pk2d_rsd(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.observables.spectro.SpectroPower.Pk2d_rsd(k)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber. Can be NumPy (<code>numpy.ndarray</code>) or JAX (<code>jax.numpy.ndarray</code>) ndarray.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.spectro.SpectroPower.Pk2d_rsd(mu)" class="doc doc-heading doc-heading-parameter">              <b><code>mu</code></b>
+<a href="#cloelib.observables.spectro.SpectroPower.Pk2d_rsd(mu)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span> | <span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Angle (cosinus) to the line of sight</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Pk2d_rsd</code></b> (              <code><span title="numpy.ndarray">ndarray</span> | <span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>2D power spectrum from couplings of density and velocity fields</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -7216,21 +7728,45 @@ Returns</p>
 
 
 <a href="#cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_term_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd(k)">k</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="o">**</span><span class="n"><span title="cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd(**args)">args</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_term_rsd</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd(k)">k</a></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd(mu)">mu</a></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="o">**</span><span class="n"><span title="cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd(**args)">args</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>2D power spectrum for a subset of specific term of the loop expansion.</p>
-<h6 id="cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd--parameters" title="Permanent link">&para;</a></h6>
-<p>k: numpy.ndarray or jax.numpy.ndarray
-    Wavenumber
-mu: numpy.ndarray or jax.numpy.ndarray
-    Angle (cosinus) to the line of sight
-Returns</p>
-<hr />
-<p>Pk2d_term_rsd: numpy.ndarray or jax.numpy.ndarray
-    2D power spectrum of specific terms</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd(k)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span> | <span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd(mu)" class="doc doc-heading doc-heading-parameter">              <b><code>mu</code></b>
+<a href="#cloelib.observables.spectro.SpectroPower.Pk2d_term_rsd(mu)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span> | <span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Angle (cosinus) to the line of sight</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Pk2d_term_rsd</code></b> (              <code><span title="numpy.ndarray">ndarray</span> | <span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>2D power spectrum of specific terms</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -7360,17 +7896,37 @@ Returns</p>
 
 
 <a href="#cloelib.observables.tracer.Tracer.get_window" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><span title="cloelib.observables.tracer.Tracer.get_window(z)">z</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer.get_window(z)">z</a></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Compute general window(s) given the selected tracer.</p>
-<h6 id="cloelib.observables.tracer.Tracer.get_window--parameters">Parameters<a class="headerlink" href="#cloelib.observables.tracer.Tracer.get_window--parameters" title="Permanent link">&para;</a></h6>
-<p>z: float
-    Redshift at which window kernel is being evaluated</p>
-<h6 id="cloelib.observables.tracer.Tracer.get_window--returns">Returns<a class="headerlink" href="#cloelib.observables.tracer.Tracer.get_window--returns" title="Permanent link">&para;</a></h6>
-<p>window: np.ndarray</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.tracer.Tracer.get_window(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.observables.tracer.Tracer.get_window(z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which window kernel is being evaluated</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>window</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -7702,17 +8258,37 @@ such as angular power spectra or Legendre multipoles.</p>
 
 
 <a href="#cloelib.summary_statistics.Tracer.get_window" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.Tracer.get_window(z)">z</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.Tracer.get_window(z)">z</a></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.tracer.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Compute general window(s) given the selected tracer.</p>
-<h6 id="cloelib.summary_statistics.Tracer.get_window--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.Tracer.get_window--parameters" title="Permanent link">&para;</a></h6>
-<p>z: float
-    Redshift at which window kernel is being evaluated</p>
-<h6 id="cloelib.summary_statistics.Tracer.get_window--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.Tracer.get_window--returns" title="Permanent link">&para;</a></h6>
-<p>window: np.ndarray</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.Tracer.get_window(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.summary_statistics.Tracer.get_window(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which window kernel is being evaluated</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>window</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -7737,7 +8313,7 @@ such as angular power spectra or Legendre multipoles.</p>
 
 
 <a href="#cloelib.summary_statistics.PositionsTracer" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.PositionsTracer(perturbations)">perturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.PositionsTracer(dndz)">dndz</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.PositionsTracer(z)">z</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.PositionsTracer(nuisance_params)">nuisance_params</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.PositionsTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.PositionsTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.PositionsTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.PositionsTracer(nuisance_params)">nuisance_params</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -7745,18 +8321,53 @@ such as angular power spectra or Legendre multipoles.</p>
 
         <p>Class to define the kernel for angular (galaxy) clustering.</p>
 
-        <h5 id="cloelib.summary_statistics.PositionsTracer--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer--parameters" title="Permanent link">&para;</a></h5>
-<p>perturbations : :class:<code>LinearPerturbations</code> or :class:<code>NonLinearPerturbations</code>
-    An object from NonLinearPerturbations class
-dndz : np.ndarray
-    A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
-    It is expected to be normalised.
-z : np.ndarray
-    A 1-dimensional array representing the redshift values corresponding to the <code>dndz</code> array.
-galaxy_bias_model : str
-    A string specifying the model used to describe the galaxy bias
-nuisance_params : dict
-    A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.</p>
+        <h6 id="cloelib.summary_statistics.PositionsTracer--this-docstring-should-be-checked-i-replaced-linearperturbations-or-nonlinearperturbations-with-perturbations-as-the-type-of-perturbations-in-the-parameters-list-doc">This docstring should be checked. I replaced LinearPerturbations or NonLinearPerturbations with Perturbations as the type of perturbations in the parameters list doc.<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer--this-docstring-should-be-checked-i-replaced-linearperturbations-or-nonlinearperturbations-with-perturbations-as-the-type-of-perturbations-in-the-parameters-list-doc" title="Permanent link">&para;</a></h6>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.summary_statistics.PositionsTracer(perturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>perturbations</code></b>
+<a href="#cloelib.summary_statistics.PositionsTracer(perturbations)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>An object from NonLinearPerturbations class</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.summary_statistics.PositionsTracer(dndz)" class="doc doc-heading doc-heading-parameter">              <b><code>dndz</code></b>
+<a href="#cloelib.summary_statistics.PositionsTracer(dndz)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
+It is expected to be normalised.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.summary_statistics.PositionsTracer(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.summary_statistics.PositionsTracer(z)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A 1-dimensional array representing the redshift values corresponding to the <code>dndz</code> array.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.summary_statistics.PositionsTracer(galaxy_bias_model)" class="doc doc-heading doc-heading-parameter">              <b><code>galaxy_bias_model</code></b>
+<a href="#cloelib.summary_statistics.PositionsTracer(galaxy_bias_model)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="str">str</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A string specifying the model used to describe the galaxy bias</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.summary_statistics.PositionsTracer(nuisance_params)" class="doc doc-heading doc-heading-parameter">              <b><code>nuisance_params</code></b>
+<a href="#cloelib.summary_statistics.PositionsTracer(nuisance_params)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="dict">dict</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -7788,21 +8399,41 @@ nuisance_params : dict
 
 
 <a href="#cloelib.summary_statistics.PositionsTracer.get_window_positions" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_positions</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.PositionsTracer.get_window_positions(z)">z</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_positions</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.PositionsTracer.get_window_positions(z)">z</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Galaxy Positions window function.</p>
 <p>Implements the galaxy clustering photometric window function.</p>
-<p>.. math::
-    W_i^G(z) &amp;= \frac{n_i(z)}{\bar{n_i}}\frac{H(z)}{c}\</p>
-<h6 id="cloelib.summary_statistics.PositionsTracer.get_window_positions--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer.get_window_positions--parameters" title="Permanent link">&para;</a></h6>
-<p>z: numpy.ndarray of float or float
-   Redshift at which to evaluate distribution</p>
-<h6 id="cloelib.summary_statistics.PositionsTracer.get_window_positions--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer.get_window_positions--returns" title="Permanent link">&para;</a></h6>
-<p>window_positions: numpy.ndarray
-   Window function for angular photometric galaxy clustering</p>
+<div class="arithmatex">\[
+    W_i^G(z) = \frac{n_i(z)}{\bar{n_i}}\frac{H(z)}{c}\\
+\]</div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.PositionsTracer.get_window_positions(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.summary_statistics.PositionsTracer.get_window_positions(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span> | <span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which to evaluate distribution (array of <code>float</code> or <code>float</code>)</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>window_positions</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>Window function for angular photometric galaxy clustering</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -7818,7 +8449,7 @@ nuisance_params : dict
 
 
 <a href="#cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_magnification_efficiency</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_magnification_efficiency</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -7826,15 +8457,34 @@ nuisance_params : dict
         <p>Compute the magnification efficiency kernel for each redshift bin.</p>
 <p>This function calculates the geometric lensing kernel W(χ), which weights the contribution
 of matter at different redshifts to the weak lensing signal, for a given redshift grid <code>z</code>.</p>
-<h6 id="cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency--parameters" title="Permanent link">&para;</a></h6>
-<p>z : np.ndarray
-    1D array of redshift values (must be evenly spaced). Used to compute comoving distances
-    and define integration domain.</p>
-<h6 id="cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency--returns" title="Permanent link">&para;</a></h6>
-<p>np.ndarray
-    2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
-    for each redshift bin over the evaluation grid.</p>
-<h6 id="cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency--notes">Notes<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency--notes" title="Permanent link">&para;</a></h6>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>1D array of redshift values (must be evenly spaced). Used to compute comoving distances
+and define integration domain.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
+for each redshift bin over the evaluation grid.</p>
+          </div>
+        </li>
+    </ul>
+        <h6 id="cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency--notes">Notes<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer.get_magnification_efficiency--notes" title="Permanent link">&para;</a></h6>
 <ul>
 <li>Assumes <code>z</code> is evenly spaced; spacing is inferred as <code>z[1] - z[0]</code>.</li>
 <li>Uses a precomputed Simpson rule weight matrix (<code>cached_stacked_simpson</code>) for integration.</li>
@@ -7856,7 +8506,7 @@ of matter at different redshifts to the weak lensing signal, for a given redshif
 
 
 <a href="#cloelib.summary_statistics.PositionsTracer.get_window_magnification" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_magnification</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.PositionsTracer.get_window_magnification(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_magnification</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.PositionsTracer.get_window_magnification(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -7865,28 +8515,61 @@ of matter at different redshifts to the weak lensing signal, for a given redshif
 <p>Calculates the weak lensing shear kernel for a given tomographic bin
 distribution.
 Uses broadcasting to compute a 2D-array of integrands and then applies
-:obj:<code>np.trapz</code> on the array along one axis.</p>
-<p>.. math::
+<code>np.trapz</code> on the array along one axis.</p>
+<div class="arithmatex">\[
     W_{i}^{\gamma}(\ell, z, k) =
     \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
     \Omega_{{\rm m},0} b_{\rm mag, i} (1 + z)
     f_K\left[\tilde{r}(z)\right]
     \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
     \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-    {f_K\left[\tilde{r}(z^{\prime})\right]}}\</p>
-<h6 id="cloelib.summary_statistics.PositionsTracer.get_window_magnification--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer.get_window_magnification--parameters" title="Permanent link">&para;</a></h6>
-<p>z: numpy.ndarray of float
-    Redshift at which weight is evaluated.
-bin_i: int
-    Index of desired tomographic bin.
-    Tomographic bin indices start from 1
-k: float
-    Wavenumber at which to evaluate the Modified Gravity
-    :math:<code>\Sigma(z,k)</code> function</p>
-<h6 id="cloelib.summary_statistics.PositionsTracer.get_window_magnification--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer.get_window_magnification--returns" title="Permanent link">&para;</a></h6>
-<p>Shear kernel: numpy.ndarray
-    1-D Numpy array of shear kernel values for specified bin
-    at specified scale for the redshifts defined in z</p>
+    {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
+\]</div>
+<h6 id="cloelib.summary_statistics.PositionsTracer.get_window_magnification--this-docstring-does-not-correspond-to-the-function">This docstring does not correspond to the function<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer.get_window_magnification--this-docstring-does-not-correspond-to-the-function" title="Permanent link">&para;</a></h6>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.PositionsTracer.get_window_magnification(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.summary_statistics.PositionsTracer.get_window_magnification(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which weight is evaluated (array of <code>float</code>).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.PositionsTracer.get_window_magnification(bin_i)" class="doc doc-heading doc-heading-parameter">              <b><code>bin_i</code></b>
+<a href="#cloelib.summary_statistics.PositionsTracer.get_window_magnification(bin_i)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="int">int</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Index of desired tomographic bin.
+Tomographic bin indices start from 1</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.PositionsTracer.get_window_magnification(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.summary_statistics.PositionsTracer.get_window_magnification(k)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber at which to evaluate the Modified Gravity
+<span class="arithmatex">\(\Sigma(z,k)\)</span> function</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>1-D Numpy array of shear kernel values for specified bin
+at specified scale for the redshifts defined in z</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -7902,7 +8585,7 @@ k: float
 
 
 <a href="#cloelib.summary_statistics.PositionsTracer.get_window" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.PositionsTracer.get_window(z)">z</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.PositionsTracer.get_window(z)">z</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -7910,11 +8593,31 @@ k: float
         <p>Compute the angular photometric galaxy clustering window function.</p>
 <p>This function combines the galaxy clustering window and the magnification
 bias window to produce the final window function.</p>
-<h6 id="cloelib.summary_statistics.PositionsTracer.get_window--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer.get_window--parameters" title="Permanent link">&para;</a></h6>
-<p>z: float
-    Redshift at which window kernel is being evaluated</p>
-<h6 id="cloelib.summary_statistics.PositionsTracer.get_window--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.PositionsTracer.get_window--returns" title="Permanent link">&para;</a></h6>
-<p>window: np.ndarray</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.PositionsTracer.get_window(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.summary_statistics.PositionsTracer.get_window(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which window kernel is being evaluated</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>window</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -8555,7 +9258,7 @@ two-point angular statistics.</p>
     <div class="doc doc-contents ">
 
 
-        <p>Protocol to define the :math:<code>P(k,\mu)</code> interface.</p>
+        <p>Protocol to define the <span class="arithmatex">\(P(k,\mu)\)</span> interface.</p>
 
           
 
@@ -8612,21 +9315,45 @@ two-point angular statistics.</p>
 
 
 <a href="#cloelib.summary_statistics.SpectroPower.Pk2d_rsd" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.SpectroPower.Pk2d_rsd(k)">k</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.SpectroPower.Pk2d_rsd(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="o">**</span><span class="n"><span title="cloelib.summary_statistics.SpectroPower.Pk2d_rsd(**args)">args</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_rsd</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.SpectroPower.Pk2d_rsd(k)">k</a></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.SpectroPower.Pk2d_rsd(mu)">mu</a></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="o">**</span><span class="n"><span title="cloelib.summary_statistics.SpectroPower.Pk2d_rsd(**args)">args</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>2D power spectrum from couplings of density and velocity fields.</p>
-<h6 id="cloelib.summary_statistics.SpectroPower.Pk2d_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.SpectroPower.Pk2d_rsd--parameters" title="Permanent link">&para;</a></h6>
-<p>k: numpy.ndarray or jax.numpy.ndarray
-    Wavenumber
-mu: numpy.ndarray or jax.numpy.ndarray
-    Angle (cosinus) to the line of sight
-Returns</p>
-<hr />
-<p>Pk2d_rsd: numpy.ndarray or jax.numpy.ndarray
-    2D power spectrum from couplings of density and velocity fields</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.SpectroPower.Pk2d_rsd(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.summary_statistics.SpectroPower.Pk2d_rsd(k)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber. Can be NumPy (<code>numpy.ndarray</code>) or JAX (<code>jax.numpy.ndarray</code>) ndarray.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.SpectroPower.Pk2d_rsd(mu)" class="doc doc-heading doc-heading-parameter">              <b><code>mu</code></b>
+<a href="#cloelib.summary_statistics.SpectroPower.Pk2d_rsd(mu)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span> | <span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Angle (cosinus) to the line of sight</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Pk2d_rsd</code></b> (              <code><span title="numpy.ndarray">ndarray</span> | <span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>2D power spectrum from couplings of density and velocity fields</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -8642,21 +9369,45 @@ Returns</p>
 
 
 <a href="#cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_term_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd(k)">k</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="o">**</span><span class="n"><span title="cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd(**args)">args</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Pk2d_term_rsd</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd(k)">k</a></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd(mu)">mu</a></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span><span class="p">,</span> <span class="o">**</span><span class="n"><span title="cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd(**args)">args</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.spectro.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>2D power spectrum for a subset of specific term of the loop expansion.</p>
-<h6 id="cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd--parameters" title="Permanent link">&para;</a></h6>
-<p>k: numpy.ndarray or jax.numpy.ndarray
-    Wavenumber
-mu: numpy.ndarray or jax.numpy.ndarray
-    Angle (cosinus) to the line of sight
-Returns</p>
-<hr />
-<p>Pk2d_term_rsd: numpy.ndarray or jax.numpy.ndarray
-    2D power spectrum of specific terms</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd(k)" class="doc doc-heading doc-heading-parameter">              <b><code>k</code></b>
+<a href="#cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd(k)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span> | <span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumber</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd(mu)" class="doc doc-heading doc-heading-parameter">              <b><code>mu</code></b>
+<a href="#cloelib.summary_statistics.SpectroPower.Pk2d_term_rsd(mu)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span> | <span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Angle (cosinus) to the line of sight</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Pk2d_term_rsd</code></b> (              <code><span title="numpy.ndarray">ndarray</span> | <span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>2D power spectrum of specific terms</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -8873,7 +9624,7 @@ Returns</p>
 
 
 <a href="#cloelib.summary_statistics.ShearTracer" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ShearTracer</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.ShearTracer(perturbations)">perturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.ShearTracer(dndz)">dndz</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.ShearTracer(z)">z</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.ShearTracer(nuisance_params)">nuisance_params</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ShearTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.ShearTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.ShearTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.ShearTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.ShearTracer(nuisance_params)">nuisance_params</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -8881,14 +9632,36 @@ Returns</p>
 
         <p>Class for the kernel for Cosmic Shear.</p>
 
-        <h5 id="cloelib.summary_statistics.ShearTracer--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.ShearTracer--parameters" title="Permanent link">&para;</a></h5>
-<p>perturbations : object
-    An object from NonLinearPerturbations class
-dndz : np.ndarray
-    A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
-    It is expected to be normalised.
-z : np.ndarray
-    A 1-dimensional array representing the redshift values corresponding to the <code>dndz</code> array.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.summary_statistics.ShearTracer(perturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>perturbations</code></b>
+<a href="#cloelib.summary_statistics.ShearTracer(perturbations)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="object">object</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>An object from NonLinearPerturbations class</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.summary_statistics.ShearTracer(dndz)" class="doc doc-heading doc-heading-parameter">              <b><code>dndz</code></b>
+<a href="#cloelib.summary_statistics.ShearTracer(dndz)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
+It is expected to be normalised.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.summary_statistics.ShearTracer(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.summary_statistics.ShearTracer(z)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>A 1-dimensional array representing the redshift values corresponding to the <code>dndz</code> array.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -8920,18 +9693,38 @@ z : np.ndarray
 
 
 <a href="#cloelib.summary_statistics.ShearTracer.get_window_IA" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_IA</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.ShearTracer.get_window_IA(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_IA</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.ShearTracer.get_window_IA(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Window integrand.</p>
 <p>Calculates IA window</p>
-<h6 id="cloelib.summary_statistics.ShearTracer.get_window_IA--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.ShearTracer.get_window_IA--parameters" title="Permanent link">&para;</a></h6>
-<p>z: float
-    Redshift at which kernel is being evaluated</p>
-<h6 id="cloelib.summary_statistics.ShearTracer.get_window_IA--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.ShearTracer.get_window_IA--returns" title="Permanent link">&para;</a></h6>
-<p>window_IA: np.ndarray</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.ShearTracer.get_window_IA(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.summary_statistics.ShearTracer.get_window_IA(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which kernel is being evaluated</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>window_IA</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -8968,7 +9761,7 @@ z : np.ndarray
 
 
 <a href="#cloelib.summary_statistics.ShearTracer.get_lensing_efficiency" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_lensing_efficiency</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.ShearTracer.get_lensing_efficiency(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_lensing_efficiency</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.ShearTracer.get_lensing_efficiency(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -8976,15 +9769,34 @@ z : np.ndarray
         <p>Compute the lensing efficiency kernel for each redshift bin.</p>
 <p>This function calculates the geometric lensing kernel W(χ), which weights the contribution
 of matter at different redshifts to the weak lensing signal, for a given redshift grid <code>z</code>.</p>
-<h6 id="cloelib.summary_statistics.ShearTracer.get_lensing_efficiency--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.ShearTracer.get_lensing_efficiency--parameters" title="Permanent link">&para;</a></h6>
-<p>z : np.ndarray
-    1D array of redshift values (must be evenly spaced). Used to compute comoving distances
-    and define integration domain.</p>
-<h6 id="cloelib.summary_statistics.ShearTracer.get_lensing_efficiency--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.ShearTracer.get_lensing_efficiency--returns" title="Permanent link">&para;</a></h6>
-<p>np.ndarray
-    2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
-    for each redshift bin over the evaluation grid.</p>
-<h6 id="cloelib.summary_statistics.ShearTracer.get_lensing_efficiency--notes">Notes<a class="headerlink" href="#cloelib.summary_statistics.ShearTracer.get_lensing_efficiency--notes" title="Permanent link">&para;</a></h6>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.ShearTracer.get_lensing_efficiency(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.summary_statistics.ShearTracer.get_lensing_efficiency(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>1D array of redshift values (must be evenly spaced). Used to compute comoving distances
+and define integration domain.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
+for each redshift bin over the evaluation grid.</p>
+          </div>
+        </li>
+    </ul>
+        <h6 id="cloelib.summary_statistics.ShearTracer.get_lensing_efficiency--notes">Notes<a class="headerlink" href="#cloelib.summary_statistics.ShearTracer.get_lensing_efficiency--notes" title="Permanent link">&para;</a></h6>
 <ul>
 <li>Assumes <code>z</code> is evenly spaced; spacing is inferred as <code>z[1] - z[0]</code>.</li>
 <li>Uses a precomputed Simpson rule weight matrix (<code>cached_stacked_simpson</code>) for integration.</li>
@@ -9006,7 +9818,7 @@ of matter at different redshifts to the weak lensing signal, for a given redshif
 
 
 <a href="#cloelib.summary_statistics.ShearTracer.get_window_lensing" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_lensing</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.ShearTracer.get_window_lensing(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_lensing</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.ShearTracer.get_window_lensing(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -9015,22 +9827,42 @@ of matter at different redshifts to the weak lensing signal, for a given redshif
 <p>Calculates the weak lensing shear kernel for a given tomographic bin
 distribution.
 Uses broadcasting to compute a 2D-array of integrands and then applies
-:obj:<code>np.trapz</code> on the array along one axis.</p>
-<p>.. math::
+<code>np.trapz</code> on the array along one axis.</p>
+<div class="arithmatex">\[
     W_{i}^{\gamma}(\ell, z, k) =
     \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
     \Omega_{{\rm m},0} (1 + z)
     f_K\left[\tilde{r}(z)\right]
     \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
     \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-    {f_K\left[\tilde{r}(z^{\prime})\right]}}\</p>
-<h6 id="cloelib.summary_statistics.ShearTracer.get_window_lensing--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.ShearTracer.get_window_lensing--parameters" title="Permanent link">&para;</a></h6>
-<p>z: numpy.ndarray of float
-    Redshift at which weight is evaluated.</p>
-<h6 id="cloelib.summary_statistics.ShearTracer.get_window_lensing--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.ShearTracer.get_window_lensing--returns" title="Permanent link">&para;</a></h6>
-<p>Shear kernel: numpy.ndarray
-    1-D Numpy array of shear kernel values for specified bin
-    at specified scale for the redshifts defined in z</p>
+    {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
+\]</div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.ShearTracer.get_window_lensing(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.summary_statistics.ShearTracer.get_window_lensing(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which weight is evaluated (<code>float</code> type).</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>1-D Numpy array of shear kernel values for specified bin
+at specified scale for the redshifts defined in z</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -9046,18 +9878,38 @@ Uses broadcasting to compute a 2D-array of integrands and then applies
 
 
 <a href="#cloelib.summary_statistics.ShearTracer.get_window" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.ShearTracer.get_window(z)">z</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.ShearTracer.get_window(z)">z</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Compute the Window.</p>
 <p>Computes general window given the selected tracer</p>
-<h6 id="cloelib.summary_statistics.ShearTracer.get_window--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.ShearTracer.get_window--parameters" title="Permanent link">&para;</a></h6>
-<p>z: float
-    Redshift at which window kernel is being evaluated</p>
-<h6 id="cloelib.summary_statistics.ShearTracer.get_window--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.ShearTracer.get_window--returns" title="Permanent link">&para;</a></h6>
-<p>window: np.ndarray</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.ShearTracer.get_window(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
+<a href="#cloelib.summary_statistics.ShearTracer.get_window(z)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshift at which window kernel is being evaluated</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>window</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            
+          </div>
+        </li>
+    </ul>
 
           
 

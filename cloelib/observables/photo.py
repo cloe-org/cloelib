@@ -29,15 +29,11 @@ class ShearTracer:
         r"""
         Initialize the class instance.
 
-        Parameters
-        ----------
-        perturbations : object
-            An object from NonLinearPerturbations class
-        dndz : np.ndarray
-            A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
+        Args:
+          perturbations (object): An object from NonLinearPerturbations class
+          dndz (np.ndarray): A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
             It is expected to be normalised.
-        z : np.ndarray
-            A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
+          z (np.ndarray): A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
         """
         if 0. in z:
             raise ValueError("One of the z array elements is equal to zero, breaking Limber integration.")
@@ -60,14 +56,11 @@ class ShearTracer:
 
         Calculates IA window
 
-        Parameters
-        ----------
-        z: float
-            Redshift at which kernel is being evaluated
+        Args:
+          z (float): Redshift at which kernel is being evaluated
 
-        Returns
-        -------
-        window_IA: np.ndarray
+        Returns: 
+          window_IA (np.ndarray):
         """
         Omega_m0 = self.background.Omega_m(0.0)
         Hz = self.perturbations.background.hubble_parameter(z)
@@ -99,16 +92,12 @@ class ShearTracer:
         This function calculates the geometric lensing kernel W(χ), which weights the contribution
         of matter at different redshifts to the weak lensing signal, for a given redshift grid `z`.
 
-        Parameters
-        ----------
-        z : np.ndarray
-            1D array of redshift values (must be evenly spaced). Used to compute comoving distances
+        Args:
+          z (np.ndarray): 1D array of redshift values (must be evenly spaced). Used to compute comoving distances
             and define integration domain.
 
-        Returns
-        -------
-        np.ndarray
-            2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
+        Returns: 
+          (np.ndarray): 2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
             for each redshift bin over the evaluation grid.
 
         Notes
@@ -131,9 +120,9 @@ class ShearTracer:
         Calculates the weak lensing shear kernel for a given tomographic bin
         distribution.
         Uses broadcasting to compute a 2D-array of integrands and then applies
-        :obj:`np.trapz` on the array along one axis.
+        `np.trapz` on the array along one axis.
 
-        .. math::
+        $$
             W_{i}^{\gamma}(\ell, z, k) =
             \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
             \Omega_{{\rm m},0} (1 + z)
@@ -141,16 +130,13 @@ class ShearTracer:
             \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
             \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
             {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
+        $$
 
-        Parameters
-        ----------
-        z: numpy.ndarray of float
-            Redshift at which weight is evaluated.
+        Args:
+          z (numpy.ndarray): Redshift at which weight is evaluated (`float` type).
 
-        Returns
-        -------
-        Shear kernel: numpy.ndarray
-            1-D Numpy array of shear kernel values for specified bin
+        Returns:
+          (numpy.ndarray): 1-D Numpy array of shear kernel values for specified bin
             at specified scale for the redshifts defined in z
         """
         Omega_m0 = self.background.Omega_m(0.0)
@@ -164,14 +150,11 @@ class ShearTracer:
 
         Computes general window given the selected tracer
 
-        Parameters
-        ----------
-        z: float
-            Redshift at which window kernel is being evaluated
+        Parameters: 
+          z (float): Redshift at which window kernel is being evaluated
 
-        Returns
-        -------
-        window: np.ndarray
+        Returns: 
+          window (np.ndarray):
         """
         total_window = self.get_window_lensing(z) + self.get_window_IA(z)
         # Apply multiplicative bias
@@ -186,19 +169,15 @@ class PositionsTracer:
         r"""
         Initialize the class instance.
 
-        Parameters
-        ----------
-        perturbations : :class:`LinearPerturbations` or :class:`NonLinearPerturbations`
-            An object from NonLinearPerturbations class
-        dndz : np.ndarray
-            A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
+        ### This docstring should be checked. I replaced LinearPerturbations or NonLinearPerturbations with Perturbations as the type of perturbations in the parameters list doc.
+
+        Parameters:
+          perturbations (Perturbations): An object from NonLinearPerturbations class
+          dndz (np.ndarray): A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
             It is expected to be normalised.
-        z : np.ndarray
-            A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
-        galaxy_bias_model : str
-            A string specifying the model used to describe the galaxy bias
-        nuisance_params : dict
-            A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
+          z (np.ndarray): A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
+          galaxy_bias_model (str): A string specifying the model used to describe the galaxy bias
+          nuisance_params (dict): A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
         """
         if 0. in z:
             raise ValueError("One of the z array elements is equal to zero, breaking Limber integration.")
@@ -246,18 +225,15 @@ class PositionsTracer:
 
         Implements the galaxy clustering photometric window function.
 
-        .. math::
-            W_i^G(z) &= \frac{n_i(z)}{\bar{n_i}}\frac{H(z)}{c}\\
+        $$
+            W_i^G(z) = \frac{n_i(z)}{\bar{n_i}}\frac{H(z)}{c}\\
+        $$
 
-        Parameters
-        ----------
-        z: numpy.ndarray of float or float
-           Redshift at which to evaluate distribution
+        Parameters:
+          z (numpy.ndarray|float): Redshift at which to evaluate distribution (array of `float` or `float`)
 
-        Returns
-        -------
-        window_positions: numpy.ndarray
-           Window function for angular photometric galaxy clustering
+        Returns:
+          window_positions (numpy.ndarray): Window function for angular photometric galaxy clustering
         """
 
         def per_bin_case():
@@ -286,16 +262,12 @@ class PositionsTracer:
         This function calculates the geometric lensing kernel W(χ), which weights the contribution
         of matter at different redshifts to the weak lensing signal, for a given redshift grid `z`.
 
-        Parameters
-        ----------
-        z : np.ndarray
-            1D array of redshift values (must be evenly spaced). Used to compute comoving distances
+        Parameters:
+          z (np.ndarray): 1D array of redshift values (must be evenly spaced). Used to compute comoving distances
             and define integration domain.
 
-        Returns
-        -------
-        np.ndarray
-            2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
+        Returns: 
+          (np.ndarray): 2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
             for each redshift bin over the evaluation grid.
 
         Notes
@@ -318,9 +290,9 @@ class PositionsTracer:
         Calculates the weak lensing shear kernel for a given tomographic bin
         distribution.
         Uses broadcasting to compute a 2D-array of integrands and then applies
-        :obj:`np.trapz` on the array along one axis.
+        `np.trapz` on the array along one axis.
 
-        .. math::
+        $$
             W_{i}^{\gamma}(\ell, z, k) =
             \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
             \Omega_{{\rm m},0} b_{\rm mag, i} (1 + z)
@@ -328,22 +300,19 @@ class PositionsTracer:
             \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
             \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
             {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
+        $$
 
-        Parameters
-        ----------
-        z: numpy.ndarray of float
-            Redshift at which weight is evaluated.
-        bin_i: int
-            Index of desired tomographic bin.
+        ### This docstring does not correspond to the function
+
+        Parameters: 
+          z (numpy.ndarray): Redshift at which weight is evaluated (array of `float`).
+          bin_i (int): Index of desired tomographic bin.
             Tomographic bin indices start from 1
-        k: float
-            Wavenumber at which to evaluate the Modified Gravity
-            :math:`\Sigma(z,k)` function
+          k (float): Wavenumber at which to evaluate the Modified Gravity
+            $\Sigma(z,k)$ function
 
-        Returns
-        -------
-        Shear kernel: numpy.ndarray
-            1-D Numpy array of shear kernel values for specified bin
+        Returns:
+          (numpy.ndarray): 1-D Numpy array of shear kernel values for specified bin
             at specified scale for the redshifts defined in z
         """
         Omega_m0 = self.background.Omega_m(0.0)
@@ -360,14 +329,11 @@ class PositionsTracer:
         This function combines the galaxy clustering window and the magnification
         bias window to produce the final window function.
 
-        Parameters
-        ----------
-        z: float
-            Redshift at which window kernel is being evaluated
+        Parameters:
+          z (float): Redshift at which window kernel is being evaluated
 
-        Returns
-        -------
-        window: np.ndarray
+        Returns:
+          window (np.ndarray):
         """
         window = self.get_window_positions(z) + self.get_window_magnification(z)
         return window

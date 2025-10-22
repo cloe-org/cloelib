@@ -22,6 +22,7 @@ This project is licensed under the MIT LICENSE.
 """
 # Import jax and enable double precision
 import jax
+
 jax.config.update("jax_enable_x64", True)
 
 __all__: list[str] = []

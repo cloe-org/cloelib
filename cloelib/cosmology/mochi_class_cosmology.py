@@ -188,7 +188,7 @@ class mochiCLASSBackground:
         """
         H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
         if units == "km/s/Mpc":
-            return H * CLASSBackground.c0  # Convert to km/s/Mpc
+            return H * mochiCLASSBackground.c0  # Convert to km/s/Mpc
         elif units == "1/Mpc":
             return H
         else:

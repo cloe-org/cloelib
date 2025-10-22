@@ -203,6 +203,13 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/6471279?v=4",
       "profile": "http://arthurmloureiro.github.io",
       "contributions": ["code", "ideas", "doc"]
+    },
+    {
+      "login": "pburger112",
+      "name": "Pierre Burger",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51719634?v=4",
+      "profile": "https://github.com/pburger112",
+      "contributions": ["code", "ideas"]
     }
   ]
 }

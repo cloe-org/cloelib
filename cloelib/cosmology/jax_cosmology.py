@@ -459,7 +459,7 @@ class JAXLinearPerturbations:
                               hubble_units = False, k_hunit = False):
         r"""Compute the linear matter power spectrum.
 
-      ### This docstring does not correspond to the function ###
+        ### This docstring does not correspond to the function ###
 
         Args: 
         zs: array_like, optional

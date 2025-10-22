@@ -259,7 +259,7 @@ class CAMBNonLinearPerturbations:
         Initialize the CAMBNonLinearPerturbations class with linear perturbation data.
 
         Args:
-            linear_perturbations (LinearPerturbations): An instance of the LinearPerturbations class.
+            self (LinearPerturbations): An instance of the LinearPerturbations class.
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
                 Defaults to None, which uses the CAMB default model.

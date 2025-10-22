@@ -18,12 +18,12 @@ def chebyshev_points(n: int) -> Array:
         Array of Chebyshev points.
     """
     k = jnp.arange(n)
-    points = jnp.cos(jnp.pi * (2 * k + 1) / (2 * n))
+    points = jnp.cos(jnp.pi * (k + 0.5) / n)
 
     return points
 
 def chebyshev_points_interval(n: int, a: float, b: float) -> Array:
-    """Compute Chebyshev points on the interval [a, b].
+    """Compute Chebyshev points of the first kind on the interval [a, b].
 
     Args:
         n: Number of Chebyshev points to compute.
@@ -34,7 +34,7 @@ def chebyshev_points_interval(n: int, a: float, b: float) -> Array:
         Array of Chebyshev points on the interval [a, b].
     """
     cheb_pts = chebyshev_points(n)
-    mapped_pts = 0.5 * (b - a) * (cheb_pts + 1) + a
+    mapped_pts = 0.5 * (b - a) * (cheb_pts + 1.0) + a
     return mapped_pts
 
 def chebyshev_coefficients(f_values: Array) -> Array:
@@ -48,7 +48,7 @@ def chebyshev_coefficients(f_values: Array) -> Array:
     N = len(f_values)
     c = jax.scipy.fft.dct(f_values, type=2, norm=None) / N
     c = c.at[0].multiply(0.5)
-    #c = c.at[N].multiply(0.5)
+    c = c.at[N].multiply(0.5)
     return c
 
 def chebyshev_interpolation(x: Array, c: Array) -> Array:
@@ -77,15 +77,9 @@ def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Arra
     """
     
     # Modified Chebyshev moments of the first kind
-    mu = jnp.zeros(n, dtype=float)
-    for i in range(0, n, 2):
-        if i != 1:
-            mu[i] = 2.0 / (1.0 - i**2)
-
-    # Compute weights using the modified Chebyshev moments
-    w = jax.scipy.fft.dct(mu, type=2, norm=None) / n
-    w = w.at[0].multiply(0.5)
-    #c = c.at[N].multiply(0.5)
+    mu = jnp.array([np.sqrt(2),0]+[(1+(-1)**k)/(1-k**2) for k in range(2,n)])
+    # Inverse discrete cosine transform
+    w = jnp.sqrt(2/n)*jax.scipy.fft.idct(mu, norm='ortho')
     w = (b - a) / 2 * w
 
     return chebyshev_points_interval(n, a, b), w

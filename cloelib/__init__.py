@@ -21,4 +21,9 @@ License:
 This project is licensed under the MIT LICENSE.
 """
 
+import jax
+
+# Enable double precision in JAX
+jax.config.update("jax_enable_x64", True)
+
 __all__: list[str] = []

@@ -14,7 +14,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/59091484?v=4",
       "profile": "http://alexhall.space",
       "contributions": [
-        "bug"
+        "bug",
+        "ideas"
       ]
     },
     {
@@ -184,7 +185,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/83759085?v=4",
       "profile": "https://github.com/josecolomanadal",
       "contributions": [
-        "bug"
+        "bug",
+        "code"
       ]
     },
     {
@@ -277,6 +279,24 @@
       "contributions": [
         "bug",
         "code"
+      ]
+    },
+    {
+      "login": "davidesciotti",
+      "name": "Davide Sciotti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/84071067?v=4",
+      "profile": "https://github.com/davidesciotti",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "GabrieleParimbelli",
+      "name": "GabrieleParimbelli",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43963112?v=4",
+      "profile": "https://github.com/GabrieleParimbelli",
+      "contributions": [
+        "bug"
       ]
     }
   ]

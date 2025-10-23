@@ -32,9 +32,3 @@ assignees: ""
 ### 📌 Additional Notes
 
 <!-- Add any extra context, logs, or screenshots here -->
-
-### 👥 Assignees
-
-<!-- Put a GitHub username here -->
-
-- @<assignee>

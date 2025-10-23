@@ -35,4 +35,6 @@ assignees: ""
 
 ### 👥 Assignees
 
-- @TBA
+<!-- Put a GitHub username here -->
+
+- @<assignee>

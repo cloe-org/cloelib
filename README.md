@@ -47,8 +47,9 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | [camb](https://camb.readthedocs.io)               | [camb](https://camb.readthedocs.io)                                | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
 | [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                  | `PBJ` (not publicly available)                                     |
 | NA                                                | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git) | NA                                                                 |
+| [mgclass](https://gitlab.com/zizgitlab/mgclass--ii) | [mgclass](https://gitlab.com/zizgitlab/mgclass--ii) | NA                                                                 |
 
-We do not provide installation support for `PBJ` and `class`.
+We do not provide installation support for `PBJ`, `class` and `mgclass`.
 
 Furthermore, it requires the installation of `pyinstrument` for the time profiling. It's an optional dependency and is not installed with the main cloelib package.
 
@@ -65,16 +66,16 @@ pip install .
 You can also install (some) supported dependencies:
 
 ```sh
-pip install .[camb,hmcode2020emu,comet-emu,pyinstrument]
+pip install .[camb,hmcode2020emu,comet-emu,pyinstrument, mgclassy]
 ```
 
 **Note:** Some shells or terminals may not interpret the brackets correctly. If you encounter an error, try adding quotation marks:
 
 ```sh
-pip install ."[camb,hmcode2020emu,comet-emu]"
+pip install ."[camb,hmcode2020emu,comet-emu, mgclassy]"
 ```
 
-**Note:** We do not offer installation support for `PBJ` and `CLASS`. For installation instructions, please refer to the official documentation of each package.
+**Note:** We do not offer installation support for `PBJ`, `CLASS` and `mgclass`. For installation instructions, please refer to the official documentation of each package.
 
 To work with the latest stable release of the code, move to the latest tag by typing:
 

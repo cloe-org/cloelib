@@ -30,6 +30,7 @@ cosmolib = { git = "https://github.com/astro-ph/cosmolib.git" }
 camb = ["camb"]
 hmcode2020emu = ["HMcode2020Emu"]
 comet-emu = ["comet-emu"]
+mgclass = ["mgclassy"]
 
 [tool.poetry.dependencies.tensorflow]
 version = "==2.13"
@@ -37,6 +38,9 @@ optional = true
 
 [tool.poetry.dependencies.HMcode2020Emu]
 git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
+
+[tool.poetry.dependencies.mgclassy]
+git = "https://gitlab.com/zizgitlab/mgclass--ii.git"
 
 [build-system]
 requires = ["poetry-core"]

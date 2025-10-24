@@ -76,10 +76,21 @@ def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Arra
     """
     
     # Modified Chebyshev moments of the first kind
-    mu = jnp.array([np.sqrt(2),0]+[(1+(-1)**k)/(1-k**2) for k in range(2,n+1)])
-    # Inverse discrete cosine transform
-    w = jnp.sqrt(2/n)*scipy.fft.dct(mu, type=1, norm='ortho')
+    # mu = jnp.array([jnp.sqrt(2),0]+[(1+(-1)**k)/(1-k**2) for k in range(2,n)])
+
+    mu = np.zeros(n)
+    for i in range(0, n, 2):
+        mu[i] = 2.0 / (1 - i**2)
+
+    w = scipy.fft.dct(mu, type=1, norm=None) / (n - 1)
+    w[0] /= 2
+    w[-1] /= 2
+    
     # Scale weights to the interval [a, b]
     w = (b - a) / 2 * w
 
-    return chebyshev_points_interval(n, a, b), w
+    return chebyshev_points_interval(n-1, a, b), w
+
+
+clenshaw_curtis_grid, clenshaw_curtis_weights = clenshaws_curtis_quadrature(10, -42, 55)
+print(clenshaw_curtis_weights)

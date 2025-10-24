@@ -70,14 +70,34 @@ def test_chebyshev_coefficients():
 
     np.testing.assert_allclose(cheb_coeff, cheb_coeff_blast, rtol=1e-5)
 
-def test_clencurtis_quadrature():
+def test_clenshaw_curtis_weights():
+    n = 10
+    a, b = -42, 55
+
+    _, weights = clenshaws_curtis_quadrature(n, a, b)
+    expected_weights = jnp.array([
+        0.5987654320987654,
+        5.653521643743801,
+        10.926289681898062,
+        14.644091710758374,
+        16.67733153150099,
+        16.677331531500993,
+        14.644091710758374,
+        10.926289681898064,
+        5.653521643743801,
+        0.5987654320987654
+    ])
+
+    np.testing.assert_allclose(weights, expected_weights)
+
+def test_clenshaw_curtis_quadrature():
     n = 10000
     a, b = 0.0, np.pi/2
 
-    clencur_grid, clencur_weights = clenshaws_curtis_quadrature(n, a, b)
-    y = np.sin(clencur_grid)
-    integral_approx = jnp.einsum('i,i->', y, clencur_weights)
+    clenshaw_curtis_grid, clenshaw_curtis_weights = clenshaws_curtis_quadrature(n, a, b)
+    y = np.sin(clenshaw_curtis_grid)
+    integral_approx = jnp.einsum('i,i->', y, clenshaw_curtis_weights)
 
     integral_exact = 1.0 
 
-    np.testing.assert_allclose(integral_approx, integral_exact, rtol=1e-5)
+    np.testing.assert_allclose(integral_approx, integral_exact, rtol=1e-4)

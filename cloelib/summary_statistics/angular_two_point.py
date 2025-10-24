@@ -12,7 +12,7 @@ from cloelib.profiling import profile_function
 import interpax
 import jax.numpy as np
 import jax
-from scipy import special, integrate
+from scipy import special
 
 # results imports
 from cosmolib.data import AngularPowerSpectrum
@@ -339,43 +339,42 @@ class AngularTwoPoint:
             for key, array in C_ell_out.items()
         }
         return cosmolib_Cls
-    
 
     def get_W_ell(self, ROOTS, norms, thetagrid, ns, ells):
-            """
-            Precomputes the kernel functions needed to calculate the COSEBI's
+        """
+        Precomputes the kernel functions needed to calculate the COSEBI's
 
-            Parameters:
-            ROOTS (list): list containing the roots of the cosebi kernel functions, ROOTS[n] should have n + 1 entries
-            norms (list): lit containing the the norms, should start at n[1]
-            thetagrid (np.array): sufficiently dense grid going from thetamin to thetamax
-            ns (list): the indices for the kernel function
-            ells (np.array): array with the ells 
+        Parameters:
+        ROOTS (list): list containing the roots of the cosebi kernel functions, ROOTS[n] should have n + 1 entries
+        norms (list): lit containing the the norms, should start at n[1]
+        thetagrid (np.array): sufficiently dense grid going from thetamin to thetamax
+        ns (list): the indices for the kernel function
+        ells (np.array): array with the ells
 
-            Returns:
-            dict with the kernel functions for each n
-            """
+        Returns:
+        dict with the kernel functions for each n
+        """
 
-            w_ell_dict = {}
-            print('Calculating the kernel functions, this might take a couple of minutes.')
-            for n in ns:
-                # Calculate Tn+
-                z = np.log(thetagrid / thetagrid[0])
-                prod = 1
-                for root in ROOTS[n-1]:
-                    prod *= (z - root)
-                tp =  (norms[n] * prod)
-                binsize = np.log(thetagrid[-1]/thetagrid[0])/(len(thetagrid)-1)
-                # Do the integral to obtain Wn(ell)
-                w_ell = np.zeros_like(ells)
-                for i,ell in enumerate(ells):
-                    J0 = special.jv(0, ell * thetagrid)
-                    integrand = tp * thetagrid * J0 
-                    w_ell = w_ell.at[i].set(np.sum(integrand * thetagrid * binsize))
-                
-                w_ell_dict[n] = w_ell
-            
-            return w_ell_dict   
+        w_ell_dict = {}
+        print("Calculating the kernel functions, this might take a couple of minutes.")
+        for n in ns:
+            # Calculate Tn+
+            z = np.log(thetagrid / thetagrid[0])
+            prod = 1
+            for root in ROOTS[n - 1]:
+                prod *= z - root
+            tp = norms[n] * prod
+            binsize = np.log(thetagrid[-1] / thetagrid[0]) / (len(thetagrid) - 1)
+            # Do the integral to obtain Wn(ell)
+            w_ell = np.zeros_like(ells)
+            for i, ell in enumerate(ells):
+                J0 = special.jv(0, ell * thetagrid)
+                integrand = tp * thetagrid * J0
+                w_ell = w_ell.at[i].set(np.sum(integrand * thetagrid * binsize))
+
+            w_ell_dict[n] = w_ell
+
+        return w_ell_dict
 
     def get_cosebis(self, nl, ks, ns, w_ell, ells):
         """
@@ -386,22 +385,22 @@ class AngularTwoPoint:
         - ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
         - ns (list): the indices for the kernel function
         - w_ell (np.array): the kernel functions
-        - ells (np.array): array with the ells 
+        - ells (np.array): array with the ells
 
         Returns:
         - dict: Pseudo angular power spectrum Cl for the multipoles specified by the mixing matrix.
         """
-            
+
         cells = self.get_Cl(ells, nl, ks)
         tomo_cosebis = {}
         n_bin = self.tracer1.n_z_bins
 
         for tomobin1 in range(1, n_bin + 1):
-            for tomobin2 in range(tomobin1,n_bin + 1):
+            for tomobin2 in range(tomobin1, n_bin + 1):
                 key = (tomobin1, tomobin2)
-                cosebis = np.zeros_like(ns, dtype=np.float64)  
+                cosebis = np.zeros_like(ns, dtype=np.float64)
                 for i, n in enumerate(ns):
-                    cl = cells['SHE', 'SHE', tomobin1, tomobin2][0, 0]
+                    cl = cells["SHE", "SHE", tomobin1, tomobin2][0, 0]
                     cosebis = cosebis.at[i].set(np.sum(ells * cl * w_ell[n]))
                 tomo_cosebis[key] = cosebis
 

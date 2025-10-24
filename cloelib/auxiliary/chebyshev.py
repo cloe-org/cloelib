@@ -17,12 +17,12 @@ def chebyshev_points(n: int) -> Array:
     Returns:
         Array of Chebyshev points.
     """
-    k = jnp.arange(n)
-    points = jnp.cos(jnp.pi * (k + 0.5) / n)
+    k = jnp.arange(n+1)
+    points = jnp.cos(jnp.pi * k / n)
 
     return points
 
-def chebyshev_points_interval(n: int, a: float, b: float) -> Array:
+def chebyshev_points_interval(n: int, x_start: float, x_stop: float) -> Array:
     """Compute Chebyshev points of the first kind on the interval [a, b].
 
     Args:
@@ -34,7 +34,7 @@ def chebyshev_points_interval(n: int, a: float, b: float) -> Array:
         Array of Chebyshev points on the interval [a, b].
     """
     cheb_pts = chebyshev_points(n)
-    mapped_pts = 0.5 * (b - a) * (cheb_pts + 1.0) + a
+    mapped_pts = 0.5*(x_stop - x_start)* (cheb_pts + 1) + x_start
     return mapped_pts
 
 def chebyshev_coefficients(f_values: Array) -> Array:

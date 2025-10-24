@@ -7,6 +7,7 @@ from cloelib.auxiliary.chebyshev import (
     chebyshev_points_interval,
     chebyshev_coefficients,
     chebyshev_interpolation,
+    clenshaws_curtis_quadrature,
 )
 
 def test_chebyshev_points():
@@ -68,3 +69,15 @@ def test_chebyshev_coefficients():
         -0.01171998])
 
     np.testing.assert_allclose(cheb_coeff, cheb_coeff_blast, rtol=1e-5)
+
+def test_clencurtis_quadrature():
+    n = 10000
+    a, b = 0.0, np.pi/2
+
+    clencur_grid, clencur_weights = clenshaws_curtis_quadrature(n, a, b)
+    y = np.sin(clencur_grid)
+    integral_approx = jnp.einsum('i,i->', y, clencur_weights)
+
+    integral_exact = 1.0 
+
+    np.testing.assert_allclose(integral_approx, integral_exact, rtol=1e-5)

@@ -5,18 +5,6 @@ import jax
 import numpy as np
 import jax.numpy as jnp
 from jax import Array
-from pyfftw import FFTW
-
-def discrete_cosine_transform(f_values: Array) -> Array:
-    """Compute the discrete cosine transform of type I.
-
-    Args:
-        f_values: Input array of function values.
-
-    Returns:
-        Array of DCT-II transformed values.
-    """
-    return FFTW(f_values, direction='FFTW_REDFT00')
 
 def chebyshev_points(n: int) -> Array:
     """Compute the Chebyshev points of the first kind.
@@ -88,9 +76,10 @@ def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Arra
     """
     
     # Modified Chebyshev moments of the first kind
-    mu = jnp.array([np.sqrt(2),0]+[(1+(-1)**k)/(1-k**2) for k in range(2,n)])
+    mu = jnp.array([np.sqrt(2),0]+[(1+(-1)**k)/(1-k**2) for k in range(2,n+1)])
     # Inverse discrete cosine transform
-    w = jnp.sqrt(2/n)*jax.scipy.fft.idct(mu, norm='ortho')
+    w = jnp.sqrt(2/n)*scipy.fft.dct(mu, type=1, norm='ortho')
+    # Scale weights to the interval [a, b]
     w = (b - a) / 2 * w
 
     return chebyshev_points_interval(n, a, b), w

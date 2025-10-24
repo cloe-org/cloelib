@@ -47,16 +47,24 @@ def test_chebyshev_points_interval():
     computed_points = chebyshev_points_interval(n, a, b)
     np.testing.assert_allclose(computed_points, expected_points, atol=1e-5, rtol=1e-5)
 
-"""
-def test_chebyshev_interpolation():
-    x_start, x_stop = -5, 10
-    x_eval = jnp.linspace(x_start, x_stop, 99)
 
-    x = chebyshev_points_interval(40, x_start, x_stop)
-    y = jnp.sin(x)
+def test_chebyshev_coefficients():
 
-    cheby_coeff = chebyshev_coefficients(y)
-    y_approx = chebyshev_interpolation(x_eval, cheby_coeff)
+    x = chebyshev_points_interval(10, -5, 7)
+    y = np.sin(x)
+    cheb_coeff = chebyshev_coefficients(y)
 
-    np.testing.assert_allclose(y_approx, jnp.sin(x_eval), rtol=1e-5)
-"""
+    cheb_coeff_blast = jnp.array([ 
+        0.12676361, 
+        -0.29898586,  
+        0.40874146, 
+        -0.12401901,  
+        0.60189207,
+        0.39126627, 
+        -0.41377925, 
+        -0.13988857,
+        0.09605752, 
+        0.02065833,
+        -0.01171998])
+
+    np.testing.assert_allclose(cheb_coeff, cheb_coeff_blast, rtol=1e-5)

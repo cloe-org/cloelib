@@ -5,7 +5,18 @@ import jax
 import numpy as np
 import jax.numpy as jnp
 from jax import Array
+from pyfftw import FFTW
 
+def discrete_cosine_transform(f_values: Array) -> Array:
+    """Compute the discrete cosine transform of type I.
+
+    Args:
+        f_values: Input array of function values.
+
+    Returns:
+        Array of DCT-II transformed values.
+    """
+    return FFTW(f_values, direction='FFTW_REDFT00')
 
 def chebyshev_points(n: int) -> Array:
     """Compute the Chebyshev points of the first kind.
@@ -46,9 +57,9 @@ def chebyshev_coefficients(f_values: Array) -> Array:
         Array of Chebyshev coefficients.
     """
     N = len(f_values)
-    c = jax.scipy.fft.dct(f_values, type=2, norm=None) / N
-    c = c.at[0].multiply(0.5)
-    c = c.at[N].multiply(0.5)
+    c = scipy.fft.dct(f_values, type=1) / (N - 1)
+    c[0] /= 2
+    c[-1] /= 2
     return c
 
 def chebyshev_interpolation(x: Array, c: Array) -> Array:

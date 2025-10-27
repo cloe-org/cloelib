@@ -406,4 +406,4 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         else:
             
             raise ValueError("Spin values not as expected")
-            return xi_dict
+        return xi_dict

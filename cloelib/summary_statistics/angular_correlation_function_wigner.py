@@ -5,7 +5,13 @@ from euclidlib.photo._le3_pk_wl import Result
 from cloelib.observables.photo import ShearTracer, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction
 from cloelib.auxiliary.cache import memoize_jax
+from numpy.typing import NDArray
 
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from typing import TypeAlias, Any
+
+    _DictKey: TypeAlias = str | int | tuple["_DictKey", ...]
 
 @jit
 def _d_0_0_ell_compute(beta: float, ell: int) -> float:
@@ -382,25 +388,25 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             xi_minus = (-1) ** self.s2 * np.einsum(
                 "L,LIJ,TL->TIJ", prefactor, Cl_minus, d_ell_theta_minus
             )
-        xi_dict = {}
         
+        xi_dict: dict[_DictKey, Result] = {}
         if self.s1 == 0 and self.s2 == 0:
             axis = (,0)
             for i in range(Ntomo1):
                 for j in range(i,Ntomo2):
-                    key = ('POS','POS',i+1,j+1)
+                    key = ("POS","POS",int(i+1),int(j+1))
                     xi_dict[key] = Result(array=xi_plus[:,i,j],ell=theta, axis=axis)
         elif self.s1 == 2 and self.s2 == 0:
             axis = (,1)
             for i in range(Ntomo1):
                 for j in range(i,Ntomo2):
-                    key = ('POS','SHEAR',i+1,j+1)
+                    key = ("POS","SHEAR",int(i+1),int(j+1))
                     xi_dict[key] = Result(array=np.array([xi_plus[:,j,i],np.zeros(len(theta))]),ell=theta, axis=axis)
         elif self.s1 == 2 and self.s2 == 2: 
             axis = (,2)
             for i in range(Ntomo1):
                 for j in range(i,Ntomo2):
-                    key = ('SHEAR','SHEAR',i+1,j+1)
+                    key = ("SHEAR","SHEAR",int(i+1),int(j+1))
                     xi_dict[key] = Result(array=np.array([[xi_plus[:,i,j],np.zeros(len(theta))],[np.zeros(len(theta)),xi_minus[:,i,j]]]),ell=theta, axis=axis) 
             
         else:

@@ -109,78 +109,124 @@ class mochiCLASSBackground:
             self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
         self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
         self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
-    
-        # MOCHI_CLASS stable basis MG params
-        file_mochiclass_params_stable_general = { # combines common_hiclass_params and mochiclass_params from alpha_B0
-                            'gravity_model': 'stable_params', 
-                            'method_gr_smg': 'on',
-                            'z_gr_smg': 99.,
-                            'skip_stability_tests_smg': 'yes', # cause stable parameters
-                            'a_min_stability_test_smg': 1e-2,
-                            'skip_math_stability_smg': 'no', ######### <---------------------- ADAPT FOR TESTING
-                            'exp_rate_smg': 1.,
-                            'pert_initial_conditions_smg': 'zero',
-                            'pert_ic_ini_z_ref_smg': 1e10,    
-                            'pert_ic_tolerance_smg': 2e-2, 
-                            'pert_ic_regulator_smg': 1e-15,
-                            'pert_qs_ic_tolerance_test_smg': 10,
-                            'method_qs_smg': 'automatic',
-                            'z_fd_qs_smg': 0., 
-                            'trigger_mass_qs_smg': 1.e2,
-                            'trigger_rad_qs_smg': 1.e2,
-                            'eps_s_qs_smg': 0.01,
-                            'n_min_qs_smg': 100, 
-                            'n_max_qs_smg': 10000 
-                        }
+
+        # MOCHI CLASS GENERAL MPARAMETERS (needed in both MG==on or off)
+        file_mochiclass_params_stable_general = {  # combines common_hiclass_params and mochiclass_params from alpha_B0
+            "gravity_model": "stable_params",
+            "method_gr_smg": "on",
+            "z_gr_smg": 99.0,
+            "skip_stability_tests_smg": "yes",  # cause stable parameters
+            "a_min_stability_test_smg": 1e-2,
+            "skip_math_stability_smg": "no",  ######### <---------------------- ADAPT FOR TESTING
+            "exp_rate_smg": 1.0,
+            "pert_initial_conditions_smg": "zero",
+            "pert_ic_ini_z_ref_smg": 1e10,
+            "pert_ic_tolerance_smg": 2e-2,
+            "pert_ic_regulator_smg": 1e-15,
+            "pert_qs_ic_tolerance_test_smg": 10,
+            "method_qs_smg": "automatic",
+            "z_fd_qs_smg": 0.0,
+            "trigger_mass_qs_smg": 1.0e2,
+            "trigger_rad_qs_smg": 1.0e2,
+            "eps_s_qs_smg": 0.01,
+            "n_min_qs_smg": 100,
+            "n_max_qs_smg": 10000,
+        }
         for key, value in file_mochiclass_params_stable_general.items():
             self.interface_args["CLASSparams"][key] = value
 
-        if mg_stable_basis_on==False: # no MG (actiavte stable basis, but LCDM values)
-            lna_smg = self.stable_MG_dict['lna_smg']
-            mochiclass_stable_basis_dict = { 
-                    # omega settings here assume that MG (stable basis) is loaded
-                    'Omega_Lambda': 0.,
-                    'Omega_fld': 0.,
-                    'Omega_smg': -1., # fractional density scalar field today (0: no smg, negative: specify both Omega_Lambda and Omega_fld, infer Omega_smg, 0<...<1: 
-                    'expansion_model': self.mg_background_model,
-                    'lna_smg': np.array2string(lna_smg, separator=',', precision=16).replace('\n','').strip('[]'),
-                    'Delta_M2': np.array2string(np.zeros_like(lna_smg), separator=',', precision=16).replace('\n','').strip('[]'),
-                    'D_kin': np.array2string(np.ones_like(lna_smg)*1e-8, separator=',', precision=16).replace('\n','').strip('[]'),
-                    'cs2': np.array2string(np.ones_like(lna_smg), separator=',', precision=16).replace('\n','').strip('[]'),
-                    'parameters_smg': '0.0',
-                }
-    
-        else: # MG with stable basis
-            lna_smg = self.stable_MG_dict['lna_smg']
-            Delta_Mpl = self.stable_MG_dict['Delta_M2']
-            Dkin = self.stable_MG_dict['D_kin']
-            cs2 = self.stable_MG_dict['cs2']
-            alpha_B0 = self.stable_MG_dict['alpha_B0']
+        if not mg_stable_basis_on:  # no MG (activate stable basis, but LCDM values)
+            lna_smg = self.stable_MG_dict["lna_smg"]
+            mochiclass_stable_basis_dict = {
+                # omega settings here assume that MG (stable basis) is loaded
+                "Omega_Lambda": 0.0,
+                "Omega_fld": 0.0,
+                "Omega_smg": -1.0,  # fractional density scalar field today (0: no smg, negative: specify both Omega_Lambda and Omega_fld, infer Omega_smg, 0<...<1:
+                "expansion_model": self.mg_background_model,
+                "lna_smg": np.array2string(lna_smg, separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+                "Delta_M2": np.array2string(
+                    np.zeros_like(lna_smg), separator=",", precision=16
+                )
+                .replace("\n", "")
+                .strip("[]"),
+                "D_kin": np.array2string(
+                    np.ones_like(lna_smg) * 1e-8, separator=",", precision=16
+                )
+                .replace("\n", "")
+                .strip("[]"),
+                "cs2": np.array2string(
+                    np.ones_like(lna_smg), separator=",", precision=16
+                )
+                .replace("\n", "")
+                .strip("[]"),
+                "parameters_smg": "0.0",
+            }
+
+        else:  # MG with stable basis
+            lna_smg = self.stable_MG_dict["lna_smg"]
+            Delta_Mpl = self.stable_MG_dict["Delta_M2"]
+            Dkin = self.stable_MG_dict["D_kin"]
+            cs2 = self.stable_MG_dict["cs2"]
+            alpha_B0 = self.stable_MG_dict["alpha_B0"]
             # convert alpha_B0 input type
             if isinstance(alpha_B0, np.ndarray):
                 # convert array to float
-                alpha_B0_str = np.array2string(alpha_B0, separator=',', precision=16).replace('\n','').strip('[]')
+                alpha_B0_str = (
+                    np.array2string(alpha_B0, separator=",", precision=16)
+                    .replace("\n", "")
+                    .strip("[]")
+                )
             elif isinstance(alpha_B0, (int, float, np.number)):
                 # convert to string
                 alpha_B0_str = str(alpha_B0)
-            mochiclass_stable_basis_dict = { 
-                    # omega settings here assume that MG (stable basis) is loaded
-                    'Omega_Lambda': 0.,
-                    'Omega_fld': 0.,
-                    'Omega_smg': -1., # fractional density scalar field today (0: no smg, negative: specify both Omega_Lambda and Omega_fld, infer Omega_smg, 0<...<1: 
-                    'expansion_model': self.mg_background_model,
-                    'lna_smg': np.array2string(lna_smg, separator=',', precision=16).replace('\n','').strip('[]'),
-                    'Delta_M2': np.array2string(Delta_Mpl, separator=',', precision=16).replace('\n','').strip('[]'),
-                    'D_kin': np.array2string(Dkin, separator=',', precision=16).replace('\n','').strip('[]'),
-                    'cs2': np.array2string(cs2, separator=',', precision=16).replace('\n','').strip('[]'),
-                    'parameters_smg': alpha_B0_str,
-                }
-        if self.mg_background_model == 'wowa':
-            mochiclass_stable_basis_dict['expansion_smg'] = np.array2string(np.array([0.5, w0, wa]), separator=',', precision=16).replace('\n','').strip('[]'), # for wowa: expansion_smg = Omega_smg, w0, wa
-            
+            mochiclass_stable_basis_dict = {
+                # omega settings here assume that MG (stable basis) is loaded
+                "Omega_Lambda": 0.0,
+                "Omega_fld": 0.0,
+                "Omega_smg": -1.0,  # fractional density scalar field today (0: no smg, negative: specify both Omega_Lambda and Omega_fld, infer Omega_smg, 0<...<1:
+                "expansion_model": self.mg_background_model,
+                "lna_smg": np.array2string(lna_smg, separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+                "Delta_M2": np.array2string(Delta_Mpl, separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+                "D_kin": np.array2string(Dkin, separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+                "cs2": np.array2string(cs2, separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+                "parameters_smg": alpha_B0_str,
+            }
+        if (
+            self.mg_background_model == "wowa"
+        ):  # for wowa: expansion_smg = Omega_smg, w0, wa
+            mochiclass_stable_basis_dict["expansion_smg"] = (
+                np.array2string(np.array([0.5, w0, wa]), separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+            )
+        elif self.mg_background_model == "rho_de":  # general rho_de evolution
+            lna_de = self.stable_MG_dict["lna_de"]
+            rho_de = self.stable_MG_dict["rho_de"]
+            mochiclass_stable_basis_dict["expansion_smg"] = 0.5
+            mochiclass_stable_basis_dict["lna_de"] = (
+                np.array2string(lna_de, separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+            )
+            mochiclass_stable_basis_dict["de_evo"] = (
+                np.array2string(rho_de, separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+            )
+        # load the mochi_class stable basis dictionary
         for key, value in mochiclass_stable_basis_dict.items():
             self.interface_args["CLASSparams"][key] = value
-    
+
         # Initialize CLASS
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
@@ -306,7 +352,7 @@ class mochiCLASSBackground:
             y = np.sin(np.sqrt(-self.Omega_k0) * x) / np.sqrt(-self.Omega_k0)
 
         return y
-    
+
     # TO-DO: Get alpha parameters and M?
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -343,7 +389,7 @@ class mochiCLASSBackground:
             np.ndarray: Matter density values.
         """
         return np.array([self.results.Om_b(z) for z in zs])
-    
+
     def alpha_B(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the alpha_B braiding parameter as a function of redshift.
@@ -354,7 +400,7 @@ class mochiCLASSBackground:
         Returns:
             np.ndarray: alpha_B values.
         """
-        return self.results.get_background()['braiding_smg']
+        return self.results.get_background()["braiding_smg"]
 
     @property
     def rdrag(self) -> float:

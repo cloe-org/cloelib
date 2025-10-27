@@ -381,8 +381,8 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             xi_minus = (-1) ** self.s2 * np.einsum(
                 "L,LIJ,TL->TIJ", prefactor, Cl_minus, d_ell_theta_minus
             )
-        _DictKey = tuple[str, str, int, int]
-        xi_dict: dict[_DictKey, Result] = {}
+        
+        xi_dict = {}
         if self.s1 == 0 and self.s2 == 0:
             axis = (0,)
             for i in range(Ntomo1):

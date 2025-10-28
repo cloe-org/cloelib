@@ -393,13 +393,13 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             axis = (1,)
             for i in range(Ntomo1):
                 for j in range(i,Ntomo2):
-                    key = ("POS","SHEAR",int(i+1),int(j+1))
+                    key = ("POS","SHE",int(i+1),int(j+1))
                     xi_dict[key] = Result(array=np.array([xi_plus[:,j,i],np.zeros(len(theta))]),ell=theta, axis=axis)
         elif self.s1 == 2 and self.s2 == 2: 
             axis = (2,)
             for i in range(Ntomo1):
                 for j in range(i,Ntomo2):
-                    key = ("SHEAR","SHEAR",int(i+1),int(j+1))
+                    key = ("SHE","SHE",int(i+1),int(j+1))
                     xi_dict[key] = Result(array=np.array([[xi_plus[:,i,j],np.zeros(len(theta))],[np.zeros(len(theta)),xi_minus[:,i,j]]]),ell=theta, axis=axis) 
             
         else:

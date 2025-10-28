@@ -30,12 +30,12 @@ class mochiCLASSBackground:
         As: float,
         ns: float,
         mnu: Union[float, Sequence[float], np.ndarray],
-        w0: float,
-        wa: float,
+        # w0: float,
+        # wa: float,
         mg_stable_basis_on: bool,
         stable_MG_dict: dict,
         mg_background_model: str,
-        gamma_MG: float,
+        # gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
     ) -> None:
@@ -69,11 +69,11 @@ class mochiCLASSBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
-        self.w0 = w0  # Kept for protocol, but mochi_CLASS doesn't directly use it
-        self.wa = wa  # Kept for protocol, but mochi_CLASS doesn't directly use it
-        self.gamma_MG = (
-            gamma_MG  # Kept for protocol, but mochi_CLASS doesn't directly use it
-        )
+        # self.w0 = w0  # Kept for protocol, but mochi_CLASS doesn't directly use it
+        # self.wa = wa  # Kept for protocol, but mochi_CLASS doesn't directly use it
+        # self.gamma_MG = (
+        #     gamma_MG  # Kept for protocol, but mochi_CLASS doesn't directly use it
+        # )
         self.mnu = mnu
         self.N_mnu = N_mnu
         self.stable_basis_on = mg_stable_basis_on
@@ -133,8 +133,9 @@ class mochiCLASSBackground:
             }
             for key, value in file_mochiclass_params_stable_general.items():
                 self.interface_args["CLASSparams"][key] = value
-
+            # LOAD MG PARAMETRISATIONS
             lna_smg = self.stable_MG_dict["lna_smg"]
+            print(type(lna_smg))
             Delta_Mpl = self.stable_MG_dict["Delta_M2"]
             Dkin = self.stable_MG_dict["D_kin"]
             cs2 = self.stable_MG_dict["cs2"]
@@ -142,7 +143,7 @@ class mochiCLASSBackground:
             if isinstance(alpha_B0, np.ndarray):
                 # convert array to float
                 alpha_B0_str = (
-                    np.array2string(alpha_B0, separator=",", precision=16)
+                    np.array2string(alpha_B0, separator=" ", precision=16)
                     .replace("\n", "")
                     .strip("[]")
                 )
@@ -151,22 +152,21 @@ class mochiCLASSBackground:
                 alpha_B0_str = str(alpha_B0)
             else:
                 raise ValueError("alpha_B0 must be a number or a 1D array")
-
             mochiclass_stable_basis_dict = {
                 # omega settings here assume that MG (stable basis) is loaded
                 "Omega_Lambda": 0.0,
                 "Omega_fld": 0.0,
                 "Omega_smg": -1.0,  # fractional density scalar field today (0: no smg, negative: specify both Omega_Lambda and Omega_fld, infer Omega_smg, 0<...<1: specify both Omega_Lambda and Omega_smg, infer Omega_fld)
-                "lna_smg": np.array2string(lna_smg, separator=",", precision=16)
+                "lna_smg": np.array2string(lna_smg, separator=" ", precision=16)
                 .replace("\n", "")
                 .strip("[]"),
-                "Delta_M2": np.array2string(Delta_Mpl, separator=",", precision=16)
+                "Delta_M2": np.array2string(Delta_Mpl, separator=" ", precision=16)
                 .replace("\n", "")
                 .strip("[]"),
-                "D_kin": np.array2string(Dkin, separator=",", precision=16)
+                "D_kin": np.array2string(Dkin, separator=" ", precision=16)
                 .replace("\n", "")
                 .strip("[]"),
-                "cs2": np.array2string(cs2, separator=",", precision=16)
+                "cs2": np.array2string(cs2, separator=" ", precision=16)
                 .replace("\n", "")
                 .strip("[]"),
                 "parameters_smg": alpha_B0_str,
@@ -180,7 +180,7 @@ class mochiCLASSBackground:
                 mochiclass_stable_basis_dict["expansion_model"] = "w0wa"
                 mochiclass_stable_basis_dict["expansion_smg"] = (
                     np.array2string(
-                        np.array([0.5, w0, wa]), separator=",", precision=16
+                        np.array([0.5, w0, wa]), separator=" ", precision=16
                     )
                     .replace("\n", "")
                     .strip("[]")
@@ -191,12 +191,12 @@ class mochiCLASSBackground:
                 mochiclass_stable_basis_dict["expansion_model"] = "rho_de"
                 mochiclass_stable_basis_dict["expansion_smg"] = 0.5
                 mochiclass_stable_basis_dict["lna_de"] = (
-                    np.array2string(lna_de, separator=",", precision=16)
+                    np.array2string(lna_de, separator=" ", precision=16)
                     .replace("\n", "")
                     .strip("[]")
                 )
                 mochiclass_stable_basis_dict["de_evo"] = (
-                    np.array2string(rho_de, separator=",", precision=16)
+                    np.array2string(rho_de, separator=" ", precision=16)
                     .replace("\n", "")
                     .strip("[]")
                 )
@@ -222,7 +222,7 @@ class mochiCLASSBackground:
                 }
             elif (
                 self.mg_background_model == "rho_de"
-            ):  # no MG (actiavte stable basis, but LCDM values)
+            ):  # no MG (activate stable basis, but LCDM values)
                 lna_smg = self.stable_MG_dict["lna_smg"]
                 Delta_Mpl = self.stable_MG_dict["Delta_M2"]
                 Dkin = self.stable_MG_dict["D_kin"]
@@ -235,27 +235,27 @@ class mochiCLASSBackground:
                     "Omega_smg": -1.0,
                     "expansion_model": "rho_de",
                     "expansion_smg": 0.5,
-                    "lna_de": np.array2string(lna_de, separator=",", precision=16)
+                    "lna_de": np.array2string(lna_de, separator=" ", precision=16)
                     .replace("\n", "")
                     .strip("[]"),
-                    "de_evo": np.array2string(rho_de, separator=",", precision=16)
+                    "de_evo": np.array2string(rho_de, separator=" ", precision=16)
                     .replace("\n", "")
                     .strip("[]"),
-                    "lna_smg": np.array2string(lna_smg, separator=",", precision=16)
+                    "lna_smg": np.array2string(lna_smg, separator=" ", precision=16)
                     .replace("\n", "")
                     .strip("[]"),
                     "Delta_M2": np.array2string(
-                        np.zeros_like(lna_smg), separator=",", precision=16
+                        np.zeros_like(lna_smg), separator=" ", precision=16
                     )
                     .replace("\n", "")
                     .strip("[]"),
                     "D_kin": np.array2string(
-                        np.ones_like(lna_smg) * 1e-8, separator=",", precision=16
+                        np.ones_like(lna_smg) * 1e-8, separator=" ", precision=16
                     )
                     .replace("\n", "")
                     .strip("[]"),
                     "cs2": np.array2string(
-                        np.ones_like(lna_smg), separator=",", precision=16
+                        np.ones_like(lna_smg), separator=" ", precision=16
                     )
                     .replace("\n", "")
                     .strip("[]"),
@@ -269,7 +269,7 @@ class mochiCLASSBackground:
         # load the mochi_class stable basis dictionary
         for key, value in mochiclass_stable_basis_dict.items():
             self.interface_args["CLASSparams"][key] = value
-
+        print(type(self.interface_args["CLASSparams"]["lna_smg"]))
         # Initialize CLASS
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])

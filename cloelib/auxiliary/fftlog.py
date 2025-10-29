@@ -43,10 +43,10 @@ def _log_extrap(x, N_extrap_begin, N_extrap_end):
     """
 
     low_x = high_x = []
-    if (N_extrap_begin):
+    if N_extrap_begin:
         dlnx_low = np.log(x[1] / x[0])
         low_x = x[0] * np.exp(dlnx_low * np.arange(-N_extrap_end, 0))
-    if (N_extrap_end):
+    if N_extrap_end:
         dlnx_high = np.log(x[-1] / x[-2])
         high_x = x[-1] * np.exp(dlnx_high * np.arange(1, N_extrap_end + 1))
 
@@ -88,8 +88,7 @@ def _c_window(n, n_cut):
     n_r = n[n[:] > n_right]
     theta_right = (n[-1] - n_r) / float(n[-1] - n_right - 1)
     W = np.ones(n.size)
-    W[n[:] > n_right] = theta_right - 1 / (2 * np.pi) \
-        * np.sin(2 * np.pi * theta_right)
+    W[n[:] > n_right] = theta_right - 1 / (2 * np.pi) * np.sin(2 * np.pi * theta_right)
     return W
 
 
@@ -119,7 +118,7 @@ def _g_m_vals(mu, q):
     g_m: numpy.ndarray
         Array containing the evaluated function
     """
-    if (mu + 1 + q.real[0] == 0):
+    if mu + 1 + q.real[0] == 0:
         print("gamma(0) encountered. Please change another nu value!")
         exit()
     imag_q = np.imag(q)
@@ -127,37 +126,37 @@ def _g_m_vals(mu, q):
     cut = 200
     cut_criterion_array = np.absolute(np.imag(q)) - np.absolute(mu)
     asym_q = q[cut_criterion_array > cut]
-    asym_plus = (mu + 1 + asym_q) / 2.
-    asym_minus = (mu + 1 - asym_q) / 2.
+    asym_plus = (mu + 1 + asym_q) / 2.0
+    asym_minus = (mu + 1 - asym_q) / 2.0
 
-    q_good_bool_array = q[(cut_criterion_array <= cut) &
-                          (q != mu + 1 + 0.0j)]
+    q_good_bool_array = q[(cut_criterion_array <= cut) & (q != mu + 1 + 0.0j)]
     q_good = q_good_bool_array
 
-    alpha_plus = (mu + 1 + q_good) / 2.
-    alpha_minus = (mu + 1 - q_good) / 2.
+    alpha_plus = (mu + 1 + q_good) / 2.0
+    alpha_minus = (mu + 1 - q_good) / 2.0
 
-    g_m[(cut_criterion_array <= cut) &
-        (q != mu + 1 + 0.0j)] = gamma(alpha_plus) / gamma(alpha_minus)
+    g_m[(cut_criterion_array <= cut) & (q != mu + 1 + 0.0j)] = gamma(
+        alpha_plus
+    ) / gamma(alpha_minus)
 
     # asymptotic form, taken from
     # https://github.com/JoeMcEwen/FAST-PT/blob/master/fastpt/gamma_funcs.py
-    abs_im_q = np.absolute(imag_q)
-    abs_mu = np.absolute(mu)
+    np.absolute(imag_q)
+    np.absolute(mu)
 
     # to improve readibility, the argument of the exponential has been divided
     # in more terms and then summed
     term1 = (asym_plus - 0.5) * np.log(asym_plus)
-    term2 = - (asym_minus - 0.5) * np.log(asym_minus)
-    term3 = - asym_q
-    term4 = 1. / 12 * (1. / asym_plus - 1. / asym_minus)
-    term5 = 1. / 360. * (1. / asym_minus**3 - 1. / asym_plus**3)
-    term6 = 1 / 1260 * (1. / asym_plus**5 - 1. / asym_minus**5)
+    term2 = -(asym_minus - 0.5) * np.log(asym_minus)
+    term3 = -asym_q
+    term4 = 1.0 / 12 * (1.0 / asym_plus - 1.0 / asym_minus)
+    term5 = 1.0 / 360.0 * (1.0 / asym_minus**3 - 1.0 / asym_plus**3)
+    term6 = 1 / 1260 * (1.0 / asym_plus**5 - 1.0 / asym_minus**5)
     exp_arg = term1 + term2 + term3 + term4 + term5 + term6
 
     g_m[cut_criterion_array > cut] = np.exp(exp_arg)
 
-    g_m[np.where(q == mu + 1 + 0.0j)[0]] = 0. + 0.0j
+    g_m[np.where(q == mu + 1 + 0.0j)[0]] = 0.0 + 0.0j
     return g_m
 
 
@@ -182,9 +181,8 @@ def _g_l(ell, z_array):
     gl: numpy.ndarray
         Computed values of the _g_l function
     """
-    gl = 2.**z_array * _g_m_vals(ell + 0.5, z_array - 1.5)
+    gl = 2.0**z_array * _g_m_vals(ell + 0.5, z_array - 1.5)
     return gl
-
 
 
 class fftlog(object):
@@ -197,8 +195,16 @@ class fftlog(object):
     after this decomposition, each term can be integrated analytically.
     """
 
-    def __init__(self, x, fx, nu=1.1, N_extrap_begin=0, N_extrap_end=0,
-                 c_window_width=0.25, N_pad=0):
+    def __init__(
+        self,
+        x,
+        fx,
+        nu=1.1,
+        N_extrap_begin=0,
+        N_extrap_end=0,
+        c_window_width=0.25,
+        N_pad=0,
+    ):
         """List of parameters.
 
         Parameters
@@ -234,7 +240,7 @@ class fftlog(object):
         self.N = self.x.size  # length of the array after manipulations
 
         # zero-padding
-        if (N_pad):
+        if N_pad:
             pad = np.zeros(N_pad)
             self.x = _log_extrap(self.x, N_pad, N_pad)
             self.fx = np.hstack((pad, self.fx, pad))
@@ -242,11 +248,11 @@ class fftlog(object):
             self.N_extrap_end += N_pad
             self.N_extrap_begin += N_pad  # update after padding
 
-        if (self.N % 2 == 1):  # force they array size to be even, as
+        if self.N % 2 == 1:  # force they array size to be even, as
             self.x = self.x[:-1]  # required by the algorithm
             self.fx = self.fx[:-1]
             self.N -= 1
-            if (N_extrap_end):
+            if N_extrap_end:
                 self.N_extrap_end -= 1
 
         self.m, self.c_m = self._get_c_m()
@@ -298,16 +304,15 @@ class fftlog(object):
          over the ``y`` array
         """
         z_ar = self.nu + 1j * self.eta_m
-        y = (ell + 1.) / self.x[::-1]
+        y = (ell + 1.0) / self.x[::-1]
         # TODO: possible improvement. y can be evaluated once and stored
-        h_m = self.c_m * (self.x[0] * y[0])**(-1j * self.eta_m) \
-            * _g_l(ell, z_ar)
+        h_m = self.c_m * (self.x[0] * y[0]) ** (-1j * self.eta_m) * _g_l(ell, z_ar)
         # TODO: possible improvement. _g_l can be evaluated once and stored
 
-        Fy = irfft(np.conj(h_m)) * y**(-self.nu) * np.sqrt(np.pi) / 4.
+        Fy = irfft(np.conj(h_m)) * y ** (-self.nu) * np.sqrt(np.pi) / 4.0
         # here the ordering of N_extrap_begin and N_extrap_end is reversed
         # since we have moved to Fourier space
         return (
-            y[self.N_extrap_end:self.N - self.N_extrap_begin],
-            Fy[self.N_extrap_end:self.N - self.N_extrap_begin]
+            y[self.N_extrap_end : self.N - self.N_extrap_begin],
+            Fy[self.N_extrap_end : self.N - self.N_extrap_begin],
         )

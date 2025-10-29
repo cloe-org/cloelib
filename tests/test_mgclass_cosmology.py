@@ -31,8 +31,8 @@ def class_background_instance(scope="module"):
         gamma_MG=0.0,
         mg_ansatz="plk_musigma_norm_late",
         mg_z_init=0.0,
-        mg_params={"mg_E11":0.0, "mg_E22":0.0},
-        N_mnu=0
+        mg_params={"mg_E11": 0.0, "mg_E22": 0.0},
+        N_mnu=0,
     )
     return class_instance
 

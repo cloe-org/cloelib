@@ -72,6 +72,76 @@ def Pkl_interp(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
 
 Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))
 
+def Pkl_unequaltime(k, z1, z2, tracer_A, tracer_B):
+    """
+    Compute the unequal-time matter power spectrum P(k, z1, z2)
+    using the geometric mean of the equal-time power spectra from two tracers.
+    
+    Arguments:
+    k : float
+        Wavenumber at which to evaluate the power spectrum.
+    z1 : float
+        Redshift corresponding to the first tracer.
+    z2 : float
+        Redshift corresponding to the second tracer.
+    tracer_A : Tracer
+        First tracer object with perturbations attribute.
+    tracer_B : Tracer
+        Second tracer object with perturbations attribute.
+    Returns:
+    Pk : float
+        Unequal-time matter power spectrum P(k, z1, z2).
+    """
+
+    Pk_A = tracer_A.perturbations.matter_power_spectrum(z1, k)
+    Pk_B = tracer_B.perturbations.matter_power_spectrum(z2, k)
+
+    Pk = jax.numpy.sqrt(Pk_A*Pk_B)
+
+    return Pk
+
+def Pkl_unequaltime_interp(k_q, chi1_q, chi2_q, ks, chi1s, chi2s, Pk) -> jax.numpy.ndarray:
+    """
+    Interpolate the unequal-time matter power spectrum Pkl(k, chi1, chi2) on a grid.
+
+    Utilizes interpax's 3D interpolation with Akima method to handle non-uniform grids. 
+    Extrapolation is enabled for values outside the given grid.
+
+    Parameters:
+    k_q (jax.numpy.ndarray): 1D array of query points where interpolation is desired in k.
+    chi1_q (jax.numpy.ndarray): 1D array of query points where interpolation is desired in chi1.
+    chi2_q (jax.numpy.ndarray): 1D array of query points where interpolation is desired in chi2.
+    ks (jax.numpy.ndarray): 1D array of k values where P(k) is evaluated.
+    chi1s (jax.numpy.ndarray): 1D array of chi1 values where P(k) is evaluated.
+    chi2s (jax.numpy.ndarray): 1D array of chi2 values where P(k) is evaluated.
+    Pk (jax.numpy.ndarray): 3D array of shape (len(ks), len(chi1s), len(chi2s)). Unequal-time matter power spectrum values at (ks, chi1s, chi2s).
+
+    Returns:
+    jax.numpy.ndarray: 1D array of shape len(k_q) Interpolated unequal-time matter power spectrum values at (k_q, chi1_q, chi2_q).
+    """
+    return interpax.interp3d(
+        k_q, 
+        chi1_q, 
+        chi2_q, 
+        ks, 
+        chi1s, 
+        chi2s, 
+        Pk, 
+        method='akima', extrap=True
+    )
+
+Pkl_unequaltime_interp_vmap = jax.jit(
+    jax.vmap(  
+        jax.vmap(  
+            jax.vmap(  
+                Pkl_unequaltime_interp,
+                in_axes=(None, None, 0, None, None, None, None),
+            ),
+            in_axes=(None, 0, None, None, None, None, None),
+        ),
+        in_axes=(0, None, None, None, None, None, None),
+    )
+)
 
 class AngularTwoPoint:
     """Two point asbtract class to compute two point functions."""

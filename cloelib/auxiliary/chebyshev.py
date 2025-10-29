@@ -92,5 +92,3 @@ def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Arra
     return chebyshev_points_interval(n-1, a, b), w
 
 
-clenshaw_curtis_grid, clenshaw_curtis_weights = clenshaws_curtis_quadrature(10, -42, 55)
-print(clenshaw_curtis_weights)

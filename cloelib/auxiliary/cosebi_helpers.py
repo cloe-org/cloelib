@@ -1,7 +1,6 @@
 import numpy as np
 import pylevin as levin
 import mpmath as mp 
-
 def get_roots_and_norms(tmax, tmin, Nmax):
     """
     Calculates the roots,norms and matrix elements given a min and max theta 
@@ -146,14 +145,14 @@ def tp(n, z, nn, rn):
     prod = mp.mpf(1)
     for root in rn[n-1]:
         prod *= (z - root)
-    return (nn[n] * prod)
+    return (nn[n-1] * prod)
 
 
 def an2(n, nn, coeff_j):
     '''Helper function for tm'''
     s = mp.mpf(0)
     for j in range(0, n + 2):  # j = 0 .. n+1
-        term = nn[n] * coeff_j[(n-1, j)] * mp.factorial(j) / ((-2) ** (j + 1))
+        term = nn[n-1] * coeff_j[(n-1, j)] * mp.factorial(j) / ((-2) ** (j + 1))
         s += term
     return 4 * s
 
@@ -162,7 +161,7 @@ def an4(n, nn, coeff_j):
     '''Helper function for tm'''
     s = mp.mpf(0)
     for j in range(0, n + 2):
-        term = nn[n] * coeff_j[(n-1, j)] * mp.factorial(j) / ((-4) ** (j + 1))
+        term = nn[n-1] * coeff_j[(n-1, j)] * mp.factorial(j) / ((-4) ** (j + 1))
         s += term
     return 12 * s
 
@@ -172,9 +171,9 @@ def dnm(n, m, nn, coeff_j):
     for j in range(m, n + 2):  # j = m .. n+1
         power_term = (-2) ** (m - j - 1)
         bracket = (3 * (2 ** (m - j - 1)) - 1)
-        term = nn[n] * coeff_j[(n-1, j)] * mp.factorial(j) * power_term * bracket
+        term = nn[n-1] * coeff_j[(n-1, j)] * mp.factorial(j) * power_term * bracket
         s += term
-    return nn[n] * coeff_j[(n-1, m)] + (4 / mp.factorial(m)) * s
+    return nn[n-1] * coeff_j[(n-1, m)] + (4 / mp.factorial(m)) * s
 
 
 def tm(n, z, nn, coeff_j):
@@ -266,3 +265,4 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
 
         w_ells[n] = result_levin
     return w_ells
+

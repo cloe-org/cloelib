@@ -13,11 +13,11 @@ from typing import Optional, Union, Sequence
 try:
     from mgclassy import Class  # type: ignore
 except ImportError as e:
-    raise ImportError("classy could not be imported.") from e
+    raise ImportError("mgclassy could not be imported.") from e
 
 
 class MGCLASSBackground:
-    """A wrapper for CLASS background cosmological calculations."""
+    """A wrapper for MGCLASS background cosmological calculations."""
 
     c0 = SPEED_OF_LIGHT / 1000
 
@@ -40,7 +40,7 @@ class MGCLASSBackground:
         N_ur: Optional[float] = None,
     ) -> None:
         """
-        Initialize the CLASSBackground class with cosmological parameters.
+        Initialize the MGCLASSBackground class with cosmological parameters.
 
         Args:
             H0 (float): Hubble parameter at z=0 in km/s/Mpc.
@@ -53,7 +53,7 @@ class MGCLASSBackground:
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the equation of state.
-            gamma_MG (float): Modified gravity growth parameter (not directly used in CLASS, but kept for protocol compliance).
+            gamma_MG (float): Modified gravity growth parameter (not directly used in MGCLASS, but kept for protocol compliance).
             N_mnu (int): Number of massive neutrino species.
             N_ur (Optional[float]): Effective number of ultra-relativistic species.
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
@@ -70,7 +70,7 @@ class MGCLASSBackground:
         self.ns = ns
         self.w0 = w0
         self.wa = wa
-        self.gamma_MG = gamma_MG  # Kept for protocol, but CLASS doesn't directly use it
+        self.gamma_MG = gamma_MG  # Kept for protocol, but MGCLASS doesn't directly use it
         self.mnu = mnu
         self.N_mnu = N_mnu
         # We can set N_ur to a default value if not provided
@@ -85,10 +85,10 @@ class MGCLASSBackground:
         self.mg_z_init = mg_z_init
         self.mg_params = mg_params
 
-        # Initialize CLASS parameters
+        # Initialize MGCLASS parameters
         self.interface_args: dict = {
             "MGCLASSparams": {}
-        }  # Use a dictionary for CLASS parameters
+        }  # Use a dictionary for MGCLASS parameters
         self.interface_args["MGCLASSparams"]["H0"] = self.H0
         self.interface_args["MGCLASSparams"]["omega_b"] = self.Omega_b0 * (self.h) ** 2
         self.interface_args["MGCLASSparams"]["omega_cdm"] = (
@@ -118,7 +118,7 @@ class MGCLASSBackground:
         for mgparam in self.mg_params.keys():
             self.interface_args["MGCLASSparams"][mgparam] = self.mg_params[mgparam]
 
-        # Initialize CLASS
+        # Initialize MGCLASS
         self.results = Class()
         self.results.set(self.interface_args["MGCLASSparams"])
         self.results.compute()
@@ -143,7 +143,7 @@ class MGCLASSBackground:
         # If N_ur is not provided, we assume the standard model of cosmology
         # where N_eff = 3.044 (including photons, neutrinos, and their contributions)
         # This is a common assumption in cosmology.
-        # Values are taken from the CLASS documentation.
+        # Values are taken from the MGCLASS documentation.
         if self.N_mnu == 0:
             return 3.044
         elif self.N_mnu == 1:
@@ -168,7 +168,7 @@ class MGCLASSBackground:
         return self.results.Neff()
 
     def _set_neutrino_masses(self) -> str:
-        """Set the neutrino masses in the CLASS parameters.
+        """Set the neutrino masses in the MGCLASS parameters.
 
         This is a helper method to ensure that the neutrino masses are set correctly.
         """
@@ -204,9 +204,9 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Hubble parameter values at specified redshifts.
         """
-        H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
+        H = np.array([self.results.Hubble(z) for z in zs])  # MGCLASS returns H in 1/Mpc
         if units == "km/s/Mpc":
-            return H * CLASSBackground.c0  # Convert to km/s/Mpc
+            return H * MGCLASSBackground.c0  # Convert to km/s/Mpc
         elif units == "1/Mpc":
             return H
         else:
@@ -286,16 +286,16 @@ class MGCLASSBackground:
 
 
 class MGCLASSLinearPerturbations:
-    """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
+    """Class for perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
 
     def __init__(self, background: Background, redshifts: np.ndarray):
-        """Initialize the CLASSLinearPerturbation instance."""
+        """Initialize the MGCLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 100
-        self.results = None  # Store CLASS results
+        self.results = None  # Store MGCLASS results
 
-        # Ensure CLASS is initialized with necessary parameters
+        # Ensure MGCLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
         self.interface_args["MGCLASSparams"]["output"] = "mPk, mTk"
         self.interface_args["MGCLASSparams"]["P_k_max_1/Mpc"] = self.kmax
@@ -316,7 +316,7 @@ class MGCLASSLinearPerturbations:
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        """Calculate the CLASS linear matter power spectrum.
+        """Calculate the MGCLASS linear matter power spectrum.
 
         Parameters
         ----------
@@ -339,7 +339,7 @@ class MGCLASSLinearPerturbations:
             and redshift
         """
         if hubble_units or k_hunit:
-            raise ValueError("This CLASS method does not yet support h-units")
+            raise ValueError("This MGCLASS method does not yet support h-units")
         self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
         # To match array convention of CAMB
         return self.Pk_linear
@@ -393,7 +393,7 @@ class MGCLASSLinearPerturbations:
 
 
 class MGCLASSNonLinearPerturbations:
-    """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
+    """Class for non-linear perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
 
     def __init__(
         self,
@@ -401,7 +401,7 @@ class MGCLASSNonLinearPerturbations:
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
     ):
-        """Initialize the CLASSNonLinearPerturbation instance."""
+        """Initialize the MGCLASSNonLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 100
@@ -409,7 +409,7 @@ class MGCLASSNonLinearPerturbations:
         if nonlinear_model is None:
             nonlinear_model = "none"
 
-        # Ensure CLASS is initialized with necessary parameters
+        # Ensure MGCLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
         self.interface_args["MGCLASSparams"]["output"] = "mPk, mTk"
         self.interface_args["MGCLASSparams"]["P_k_max_1/Mpc"] = self.kmax
@@ -427,7 +427,7 @@ class MGCLASSNonLinearPerturbations:
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        """Calculate the CLASS non-linear matter power spectrum.
+        """Calculate the MGCLASS non-linear matter power spectrum.
 
         Parameters
         ----------
@@ -450,7 +450,7 @@ class MGCLASSNonLinearPerturbations:
             and redshift
         """
         if hubble_units or k_hunit:
-            raise ValueError("This CLASS method does not yet support h-units")
+            raise ValueError("This MGCLASS method does not yet support h-units")
         self.Pk_nonlinear = np.array(
             [[self.results.pk(ki, zi) for ki in ks] for zi in zs]
         )

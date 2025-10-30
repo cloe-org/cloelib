@@ -1,50 +1,49 @@
-[tool.poetry]
-name = "cloelib"
-version = "0.9.0"
-description = "cloelib is a flexible and efficient library designed to compute cosmological observables for CLOE (Cosmology Likelihood for Observables in Euclid)"
-authors = [
-    "M. Bonici <marco.bonici@uwaterloo.ca>",
-    "G. Cañas-Herrera <guadalupe.canasherrera@esa.int>",
-    "P. Carrilho <pedro.carrilho@ed.ac.uk>",
-    "S. Casas <casas@physik.rwth-aachen.de>",
-    "C. Moretti <cmoretti@sissa.it>",
-    "A. Pezzotta <andrea.pezzotta@inaf.it>",
-]
-license = "MIT"
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-interpax = "0.3.3"
-jax = "0.4.38"
-numpy = "<2.0"
-quadax = "0.2.7"
-scipy = "<1.14"
-pytest = "8.3.5"
-pytest-cov = "6.1.1"
-mypy = "1.17"
-pyinstrument = "^4.6.2"
-cosmolib = { git = "https://github.com/astro-ph/cosmolib.git" }
-
-[tool.poetry.extras]
-camb = ["camb"]
-hmcode2020emu = ["HMcode2020Emu"]
-comet-emu = ["comet-emu"]
-mgclass = ["mgclassy"]
-
-[tool.poetry.dependencies.tensorflow]
-version = "==2.13"
-optional = true
-
-[tool.poetry.dependencies.HMcode2020Emu]
-git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
-
-[tool.poetry.dependencies.mgclassy]
-git = "https://gitlab.com/zizgitlab/mgclass--ii.git"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cloelib"
+description = "cloelib is a flexible and efficient library designed to compute cosmological observables for CLOE (Cosmology Likelihood for Observables in Euclid)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "M. Bonici", email = "marco.bonici@uwaterloo.ca" },
+    { name = "G. Cañas-Herrera", email = "guadalupe.canasherrera@esa.int" },
+    { name = "P. Carrilho", email = "pedro.carrilho@ed.ac.uk" },
+    { name = "S. Casas", email = "casas@physik.rwth-aachen.de" },
+    { name = "C. Moretti", email = "cmoretti@sissa.it" },
+    { name = "A. Pezzotta", email = "andrea.pezzotta@inaf.it" }
+]
+
+dependencies = [
+    "interpax==0.3.3",
+    "jax==0.4.38",
+    "numpy<2.0",
+    "quadax==0.2.7",
+    "scipy<1.14",
+    "pytest==8.3.5",
+    "pytest-cov==6.1.1",
+    "mypy==1.17",
+    "pyinstrument>=4.6.2",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+camb = ["camb"]
+comet-emu = ["comet-emu"]
+tensorflow = ["tensorflow==2.13"]
+hmcode2020emu = ["HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "cloelib/_version.py"
 
 [tool.pytest.ini_options]
 addopts = "--verbose --cov=cloelib"
+
+[tool.hatch.metadata]
+allow-direct-references = true

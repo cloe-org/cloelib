@@ -16,7 +16,7 @@ except ImportError as e:
     raise ImportError("classy could not be imported.") from e
 
 
-class CLASSBackground:
+class MGCLASSBackground:
     """A wrapper for CLASS background cosmological calculations."""
 
     c0 = SPEED_OF_LIGHT / 1000
@@ -87,40 +87,40 @@ class CLASSBackground:
 
         # Initialize CLASS parameters
         self.interface_args: dict = {
-            "CLASSparams": {}
+            "MGCLASSparams": {}
         }  # Use a dictionary for CLASS parameters
-        self.interface_args["CLASSparams"]["H0"] = self.H0
-        self.interface_args["CLASSparams"]["omega_b"] = self.Omega_b0 * (self.h) ** 2
-        self.interface_args["CLASSparams"]["omega_cdm"] = (
+        self.interface_args["MGCLASSparams"]["H0"] = self.H0
+        self.interface_args["MGCLASSparams"]["omega_b"] = self.Omega_b0 * (self.h) ** 2
+        self.interface_args["MGCLASSparams"]["omega_cdm"] = (
             self.Omega_cdm0 * (self.h) ** 2
         )
-        self.interface_args["CLASSparams"]["Omega_k"] = self.Omega_k0
-        self.interface_args["CLASSparams"]["n_s"] = self.ns
-        self.interface_args["CLASSparams"]["A_s"] = self.As
-        self.interface_args["CLASSparams"]["w0_fld"] = self.w0  # or w0
-        self.interface_args["CLASSparams"]["wa_fld"] = self.wa  # or wa
+        self.interface_args["MGCLASSparams"]["Omega_k"] = self.Omega_k0
+        self.interface_args["MGCLASSparams"]["n_s"] = self.ns
+        self.interface_args["MGCLASSparams"]["A_s"] = self.As
+        self.interface_args["MGCLASSparams"]["w0_fld"] = self.w0  # or w0
+        self.interface_args["MGCLASSparams"]["wa_fld"] = self.wa  # or wa
         # To get correct perturbations for w0wa
-        self.interface_args["CLASSparams"]["use_ppf"] = "yes"
+        self.interface_args["MGCLASSparams"]["use_ppf"] = "yes"
         # To avoid using a cosmological constant
-        self.interface_args["CLASSparams"]["Omega_Lambda"] = 0.0
+        self.interface_args["MGCLASSparams"]["Omega_Lambda"] = 0.0
 
         # Set neutrino parameters
         if self.N_mnu > 0:
-            self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
-        self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
-        self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
+            self.interface_args["MGCLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
+        self.interface_args["MGCLASSparams"]["N_ncdm"] = self.N_mnu
+        self.interface_args["MGCLASSparams"]["N_ur"] = self.N_ur
 
         # To use the appropriate gauge where MGCLASS modified gravity is implemented
-        self.interface_args["CLASSparams"]["gauge"] = "newtonian"
-        self.interface_args["CLASSparams"]["mg_z_init"] = self.mg_z_init
-        self.interface_args["CLASSparams"]["mg_ansatz"] = self.mg_ansatz
+        self.interface_args["MGCLASSparams"]["gauge"] = "newtonian"
+        self.interface_args["MGCLASSparams"]["mg_z_init"] = self.mg_z_init
+        self.interface_args["MGCLASSparams"]["mg_ansatz"] = self.mg_ansatz
         # Use a dictionary for an MGCLASS model parameters
         for mgparam in self.mg_params.keys():
-            self.interface_args["CLASSparams"][mgparam] = self.mg_params[mgparam]
+            self.interface_args["MGCLASSparams"][mgparam] = self.mg_params[mgparam]
 
         # Initialize CLASS
         self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
+        self.results.set(self.interface_args["MGCLASSparams"])
         self.results.compute()
 
     @property
@@ -285,7 +285,7 @@ class CLASSBackground:
         return self.results.rs_drag()
 
 
-class CLASSLinearPerturbations:
+class MGCLASSLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
 
     def __init__(self, background: Background, redshifts: np.ndarray):
@@ -297,15 +297,15 @@ class CLASSLinearPerturbations:
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["non linear"] = "none"
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
+        self.interface_args["MGCLASSparams"]["output"] = "mPk, mTk"
+        self.interface_args["MGCLASSparams"]["P_k_max_1/Mpc"] = self.kmax
+        self.interface_args["MGCLASSparams"]["k_per_decade_for_bao"] = 70
+        self.interface_args["MGCLASSparams"]["k_per_decade_for_pk"] = 10
+        self.interface_args["MGCLASSparams"]["z_max_pk"] = np.max(self.z)
+        self.interface_args["MGCLASSparams"]["non linear"] = "none"
+        self.interface_args["MGCLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
+        self.results.set(self.interface_args["MGCLASSparams"])
         self.results.compute()
 
     @property
@@ -392,7 +392,7 @@ class CLASSLinearPerturbations:
         )
 
 
-class CLASSNonLinearPerturbations:
+class MGCLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
 
     def __init__(
@@ -411,17 +411,17 @@ class CLASSNonLinearPerturbations:
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
-        self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
-        self.interface_args["CLASSparams"]["non linear"] = nonlinear_model
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
+        self.interface_args["MGCLASSparams"]["output"] = "mPk, mTk"
+        self.interface_args["MGCLASSparams"]["P_k_max_1/Mpc"] = self.kmax
+        self.interface_args["MGCLASSparams"]["k_per_decade_for_bao"] = 70
+        self.interface_args["MGCLASSparams"]["k_per_decade_for_pk"] = 10
+        self.interface_args["MGCLASSparams"]["z_max_pk"] = np.max(self.z)
+        self.interface_args["MGCLASSparams"]["nonlinear_min_k_max"] = 50
+        self.interface_args["MGCLASSparams"]["hmcode_tol_sigma"] = 1e-8
+        self.interface_args["MGCLASSparams"]["non linear"] = nonlinear_model
+        self.interface_args["MGCLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
+        self.results.set(self.interface_args["MGCLASSparams"])
         self.results.compute()
 
     def matter_power_spectrum(

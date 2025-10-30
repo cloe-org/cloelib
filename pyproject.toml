@@ -35,6 +35,7 @@ camb = ["camb"]
 comet-emu = ["comet-emu"]
 tensorflow = ["tensorflow==2.13"]
 hmcode2020emu = ["HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"]
+mgclass = ["mgclassy @ git+https://gitlab.com/zizgitlab/mgclass--ii.git"]
 
 [tool.hatch.version]
 source = "vcs"

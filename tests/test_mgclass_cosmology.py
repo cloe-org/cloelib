@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from cloelib.cosmology.cosmology import Background, Perturbations
-from cloelib.cosmology.mgmgclass_cosmology import (
+from cloelib.cosmology.mgclass_cosmology import (
     MGCLASSBackground,
     MGCLASSLinearPerturbations,
     MGCLASSNonLinearPerturbations,

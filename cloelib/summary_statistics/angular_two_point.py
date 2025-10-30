@@ -344,11 +344,16 @@ class AngularTwoPoint:
         Compute the cosebis from the angular power spectrum
 
         Parameters:
-        - nl (jax.numpy.ndarray): Noise power spectrum (not used yet).
-        - ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
-        - ns (list): the indices for the kernel function
-        - w_ell (np.array): the kernel functions
-        - ells (np.array): array with the ells
+        - nl (jax.numpy.ndarray): 
+            Noise power spectrum (not used yet).
+        - ks (jax.numpy.ndarray): 
+            Wavenumber grid of the matter power spectrum.
+        - ns (list): 
+            the indices for the kernel function
+        - w_ell (np.array): 
+            the kernel functions
+        - ells (np.array): 
+            array with the ells
 
         Returns:
         - dict: Pseudo angular power spectrum Cl for the multipoles specified by the mixing matrix.
@@ -365,6 +370,6 @@ class AngularTwoPoint:
                 for i, n in enumerate(ns):
                     cl = cells["SHE", "SHE", tomobin1, tomobin2][0, 0]
                     cosebis = cosebis.at[i].set(np.sum(ells * cl * w_ell[n]))
-                tomo_cosebis[key] = cosebis
+                tomo_cosebis[key] = cosebis/(2*np.pi)
 
         return tomo_cosebis

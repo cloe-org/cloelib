@@ -338,11 +338,9 @@ class CLASSLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        if hubble_units == True or k_hunit == True:
+        if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_linear = np.array(
-            [[self.results.pk(ki, zi) for ki in ks] for zi in zs]
-        )  # type: ignore[union-attr]
+        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
         # To match array convention of CAMB
         return self.Pk_linear
 
@@ -408,7 +406,7 @@ class CLASSNonLinearPerturbations:
         self.z = redshifts
         self.kmax = 100
 
-        if nonlinear_model == None:
+        if nonlinear_model is None:
             nonlinear_model = "none"
 
         # Ensure CLASS is initialized with necessary parameters
@@ -451,7 +449,7 @@ class CLASSNonLinearPerturbations:
             Non-linear matter power spectrum at the specified scale
             and redshift
         """
-        if hubble_units == True or k_hunit == True:
+        if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
         self.Pk_nonlinear = np.array(
             [[self.results.pk(ki, zi) for ki in ks] for zi in zs]

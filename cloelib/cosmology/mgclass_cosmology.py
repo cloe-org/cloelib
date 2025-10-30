@@ -70,7 +70,9 @@ class MGCLASSBackground:
         self.ns = ns
         self.w0 = w0
         self.wa = wa
-        self.gamma_MG = gamma_MG  # Kept for protocol, but MGCLASS doesn't directly use it
+        self.gamma_MG = (
+            gamma_MG  # Kept for protocol, but MGCLASS doesn't directly use it
+        )
         self.mnu = mnu
         self.N_mnu = N_mnu
         # We can set N_ur to a default value if not provided

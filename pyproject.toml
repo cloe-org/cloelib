@@ -4,7 +4,6 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cloelib"
-version = "0.1.0"  # Hatch will override with VCS if you use [tool.hatch.version]
 description = "cloelib is a flexible and efficient library designed to compute cosmological observables for CLOE (Cosmology Likelihood for Observables in Euclid)"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,6 +28,7 @@ dependencies = [
     "mypy==1.17",
     "pyinstrument>=4.6.2",
 ]
+dynamic = ["version"]
 
 [project.optional-dependencies]
 camb = ["camb"]

@@ -120,50 +120,89 @@ def Pkl_unequaltime(k, z1, z2, tracer_A, tracer_B):
 
     return Pk
 
-def Pkl_unequaltime_interp(k_q, chi1_q, chi2_q, ks, chi1s, chi2s, Pk) -> jax.numpy.ndarray:
-    """
-    Interpolate the unequal-time matter power spectrum Pkl(k, chi1, chi2) on a grid.
+# Only works with JAXCosmology
+Pkl_unequaltime_vmap = jax.vmap(
+        jax.vmap(
+            jax.vmap(
+                Pkl_unequaltime,
+                in_axes=(None, None, 0, None, None),
+            ),
+            in_axes=(None, 0, None, None, None),
+        ),
+        in_axes=(0, None, None, None, None),
+)
 
-    Utilizes interpax's 3D interpolation with Akima method to handle non-uniform grids. 
-    Extrapolation is enabled for values outside the given grid.
-
-    Parameters:
-    k_q (jax.numpy.ndarray): 1D array of query points where interpolation is desired in k.
-    chi1_q (jax.numpy.ndarray): 1D array of query points where interpolation is desired in chi1.
-    chi2_q (jax.numpy.ndarray): 1D array of query points where interpolation is desired in chi2.
-    ks (jax.numpy.ndarray): 1D array of k values where P(k) is evaluated.
-    chi1s (jax.numpy.ndarray): 1D array of chi1 values where P(k) is evaluated.
-    chi2s (jax.numpy.ndarray): 1D array of chi2 values where P(k) is evaluated.
-    Pk (jax.numpy.ndarray): 3D array of shape (len(ks), len(chi1s), len(chi2s)). Unequal-time matter power spectrum values at (ks, chi1s, chi2s).
-
-    Returns:
-    jax.numpy.ndarray: 1D array of shape len(k_q) Interpolated unequal-time matter power spectrum values at (k_q, chi1_q, chi2_q).
-    """
-    return interpax.interp3d(
-        k_q, 
-        chi1_q, 
-        chi2_q, 
-        ks, 
-        chi1s, 
-        chi2s, 
-        Pk, 
-        method='akima', extrap=True
+def Pkl_unequaltime_interpolator(k, chi1, chi2, Pkl) -> interpax.Interpolator3D:
+    return interpax.Interpolator3D(
+        k,
+        chi1,
+        chi2,
+        Pkl, 
+        method='akima',
+        extrap=True
     )
 
-Pkl_unequaltime_interp_vmap = jax.jit(
-    jax.vmap(  
+def Pkl_unequaltime_interp(k_q, chi1_q, chi2_q, Pkl_interoplator) -> jax.numpy.ndarray:
+    """
+    Interpolate the unequal-time matter power spectrum on a grid.
+
+    Utilizes interpax's 2D interpolation with Akima method to handle
+    non-uniform grids. Extrapolation is enabled
+    for values outside the given grid.
+
+    Parameters:
+    k_q : jax.numpy.ndarray
+        1D array of query points where interpolation is desired in k.
+    chi1_q : jax.numpy.ndarray
+        1D array of query points where interpolation is desired in chi1.
+    chi2_q : jax.numpy.ndarray
+        1D array of query points where interpolation is desired in chi2.
+    Pkl_interpolator : interpax.Interpolator3D
+        Convenience inperpax class for representing Pkl(ks, chi1s, chi2s) interpolated function.
+    Returns: jax.numpy.ndarray
+        1D array of shape len(k_q) == len(chi1_q) == len(chi2_q) Interpolated unequal-time matter power spectrum values at (k_q, chi1_q, chi2_q).
+    """
+    return Pkl_interoplator(
+        k_q, 
+        chi1_q, 
+        chi2_q
+    )
+
+"""
+Vectorized version of `Pkl_unequaltime_interp` over a 3D query grid.
+
+This function applies `Pkl_unequaltime_interp` to all possible combinations
+of query points (k_q, chi1_q, chi2_q) using nested `jax.vmap` calls, enabling
+fully batched interpolation on a 3D grid without explicit Python loops.
+
+Parameters
+----------
+k_q : jax.numpy.ndarray
+    1D array of wavenumber query points.
+chi1_q : jax.numpy.ndarray
+    1D array of first comoving-distance query points.
+chi2_q : jax.numpy.ndarray
+    1D array of second comoving-distance query points.
+Pkl_interpolator : interpax.Interpolator3D
+
+Returns
+-------
+jax.numpy.ndarray
+    3D array of shape (len(k_q), len(chi1_q), len(chi2_q))
+    containing the interpolated unequal-time matter power spectrum values.
+"""
+Pkl_unequaltime_interp_vmap = jax.vmap(  
         jax.vmap(  
             jax.vmap(  
                 Pkl_unequaltime_interp,
-                in_axes=(None, None, 0, None, None, None, None),
+                in_axes=(None, None, 0, None),
             ),
-            in_axes=(None, 0, None, None, None, None, None),
+            in_axes=(None, 0, None, None),
         ),
-        in_axes=(0, None, None, None, None, None, None),
+        in_axes=(0, None, None, None),
     )
-)
 
-def Pkl_chebyshev_coeffs(k_min, k_max, n_k_cheb, chi1, chi2, tracer_A, tracer_B):
+def Pkl_chebyshev_coeffs(k_min, k_max, n_k_cheb, chi1, chi2, Pkl_interpolator):
     """
     Compute the Chebyshev coefficients for the unequal-time matter power spectrum
     P(k, chi1, chi2) over specified ranges and number of points.
@@ -179,10 +218,7 @@ def Pkl_chebyshev_coeffs(k_min, k_max, n_k_cheb, chi1, chi2, tracer_A, tracer_B)
         Comoving distances chi1.
     chi2 : float
         Comoving distances chi2.
-    tracer_A : Tracer
-        First tracer object with perturbations attribute.
-    tracer_B : Tracer
-        Second tracer object with perturbations attribute.
+    Pkl_interpolator: interpax.Interpolator3D
 
     Returns:
     jax.numpy.ndarray
@@ -191,13 +227,13 @@ def Pkl_chebyshev_coeffs(k_min, k_max, n_k_cheb, chi1, chi2, tracer_A, tracer_B)
     
     ks = chebyshev_points_interval(n_k_cheb, k_min, k_max)
 
-    Pk = Pkl_unequaltime(ks, chi1, chi2, tracer_A, tracer_B)
+    Pk = Pkl_interpolator(ks, chi1, chi2)
 
     Pkl_coeffs = chebyshev_coefficients(Pk)
 
     return Pkl_coeffs
 
-def Pkl_chebyshev_coeffs_vmap(k_min, k_max, n_k_cheb, chi1, chi2, tracer_A, tracer_B):
+def Pkl_chebyshev_coeffs_vmap(k_min, k_max, n_k_cheb, chi1, chi2, Pkl_interpolator):
     """
     Vectorized computation of Chebyshev coefficients for the unequal-time matter power spectrum
     P(k, chi1, chi2) over specified ranges and number of points.
@@ -213,10 +249,8 @@ def Pkl_chebyshev_coeffs_vmap(k_min, k_max, n_k_cheb, chi1, chi2, tracer_A, trac
         1D array of comoving distances chi1.
     chi2 : jax.numpy.ndarray
         1D array of comoving distances chi2.
-    tracer_A : Tracer
-        First tracer object with perturbations attribute.
-    tracer_B : Tracer
-        Second tracer object with perturbations attribute.
+    Pkl_interpolator: interpax.Interpolator3D
+
 
     Returns:
     jax.numpy.ndarray
@@ -225,5 +259,5 @@ def Pkl_chebyshev_coeffs_vmap(k_min, k_max, n_k_cheb, chi1, chi2, tracer_A, trac
     out = np.zeros((n_k_cheb+1, len(chi1), len(chi2)))
     for chi1_i, chi1_val in enumerate(chi1):
         for chi2_j, chi2_val in enumerate(chi2):
-            out[:, chi1_i, chi2_j] = Pkl_chebyshev_coeffs(k_min, k_max, n_k_cheb, chi1_val, chi2_val, tracer_A, tracer_B)
+            out[:, chi1_i, chi2_j] = Pkl_chebyshev_coeffs(k_min, k_max, n_k_cheb, chi1_val, chi2_val, Pkl_interpolator)
     return out

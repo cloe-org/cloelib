@@ -19,6 +19,8 @@ except ImportError:
 class CometVDG_SpectroPower:
     r"""Class to retrieve :math:`P(k,\mu)` (including RSD) with the VDG model from COMET."""
 
+    NLcode = "COMET"
+
     def __init__(self, background: Background, RSD_parameters: dict, redshift: float):
         r"""Class constructor.
 

@@ -2,6 +2,7 @@
 
 import scipy
 import jax
+import interpax
 import numpy as np
 import jax.numpy as jnp
 from jax import Array

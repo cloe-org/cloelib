@@ -358,6 +358,9 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         elif self.s1 == 2 and self.s2 == 0:
             d_ell_theta_plus = d_2_0_vmap(theta, self.ells)
             d_ell_theta_minus = d_ell_theta_plus
+        elif self.s1 == 0 and self.s2 == 2:
+            d_ell_theta_plus = d_2_0_vmap(theta, self.ells)
+            d_ell_theta_minus = d_ell_theta_plus
         elif self.s1 == 2 and self.s2 == 2:
             d_ell_theta_plus = d_2_2_vmap(theta, self.ells)
             d_ell_theta_minus = d_2_m2_vmap(theta, self.ells)

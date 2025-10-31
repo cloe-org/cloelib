@@ -17,7 +17,7 @@ except (ImportError, AttributeError, TypeError) as e:
 class PBJSpectroPower:
     r"""Class to retrieve :math:`P(k,\mu)` with the EFT model from PBJ."""
 
-    NLcode = 'PBJ'
+    NLcode = "PBJ"
 
     def __init__(self, linear_perturbations: Perturbations, nuisance_parameters: dict):
         r"""Class constructor.

@@ -498,6 +498,10 @@ class LegendreMultipoles:
         multipoles: dict
             Two-point correlation function Legendre multipoles
         """
+        if self.spectro_power.NLcode != 'COMET':
+            raise ValueError('2PCF multipoles can temporarily be retrieved '
+                             'only with COMET')
+
         ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
         k_hnkl = np.logspace(logkmin, logkmax, nk)
         pk_multipoles = self.power_multipoles(k=k_hnkl, ells=ells, use_AP=use_AP)

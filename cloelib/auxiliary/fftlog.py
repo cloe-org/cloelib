@@ -119,7 +119,7 @@ def _g_m_vals(mu, q):
         Array containing the evaluated function
     """
     if mu + 1 + q.real[0] == 0:
-        print("gamma(0) encountered. Please change another nu value!")
+        print("gamma(0) encountered. Please change to another nu value!")
         exit()
     imag_q = np.imag(q)
     g_m = np.zeros(q.size, dtype=complex)

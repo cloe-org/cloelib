@@ -4,9 +4,8 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal, assert_raises
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
-from cloelib.observables.clusters.castro_hmf_bias import CastroHMFBias
 from cloelib.observables.clusters.halo_statistics import HaloStatistics
-from cloelib.observables.clusters.tinker_hmf_bias import TinkerHMFBias
+from cloelib.observables.clusters.hmf_bias import CastroHMFBias, TinkerHMFBias
 
 
 def test_halostatistics():

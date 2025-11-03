@@ -7,6 +7,7 @@ import numpy as np
 import jax.numpy as jnp
 from jax import Array
 
+
 def chebyshev_points(n: int) -> Array:
     """Compute the Chebyshev points of the first kind.
 
@@ -17,10 +18,11 @@ def chebyshev_points(n: int) -> Array:
     Returns:
         Array of Chebyshev points.
     """
-    k = jnp.arange(n+1)
+    k = jnp.arange(n + 1)
     points = jnp.cos(jnp.pi * k / n)
 
     return points
+
 
 def chebyshev_points_interval(n: int, x_start: float, x_stop: float) -> Array:
     """Compute Chebyshev points of the first kind on the interval [a, b].
@@ -34,8 +36,9 @@ def chebyshev_points_interval(n: int, x_start: float, x_stop: float) -> Array:
         Array of Chebyshev points on the interval [a, b].
     """
     cheb_pts = chebyshev_points(n)
-    mapped_pts = 0.5*(x_stop - x_start)* (cheb_pts + 1) + x_start
+    mapped_pts = 0.5 * (x_stop - x_start) * (cheb_pts + 1) + x_start
     return mapped_pts
+
 
 def chebyshev_coefficients(f_values: Array) -> Array:
     """Compute Chebyshev coefficients from function values at Chebyshev points.
@@ -51,6 +54,7 @@ def chebyshev_coefficients(f_values: Array) -> Array:
     c[-1] /= 2
     return c
 
+
 def chebyshev_interpolation(x: Array, c: Array) -> Array:
     """Evaluate Chebyshev interpolation at given points.
 
@@ -64,6 +68,7 @@ def chebyshev_interpolation(x: Array, c: Array) -> Array:
     x_scaled = (2 * x - (x.min() + x.max())) / (x.max() - x.min())
     return np.polynomial.chebyshev.chebval(x_scaled, c)
 
+
 def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Array]:
     """Compute the Clenshaw-Curtis quadrature of a function f on [a, b].
 
@@ -75,7 +80,7 @@ def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Arra
         cheb_pts : Chebyshev points on [a, b].
         weights : Corresponding weights for Clenshaw-Curtis quadrature.
     """
-    
+
     # Modified Chebyshev moments of the first kind
     # mu = jnp.array([jnp.sqrt(2),0]+[(1+(-1)**k)/(1-k**2) for k in range(2,n)])
 
@@ -86,17 +91,18 @@ def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Arra
     w = scipy.fft.dct(mu, type=1, norm=None) / (n - 1)
     w[0] /= 2
     w[-1] /= 2
-    
+
     # Scale weights to the interval [a, b]
     w = (b - a) / 2 * w
 
-    return chebyshev_points_interval(n-1, a, b), w
+    return chebyshev_points_interval(n - 1, a, b), w
+
 
 def Pkl_unequaltime(k, z1, z2, tracer_A, tracer_B):
     """
     Compute the unequal-time matter power spectrum P(k, z1, z2)
     using the geometric mean of the equal-time power spectra from two tracers.
-    
+
     Arguments:
     k : float
         Wavenumber at which to evaluate the power spectrum.
@@ -116,31 +122,27 @@ def Pkl_unequaltime(k, z1, z2, tracer_A, tracer_B):
     Pk_A = tracer_A.perturbations.matter_power_spectrum(z1, k)
     Pk_B = tracer_B.perturbations.matter_power_spectrum(z2, k)
 
-    Pk = jax.numpy.sqrt(Pk_A*Pk_B)
+    Pk = jax.numpy.sqrt(Pk_A * Pk_B)
 
     return Pk
 
+
 # Only works with JAXCosmology
 Pkl_unequaltime_vmap = jax.vmap(
+    jax.vmap(
         jax.vmap(
-            jax.vmap(
-                Pkl_unequaltime,
-                in_axes=(None, None, 0, None, None),
-            ),
-            in_axes=(None, 0, None, None, None),
+            Pkl_unequaltime,
+            in_axes=(None, None, 0, None, None),
         ),
-        in_axes=(0, None, None, None, None),
+        in_axes=(None, 0, None, None, None),
+    ),
+    in_axes=(0, None, None, None, None),
 )
 
+
 def Pkl_unequaltime_interpolator(k, chi1, chi2, Pkl) -> interpax.Interpolator3D:
-    return interpax.Interpolator3D(
-        k,
-        chi1,
-        chi2,
-        Pkl, 
-        method='akima',
-        extrap=True
-    )
+    return interpax.Interpolator3D(k, chi1, chi2, Pkl, method="akima", extrap=True)
+
 
 def Pkl_unequaltime_interp(k_q, chi1_q, chi2_q, Pkl_interoplator) -> jax.numpy.ndarray:
     """
@@ -162,11 +164,8 @@ def Pkl_unequaltime_interp(k_q, chi1_q, chi2_q, Pkl_interoplator) -> jax.numpy.n
     Returns: jax.numpy.ndarray
         1D array of shape len(k_q) == len(chi1_q) == len(chi2_q) Interpolated unequal-time matter power spectrum values at (k_q, chi1_q, chi2_q).
     """
-    return Pkl_interoplator(
-        k_q, 
-        chi1_q, 
-        chi2_q
-    )
+    return Pkl_interoplator(k_q, chi1_q, chi2_q)
+
 
 """
 Vectorized version of `Pkl_unequaltime_interp` over a 3D query grid.
@@ -191,16 +190,17 @@ jax.numpy.ndarray
     3D array of shape (len(k_q), len(chi1_q), len(chi2_q))
     containing the interpolated unequal-time matter power spectrum values.
 """
-Pkl_unequaltime_interp_vmap = jax.vmap(  
-        jax.vmap(  
-            jax.vmap(  
-                Pkl_unequaltime_interp,
-                in_axes=(None, None, 0, None),
-            ),
-            in_axes=(None, 0, None, None),
+Pkl_unequaltime_interp_vmap = jax.vmap(
+    jax.vmap(
+        jax.vmap(
+            Pkl_unequaltime_interp,
+            in_axes=(None, None, 0, None),
         ),
-        in_axes=(0, None, None, None),
-    )
+        in_axes=(None, 0, None, None),
+    ),
+    in_axes=(0, None, None, None),
+)
+
 
 def Pkl_chebyshev_coeffs(k_min, k_max, n_k_cheb, chi1, chi2, Pkl_interpolator):
     """
@@ -224,7 +224,7 @@ def Pkl_chebyshev_coeffs(k_min, k_max, n_k_cheb, chi1, chi2, Pkl_interpolator):
     jax.numpy.ndarray
         3D array of Chebyshev coefficients for P(k, chi1, chi2).
     """
-    
+
     ks = chebyshev_points_interval(n_k_cheb, k_min, k_max)
 
     Pk = Pkl_interpolator(ks, chi1, chi2)
@@ -232,6 +232,7 @@ def Pkl_chebyshev_coeffs(k_min, k_max, n_k_cheb, chi1, chi2, Pkl_interpolator):
     Pkl_coeffs = chebyshev_coefficients(Pk)
 
     return Pkl_coeffs
+
 
 def Pkl_chebyshev_coeffs_vmap(k_min, k_max, n_k_cheb, chi1, chi2, Pkl_interpolator):
     """
@@ -256,8 +257,10 @@ def Pkl_chebyshev_coeffs_vmap(k_min, k_max, n_k_cheb, chi1, chi2, Pkl_interpolat
     jax.numpy.ndarray
         3D array of Chebyshev coefficients for P(k, chi1, chi2).
     """
-    out = np.zeros((n_k_cheb+1, len(chi1), len(chi2)))
+    out = np.zeros((n_k_cheb + 1, len(chi1), len(chi2)))
     for chi1_i, chi1_val in enumerate(chi1):
         for chi2_j, chi2_val in enumerate(chi2):
-            out[:, chi1_i, chi2_j] = Pkl_chebyshev_coeffs(k_min, k_max, n_k_cheb, chi1_val, chi2_val, Pkl_interpolator)
+            out[:, chi1_i, chi2_j] = Pkl_chebyshev_coeffs(
+                k_min, k_max, n_k_cheb, chi1_val, chi2_val, Pkl_interpolator
+            )
     return out

@@ -112,7 +112,7 @@ def comoving_distance_to_redshift(chi, background):
     """
     zs = np.logspace(np.log10(1e-4), np.log10(30.0), 10000)
     chi_of_z = background.comoving_distance(zs)
-    return jax.numpy.interp(chi,chi_of_z, zs)
+    return jax.numpy.interp(chi, chi_of_z, zs)
 
 
 def Pkl_unequaltime(k, chi1, chi2, tracer_A, tracer_B):

@@ -312,7 +312,7 @@ class CAMBLinearPerturbations:
         self.kmax = 300.0
         if 0.001 < abs(redshifts.min()):
             warnings.warn(
-                "lowest redshift should be close to 0.0 for proper interpolation to small redshifts and the computation of simga8(z=0)."
+                "Lowest redshift should be close to 0.0 for proper interpolation to small redshifts and the computation of sigma8(z=0)."
             )
         self.z = redshifts
 

@@ -101,7 +101,7 @@ def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Arra
 def comoving_distance_to_redshift(chi, background):
     """
     Convert comoving distance chi to redshift z using interpolation given a background model.
-    Arguments:  
+    Arguments:
     chi : float
         Comoving distance.
     background : Background
@@ -112,8 +112,7 @@ def comoving_distance_to_redshift(chi, background):
     """
     zs = np.linspace(1e-4, 30.0, 1000)
     chi_of_z = background.comoving_distance(zs)
-    z_of_chi_spline = scipy.interpolate.CubicSpline(chi_of_z, zs)
-    return z_of_chi_spline(chi)
+    return jax.numpy.interp(chi, chi_of_z, zs)
 
 
 def Pkl_unequaltime(k, chi1, chi2, tracer_A, tracer_B):

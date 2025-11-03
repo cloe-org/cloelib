@@ -98,7 +98,25 @@ def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Arra
     return chebyshev_points_interval(n - 1, a, b), w
 
 
-def Pkl_unequaltime(k, z1, z2, tracer_A, tracer_B):
+def comoving_distance_to_redshift(chi, background):
+    """
+    Convert comoving distance chi to redshift z using interpolation given a background model.
+    Arguments:  
+    chi : float
+        Comoving distance.
+    background : Background
+        Background cosmology object with comoving_distance method.
+    Returns:
+    z : float
+        Redshift corresponding to the given comoving distance.
+    """
+    zs = np.linspace(1e-4, 30.0, 1000)
+    chi_of_z = background.comoving_distance(zs)
+    z_of_chi_spline = scipy.interpolate.CubicSpline(chi_of_z, zs)
+    return z_of_chi_spline(chi)
+
+
+def Pkl_unequaltime(k, chi1, chi2, tracer_A, tracer_B):
     """
     Compute the unequal-time matter power spectrum P(k, z1, z2)
     using the geometric mean of the equal-time power spectra from two tracers.
@@ -106,10 +124,10 @@ def Pkl_unequaltime(k, z1, z2, tracer_A, tracer_B):
     Arguments:
     k : float
         Wavenumber at which to evaluate the power spectrum.
-    z1 : float
-        Redshift corresponding to the first tracer.
-    z2 : float
-        Redshift corresponding to the second tracer.
+    chi1 : float
+        Comoving distance corresponding to the first tracer.
+    chi2 : float
+        Comoving distance corresponding to the second tracer.
     tracer_A : Tracer
         First tracer object with perturbations attribute.
     tracer_B : Tracer
@@ -118,6 +136,9 @@ def Pkl_unequaltime(k, z1, z2, tracer_A, tracer_B):
     Pk : float
         Unequal-time matter power spectrum P(k, z1, z2).
     """
+
+    z1 = comoving_distance_to_redshift(chi1, tracer_A.background)
+    z2 = comoving_distance_to_redshift(chi2, tracer_B.background)
 
     Pk_A = tracer_A.perturbations.matter_power_spectrum(z1, k)
     Pk_B = tracer_B.perturbations.matter_power_spectrum(z2, k)

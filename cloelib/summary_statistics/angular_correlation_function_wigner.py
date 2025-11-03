@@ -6,6 +6,7 @@ from cloelib.observables.photo import ShearTracer, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction
 from cloelib.auxiliary.cache import memoize_jax
 
+
 @jit
 def _d_0_0_ell_compute(beta: float, ell: int) -> float:
     r"""
@@ -317,7 +318,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             self.keys = ("POS", "SHE")
         else:
             raise ValueError("Unsupported tracer combination")
-    
+
     def get_xi(self, theta):
         """
         Compute the angular correlation function xi(theta) using the Wigner d-matrices.
@@ -357,6 +358,9 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         elif self.s1 == 2 and self.s2 == 0:
             d_ell_theta_plus = d_2_0_vmap(theta, self.ells)
             d_ell_theta_minus = d_ell_theta_plus
+        elif self.s1 == 0 and self.s2 == 2:
+            d_ell_theta_plus = d_2_0_vmap(theta, self.ells)
+            d_ell_theta_minus = d_ell_theta_plus
         elif self.s1 == 2 and self.s2 == 2:
             d_ell_theta_plus = d_2_2_vmap(theta, self.ells)
             d_ell_theta_minus = d_2_m2_vmap(theta, self.ells)
@@ -381,28 +385,49 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             xi_minus = (-1) ** self.s2 * np.einsum(
                 "L,LIJ,TL->TIJ", prefactor, Cl_minus, d_ell_theta_minus
             )
-        
+
         xi_dict = {}
         if self.s1 == 0 and self.s2 == 0:
             axis = (0,)
             for i in range(Ntomo1):
-                for j in range(i,Ntomo2):
-                    key = ("POS","POS",int(i+1),int(j+1))
-                    xi_dict[key] = Result(array=xi_plus[:,i,j],ell=theta, axis=axis)
+                for j in range(i, Ntomo2):
+                    key = ("POS", "POS", int(i + 1), int(j + 1))
+                    xi_dict[key] = Result(array=xi_plus[:, i, j], ell=theta, axis=axis)
         elif self.s1 == 2 and self.s2 == 0:
             axis = (1,)
             for i in range(Ntomo1):
-                for j in range(i,Ntomo2):
-                    key = ("POS","SHE",int(i+1),int(j+1))
-                    xi_dict[key] = Result(array=np.array([xi_plus[:,j,i],np.zeros(len(theta))]),ell=theta, axis=axis)
-        elif self.s1 == 2 and self.s2 == 2: 
+                for j in range(i, Ntomo2):
+                    key = ("POS", "SHE", int(i + 1), int(j + 1))
+                    xi_dict[key] = Result(
+                        array=np.array([xi_plus[:, j, i], np.zeros(len(theta))]),
+                        ell=theta,
+                        axis=axis,
+                    )
+        elif self.s1 == 0 and self.s2 == 2:
+            axis = (1,)
+            for i in range(Ntomo1):
+                for j in range(i, Ntomo2):
+                    key = ("POS", "SHE", int(i + 1), int(j + 1))
+                    xi_dict[key] = Result(
+                        array=np.array([xi_plus[:, j, i], np.zeros(len(theta))]),
+                        ell=theta,
+                        axis=axis,
+                    )
+        elif self.s1 == 2 and self.s2 == 2:
             axis = (2,)
             for i in range(Ntomo1):
-                for j in range(i,Ntomo2):
-                    key = ("SHE","SHE",int(i+1),int(j+1))
-                    xi_dict[key] = Result(array=np.array([[xi_plus[:,i,j],np.zeros(len(theta))],[np.zeros(len(theta)),xi_minus[:,i,j]]]),ell=theta, axis=axis) 
-            
+                for j in range(i, Ntomo2):
+                    key = ("SHE", "SHE", int(i + 1), int(j + 1))
+                    xi_dict[key] = Result(
+                        array=np.array(
+                            [
+                                [xi_plus[:, i, j], np.zeros(len(theta))],
+                                [np.zeros(len(theta)), xi_minus[:, i, j]],
+                            ]
+                        ),
+                        ell=theta,
+                        axis=axis,
+                    )
         else:
-            
             raise ValueError("Spin values not as expected")
         return xi_dict

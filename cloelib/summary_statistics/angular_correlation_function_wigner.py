@@ -1,7 +1,7 @@
 import jax.numpy as np
 import jax
 from jax import jit
-from euclidlib.photo._le3_pk_wl import Result
+from cosmolib.data import TwoPointCorrelationFunction
 from cloelib.observables.photo import ShearTracer, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction
 from cloelib.auxiliary.cache import memoize_jax
@@ -392,25 +392,27 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             for i in range(Ntomo1):
                 for j in range(i, Ntomo2):
                     key = ("POS", "POS", int(i + 1), int(j + 1))
-                    xi_dict[key] = Result(array=xi_plus[:, i, j], ell=theta, axis=axis)
+                    xi_dict[key] = TwoPointCorrelationFunction(
+                        array=xi_plus[:, i, j], theta=theta, axis=axis
+                    )
         elif self.s1 == 2 and self.s2 == 0:
             axis = (1,)
             for i in range(Ntomo1):
-                for j in range(i, Ntomo2):
+                for j in range(Ntomo2):
                     key = ("POS", "SHE", int(i + 1), int(j + 1))
-                    xi_dict[key] = Result(
+                    xi_dict[key] = TwoPointCorrelationFunction(
                         array=np.array([xi_plus[:, j, i], np.zeros(len(theta))]),
-                        ell=theta,
+                        theta=theta,
                         axis=axis,
                     )
         elif self.s1 == 0 and self.s2 == 2:
             axis = (1,)
             for i in range(Ntomo1):
-                for j in range(i, Ntomo2):
+                for j in range(Ntomo2):
                     key = ("POS", "SHE", int(i + 1), int(j + 1))
-                    xi_dict[key] = Result(
+                    xi_dict[key] = TwoPointCorrelationFunction(
                         array=np.array([xi_plus[:, j, i], np.zeros(len(theta))]),
-                        ell=theta,
+                        theta=theta,
                         axis=axis,
                     )
         elif self.s1 == 2 and self.s2 == 2:
@@ -418,14 +420,14 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             for i in range(Ntomo1):
                 for j in range(i, Ntomo2):
                     key = ("SHE", "SHE", int(i + 1), int(j + 1))
-                    xi_dict[key] = Result(
+                    xi_dict[key] = TwoPointCorrelationFunction(
                         array=np.array(
                             [
                                 [xi_plus[:, i, j], np.zeros(len(theta))],
                                 [np.zeros(len(theta)), xi_minus[:, i, j]],
                             ]
                         ),
-                        ell=theta,
+                        theta=theta,
                         axis=axis,
                     )
         else:

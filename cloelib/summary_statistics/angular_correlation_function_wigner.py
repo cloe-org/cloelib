@@ -372,7 +372,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
 
         # Initialize xi arrays
         xi_plus = np.zeros((Ntheta, Ntomo1, Ntomo2))
-        if self.s2 == 2:
+        if self.s1 == 2 and self.s2 == 2:
             xi_minus = np.zeros((Ntheta, Ntomo1, Ntomo2))
 
         # Vectorized computation over (theta, tomo1, tomo2)
@@ -381,7 +381,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         xi_plus = np.einsum("L,LIJ,TL->TIJ", prefactor, Cl_plus, d_ell_theta_plus)
 
         # Compute xi_minus if we have a spin2 tracer
-        if self.s2 == 2:
+        if self.s1 == 2 and self.s2 == 2:
             xi_minus = (-1) ** self.s2 * np.einsum(
                 "L,LIJ,TL->TIJ", prefactor, Cl_minus, d_ell_theta_minus
             )
@@ -399,9 +399,9 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             axis = (1,)
             for i in range(Ntomo1):
                 for j in range(Ntomo2):
-                    key = ("POS", "SHE", int(i + 1), int(j + 1))
+                    key = ("SHE", "POS", int(i + 1), int(j + 1))
                     xi_dict[key] = TwoPointCorrelationFunction(
-                        array=np.array([xi_plus[:, j, i], np.zeros(len(theta))]),
+                        array=np.array([xi_plus[:, i, j], np.zeros(len(theta))]),
                         theta=theta,
                         axis=axis,
                     )
@@ -411,7 +411,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
                 for j in range(Ntomo2):
                     key = ("POS", "SHE", int(i + 1), int(j + 1))
                     xi_dict[key] = TwoPointCorrelationFunction(
-                        array=np.array([xi_plus[:, j, i], np.zeros(len(theta))]),
+                        array=np.array([xi_plus[:, i, j], np.zeros(len(theta))]),
                         theta=theta,
                         axis=axis,
                     )

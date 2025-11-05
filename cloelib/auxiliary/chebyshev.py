@@ -8,6 +8,18 @@ import jax.numpy as jnp
 from jax import Array
 
 
+def dct_type1(f_values: Array) -> Array:
+    """Compute the Discrete Cosine Transform (DCT) of type I.
+
+    Args:
+        f_values: Input array of function values.
+
+    Returns:
+        DCT type I of the input array.
+    """
+    return scipy.fft.dct(f_values, type=1)
+
+
 def chebyshev_points(n: int) -> Array:
     """Compute the Chebyshev points of the first kind.
 
@@ -49,7 +61,7 @@ def chebyshev_coefficients(f_values: Array) -> Array:
         Array of Chebyshev coefficients.
     """
     N = len(f_values)
-    c = scipy.fft.dct(f_values, type=1) / (N - 1)
+    c = dct_type1(f_values) / (N - 1)
     c[0] /= 2
     c[-1] /= 2
     return c
@@ -88,7 +100,7 @@ def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Arra
     for i in range(0, n, 2):
         mu[i] = 2.0 / (1 - i**2)
 
-    w = scipy.fft.dct(mu, type=1, norm=None) / (n - 1)
+    w = dct_type1(mu) / (n - 1)
     w[0] /= 2
     w[-1] /= 2
 

@@ -507,17 +507,10 @@ class LegendreMultipoles:
         k_hnkl = np.logspace(logkmin, logkmax, nk)
         pk_multipoles = self.power_multipoles(k=k_hnkl, ells=ells, use_AP=use_AP)
         volume_factor = (k_hnkl**3) / (2 * (np.pi**2))
-        AP_factor = (
-            self.ap_distortion.q_AP_tr(self.redshift) ** 2
-            * self.ap_distortion.q_AP_lo(self.redshift)
-            if use_AP
-            else 1.0
-        )
         xi_multipoles = {}
         for ell in ells:
             y_array = (
                 volume_factor
-                * AP_factor
                 * pk_multipoles[f"ell{ell}"]
                 * self._UVcutoff(k=k_hnkl, kcut=kcut, pow=pow)
                 * np.real(1j**ell)

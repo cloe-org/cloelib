@@ -431,5 +431,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
                         theta=theta,
                         axis=(2,),
                     )
+        else:
+            raise ValueError("Spin values not as expected")
 
         return xi_dict

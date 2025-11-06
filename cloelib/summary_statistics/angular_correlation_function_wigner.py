@@ -319,6 +319,46 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         else:
             raise ValueError("Unsupported tracer combination")
 
+    def build_xi_dict(self, all_xi, theta, Ntomo1, Ntomo2):
+        """Return a dictionary of TwoPointCorrelationFunction objects."""
+        xi_dict = {}
+
+        tracer_info = {
+            (0, 0): dict(
+                label=("POS", "POS"), axis=(0,), slice=lambda i, j: all_xi[:, i, j]
+            ),
+            (2, 0): dict(
+                label=("SHE", "POS"), axis=(1,), slice=lambda i, j: all_xi[:, :, i, j]
+            ),
+            (0, 2): dict(
+                label=("POS", "SHE"), axis=(1,), slice=lambda i, j: all_xi[:, :, i, j]
+            ),
+            (2, 2): dict(
+                label=("SHE", "SHE"),
+                axis=(2,),
+                slice=lambda i, j: all_xi[:, :, :, i, j],
+            ),
+        }
+
+        key = (self.s1, self.s2)
+        if key not in tracer_info:
+            raise ValueError(f"Unsupported (s1, s2) combination: {key}")
+
+        info = tracer_info[key]
+        label, axis, slicer = info["label"], info["axis"], info["slice"]
+
+        def j_range(i):
+            return range(i, Ntomo2) if key in [(0, 0), (2, 2)] else range(Ntomo2)
+
+        for i in range(Ntomo1):
+            for j in j_range(i):
+                xi_dict[label + (i + 1, j + 1)] = TwoPointCorrelationFunction(
+                    array=slicer(i, j),
+                    theta=theta,
+                    axis=axis,
+                )
+        return xi_dict
+
     def get_xi(self, theta):
         """
         Compute the angular correlation function xi(theta) using the Wigner d-matrices.
@@ -398,40 +438,9 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             all_xi = np.zeros((2, 2, Ntheta, Ntomo1, Ntomo2))
             all_xi = all_xi.at[0, 0, :, :, :].set(xi_plus)
             all_xi = all_xi.at[1, 1, :, :, :].set(xi_minus)
-
-        xi_dict = {}
-
-        if self.s1 == 0 and self.s2 == 0:
-            for i in range(Ntomo1):
-                for j in range(i, Ntomo2):
-                    key = ("POS", "POS", i + 1, j + 1)
-                    xi_dict[key] = TwoPointCorrelationFunction(
-                        array=np.array(all_xi[:, i, j]),
-                        theta=theta,
-                        axis=(0,),
-                    )
-
-        elif (self.s1, self.s2) in [(2, 0), (0, 2)]:
-            tracer_key = ("SHE", "POS") if self.s1 == 2 else ("POS", "SHE")
-            for i in range(Ntomo1):
-                for j in range(Ntomo2):
-                    key = tracer_key + (i + 1, j + 1)
-                    xi_dict[key] = TwoPointCorrelationFunction(
-                        array=np.array(all_xi[:, :, i, j]),
-                        theta=theta,
-                        axis=(1,),
-                    )
-
-        elif self.s1 == 2 and self.s2 == 2:
-            for i in range(Ntomo1):
-                for j in range(i, Ntomo2):
-                    key = ("SHE", "SHE", i + 1, j + 1)
-                    xi_dict[key] = TwoPointCorrelationFunction(
-                        array=np.array(all_xi[:, :, :, i, j]),
-                        theta=theta,
-                        axis=(2,),
-                    )
         else:
             raise ValueError("Spin values not as expected")
+
+        xi_dict = self.build_xi_dict(all_xi, theta, Ntomo1, Ntomo2)
 
         return xi_dict

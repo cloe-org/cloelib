@@ -5,7 +5,6 @@ from cosmolib.data import TwoPointCorrelationFunction
 from cloelib.observables.photo import ShearTracer, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction
 from cloelib.auxiliary.cache import memoize_jax
-import time
 
 
 @jit
@@ -386,7 +385,6 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             xi_minus = (-1) ** self.s2 * np.einsum(
                 "L,LIJ,TL->TIJ", prefactor, Cl_minus, d_ell_theta_minus
             )
-        t1 = time.time()
 
         if self.s1 == 0 and self.s2 == 0:
             all_xi = np.zeros((Ntheta, Ntomo1, Ntomo2))
@@ -433,7 +431,5 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
                         theta=theta,
                         axis=(2,),
                     )
-        t2 = time.time()
-        print(t2 - t1)
 
         return xi_dict

@@ -238,7 +238,7 @@ class wCDM_Linear:
             import cosmopower as cp
 
 
-            cp_file = emulator_data("w0wa_linear-spectra.pkl", zenodo_path)
+            cp_file = emulator_data("wcdm-linear-spectra.pkl", zenodo_path)
             self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
 
@@ -259,7 +259,7 @@ class wCDM_Linear:
                      'H0': np.array([20, 100]),
                      'ns': np.array([0.6, 1.3]),
                      'lnAs': np.array([1.61, 5]),
-                     'w': np.array([-3.0, -0.33]),
+                     'w': np.array([-3.0, 0]),
                      'z': np.array([0.0, 5.0]),
           }
         
@@ -700,7 +700,7 @@ class wCDM_Pcb_Linear:
                      'H0': np.array([20, 100]),
                      'ns': np.array([0.6, 1.3]),
                      'lnAs': np.array([1.61, 5]),
-                     'w': np.array([-3.0, -0.33]),
+                     'w': np.array([-3.0, 0]),
                      'z': np.array([0.0, 5.0]),
           }
         
@@ -743,7 +743,7 @@ class wCDM_Pcb_Linear:
         return (
             f"Cosmopower cb linear Pk module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
             f"for an wCDM cosmology, using input cosmological parameters:\n"
-            f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0'] \n"
+            f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'w', 'z'] \n"
             f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
             f"There are no massive neutrinos in this model. " 
         )

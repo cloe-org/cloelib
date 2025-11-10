@@ -1,16 +1,21 @@
 import pytest
 import numpy as np
-from cloelib.cosmology.cosmopower_cosmology import (
-    w0waCDM_Linear,
-    wCDM_Linear,
-    LCDM_Linear,
-    w0waCDM_Pcb_Linear,
-    wCDM_Pcb_Linear,
-    LCDM_Pcb_Linear,
-)
 import importlib.util
 
 HAS_COSMOPOWER = importlib.util.find_spec("cosmopower") is not None
+if HAS_COSMOPOWER:
+    from cloelib.cosmology.cosmopower_cosmology import (
+        w0waCDM_Linear,
+        wCDM_Linear,
+        LCDM_Linear,
+        w0waCDM_Pcb_Linear,
+        wCDM_Pcb_Linear,
+        LCDM_Pcb_Linear,
+    )
+else:
+    pytest.skip(
+        "cosmopower not installed; skipping emulator tests", allow_module_level=True
+    )
 
 # Test cosmology parameters
 H0 = 67.7

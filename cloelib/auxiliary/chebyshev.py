@@ -133,25 +133,31 @@ def comoving_distance_to_redshift(chi, background):
     return akima_interpolation(zs, chi_of_z, chi)
 
 
-def Pkl_unequaltime(k, chi1, chi2, tracer_A, tracer_B):
+def Pkl_unequaltime(
+    k: jnp.ndarray,
+    chi1: jnp.ndarray,
+    chi2: jnp.ndarray,
+    tracer_A,
+    tracer_B,
+) -> jnp.ndarray:
     """
-    Compute the unequal-time matter power spectrum P(k, z1, z2)
+    Compute the unequal-time matter power spectrum P(k, chi1, chi2)
     using the geometric mean of the equal-time power spectra from two tracers.
 
     Arguments:
-    k : float
+    k : jnp.ndarray
         Wavenumber at which to evaluate the power spectrum.
-    chi1 : float
+    chi1 : jnp.ndarray
         Comoving distance corresponding to the first tracer.
-    chi2 : float
+    chi2 : jnp.ndarray
         Comoving distance corresponding to the second tracer.
     tracer_A : Tracer
         First tracer object with perturbations attribute.
     tracer_B : Tracer
         Second tracer object with perturbations attribute.
     Returns:
-    Pk : float
-        Unequal-time matter power spectrum P(k, z1, z2).
+    Pk : jnp.ndarray shape (len(k), len(chi1), len(chi2))
+        Unequal-time matter power spectrum P(k, chi1, chi2).
     """
 
     z1 = comoving_distance_to_redshift(chi1, tracer_A.background)
@@ -160,22 +166,9 @@ def Pkl_unequaltime(k, chi1, chi2, tracer_A, tracer_B):
     Pk_A = tracer_A.perturbations.matter_power_spectrum(z1, k)
     Pk_B = tracer_B.perturbations.matter_power_spectrum(z2, k)
 
-    Pk = jax.numpy.sqrt(Pk_A * Pk_B)
+    Pk = jax.numpy.sqrt(jnp.einsum("ij,kj->jik", Pk_A, Pk_B))
 
     return Pk
-
-
-# Only works with JAXCosmology
-Pkl_unequaltime_vmap = jax.vmap(
-    jax.vmap(
-        jax.vmap(
-            Pkl_unequaltime,
-            in_axes=(None, None, 0, None, None),
-        ),
-        in_axes=(None, 0, None, None, None),
-    ),
-    in_axes=(0, None, None, None, None),
-)
 
 
 @jax.jit

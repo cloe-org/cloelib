@@ -122,7 +122,7 @@ def comoving_distance_to_redshift(chi, background):
     z : float
         Redshift corresponding to the given comoving distance.
     """
-    zs = np.logspace(np.log10(1e-4), np.log10(30.0), 10000)
+    zs = jnp.logspace(jnp.log10(1e-4), jnp.log10(30.0), 10000)
     chi_of_z = background.comoving_distance(zs)
     return jax.numpy.interp(chi, chi_of_z, zs)
 
@@ -296,3 +296,19 @@ def Pkl_chebyshev_coeffs_vmap(k_min, k_max, n_k_cheb, chi1, chi2, Pkl_interpolat
                 k_min, k_max, n_k_cheb, chi1_val, chi2_val, Pkl_interpolator
             )
     return out
+
+def w_ell(c:Array, T_tilde:Array) -> Array:
+    """
+    Compute the matrix contractio  to obtain w_ell from Chebyshev coefficients and T_tilde.
+    
+    Parameters:
+    c : jax.numpy.ndarray
+        3D array of Chebyshev coefficients. Shape: (n_k_cheb + 1, chi1_n, chi2_n)
+    T_tilde : jax.numpy.ndarray
+        3D array of shape (chi1_n, chi2_n, n_k_cheb + 1) representing T_tilde.
+
+    Returns:
+    jax.numpy.ndarray
+        2D array of shape (chi1_n, chi2_n) representing w_ell.
+    """
+    return jnp.einsum('ijk,jki->jk', c, T_tilde)

@@ -7,7 +7,7 @@ Supported models include:
 - LCDM with mass of the neutrinos 0
 """
 
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 import numpy as np
@@ -15,7 +15,6 @@ import warnings
 from scipy import interpolate
 import os
 import urllib.request
-from typing import Tuple, Optional
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 import tensorflow as tf
 tf.keras.optimizers.Adam = tf.keras.optimizers.legacy.Adam

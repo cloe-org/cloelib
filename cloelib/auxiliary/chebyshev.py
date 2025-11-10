@@ -1,11 +1,11 @@
-"""Module for Chebyshev polynomial."""
+"""Module for Chebyshev polynomials and related utilities."""
 
-import scipy
 import jax
-import interpax
 import numpy as np
 import jax.numpy as jnp
 from jax import Array
+
+from cloelib.auxiliary.akima_spline import akima_interpolation
 
 
 def dct_type1(f_values: Array) -> Array:
@@ -17,7 +17,11 @@ def dct_type1(f_values: Array) -> Array:
     Returns:
         DCT type I of the input array.
     """
-    return scipy.fft.dct(f_values, type=1)
+    # return scipy.fft.dct(f_values, type=1)
+    N = f_values.shape[0]
+    x_ext = jnp.concatenate([f_values, f_values[-2:0:-1]])
+    X = jnp.fft.fft(x_ext)
+    return jnp.real(X[:N])
 
 
 def chebyshev_points(n: int) -> Array:
@@ -62,8 +66,10 @@ def chebyshev_coefficients(f_values: Array) -> Array:
     """
     N = len(f_values)
     c = dct_type1(f_values) / (N - 1)
-    c[0] /= 2
-    c[-1] /= 2
+    c = c.at[0].set(c[0] / 2)
+    c = c.at[-1].set(c[-1] / 2)
+    # c[0] /= 2
+    # c[-1] /= 2
     return c
 
 
@@ -122,9 +128,9 @@ def comoving_distance_to_redshift(chi, background):
     z : float
         Redshift corresponding to the given comoving distance.
     """
-    zs = jnp.logspace(jnp.log10(1e-4), jnp.log10(30.0), 10000)
+    zs = np.logspace(np.log10(1e-4), np.log10(30.0), 10000)
     chi_of_z = background.comoving_distance(zs)
-    return jax.numpy.interp(chi, chi_of_z, zs)
+    return akima_interpolation(zs, chi_of_z, chi)
 
 
 def Pkl_unequaltime(k, chi1, chi2, tracer_A, tracer_B):
@@ -172,135 +178,57 @@ Pkl_unequaltime_vmap = jax.vmap(
 )
 
 
-def Pkl_unequaltime_interpolator(k, chi1, chi2, Pkl) -> interpax.Interpolator3D:
-    return interpax.Interpolator3D(k, chi1, chi2, Pkl, method="akima", extrap=True)
-
-
-def Pkl_unequaltime_interp(k_q, chi1_q, chi2_q, Pkl_interoplator) -> jax.numpy.ndarray:
+@jax.jit
+def Pkl_unequaltime_interp(Pkl, ks, k_q) -> jax.numpy.ndarray:
     """
-    Interpolate the unequal-time matter power spectrum on a grid.
-
-    Utilizes interpax's 2D interpolation with Akima method to handle
-    non-uniform grids. Extrapolation is enabled
-    for values outside the given grid.
-
-    Parameters:
+    Interpolate the unequal-time matter power spectrum over k_q values with a fixed chi1, chi2 grid.
+    Parameters
+    ----------
+    Pkl : jax.numpy.ndarray
+        3D array of matter power spectrum values, shape (len(ks), len(chi1s), len(chi2s)).
+    ks : jax.numpy.ndarray
+        1D array of wavenumber grid points corresponding to the first axis of Pkl.
     k_q : jax.numpy.ndarray
-        1D array of query points where interpolation is desired in k.
-    chi1_q : jax.numpy.ndarray
-        1D array of query points where interpolation is desired in chi1.
-    chi2_q : jax.numpy.ndarray
-        1D array of query points where interpolation is desired in chi2.
-    Pkl_interpolator : interpax.Interpolator3D
-        Convenience inperpax class for representing Pkl(ks, chi1s, chi2s) interpolated function.
-    Returns: jax.numpy.ndarray
-        1D array of shape len(k_q) == len(chi1_q) == len(chi2_q) Interpolated unequal-time matter power spectrum values at (k_q, chi1_q, chi2_q).
+        1D array of wavenumber query points.
+    Returns
+    -------
+    jax.numpy.ndarray
+        3D array of same shape as Pkl with the interpolated unequal-time matter power spectrum values.
     """
-    return Pkl_interoplator(k_q, chi1_q, chi2_q)
+    return akima_interpolation(Pkl, ks, k_q, axis=0)
 
 
-"""
-Vectorized version of `Pkl_unequaltime_interp` over a 3D query grid.
-
-This function applies `Pkl_unequaltime_interp` to all possible combinations
-of query points (k_q, chi1_q, chi2_q) using nested `jax.vmap` calls, enabling
-fully batched interpolation on a 3D grid without explicit Python loops.
-
-Parameters
-----------
-k_q : jax.numpy.ndarray
-    1D array of wavenumber query points.
-chi1_q : jax.numpy.ndarray
-    1D array of first comoving-distance query points.
-chi2_q : jax.numpy.ndarray
-    1D array of second comoving-distance query points.
-Pkl_interpolator : interpax.Interpolator3D
-
-Returns
--------
-jax.numpy.ndarray
-    3D array of shape (len(k_q), len(chi1_q), len(chi2_q))
-    containing the interpolated unequal-time matter power spectrum values.
-"""
-Pkl_unequaltime_interp_vmap = jax.vmap(
-    jax.vmap(
-        jax.vmap(
-            Pkl_unequaltime_interp,
-            in_axes=(None, None, 0, None),
-        ),
-        in_axes=(None, 0, None, None),
-    ),
-    in_axes=(0, None, None, None),
-)
-
-
-def Pkl_chebyshev_coeffs(k_min, k_max, n_k_cheb, chi1, chi2, Pkl_interpolator):
+@jax.jit
+def Pkl_chebyshev_coeffs(
+    Pkl: jnp.ndarray,
+    ks: jnp.ndarray,
+    k_cheb: jnp.ndarray,
+) -> jax.numpy.ndarray:
     """
     Compute the Chebyshev coefficients for the unequal-time matter power spectrum
-    P(k, chi1, chi2) over specified ranges and number of points.
+    P(k, chi1, chi2) given a 1D array of wavenumber chebyshev points.
 
     Parameters:
-    k_min : float
-        Minimum wavenumber.
-    k_max : float
-        Maximum wavenumber.
-    n_k_cheb : int
-        Number of Chebyshev points in k.
-    chi1 : float
-        Comoving distances chi1.
-    chi2 : float
-        Comoving distances chi2.
-    Pkl_interpolator: interpax.Interpolator3D
-
+    Pkl : jax.numpy.ndarray
+        3D array of matter power spectrum values, shape (len(ks), len(chi1s), len(chi2s)).
+    ks : jax.numpy.ndarray
+        1D array of wavenumber grid points corresponding to the first axis of Pkl.
+    k_cheb : jax.numpy.ndarray
+        1D array of wavenumber Chebyshev points.
     Returns:
     jax.numpy.ndarray
         3D array of Chebyshev coefficients for P(k, chi1, chi2).
     """
 
-    ks = chebyshev_points_interval(n_k_cheb, k_min, k_max)
+    Pk = Pkl_unequaltime_interp(Pkl, ks, k_cheb)
 
-    Pk = Pkl_interpolator(ks, chi1, chi2)
-
-    Pkl_coeffs = chebyshev_coefficients(Pk)
-
-    return Pkl_coeffs
+    return jnp.apply_along_axis(chebyshev_coefficients, 0, Pk)
 
 
-def Pkl_chebyshev_coeffs_vmap(k_min, k_max, n_k_cheb, chi1, chi2, Pkl_interpolator):
-    """
-    Vectorized computation of Chebyshev coefficients for the unequal-time matter power spectrum
-    P(k, chi1, chi2) over specified ranges and number of points.
-
-    Parameters:
-    k_min : float
-        Minimum wavenumber.
-    k_max : float
-        Maximum wavenumber.
-    n_k_cheb : int
-        Number of Chebyshev points in k.
-    chi1 : jax.numpy.ndarray
-        1D array of comoving distances chi1.
-    chi2 : jax.numpy.ndarray
-        1D array of comoving distances chi2.
-    Pkl_interpolator: interpax.Interpolator3D
-
-
-    Returns:
-    jax.numpy.ndarray
-        3D array of Chebyshev coefficients for P(k, chi1, chi2).
-    """
-    out = np.zeros((n_k_cheb + 1, len(chi1), len(chi2)))
-    for chi1_i, chi1_val in enumerate(chi1):
-        for chi2_j, chi2_val in enumerate(chi2):
-            out[:, chi1_i, chi2_j] = Pkl_chebyshev_coeffs(
-                k_min, k_max, n_k_cheb, chi1_val, chi2_val, Pkl_interpolator
-            )
-    return out
-
-def w_ell(c:Array, T_tilde:Array) -> Array:
+def w_ell(c: Array, T_tilde: Array) -> Array:
     """
     Compute the matrix contractio  to obtain w_ell from Chebyshev coefficients and T_tilde.
-    
+
     Parameters:
     c : jax.numpy.ndarray
         3D array of Chebyshev coefficients. Shape: (n_k_cheb + 1, chi1_n, chi2_n)
@@ -311,4 +239,4 @@ def w_ell(c:Array, T_tilde:Array) -> Array:
     jax.numpy.ndarray
         2D array of shape (chi1_n, chi2_n) representing w_ell.
     """
-    return jnp.einsum('ijk,jki->jk', c, T_tilde)
+    return jnp.einsum("ijk,jki->jk", c, T_tilde)

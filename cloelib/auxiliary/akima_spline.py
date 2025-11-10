@@ -158,6 +158,7 @@ def _akima_eval(t, u, b, c, d, tq, axis: int = 0):
     indices = jnp.searchsorted(t, tq) - 1
     indices = jnp.clip(indices, 0, n - 1)
 
+    tq = jnp.atleast_1d(tq)
     dt = tq - t[indices]
     shape = (dt.shape[0],) + (1,) * (u.ndim - 1)
     dt_reshaped = dt.reshape(shape)

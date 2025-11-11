@@ -11,15 +11,19 @@ from cloelib.cosmology.cosmology import Background
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 import numpy as np
-import warnings
 from scipy import interpolate
 import os
 import urllib.request
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+
 import tensorflow as tf
 
 tf.keras.optimizers.Adam = tf.keras.optimizers.legacy.Adam
+tf.get_logger().setLevel("ERROR")
+
+import cosmopower as cp  # noqa: E402
 
 
 def emulator_data(filename: str, url_base: str) -> str:
@@ -60,7 +64,7 @@ zenodo_path = "https://zenodo.org/records/17570978/files"
 k_modes_path = emulator_data("k-modes.txt", zenodo_path)
 
 
-class w0waCDM_Linear:
+class CosmoPowerw0waCDMLinearPerturbations:
     """
     Emulator for the linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
 
@@ -86,12 +90,9 @@ class w0waCDM_Linear:
         ValueError
             If any parameter lies outside the bounds supported by the emulator.
         """
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=UserWarning)
-            import cosmopower as cp
 
-            cp_file = emulator_data("w0wa-linear-spectra.pkl", zenodo_path)
-            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+        cp_file = emulator_data("w0wa-linear-spectra.pkl", zenodo_path)
+        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
         self.k_emu = np.loadtxt(k_modes_path)
 
@@ -211,7 +212,7 @@ class w0waCDM_Linear:
         return D_z_k
 
 
-class wCDM_Linear:
+class CosmoPowerwCDMLinearPerturbations:
     """
     Emulator for the linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
 
@@ -237,12 +238,9 @@ class wCDM_Linear:
         ValueError
             If any parameter lies outside the bounds supported by the emulator.
         """
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=UserWarning)
-            import cosmopower as cp
 
-            cp_file = emulator_data("wcdm-linear-spectra.pkl", zenodo_path)
-            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+        cp_file = emulator_data("wcdm-linear-spectra.pkl", zenodo_path)
+        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
         self.k_emu = np.loadtxt(k_modes_path)
 
@@ -360,7 +358,7 @@ class wCDM_Linear:
         return D_z_k
 
 
-class LCDM_Linear:
+class CosmoPowerLCDMLinearPerturbations:
     """
     Emulator for the linear matter power spectrum in the LCDM cosmology (w is set to -1) with no massive neutrinos.
 
@@ -386,12 +384,9 @@ class LCDM_Linear:
         ValueError
             If any parameter lies outside the bounds supported by the emulator.
         """
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=UserWarning)
-            import cosmopower as cp
 
-            cp_file = emulator_data("lcdm-linear-spectra.pkl", zenodo_path)
-            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+        cp_file = emulator_data("lcdm-linear-spectra.pkl", zenodo_path)
+        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
         self.k_emu = np.loadtxt(k_modes_path)
 
@@ -507,7 +502,7 @@ class LCDM_Linear:
         return D_z_k
 
 
-class w0waCDM_Pcb_Linear:
+class CosmoPowerw0waCDMLinearCBPerturbations:
     """
     Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
 
@@ -533,12 +528,9 @@ class w0waCDM_Pcb_Linear:
         ValueError
             If any parameter lies outside the bounds supported by the emulator.
         """
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=UserWarning)
-            import cosmopower as cp
 
-            cp_file = emulator_data("w0wa-pcb-linear-spectra.pkl", zenodo_path)
-            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+        cp_file = emulator_data("w0wa-pcb-linear-spectra.pkl", zenodo_path)
+        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
         self.k_emu = np.loadtxt(k_modes_path)
 
@@ -658,7 +650,7 @@ class w0waCDM_Pcb_Linear:
         return D_z_k
 
 
-class wCDM_Pcb_Linear:
+class CosmoPowerwCDMLinearCBPerturbations:
     """
     Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
 
@@ -684,12 +676,9 @@ class wCDM_Pcb_Linear:
         ValueError
             If any parameter lies outside the bounds supported by the emulator.
         """
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=UserWarning)
-            import cosmopower as cp
 
-            cp_file = emulator_data("wcdm-pcb-linear-spectra.pkl", zenodo_path)
-            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+        cp_file = emulator_data("wcdm-pcb-linear-spectra.pkl", zenodo_path)
+        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
         self.k_emu = np.loadtxt(k_modes_path)
 
@@ -807,7 +796,7 @@ class wCDM_Pcb_Linear:
         return D_z_k
 
 
-class LCDM_Pcb_Linear:
+class CosmoPowerLCDMLinearCBPerturbations:
     """
     Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the LCDM cosmology (w is set to -1) with no massive neutrinos.
 
@@ -833,12 +822,9 @@ class LCDM_Pcb_Linear:
         ValueError
             If any parameter lies outside the bounds supported by the emulator.
         """
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=UserWarning)
-            import cosmopower as cp
 
-            cp_file = emulator_data("lcdm-pcb-linear-spectra.pkl", zenodo_path)
-            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+        cp_file = emulator_data("lcdm-pcb-linear-spectra.pkl", zenodo_path)
+        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
         self.k_emu = np.loadtxt(k_modes_path)
 

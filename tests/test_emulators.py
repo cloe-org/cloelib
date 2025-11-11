@@ -5,12 +5,12 @@ import importlib.util
 HAS_COSMOPOWER = importlib.util.find_spec("cosmopower") is not None
 if HAS_COSMOPOWER:
     from cloelib.cosmology.cosmopower_cosmology import (
-        w0waCDM_Linear,
-        wCDM_Linear,
-        LCDM_Linear,
-        w0waCDM_Pcb_Linear,
-        wCDM_Pcb_Linear,
-        LCDM_Pcb_Linear,
+        CosmoPowerw0waCDMLinearPerturbations as w0waCDM_Linear,
+        CosmoPowerwCDMLinearPerturbations as wCDM_Linear,
+        CosmoPowerLCDMLinearPerturbations as LCDM_Linear,
+        CosmoPowerw0waCDMLinearCBPerturbations as w0waCDM_Pcb_Linear,
+        CosmoPowerwCDMLinearCBPerturbations as wCDM_Pcb_Linear,
+        CosmoPowerLCDMLinearCBPerturbations as LCDM_Pcb_Linear,
     )
 else:
     pytest.skip(

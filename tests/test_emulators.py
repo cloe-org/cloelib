@@ -5,12 +5,9 @@ import importlib.util
 HAS_COSMOPOWER = importlib.util.find_spec("cosmopower") is not None
 if HAS_COSMOPOWER:
     from cloelib.cosmology.cosmopower_cosmology import (
-        CosmoPowerw0waCDMLinearPerturbations as w0waCDM_Linear,
-        CosmoPowerwCDMLinearPerturbations as wCDM_Linear,
-        CosmoPowerLCDMLinearPerturbations as LCDM_Linear,
-        CosmoPowerw0waCDMLinearCBPerturbations as w0waCDM_Pcb_Linear,
-        CosmoPowerwCDMLinearCBPerturbations as wCDM_Pcb_Linear,
-        CosmoPowerLCDMLinearCBPerturbations as LCDM_Pcb_Linear,
+        CosmoPowerw0waCDMPerturbations as w0waCDM,
+        CosmoPowerwCDMPerturbations as wCDM,
+        CosmoPowerLCDMPerturbations as LCDM,
     )
 else:
     pytest.skip(
@@ -142,7 +139,7 @@ def background_lcdm():
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_linear_initialization(background_w0wa, z_array):
     """Test w0waCDM emulator initializes correctly"""
-    emulator = w0waCDM_Linear(background=background_w0wa, redshifts=z_array)
+    emulator = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
 
     assert hasattr(emulator, "Pk_int")
     assert hasattr(emulator, "k")
@@ -154,7 +151,7 @@ def test_w0wa_linear_initialization(background_w0wa, z_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_linear_power_spectrum(background_w0wa, z_array, k_array):
     """Test w0waCDM power spectrum output - following the pattern: pk = emulator.matter_power_spectrum(z, k)[0,:]"""
-    emulator = w0waCDM_Linear(background=background_w0wa, redshifts=z_array)
+    emulator = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
 
     # Use the documented calling pattern
     pk = emulator.matter_power_spectrum(z_array[0], k_array)[0, :]
@@ -168,7 +165,7 @@ def test_w0wa_linear_power_spectrum(background_w0wa, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_linear_redshift_evolution(background_w0wa, z_array, k_array):
     """Test power spectrum decreases with redshift"""
-    emulator = w0waCDM_Linear(background=background_w0wa, redshifts=z_array)
+    emulator = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
 
     pk_z0 = emulator.matter_power_spectrum(0.0, k_array)[0, :]
     pk_z2 = emulator.matter_power_spectrum(2.0, k_array)[0, :]
@@ -180,7 +177,7 @@ def test_w0wa_linear_redshift_evolution(background_w0wa, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_linear_growth_factor(background_w0wa, z_array, k_array):
     """Test growth factor properties"""
-    emulator = w0waCDM_Linear(background=background_w0wa, redshifts=z_array)
+    emulator = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
 
     D_z0 = emulator.growth_factor(0.0, k_array)[0, :]
     D_z2 = emulator.growth_factor(2.0, k_array)[0, :]
@@ -196,7 +193,7 @@ def test_w0wa_linear_growth_factor(background_w0wa, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_pcb_linear(background_w0wa, z_array, k_array):
     """Test w0waCDM Pcb emulator"""
-    emulator = w0waCDM_Pcb_Linear(background=background_w0wa, redshifts=z_array)
+    emulator = w0waCDM.LinearCB(background=background_w0wa, redshifts=z_array)
 
     pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
 
@@ -211,7 +208,7 @@ def test_w0wa_pcb_linear(background_w0wa, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_wcdm_linear_power_spectrum(background_wcdm, z_array, k_array):
     """Test wCDM power spectrum"""
-    emulator = wCDM_Linear(background=background_wcdm, redshifts=z_array)
+    emulator = wCDM.Linear(background=background_wcdm, redshifts=z_array)
 
     pk = emulator.matter_power_spectrum(1.0, k_array)[0, :]
 
@@ -223,7 +220,7 @@ def test_wcdm_linear_power_spectrum(background_wcdm, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_wcdm_pcb_linear(background_wcdm, z_array, k_array):
     """Test wCDM Pcb emulator"""
-    emulator = wCDM_Pcb_Linear(background=background_wcdm, redshifts=z_array)
+    emulator = wCDM.LinearCB(background=background_wcdm, redshifts=z_array)
 
     pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
 
@@ -236,7 +233,7 @@ def test_wcdm_pcb_linear(background_wcdm, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_lcdm_linear_power_spectrum(background_lcdm, z_array, k_array):
     """Test LCDM power spectrum"""
-    emulator = LCDM_Linear(background=background_lcdm, redshifts=z_array)
+    emulator = LCDM.Linear(background=background_lcdm, redshifts=z_array)
 
     pk = emulator.matter_power_spectrum(0.0, k_array)[0, :]
 
@@ -248,7 +245,7 @@ def test_lcdm_linear_power_spectrum(background_lcdm, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_lcdm_growth_factor_normalization(background_lcdm, z_array, k_array):
     """Test LCDM growth factor is properly normalized"""
-    emulator = LCDM_Linear(background=background_lcdm, redshifts=z_array)
+    emulator = LCDM.Linear(background=background_lcdm, redshifts=z_array)
 
     D_z0 = emulator.growth_factor(0.0, k_array)[0, :]
 
@@ -260,7 +257,7 @@ def test_lcdm_growth_factor_normalization(background_lcdm, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_lcdm_pcb_linear(background_lcdm, z_array, k_array):
     """Test LCDM Pcb emulator"""
-    emulator = LCDM_Pcb_Linear(background=background_lcdm, redshifts=z_array)
+    emulator = LCDM.LinearCB(background=background_lcdm, redshifts=z_array)
 
     pk_cb = emulator.matter_power_spectrum(1.5, k_array)[0, :]
 
@@ -289,7 +286,7 @@ def test_parameter_out_of_bounds():
     )
 
     with pytest.raises(ValueError, match="out of range"):
-        w0waCDM_Linear(background=bad_background, redshifts=np.array([0.0, 1.0]))
+        w0waCDM.Linear(background=bad_background, redshifts=np.array([0.0, 1.0]))
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -310,7 +307,7 @@ def test_non_flat_geometry():
     )
 
     with pytest.raises(AssertionError, match="Non flat geometries"):
-        w0waCDM_Linear(background=curved_background, redshifts=np.array([0.0]))
+        w0waCDM.Linear(background=curved_background, redshifts=np.array([0.0]))
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -318,7 +315,7 @@ def test_redshift_filtering(background_lcdm):
     """Test that emulator handles valid redshifts correctly"""
     # Only use redshifts within valid range (<=5)
     z_valid = np.array([0.0, 1.0, 3.0, 4.5])
-    emulator = LCDM_Linear(background=background_lcdm, redshifts=z_valid)
+    emulator = LCDM.Linear(background=background_lcdm, redshifts=z_valid)
 
     # Internal z should be within range
     assert np.all(emulator.z <= 5.0)
@@ -330,8 +327,8 @@ def test_redshift_filtering(background_lcdm):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_pcb_vs_total_matter(background_lcdm, z_array, k_array):
     """Test that Pcb and total matter spectra are similar (no massive neutrinos)"""
-    emulator_total = LCDM_Linear(background=background_lcdm, redshifts=z_array)
-    emulator_pcb = LCDM_Pcb_Linear(background=background_lcdm, redshifts=z_array)
+    emulator_total = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    emulator_pcb = LCDM.LinearCB(background=background_lcdm, redshifts=z_array)
 
     pk_total = emulator_total.matter_power_spectrum(0.0, k_array)[0, :]
     pk_cb = emulator_pcb.matter_power_spectrum(0.0, k_array)[0, :]
@@ -345,7 +342,7 @@ def test_pcb_vs_total_matter(background_lcdm, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_str_representation(background_w0wa, z_array):
     """Test __str__ method returns useful info"""
-    emulator = w0waCDM_Linear(background=background_w0wa, redshifts=z_array)
+    emulator = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
 
     info_str = str(emulator)
 

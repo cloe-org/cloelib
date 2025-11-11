@@ -64,877 +64,889 @@ zenodo_path = "https://zenodo.org/records/17570978/files"
 k_modes_path = emulator_data("k-modes.txt", zenodo_path)
 
 
-class CosmoPowerw0waCDMLinearPerturbations:
+class CosmoPowerw0waCDMPerturbations:
     """
-    Emulator for the linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
-
-    This class uses a Cosmopower-trained neural network to emulate the linear power spectrum
-    for a w0waCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
+    Class for w0waCDM cosmology perturbations using Cosmopower emulators.
     """
 
-    def __init__(self, background: Background, redshifts: np.ndarray):
+    class Linear:
         """
-        Initialize the emulator with a given cosmological background and redshift array.
+        Emulator for the linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
 
-        Parameters
-        ----------
-        background : Background
-            Background cosmology object, providing all necessary cosmological parameters.
-        redshifts : np.ndarray
-            Array of redshift values for which the power spectrum should be computed.
-
-        Raises
-        ------
-        AssertionError
-            If the geometry is not flat (Omega_k0 != 0).
-        ValueError
-            If any parameter lies outside the bounds supported by the emulator.
+        This class uses a Cosmopower-trained neural network to emulate the linear power spectrum
+        for a w0waCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
         """
 
-        cp_file = emulator_data("w0wa-linear-spectra.pkl", zenodo_path)
-        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+        def __init__(self, background: Background, redshifts: np.ndarray):
+            """
+            Initialize the emulator with a given cosmological background and redshift array.
 
-        self.k_emu = np.loadtxt(k_modes_path)
+            Parameters
+            ----------
+            background : Background
+                Background cosmology object, providing all necessary cosmological parameters.
+            redshifts : np.ndarray
+                Array of redshift values for which the power spectrum should be computed.
 
-        self.k_min = self.k_emu[0]
-        self.k_max = self.k_emu[-1]
+            Raises
+            ------
+            AssertionError
+                If the geometry is not flat (Omega_k0 != 0).
+            ValueError
+                If any parameter lies outside the bounds supported by the emulator.
+            """
 
-        self.background = background
-        assert background.Omega_k0 == 0, "Non flat geometries not supported"
+            cp_file = emulator_data("w0wa-linear-spectra.pkl", zenodo_path)
+            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
-        redshift_max = 5
-        self.z = redshifts[redshifts <= redshift_max]
+            self.k_emu = np.loadtxt(k_modes_path)
 
-        cp_bounds = {
-            "ombh2": np.array([0.001, 0.1]),
-            "omch2": np.array([0.05, 0.9]),
-            "H0": np.array([20, 100]),
-            "ns": np.array([0.6, 1.3]),
-            "lnAs": np.array([1.61, 5]),
-            "w0": np.array([-3.0, -0.33]),
-            "wa": np.array([-3, 3]),
-            "z": np.array([0.0, 5.0]),
-        }
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
 
-        self.params = {
-            "ombh2": self.background.Omega_b0 * self.background.h**2,
-            "omch2": self.background.Omega_cdm0 * self.background.h**2,
-            "H0": self.background.H0,
-            "ns": self.background.ns,
-            "lnAs": np.log(self.background.As * 1e10),
-            "w0": self.background.w0,
-            "wa": self.background.wa,
-        }
+            self.background = background
+            assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
-        for key in self.params.keys():
-            if np.product(self.params[key] - cp_bounds[key]) > 0:
-                raise ValueError("Cosmopower linear Ivan out of range.")
-            else:
-                self.params[key] = np.tile(self.params[key], len(redshifts))
+            redshift_max = 5
+            self.z = redshifts[redshifts <= redshift_max]
 
-        self.params["z"] = redshifts
+            cp_bounds = {
+                "ombh2": np.array([0.001, 0.1]),
+                "omch2": np.array([0.05, 0.9]),
+                "H0": np.array([20, 100]),
+                "ns": np.array([0.6, 1.3]),
+                "lnAs": np.array([1.61, 5]),
+                "w0": np.array([-3.0, -0.33]),
+                "wa": np.array([-3, 3]),
+                "z": np.array([0.0, 5.0]),
+            }
 
-        Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "w0": self.background.w0,
+                "wa": self.background.wa,
+            }
 
-        k_out, z_out, Pk_out = extend_spectra(
-            self.k_emu,
-            self.z,
-            Pk_lin,
-            flag_range=True,
-            option_wavenumber="logk2",
-            option_redshift="power_law",
-            extrap_z=redshifts,
-            option_cosmo="const",
-            ns=self.background.ns,
-        )
+            for key in self.params.keys():
+                if np.product(self.params[key] - cp_bounds[key]) > 0:
+                    raise ValueError("Cosmopower emulator out of range.")
+                else:
+                    self.params[key] = np.tile(self.params[key], len(redshifts))
 
-        self.k = k_out
-        self.z = z_out
-        self.Pk = Pk_out
+            self.params["z"] = redshifts
 
-        pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
-        self.Pk_int = pk_int
+            Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
 
-    def __str__(self):
-        """Return emulator description."""
-        return (
-            f"Cosmopower linear Pk module. Computes the linear power spectrum "
-            f"for an w0waCDM cosmology, using input cosmological parameters:\n"
-            f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa'] \n"
-            f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-            f"There are no massive neutrinos in this model. "
-        )
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_lin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
 
-    def matter_power_spectrum(self, zs, ks):
-        """Compute the linear matter power spectrum P(k, z).
+            self.k = k_out
+            self.z = z_out
+            self.Pk = Pk_out
 
-        Parameters
-        ----------
-        zs : np.ndarray
-            Redshifts at which to evaluate the power spectrum.
-        ks : np.ndarray
-            Wavenumbers in units of Mpc^-1.
+            pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
+            self.Pk_int = pk_int
 
-        Returns
-        -------
-        np.ndarray
-            Linear matter power spectrum in (Mpc/h)^3.
+        def __str__(self):
+            """Return emulator description."""
+            return (
+                f"Cosmopower linear Pk module. Computes the linear power spectrum "
+                f"for an w0waCDM cosmology, using input cosmological parameters:\n"
+                f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa'] \n"
+                f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
+                f"There are no massive neutrinos in this model. "
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            """Compute the linear matter power spectrum P(k, z).
+
+            Parameters
+            ----------
+            zs : np.ndarray
+                Redshifts at which to evaluate the power spectrum.
+            ks : np.ndarray
+                Wavenumbers in units of Mpc^-1.
+
+            Returns
+            -------
+            np.ndarray
+                Linear matter power spectrum in (Mpc/h)^3.
+            """
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks) -> np.ndarray:
+            r"""
+            Calculate the growth factor for given redshifts and wavenumbers.
+
+            .. math::
+                D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+                /P_{\rm \delta\delta}(z=0, k)}\\
+
+            and normalizes as for :math:`D(z)/D(0)`.
+
+
+            Parameters:
+            -----------
+            zs : array_like
+                Redshifts at which to calculate the growth factor.
+            ks : array_like
+                Wavenumbers at which to calculate the growth factor.
+
+            Returns:
+            --------
+            np.ndarray
+                The growth factor as a function of redshift and wavenumber.
+
+            """
+            if hasattr(self, "Pk_int") and self.Pk_int is not None:
+                D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+            return D_z_k
+
+    class LinearCB:
         """
-        return self.Pk_int(zs, ks)
+        Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
 
-    def growth_factor(self, zs, ks) -> np.ndarray:
-        r"""
-        Calculate the growth factor for given redshifts and wavenumbers.
-
-        .. math::
-            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
-            /P_{\rm \delta\delta}(z=0, k)}\\
-
-        and normalizes as for :math:`D(z)/D(0)`.
-
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
-
-        Returns:
-        --------
-        np.ndarray
-            The growth factor as a function of redshift and wavenumber.
-
+        This class uses a Cosmopower-trained neural network to emulate the cb linear power spectrum
+        for a w0waCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
         """
-        if hasattr(self, "Pk_int") and self.Pk_int is not None:
-            D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        return D_z_k
+        def __init__(self, background: Background, redshifts: np.ndarray):
+            """
+            Initialize the emulator with a given cosmological background and redshift array.
+
+            Parameters
+            ----------
+            background : Background
+                Background cosmology object, providing all necessary cosmological parameters.
+            redshifts : np.ndarray
+                Array of redshift values for which the power spectrum should be computed.
+
+            Raises
+            ------
+            AssertionError
+                If the geometry is not flat (Omega_k0 != 0).
+            ValueError
+                If any parameter lies outside the bounds supported by the emulator.
+            """
+
+            cp_file = emulator_data("w0wa-pcb-linear-spectra.pkl", zenodo_path)
+            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+
+            self.k_emu = np.loadtxt(k_modes_path)
+
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
+
+            self.background = background
+            assert background.Omega_k0 == 0, "Non flat geometries not supported"
+
+            redshift_max = 5
+            self.z = redshifts[redshifts <= redshift_max]
+
+            cp_bounds = {
+                "ombh2": np.array([0.001, 0.1]),
+                "omch2": np.array([0.05, 0.9]),
+                "H0": np.array([20, 100]),
+                "ns": np.array([0.6, 1.3]),
+                "lnAs": np.array([1.61, 5]),
+                "w0": np.array([-3.0, -0.33]),
+                "wa": np.array([-3, 3]),
+                "z": np.array([0.0, 5.0]),
+            }
+
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "w0": self.background.w0,
+                "wa": self.background.wa,
+            }
+
+            for key in self.params.keys():
+                if np.product(self.params[key] - cp_bounds[key]) > 0:
+                    raise ValueError("Cosmopower emulator out of range.")
+                else:
+                    self.params[key] = np.tile(self.params[key], len(redshifts))
+
+            self.params["z"] = redshifts
+
+            Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
+
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_lin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
+
+            self.k = k_out
+            self.z = z_out
+            self.Pk = Pk_out
+
+            pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
+            self.Pk_int = pk_int
+
+        def __str__(self):
+            """Return emulator description."""
+            return (
+                f"Cosmopower cb linear Pk module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
+                f"for an w0waCDM cosmology, using input cosmological parameters:\n"
+                f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa'] \n"
+                f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
+                f"There are no massive neutrinos in this model. "
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            """Compute the cb linear matter power spectrum P_cb(k, z).
+
+            Parameters
+            ----------
+            zs : np.ndarray
+                Redshifts at which to evaluate the power spectrum.
+            ks : np.ndarray
+                Wavenumbers in units of Mpc^-1.
+
+            Returns
+            -------
+            np.ndarray
+                Linear matter power spectrum in (Mpc/h)^3.
+            """
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks) -> np.ndarray:
+            r"""
+            Calculate the growth factor for given redshifts and wavenumbers.
+
+            .. math::
+                D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+                /P_{\rm \delta\delta}(z=0, k)}\\
+
+            and normalizes as for :math:`D(z)/D(0)`.
 
 
-class CosmoPowerwCDMLinearPerturbations:
+            Parameters:
+            -----------
+            zs : array_like
+                Redshifts at which to calculate the growth factor.
+            ks : array_like
+                Wavenumbers at which to calculate the growth factor.
+
+            Returns:
+            --------
+            np.ndarray
+                The growth factor as a function of redshift and wavenumber.
+
+            """
+            if hasattr(self, "Pk_int") and self.Pk_int is not None:
+                D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+            return D_z_k
+
+
+class CosmoPowerwCDMPerturbations:
     """
-    Emulator for the linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
-
-    This class uses a Cosmopower-trained neural network to emulate the linear power spectrum
-    for a wCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
-    """
-
-    def __init__(self, background: Background, redshifts: np.ndarray):
-        """
-        Initialize the emulator with a given cosmological background and redshift array.
-
-        Parameters
-        ----------
-        background : Background
-            Background cosmology object, providing all necessary cosmological parameters.
-        redshifts : np.ndarray
-            Array of redshift values for which the power spectrum should be computed.
-
-        Raises
-        ------
-        AssertionError
-            If the geometry is not flat (Omega_k0 != 0).
-        ValueError
-            If any parameter lies outside the bounds supported by the emulator.
-        """
-
-        cp_file = emulator_data("wcdm-linear-spectra.pkl", zenodo_path)
-        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
-
-        self.k_emu = np.loadtxt(k_modes_path)
-
-        self.k_min = self.k_emu[0]
-        self.k_max = self.k_emu[-1]
-
-        self.background = background
-        assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-        redshift_max = 5
-        self.z = redshifts[redshifts <= redshift_max]
-
-        cp_bounds = {
-            "ombh2": np.array([0.001, 0.1]),
-            "omch2": np.array([0.05, 0.9]),
-            "H0": np.array([20, 100]),
-            "ns": np.array([0.6, 1.3]),
-            "lnAs": np.array([1.61, 5]),
-            "w": np.array([-3.0, 0]),
-            "z": np.array([0.0, 5.0]),
-        }
-
-        self.params = {
-            "ombh2": self.background.Omega_b0 * self.background.h**2,
-            "omch2": self.background.Omega_cdm0 * self.background.h**2,
-            "H0": self.background.H0,
-            "ns": self.background.ns,
-            "lnAs": np.log(self.background.As * 1e10),
-            "w": self.background.w0,
-        }
-
-        for key in self.params.keys():
-            if np.product(self.params[key] - cp_bounds[key]) > 0:
-                raise ValueError("Cosmopower linear Ivan out of range.")
-            else:
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-
-        self.params["z"] = redshifts
-
-        Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
-
-        k_out, z_out, Pk_out = extend_spectra(
-            self.k_emu,
-            self.z,
-            Pk_lin,
-            flag_range=True,
-            option_wavenumber="logk2",
-            option_redshift="power_law",
-            extrap_z=redshifts,
-            option_cosmo="const",
-            ns=self.background.ns,
-        )
-
-        self.k = k_out
-        self.z = z_out
-        self.Pk = Pk_out
-
-        pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
-        self.Pk_int = pk_int
-
-    def __str__(self):
-        """Return emulator description."""
-        return (
-            f"Cosmopower linear Pk module. Computes the linear power spectrum "
-            f"for an wCDM cosmology, using input cosmological parameters:\n"
-            f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs','w','z' ] \n"
-            f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-            f"There are no massive neutrinos in this model. "
-        )
-
-    def matter_power_spectrum(self, zs, ks):
-        """Compute the linear matter power spectrum P(k, z).
-
-        Parameters
-        ----------
-        zs : np.ndarray
-            Redshifts at which to evaluate the power spectrum.
-        ks : np.ndarray
-            Wavenumbers in units of Mpc^-1.
-
-        Returns
-        -------
-        np.ndarray
-            Linear matter power spectrum in (Mpc/h)^3.
-        """
-        return self.Pk_int(zs, ks)
-
-    def growth_factor(self, zs, ks) -> np.ndarray:
-        r"""
-        Calculate the growth factor for given redshifts and wavenumbers.
-
-        .. math::
-            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
-            /P_{\rm \delta\delta}(z=0, k)}\\
-
-        and normalizes as for :math:`D(z)/D(0)`.
-
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
-
-        Returns:
-        --------
-        np.ndarray
-            The growth factor as a function of redshift and wavenumber.
-
-        """
-        if hasattr(self, "Pk_int") and self.Pk_int is not None:
-            D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        return D_z_k
-
-
-class CosmoPowerLCDMLinearPerturbations:
-    """
-    Emulator for the linear matter power spectrum in the LCDM cosmology (w is set to -1) with no massive neutrinos.
-
-    This class uses a Cosmopower-trained neural network to emulate the linear power spectrum
-    for a LCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
-    """
-
-    def __init__(self, background: Background, redshifts: np.ndarray):
-        """
-        Initialize the emulator with a given cosmological background and redshift array.
-
-        Parameters
-        ----------
-        background : Background
-            Background cosmology object, providing all necessary cosmological parameters.
-        redshifts : np.ndarray
-            Array of redshift values for which the power spectrum should be computed.
-
-        Raises
-        ------
-        AssertionError
-            If the geometry is not flat (Omega_k0 != 0).
-        ValueError
-            If any parameter lies outside the bounds supported by the emulator.
-        """
-
-        cp_file = emulator_data("lcdm-linear-spectra.pkl", zenodo_path)
-        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
-
-        self.k_emu = np.loadtxt(k_modes_path)
-
-        self.k_min = self.k_emu[0]
-        self.k_max = self.k_emu[-1]
-
-        self.background = background
-        assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-        redshift_max = 5
-        self.z = redshifts[redshifts <= redshift_max]
-
-        cp_bounds = {
-            "ombh2": np.array([0.001, 0.1]),
-            "omch2": np.array([0.05, 0.9]),
-            "H0": np.array([20, 100]),
-            "ns": np.array([0.6, 1.3]),
-            "lnAs": np.array([1.61, 5]),
-            "z": np.array([0.0, 5.0]),
-        }
-
-        self.params = {
-            "ombh2": self.background.Omega_b0 * self.background.h**2,
-            "omch2": self.background.Omega_cdm0 * self.background.h**2,
-            "H0": self.background.H0,
-            "ns": self.background.ns,
-            "lnAs": np.log(self.background.As * 1e10),
-        }
-
-        for key in self.params.keys():
-            if np.product(self.params[key] - cp_bounds[key]) > 0:
-                raise ValueError("Cosmopower linear Ivan out of range.")
-            else:
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-
-        self.params["z"] = redshifts
-
-        Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
-
-        k_out, z_out, Pk_out = extend_spectra(
-            self.k_emu,
-            self.z,
-            Pk_lin,
-            flag_range=True,
-            option_wavenumber="logk2",
-            option_redshift="power_law",
-            extrap_z=redshifts,
-            option_cosmo="const",
-            ns=self.background.ns,
-        )
-
-        self.k = k_out
-        self.z = z_out
-        self.Pk = Pk_out
-
-        pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
-        self.Pk_int = pk_int
-
-    def __str__(self):
-        """Return emulator description."""
-        return (
-            f"Cosmopower linear Pk module. Computes the linear power spectrum "
-            f"for an LCDM cosmology with w = -1, using input cosmological parameters:\n"
-            f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z'] \n"
-            f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-            f"There are no massive neutrinos in this model. "
-        )
-
-    def matter_power_spectrum(self, zs, ks):
-        """Compute the linear matter power spectrum P(k, z).
-
-        Parameters
-        ----------
-        zs : np.ndarray
-            Redshifts at which to evaluate the power spectrum.
-        ks : np.ndarray
-            Wavenumbers in units of Mpc^-1.
-
-        Returns
-        -------
-        np.ndarray
-            Linear matter power spectrum in (Mpc/h)^3.
-        """
-        return self.Pk_int(zs, ks)
-
-    def growth_factor(self, zs, ks) -> np.ndarray:
-        r"""
-        Calculate the growth factor for given redshifts and wavenumbers.
-
-        .. math::
-            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
-            /P_{\rm \delta\delta}(z=0, k)}\\
-
-        and normalizes as for :math:`D(z)/D(0)`.
-
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
-
-        Returns:
-        --------
-        np.ndarray
-            The growth factor as a function of redshift and wavenumber.
-
-        """
-        if hasattr(self, "Pk_int") and self.Pk_int is not None:
-            D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        return D_z_k
-
-
-class CosmoPowerw0waCDMLinearCBPerturbations:
-    """
-    Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
-
-    This class uses a Cosmopower-trained neural network to emulate the cb linear power spectrum
-    for a w0waCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
+    Class for wCDM cosmology perturbations using Cosmopower emulators.
     """
 
-    def __init__(self, background: Background, redshifts: np.ndarray):
+    class Linear:
         """
-        Initialize the emulator with a given cosmological background and redshift array.
+        Emulator for the linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
 
-        Parameters
-        ----------
-        background : Background
-            Background cosmology object, providing all necessary cosmological parameters.
-        redshifts : np.ndarray
-            Array of redshift values for which the power spectrum should be computed.
-
-        Raises
-        ------
-        AssertionError
-            If the geometry is not flat (Omega_k0 != 0).
-        ValueError
-            If any parameter lies outside the bounds supported by the emulator.
+        This class uses a Cosmopower-trained neural network to emulate the linear power spectrum
+        for a wCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
         """
 
-        cp_file = emulator_data("w0wa-pcb-linear-spectra.pkl", zenodo_path)
-        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+        def __init__(self, background: Background, redshifts: np.ndarray):
+            """
+            Initialize the emulator with a given cosmological background and redshift array.
 
-        self.k_emu = np.loadtxt(k_modes_path)
+            Parameters
+            ----------
+            background : Background
+                Background cosmology object, providing all necessary cosmological parameters.
+            redshifts : np.ndarray
+                Array of redshift values for which the power spectrum should be computed.
 
-        self.k_min = self.k_emu[0]
-        self.k_max = self.k_emu[-1]
+            Raises
+            ------
+            AssertionError
+                If the geometry is not flat (Omega_k0 != 0).
+            ValueError
+                If any parameter lies outside the bounds supported by the emulator.
+            """
 
-        self.background = background
-        assert background.Omega_k0 == 0, "Non flat geometries not supported"
+            cp_file = emulator_data("wcdm-linear-spectra.pkl", zenodo_path)
+            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
-        redshift_max = 5
-        self.z = redshifts[redshifts <= redshift_max]
+            self.k_emu = np.loadtxt(k_modes_path)
 
-        cp_bounds = {
-            "ombh2": np.array([0.001, 0.1]),
-            "omch2": np.array([0.05, 0.9]),
-            "H0": np.array([20, 100]),
-            "ns": np.array([0.6, 1.3]),
-            "lnAs": np.array([1.61, 5]),
-            "w0": np.array([-3.0, -0.33]),
-            "wa": np.array([-3, 3]),
-            "z": np.array([0.0, 5.0]),
-        }
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
 
-        self.params = {
-            "ombh2": self.background.Omega_b0 * self.background.h**2,
-            "omch2": self.background.Omega_cdm0 * self.background.h**2,
-            "H0": self.background.H0,
-            "ns": self.background.ns,
-            "lnAs": np.log(self.background.As * 1e10),
-            "w0": self.background.w0,
-            "wa": self.background.wa,
-        }
+            self.background = background
+            assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
-        for key in self.params.keys():
-            if np.product(self.params[key] - cp_bounds[key]) > 0:
-                raise ValueError("Cosmopower linear Ivan out of range.")
-            else:
-                self.params[key] = np.tile(self.params[key], len(redshifts))
+            redshift_max = 5
+            self.z = redshifts[redshifts <= redshift_max]
 
-        self.params["z"] = redshifts
+            cp_bounds = {
+                "ombh2": np.array([0.001, 0.1]),
+                "omch2": np.array([0.05, 0.9]),
+                "H0": np.array([20, 100]),
+                "ns": np.array([0.6, 1.3]),
+                "lnAs": np.array([1.61, 5]),
+                "w": np.array([-3.0, 0]),
+                "z": np.array([0.0, 5.0]),
+            }
 
-        Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "w": self.background.w0,
+            }
 
-        k_out, z_out, Pk_out = extend_spectra(
-            self.k_emu,
-            self.z,
-            Pk_lin,
-            flag_range=True,
-            option_wavenumber="logk2",
-            option_redshift="power_law",
-            extrap_z=redshifts,
-            option_cosmo="const",
-            ns=self.background.ns,
-        )
+            for key in self.params.keys():
+                if np.product(self.params[key] - cp_bounds[key]) > 0:
+                    raise ValueError("Cosmopower emulator out of range.")
+                else:
+                    self.params[key] = np.tile(self.params[key], len(redshifts))
 
-        self.k = k_out
-        self.z = z_out
-        self.Pk = Pk_out
+            self.params["z"] = redshifts
 
-        pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
-        self.Pk_int = pk_int
+            Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
 
-    def __str__(self):
-        """Return emulator description."""
-        return (
-            f"Cosmopower cb linear Pk module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
-            f"for an w0waCDM cosmology, using input cosmological parameters:\n"
-            f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa'] \n"
-            f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-            f"There are no massive neutrinos in this model. "
-        )
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_lin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
 
-    def matter_power_spectrum(self, zs, ks):
-        """Compute the cb linear matter power spectrum P_cb(k, z).
+            self.k = k_out
+            self.z = z_out
+            self.Pk = Pk_out
 
-        Parameters
-        ----------
-        zs : np.ndarray
-            Redshifts at which to evaluate the power spectrum.
-        ks : np.ndarray
-            Wavenumbers in units of Mpc^-1.
+            pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
+            self.Pk_int = pk_int
 
-        Returns
-        -------
-        np.ndarray
-            Linear matter power spectrum in (Mpc/h)^3.
+        def __str__(self):
+            """Return emulator description."""
+            return (
+                f"Cosmopower linear Pk module. Computes the linear power spectrum "
+                f"for an wCDM cosmology, using input cosmological parameters:\n"
+                f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs','w','z' ] \n"
+                f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
+                f"There are no massive neutrinos in this model. "
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            """Compute the linear matter power spectrum P(k, z).
+
+            Parameters
+            ----------
+            zs : np.ndarray
+                Redshifts at which to evaluate the power spectrum.
+            ks : np.ndarray
+                Wavenumbers in units of Mpc^-1.
+
+            Returns
+            -------
+            np.ndarray
+                Linear matter power spectrum in (Mpc/h)^3.
+            """
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks) -> np.ndarray:
+            r"""
+            Calculate the growth factor for given redshifts and wavenumbers.
+
+            .. math::
+                D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+                /P_{\rm \delta\delta}(z=0, k)}\\
+
+            and normalizes as for :math:`D(z)/D(0)`.
+
+
+            Parameters:
+            -----------
+            zs : array_like
+                Redshifts at which to calculate the growth factor.
+            ks : array_like
+                Wavenumbers at which to calculate the growth factor.
+
+            Returns:
+            --------
+            np.ndarray
+                The growth factor as a function of redshift and wavenumber.
+
+            """
+            if hasattr(self, "Pk_int") and self.Pk_int is not None:
+                D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+            return D_z_k
+
+    class LinearCB:
         """
-        return self.Pk_int(zs, ks)
+        Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
 
-    def growth_factor(self, zs, ks) -> np.ndarray:
-        r"""
-        Calculate the growth factor for given redshifts and wavenumbers.
-
-        .. math::
-            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
-            /P_{\rm \delta\delta}(z=0, k)}\\
-
-        and normalizes as for :math:`D(z)/D(0)`.
-
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
-
-        Returns:
-        --------
-        np.ndarray
-            The growth factor as a function of redshift and wavenumber.
-
+        This class uses a Cosmopower-trained neural network to emulate the cb linear power spectrum
+        for a wCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
         """
-        if hasattr(self, "Pk_int") and self.Pk_int is not None:
-            D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        return D_z_k
+        def __init__(self, background: Background, redshifts: np.ndarray):
+            """
+            Initialize the emulator with a given cosmological background and redshift array.
+
+            Parameters
+            ----------
+            background : Background
+                Background cosmology object, providing all necessary cosmological parameters.
+            redshifts : np.ndarray
+                Array of redshift values for which the power spectrum should be computed.
+
+            Raises
+            ------
+            AssertionError
+                If the geometry is not flat (Omega_k0 != 0).
+            ValueError
+                If any parameter lies outside the bounds supported by the emulator.
+            """
+
+            cp_file = emulator_data("wcdm-pcb-linear-spectra.pkl", zenodo_path)
+            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+
+            self.k_emu = np.loadtxt(k_modes_path)
+
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
+
+            self.background = background
+            assert background.Omega_k0 == 0, "Non flat geometries not supported"
+
+            redshift_max = 5
+            self.z = redshifts[redshifts <= redshift_max]
+
+            cp_bounds = {
+                "ombh2": np.array([0.001, 0.1]),
+                "omch2": np.array([0.05, 0.9]),
+                "H0": np.array([20, 100]),
+                "ns": np.array([0.6, 1.3]),
+                "lnAs": np.array([1.61, 5]),
+                "w": np.array([-3.0, 0]),
+                "z": np.array([0.0, 5.0]),
+            }
+
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "w": self.background.w0,
+            }
+
+            for key in self.params.keys():
+                if np.product(self.params[key] - cp_bounds[key]) > 0:
+                    raise ValueError("Cosmopower emulator out of range.")
+                else:
+                    self.params[key] = np.tile(self.params[key], len(redshifts))
+
+            self.params["z"] = redshifts
+
+            Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
+
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_lin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
+
+            self.k = k_out
+            self.z = z_out
+            self.Pk = Pk_out
+
+            pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
+            self.Pk_int = pk_int
+
+        def __str__(self):
+            """Return emulator description."""
+            return (
+                f"Cosmopower cb linear Pk module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
+                f"for an wCDM cosmology, using input cosmological parameters:\n"
+                f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'w', 'z'] \n"
+                f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
+                f"There are no massive neutrinos in this model. "
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            """Compute the cb linear matter power spectrum P_cb(k, z).
+
+            Parameters
+            ----------
+            zs : np.ndarray
+                Redshifts at which to evaluate the power spectrum.
+            ks : np.ndarray
+                Wavenumbers in units of Mpc^-1.
+
+            Returns
+            -------
+            np.ndarray
+                Linear matter power spectrum in (Mpc/h)^3.
+            """
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks) -> np.ndarray:
+            r"""
+            Calculate the growth factor for given redshifts and wavenumbers.
+
+            .. math::
+                D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+                /P_{\rm \delta\delta}(z=0, k)}\\
+
+            and normalizes as for :math:`D(z)/D(0)`.
 
 
-class CosmoPowerwCDMLinearCBPerturbations:
+            Parameters:
+            -----------
+            zs : array_like
+                Redshifts at which to calculate the growth factor.
+            ks : array_like
+                Wavenumbers at which to calculate the growth factor.
+
+            Returns:
+            --------
+            np.ndarray
+                The growth factor as a function of redshift and wavenumber.
+
+            """
+            if hasattr(self, "Pk_int") and self.Pk_int is not None:
+                D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+            return D_z_k
+
+
+class CosmoPowerLCDMPerturbations:
     """
-    Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the w0waCDM cosmology with no massive neutrinos.
-
-    This class uses a Cosmopower-trained neural network to emulate the cb linear power spectrum
-    for a wCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
+    Class for LCDM cosmology perturbations using Cosmopower emulators.
     """
 
-    def __init__(self, background: Background, redshifts: np.ndarray):
+    class Linear:
         """
-        Initialize the emulator with a given cosmological background and redshift array.
+        Emulator for the linear matter power spectrum in the LCDM cosmology (w is set to -1) with no massive neutrinos.
 
-        Parameters
-        ----------
-        background : Background
-            Background cosmology object, providing all necessary cosmological parameters.
-        redshifts : np.ndarray
-            Array of redshift values for which the power spectrum should be computed.
-
-        Raises
-        ------
-        AssertionError
-            If the geometry is not flat (Omega_k0 != 0).
-        ValueError
-            If any parameter lies outside the bounds supported by the emulator.
+        This class uses a Cosmopower-trained neural network to emulate the linear power spectrum
+        for a LCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
         """
 
-        cp_file = emulator_data("wcdm-pcb-linear-spectra.pkl", zenodo_path)
-        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+        def __init__(self, background: Background, redshifts: np.ndarray):
+            """
+            Initialize the emulator with a given cosmological background and redshift array.
 
-        self.k_emu = np.loadtxt(k_modes_path)
+            Parameters
+            ----------
+            background : Background
+                Background cosmology object, providing all necessary cosmological parameters.
+            redshifts : np.ndarray
+                Array of redshift values for which the power spectrum should be computed.
 
-        self.k_min = self.k_emu[0]
-        self.k_max = self.k_emu[-1]
+            Raises
+            ------
+            AssertionError
+                If the geometry is not flat (Omega_k0 != 0).
+            ValueError
+                If any parameter lies outside the bounds supported by the emulator.
+            """
 
-        self.background = background
-        assert background.Omega_k0 == 0, "Non flat geometries not supported"
+            cp_file = emulator_data("lcdm-linear-spectra.pkl", zenodo_path)
+            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
-        redshift_max = 5
-        self.z = redshifts[redshifts <= redshift_max]
+            self.k_emu = np.loadtxt(k_modes_path)
 
-        cp_bounds = {
-            "ombh2": np.array([0.001, 0.1]),
-            "omch2": np.array([0.05, 0.9]),
-            "H0": np.array([20, 100]),
-            "ns": np.array([0.6, 1.3]),
-            "lnAs": np.array([1.61, 5]),
-            "w": np.array([-3.0, 0]),
-            "z": np.array([0.0, 5.0]),
-        }
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
 
-        self.params = {
-            "ombh2": self.background.Omega_b0 * self.background.h**2,
-            "omch2": self.background.Omega_cdm0 * self.background.h**2,
-            "H0": self.background.H0,
-            "ns": self.background.ns,
-            "lnAs": np.log(self.background.As * 1e10),
-            "w": self.background.w0,
-        }
+            self.background = background
+            assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
-        for key in self.params.keys():
-            if np.product(self.params[key] - cp_bounds[key]) > 0:
-                raise ValueError("Cosmopower linear Ivan out of range.")
-            else:
-                self.params[key] = np.tile(self.params[key], len(redshifts))
+            redshift_max = 5
+            self.z = redshifts[redshifts <= redshift_max]
 
-        self.params["z"] = redshifts
+            cp_bounds = {
+                "ombh2": np.array([0.001, 0.1]),
+                "omch2": np.array([0.05, 0.9]),
+                "H0": np.array([20, 100]),
+                "ns": np.array([0.6, 1.3]),
+                "lnAs": np.array([1.61, 5]),
+                "z": np.array([0.0, 5.0]),
+            }
 
-        Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+            }
 
-        k_out, z_out, Pk_out = extend_spectra(
-            self.k_emu,
-            self.z,
-            Pk_lin,
-            flag_range=True,
-            option_wavenumber="logk2",
-            option_redshift="power_law",
-            extrap_z=redshifts,
-            option_cosmo="const",
-            ns=self.background.ns,
-        )
+            for key in self.params.keys():
+                if np.product(self.params[key] - cp_bounds[key]) > 0:
+                    raise ValueError("Cosmopower emulator out of range.")
+                else:
+                    self.params[key] = np.tile(self.params[key], len(redshifts))
 
-        self.k = k_out
-        self.z = z_out
-        self.Pk = Pk_out
+            self.params["z"] = redshifts
 
-        pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
-        self.Pk_int = pk_int
+            Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
 
-    def __str__(self):
-        """Return emulator description."""
-        return (
-            f"Cosmopower cb linear Pk module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
-            f"for an wCDM cosmology, using input cosmological parameters:\n"
-            f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'w', 'z'] \n"
-            f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-            f"There are no massive neutrinos in this model. "
-        )
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_lin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
 
-    def matter_power_spectrum(self, zs, ks):
-        """Compute the cb linear matter power spectrum P_cb(k, z).
+            self.k = k_out
+            self.z = z_out
+            self.Pk = Pk_out
 
-        Parameters
-        ----------
-        zs : np.ndarray
-            Redshifts at which to evaluate the power spectrum.
-        ks : np.ndarray
-            Wavenumbers in units of Mpc^-1.
+            pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
+            self.Pk_int = pk_int
 
-        Returns
-        -------
-        np.ndarray
-            Linear matter power spectrum in (Mpc/h)^3.
+        def __str__(self):
+            """Return emulator description."""
+            return (
+                f"Cosmopower linear Pk module. Computes the linear power spectrum "
+                f"for an LCDM cosmology with w = -1, using input cosmological parameters:\n"
+                f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z'] \n"
+                f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
+                f"There are no massive neutrinos in this model. "
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            """Compute the linear matter power spectrum P(k, z).
+
+            Parameters
+            ----------
+            zs : np.ndarray
+                Redshifts at which to evaluate the power spectrum.
+            ks : np.ndarray
+                Wavenumbers in units of Mpc^-1.
+
+            Returns
+            -------
+            np.ndarray
+                Linear matter power spectrum in (Mpc/h)^3.
+            """
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks) -> np.ndarray:
+            r"""
+            Calculate the growth factor for given redshifts and wavenumbers.
+
+            .. math::
+                D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+                /P_{\rm \delta\delta}(z=0, k)}\\
+
+            and normalizes as for :math:`D(z)/D(0)`.
+
+
+            Parameters:
+            -----------
+            zs : array_like
+                Redshifts at which to calculate the growth factor.
+            ks : array_like
+                Wavenumbers at which to calculate the growth factor.
+
+            Returns:
+            --------
+            np.ndarray
+                The growth factor as a function of redshift and wavenumber.
+
+            """
+            if hasattr(self, "Pk_int") and self.Pk_int is not None:
+                D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+            return D_z_k
+
+    class LinearCB:
         """
-        return self.Pk_int(zs, ks)
+        Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the LCDM cosmology (w is set to -1) with no massive neutrinos.
 
-    def growth_factor(self, zs, ks) -> np.ndarray:
-        r"""
-        Calculate the growth factor for given redshifts and wavenumbers.
-
-        .. math::
-            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
-            /P_{\rm \delta\delta}(z=0, k)}\\
-
-        and normalizes as for :math:`D(z)/D(0)`.
-
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
-
-        Returns:
-        --------
-        np.ndarray
-            The growth factor as a function of redshift and wavenumber.
-
-        """
-        if hasattr(self, "Pk_int") and self.Pk_int is not None:
-            D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        return D_z_k
-
-
-class CosmoPowerLCDMLinearCBPerturbations:
-    """
-    Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the LCDM cosmology (w is set to -1) with no massive neutrinos.
-
-    This class uses a Cosmopower-trained neural network to emulate the cb linear power spectrum
-    for a LCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
-    """
-
-    def __init__(self, background: Background, redshifts: np.ndarray):
-        """
-        Initialize the emulator with a given cosmological background and redshift array.
-
-        Parameters
-        ----------
-        background : Background
-            Background cosmology object, providing all necessary cosmological parameters.
-        redshifts : np.ndarray
-            Array of redshift values for which the power spectrum should be computed.
-
-        Raises
-        ------
-        AssertionError
-            If the geometry is not flat (Omega_k0 != 0).
-        ValueError
-            If any parameter lies outside the bounds supported by the emulator.
+        This class uses a Cosmopower-trained neural network to emulate the cb linear power spectrum
+        for a LCDM cosmology with no massive neutrinos (neutrino mass is set to zero).
         """
 
-        cp_file = emulator_data("lcdm-pcb-linear-spectra.pkl", zenodo_path)
-        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+        def __init__(self, background: Background, redshifts: np.ndarray):
+            """
+            Initialize the emulator with a given cosmological background and redshift array.
 
-        self.k_emu = np.loadtxt(k_modes_path)
+            Parameters
+            ----------
+            background : Background
+                Background cosmology object, providing all necessary cosmological parameters.
+            redshifts : np.ndarray
+                Array of redshift values for which the power spectrum should be computed.
 
-        self.k_min = self.k_emu[0]
-        self.k_max = self.k_emu[-1]
+            Raises
+            ------
+            AssertionError
+                If the geometry is not flat (Omega_k0 != 0).
+            ValueError
+                If any parameter lies outside the bounds supported by the emulator.
+            """
 
-        self.background = background
-        assert background.Omega_k0 == 0, "Non flat geometries not supported"
+            cp_file = emulator_data("lcdm-pcb-linear-spectra.pkl", zenodo_path)
+            self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
-        redshift_max = 5
-        self.z = redshifts[redshifts <= redshift_max]
+            self.k_emu = np.loadtxt(k_modes_path)
 
-        cp_bounds = {
-            "ombh2": np.array([0.001, 0.1]),
-            "omch2": np.array([0.05, 0.9]),
-            "H0": np.array([20, 100]),
-            "ns": np.array([0.6, 1.3]),
-            "lnAs": np.array([1.61, 5]),
-            "z": np.array([0.0, 5.0]),
-        }
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
 
-        self.params = {
-            "ombh2": self.background.Omega_b0 * self.background.h**2,
-            "omch2": self.background.Omega_cdm0 * self.background.h**2,
-            "H0": self.background.H0,
-            "ns": self.background.ns,
-            "lnAs": np.log(self.background.As * 1e10),
-        }
+            self.background = background
+            assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
-        for key in self.params.keys():
-            if np.product(self.params[key] - cp_bounds[key]) > 0:
-                raise ValueError("Cosmopower linear Ivan out of range.")
-            else:
-                self.params[key] = np.tile(self.params[key], len(redshifts))
+            redshift_max = 5
+            self.z = redshifts[redshifts <= redshift_max]
 
-        self.params["z"] = redshifts
+            cp_bounds = {
+                "ombh2": np.array([0.001, 0.1]),
+                "omch2": np.array([0.05, 0.9]),
+                "H0": np.array([20, 100]),
+                "ns": np.array([0.6, 1.3]),
+                "lnAs": np.array([1.61, 5]),
+                "z": np.array([0.0, 5.0]),
+            }
 
-        Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+            }
 
-        k_out, z_out, Pk_out = extend_spectra(
-            self.k_emu,
-            self.z,
-            Pk_lin,
-            flag_range=True,
-            option_wavenumber="logk2",
-            option_redshift="power_law",
-            extrap_z=redshifts,
-            option_cosmo="const",
-            ns=self.background.ns,
-        )
+            for key in self.params.keys():
+                if np.product(self.params[key] - cp_bounds[key]) > 0:
+                    raise ValueError("Cosmopower linear Ivan out of range.")
+                else:
+                    self.params[key] = np.tile(self.params[key], len(redshifts))
 
-        self.k = k_out
-        self.z = z_out
-        self.Pk = Pk_out
+            self.params["z"] = redshifts
 
-        pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
-        self.Pk_int = pk_int
+            Pk_lin = self.cp_LIN.ten_to_predictions_np(self.params)
 
-    def __str__(self):
-        """Return emulator description."""
-        return (
-            f"Cosmopower cb linear Pk module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
-            f"for an LCDM cosmology with w = -1, using input cosmological parameters:\n"
-            f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z'] \n"
-            f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-            f"There are no massive neutrinos in this model. "
-        )
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_lin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
 
-    def matter_power_spectrum(self, zs, ks):
-        """Compute the cb linear matter power spectrum P_cb(k, z).
+            self.k = k_out
+            self.z = z_out
+            self.Pk = Pk_out
 
-        Parameters
-        ----------
-        zs : np.ndarray
-            Redshifts at which to evaluate the power spectrum.
-        ks : np.ndarray
-            Wavenumbers in units of Mpc^-1.
+            pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
+            self.Pk_int = pk_int
 
-        Returns
-        -------
-        np.ndarray
-            Linear matter power spectrum in (Mpc/h)^3.
-        """
-        return self.Pk_int(zs, ks)
+        def __str__(self):
+            """Return emulator description."""
+            return (
+                f"Cosmopower cb linear Pk module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
+                f"for an LCDM cosmology with w = -1, using input cosmological parameters:\n"
+                f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z'] \n"
+                f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
+                f"There are no massive neutrinos in this model. "
+            )
 
-    def growth_factor(self, zs, ks) -> np.ndarray:
-        r"""
-        Calculate the growth factor for given redshifts and wavenumbers.
+        def matter_power_spectrum(self, zs, ks):
+            """Compute the cb linear matter power spectrum P_cb(k, z).
 
-        .. math::
-            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
-            /P_{\rm \delta\delta}(z=0, k)}\\
+            Parameters
+            ----------
+            zs : np.ndarray
+                Redshifts at which to evaluate the power spectrum.
+            ks : np.ndarray
+                Wavenumbers in units of Mpc^-1.
 
-        and normalizes as for :math:`D(z)/D(0)`.
+            Returns
+            -------
+            np.ndarray
+                Linear matter power spectrum in (Mpc/h)^3.
+            """
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks) -> np.ndarray:
+            r"""
+            Calculate the growth factor for given redshifts and wavenumbers.
+
+            .. math::
+                D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+                /P_{\rm \delta\delta}(z=0, k)}\\
+
+            and normalizes as for :math:`D(z)/D(0)`.
 
 
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
+            Parameters:
+            -----------
+            zs : array_like
+                Redshifts at which to calculate the growth factor.
+            ks : array_like
+                Wavenumbers at which to calculate the growth factor.
 
-        Returns:
-        --------
-        np.ndarray
-            The growth factor as a function of redshift and wavenumber.
+            Returns:
+            --------
+            np.ndarray
+                The growth factor as a function of redshift and wavenumber.
 
-        """
-        if hasattr(self, "Pk_int") and self.Pk_int is not None:
-            D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+            """
+            if hasattr(self, "Pk_int") and self.Pk_int is not None:
+                D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        return D_z_k
+            return D_z_k

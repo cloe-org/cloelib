@@ -12,6 +12,7 @@ from cloelib.profiling import profile_function
 import interpax
 import jax.numpy as np
 import jax
+from scipy import integrate
 
 # results imports
 from cosmolib.data import AngularPowerSpectrum
@@ -344,19 +345,19 @@ class AngularTwoPoint:
         Compute the cosebis from the angular power spectrum
 
         Parameters:
-        - nl (jax.numpy.ndarray): 
+        - nl (jax.numpy.ndarray):
             Noise power spectrum (not used yet).
-        - ks (jax.numpy.ndarray): 
+        - ks (jax.numpy.ndarray):
             Wavenumber grid of the matter power spectrum.
-        - ns (list): 
+        - ns (jax.numpy.array):
             the indices for the kernel function
-        - w_ell (np.array): 
+        - w_ell (np.array):
             the kernel functions
-        - ells (np.array): 
+        - ells (jax.numpy.array):
             array with the ells
 
         Returns:
-        - dict: Pseudo angular power spectrum Cl for the multipoles specified by the mixing matrix.
+        - dict: COSEBIs obtained from the angular power spectrum
         """
 
         cells = self.get_Cl(ells, nl, ks)
@@ -369,7 +370,9 @@ class AngularTwoPoint:
                 cosebis = np.zeros_like(ns, dtype=np.float64)
                 for i, n in enumerate(ns):
                     cl = cells["SHE", "SHE", tomobin1, tomobin2][0, 0]
-                    cosebis = cosebis.at[i].set(np.sum(ells * cl * w_ell[n]))
-                tomo_cosebis[key] = cosebis/(2*np.pi)
+                    cosebis = cosebis.at[i].set(
+                        integrate.simpson(ells * cl * w_ell[n].flatten(), ells)
+                    )
+                tomo_cosebis[key] = cosebis / (2 * np.pi)
 
         return tomo_cosebis

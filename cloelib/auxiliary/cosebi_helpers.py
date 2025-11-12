@@ -1,20 +1,22 @@
 import numpy as np
 import pylevin as levin
-import mpmath as mp 
+import mpmath as mp
+
+
 def get_roots_and_norms(tmax, tmin, Nmax):
     """
-    Calculates the roots,norms and matrix elements given a min and max theta 
-    up to a certain Nmax. 
+    Calculates the roots,norms and matrix elements given a min and max theta
+    up to a certain Nmax.
 
     Parameters:
     ----------
-    tmax: float 
+    tmax: float
         maximum seperation
     tmin: float
         minimum seperation
     Nmax: integer
         maximum COSEBI
-    
+
     Returns
     -------
     rn (mp.math)
@@ -41,8 +43,7 @@ def get_roots_and_norms(tmax, tmin, Nmax):
 
     # --- compute coeffs for n=1 explicitly by solving 2x2 system
     # Build correct mp.matrix for 'aa' and 'bb'
-    aa_2x2 = mp.matrix([[J(2, 0, zmax), J(2, 1, zmax)],
-                        [J(4, 0, zmax), J(4, 1, zmax)]])
+    aa_2x2 = mp.matrix([[J(2, 0, zmax), J(2, 1, zmax)], [J(4, 0, zmax), J(4, 1, zmax)]])
     bb_2x2 = mp.matrix([[-J(2, 2, zmax)], [-J(4, 2, zmax)]])  # since nn=1 so nn+1 = 2
 
     sol12 = mp.lu_solve(aa_2x2, bb_2x2)  # returns a column matrix (2x1)
@@ -56,7 +57,7 @@ def get_roots_and_norms(tmax, tmin, Nmax):
         aa = mp.matrix(size, size)
         bb = mp.matrix(size, 1)
 
-        # orthogonality conditions (equations like your Eq.(34))
+        # orthogonality conditions
         # there are (nn-1) of these: for m = 1..nn-1 correspond to rows 0..(nn-2)
         for idx_m, m in enumerate(range(1, nn)):
             # fill row idx_m of aa and corresponding entry of bb
@@ -87,7 +88,7 @@ def get_roots_and_norms(tmax, tmin, Nmax):
     coeff_j = coeff_j[1:, :]  # now row 0 corresponds to n=1
 
     # -------------------------
-    # Normalizations Nn 
+    # Normalizations Nn
     Nn = []
     for nn in range(1, Nmax + 1):
         temp_sum = mp.mpf(0)
@@ -98,20 +99,21 @@ def get_roots_and_norms(tmax, tmin, Nmax):
         temp_Nn = mp.sqrt(mp.fabs(temp_Nn))
         Nn.append(temp_Nn)
 
-
-    ##We now want the root of the filter t_+n^log 
-    #the filter is: 
+    ##We now want the root of the filter t_+n^log
+    # the filter is:
     rn = []
-    for nn in range(1,Nmax+1):
-        rn.append(mp.polyroots(coeff_j[nn-1,:nn+2][::-1],maxsteps=500,extraprec=100))
-        #[::-1])
+    for nn in range(1, Nmax + 1):
+        rn.append(
+            mp.polyroots(coeff_j[nn - 1, : nn + 2][::-1], maxsteps=500, extraprec=100)
+        )
+        # [::-1])
 
     # -----------------
     return rn, Nn, coeff_j
 
 
 def J(k, j, zmax):
-    '''Helper function for get_roots to calculate a gamma function'''
+    """Helper function for get_roots to calculate a gamma function"""
 
     # J = (Gamma(j+1) - gamma_upper(j+1, -k zmax)) / (-k)^(j+1)
     # Use mpmath routines with high precision
@@ -121,13 +123,14 @@ def J(k, j, zmax):
     denom = mp.power(-k, j + 1)
     return mp.fdiv(numerator, denom)
 
+
 def tp(n, z, nn, rn):
-    '''
+    """
     kernel function Tn+
 
     Parameters:
     ----------
-    n: integer 
+    n: integer
         cosebi index
     z: float or array
         log(theta/theta_min)
@@ -135,54 +138,55 @@ def tp(n, z, nn, rn):
         normalizations from get_roots
     rn: mpmath
         roots from get_roots
-    
+
     Returns
     -------
     tn+ (mp.math)
         the kernel function tn+
 
-    '''
+    """
     prod = mp.mpf(1)
-    for root in rn[n-1]:
-        prod *= (z - root)
-    return (nn[n-1] * prod)
+    for root in rn[n - 1]:
+        prod *= z - root
+    return nn[n - 1] * prod
 
 
 def an2(n, nn, coeff_j):
-    '''Helper function for tm'''
+    """Helper function for tm"""
     s = mp.mpf(0)
     for j in range(0, n + 2):  # j = 0 .. n+1
-        term = nn[n-1] * coeff_j[(n-1, j)] * mp.factorial(j) / ((-2) ** (j + 1))
+        term = nn[n - 1] * coeff_j[(n - 1, j)] * mp.factorial(j) / ((-2) ** (j + 1))
         s += term
     return 4 * s
 
 
 def an4(n, nn, coeff_j):
-    '''Helper function for tm'''
+    """Helper function for tm"""
     s = mp.mpf(0)
     for j in range(0, n + 2):
-        term = nn[n-1] * coeff_j[(n-1, j)] * mp.factorial(j) / ((-4) ** (j + 1))
+        term = nn[n - 1] * coeff_j[(n - 1, j)] * mp.factorial(j) / ((-4) ** (j + 1))
         s += term
     return 12 * s
 
+
 def dnm(n, m, nn, coeff_j):
-    '''Helper function for tm'''
+    """Helper function for tm"""
     s = mp.mpf(0)
     for j in range(m, n + 2):  # j = m .. n+1
         power_term = (-2) ** (m - j - 1)
-        bracket = (3 * (2 ** (m - j - 1)) - 1)
-        term = nn[n-1] * coeff_j[(n-1, j)] * mp.factorial(j) * power_term * bracket
+        bracket = 3 * (2 ** (m - j - 1)) - 1
+        term = nn[n - 1] * coeff_j[(n - 1, j)] * mp.factorial(j) * power_term * bracket
         s += term
-    return nn[n-1] * coeff_j[(n-1, m)] + (4 / mp.factorial(m)) * s
+    return nn[n - 1] * coeff_j[(n - 1, m)] + (4 / mp.factorial(m)) * s
 
 
 def tm(n, z, nn, coeff_j):
-    '''
+    """
     kernel function Tm-
 
     Parameters:
     ----------
-    n: integer 
+    n: integer
         cosebi index
     z: float or array
         log(theta/theta_min)
@@ -190,25 +194,30 @@ def tm(n, z, nn, coeff_j):
         normalizations from get_roots
     rn: coeff_j
         matrix elements from get_roots
-    
+
     Returns
     -------
     tm (mp.math)
         tminus kernel function
 
-    '''
+    """
     s = mp.mpf(0)
     for m in range(0, n + 1):
-        s += dnm(n, m, nn, coeff_j) * (z ** m)
-    return (an2(n, nn, coeff_j) * mp.e ** (-2 * z) - an4(n, nn, coeff_j) * mp.e ** (-4 * z) + s)
+        s += dnm(n, m, nn, coeff_j) * (z**m)
+    return (
+        an2(n, nn, coeff_j) * mp.e ** (-2 * z)
+        - an4(n, nn, coeff_j) * mp.e ** (-4 * z)
+        + s
+    )
+
 
 def get_W_ell(thetagrid, Nmax, ells, N_thread):
-    '''
+    """
     kernel function Tm-
 
     Parameters:
     ----------
-    n: integer 
+    n: integer
         cosebi index
     z: float or array
         log(theta/theta_min)
@@ -216,26 +225,27 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
         normalizations from get_roots
     rn: coeff_j
         matrix elements from get_roots
-    
+
     Returns
     -------
     tm (mp.math)
         tminus kernel function
-    '''
+    """
 
-    print('start calculating roots and norms:')
+    print("start calculating roots and norms:")
 
     tmax = thetagrid[-1]
     tmin = thetagrid[0]
 
     rn, nn, coeff_j = get_roots_and_norms(tmax, tmin, Nmax)
-    print('done')
-    ns = np.arange(1,Nmax)
+    print("done")
+    ns = np.arange(1, Nmax)
     w_ells = {}
 
-    print('start performing the bessel integrals')
+    print("start performing the bessel integrals")
     for n in ns:
-        Tm = tm(n, np.log(thetagrid/thetagrid[0]),nn, coeff_j)
+        print(n, "/", Nmax)
+        Tm = tm(n, np.log(thetagrid / thetagrid[0]), nn, coeff_j)
         Tm = np.array([complex(x).real for x in Tm])
         f_of_x = (thetagrid * Tm).reshape([len(thetagrid), 1])
 
@@ -259,10 +269,9 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
             thetagrid[0] * np.ones_like(ells),
             thetagrid[-1] * np.ones_like(ells),
             ells,
-            4*np.ones_like(ells).astype(int),
+            4 * np.ones_like(ells).astype(int),
             result_levin,
         )
 
         w_ells[n] = result_levin
     return w_ells
-

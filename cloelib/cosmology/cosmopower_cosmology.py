@@ -3,8 +3,11 @@ This module provides Cosmopower-based emulators for linear and nonlinear matter 
 
 Supported models include:
 - w0waCDM with mass of the neutrino 0
+- w0waCDM with one massive neutrino
 - wCDM with mass of the neutrino 0
+- wCDM with one massive neutrino
 - LCDM with mass of the neutrinos 0
+- LCDM with one massive neutrino
 """
 
 from cloelib.cosmology.cosmology import Background

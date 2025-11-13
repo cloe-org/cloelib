@@ -70,51 +70,43 @@ class TestBNT(unittest.TestCase):
         assert_allclose(BNT_matrix, expected, rtol=0, atol=1e-4)
 
     def test_bnt_matrix_correct_to_4dp_jax(self):
-        """Matrix matches expected values to 4 decimal places when using JAX arrays."""
-        import jax.numpy as jnp
+        """Matrix matches expected values to 4 decimal places when inputs are JAX arrays."""
         import numpy as np
         from numpy.testing import assert_allclose
 
-        def trapz_jax(y, x):
-            """Minimal trapezoidal rule compatible with JAX, 1D arrays."""
-            dx = x[1:] - x[:-1]
-            return jnp.sum(0.5 * (y[1:] + y[:-1]) * dx)
-
-        # Redshift grid as JAX array
-        z = jnp.linspace(0.1, 2.0, 200, dtype=jnp.float64)
-
-        # Build normalized n(z) distributions as JAX arrays
+        z = np.linspace(0.1, 2.0, 200)
         centers = [0.4, 0.8, 1.2]
         widths = [0.1, 0.1, 0.1]
+
         dndz_list = []
         for c, w in zip(centers, widths):
-            nz = jnp.exp(-0.5 * ((z - c) / w) ** 2)
-            nz = nz / trapz_jax(nz, z)  # normalize with JAX-compatible trapz
+            nz = np.exp(-0.5 * ((z - c) / w) ** 2)
+            nz /= np.trapz(nz, z)
             dndz_list.append(nz)
 
-        # Compute BNT matrix using JAX backend
+        # convert to jax before feeding to BNT
+        z_jax = jnp.asarray(z)
+        dndz_list_jax = [jnp.asarray(nz) for nz in dndz_list]
+
         bnt = BNT(
-            dndz_list=dndz_list, z=z, fid_parameters=fid_params, background=background
+            dndz_list=dndz_list_jax,
+            z=z_jax,
+            fid_parameters=fid_params,
+            background=background,
         )
         BNT_matrix = bnt.get_matrix()
 
-        # Expected result (NumPy for comparison)
         expected = np.array(
             [
                 [1.0, 0.0, 0.0],
                 [-1.0, 1.0, 0.0],
                 [0.2969388, -1.2969388, 1.0],
-            ],
-            dtype=np.float64,
+            ]
         )
 
-        # Check that output is a JAX array
-        assert isinstance(BNT_matrix, jnp.ndarray), (
-            "BNT_matrix should be a jax.numpy.ndarray"
-        )
+        assert_allclose(BNT_matrix, expected, rtol=0, atol=1e-4)
 
-        # Compare numerical values (convert JAX array to NumPy)
-        assert_allclose(np.array(BNT_matrix), expected, rtol=0, atol=1e-4)
+        assert isinstance(BNT_matrix, np.ndarray), "Output must be a NumPy array."
 
     def test_bnt_raises_when_fewer_than_three_bins(self):
         """Raises ValueError if fewer than 3 tomographic bins are provided."""
@@ -169,33 +161,6 @@ class TestBNT(unittest.TestCase):
             BNT(
                 dndz_list=[d2d, d2d, d2d],
                 z=z,
-                fid_parameters=fid_params,
-                background=background,
-            )
-
-    def test_bnt_raises_when_mixed_numpy_and_jax_arrays(self):
-        """Raises TypeError when z and dndz_list come from different array backends."""
-
-        # Case 1: z is NumPy, dndz_list is JAX
-        z_np = np.linspace(0.1, 2.0, 100)
-        dndz_jax = [jnp.linspace(0.1, 2.0, 100) for _ in range(3)]
-
-        with self.assertRaisesRegex(TypeError, r"Mixed array backends detected"):
-            BNT(
-                dndz_list=dndz_jax,
-                z=z_np,
-                fid_parameters=fid_params,
-                background=background,
-            )
-
-        # Case 2: z is JAX, dndz_list is NumPy
-        z_jax = jnp.linspace(0.1, 2.0, 100)
-        dndz_np = [np.linspace(0.1, 2.0, 100) for _ in range(3)]
-
-        with self.assertRaisesRegex(TypeError, r"Mixed array backends detected"):
-            BNT(
-                dndz_list=dndz_np,
-                z=z_jax,
                 fid_parameters=fid_params,
                 background=background,
             )

@@ -23,7 +23,7 @@ class SpectroPower(Protocol):
 
         Parameters:
           k (ndarray): Wavenumber. Can be NumPy (`numpy.ndarray`) or JAX (`jax.numpy.ndarray`) ndarray.
-          mu (numpy.ndarray|jax.numpy.ndarray): Angle (cosinus) to the line of sight
+          mu (numpy.ndarray|jax.numpy.ndarray): Angle (cosinus) to the line of sight. Can be NumPy (`numpy.ndarray`) or JAX (`jax.numpy.ndarray`) ndarray.
         
         Returns:
           Pk2d_rsd (numpy.ndarray|jax.numpy.ndarray): 2D power spectrum from couplings of density and velocity fields
@@ -34,10 +34,10 @@ class SpectroPower(Protocol):
         r"""2D power spectrum for a subset of specific term of the loop expansion.
 
         Parameters:
-          k (numpy.ndarray|jax.numpy.ndarray): Wavenumber
-          mu (numpy.ndarray|jax.numpy.ndarray): Angle (cosinus) to the line of sight
+          k (numpy.ndarray|jax.numpy.ndarray): Wavenumber. Can be NumPy (`numpy.ndarray`) or JAX (`jax.numpy.ndarray`) ndarray.
+          mu (numpy.ndarray|jax.numpy.ndarray): Angle (cosinus) to the line of sight. Can be NumPy (`numpy.ndarray`) or JAX (`jax.numpy.ndarray`) ndarray. 
 
         Returns: 
-          Pk2d_term_rsd (numpy.ndarray|jax.numpy.ndarray): 2D power spectrum of specific terms
+          Pk2d_term_rsd (numpy.ndarray|jax.numpy.ndarray): 2D power spectrum of specific terms. Can be NumPy (`numpy.ndarray`) or JAX (`jax.numpy.ndarray`) ndarray.
         """
         ...

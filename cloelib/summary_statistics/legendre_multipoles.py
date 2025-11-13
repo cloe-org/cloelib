@@ -22,19 +22,13 @@ class LegendreMultipoles:
                  nbar: float):
         """Initialize the class instance.
 
-        Parameters
-        ----------
-        spectro_power: SpectroPower
-            Class returning the anisotropic power spectrum (only density and
-            velocity field couplings; noise and systematics are included directly
-            here)
-        background_fiducial: Background
-            Background class for computing fiducial background distances
-        parameters: dict
-            Dictionary containing shot noise and parameters related to
-            observational systematics
-        nbar: float
-            Mean number denisty of the sample
+        Args:
+            spectro_power (SpectroPower): Class returning the anisotropic power spectrum (only density and
+                velocity field couplings; noise and systematics are included directly here)
+            background_fiducial (Background): Background class for computing fiducial background distances
+            parameters (dict): Dictionary containing shot noise and parameters related to
+                observational systematics
+            nbar (float): Mean number denisty of the sample
         """
         self.spectro_power = spectro_power
         self.redshift = spectro_power.redshift
@@ -53,15 +47,11 @@ class LegendreMultipoles:
 
         If the input is a scalar, it is converted to a NumPy array.
 
-        Parameters
-        ----------
-        param : scalar or array-like
-            Input parameter.
+        Args:
+            param (scalar|array-like): Input parameter.
 
-        Returns
-        -------
-        numpy.ndarray
-            Input parameter as a NumPy array.
+        Returns:
+            (numpy.ndarray): Input parameter as a NumPy array.
         """
         if np.isscalar(param):
             param = np.array([param])
@@ -71,24 +61,19 @@ class LegendreMultipoles:
               use_AP: Optional[bool] = True) -> np.ndarray:
         r"""AP-distorted wavenumber.
 
-        .. math::
+        $$
             k(k_{\rm fid},\mu_{\rm fid}, z) &= k_{\rm fid} \
             \left[\frac{(\mu_{\rm fid})^2}{q_\parallel^2(z)} + \
             \frac{1-(\mu_{\rm fid}^2)}{q_\perp^2(z)}\right]^{1/2}
-        Parameters
-        ----------
-        k: np.ndarray
-           Fiducial wavenumber
-        mu: np.ndarray
-           Fiducial angle (cosinus) to the line of sight
-        z: float
-           Redshift
-        use_AP: bool
-            Flag to switch between with and without AP corrections
-        Returns
-        -------
-        kAP: np.ndarray
-           AP-distorted wavenumber
+        $$
+        Parameters:
+            k (np.ndarray): Fiducial wavenumber
+            mu (np.ndarray): Fiducial angle (cosinus) to the line of sight
+            z (float): Redshift
+            use_AP (bool): Flag to switch between with and without AP corrections
+
+        Returns:
+            kAP (np.ndarray): AP-distorted wavenumber
         """
         q_tr = self.ap_distortion.q_AP_tr(zs) if use_AP else 1.0
         q_lo = self.ap_distortion.q_AP_lo(zs) if use_AP else 1.0
@@ -228,18 +213,12 @@ class LegendreMultipoles:
                          use_AP: Optional[bool] = True) -> dict:
         r"""Power spectrum Legendre multipoles.
 
-        Parameters
-        ----------
-        k: np.ndarray
-            Wavenumber
-        ells: np.ndarray
-            Legendre multipole order
-        use_AP: bool
-            Flag to switch between with and without AP corrections
-        Returns
-        -------
-        multipoles: dict
-            Power spectrum Legendre multipoles
+        Parameters: 
+            k (np.ndarray): Wavenumber
+            ells (np.ndarray): Legendre multipole order
+            use_AP (bool): Flag to switch between with and without AP corrections
+        Returns:
+            multipoles (dict): Power spectrum Legendre multipoles
         """
         ells = self._ensure_array(ells) if ells is not None else np.array([0,2,4])
         AP_factor = (self.ap_distortion.q_AP_tr(self.redshift)**2 *
@@ -262,20 +241,14 @@ class LegendreMultipoles:
                               use_AP: Optional[bool] = True) -> dict:
         r"""Power spectrum Legendre multipoles of specified terms.
 
-        Parameters
-        ----------
-        k: np.ndarray
-            Wavenumber
-        term_list: list
-            List of terms to compute
-        ells: np.ndarray
-            Legendre multipole order
-        use_AP: bool
-            Flag to switch between with and without AP corrections
-        Returns
-        -------
-        multipoles: dict
-            Power spectrum Legendre multipoles of specified terms
+        Parameters:
+            k (np.ndarray): Wavenumber
+            term_list (list): List of terms to compute
+            ells (np.ndarray): Legendre multipole order
+            use_AP (bool): Flag to switch between with and without AP corrections
+
+        Returns:
+            multipoles (dict): Power spectrum Legendre multipoles of specified terms
         """
         ells = self._ensure_array(ells) \
             if ells is not None else np.array([0,2,4])
@@ -314,18 +287,13 @@ class LegendreMultipoles:
                                    use_AP: Optional[bool] = True) -> dict:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
 
-        Parameters
-        ----------
-        mixing_matrix: dict
-            Dicitonary containing the mixing matrix
-        ells: np.ndarray
-            Legendre multipole order
-        use_AP: bool
-            Flag to switch between with and without AP corrections
-        Returns
-        -------
-        multipoles_out: dict
-            Convolved power spectrum Legendre multipoles
+        Parameters:
+            mixing_matrix (dict): Dicitonary containing the mixing matrix
+            ells (np.ndarray): Legendre multipole order
+            use_AP (bool): Flag to switch between with and without AP corrections
+
+        Returns:
+            multipoles_out (dict): Convolved power spectrum Legendre multipoles
         """
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
@@ -358,20 +326,14 @@ class LegendreMultipoles:
                                         use_AP: Optional[bool] = True) -> dict:
         r"""Convolved power spectrum multipoles of specified terms.
 
-        Parameters
-        ----------
-        mixing_matrix: dict
-            Dicitonary containing the mixing matrix
-        term_list: list
-            List of terms to compute
-        ells: np.ndarray
-            Legendre multipole order
-        use_AP: bool
-            Flag to switch between with and without AP corrections
-        Returns
-        -------
-        multipoles_out: dict
-            Convolved power spectrum Legendre multipoles of specified terms
+        Parameters:
+            mixing_matrix (dict): Dicitonary containing the mixing matrix
+            term_list (list): List of terms to compute
+            ells (np.ndarray): Legendre multipole order
+            use_AP (bool): Flag to switch between with and without AP corrections
+
+        Returns:
+            multipoles_out (dict): Convolved power spectrum Legendre multipoles of specified terms
         """
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot

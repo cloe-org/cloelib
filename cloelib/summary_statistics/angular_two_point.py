@@ -30,15 +30,15 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2, weights):
     and comoving distance squared.
 
     Parameters:
-    - WT1 (jax.numpy.ndarray): Window function for the first tracer.
-    - WT2 (jax.numpy.ndarray): Window function for the second tracer.
-    - Pkl (jax.numpy.ndarray): Matter power spectrum interpolated on Limber grid.
-    - H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
-    - chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
-    - weights (jax.numpy.ndarray): Array of weights used for the fixed nodes integration.
+        WT1 (jax.numpy.ndarray): Window function for the first tracer.
+        WT2 (jax.numpy.ndarray): Window function for the second tracer.
+        Pkl (jax.numpy.ndarray): Matter power spectrum interpolated on Limber grid.
+        H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
+        chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
+        weights (jax.numpy.ndarray): Array of weights used for the fixed nodes integration.
 
     Returns:
-    - jax.numpy.ndarray: Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
+        (jax.numpy.ndarray): Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
     """
     return np.einsum('iz,jz,lz,z,z,z->lij', WT1, WT2, Pkl, 1/H, 1/chi2, weights)
 
@@ -52,14 +52,14 @@ def Pkl_interp(k_l, z_l, ks, zs, Pk):
     for values outside the given grid.
 
     Parameters:
-    - k_l (jax.numpy.ndarray): Wavenumbers corresponding to (ells + 0.5) / chi.
-    - z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
-    - ks (jax.numpy.ndarray): Original wavenumber grid of the matter power spectrum.
-    - zs (jax.numpy.ndarray): Original redshift grid of the matter power spectrum.
-    - Pk (jax.numpy.ndarray): Matter power spectrum values on (ks, zs) grid.
+        k_l (jax.numpy.ndarray): Wavenumbers corresponding to (ells + 0.5) / chi.
+        z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
+        ks (jax.numpy.ndarray): Original wavenumber grid of the matter power spectrum.
+        zs (jax.numpy.ndarray): Original redshift grid of the matter power spectrum.
+        Pk (jax.numpy.ndarray): Matter power spectrum values on (ks, zs) grid.
 
     Returns:
-    - jax.numpy.ndarray: Interpolated power spectrum on the Limber grid.
+        (jax.numpy.ndarray): Interpolated power spectrum on the Limber grid.
     """
     return 10**interpax.interp2d(jax.numpy.log10(k_l), z_l, jax.numpy.log10(ks),  zs,
                                  jax.numpy.log10(Pk), method="akima", extrap=True)
@@ -78,8 +78,8 @@ class AngularTwoPoint:
         as instance attributes.
 
         Parameters:
-        - tracer1 (Tracer): The first tracer for the two-point function.
-        - tracer2 (Tracer): The second tracer for the two-point function.
+            tracer1 (Tracer): The first tracer for the two-point function.
+            tracer2 (Tracer): The second tracer for the two-point function.
         """
         self.tracer1 = tracer1
         self.tracer2 = tracer2
@@ -93,13 +93,13 @@ class AngularTwoPoint:
         spectrum accordingly.
 
         Parameters:
-        - z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
-        - ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
-        - zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
-        - ells (jax.numpy.ndarray): Multipole moments for angular power spectrum.
+            z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
+            ells (jax.numpy.ndarray): Multipole moments for angular power spectrum.
 
         Returns:
-        - jax.numpy.ndarray: Interpolated matter power spectrum on the Limber grid.
+            (jax.numpy.ndarray): Interpolated matter power spectrum on the Limber grid.
         """
         chi = self.tracer1.perturbations.background.comoving_distance(z_l)
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
@@ -117,12 +117,12 @@ class AngularTwoPoint:
         two-point angular statistics.
 
         Parameters:
-        - ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
-        - nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
-        - ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
+            nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
 
         Returns:
-        - jax.numpy.ndarray: Angular power spectrum Cl for the given multipoles.
+            (jax.numpy.ndarray): Angular power spectrum Cl for the given multipoles.
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
@@ -154,13 +154,13 @@ class AngularTwoPoint:
         two-point angular statistics.
 
         Parameters:
-        - nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
-        - ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
-        - ks (numpy.ndarray): Mixing matrices in the euclidlib internal format.
-        - n_ells_int (int): number of multiples to calculate.
+            nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            ks (numpy.ndarray): Mixing matrices in the euclidlib internal format.
+            n_ells_int (int): number of multiples to calculate.
 
         Returns:
-        - jax.numpy.ndarray: Pseudo angular power spectrum Cl for the given multipoles.
+            jax.numpy.ndarray: Pseudo angular power spectrum Cl for the given multipoles.
         """
         ellmax = mixing_matrix[('POS', 'POS', 1, 1)].ell[-1]
         ells_calc = np.geomspace(1,ellmax+1,n_ells_int)

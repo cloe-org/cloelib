@@ -310,6 +310,16 @@
         "code",
         "ideas"
       ]
+    },
+    {
+      "login": "rreischke",
+      "name": "Robert Reischke",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31727230?v=4",
+      "profile": "https://github.com/rreischke",
+      "contributions": [
+        "ideas",
+        "mentoring"
+      ]
     }
   ]
 }

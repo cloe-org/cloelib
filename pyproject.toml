@@ -14,9 +14,9 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.14"
+python = "^3.10"
 interpax = "0.3.3"
-jax = "0.4.38"
+jax = ">=0.4.38"
 numpy = "<2.0"
 quadax = "0.2.7"
 scipy = "<1.14"

@@ -178,8 +178,8 @@ class MGemuNonlinearBoost:
                 "ns":      (0.8, 1.1),
                 "As":      (1.7e-9, 2.5e-9),
                 "Omega_nu": (1e-11, 0.000317),
-                "w0": (-1.3, -0.7),           
-                "wa": (-0.5,  0.5),           
+                "w0": (-1.3, -0.5),           
+                "wa": (-2.0,  0.5),           
                 "xi": (0.,150.),           
                 "z":  (0.0, 2.5),
             },
@@ -527,3 +527,17 @@ class BoostedPerturbations:
         D_lin = np.sqrt(Bz / B0)
 
         return np.squeeze(D_lin)
+
+
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+        B0 = self.boost_interp(np.array([0.0]), np.array([2e-2]))  # shape (nz, 1)
+        B0 = np.sqrt(B0[:, 0])
+        return self.base.sigma8_0() * B0

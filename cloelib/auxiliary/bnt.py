@@ -8,7 +8,7 @@ from cloelib.cosmology.cosmology import Background
 from typing import List, Union
 
 
-class BNT:
+class BNTMatrixCalculator:
     """Class to compute the BNT matrix."""
 
     def __init__(
@@ -44,7 +44,7 @@ class BNT:
 
         if len(self.dndz_list) < 3:
             raise ValueError(
-                "BNT requires at least 3 tomographic bins to compute the matrix."
+                "BNTMatrixCalculator requires at least 3 tomographic bins to compute the matrix."
             )
         if np.any(self.z == 0.0):
             raise ValueError(
@@ -57,7 +57,7 @@ class BNT:
 
         self.chi = self.background.comoving_distance(self.z)
 
-    def get_matrix(self) -> np.ndarray:
+    def get_bnt_matrix(self) -> np.ndarray:
         """Compute the BNT matrix."""
         A_list = []
         B_list = []

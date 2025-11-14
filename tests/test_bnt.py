@@ -1,10 +1,10 @@
-"""Unit tests for the BNT class in cloelib.auxiliary.bnt (unittest style, pytest compatible)."""
+"""Unit tests for the BNTMatrixCalculator class in cloelib.auxiliary.bnt (unittest style, pytest compatible)."""
 
 import unittest
 import numpy as np
 import jax.numpy as jnp
 from numpy.testing import assert_allclose
-from cloelib.auxiliary.bnt import BNT
+from cloelib.auxiliary.bnt import BNTMatrixCalculator
 from cloelib.cosmology.camb_cosmology import CAMBBackground
 
 # --- Shared cosmology setup ---
@@ -43,7 +43,7 @@ background = CAMBBackground(
 )
 
 
-class TestBNT(unittest.TestCase):
+class TestBNTMatrixCalculator(unittest.TestCase):
     def test_bnt_matrix_correct_to_4dp(self):
         """Matrix matches expected values to 4 decimal places."""
         z = np.linspace(0.1, 2.0, 200)
@@ -55,10 +55,10 @@ class TestBNT(unittest.TestCase):
             nz /= np.trapz(nz, z)
             dndz_list.append(nz)
 
-        bnt = BNT(
+        bnt = BNTMatrixCalculator(
             dndz_list=dndz_list, z=z, fid_parameters=fid_params, background=background
         )
-        BNT_matrix = bnt.get_matrix()
+        BNT_matrix = bnt.get_bnt_matrix()
 
         expected = np.array(
             [
@@ -88,13 +88,13 @@ class TestBNT(unittest.TestCase):
         z_jax = jnp.asarray(z)
         dndz_list_jax = [jnp.asarray(nz) for nz in dndz_list]
 
-        bnt = BNT(
+        bnt = BNTMatrixCalculator(
             dndz_list=dndz_list_jax,
             z=z_jax,
             fid_parameters=fid_params,
             background=background,
         )
-        BNT_matrix = bnt.get_matrix()
+        BNT_matrix = bnt.get_bnt_matrix()
 
         expected = np.array(
             [
@@ -121,9 +121,9 @@ class TestBNT(unittest.TestCase):
 
         with self.assertRaisesRegex(
             ValueError,
-            r"BNT requires at least 3 tomographic bins to compute the matrix\.",
+            r"BNTMatrixCalculator requires at least 3 tomographic bins to compute the matrix\.",
         ):
-            BNT(
+            BNTMatrixCalculator(
                 dndz_list=[d1, d2],
                 z=z,
                 fid_parameters=fid_params,
@@ -140,7 +140,7 @@ class TestBNT(unittest.TestCase):
             ValueError,
             r"One of the z array elements is equal to zero, breaking the BNT computation\.",
         ):
-            BNT(
+            BNTMatrixCalculator(
                 dndz_list=dndz_list,
                 z=z,
                 fid_parameters=fid_params,
@@ -158,7 +158,7 @@ class TestBNT(unittest.TestCase):
             ValueError,
             r"The shape of the z array does not match the shape of the dndz array\.",
         ):
-            BNT(
+            BNTMatrixCalculator(
                 dndz_list=[d2d, d2d, d2d],
                 z=z,
                 fid_parameters=fid_params,

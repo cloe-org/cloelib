@@ -118,7 +118,7 @@ def J(k, j, zmax):
     # Use mpmath routines with high precision
 
     gamma_full = mp.gamma(j + 1)
-    gamma_upper = mp.gammainc(j + 1, -k * zmax)  
+    gamma_upper = mp.gammainc(j + 1, -k * zmax)
     numerator = gamma_full - gamma_upper
     denom = mp.power(-k, j + 1)
     return mp.fdiv(numerator, denom)
@@ -149,7 +149,7 @@ def tp(n, t, tmin, nn, rn):
     """
 
     # np.array to allow for simple multiplication
-    z = np.array([mp.log(x/tmin) for x in t])
+    z = np.array([mp.log(x / tmin) for x in t])
     prod = mp.mpf(1)
     for root in rn[n - 1]:
         prod *= z - root
@@ -210,7 +210,7 @@ def tm(n, t, tmin, nn, coeff_j):
     """
 
     # np.array to allow for simple multiplication
-    z = np.array([mp.log(x/tmin) for x in t]) 
+    z = np.array([mp.log(x / tmin) for x in t])
     s = mp.mpf(0)
     for m in range(0, n + 1):
         s += dnm(n, m, nn, coeff_j) * (z**m)

@@ -340,21 +340,23 @@ class AngularTwoPoint:
         }
         return cosmolib_Cls
 
-    def get_cosebis(self, nl, ks, ns, w_ell, ells):
+    def get_cosebis(self, ells, nl, ks, w_ell, ns):
         """
         Compute the cosebis from the angular power spectrum
 
         Parameters:
+        - ells (jax.numpy.array):
+        array with the ells
         - nl (jax.numpy.ndarray):
             Noise power spectrum (not used yet).
         - ks (jax.numpy.ndarray):
             Wavenumber grid of the matter power spectrum.
+        - w_ell (np.array):
+            the kernel functions, the can be obtained via the function
+            get_W_ell in auxiliary functions.
         - ns (jax.numpy.array):
             the indices for the kernel function
-        - w_ell (np.array):
-            the kernel functions
-        - ells (jax.numpy.array):
-            array with the ells
+
 
         Returns:
         - dict: COSEBIs obtained from the angular power spectrum
@@ -371,7 +373,7 @@ class AngularTwoPoint:
                 for i, n in enumerate(ns):
                     cl = cells["SHE", "SHE", tomobin1, tomobin2][0, 0]
                     cosebis = cosebis.at[i].set(
-                        integrate.simpson(ells * cl * w_ell[n].flatten(), ells)
+                        integrate.simpson(ells * cl * w_ell[n], ells)
                     )
                 tomo_cosebis[key] = cosebis / (2 * np.pi)
 

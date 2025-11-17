@@ -30,6 +30,8 @@ cosmolib = { git = "https://github.com/astro-ph/cosmolib.git" }
 camb = ["camb"]
 hmcode2020emu = ["HMcode2020Emu"]
 comet-emu = ["comet-emu"]
+pylevin = ["pylevin"]
+mpmath = ["mpmath"]
 
 [tool.poetry.dependencies.tensorflow]
 version = "==2.13"

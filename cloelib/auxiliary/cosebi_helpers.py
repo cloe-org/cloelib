@@ -106,7 +106,6 @@ def get_roots_and_norms(tmax, tmin, Nmax):
         rn.append(
             mp.polyroots(coeff_j[nn - 1, : nn + 2][::-1], maxsteps=500, extraprec=100)
         )
-        # [::-1])
 
     # -----------------
     return rn, Nn, coeff_j
@@ -114,17 +113,18 @@ def get_roots_and_norms(tmax, tmin, Nmax):
 
 def J(k, j, zmax):
     """Helper function for get_roots to calculate a gamma function"""
-
+    # using lower gamma (J = mp.gammainc(j+1,0,-k*zmax)) function gives an error, so we go via the upper
     # J = (Gamma(j+1) - gamma_upper(j+1, -k zmax)) / (-k)^(j+1)
     # Use mpmath routines with high precision
+
     gamma_full = mp.gamma(j + 1)
-    gamma_upper = mp.gammainc(j + 1, -k * zmax)  # corresponds to upper incomplete?
+    gamma_upper = mp.gammainc(j + 1, -k * zmax)  
     numerator = gamma_full - gamma_upper
     denom = mp.power(-k, j + 1)
     return mp.fdiv(numerator, denom)
 
 
-def tp(n, z, nn, rn):
+def tp(n, t, tmin, nn, rn):
     """
     kernel function Tn+
 
@@ -132,8 +132,10 @@ def tp(n, z, nn, rn):
     ----------
     n: integer
         cosebi index
-    z: float or array
-        log(theta/theta_min)
+    t:  np.array or list
+        theta, angular seperation
+    tmax: float
+        max angular seperation
     nn: mpmath
         normalizations from get_roots
     rn: mpmath
@@ -145,6 +147,9 @@ def tp(n, z, nn, rn):
         the kernel function tn+
 
     """
+
+    # np.array to allow for simple multiplication
+    z = np.array([mp.log(x/tmin) for x in t])
     prod = mp.mpf(1)
     for root in rn[n - 1]:
         prod *= z - root
@@ -180,7 +185,7 @@ def dnm(n, m, nn, coeff_j):
     return nn[n - 1] * coeff_j[(n - 1, m)] + (4 / mp.factorial(m)) * s
 
 
-def tm(n, z, nn, coeff_j):
+def tm(n, t, tmin, nn, coeff_j):
     """
     kernel function Tm-
 
@@ -188,8 +193,10 @@ def tm(n, z, nn, coeff_j):
     ----------
     n: integer
         cosebi index
-    z: float or array
-        log(theta/theta_min)
+    t: np.array or list
+        theta, angular seperation
+    tmin: float
+        min angular seperation
     nn: mpmath
         normalizations from get_roots
     rn: coeff_j
@@ -201,6 +208,9 @@ def tm(n, z, nn, coeff_j):
         tminus kernel function
 
     """
+
+    # np.array to allow for simple multiplication
+    z = np.array([mp.log(x/tmin) for x in t]) 
     s = mp.mpf(0)
     for m in range(0, n + 1):
         s += dnm(n, m, nn, coeff_j) * (z**m)
@@ -245,8 +255,9 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
     print("start performing the bessel integrals")
     for n in ns:
         print(n, "/", Nmax)
-        Tm = tm(n, np.log(thetagrid / thetagrid[0]), nn, coeff_j)
-        Tm = np.array([complex(x).real for x in Tm])
+        Tm = tm(n, thetagrid, thetagrid[0], nn, coeff_j)
+        # convert the mp.math object to normal floats
+        Tm = np.array([float(x) for x in Tm])
         f_of_x = (thetagrid * Tm).reshape([len(thetagrid), 1])
 
         integral_type = 1
@@ -273,5 +284,5 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
             result_levin,
         )
 
-        w_ells[n] = result_levin
+        w_ells[n] = result_levin.flatten()
     return w_ells

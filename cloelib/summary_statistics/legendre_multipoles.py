@@ -5,6 +5,7 @@ from cloelib.cosmology.cosmology import Background
 from cloelib.observables.spectro import SpectroPower
 from cloelib.summary_statistics.APDistortion import APDistortion
 from cloelib.auxiliary.math_utils import legendre
+from cloelib.auxiliary.fftlog import fftlog
 
 # General imports
 from typing import Optional
@@ -441,3 +442,80 @@ class LegendreMultipoles:
             )
 
         return multipoles_out
+
+    def _UVcutoff(self, k: np.ndarray, kcut: float, pow: float):
+        r"""Cutoff of ultraviolet modes
+
+        Parameters
+        ----------
+        k: np.ndarray
+            Input wave modes
+        kcut: float
+            Cutoff scale
+        pow: float
+            Index of exponential cutoff
+
+        Returns
+        -------
+        damping: np.ndarray
+            Damping function of UV wave modes
+        """
+        return np.exp(-((k / kcut) ** pow))
+
+    def two_point_correlation_multipoles(
+        self,
+        s: np.ndarray,
+        ells: Optional[np.ndarray] = None,
+        use_AP: Optional[bool] = True,
+        logkmin: Optional[float] = -5,
+        logkmax: Optional[float] = 2,
+        nk: Optional[int] = 2048,
+        kcut: Optional[float] = 0.4,
+        pow: Optional[float] = 2,
+    ) -> dict:
+        r"""Two-point correlation function Legendre multipoles.
+
+        Parameters
+        ----------
+        s: np.ndarray
+            Comoving separations
+        ells: np.ndarray
+            Legendre multipole order
+        use_AP: bool
+            Flag to switch between with and without AP corrections
+        logkmin: float
+            Left logarithmic edge of input wave mode array
+        logkmax: float
+            Right logarithmic edge of input wave mode array
+        nk: int
+            Number of logarithmic wave mode bins
+        kcut: float
+            Cutoff scale for exponential damping
+        pow: float
+            Power index for exponential damping
+        Returns
+        -------
+        multipoles: dict
+            Two-point correlation function Legendre multipoles
+        """
+        if self.spectro_power.NLcode != "COMET":
+            raise ValueError(
+                "2PCF multipoles can temporarily be retrieved only with COMET"
+            )
+
+        ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
+        k_hnkl = np.logspace(logkmin, logkmax, nk)
+        pk_multipoles = self.power_multipoles(k=k_hnkl, ells=ells, use_AP=use_AP)
+        volume_factor = (k_hnkl**3) / (2 * (np.pi**2))
+        xi_multipoles = {}
+        for ell in ells:
+            y_array = (
+                volume_factor
+                * pk_multipoles[f"ell{ell}"]
+                * self._UVcutoff(k=k_hnkl, kcut=kcut, pow=pow)
+                * np.real(1j**ell)
+            )
+            transformer = fftlog(x=k_hnkl, fx=y_array, nu=2)
+            r_grid, transformed_log = transformer.fftlog(ell=ell)
+            xi_multipoles[f"ell{ell}"] = np.interp(s, r_grid, transformed_log)
+        return xi_multipoles

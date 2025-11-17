@@ -321,7 +321,7 @@ class AngularTwoPoint:
 
                     arr = arr.at[1, 1, :].set(
                         mixing_matrix[key].array[0] @ C_ell_calc[key].array[1, 1]
-                        + mixing_matrix[key].array[1] @ C_ell_calc[key].array[1, 1]
+                        + mixing_matrix[key].array[1] @ C_ell_calc[key].array[0, 0]
                     )
 
                     C_ell_out[key] = arr
@@ -331,8 +331,8 @@ class AngularTwoPoint:
             key: AngularPowerSpectrum(
                 array=array,
                 axis=None,
-                lower=None,
-                upper=None,
+                lower=mixing_matrix[key].lower,
+                upper=mixing_matrix[key].upper,
                 ell=mixing_matrix[key].ell,
                 software="cloelib, `get_pseudo_Cl` method",
             )

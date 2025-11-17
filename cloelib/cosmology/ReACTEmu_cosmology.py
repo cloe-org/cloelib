@@ -160,6 +160,8 @@ class MGemuNonlinearBoost:
                # "ns":      (0.9649, 0.9649), # Fixed for this model 
                 "As":      (1.7e-9, 2.5e-9),
                # "Omega_nu": (0.0, 0.0), # Fixed for this model 
+                "w0": (-1.5, -0.5),           
+                "wa": (-0.5, 0.5), 
                 "mu0": (-0.999, 3.0),
                 "c1": (-0.3333, 1.0),
                 "lam": (0.0, 2.0),

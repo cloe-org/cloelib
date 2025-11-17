@@ -16,6 +16,10 @@ except ImportError as e:
     raise ImportError("classy could not be imported.") from e
 
 
+####################################
+############ BACKGROUND ############
+####################################
+
 class mochiCLASSBackground:
     """A wrapper for MOCHI_CLASS background cosmological calculations."""
 
@@ -30,8 +34,8 @@ class mochiCLASSBackground:
         As: float,
         ns: float,
         mnu: Union[float, Sequence[float], np.ndarray],
-        # w0: float,
-        # wa: float,
+        #w0: float,
+        #wa: float,
         mg_stable_basis_on: bool,
         stable_MG_dict: dict,
         mg_background_model: str,
@@ -204,15 +208,18 @@ class mochiCLASSBackground:
                 raise ValueError(
                     "mg_background_model must be 'lcdm', 'wowa' or 'rho_de'"
                 )
-        # NO MG TURNED ON
+            
+        # ########## NO MG TURNED ON ########## 
         else:
             # Check expansion model for MG
             if self.mg_background_model == "lcdm":
                 mochiclass_stable_basis_dict = {"Omega_fld": 0.0, "Omega_smg": 0.0}
-            elif self.mg_background_model == "w0wa":
+            elif self.mg_background_model == "wowa":
                 mochiclass_stable_basis_dict = {
-                    "Omega_fld": 0.0,
-                    "Omega_smg": 0.0,
+                    'Omega_Lambda': 0,
+                    'Omega_scf': 0,
+                    #"Omega_fld": 0.0,
+                    #"Omega_smg": 0.0,
                     "use_ppf": "yes",
                     "c_gamma_over_c_fld": 0.4,
                     "fluid_equation_of_state": "CLP",
@@ -269,7 +276,7 @@ class mochiCLASSBackground:
         # load the mochi_class stable basis dictionary
         for key, value in mochiclass_stable_basis_dict.items():
             self.interface_args["CLASSparams"][key] = value
-        print(type(self.interface_args["CLASSparams"]["lna_smg"]))
+        # print(type(self.interface_args["CLASSparams"]["lna_smg"]))
         # Initialize CLASS
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
@@ -444,12 +451,65 @@ class mochiCLASSBackground:
             np.ndarray: alpha_B values.
         """
         return self.results.get_background()["braiding_smg"]
+    
+    def Om_smg(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Calculate dark energy density fraction Om_smg(z) 
+        (exactly, the ratio of quantities defined by Class 
+        as index_bg_rho_smg and index_bg_rho_crit in the background module)
+
+        requires mochi_class v3.3.3 - 12/11/2025
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns
+        -------
+        np.ndarray
+            dark energy density fraction Om_smg(z) 
+        """
+        arr = [self.results.Om_smg(zi) for zi in zs]  
+        return np.array(arr)
+    
+    def get_background(self) -> dict:
+        """
+        Return all background quantities
+
+        Return a dictionary of background quantities at all times.
+        The name and list of quantities in the returned dictionary are
+        defined in CLASS, in background_output_titles() and
+        background_output_data(). The keys of the dictionary refer to
+        redshift 'z', proper time 'proper time [Gyr]', conformal time
+        'conf. time [Mpc]', and many quantities such as the Hubble
+        rate, distances, densities, pressures, or growth factors. For
+        each key, the dictionary contains an array of values
+        corresponding to each sampled value of time.
+
+        This function works for whatever request in the 'output'
+        field, and even if 'output' was not passed or left blank.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        background : dict
+            Dictionary of all background quantities at each time
+        """
+        return self.results.get_background()
+    
+
 
     @property
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering in Mpc."""
         return self.results.rs_drag()
 
+
+####################################
+############## LINEAR ##############
+####################################
 
 class mochiCLASSLinearPerturbations:
     """Class for perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
@@ -552,6 +612,10 @@ class mochiCLASSLinearPerturbations:
         arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
+
+####################################
+############ NONLINEAR ############
+####################################
 
 class mochiCLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
@@ -660,3 +724,5 @@ class mochiCLASSNonLinearPerturbations:
         """
         arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
+
+

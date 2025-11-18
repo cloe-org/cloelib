@@ -27,6 +27,7 @@ wa = 0.0
 ns = 0.96
 mnu = 0.0  # All emulators have zero neutrino mass
 mnu_1mass = 0.06  # For 1 massive neutrino tests
+mnu_3degen = 0.06  # For 3 degenerate neutrinos tests
 N_mnu = 0  # Number of massive neutrino species
 As = 2e-9
 
@@ -117,6 +118,24 @@ def background_w0wa_1mass():
 
 
 @pytest.fixture
+def background_w0wa_3degen():
+    """Background for w0waCDM tests with 3 degenerate neutrinos"""
+    return DummyBackground(
+        H0=H0,
+        Omega_b0=Omega_b0,
+        Omega_cdm0=Omega_cdm0,
+        Omega_k0=Omega_k0,
+        As=As,
+        ns=ns,
+        mnu=mnu_3degen,
+        N_mnu=3,
+        w0=w0,
+        wa=wa,
+        gamma_MG=0.0,
+    )
+
+
+@pytest.fixture
 def background_wcdm():
     """Background for wCDM tests (wa=0 implicitly)"""
     return DummyBackground(
@@ -153,6 +172,24 @@ def background_wcdm_1mass():
 
 
 @pytest.fixture
+def background_wcdm_3degen():
+    """Background for wCDM tests with 3 degenerate neutrinos"""
+    return DummyBackground(
+        H0=H0,
+        Omega_b0=Omega_b0,
+        Omega_cdm0=Omega_cdm0,
+        Omega_k0=Omega_k0,
+        As=As,
+        ns=ns,
+        mnu=mnu_3degen,
+        N_mnu=3,
+        w0=-0.9,
+        wa=0.0,
+        gamma_MG=0.0,
+    )
+
+
+@pytest.fixture
 def background_lcdm():
     """Background for LCDM tests (w=-1)"""
     return DummyBackground(
@@ -182,6 +219,24 @@ def background_lcdm_1mass():
         ns=ns,
         mnu=mnu_1mass,
         N_mnu=1,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+    )
+
+
+@pytest.fixture
+def background_lcdm_3degen():
+    """Background for LCDM tests with 3 degenerate neutrinos"""
+    return DummyBackground(
+        H0=H0,
+        Omega_b0=Omega_b0,
+        Omega_cdm0=Omega_cdm0,
+        Omega_k0=Omega_k0,
+        As=As,
+        ns=ns,
+        mnu=mnu_3degen,
+        N_mnu=3,
         w0=-1.0,
         wa=0.0,
         gamma_MG=0.0,
@@ -258,19 +313,20 @@ def test_w0wa_pcb_linear(background_w0wa, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_linear_1mass_initialization(background_w0wa_1mass, z_array):
     """Test w0waCDM 1mass emulator initializes correctly"""
-    emulator = w0waCDM.Linear_1mass(background=background_w0wa_1mass, redshifts=z_array)
+    emulator = w0waCDM.Linear(background=background_w0wa_1mass, redshifts=z_array)
 
     assert hasattr(emulator, "Pk_int")
     assert hasattr(emulator, "k")
     assert hasattr(emulator, "z")
     assert emulator.k_min > 0
     assert emulator.k_max > emulator.k_min
+    assert emulator.has_neutrinos is True
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_linear_1mass_power_spectrum(background_w0wa_1mass, z_array, k_array):
     """Test w0waCDM 1mass power spectrum output"""
-    emulator = w0waCDM.Linear_1mass(background=background_w0wa_1mass, redshifts=z_array)
+    emulator = w0waCDM.Linear(background=background_w0wa_1mass, redshifts=z_array)
 
     pk = emulator.matter_power_spectrum(z_array[0], k_array)[0, :]
 
@@ -283,9 +339,7 @@ def test_w0wa_linear_1mass_power_spectrum(background_w0wa_1mass, z_array, k_arra
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_linearcb_1mass_power_spectrum(background_w0wa_1mass, z_array, k_array):
     """Test w0waCDM 1mass Pcb power spectrum"""
-    emulator = w0waCDM.LinearCB_1mass(
-        background=background_w0wa_1mass, redshifts=z_array
-    )
+    emulator = w0waCDM.LinearCB(background=background_w0wa_1mass, redshifts=z_array)
 
     pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
 
@@ -300,9 +354,7 @@ def test_w0wa_1mass_suppression(
 ):
     """Test that massive neutrinos suppress power spectrum"""
     emulator_0mass = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
-    emulator_1mass = w0waCDM.Linear_1mass(
-        background=background_w0wa_1mass, redshifts=z_array
-    )
+    emulator_1mass = w0waCDM.Linear(background=background_w0wa_1mass, redshifts=z_array)
 
     pk_0mass = emulator_0mass.matter_power_spectrum(0.0, k_array)[0, :]
     pk_1mass = emulator_1mass.matter_power_spectrum(0.0, k_array)[0, :]
@@ -313,6 +365,41 @@ def test_w0wa_1mass_suppression(
     assert np.all(pk_0mass[high_k_mask] > pk_1mass[high_k_mask]), (
         "Massive neutrinos should suppress power on small scales"
     )
+
+
+# ============= w0waCDM Tests (3 degenerate neutrinos) =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_w0wa_linear_3degen_initialization(background_w0wa_3degen, z_array):
+    """Test w0waCDM 3degen emulator initializes correctly"""
+    emulator = w0waCDM.Linear(background=background_w0wa_3degen, redshifts=z_array)
+
+    assert hasattr(emulator, "Pk_int")
+    assert emulator.has_neutrinos is True
+    assert emulator.background.N_mnu == 3
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_w0wa_linear_3degen_power_spectrum(background_w0wa_3degen, z_array, k_array):
+    """Test w0waCDM 3degen power spectrum output"""
+    emulator = w0waCDM.Linear(background=background_w0wa_3degen, redshifts=z_array)
+
+    pk = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert isinstance(pk, np.ndarray)
+    assert np.all(pk > 0)
+    assert np.all(np.isfinite(pk))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_w0wa_linearcb_3degen_power_spectrum(background_w0wa_3degen, z_array, k_array):
+    """Test w0waCDM 3degen Pcb power spectrum"""
+    emulator = w0waCDM.LinearCB(background=background_w0wa_3degen, redshifts=z_array)
+
+    pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_cb > 0)
 
 
 # ============= wCDM Tests (0 massive neutrinos) =============
@@ -346,7 +433,7 @@ def test_wcdm_pcb_linear(background_wcdm, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_wcdm_linear_1mass_initialization(background_wcdm_1mass, z_array):
     """Test wCDM 1mass emulator initializes correctly"""
-    emulator = wCDM.Linear_1mass(background=background_wcdm_1mass, redshifts=z_array)
+    emulator = wCDM.Linear(background=background_wcdm_1mass, redshifts=z_array)
 
     assert hasattr(emulator, "Pk_int")
     assert hasattr(emulator, "k")
@@ -356,7 +443,7 @@ def test_wcdm_linear_1mass_initialization(background_wcdm_1mass, z_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_wcdm_linear_1mass_power_spectrum(background_wcdm_1mass, z_array, k_array):
     """Test wCDM 1mass power spectrum output"""
-    emulator = wCDM.Linear_1mass(background=background_wcdm_1mass, redshifts=z_array)
+    emulator = wCDM.Linear(background=background_wcdm_1mass, redshifts=z_array)
 
     pk = emulator.matter_power_spectrum(1.0, k_array)[0, :]
 
@@ -368,11 +455,33 @@ def test_wcdm_linear_1mass_power_spectrum(background_wcdm_1mass, z_array, k_arra
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_wcdm_linearcb_1mass_power_spectrum(background_wcdm_1mass, z_array, k_array):
     """Test wCDM 1mass Pcb power spectrum"""
-    emulator = wCDM.LinearCB_1mass(background=background_wcdm_1mass, redshifts=z_array)
+    emulator = wCDM.LinearCB(background=background_wcdm_1mass, redshifts=z_array)
 
     pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
 
     assert np.all(pk_cb > 0)
+
+
+# ============= wCDM Tests (3 degenerate neutrinos) =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_wcdm_linear_3degen_initialization(background_wcdm_3degen, z_array):
+    """Test wCDM 3degen emulator initializes correctly"""
+    emulator = wCDM.Linear(background=background_wcdm_3degen, redshifts=z_array)
+
+    assert hasattr(emulator, "Pk_int")
+    assert emulator.background.N_mnu == 3
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_wcdm_linear_3degen_power_spectrum(background_wcdm_3degen, z_array, k_array):
+    """Test wCDM 3degen power spectrum output"""
+    emulator = wCDM.Linear(background=background_wcdm_3degen, redshifts=z_array)
+
+    pk = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk > 0)
 
 
 # ============= LCDM Tests (0 massive neutrinos) =============
@@ -418,7 +527,7 @@ def test_lcdm_pcb_linear(background_lcdm, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_lcdm_linear_1mass_initialization(background_lcdm_1mass, z_array):
     """Test LCDM 1mass emulator initializes correctly"""
-    emulator = LCDM.Linear_1mass(background=background_lcdm_1mass, redshifts=z_array)
+    emulator = LCDM.Linear(background=background_lcdm_1mass, redshifts=z_array)
 
     assert hasattr(emulator, "Pk_int")
     assert hasattr(emulator, "k")
@@ -428,7 +537,7 @@ def test_lcdm_linear_1mass_initialization(background_lcdm_1mass, z_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_lcdm_linear_1mass_power_spectrum(background_lcdm_1mass, z_array, k_array):
     """Test LCDM 1mass power spectrum output"""
-    emulator = LCDM.Linear_1mass(background=background_lcdm_1mass, redshifts=z_array)
+    emulator = LCDM.Linear(background=background_lcdm_1mass, redshifts=z_array)
 
     pk = emulator.matter_power_spectrum(0.0, k_array)[0, :]
 
@@ -440,7 +549,7 @@ def test_lcdm_linear_1mass_power_spectrum(background_lcdm_1mass, z_array, k_arra
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_lcdm_linearcb_1mass_power_spectrum(background_lcdm_1mass, z_array, k_array):
     """Test LCDM 1mass Pcb power spectrum"""
-    emulator = LCDM.LinearCB_1mass(background=background_lcdm_1mass, redshifts=z_array)
+    emulator = LCDM.LinearCB(background=background_lcdm_1mass, redshifts=z_array)
 
     pk_cb = emulator.matter_power_spectrum(1.5, k_array)[0, :]
 
@@ -450,13 +559,45 @@ def test_lcdm_linearcb_1mass_power_spectrum(background_lcdm_1mass, z_array, k_ar
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_lcdm_1mass_growth_factor(background_lcdm_1mass, z_array, k_array):
     """Test LCDM 1mass growth factor"""
-    emulator = LCDM.Linear_1mass(background=background_lcdm_1mass, redshifts=z_array)
+    emulator = LCDM.Linear(background=background_lcdm_1mass, redshifts=z_array)
 
     D_z0 = emulator.growth_factor(0.0, k_array)[0, :]
 
     np.testing.assert_allclose(
         D_z0, 1.0, rtol=1e-6, err_msg="Growth factor should be 1 at z=0"
     )
+
+
+# ============= LCDM Tests (3 degenerate neutrinos) =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_lcdm_linear_3degen_initialization(background_lcdm_3degen, z_array):
+    """Test LCDM 3degen emulator initializes correctly"""
+    emulator = LCDM.Linear(background=background_lcdm_3degen, redshifts=z_array)
+
+    assert hasattr(emulator, "Pk_int")
+    assert emulator.background.N_mnu == 3
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_lcdm_linear_3degen_power_spectrum(background_lcdm_3degen, z_array, k_array):
+    """Test LCDM 3degen power spectrum output"""
+    emulator = LCDM.Linear(background=background_lcdm_3degen, redshifts=z_array)
+
+    pk = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk > 0)
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_lcdm_linearcb_3degen_power_spectrum(background_lcdm_3degen, z_array, k_array):
+    """Test LCDM 3degen Pcb power spectrum"""
+    emulator = LCDM.LinearCB(background=background_lcdm_3degen, redshifts=z_array)
+
+    pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_cb > 0)
 
 
 # ============= Boundary & Error Tests =============
@@ -505,6 +646,27 @@ def test_non_flat_geometry():
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_unsupported_neutrino_configuration():
+    """Test that unsupported N_mnu raises ValueError"""
+    bad_nu_background = DummyBackground(
+        H0=H0,
+        Omega_b0=Omega_b0,
+        Omega_cdm0=Omega_cdm0,
+        Omega_k0=Omega_k0,
+        As=As,
+        ns=ns,
+        mnu=0.06,
+        N_mnu=2,
+        w0=w0,
+        wa=wa,
+        gamma_MG=0.0,
+    )
+
+    with pytest.raises(ValueError, match="Unsupported N_mnu"):
+        w0waCDM.Linear(background=bad_nu_background, redshifts=np.array([0.0, 1.0]))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_redshift_filtering(background_lcdm):
     """Test that emulator handles valid redshifts correctly"""
     z_valid = np.array([0.0, 1.0, 3.0, 4.5])
@@ -531,8 +693,8 @@ def test_pcb_vs_total_matter(background_lcdm, z_array, k_array):
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
-def test_str_representation(background_w0wa, z_array):
-    """Test __str__ method returns useful info"""
+def test_str_representation_no_neutrinos(background_w0wa, z_array):
+    """Test __str__ method for massless neutrinos"""
     emulator = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
 
     info_str = str(emulator)
@@ -540,4 +702,29 @@ def test_str_representation(background_w0wa, z_array):
     assert "w0waCDM" in info_str
     assert "k_min" in info_str
     assert "k_max" in info_str
-    assert "neutrino" in info_str.lower()
+    assert "no massive neutrinos" in info_str
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_str_representation_1mass(background_w0wa_1mass, z_array):
+    """Test __str__ method for 1 massive neutrino"""
+    emulator = w0waCDM.Linear(background=background_w0wa_1mass, redshifts=z_array)
+
+    info_str = str(emulator)
+
+    assert "w0waCDM" in info_str
+    assert "Casas et al. 2023" in info_str
+    assert "one massive neutrino" in info_str
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_str_representation_3degen(background_w0wa_3degen, z_array):
+    """Test __str__ method for 3 degenerate neutrinos"""
+    emulator = w0waCDM.Linear(background=background_w0wa_3degen, redshifts=z_array)
+
+    info_str = str(emulator)
+
+    assert "w0waCDM" in info_str
+    assert "Archidiacono et al. (2024)" in info_str
+    assert "three" in info_str
+    assert "degenerate" in info_str

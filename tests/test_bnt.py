@@ -55,9 +55,7 @@ class TestBNTMatrixCalculator(unittest.TestCase):
             nz /= np.trapz(nz, z)
             dndz_list.append(nz)
 
-        bnt = BNTMatrixCalculator(
-            dndz_list=dndz_list, z=z, fid_parameters=fid_params, background=background
-        )
+        bnt = BNTMatrixCalculator(dndz_list=dndz_list, z=z, background=background)
         BNT_matrix = bnt.get_bnt_matrix()
 
         expected = np.array(
@@ -91,7 +89,6 @@ class TestBNTMatrixCalculator(unittest.TestCase):
         bnt = BNTMatrixCalculator(
             dndz_list=dndz_list_jax,
             z=z_jax,
-            fid_parameters=fid_params,
             background=background,
         )
         BNT_matrix = bnt.get_bnt_matrix()
@@ -126,7 +123,6 @@ class TestBNTMatrixCalculator(unittest.TestCase):
             BNTMatrixCalculator(
                 dndz_list=[d1, d2],
                 z=z,
-                fid_parameters=fid_params,
                 background=background,
             )
 
@@ -143,7 +139,6 @@ class TestBNTMatrixCalculator(unittest.TestCase):
             BNTMatrixCalculator(
                 dndz_list=dndz_list,
                 z=z,
-                fid_parameters=fid_params,
                 background=background,
             )
 
@@ -161,6 +156,5 @@ class TestBNTMatrixCalculator(unittest.TestCase):
             BNTMatrixCalculator(
                 dndz_list=[d2d, d2d, d2d],
                 z=z,
-                fid_parameters=fid_params,
                 background=background,
             )

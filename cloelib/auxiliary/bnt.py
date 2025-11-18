@@ -15,7 +15,6 @@ class BNTMatrixCalculator:
         self,
         dndz_list: List[Union[np.ndarray, jnp.ndarray]],
         z: Union[np.ndarray, jnp.ndarray],
-        fid_parameters: dict,
         background: Background,
     ):
         r"""
@@ -28,8 +27,6 @@ class BNTMatrixCalculator:
             Each list member is expected to be normalised.
         z : np.ndarray or jnp.ndarray
             A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
-        fid_parameters : dict
-            A dictionary of the fiducial cosmology parameters.
         background : Background
             Cosmological background instance.
         """
@@ -38,7 +35,6 @@ class BNTMatrixCalculator:
         self.z = np.asarray(z)
         self.dndz_list = [np.asarray(nz) for nz in dndz_list]
 
-        self.fid_parameters = fid_parameters
         self.background = background
         self.nbins = len(self.dndz_list)
 

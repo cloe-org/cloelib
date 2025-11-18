@@ -23,7 +23,7 @@ class BNTMatrixCalculator:
         Parameters
         ----------
         dndz_list : List[np.ndarray or jnp.ndarray]
-            A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
+            A list of 1d-arrays representing the number density distribution of galaxies as a function of redshift.
             Each list member is expected to be normalised.
         z : np.ndarray or jnp.ndarray
             A 1-dimensional array representing the redshift values corresponding to the `dndz` array.

@@ -8,7 +8,6 @@ import numpy as np
 from typing import Tuple, Optional
 from copy import deepcopy
 from scipy.interpolate import interp1d, RectBivariateSpline
-from scipy import interpolate
 
 
 # Cosmology imports
@@ -275,7 +274,7 @@ class MGemuNonlinearBoost:
 
 
         # Create the interpolator over the original grid
-        boost_inrange_interp = interpolate.RectBivariateSpline(zvals_inrange, k_emu, boost_inrange, kx=1, ky=1)
+        boost_inrange_interp = RectBivariateSpline(zvals_inrange, k_emu, boost_inrange, kx=1, ky=1)
 
 
         # ---- choose redshift extrapolation policy ----
@@ -376,7 +375,7 @@ class MGemuNonlinearBoost:
 
 
         # Build interpolator
-        self.MGboost_interp = interpolate.RectBivariateSpline(z_out, k_out, boost_out, kx=1, ky=1)
+        self.MGboost_interp = RectBivariateSpline(z_out, k_out, boost_out, kx=1, ky=1)
 
 
 
@@ -386,7 +385,7 @@ class MGemuNonlinearBoost:
         Parameters
         ----------
         ks: numpy.ndarray
-            Wave number in h Mpc^{-1}
+            Wave number in Mpc^{-1}
 
         zs: numpy.ndarray
             redshifts

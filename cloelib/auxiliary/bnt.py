@@ -56,7 +56,19 @@ class BNTMatrixCalculator:
         self.chi = self.background.comoving_distance(self.z)
 
     def get_bnt_matrix(self) -> np.ndarray:
-        """Compute the BNT matrix."""
+        """
+        Compute the BNT matrix.
+
+        The BNT matrix is a lower–triangular linear transformation acting on tomographic
+        weak-lensing kernels, designed to construct linear combinations of shear kernels
+        that are localised in comoving distance.
+
+        Returns
+        -------
+        np.ndarray
+            The BNT transformation matrix with shape ``(nbins, nbins)``, always
+            lower triangular with ones on the diagonal.
+        """
         A_list = []
         B_list = []
         for i in range(self.nbins):

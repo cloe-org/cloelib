@@ -1,3 +1,13 @@
+"""
+Tabulated nonlinear boost module.
+
+This module provides a lightweight interface for using simulation-based
+nonlinear matter power spectrum boosts B(k, z).  It reads a text file
+containing a common k-grid and boost values for a set of snapshot
+redshifts, constructs a 2D spline interpolator B(z, k), and exposes it in
+the required format.
+"""
+
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
@@ -9,15 +19,6 @@ from typing import Sequence
 from scipy.interpolate import RectBivariateSpline
 
 
-"""
-Tabulated nonlinear boost module.
-
-This module provides a lightweight interface for using simulation-based
-nonlinear matter power spectrum boosts B(k, z).  It reads a text file
-containing a common k-grid and boost values for a set of snapshot
-redshifts, constructs a 2D spline interpolator B(z, k), and exposes it in
-the required format.
-"""
 
 
 class TabulatedNonlinearBoost:

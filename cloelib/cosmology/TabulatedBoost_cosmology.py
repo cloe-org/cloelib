@@ -5,9 +5,8 @@ from cloelib.auxiliary.extrapolator import extend_spectra
 
 # General imports
 import numpy as np
-from typing import Tuple, Optional, Sequence
-from copy import deepcopy
-from scipy.interpolate import interp1d, RectBivariateSpline
+from typing import Sequence
+from scipy.interpolate import RectBivariateSpline
 
 
 """
@@ -17,8 +16,9 @@ This module provides a lightweight interface for using simulation-based
 nonlinear matter power spectrum boosts B(k, z).  It reads a text file
 containing a common k-grid and boost values for a set of snapshot
 redshifts, constructs a 2D spline interpolator B(z, k), and exposes it in
-the required format.  
+the required format.
 """
+
 
 class TabulatedNonlinearBoost:
     """
@@ -53,7 +53,7 @@ class TabulatedNonlinearBoost:
         Gives the high redshift extrapolation policy. Can choose from the following:
             options: "power_law", "freeze", "one", "taper"
 
-    z_decay: float 
+    z_decay: float
         Gives the decay rate after emulator max redshift going back to LCDM (boost=1)
 
     Notes
@@ -63,17 +63,16 @@ class TabulatedNonlinearBoost:
     way as the ReACT emulator-based version.
     """
 
-    def __init__(self,
-                 background : Background,
-                 linearperturbations: Perturbations, 
-                 zs: np.ndarray, 
-                 boost_file: str, 
-                 z_cols: Sequence[float],
-                 high_z_policy: str = "taper",                
-                 z_decay: float = 0.75
-                ):
-
-
+    def __init__(
+        self,
+        background: Background,
+        linearperturbations: Perturbations,
+        zs: np.ndarray,
+        boost_file: str,
+        z_cols: Sequence[float],
+        high_z_policy: str = "taper",
+        z_decay: float = 0.75,
+    ):
         # Load table: k, B(z1), B(z2), ...
         data = np.loadtxt(boost_file)
 
@@ -97,41 +96,39 @@ class TabulatedNonlinearBoost:
         # Ensure z is sorted ascending and reorder boost columns accordingly
         sort_idx = np.argsort(z_cols)
         z_sorted = z_cols[sort_idx]
-        boost_zk = boost_kz[:, sort_idx].T  # -> shape (Nz, Nk) as RectBivariateSpline expects
-       
+        boost_zk = boost_kz[
+            :, sort_idx
+        ].T  # -> shape (Nz, Nk) as RectBivariateSpline expects
+
         zmin = z_sorted[0]
         zmax = z_sorted[-1]
 
-        
         self.background = background
         # Change h/Mpc --> 1/Mpc
-        ktab *= self.background.h  
+        ktab *= self.background.h
 
         # Build 2D spline B(z, k)
         # Note: assumes k and z arrays are strictly increasing
         boost_inrange_interp = RectBivariateSpline(z_sorted, ktab, boost_zk, kx=1, ky=1)
 
-
         # ---- choose redshift extrapolation policy ----
         # options: "power_law", "freeze", "one", "taper"
         # validate & store policy
-        if high_z_policy not in {"power_law","freeze","one","taper"}:
+        if high_z_policy not in {"power_law", "freeze", "one", "taper"}:
             raise ValueError("Invalid high_z_policy ...")
 
         self.z_decay = float(z_decay)
-        
 
-        # 1) Low k extrapolation 
-        # constant extrapolation of the boost to low  k 
+        # 1) Low k extrapolation
+        # constant extrapolation of the boost to low  k
         kmin = ktab[0]
         kmax = ktab[-1]
-        
-        k_low_mask = linearperturbations.k < kmax 
+
+        k_low_mask = linearperturbations.k < kmax
         k_target = linearperturbations.k[k_low_mask]
 
         zvals = zs
         zvals_inrange = zvals[(zvals >= zmin) & (zvals <= zmax)]
-
 
         # Precompute interpolated values on the new k grid
         boost_resampled = np.zeros((len(zvals_inrange), len(k_target)))
@@ -140,8 +137,7 @@ class TabulatedNonlinearBoost:
         for i, z_val in enumerate(zvals_inrange):
             boost_resampled[i, :] = boost_inrange_interp(z_val, vals_k)[0]
 
-
-        # High k extrapolation 
+        # High k extrapolation
         # Handle high-k extrapolation with extend_spectra or constant
         # For simplicity, assume constant high-k for now:
 
@@ -150,11 +146,13 @@ class TabulatedNonlinearBoost:
         if high_z_policy == "power_law":
             # let extend_spectra also do z with its power-law
             k_out, z_out, boost_out = extend_spectra(
-                k_target, zvals_inrange, boost_resampled,
+                k_target,
+                zvals_inrange,
+                boost_resampled,
                 flag_range=True,
                 option_wavenumber="power_law",
                 option_redshift="power_law",
-                extrap_z=zvals,            # full requested z grid
+                extrap_z=zvals,  # full requested z grid
                 option_cosmo="const",
             )
 
@@ -162,7 +160,9 @@ class TabulatedNonlinearBoost:
             # extend only in k; keep z at the grid values
             try:
                 k_out, z_in, boost_kext = extend_spectra(
-                    k_target, zvals_inrange, boost_resampled,
+                    k_target,
+                    zvals_inrange,
+                    boost_resampled,
                     flag_range=True,
                     option_wavenumber="power_law",
                     option_redshift="none",
@@ -171,7 +171,9 @@ class TabulatedNonlinearBoost:
                 )
             except TypeError:
                 k_out, z_in, boost_kext = extend_spectra(
-                    k_target, zvals_inrange, boost_resampled,
+                    k_target,
+                    zvals_inrange,
+                    boost_resampled,
                     flag_range=True,
                     option_wavenumber="power_law",
                     option_redshift="const",
@@ -197,24 +199,22 @@ class TabulatedNonlinearBoost:
 
             elif high_z_policy == "taper":
                 dz = (z_out[idx_hi] - zmax)[:, None]
-                boost_out[idx_hi, :] = 1.0 + (last - 1.0)[None, :] * np.exp(-dz / self.z_decay)
+                boost_out[idx_hi, :] = 1.0 + (last - 1.0)[None, :] * np.exp(
+                    -dz / self.z_decay
+                )
 
             else:
                 raise ValueError(f"Unknown high_z_policy: {high_z_policy}")
 
-
-        #✅ Apply boost = 1 for z > zmax if it is lower than 1 (this is safest thing to do since the extend_spectra results in unphysical high-z extrapolations)
+        # ✅ Apply boost = 1 for z > zmax if it is lower than 1 (this is safest thing to do since the extend_spectra results in unphysical high-z extrapolations)
         enforce_floor_highz = False
         if enforce_floor_highz:
             hi = z_out > zmax  # z_max = 2 in current setup
             if np.any(hi):
                 boost_out[hi, :] = np.maximum(boost_out[hi, :], 1.0)
 
-
         # Build interpolator
         self.MGboost_interp = RectBivariateSpline(z_out, k_out, boost_out, kx=1, ky=1)
-
-
 
     def mg_spectrum_boost(self, zs, ks) -> np.ndarray:
         r"""Computes the nonlinear matter power spectrum boost.
@@ -238,45 +238,44 @@ class TabulatedNonlinearBoost:
         return self.MGboost_interp(zs, ks)
 
 
-
 class TabulatedBoostedPerturbations:
     def __init__(self, base_lin_perturbations, base_perturbations, boost_interp):
         """
-        Applies the nonlinear boost to the LCDM nonlinear spectrum given in base_perturbations 
+        Applies the nonlinear boost to the LCDM nonlinear spectrum given in base_perturbations
 
         Parameters
         ----------
         Parameters
         ----------
         base_lin_perturbations : object
-            An object representing the linear perturbations, which may include methods 
+            An object representing the linear perturbations, which may include methods
             like `sigma_lensing` for lensing calculations.
 
         base_perturbations : object
-            An object with a `matter_power_spectrum(z, k)` method that provides the 
+            An object with a `matter_power_spectrum(z, k)` method that provides the
             nonlinear matter power spectrum for the ΛCDM model.
 
         boost_interp : callable
-            A function or interpolator B(z, k) that returns the nonlinear boost 
-            to be applied to the ΛCDM 
+            A function or interpolator B(z, k) that returns the nonlinear boost
+            to be applied to the ΛCDM
 
         """
 
         self.background = base_perturbations.background
-        assert self.background.Omega_k0 == 0, 'Non flat geometries not supported'
-
+        assert self.background.Omega_k0 == 0, "Non flat geometries not supported"
 
         self.base = base_perturbations
         self.boost_interp = boost_interp
 
         self.base_lin = base_lin_perturbations
-        if hasattr(base_lin_perturbations, 'sigma_lensing') and callable(getattr(base_lin_perturbations, 'sigma_lensing')):
+        if hasattr(base_lin_perturbations, "sigma_lensing") and callable(
+            getattr(base_lin_perturbations, "sigma_lensing")
+        ):
             self.sigma_lensing = base_lin_perturbations.sigma_lensing
 
-
         # Optionally expose attributes like z and k if they exist
-        self.k = getattr(base_perturbations, 'k', None)
-        self.z = getattr(base_perturbations, 'z', None)
+        self.k = getattr(base_perturbations, "k", None)
+        self.z = getattr(base_perturbations, "z", None)
 
     def matter_power_spectrum(self, z, k):
         """
@@ -313,7 +312,6 @@ class TabulatedBoostedPerturbations:
         # Squeeze to reduce unnecessary dimensions for plotting
         return np.squeeze(P_boosted)
 
-
     def growth_factor(self, zs, ks=None):
         r"""Calculate the growth factor.
 
@@ -340,7 +338,7 @@ class TabulatedBoostedPerturbations:
         # Case A: fully general growth via power spectra ratio
         if ks is not None:
             k = np.atleast_1d(ks).astype(float)
-            P = self.matter_power_spectrum(z, k)              # shape (nz, nk) or (nk,) if z scalar
+            P = self.matter_power_spectrum(z, k)  # shape (nz, nk) or (nk,) if z scalar
             P0 = self.matter_power_spectrum(np.array([0.0]), k)  # shape (1, nk)
             P0 = np.squeeze(P0)
             # avoid div-by-zero in pathological cases
@@ -351,7 +349,9 @@ class TabulatedBoostedPerturbations:
         # Case B: linear-growth estimate from boost at large scales
         # pick a default large-scale k: prefer the smallest available k-grid if we have one
         if getattr(self, "k", None) is not None and len(self.k) > 0:
-            k_lin = float(np.min(self.k))  # typically the safest large-scale mode available
+            k_lin = float(
+                np.min(self.k)
+            )  # typically the safest large-scale mode available
         else:
             k_lin = 2e-2  # [1/Mpc] fallback default; adjust if your units differ
 
@@ -365,7 +365,6 @@ class TabulatedBoostedPerturbations:
         D_lin = np.sqrt(Bz / B0)
 
         return np.squeeze(D_lin)
-
 
     def sigma8_0(self) -> float:
         """

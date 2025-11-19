@@ -6,7 +6,9 @@ import jax.numpy as jnp
 from jax import Array
 
 from cloelib.auxiliary.akima_spline import akima_interpolation
+from cloelib.observables.photo import PositionsTracer, ShearTracer
 
+jax.config.update('jax_enable_x64', True)
 
 def dct_type1(f_values: Array) -> Array:
     """Compute the Discrete Cosine Transform (DCT) of type I.
@@ -102,13 +104,15 @@ def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Arra
     # Modified Chebyshev moments of the first kind
     # mu = jnp.array([jnp.sqrt(2),0]+[(1+(-1)**k)/(1-k**2) for k in range(2,n)])
 
-    mu = np.zeros(n)
+    mu = jnp.zeros(n)
     for i in range(0, n, 2):
-        mu[i] = 2.0 / (1 - i**2)
+        mu = mu.at[i].set(2.0 / (1 - i**2))
 
     w = dct_type1(mu) / (n - 1)
-    w[0] /= 2
-    w[-1] /= 2
+    w = w.at[0].set(w[0] / 2)
+    w = w.at[-1].set(w[-1] / 2)
+    # w[0] /= 2
+    # w[-1] /= 2
 
     # Scale weights to the interval [a, b]
     w = (b - a) / 2 * w
@@ -128,7 +132,7 @@ def comoving_distance_to_redshift(chi, background):
     z : float
         Redshift corresponding to the given comoving distance.
     """
-    zs = np.logspace(np.log10(1e-4), np.log10(30.0), 10000)
+    zs = np.logspace(np.log10(1e-4), np.log10(20.0), 10000)
     chi_of_z = background.comoving_distance(zs)
     return akima_interpolation(zs, chi_of_z, chi)
 
@@ -226,10 +230,103 @@ def w_ell(c: Array, T_tilde: Array) -> Array:
     c : jax.numpy.ndarray
         3D array of Chebyshev coefficients. Shape: (n_k_cheb + 1, chi1_n, chi2_n)
     T_tilde : jax.numpy.ndarray
-        3D array of shape (chi1_n, chi2_n, n_k_cheb + 1) representing T_tilde.
+        4D array of shape (ells, chi1_n, chi2_n, n_k_cheb + 1) representing T_tilde.
 
     Returns:
     jax.numpy.ndarray
-        2D array of shape (chi1_n, chi2_n) representing w_ell.
+        3D array of shape (ells, chi1_n, chi2_n) representing w_ell.
     """
-    return jnp.einsum("ijk,jki->jk", c, T_tilde)
+    return jnp.einsum("ijk,ljki->ljk", c, T_tilde)
+
+
+def kernel_grid_interpolator(tracer, chi_grid):
+    """
+    Interpolates the kernel values for a given grid based on the specified cosmological probes.
+    Returns a 2D array of interpolated kernel values, where rows correspond to the number of bins and columns correspond to the grid points.
+
+    Parameters:
+    tracer: An instance of a cosmological tracer class (e.g., PositionsTracer, ShearsTracer).
+    grid: A 1D array of grid points where the kernel values need to be interpolated.
+    Returns:
+    interpolated_kernel: A 2D array of shape (n_bins, len(grid)) containing the interpolated kernel values.
+    """
+    z_grid = comoving_distance_to_redshift(chi_grid, tracer.background)
+    kernel_values = tracer.get_window(tracer.z)
+    return akima_interpolation(kernel_values, tracer.z, z_grid, axis=-1)
+
+
+def _get_kernel_array_position(tracer: PositionsTracer, chi_grid):
+    """
+    Computes the kernel values for a given grid based on the specified cosmological probes.
+    Returns a 2D array of kernel values, where rows correspond to the number of bins and columns correspond to the grid points.
+
+    Parameters:
+    tracer: An instance of a cosmological tracer class (e.g., PositionsTracer, ShearsTracer).
+    grid: A 1D array of grid points where the kernel values need to be computed.
+    Returns:
+    kernel_array: A 2D array of shape (n_bins, len(grid)) containing the kernel values.
+    """
+
+    return kernel_grid_interpolator(tracer, chi_grid)
+
+
+def _get_kernel_array_shear(tracer: ShearTracer, chi_grid):
+    """
+    Computes the kernel values for a given grid based on the specified cosmological probes.
+    Returns a 2D array of kernel values, where rows correspond to the number of bins and columns correspond to the grid points.
+
+    Parameters:
+    tracer: An instance of a cosmological tracer class (e.g., PositionsTracer, ShearsTracer).
+    grid: A 1D array of grid points where the kernel values need to be computed.
+    Returns:
+    kernel_array: A 2D array of shape (n_bins, len(grid)) containing the kernel values.
+    """
+
+    return kernel_grid_interpolator(tracer, chi_grid) / chi_grid**2
+
+
+def get_kernel_array(tracer, chi_grid):
+    """
+    Computes the kernel values for a given grid based on the specified cosmological probes.
+    Returns a 2D array of kernel values, where rows correspond to the number of bins and columns correspond to the grid points.
+
+    Parameters:
+    tracer: An instance of a cosmological tracer class (e.g., PositionsTracer, ShearsTracer).
+    grid: A 1D array of grid points where the kernel values need to be computed.
+    Returns:
+    kernel_array: A 2D array of shape (n_bins, len(grid)) containing the kernel values.
+    """
+    if isinstance(tracer, PositionsTracer):
+        return _get_kernel_array_position(tracer, chi_grid)
+    elif isinstance(tracer, ShearTracer):
+        return _get_kernel_array_shear(tracer, chi_grid)
+    else:
+        raise ValueError("Tracer type not supported for kernel array computation.")
+    
+def combine_kernels(tracer_1, tracer_2, chi, R):
+    """
+    Combine the kernels of two tracers over given chi and R grids.
+    Parameters:
+    tracer_1 : Tracer
+        First tracer object with perturbations attribute.
+    tracer_2 : Tracer
+        Second tracer object with perturbations attribute.
+    chi : array-like
+        Array of chi values.
+    R : array-like
+        Array of R values.
+    Returns:
+    Combined kernel array of shaepe (n_bins_1, n_bins_2, len(R), len(chi)).
+    """
+
+    W1_chi = get_kernel_array(tracer_1, chi)
+    W2_chi = get_kernel_array(tracer_2, chi)
+
+    R_mesh, chi_mesh = jnp.meshgrid(R, chi, indexing="ij")
+    chi_R = chi_mesh * R_mesh
+
+    W1_chi_R = jax.vmap(get_kernel_array, in_axes=(None, 0), out_axes=(2))(tracer_1, chi_R)
+    W2_chi_R = jax.vmap(get_kernel_array, in_axes=(None, 0), out_axes=(2))(tracer_2, chi_R)
+
+    return (jnp.einsum("ik,jkt->ijkt", W1_chi, W2_chi_R)
+        + jnp.einsum("jk,ikt->ijkt", W2_chi, W1_chi_R))

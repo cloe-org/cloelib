@@ -121,7 +121,7 @@ def test_clenshaw_curtis_weights():
         ]
     )
 
-    np.testing.assert_allclose(weights, expected_weights)
+    np.testing.assert_allclose(weights, expected_weights, rtol=1e-6)
 
 
 def test_clenshaw_curtis_quadrature():

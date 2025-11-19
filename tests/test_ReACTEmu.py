@@ -1,7 +1,10 @@
 import numpy as np
 import pytest
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
-from cloelib.cosmology.ReACTEmu_cosmology import MGemuNonlinearBoost, BoostedPerturbations
+from cloelib.cosmology.ReACTEmu_cosmology import (
+    MGemuNonlinearBoost,
+    BoostedPerturbations,
+)
 
 import urllib.request
 import zipfile
@@ -9,7 +12,7 @@ from pathlib import Path
 
 
 # -------------------------------
-# Download utility 
+# Download utility
 # -------------------------------
 
 VALIDATION_URL = "https://drive.google.com/uc?id=16IftTSG1g7bVGhaajWJPSAln06XVOijI"
@@ -35,6 +38,7 @@ def ensure_validation_data() -> Path:
 # Fixtures using actual CAMB class
 # -------------------------------
 
+
 @pytest.fixture(scope="module")
 def camb_background():
     return CAMBBackground(
@@ -48,7 +52,7 @@ def camb_background():
         w0=-1,
         wa=0,
         gamma_MG=0.0,
-        N_mnu = 0.0
+        N_mnu=0.0,
     )
 
 
@@ -67,16 +71,14 @@ def test_mgemu_initializes_correctly(camb_background, camb_linear):
 
     # New required MG parameters (use benign defaults for unused ones)
     mgpars = {
-        "fr0": 1e-4,     # was MGp1
-        "omega_rc": 0.0, # for DGP; unused for 'fr'
+        "fr0": 1e-4,  # was MGp1
+        "omega_rc": 0.0,  # for DGP; unused for 'fr'
         "gamma0": 0.55,  # for Linder gamma; unused for 'fr'
-        "q1": 0.0,       # whatever default is safe in your code
+        "q1": 0.0,  # whatever default is safe in your code
     }
 
     obj = MGemuNonlinearBoost(
-        camb_background, linear_pert, zs,
-        gravity_model="fr",
-        mgpars=mgpars
+        camb_background, linear_pert, zs, gravity_model="fr", mgpars=mgpars
     )
 
     val = obj.mg_spectrum_boost(0.5, 0.2)
@@ -87,25 +89,30 @@ def test_mgemu_initializes_correctly(camb_background, camb_linear):
 # Test: Boosted spectrum interface
 # -------------------------
 def test_boosted_spectrum_shape():
-
     class DummyBackground:
         Omega_k0 = 0.0
         w0 = -1.0
         wa = 0.0
         # (optional) other fields you often read
-        h = 0.67; H0 = 100*h; Omega_b0 = 0.05; Omega_cdm0 = 0.25
-        mnu = 0.0; As = 2.1e-9; ns = 0.965; N_mnu = 0.0
+        h = 0.67
+        H0 = 100 * h
+        Omega_b0 = 0.05
+        Omega_cdm0 = 0.25
+        mnu = 0.0
+        As = 2.1e-9
+        ns = 0.965
+        N_mnu = 0.0
 
-    class DummyLin:  
+    class DummyLin:
         background = DummyBackground()
-
 
     class DummyBase:
         background = DummyBackground()
-        def matter_power_spectrum(self, z, k):
-            z = np.atleast_1d(z); k = np.atleast_1d(k)
-            return np.outer(np.ones_like(z), np.ones_like(k)) * 2.0
 
+        def matter_power_spectrum(self, z, k):
+            z = np.atleast_1d(z)
+            k = np.atleast_1d(k)
+            return np.outer(np.ones_like(z), np.ones_like(k)) * 2.0
 
     def dummy_boost(z, k, grid=False):
         return np.outer(np.ones_like(z), np.ones_like(k)) * 1.5
@@ -120,25 +127,29 @@ def test_boosted_spectrum_shape():
 
 
 def test_boosted_scalar_input():
-    
     class DummyBackground:
         Omega_k0 = 0.0
         w0 = -1.0
         wa = 0.0
         # (optional) other fields you often read
-        h = 0.67; H0 = 100*h; Omega_b0 = 0.05; Omega_cdm0 = 0.25
-        mnu = 0.0; As = 2.1e-9; ns = 0.965
+        h = 0.67
+        H0 = 100 * h
+        Omega_b0 = 0.05
+        Omega_cdm0 = 0.25
+        mnu = 0.0
+        As = 2.1e-9
+        ns = 0.965
 
-    class DummyLin:  
+    class DummyLin:
         background = DummyBackground()
-
 
     class DummyBase:
         background = DummyBackground()
-        def matter_power_spectrum(self, z, k):
-            z = np.atleast_1d(z); k = np.atleast_1d(k)
-            return np.outer(np.ones_like(z), np.ones_like(k)) * 2.0
 
+        def matter_power_spectrum(self, z, k):
+            z = np.atleast_1d(z)
+            k = np.atleast_1d(k)
+            return np.outer(np.ones_like(z), np.ones_like(k)) * 2.0
 
     def dummy_boost(z, k, grid=False):
         return np.array([1.5])
@@ -151,14 +162,16 @@ def test_boosted_scalar_input():
 # -------------------------
 # Validation against external data
 # -------------------------
-@pytest.mark.parametrize("model_name,mgparam,filename", [
-    ("fr",  1e-5, "fR_validation_data.dat"),
-    ("dgp", 0.1,  "dgp_validation_data.dat"),
-])
-
-
-def test_mg_boost_matches_validation(camb_background, camb_linear, model_name, mgparam, filename):
-    
+@pytest.mark.parametrize(
+    "model_name,mgparam,filename",
+    [
+        ("fr", 1e-5, "fR_validation_data.dat"),
+        ("dgp", 0.1, "dgp_validation_data.dat"),
+    ],
+)
+def test_mg_boost_matches_validation(
+    camb_background, camb_linear, model_name, mgparam, filename
+):
     # Get external data directory (download & unzip if needed)
     data_dir = ensure_validation_data()
     data_path = data_dir / filename
@@ -174,18 +187,13 @@ def test_mg_boost_matches_validation(camb_background, camb_linear, model_name, m
     else:
         raise ValueError(f"Unsupported model in test: {model_name}")
 
-
     boost_obj = MGemuNonlinearBoost(
-        camb_background, linear_pert, zs,
-        gravity_model=model_name,
-        mgpars=mgpars
+        camb_background, linear_pert, zs, gravity_model=model_name, mgpars=mgpars
     )
     interp = boost_obj.MGboost_interp
 
-
     # Load validation data
     data = np.loadtxt(str(data_path))
-
 
     # Original k in h/Mpc (from data)
     k_raw = data[:, 0]
@@ -199,7 +207,6 @@ def test_mg_boost_matches_validation(camb_background, camb_linear, model_name, m
     kmax = interp.get_knots()[1][-1]
     k_vals = np.clip(k_vals_physical, kmin, kmax)
 
-
     z_map = {1.5: 1, 0.785: 2, 0.478: 3, 0.1: 4}  # column indices
 
     for z in zs:
@@ -211,6 +218,5 @@ def test_mg_boost_matches_validation(camb_background, camb_linear, model_name, m
         max_err = rel_err[mask].max()
 
         assert max_err < 0.005, (
-            f"{model_name} boost error > 0.5% at z={z} "
-            f"(max rel error = {max_err:.5f})"
+            f"{model_name} boost error > 0.5% at z={z} (max rel error = {max_err:.5f})"
         )

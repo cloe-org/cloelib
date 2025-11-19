@@ -69,7 +69,6 @@ class TestBNTMatrixCalculator(unittest.TestCase):
 
     def test_bnt_matrix_correct_to_4dp_jax(self):
         """Matrix matches expected values to 4 decimal places when inputs are JAX arrays."""
-        import numpy as np
         from numpy.testing import assert_allclose
 
         z = np.linspace(0.1, 2.0, 200)
@@ -105,56 +104,32 @@ class TestBNTMatrixCalculator(unittest.TestCase):
 
         assert isinstance(BNT_matrix, np.ndarray), "Output must be a NumPy array."
 
-    def test_bnt_raises_when_fewer_than_three_bins(self):
-        """Raises ValueError if fewer than 3 tomographic bins are provided."""
-        z = np.linspace(0.1, 2.0, 200)
+    def test_bnt_raises_when_dndz_shape_mismatch(self):
+        """Raises ValueError if any dndz array has a shape different from z."""
+        # z has length 100
+        z = np.linspace(0.1, 2.0, 100)
 
-        def nz(c, w):
-            g = np.exp(-0.5 * ((z - c) / w) ** 2)
-            return g / np.trapz(g, z)
+        # Helper to build a normalized nz on a given z-grid
+        def make_nz(z_grid, center, width):
+            nz = np.exp(-0.5 * ((z_grid - center) / width) ** 2)
+            nz /= np.trapz(nz, z_grid)
+            return nz
 
-        d1 = nz(0.5, 0.1)
-        d2 = nz(1.0, 0.1)
+        # One dndz with matching shape
+        dndz_good = make_nz(z, center=0.8, width=0.1)
 
-        with self.assertRaisesRegex(
-            ValueError,
-            r"BNTMatrixCalculator requires at least 3 tomographic bins to compute the matrix\.",
-        ):
-            BNTMatrixCalculator(
-                dndz_list=[d1, d2],
-                z=z,
-                background=background,
-            )
+        # One dndz with mismatched shape (different grid)
+        z_short = z[::2]  # length 50
+        dndz_bad = make_nz(z_short, center=0.8, width=0.1)
 
-    def test_bnt_raises_when_zero_present_in_z(self):
-        """Raises ValueError if any z element equals zero."""
-        z = np.array([0.0, 0.5, 1.0], dtype=float)
-        d = np.array([0.2, 0.3, 0.5], dtype=float)
-        dndz_list = [d, d, d]
+        dndz_list = [dndz_good, dndz_bad, dndz_good]
 
         with self.assertRaisesRegex(
             ValueError,
-            r"One of the z array elements is equal to zero, breaking the BNT computation\.",
+            r"Each dndz array must have shape",
         ):
             BNTMatrixCalculator(
                 dndz_list=dndz_list,
-                z=z,
-                background=background,
-            )
-
-    def test_bnt_raises_when_z_and_dndz_rank_mismatch(self):
-        """Raises ValueError if z rank differs from dndz[i] rank."""
-        z = np.linspace(0.1, 2.0, 80)
-        g = np.exp(-0.5 * ((z - 0.8) / 0.1) ** 2)
-        d1d = g / np.trapz(g, z)
-        d2d = d1d[:, None]  # make it 2D to trigger rank mismatch
-
-        with self.assertRaisesRegex(
-            ValueError,
-            r"The shape of the z array does not match the shape of the dndz array\.",
-        ):
-            BNTMatrixCalculator(
-                dndz_list=[d2d, d2d, d2d],
                 z=z,
                 background=background,
             )

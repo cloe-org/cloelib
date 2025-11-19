@@ -46,10 +46,12 @@ class BNTMatrixCalculator:
             raise ValueError(
                 "One of the z array elements is equal to zero, breaking the BNT computation."
             )
-        if len(self.z.shape) != len(self.dndz_list[0].shape):
-            raise ValueError(
-                "The shape of the z array does not match the shape of the dndz array."
-            )
+        for nz in self.dndz_list:
+            if nz.shape != self.z.shape:
+                raise ValueError(
+                    f"Each dndz array must have shape {self.z.shape}, "
+                    f"but found {nz.shape}."
+                )
 
         self.chi = self.background.comoving_distance(self.z)
 
@@ -59,8 +61,16 @@ class BNTMatrixCalculator:
         B_list = []
         for i in range(self.nbins):
             nz = self.dndz_list[i]
-            A_list += [np.trapz(nz, self.z)]
-            B_list += [np.trapz(nz / self.chi, self.z)]
+            A_list.append(
+                np.trapezoid(nz, self.z)
+                if hasattr(np, "trapezoid")
+                else np.trapz(nz, self.z)
+            )
+            B_list.append(
+                np.trapezoid(nz / self.chi, self.z)
+                if hasattr(np, "trapezoid")
+                else np.trapz(nz / self.chi, self.z)
+            )
 
         BNT_matrix = np.eye(self.nbins)
         BNT_matrix[1, 0] = -1.0
@@ -70,7 +80,7 @@ class BNTMatrixCalculator:
                 [[A_list[i - 1], A_list[i - 2]], [B_list[i - 1], B_list[i - 2]]]
             )
             A = -1.0 * np.array([A_list[i], B_list[i]])
-            soln = np.dot(np.linalg.inv(mat), A)
+            soln = np.linalg.solve(mat, A)
             BNT_matrix[i, i - 1] = soln[0]
             BNT_matrix[i, i - 2] = soln[1]
 

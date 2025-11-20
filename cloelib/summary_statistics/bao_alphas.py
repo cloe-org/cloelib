@@ -38,9 +38,7 @@ class BaryonAcousticOscillations:
         self.background_fiducial = background_fiducial
         self.zs = redshifts
         self.Neff = 3.046  # This is hardcoded but should come from background
-        self.rd_ratio = self.sound_horizon_drag(
-            self.background_fiducial
-        ) / self.sound_horizon_drag(self.background)
+        self.rd_ratio = self.background_fiducial.rdrag / self.background.rdrag
         self.ap_distortion = APDistortion(background, background_fiducial)
 
         # the `alphas_dict` attribute is a dictionary containing
@@ -155,30 +153,3 @@ class BaryonAcousticOscillations:
             for i, z in enumerate(self.zs)
         }
         return alphas
-
-    def sound_horizon_drag(self, background):
-        r"""Compute the sound horizon at drag epoch.
-
-        Uses the fitting formula Eq.17
-        of [1411.1074](https://arxiv.org/abs/1411.1074)
-
-        Parameters
-        ----------
-        background: Background
-            Background class containing cosmology
-
-        Returns
-        -------
-        r_d: float
-            Sound horizon at drag epoch
-        """
-        omega_cb = background.Omega_cdm0 * background.h**2
-        omega_b = background.Omega_b0 * background.h**2
-        omega_nu = background.mnu * 93.14
-
-        r_d = (
-            56.067
-            * np.exp(-49.7 * (omega_nu + 0.002) ** 2)
-            / (omega_cb**0.2436 * omega_b**0.128876 * (1 + (self.Neff - 3.046) / 30.6))
-        )
-        return r_d

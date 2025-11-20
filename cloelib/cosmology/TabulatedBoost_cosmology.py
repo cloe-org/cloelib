@@ -19,8 +19,6 @@ from typing import Sequence
 from scipy.interpolate import RectBivariateSpline
 
 
-
-
 class TabulatedNonlinearBoost:
     """
     Nonlinear matter power spectrum boost from a tabulated file B(k; z).

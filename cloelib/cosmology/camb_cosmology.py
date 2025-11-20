@@ -102,7 +102,9 @@ class CAMBBackground:
         self.interface_args["CAMBparams"].InitPower.set_params(As=self.As, ns=self.ns)
 
         # Call CAMB to compute the background
+        print("here")
         self.results = camb.get_background(self.interface_args["CAMBparams"])
+        print("got here")
 
     @property
     def _interface_args(self) -> dict:

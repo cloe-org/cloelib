@@ -3,11 +3,14 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+import sys
 
 # General imports
 import numpy as np
 import copy
 from typing import Optional, Union, Sequence
+
+np.set_printoptions(threshold=sys.maxsize)
 
 # Cosmology imports (make sure it's the version of mochi_class that's being imported not the standard CLASS!)
 try:
@@ -19,6 +22,7 @@ except ImportError as e:
 ####################################
 ############ BACKGROUND ############
 ####################################
+
 
 class mochiCLASSBackground:
     """A wrapper for MOCHI_CLASS background cosmological calculations."""
@@ -34,8 +38,8 @@ class mochiCLASSBackground:
         As: float,
         ns: float,
         mnu: Union[float, Sequence[float], np.ndarray],
-        #w0: float,
-        #wa: float,
+        # w0: float,
+        # wa: float,
         mg_stable_basis_on: bool,
         stable_MG_dict: dict,
         mg_background_model: str,
@@ -139,7 +143,6 @@ class mochiCLASSBackground:
                 self.interface_args["CLASSparams"][key] = value
             # LOAD MG PARAMETRISATIONS
             lna_smg = self.stable_MG_dict["lna_smg"]
-            print(type(lna_smg))
             Delta_Mpl = self.stable_MG_dict["Delta_M2"]
             Dkin = self.stable_MG_dict["D_kin"]
             cs2 = self.stable_MG_dict["cs2"]
@@ -147,7 +150,7 @@ class mochiCLASSBackground:
             if isinstance(alpha_B0, np.ndarray):
                 # convert array to float
                 alpha_B0_str = (
-                    np.array2string(alpha_B0, separator=" ", precision=16)
+                    np.array2string(alpha_B0, separator=",", precision=16)
                     .replace("\n", "")
                     .strip("[]")
                 )
@@ -161,16 +164,16 @@ class mochiCLASSBackground:
                 "Omega_Lambda": 0.0,
                 "Omega_fld": 0.0,
                 "Omega_smg": -1.0,  # fractional density scalar field today (0: no smg, negative: specify both Omega_Lambda and Omega_fld, infer Omega_smg, 0<...<1: specify both Omega_Lambda and Omega_smg, infer Omega_fld)
-                "lna_smg": np.array2string(lna_smg, separator=" ", precision=16)
+                "lna_smg": np.array2string(lna_smg, separator=",", precision=16)
                 .replace("\n", "")
                 .strip("[]"),
-                "Delta_M2": np.array2string(Delta_Mpl, separator=" ", precision=16)
+                "Delta_M2": np.array2string(Delta_Mpl, separator=",", precision=16)
                 .replace("\n", "")
                 .strip("[]"),
-                "D_kin": np.array2string(Dkin, separator=" ", precision=16)
+                "D_kin": np.array2string(Dkin, separator=",", precision=16)
                 .replace("\n", "")
                 .strip("[]"),
-                "cs2": np.array2string(cs2, separator=" ", precision=16)
+                "cs2": np.array2string(cs2, separator=",", precision=16)
                 .replace("\n", "")
                 .strip("[]"),
                 "parameters_smg": alpha_B0_str,
@@ -184,7 +187,7 @@ class mochiCLASSBackground:
                 mochiclass_stable_basis_dict["expansion_model"] = "w0wa"
                 mochiclass_stable_basis_dict["expansion_smg"] = (
                     np.array2string(
-                        np.array([0.5, w0, wa]), separator=" ", precision=16
+                        np.array([0.5, w0, wa]), separator=",", precision=16
                     )
                     .replace("\n", "")
                     .strip("[]")
@@ -195,12 +198,12 @@ class mochiCLASSBackground:
                 mochiclass_stable_basis_dict["expansion_model"] = "rho_de"
                 mochiclass_stable_basis_dict["expansion_smg"] = 0.5
                 mochiclass_stable_basis_dict["lna_de"] = (
-                    np.array2string(lna_de, separator=" ", precision=16)
+                    np.array2string(lna_de, separator=",", precision=16)
                     .replace("\n", "")
                     .strip("[]")
                 )
                 mochiclass_stable_basis_dict["de_evo"] = (
-                    np.array2string(rho_de, separator=" ", precision=16)
+                    np.array2string(rho_de, separator=",", precision=16)
                     .replace("\n", "")
                     .strip("[]")
                 )
@@ -208,18 +211,18 @@ class mochiCLASSBackground:
                 raise ValueError(
                     "mg_background_model must be 'lcdm', 'wowa' or 'rho_de'"
                 )
-            
-        # ########## NO MG TURNED ON ########## 
+
+        # ########## NO MG TURNED ON ##########
         else:
             # Check expansion model for MG
             if self.mg_background_model == "lcdm":
                 mochiclass_stable_basis_dict = {"Omega_fld": 0.0, "Omega_smg": 0.0}
             elif self.mg_background_model == "wowa":
                 mochiclass_stable_basis_dict = {
-                    'Omega_Lambda': 0,
-                    'Omega_scf': 0,
-                    #"Omega_fld": 0.0,
-                    #"Omega_smg": 0.0,
+                    "Omega_Lambda": 0,
+                    "Omega_scf": 0,
+                    # "Omega_fld": 0.0,
+                    # "Omega_smg": 0.0,
                     "use_ppf": "yes",
                     "c_gamma_over_c_fld": 0.4,
                     "fluid_equation_of_state": "CLP",
@@ -242,27 +245,27 @@ class mochiCLASSBackground:
                     "Omega_smg": -1.0,
                     "expansion_model": "rho_de",
                     "expansion_smg": 0.5,
-                    "lna_de": np.array2string(lna_de, separator=" ", precision=16)
+                    "lna_de": np.array2string(lna_de, separator=",", precision=16)
                     .replace("\n", "")
                     .strip("[]"),
-                    "de_evo": np.array2string(rho_de, separator=" ", precision=16)
+                    "de_evo": np.array2string(rho_de, separator=",", precision=16)
                     .replace("\n", "")
                     .strip("[]"),
-                    "lna_smg": np.array2string(lna_smg, separator=" ", precision=16)
+                    "lna_smg": np.array2string(lna_smg, separator=",", precision=16)
                     .replace("\n", "")
                     .strip("[]"),
                     "Delta_M2": np.array2string(
-                        np.zeros_like(lna_smg), separator=" ", precision=16
+                        np.zeros_like(lna_smg), separator=",", precision=16
                     )
                     .replace("\n", "")
                     .strip("[]"),
                     "D_kin": np.array2string(
-                        np.ones_like(lna_smg) * 1e-8, separator=" ", precision=16
+                        np.ones_like(lna_smg) * 1e-8, separator=",", precision=16
                     )
                     .replace("\n", "")
                     .strip("[]"),
                     "cs2": np.array2string(
-                        np.ones_like(lna_smg), separator=" ", precision=16
+                        np.ones_like(lna_smg), separator=",", precision=16
                     )
                     .replace("\n", "")
                     .strip("[]"),
@@ -276,7 +279,6 @@ class mochiCLASSBackground:
         # load the mochi_class stable basis dictionary
         for key, value in mochiclass_stable_basis_dict.items():
             self.interface_args["CLASSparams"][key] = value
-        # print(type(self.interface_args["CLASSparams"]["lna_smg"]))
         # Initialize CLASS
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
@@ -440,22 +442,10 @@ class mochiCLASSBackground:
         """
         return np.array([self.results.Om_b(z) for z in zs])
 
-    def alpha_B(self, zs: np.ndarray) -> np.ndarray:
-        """
-        Return the alpha_B braiding parameter as a function of redshift.
-
-        Args:
-            zs (np.ndarray): Array of redshifts.
-
-        Returns:
-            np.ndarray: alpha_B values.
-        """
-        return self.results.get_background()["braiding_smg"]
-    
     def Om_smg(self, zs: np.ndarray) -> np.ndarray:
         """
-        Calculate dark energy density fraction Om_smg(z) 
-        (exactly, the ratio of quantities defined by Class 
+        Calculate dark energy density fraction Om_smg(z)
+        (exactly, the ratio of quantities defined by Class
         as index_bg_rho_smg and index_bg_rho_crit in the background module)
 
         requires mochi_class v3.3.3 - 12/11/2025
@@ -466,11 +456,11 @@ class mochiCLASSBackground:
         Returns
         -------
         np.ndarray
-            dark energy density fraction Om_smg(z) 
+            dark energy density fraction Om_smg(z)
         """
-        arr = [self.results.Om_smg(zi) for zi in zs]  
+        arr = [self.results.Om_smg(zi) for zi in zs]
         return np.array(arr)
-    
+
     def get_background(self) -> dict:
         """
         Return all background quantities
@@ -498,8 +488,6 @@ class mochiCLASSBackground:
             Dictionary of all background quantities at each time
         """
         return self.results.get_background()
-    
-
 
     @property
     def rdrag(self) -> float:
@@ -511,14 +499,16 @@ class mochiCLASSBackground:
 ############## LINEAR ##############
 ####################################
 
+
 class mochiCLASSLinearPerturbations:
     """Class for perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
 
-    def __init__(self, background: Background, redshifts: np.ndarray):
+    def __init__(self, background: Background, redshifts: np.ndarray, ks: np.ndarray):
         """Initialize the CLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
-        self.kmax = 100
+        self.kmax = 10
+        self.k = ks
         self.results = None  # Store CLASS results
 
         # Ensure CLASS is initialized with necessary parameters
@@ -617,6 +607,7 @@ class mochiCLASSLinearPerturbations:
 ############ NONLINEAR ############
 ####################################
 
+
 class mochiCLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
 
@@ -624,10 +615,12 @@ class mochiCLASSNonLinearPerturbations:
         self,
         background: Background,
         redshifts: np.ndarray,
+        ks: np.ndarray,
         nonlinear_model: Optional[str] = None,
     ):
         """Initialize the CLASSNonLinearPerturbation instance."""
         self.background = background
+        self.k = ks
         self.z = redshifts
         self.kmax = 100
 
@@ -652,7 +645,6 @@ class mochiCLASSNonLinearPerturbations:
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        # LG: Do we want to use mochi_class to get the MG nonlinear Pk's?
         """Calculate the MOCHI_CLASS non-linear matter power spectrum.
 
         Parameters
@@ -724,5 +716,3 @@ class mochiCLASSNonLinearPerturbations:
         """
         arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
-
-

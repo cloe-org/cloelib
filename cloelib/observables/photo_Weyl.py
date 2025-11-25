@@ -60,6 +60,11 @@ class PositionsTracer_Weyl_GC:
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z
+        
+        # Weyl project: Add z_ini
+        self.z_ini = self.perturbations.z[0]
+        
+        
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 0
 
@@ -93,7 +98,6 @@ class PositionsTracer_Weyl_GC:
 
     def get_window_positions(self, z) -> np.ndarray:
         # WEYL PROJECT: This will be the positions window function when used for galaxy clustering
-        # TO DO: Remove current implementation of bias; Implement Jhat and bhat parameters
         
         r"""Galaxy Positions window function.    
 
@@ -114,6 +118,9 @@ class PositionsTracer_Weyl_GC:
         """
         
         #Weyl: Add factor 1/sigma_8(z_ini)
+        # Assuming each background class has a self.sigma8
+        
+        sigma_8ini = self.background.sigma8*self.perturbations.growth_factor(self.z_ini,1) #growth factor already normalized to 1 today
 
         def per_bin_case():
             window = (
@@ -121,6 +128,7 @@ class PositionsTracer_Weyl_GC:
                 * self.dndz_shifted
                 * self.perturbations.background.hubble_parameter(z)
                 / c_0
+                / sigma_8ini
             )
             return window
 
@@ -197,12 +205,15 @@ class PositionsTracer_Weyl_GC:
             at specified scale for the redshifts defined in z
         """
         
-        #TO DO Weyl: Add factor D_1(z)/D_1(z_\ini)
+        #Weyl: Added factor D_1(z)/D_1(z_\ini)
+        
+        growth_factor = self.perturbations.growth_factor(z,1)/self.perturbations.growth_factor(self.z_ini,1)
         
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (
             3
             / 2
+            * growth_factor 
             * (self.background.H0 / c_0) ** 2
             * Omega_m0
             * (1 + z)
@@ -273,6 +284,10 @@ class PositionsTracer_Weyl_GGL:
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z
+        
+        # Weyl project: Add z_ini
+        self.z_ini = self.perturbations.z[0]
+        
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 0
 
@@ -307,7 +322,7 @@ class PositionsTracer_Weyl_GGL:
         def per_bin_Jhat():
             bias_array = np.asarray(
                 [
-                    nuisance_params.get("Jhat_bin%d" % bin, 1.0) #Rename parameter? In our case, we use the bhat=bias*sigma8 as parameters
+                    Jhat_params.get("Jhat_bin%d" % bin, 1.0) 
                     for bin in range(self.n_z_bins)
                 ]
             )
@@ -340,9 +355,9 @@ class PositionsTracer_Weyl_GGL:
         """
 
         # WEYL: Multiplied with Jhat; Removed factor (self.background.H0 / c_0) ** 2* Omega_m0* (1 + z)
-        # TO DO WEYL: Add factor (1/sigma_8(z_ini))**2
+        # WEYL: Added factor (1/sigma_8(z_ini))**2
         Omega_m0 = self.background.Omega_m(0.0)
-        
+        sigma_8ini = self.background.sigma8*self.perturbations.growth_factor(self.z_ini,1) #growth factor already normalized to 1 today
         
         def per_bin_case():
             window = (
@@ -351,6 +366,7 @@ class PositionsTracer_Weyl_GGL:
                 * self.dndz_shifted
                 * self.perturbations.background.hubble_parameter(z)
                 / (c_0* (self.background.H0 / c_0) ** 2* Omega_m0* (1 + z))
+                / sigma_8ini**2
             )
             return window
 
@@ -429,12 +445,14 @@ class PositionsTracer_Weyl_GGL:
             at specified scale for the redshifts defined in z
         """
         
-        #TO DO Weyl: Add factor (D_1(z)/D_1(z_ini))**2
+        # Weyl project: added growth factor
+        growth_factor = self.perturbations.growth_factor(z,1)/self.perturbations.growth_factor(self.z_ini,1)
 
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (
             3
             / 2
+            * growth_factor**2 
             * (self.background.H0 / c_0) ** 2
             * Omega_m0
             * (1 + z)
@@ -465,4 +483,3 @@ class PositionsTracer_Weyl_GGL:
         """
         window = self.get_window_positions(z) + self.get_window_magnification(z)
         return window
-    

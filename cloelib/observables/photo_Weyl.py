@@ -483,3 +483,4 @@ class PositionsTracer_Weyl_GGL:
         """
         window = self.get_window_positions(z) + self.get_window_magnification(z)
         return window
+    

@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using CAMB."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import Background, ensure_z_zero_included
 
 # General imports
 import numpy as np
@@ -311,7 +311,7 @@ class CAMBLinearPerturbations:
         self.kmax = 300.0
 
         # Ensure z=0 is included for sigma8(z=0) computation and proper interpolation
-        self.z = self._ensure_z_zero_included(redshifts)
+        self.z = ensure_z_zero_included(redshifts)
 
         self.background.interface_args["CAMBparams"].set_matter_power(
             redshifts=self.z, kmax=self.kmax
@@ -323,15 +323,6 @@ class CAMBLinearPerturbations:
         )
 
         self.sigma8_0 = self.results.get_sigma8().max()
-
-    @staticmethod
-    def _ensure_z_zero_included(redshifts: np.ndarray) -> np.ndarray:
-        """Ensure z=0 is in redshift array for sigma8(z=0) computation."""
-        z_min = redshifts.min()
-        if z_min > 0.001:
-            return np.sort(np.append(redshifts, 0.0))
-        else:
-            return redshifts
 
     def matter_power_spectrum(
         self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False
@@ -434,7 +425,7 @@ class CAMBNonLinearPerturbations:
         self.kmax = 500
 
         # Ensure z=0 is included for sigma8(z=0) computation and proper interpolation
-        self.z = CAMBLinearPerturbations._ensure_z_zero_included(redshifts)
+        self.z = ensure_z_zero_included(redshifts)
 
         # Configure CAMB parameters for nonlinear calculations
         self.background.interface_args["CAMBparams"].NonLinear = model.NonLinear_both

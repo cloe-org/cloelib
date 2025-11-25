@@ -22,6 +22,7 @@ class EmantisFofrNonLinearPerturbations:
         redshifts: np.ndarray,
         verbose: bool = False,
         emu_version: int = 2,
+        extrapolate_cosmo: bool = True,
     ) -> None:
         """Initialize the perturbation instance.
 
@@ -40,6 +41,10 @@ class EmantisFofrNonLinearPerturbations:
         emu_version : int, optional (default=2)
             The version of the emantis emulator to use.
             Version 2 (the default) has an extended cosmological parameter and redshift range.
+        extrapolate_cosmo : bool optional (default=True)
+            Activate or not constant extrapolation of cosmological parameters.
+            The extrapolation is done only for the LCDM cosmological parameters.
+            There is no extrapolation for fR0.
         """
         self.background = background
         self.nonlinearpertubations_lcdm = nonlinearperturbations_lcdm
@@ -95,7 +100,7 @@ class EmantisFofrNonLinearPerturbations:
 
         # Get boost from emantis (pass wavenumbers in h/Mpc).
         pk_boost_emu = self.emantis_emu.predict_boost(
-            self.params_emu, aexp_emu, k=k_emu / self.params_emu["h"]
+            self.params_emu, aexp_emu, k=k_emu / self.params_emu["h"], extrapolate_cosmo=extrapolate_cosmo
         )
 
         # Extrapolate emulator prediction in wavenumber and redshift.

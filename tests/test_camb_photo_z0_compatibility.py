@@ -70,8 +70,8 @@ def test_no_collision_and_power_spectrum_at_all_z(camb_photo_setup):
 
     # Create nuisance parameters
     nuisance_params = {
-        **{f"multiplicative_bias_{i+1}": 0.0 for i in range(n_z_bins)},
-        **{f"dz_shear_{i+1}": 0.0 for i in range(n_z_bins)},
+        **{f"multiplicative_bias_{i + 1}": 0.0 for i in range(n_z_bins)},
+        **{f"dz_shear_{i + 1}": 0.0 for i in range(n_z_bins)},
         "AIA": 1.0,
         "CIA": 0.0164,
         "EtaIA": -0.41,
@@ -97,9 +97,9 @@ def test_no_collision_and_power_spectrum_at_all_z(camb_photo_setup):
     )
 
     # Verify arrays are actually different
-    assert not np.array_equal(
-        shear_tracer.z, shear_tracer.perturbations.z
-    ), "Tracer and perturbations z arrays should be different"
+    assert not np.array_equal(shear_tracer.z, shear_tracer.perturbations.z), (
+        "Tracer and perturbations z arrays should be different"
+    )
 
     # Now verify that power spectrum can be computed at ALL perturbations.z (including z=0)
     ks = np.logspace(-3, 1, 20)  # Wavenumber grid
@@ -108,7 +108,9 @@ def test_no_collision_and_power_spectrum_at_all_z(camb_photo_setup):
     pk_all_z = perturbations.matter_power_spectrum(perturbations.z, ks)
 
     # Verify power spectrum output shape and values
-    assert pk_all_z.shape[0] == len(perturbations.z), "P(k,z) should have row for each z"
+    assert pk_all_z.shape[0] == len(perturbations.z), (
+        "P(k,z) should have row for each z"
+    )
     assert pk_all_z.shape[1] == len(ks), "P(k,z) should have column for each k"
     assert np.all(np.isfinite(pk_all_z)), "All P(k,z) values should be finite"
     assert np.all(pk_all_z > 0), "All P(k,z) values should be positive"

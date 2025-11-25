@@ -14,7 +14,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/59091484?v=4",
       "profile": "http://alexhall.space",
       "contributions": [
-        "bug"
+        "bug",
+        "ideas"
       ]
     },
     {
@@ -52,7 +53,9 @@
       "contributions": [
         "code",
         "doc",
-        "test"
+        "test",
+        "ideas",
+        "tool"
       ]
     },
     {
@@ -182,7 +185,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/83759085?v=4",
       "profile": "https://github.com/josecolomanadal",
       "contributions": [
-        "bug"
+        "bug",
+        "code"
       ]
     },
     {
@@ -213,6 +217,118 @@
       "contributions": [
         "ideas",
         "question"
+      ]
+    },
+    {
+      "login": "m-aguena",
+      "name": "Michel Aguena",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12038660?v=4",
+      "profile": "https://github.com/m-aguena",
+      "contributions": [
+        "code",
+        "test",
+        "ideas"
+      ]
+    },
+    {
+      "login": "ippoppi",
+      "name": "Filippo Oppizzi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50492103?v=4",
+      "profile": "https://github.com/ippoppi",
+      "contributions": [
+        "code",
+        "ideas",
+        "tool"
+      ]
+    },
+    {
+      "login": "JaimeRZP",
+      "name": "Jaime RZ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39957598?v=4",
+      "profile": "https://jaimeruizzapatero.net/",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "arthurmloureiro",
+      "name": "Arthur Loureiro",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6471279?v=4",
+      "profile": "http://arthurmloureiro.github.io",
+      "contributions": [
+        "code",
+        "ideas",
+        "doc"
+      ]
+    },
+    {
+      "login": "pburger112",
+      "name": "Pierre Burger",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51719634?v=4",
+      "profile": "https://github.com/pburger112",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "davidesciotti",
+      "name": "Davide Sciotti",
+      "avatar_url": "https://avatars.githubusercontent.com/u/84071067?v=4",
+      "profile": "https://github.com/davidesciotti",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "GabrieleParimbelli",
+      "name": "GabrieleParimbelli",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43963112?v=4",
+      "profile": "https://github.com/GabrieleParimbelli",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "zahrabaghkhani",
+      "name": "Zahra Baghkhani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/47903409?v=4",
+      "profile": "https://github.com/zahrabaghkhani",
+      "contributions": [
+        "code",
+        "ideas",
+        "bug"
+      ]
+    },
+    {
+      "login": "fabriceroy",
+      "name": "Fabrice Roy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29073232?v=4",
+      "profile": "https://github.com/fabriceroy",
+      "contributions": [
+        "doc",
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "rreischke",
+      "name": "Robert Reischke",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31727230?v=4",
+      "profile": "https://github.com/rreischke",
+      "contributions": [
+        "ideas",
+        "mentoring"
+      ]
+    },
+    {
+      "login": "AngusWright",
+      "name": "Angus H. Wright",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5625880?v=4",
+      "profile": "https://github.com/AngusWright",
+      "contributions": [
+        "ideas",
+        "mentoring"
       ]
     }
   ]

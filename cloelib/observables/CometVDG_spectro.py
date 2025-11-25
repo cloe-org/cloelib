@@ -4,14 +4,14 @@
 from cloelib.cosmology.cosmology import Background
 
 # General imports
-from typing import Protocol, Union, TypeVar, Optional
+from typing import Sequence
 import numpy as np  # type: ignore
-from copy import deepcopy
 
 # Cosmology imports
 try:
-    from comet import comet # type: ignore
-    comet_inst = comet(model='VDG_infty', use_Mpc=True, bias_basis='AssBauGre')
+    from comet import comet  # type: ignore
+
+    comet_inst = comet(model="VDG_infty", use_Mpc=True, bias_basis="AssBauGre")
 except ImportError:
     raise ImportError("Comet could not be imported or initialised.")
 
@@ -19,8 +19,9 @@ except ImportError:
 class CometVDG_SpectroPower:
     r"""Class to retrieve :math:`P(k,\mu)` (including RSD) with the VDG model from COMET."""
 
-    def __init__(self, background: Background, RSD_parameters: dict,
-                 redshift: float):
+    NLcode = "COMET"
+
+    def __init__(self, background: Background, RSD_parameters: dict, redshift: float):
         r"""Class constructor.
 
         Parameters
@@ -35,28 +36,80 @@ class CometVDG_SpectroPower:
         self.background = background
 
         self.parameters = {}
-        self.parameters['wc'] = self.background.Omega_cdm0 * self.background.h**2
-        self.parameters['wb'] = self.background.Omega_b0 * self.background.h**2
-        self.parameters['Mnu'] = self.background.mnu
-        self.parameters['ns'] = self.background.ns
-        self.parameters['h'] = self.background.h
-        self.parameters['As'] = self.background.As * 1e9
-        self.parameters['w0'] = self.background.w0
-        self.parameters['wa'] = self.background.wa
-        self.parameters['Ok'] = self.background.Omega_k0
+        self.parameters["wc"] = self.background.Omega_cdm0 * self.background.h**2
+        self.parameters["wb"] = self.background.Omega_b0 * self.background.h**2
+        self.parameters["Mnu"] = self._set_neutrino_parameters(self.background)
+        self.parameters["ns"] = self.background.ns
+        self.parameters["h"] = self.background.h
+        self.parameters["As"] = self.background.As * 1e9
+        self.parameters["w0"] = self.background.w0
+        self.parameters["wa"] = self.background.wa
+        self.parameters["Ok"] = self.background.Omega_k0
         self.parameters.update(RSD_parameters)
-        self.parameters['z'] = redshift
+        self.parameters["z"] = redshift
 
         self.redshift = redshift
 
         self.diagram_naming_relation = {
-            'b1-b1': ['P0L_b1b1', 'P1L_b1b1'],
-            'b1-b2': 'P1L_b1b2', 'b1-bG2': 'P1L_b1g2', 'b1-bGam3': 'P1L_b1g21',
-            'b2-b2': 'P1L_b2b2', 'b2-bG2': 'P1L_b2g2', 'bG2-bG2': 'P1L_g2g2',
-            'b1': 'PNL_b1', 'b2': 'P1L_b2', 'bG2': 'P1L_g2', 'bGam3': 'P1L_g21',
-            'v-v': 'PNL_id',
-            'c0': 'Pctr_c0', 'c2': 'Pctr_c2', 'c4': 'Pctr_c4'
+            "b1-b1": ["P0L_b1b1", "P1L_b1b1"],
+            "b1-b2": "P1L_b1b2",
+            "b1-bG2": "P1L_b1g2",
+            "b1-bGam3": "P1L_b1g21",
+            "b2-b2": "P1L_b2b2",
+            "b2-bG2": "P1L_b2g2",
+            "bG2-bG2": "P1L_g2g2",
+            "b1": "PNL_b1",
+            "b2": "P1L_b2",
+            "bG2": "P1L_g2",
+            "bGam3": "P1L_g21",
+            "v-v": "PNL_id",
+            "c0": "Pctr_c0",
+            "c2": "Pctr_c2",
+            "c4": "Pctr_c4",
         }
+
+    def _set_neutrino_parameters(self, background: Background) -> float:
+        r"""Set neutrino parameters in the parameters dictionary.
+
+        This method adds neutrino parameters to the provided dictionary.
+        It also ensures consistency with the background cosmology.
+        Comet only supports a single species of neutrinos, so this method
+        throws an error if multiple neutrino species are provided.
+        Note that Comet supports mnu=0.0 (N_mnu=0).
+
+        Parameters
+        ----------
+        parameters: dict
+            Dictionary to which neutrino parameters will be added
+
+        Returns
+        -------
+        mnu_arg: float
+            Neutrino mass in eV
+        """
+        if background.N_mnu > 1:
+            raise ValueError(
+                "Comet only supports max a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
+
+        if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
+            raise ValueError(
+                "Comet only supports a fixed number of effective"
+                f"relativistic species (N_eff=3.044). Found {background.N_eff} "
+                "Ensure that N_eff=3.044 in the Background class."
+            )
+        if isinstance(background.mnu, Sequence) or isinstance(
+            background.mnu, np.ndarray
+        ):
+            raise ValueError(
+                "Comet only supports a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
+        else:
+            mnu_arg = float(background.mnu)
+        # returns the neutrino mass in eV
+        return mnu_arg
 
     def _Winfty(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""Large-scale limit of the velocity difference generating function.
@@ -72,10 +125,10 @@ class CometVDG_SpectroPower:
         Winfty: np.ndarray
             Damping function
         """
-        f = comet_inst.params['f']
-        sigmav = comet_inst.params['sv']
-        num = (f * k * mu)**2
-        den = 1.0 + num * self.parameters['avir']**2
+        f = comet_inst.params["f"]
+        sigmav = comet_inst.params["sv"]
+        num = (f * k * mu) ** 2
+        den = 1.0 + num * self.parameters["avir"] ** 2
         Winfty = 1.0 / np.sqrt(den) * np.exp(-num * sigmav**2 / den)
         return Winfty
 
@@ -94,12 +147,19 @@ class CometVDG_SpectroPower:
             2D power spectrum from couplings of density and velocity fields
         """
         Pk2d = np.squeeze(
-            comet_inst.P2d_nostoch(k=k[:, :, np.newaxis], mu=mu[:, np.newaxis],
-                                   params=self.parameters, de_model='w0wa'))
+            comet_inst.P2d_nostoch(
+                k=k[:, :, np.newaxis],
+                mu=mu[:, np.newaxis],
+                params=self.parameters,
+                de_model="w0wa",
+            )
+        )
         Winfty = self._Winfty(k=k, mu=mu)
         return Pk2d * Winfty
 
-    def Pk2d_term_rsd(self, k: np.ndarray, mu: np.ndarray, term_list: list) -> np.ndarray:
+    def Pk2d_term_rsd(
+        self, k: np.ndarray, mu: np.ndarray, term_list: list
+    ) -> np.ndarray:
         r"""2D power spectrum for a subset of specific diagrams of the loop expansion.
 
         Parameters
@@ -119,16 +179,29 @@ class CometVDG_SpectroPower:
         for key in term_list:
             vals = self.diagram_naming_relation[key]
             vals = vals if isinstance(vals, list) else [vals]
-            index_map[key] = list(range(len(term_list_expanded),
-                                  len(term_list_expanded) + len(vals)))
+            index_map[key] = list(
+                range(len(term_list_expanded), len(term_list_expanded) + len(vals))
+            )
             term_list_expanded.extend(vals)
         Pk2d_expanded = np.squeeze(
-            comet_inst.PX_2d(k=k[:, :, np.newaxis], mu=mu[:, np.newaxis],
-                             params=self.parameters, X_list=term_list_expanded,
-                             de_model='w0wa'), axis=-1)
+            comet_inst.PX_2d(
+                k=k[:, :, np.newaxis],
+                mu=mu[:, np.newaxis],
+                params=self.parameters,
+                X_list=term_list_expanded,
+                de_model="w0wa",
+            ),
+            axis=-1,
+        )
         Pk2d = np.array(
-            [np.sum(Pk2d_expanded[indices], axis=0)
-             if len(indices) > 1 else Pk2d_expanded[indices[0]]
-             for key, indices in index_map.items()])
+            [
+                (
+                    np.sum(Pk2d_expanded[indices], axis=0)
+                    if len(indices) > 1
+                    else Pk2d_expanded[indices[0]]
+                )
+                for key, indices in index_map.items()
+            ]
+        )
         Winfty = self._Winfty(k=k, mu=mu)
-        return np.einsum('abc,bc->abc', Pk2d, Winfty)
+        return np.einsum("abc,bc->abc", Pk2d, Winfty)

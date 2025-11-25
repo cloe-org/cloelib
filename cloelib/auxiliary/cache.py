@@ -16,24 +16,29 @@ Internally the cache is maintained by ``functools.lru_cache`` with
 ``maxsize=None`` (an unbounded cache).
 """
 
-
 import jax.numpy as np
 from functools import lru_cache, wraps
 
+
 def memoize_jax(func):
     """Memoize functions with JAX array arguments."""
+
     @lru_cache(maxsize=None)
     def cached_func(*hashable_args, **hashable_kwargs):
         args = [
-            np.frombuffer(arg[0], dtype=arg[2]).reshape(arg[1])
-            if isinstance(arg, tuple) and len(arg) == 3
-            else arg
+            (
+                np.frombuffer(arg[0], dtype=arg[2]).reshape(arg[1])
+                if isinstance(arg, tuple) and len(arg) == 3
+                else arg
+            )
             for arg in hashable_args
         ]
         kwargs = {
-            k: np.frombuffer(v[0], dtype=v[2]).reshape(v[1])
-            if isinstance(v, tuple) and len(v) == 3
-            else v
+            k: (
+                np.frombuffer(v[0], dtype=v[2]).reshape(v[1])
+                if isinstance(v, tuple) and len(v) == 3
+                else v
+            )
             for k, v in hashable_kwargs.items()
         }
         return func(*args, **kwargs)
@@ -41,15 +46,19 @@ def memoize_jax(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         hashable_args = tuple(
-            (arg.tobytes(), arg.shape, arg.dtype)
-            if hasattr(arg, 'shape') and hasattr(arg, 'dtype')
-            else arg
+            (
+                (arg.tobytes(), arg.shape, arg.dtype)
+                if hasattr(arg, "shape") and hasattr(arg, "dtype")
+                else arg
+            )
             for arg in args
         )
         hashable_kwargs_dict = {
-            k: (v.tobytes(), v.shape, v.dtype)
-            if hasattr(v, 'shape') and hasattr(v, 'dtype')
-            else v
+            k: (
+                (v.tobytes(), v.shape, v.dtype)
+                if hasattr(v, "shape") and hasattr(v, "dtype")
+                else v
+            )
             for k, v in kwargs.items()
         }
         return cached_func(*hashable_args, **hashable_kwargs_dict)

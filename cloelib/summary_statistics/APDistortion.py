@@ -1,4 +1,5 @@
 """Module to compute Alcock-Paczynski (AP) distortions parameters."""
+
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 
@@ -8,6 +9,7 @@ import numpy as np  # type: ignore
 import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
+
 
 class APDistortion:
     """Class to compute AP distortion parameters from cosmological background quantities."""
@@ -40,8 +42,9 @@ class APDistortion:
         q_tr: np.ndarray
            Transversal AP parameter
         """
-        return (self.background.angular_diameter_distance(z)
-                / self.background_fiducial.angular_diameter_distance(z))
+        return self.background.angular_diameter_distance(
+            z
+        ) / self.background_fiducial.angular_diameter_distance(z)
 
     def q_AP_lo(self, z: T) -> T:
         r"""AP distortion parameter parallel to the line of sight.
@@ -57,5 +60,6 @@ class APDistortion:
         q_tr: np.ndarray
            Parallel AP parameter
         """
-        return (self.background_fiducial.hubble_parameter(z)
-                / self.background.hubble_parameter(z))
+        return self.background_fiducial.hubble_parameter(
+            z
+        ) / self.background.hubble_parameter(z)

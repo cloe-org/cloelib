@@ -1,4 +1,5 @@
 """Implementation of nonlinear Perturbation cosmology for f(R) gravity using the e-MANTIS emulator."""
+
 import numpy as np
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.cosmology.cosmology import Background, Perturbations
@@ -56,7 +57,7 @@ class EmantisFofrNonLinearPerturbations:
             model = "fR_v1"
         else:
             raise ValueError(
-                f"Unsupported value for `emu_version`. Allowed values are 1 or 2."
+                "Unsupported value for `emu_version`. Allowed values are 1 or 2."
             )
 
         # Initialize the e-MANTIS emulator.
@@ -100,7 +101,10 @@ class EmantisFofrNonLinearPerturbations:
 
         # Get boost from emantis (pass wavenumbers in h/Mpc).
         pk_boost_emu = self.emantis_emu.predict_boost(
-            self.params_emu, aexp_emu, k=k_emu / self.params_emu["h"], extrapolate_cosmo=extrapolate_cosmo
+            self.params_emu,
+            aexp_emu,
+            k=k_emu / self.params_emu["h"],
+            extrapolate_cosmo=extrapolate_cosmo,
         )
 
         # Extrapolate emulator prediction in wavenumber and redshift.

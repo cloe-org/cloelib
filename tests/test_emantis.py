@@ -14,9 +14,7 @@ else:
 
 
 class LCDMBackground:
-
     def __init__(self) -> None:
-
         self.h = 0.7
         self.Omega_b0 = 0.05
         self.Omega_cdm0 = 0.27
@@ -26,7 +24,6 @@ class LCDMBackground:
 
 
 class LCDMNonLinearPerturbations:
-
     def __init__(self) -> None:
         pass
 

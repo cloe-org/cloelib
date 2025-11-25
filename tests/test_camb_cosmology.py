@@ -407,7 +407,9 @@ def test_camb_linear_perturbations_z_zero_automatic_inclusion(camb_background_in
     assert linear_pert.sigma8_0 > 0  # Physical value
 
 
-def test_camb_nonlinear_perturbations_z_zero_automatic_inclusion(camb_background_instance):
+def test_camb_nonlinear_perturbations_z_zero_automatic_inclusion(
+    camb_background_instance,
+):
     """Test that z=0 is automatically included in NonLinear perturbations."""
     # User provides redshifts WITHOUT z=0
     user_redshifts = np.array([0.5, 1.0, 1.5, 2.0])

@@ -38,7 +38,7 @@ pylevin = ["pylevin"]
 mpmath = ["mpmath"]
 tensorflow = ["tensorflow==2.13"]
 hmcode2020emu = ["HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"]
-emantis = ["emantis"]
+emantis = ["emantis>=1.2.1"]
 
 [tool.hatch.version]
 source = "vcs"

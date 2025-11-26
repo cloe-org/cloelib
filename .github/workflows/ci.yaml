@@ -42,7 +42,7 @@ jobs:
 
       - name: Install external prereq using pip
         run: |
-          pip install camb jax classy==3.3.1
+          pip install camb jax classy==3.3.1 "emantis>=1.2.1"
 
       - name: Install dependencies
         run: |

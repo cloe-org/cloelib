@@ -149,28 +149,7 @@ class SelectionFunction_interp:
 
     ## NEW FUNCTION FROM SINFONIA FILE
 
-    def sel_func_interp(self):
-
-
-        r"""
-        Selection Function from file.
-        Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of 
-        1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
-        Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
-
-        Returns
-        -------
-        integ4d_interp_func: 2d interpolator
-        """
-
-
-        ## Define ranges for Obs arrays: arrays for grid in final NC
-        n_lobsNC = len(self.lobsNC_edges)-1
-        n_zobsNC = len(self.zobsNC_edges)-1
-
-        ## Find number of tiles from fits file
-        num_headers = len(self.file_selection)
-        n_tile = int((num_headers-1)/7)
+    def _read_redshifts_and_richness_from_file(self):
 
         ## Definition of arrays for Obs and True quantities
         ## ASSUMPTION: all tiles have the same ranges and binning
@@ -234,19 +213,22 @@ class SelectionFunction_interp:
             zobs_tot = zobs_tot_high
             size_add_zmin = 0
 
+        return (
+            zobs_file, lobs_file, ztr_file, ltr_file, zobs_tot, lobs_tot
+        )
+
+    def _compute_sum_of_I_ltr_ztr_lobs_lobs(self, zobs_tot, lobs_tot, nsteps_ltr_file, nsteps_ztr_file):
         nsteps_lobs_tot = len(lobs_tot)
         nsteps_zobs_tot = len(zobs_tot)
-
-        ## Find common index between (lobs_file-->lobs_edges) and (zobs_file-->zobs_edges)
-
-        index_lobsfile_edges = [np.abs(lobs_tot - value).argmin() for value in self.lobsNC_edges]
-        index_zobsfile_edges = [np.abs(zobs_tot - value).argmin() for value in self.zobsNC_edges] 
-
 
         ## Start loop on the tiles, to: -----------------------------------------------------------
         ## extraxt 4d array, Completeness and Purity for the fits file
         ## evaluate the different ingredients and integrals to obtain tildeI(λtr,ztr,∆λobs,∆zobs)
         ## ASSUMPTION: the input file is normalised
+
+        ## Find number of tiles from fits file
+        num_headers = len(self.file_selection)
+        n_tile = int((num_headers-1)/7)
 
         arrays = {}
         ## Index of P_4d, Compl and Pur for each tile
@@ -336,7 +318,43 @@ class SelectionFunction_interp:
 
             ## Produce sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
             sum_a += arrays[f"mult_{it}"]
+
+        return sum_a
+
+    def sel_func_interp(self):
+        r"""
+        Selection Function from file.
+        Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of 
+        1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
+        Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
+
+        Returns
+        -------
+        integ4d_interp_func: 2d interpolator
+        """
+
+        # read arrays from file
+        (
+            zobs_file, lobs_file, ztr_file, ltr_file, zobs_tot, lobs_tot
+        ) = self._read_redshifts_and_richness_from_file()
+        nsteps_ltr_file = ltr_file.size
+        nsteps_ztr_file = ztr_file.size
+
+        # Produce sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
+        sum_a = self._compute_sum_of_I_ltr_ztr_lobs_lobs(lobs_tot, nsteps_ltr_file, nsteps_ztr_file)
         
+        ##############################
+        ## tildeI(λtr,ztr,∆λobs,∆zobs)
+        ##############################
+
+        ## Find common index between (lobs_file-->lobs_edges) and (zobs_file-->zobs_edges)
+        index_lobsfile_edges = [np.abs(lobs_tot - value).argmin() for value in self.lobsNC_edges]
+        index_zobsfile_edges = [np.abs(zobs_tot - value).argmin() for value in self.zobsNC_edges] 
+
+        ## Define ranges for Obs arrays: arrays for grid in final NC
+        n_lobsNC = len(self.lobsNC_edges)-1
+        n_zobsNC = len(self.zobsNC_edges)-1
+
         ## Integrate 1/Omega_tot*sum_a = tildeI(λtr,ztr,∆λobs,∆zobs)
         integ4d = np.zeros((n_lobsNC,n_zobsNC,nsteps_ltr_file,nsteps_ztr_file))
 
@@ -344,13 +362,11 @@ class SelectionFunction_interp:
             l_start = index_lobsfile_edges[ltab]
             l_end = index_lobsfile_edges[ltab + 1]
             lint = lobs_tot[l_start:l_end]
-            nl = l_end - l_start    
 
             for ztab in range(n_zobsNC):
                 z_start = index_zobsfile_edges[ztab]
                 z_end = index_zobsfile_edges[ztab + 1]
                 zint = zobs_tot[z_start:z_end]
-                nz = z_end - z_start
         
                 integrand = 1/self.Omega_tot * sum_a[:,:,l_start:l_end,z_start:z_end]
                 result_z = integrate.simpson(integrand, x=zint, axis=-1)

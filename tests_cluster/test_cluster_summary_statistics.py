@@ -1,4 +1,6 @@
 # import jax.numpy as np
+import time
+
 import benchmark_values
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal, assert_raises
@@ -10,12 +12,22 @@ from cloelib.observables.clusters.halo_statistics import HaloStatistics
 from cloelib.observables.clusters.hmf_bias import CastroHMFBias
 from cloelib.observables.clusters.profile import ProfileNFW
 from cloelib.observables.clusters.selection_function import SelectionFunction
-from cloelib.summary_statistics.clusters.cluster_statistics import ClusterStatistics
+from cloelib.summary_statistics.clusters import (
+    ClusterClustering,
+    ClusterCounts,
+    ClusterStatisticsModeling,
+    ClusterWeakLensing,
+)
 
 
-def test_clustersummmarystatitistics():
-    # Cosmology parameters
+def get_values():
+
+    ###########
+    # Cosmology
+    ###########
+
     print("# Cosmology parameters")
+    t0 = time.time()
     _H0 = 67.0
     _h = _H0 / 100.0
     _omch2 = 0.12
@@ -42,26 +54,14 @@ def test_clustersummmarystatitistics():
     perturbations_fid = CAMBLinearPerturbations(
         background_fid, np.linspace(0.0, 2.0, 100)
     )
+    print(f"cosmo     :  {time.time()-t0:.4f} seconds")
+    t0 = time.time()
 
-    area = 10313
-    halo_concentration = 0.1
-    overdensity_type = "vir"
-    CG_like_selection = "CC_CWL_Cxi2"
-    CG_xi2_cov_selection = "covCC_covCxi2"
-    bias = "castro23"
-    neutrino_cdm = True
+    #############
+    # Observables
+    #############
 
-    zed_obs_edges = np.linspace(0.2, 1.8, 9)
-    Lambda_obs_edges = np.array([20.0, 30.0, 45.0, 60.0, 500.0])
-    Rad_obs_edges = np.linspace(5.0, 100.0, 11)
-    Lambda_obs_Cxi2_edges = np.array([20, 30, 500])
-    Rad_obs_Cxi2_edges = np.geomspace(20.0, 130.0, 31)
-    zed_obs_Cxi2_edges = np.arange(0.2, 1.81, 0.4)
-
-    k = np.geomspace(1e-4, 10, 500)
-    Mass = np.logspace(12.0, 16.0, 51)
-    Lambda = np.geomspace(5.0, 250.0, 51)
-    zed = np.linspace(1.0e-5, 6.0 - 1.0e-5, 200)
+    # Parameters
 
     _sel_pars = dict(
         A_l=52.0,
@@ -90,59 +90,198 @@ def test_clustersummmarystatitistics():
         alpha_nz=0.4,
     )
 
-    HS = HaloStatistics(perturbations, z=zed, k=k, overdensity_type=overdensity_type)
-    HSCastro = CastroHMFBias(HS)
+    integ_k_arr = np.geomspace(1e-4, 10, 500)
+    integ_mass_arr = np.logspace(12.0, 16.0, 51)
+    integ_lambda_true_arr = np.geomspace(5.0, 250.0, 51)
+    integ_ztrue_arr = np.linspace(1.0e-5, 6.0 - 1.0e-5, 200)
 
-    profileNFW = ProfileNFW(HSCastro, k=k, z=zed, **_prof_pars)
+    halo_concentration = 0.1
+    overdensity_type = "vir"
+    area = 10313
+
+    # Integration bins
+
+    z_obs_nc_edges = np.linspace(0.2, 1.8, 9)
+    lambda_obs_nc_edges = np.array([20.0, 30.0, 45.0, 60.0, 500.0])
+    z_obs_profile_edges = np.linspace(0.2, 1.8, 9)
+    lambda_obs_profile_edges = np.array([20.0, 30.0, 45.0, 60.0, 500.0])
+    radius_profile_edges = np.linspace(5.0, 100.0, 11)
+    lambda_obs_clustering_edges = np.array([20, 30, 500])
+    radius_clustering_edges = np.geomspace(20.0, 130.0, 31)
+    zed_obs_clustering_edges = np.arange(0.2, 1.81, 0.4)
+
+    # Istanciate objects
 
     selectionFunction = SelectionFunction(**_sel_pars)
-
-    haloClustering = HaloClustering(
-        perturbations, perturbations_fid, selectionFunction, k=k
+    HSCastro = CastroHMFBias(
+        halo_statistics=HaloStatistics(
+            perturbations,
+            z=integ_ztrue_arr,
+            k=integ_k_arr,
+            overdensity_type=overdensity_type,
+        )
     )
-
     covariance = HaloCovariance(
-        perturbations, area=area, nbins_zob=len(zed_obs_edges), k=k
+        perturbations, area=area, nbins_zob=len(z_obs_nc_edges), k=integ_k_arr
+    )
+    profileNFW = ProfileNFW(HSCastro, k=integ_k_arr, z=integ_ztrue_arr, **_prof_pars)
+    haloClustering = HaloClustering(
+        perturbations, perturbations_fid, selectionFunction, k=integ_k_arr
     )
 
-    clusterStatistics = ClusterStatistics(
-        perturbations,
-        HS,
-        selectionFunction,
+    print(f"init obs  :  {time.time()-t0:.4f} seconds")
+    t0 = time.time()
+
+    ####################
+    # Summary Statistics
+    ####################
+
+    print("---------------------------")
+    t1 = time.time()
+
+    # Istanciate objects
+    cluster_statitstics_modeling = ClusterStatisticsModeling(
         HSCastro,
-        profileNFW,
-        haloClustering,
-        covariance,
-        z_obs_edges=zed_obs_edges,
-        Lambda_obs_edges=Lambda_obs_edges,
-        Rad_obs_edges=Rad_obs_edges,
-        Lambda_obs_Cxi2_edges=Lambda_obs_Cxi2_edges,
-        Rad_obs_Cxi2_edges=Rad_obs_Cxi2_edges,
-        z_obs_Cxi2_edges=zed_obs_Cxi2_edges,
-        halo_concentration=halo_concentration,
-        k=k,
-        Mass=Mass,
-        Lambda=Lambda,
-        z=zed,
+        selectionFunction,
+        integ_k_arr=integ_k_arr,
+        integ_mass_arr=integ_mass_arr,
+        integ_lambda_true_arr=integ_lambda_true_arr,
+        integ_ztrue_arr=integ_ztrue_arr,
         area=area,
-        CG_like_selection=CG_like_selection,
-        CG_xi2_cov_selection=CG_xi2_cov_selection,
-        bias=bias,
-        neutrino_cdm=neutrino_cdm,
+    )
+    cluster_counts_statistics = ClusterCounts(
+        cluster_statitstics_modeling,
+        covariance,
+        photoz_rsd_correction=haloClustering.photoz_rsd_correction,
+    )
+    cluster_wl_statistics = ClusterWeakLensing(
+        cluster_statitstics_modeling,
+        profileNFW,
+        halo_concentration=halo_concentration,
+    )
+    cluster_clustering_statistics = ClusterClustering(
+        cluster_statitstics_modeling,
+        haloClustering,
     )
 
-    N_zbin_Lbin, g_zbin_Lbin_Rbin, Cxi2_zbin_Lbin_Rbin, cov_zbin_Lbin, cov_Cxi2 = (
-        clusterStatistics.N_zbin_Lbin_Rbin()
+    print(f"init stat :  {time.time()-t0:.4f} seconds")
+    t0 = time.time()
+
+    # Compute values
+
+    cluster_counts, counts_intermediate_integration_products = (
+        cluster_counts_statistics.get_NC(
+            z_obs_edges=z_obs_nc_edges,
+            lambda_obs_edges=lambda_obs_nc_edges,
+        )
+    )
+    print(f"nc        :  {time.time()-t0:.4f} seconds")
+    t0 = time.time()
+    cov_cluster_counts = cluster_counts_statistics.get_NC_covariance(
+        z_obs_nc_edges,
+        cluster_counts,
+        counts_intermediate_integration_products["window_lambda_obs"],
+        counts_intermediate_integration_products["window_z_obs"],
+    )
+    print(f"nc_cov    :  {time.time()-t0:.4f} seconds")
+    t0 = time.time()
+    deltasigma_mean_values = cluster_wl_statistics.get_DeltaSigma(
+        z_obs_edges=z_obs_profile_edges,
+        lambda_obs_edges=lambda_obs_profile_edges,
+        radius_edges=radius_profile_edges,
+    )
+    print(f"dsig      :  {time.time()-t0:.4f} seconds")
+    t0 = time.time()
+    cluster_clustering, clustering_intermediate_integration_products = (
+        cluster_clustering_statistics.get_xi(
+            lambda_obs_edges=lambda_obs_clustering_edges,
+            radius_edges=radius_clustering_edges,
+            z_obs_edges=zed_obs_clustering_edges,
+        )
+    )
+    print(f"xi        :  {time.time()-t0:.4f} seconds")
+    t0 = time.time()
+    cov_cluster_clustering = cluster_clustering_statistics.get_xi_covariance(
+        clustering_intermediate_integration_products["pk_mean_values"],
+        clustering_intermediate_integration_products["radial_shell_window"],
+        clustering_intermediate_integration_products["radial_shell_volume"],
+        clustering_intermediate_integration_products["window_z_obs"],
+        clustering_intermediate_integration_products["cluster_counts"],
+    )
+    print(f"xi_cov    :  {time.time()-t0:.4f} seconds")
+    t0 = time.time()
+    print("---------------------------")
+    print(f"tot like  :  {time.time()-t1:.4f} seconds")
+
+    # Max relative difference
+    print()
+    print("Max relative differences to the reference values:")
+    print_diff(
+        "nc",
+        cluster_counts,
+        benchmark_values.cluster_counts,
+    )
+    print_diff(
+        "dsig",
+        deltasigma_mean_values[0:2],
+        benchmark_values.deltasigma,
+    )
+    print_diff(
+        "xi",
+        cluster_clustering[0:2],
+        benchmark_values.cluster_clustering,
+    )
+    print_diff(
+        "nc_cov",
+        cov_cluster_counts[1:2],
+        benchmark_values.cov_cluster_counts,
+    )
+    print_diff(
+        "xi_cov",
+        cov_cluster_clustering[1, 1, 1:3, 1:3, 10:20, 10:20],
+        benchmark_values.cov_cluster_clustering,
+    )
+    return (
+        cluster_counts,
+        deltasigma_mean_values,
+        cluster_clustering,
+        cov_cluster_counts,
+        cov_cluster_clustering,
     )
 
-    assert_allclose(N_zbin_Lbin, benchmark_values.NC_ref, rtol=1e-2)
 
-    assert_allclose(g_zbin_Lbin_Rbin[0:2], benchmark_values.gWL, rtol=1e-2)
+def print_diff(name, value_test, value_ref, min_comparison_value=0):
+    _msk = abs(value_ref) > min_comparison_value
+    print(f"  {name:6} : {abs(value_test[_msk]/value_ref[_msk]-1).max():.2e}")
 
-    assert_allclose(Cxi2_zbin_Lbin_Rbin[0:2], benchmark_values.Cxi2, rtol=1e-2)
 
-    assert_allclose(cov_zbin_Lbin[1:2], benchmark_values.NC_cov, rtol=5e-2)
+def test_clustersummmarystatitistics():
+    (
+        cluster_counts,
+        deltasigma_mean_values,
+        cluster_clustering,
+        cov_cluster_counts,
+        cov_cluster_clustering,
+    ) = get_values()
+
+    assert_allclose(cluster_counts, benchmark_values.cluster_counts, rtol=1e-2)
+
+    assert_allclose(deltasigma_mean_values[0:2], benchmark_values.deltasigma, rtol=1e-2)
 
     assert_allclose(
-        cov_Cxi2[1, 1, 1:3, 1:3, 10:20, 10:20], benchmark_values.Cxi2_cov, rtol=5e-2
+        cluster_clustering[0:2], benchmark_values.cluster_clustering, rtol=1e-2
     )
+
+    assert_allclose(
+        cov_cluster_counts[1:2], benchmark_values.cov_cluster_counts, rtol=5e-2
+    )
+
+    assert_allclose(
+        cov_cluster_clustering[1, 1, 1:3, 1:3, 10:20, 10:20],
+        benchmark_values.cov_cluster_clustering,
+        rtol=5e-2,
+    )
+
+
+if __name__ == "__main__":
+    get_values()

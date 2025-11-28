@@ -214,10 +214,10 @@ class SelectionFunction_interp:
             size_add_zmin = 0
 
         return (
-            zobs_file, lobs_file, ztr_file, ltr_file, zobs_tot, lobs_tot
+            zobs_file, lobs_file, ztr_file, ltr_file, zobs_tot, lobs_tot, size_add_zmin, size_add_lmin
         )
 
-    def _compute_sum_of_I_ltr_ztr_lobs_lobs(self, zobs_tot, lobs_tot, nsteps_ltr_file, nsteps_ztr_file):
+    def _compute_sum_of_I_ltr_ztr_lobs_lobs(self, zobs_tot, lobs_tot, size_add_zmin, size_add_lmin, nsteps_ltr_file, nsteps_ztr_file):
         nsteps_lobs_tot = len(lobs_tot)
         nsteps_zobs_tot = len(zobs_tot)
 
@@ -335,13 +335,13 @@ class SelectionFunction_interp:
 
         # read arrays from file
         (
-            zobs_file, lobs_file, ztr_file, ltr_file, zobs_tot, lobs_tot
+            zobs_file, lobs_file, ztr_file, ltr_file, zobs_tot, lobs_tot, size_add_zmin, size_add_lmin
         ) = self._read_redshifts_and_richness_from_file()
         nsteps_ltr_file = ltr_file.size
         nsteps_ztr_file = ztr_file.size
 
         # Produce sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
-        sum_a = self._compute_sum_of_I_ltr_ztr_lobs_lobs(lobs_tot, nsteps_ltr_file, nsteps_ztr_file)
+        sum_a = self._compute_sum_of_I_ltr_ztr_lobs_lobs(zobs_tot, lobs_tot, size_add_zmin, size_add_lmin, nsteps_ltr_file, nsteps_ztr_file)
         
         ##############################
         ## tildeI(λtr,ztr,∆λobs,∆zobs)

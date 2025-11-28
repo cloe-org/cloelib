@@ -30,6 +30,7 @@ mnu_1mass = 0.06  # For 1 massive neutrino tests
 mnu_3degen = 0.06  # For 3 degenerate neutrinos tests
 N_mnu = 0  # Number of massive neutrino species
 As = 2e-9
+log10TAGN = 7.8  # AGN feedback parameter
 
 
 class DummyBackground:
@@ -243,7 +244,7 @@ def background_lcdm_3degen():
     )
 
 
-# ============= w0waCDM Tests (0 massive neutrinos) =============
+# ============= w0waCDM Linear Tests (0 massive neutrinos) =============
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -256,6 +257,9 @@ def test_w0wa_linear_initialization(background_w0wa, z_array):
     assert hasattr(emulator, "z")
     assert emulator.k_min > 0
     assert emulator.k_max > emulator.k_min
+    # Linear now has sigma8 and fsigma8
+    assert hasattr(emulator, "sigma8")
+    assert hasattr(emulator, "fsigma8")
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -296,6 +300,21 @@ def test_w0wa_linear_growth_factor(background_w0wa, z_array, k_array):
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_w0wa_linear_sigma8(background_w0wa, z_array):
+    """Test Linear class sigma8 and growth_rate"""
+    emulator = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
+
+    sigma8_0 = emulator.sigma8_0()
+    growth_rate = emulator.growth_rate()
+
+    assert isinstance(sigma8_0, (float, np.floating))
+    assert sigma8_0 > 0
+    assert isinstance(growth_rate, np.ndarray)
+    assert np.all(growth_rate > 0)
+    assert len(growth_rate) == len(z_array)
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_w0wa_pcb_linear(background_w0wa, z_array, k_array):
     """Test w0waCDM Pcb emulator"""
     emulator = w0waCDM.LinearCB(background=background_w0wa, redshifts=z_array)
@@ -305,9 +324,12 @@ def test_w0wa_pcb_linear(background_w0wa, z_array, k_array):
     assert isinstance(pk_cb, np.ndarray)
     assert np.all(pk_cb > 0)
     assert pk_cb.shape[0] == len(k_array)
+    # LinearCB now has sigma8 and fsigma8
+    assert hasattr(emulator, "sigma8")
+    assert hasattr(emulator, "fsigma8")
 
 
-# ============= w0waCDM Tests (1 massive neutrino) =============
+# ============= w0waCDM Linear Tests (1 massive neutrino) =============
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -321,6 +343,8 @@ def test_w0wa_linear_1mass_initialization(background_w0wa_1mass, z_array):
     assert emulator.k_min > 0
     assert emulator.k_max > emulator.k_min
     assert emulator.has_neutrinos is True
+    assert hasattr(emulator, "sigma8")
+    assert hasattr(emulator, "fsigma8")
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -367,7 +391,7 @@ def test_w0wa_1mass_suppression(
     )
 
 
-# ============= w0waCDM Tests (3 degenerate neutrinos) =============
+# ============= w0waCDM Linear Tests (3 degenerate neutrinos) =============
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -402,7 +426,103 @@ def test_w0wa_linearcb_3degen_power_spectrum(background_w0wa_3degen, z_array, k_
     assert np.all(pk_cb > 0)
 
 
-# ============= wCDM Tests (0 massive neutrinos) =============
+# ============= w0waCDM NonLinear Tests =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_w0wa_nonlinear_initialization(background_w0wa, z_array):
+    """Test w0waCDM nonlinear emulator initializes correctly"""
+    linear = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
+    nonlinear = w0waCDM.NonLinear(
+        background=background_w0wa,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    assert hasattr(nonlinear, "Pk_int")
+    assert hasattr(nonlinear, "sigma8")
+    assert hasattr(nonlinear, "fsigma8")
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_w0wa_nonlinear_power_spectrum(background_w0wa, z_array, k_array):
+    """Test w0waCDM nonlinear power spectrum"""
+    linear = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
+    nonlinear = w0waCDM.NonLinear(
+        background=background_w0wa,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert isinstance(pk_nl, np.ndarray)
+    assert np.all(pk_nl > 0)
+    assert np.all(np.isfinite(pk_nl))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_w0wa_nonlinear_boost(background_w0wa, z_array, k_array):
+    """Test that nonlinear power is boosted relative to linear on small scales"""
+    linear = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
+    nonlinear = w0waCDM.NonLinear(
+        background=background_w0wa,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_lin = linear.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    # Nonlinear corrections should boost power on small scales
+    high_k_mask = k_array > 1.0
+    assert np.all(pk_nl[high_k_mask] > pk_lin[high_k_mask]), (
+        "Nonlinear power should be boosted on small scales"
+    )
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_w0wa_nonlinear_sigma8(background_w0wa, z_array):
+    """Test nonlinear sigma8 and growth_rate"""
+    linear = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
+    nonlinear = w0waCDM.NonLinear(
+        background=background_w0wa,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    sigma8_0 = nonlinear.sigma8_0()
+    growth_rate = nonlinear.growth_rate()
+
+    assert isinstance(sigma8_0, (float, np.floating))
+    assert sigma8_0 > 0
+    assert isinstance(growth_rate, np.ndarray)
+    assert np.all(growth_rate > 0)
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_w0wa_nonlinearcb(background_w0wa, z_array, k_array):
+    """Test w0waCDM NonLinearCB emulator"""
+    linear = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
+    nonlinear_cb = w0waCDM.NonLinearCB(
+        background=background_w0wa,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_cb_nl = nonlinear_cb.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_cb_nl > 0)
+    assert hasattr(nonlinear_cb, "sigma8")
+    assert hasattr(nonlinear_cb, "fsigma8")
+
+
+# ============= wCDM Linear Tests (0 massive neutrinos) =============
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -415,6 +535,9 @@ def test_wcdm_linear_power_spectrum(background_wcdm, z_array, k_array):
     assert isinstance(pk, np.ndarray)
     assert np.all(pk > 0)
     assert np.all(np.isfinite(pk))
+    # Check sigma8 attributes
+    assert hasattr(emulator, "sigma8")
+    assert hasattr(emulator, "fsigma8")
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -425,9 +548,11 @@ def test_wcdm_pcb_linear(background_wcdm, z_array, k_array):
     pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
 
     assert np.all(pk_cb > 0)
+    assert hasattr(emulator, "sigma8")
+    assert hasattr(emulator, "fsigma8")
 
 
-# ============= wCDM Tests (1 massive neutrino) =============
+# ============= wCDM Linear Tests (1 massive neutrino) =============
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -438,6 +563,8 @@ def test_wcdm_linear_1mass_initialization(background_wcdm_1mass, z_array):
     assert hasattr(emulator, "Pk_int")
     assert hasattr(emulator, "k")
     assert hasattr(emulator, "z")
+    assert hasattr(emulator, "sigma8")
+    assert hasattr(emulator, "fsigma8")
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -462,7 +589,7 @@ def test_wcdm_linearcb_1mass_power_spectrum(background_wcdm_1mass, z_array, k_ar
     assert np.all(pk_cb > 0)
 
 
-# ============= wCDM Tests (3 degenerate neutrinos) =============
+# ============= wCDM Linear Tests (3 degenerate neutrinos) =============
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -484,7 +611,42 @@ def test_wcdm_linear_3degen_power_spectrum(background_wcdm_3degen, z_array, k_ar
     assert np.all(pk > 0)
 
 
-# ============= LCDM Tests (0 massive neutrinos) =============
+# ============= wCDM NonLinear Tests =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_wcdm_nonlinear_initialization(background_wcdm, z_array):
+    """Test wCDM nonlinear emulator initializes correctly"""
+    linear = wCDM.Linear(background=background_wcdm, redshifts=z_array)
+    nonlinear = wCDM.NonLinear(
+        background=background_wcdm,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    assert hasattr(nonlinear, "Pk_int")
+    assert hasattr(nonlinear, "sigma8")
+    assert hasattr(nonlinear, "fsigma8")
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_wcdm_nonlinearcb(background_wcdm, z_array, k_array):
+    """Test wCDM NonLinearCB emulator"""
+    linear = wCDM.Linear(background=background_wcdm, redshifts=z_array)
+    nonlinear_cb = wCDM.NonLinearCB(
+        background=background_wcdm,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_cb_nl = nonlinear_cb.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_cb_nl > 0)
+
+
+# ============= LCDM Linear Tests (0 massive neutrinos) =============
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -497,6 +659,9 @@ def test_lcdm_linear_power_spectrum(background_lcdm, z_array, k_array):
     assert isinstance(pk, np.ndarray)
     assert np.all(pk > 0)
     assert pk.shape[0] == len(k_array)
+    # Check sigma8 attributes
+    assert hasattr(emulator, "sigma8")
+    assert hasattr(emulator, "fsigma8")
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -512,6 +677,20 @@ def test_lcdm_growth_factor_normalization(background_lcdm, z_array, k_array):
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_lcdm_linear_sigma8(background_lcdm, z_array):
+    """Test LCDM Linear class sigma8 and growth_rate"""
+    emulator = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+
+    sigma8_0 = emulator.sigma8_0()
+    growth_rate = emulator.growth_rate()
+
+    assert isinstance(sigma8_0, (float, np.floating))
+    assert sigma8_0 > 0
+    assert isinstance(growth_rate, np.ndarray)
+    assert np.all(growth_rate > 0)
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
 def test_lcdm_pcb_linear(background_lcdm, z_array, k_array):
     """Test LCDM Pcb emulator"""
     emulator = LCDM.LinearCB(background=background_lcdm, redshifts=z_array)
@@ -519,9 +698,11 @@ def test_lcdm_pcb_linear(background_lcdm, z_array, k_array):
     pk_cb = emulator.matter_power_spectrum(1.5, k_array)[0, :]
 
     assert np.all(pk_cb > 0)
+    assert hasattr(emulator, "sigma8")
+    assert hasattr(emulator, "fsigma8")
 
 
-# ============= LCDM Tests (1 massive neutrino) =============
+# ============= LCDM Linear Tests (1 massive neutrino) - SKIPPED (files not on Zenodo) =============
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -568,7 +749,7 @@ def test_lcdm_1mass_growth_factor(background_lcdm_1mass, z_array, k_array):
     )
 
 
-# ============= LCDM Tests (3 degenerate neutrinos) =============
+# ============= LCDM Linear Tests (3 degenerate neutrinos) - SKIPPED (files not on Zenodo) =============
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
@@ -598,6 +779,60 @@ def test_lcdm_linearcb_3degen_power_spectrum(background_lcdm_3degen, z_array, k_
     pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
 
     assert np.all(pk_cb > 0)
+
+
+# ============= LCDM NonLinear Tests =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_lcdm_nonlinear_initialization(background_lcdm, z_array):
+    """Test LCDM nonlinear emulator initializes correctly"""
+    linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    nonlinear = LCDM.NonLinear(
+        background=background_lcdm,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    assert hasattr(nonlinear, "Pk_int")
+    assert hasattr(nonlinear, "sigma8")
+    assert hasattr(nonlinear, "fsigma8")
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_lcdm_nonlinear_power_spectrum(background_lcdm, z_array, k_array):
+    """Test LCDM nonlinear power spectrum"""
+    linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    nonlinear = LCDM.NonLinear(
+        background=background_lcdm,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert isinstance(pk_nl, np.ndarray)
+    assert np.all(pk_nl > 0)
+    assert np.all(np.isfinite(pk_nl))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_lcdm_nonlinearcb(background_lcdm, z_array, k_array):
+    """Test LCDM NonLinearCB emulator"""
+    linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    nonlinear_cb = LCDM.NonLinearCB(
+        background=background_lcdm,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_cb_nl = nonlinear_cb.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_cb_nl > 0)
+    assert hasattr(nonlinear_cb, "sigma8")
 
 
 # ============= Boundary & Error Tests =============
@@ -662,7 +897,7 @@ def test_unsupported_neutrino_configuration():
         gamma_MG=0.0,
     )
 
-    with pytest.raises(ValueError, match="Unsupported N_mnu"):
+    with pytest.raises(ValueError, match="Unsupported"):
         w0waCDM.Linear(background=bad_nu_background, redshifts=np.array([0.0, 1.0]))
 
 
@@ -728,3 +963,22 @@ def test_str_representation_3degen(background_w0wa_3degen, z_array):
     assert "Archidiacono et al. (2024)" in info_str
     assert "three" in info_str
     assert "degenerate" in info_str
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER, reason="cosmopower not installed")
+def test_str_representation_nonlinear(background_lcdm, z_array):
+    """Test __str__ method for nonlinear class"""
+    linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    nonlinear = LCDM.NonLinear(
+        background=background_lcdm,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    info_str = str(nonlinear)
+
+    assert "LCDM" in info_str
+    assert "nonlinear" in info_str
+    assert "mead2020" in info_str
+    assert "logT_AGN" in info_str

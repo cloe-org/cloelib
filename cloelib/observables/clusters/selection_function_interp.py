@@ -346,16 +346,15 @@ class SelectionFunction_interp:
             ## P(lobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
             N = integrate.simpson(CG_ricH_seL_funcT_code, x=lobs_tot, axis=2)
             ## To deal with zeros
-            norm_CG_ricH_seL_funcT_code = np.zeros_like(
+            arrays[f"norm_CG_ricH_seL_funcT_code_{it}"] = np.zeros_like(
                 CG_ricH_seL_funcT_code, dtype=float
             )
-            norm_CG_ricH_seL_funcT_code = np.divide(
+            arrays[f"norm_CG_ricH_seL_funcT_code_{it}"] = np.divide(
                 CG_ricH_seL_funcT_code,
                 N[:, :, np.newaxis],
-                out=norm_CG_ricH_seL_funcT_code,
+                out=arrays[f"norm_CG_ricH_seL_funcT_code_{it}"],
                 where=N[:, :, np.newaxis] != 0,
             )
-            arrays[f"norm_CG_ricH_seL_funcT_code_{it}"] = norm_CG_ricH_seL_funcT_code
             ## np.shape(arrays[f"norm_CG_ricH_seL_funcT_code_{it}"]): (ltr, ztr, lobs)
 
             ## Produce P_alpha(zobs|λtr,ztr) for all tiles

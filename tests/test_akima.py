@@ -108,7 +108,7 @@ def test_akima_interpolation_sine():
 def test_akima_interpolation_monotonic():
     """Test that Akima preserves monotonicity for monotonic data."""
     t = jnp.linspace(0, 1, 10)
-    u = jnp.linspace(0, 10, 10)  # Monotonically increasing
+    u = jnp.linspace(0, 10, 10)
 
     t_new = jnp.linspace(0, 1, 50)
     result = akima_interpolation(u, t, t_new)
@@ -116,3 +116,30 @@ def test_akima_interpolation_monotonic():
     # Check monotonicity (allowing tiny numerical errors)
     diffs = jnp.diff(result)
     assert jnp.all(diffs >= -1e-10)
+
+
+def test_akima_grad():
+    """Test gradients of akima_interpolation using JAX."""
+    x = jnp.linspace(0, 10, 20)
+    x_new = jnp.linspace(0, 10, 50)
+
+    def f(alpha, x, x_new: float):
+        y = jnp.sin(alpha * x)
+        return akima_interpolation(y, x, x_new)[0]
+
+    grad_f = jax.grad(f, argnums=0)
+
+    alpha = 0.5
+    grad = jax.vmap(grad_f, in_axes=(None, None, 0))(alpha, x, x_new)
+
+    # exact derivative
+    dy_dalpha = x * jnp.cos(alpha * x)
+
+    # Interpolate the exact derivative at the same x_new points
+    dy_dalpha_interp = akima_interpolation(dy_dalpha, x, x_new)
+
+    np.testing.assert_allclose(
+        grad,
+        dy_dalpha_interp,
+        rtol=1e-2,
+    )

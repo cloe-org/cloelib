@@ -61,7 +61,8 @@ class PositionsTracer_Weyl_GC:
         self.background = self.perturbations.background
         self.z = z
         
-        # Weyl project: Add z_ini
+        # Weyl project: Add z_ini 
+        # For this to work, perturbations should be initialized with redshifts = np.array([z_ini])
         self.z_ini = self.perturbations.z[0]
         
         
@@ -75,7 +76,7 @@ class PositionsTracer_Weyl_GC:
         self.dndz = dndz
         # Correct dndz for dz_pos
         self.dndz_shifted = shift_dndz_jax(dndz, z, self.dz_pos_i)
-        self.flags = {"galaxy_bias_model": galaxy_bias_model}
+        #self.flags = {"galaxy_bias_model": galaxy_bias_model}
         self.n_z_bins = dndz.shape[0]
         self.magnification_bias = [
             self.nuisance_params[f"magnification_bias_{i + 1}"]
@@ -116,11 +117,11 @@ class PositionsTracer_Weyl_GC:
         window_positions: numpy.ndarray
            Window function for angular photometric galaxy clustering
         """
-        
-        #Weyl: Add factor 1/sigma_8(z_ini)
-        # Assuming each background class has a self.sigma8
-        
-        sigma_8ini = self.background.sigma8*self.perturbations.growth_factor(self.z_ini,1) #growth factor already normalized to 1 today
+        # Weyl: We need to act factor (1/sigma_8(z_ini))**2
+        # The following will work with a CAMB Background, assuming it is initialized with redshifts = np.array([z_ini])
+        # Will need to adjust this to make it consistently work with any background
+        sigma_8ini = self.perturbations.results.get_sigma8()[0]
+        #sigma_8ini = self.background.sigma8*self.perturbations.growth_factor(self.z_ini,1) #growth factor already normalized to 1 today
 
         def per_bin_case():
             window = (
@@ -298,7 +299,7 @@ class PositionsTracer_Weyl_GGL:
         self.dndz = dndz
         # Correct dndz for dz_pos
         self.dndz_shifted = shift_dndz_jax(dndz, z, self.dz_pos_i)
-        self.flags = {"galaxy_bias_model": galaxy_bias_model}
+        #self.flags = {"galaxy_bias_model": galaxy_bias_model}
         self.n_z_bins = dndz.shape[0]
         self.magnification_bias = [
             self.nuisance_params[f"magnification_bias_{i + 1}"]
@@ -355,9 +356,14 @@ class PositionsTracer_Weyl_GGL:
         """
 
         # WEYL: Multiplied with Jhat; Removed factor (self.background.H0 / c_0) ** 2* Omega_m0* (1 + z)
-        # WEYL: Added factor (1/sigma_8(z_ini))**2
         Omega_m0 = self.background.Omega_m(0.0)
-        sigma_8ini = self.background.sigma8*self.perturbations.growth_factor(self.z_ini,1) #growth factor already normalized to 1 today
+        
+        
+        # Weyl: We need to act factor (1/sigma_8(z_ini))**2
+        # The following will work with a CAMB Background, assuming it is initialized with redshifts = np.array([z_ini])
+        # Will need to adjust this to make it consistently work with any background
+        sigma_8ini = self.perturbations.results.get_sigma8()[0]
+        #sigma_8ini = self.background.sigma8*self.perturbations.growth_factor(self.z_ini,1) #growth factor already normalized to 1 today
         
         def per_bin_case():
             window = (
@@ -410,7 +416,6 @@ class PositionsTracer_Weyl_GGL:
         return result
 
     def get_window_magnification(self, z):
-        #TO DO Weyl: Add factor (D_1(z)/D_1(z_ini))**2
         r"""Magnification photometric galaxy kernel.
 
         Calculates the weak lensing shear kernel for a given tomographic bin

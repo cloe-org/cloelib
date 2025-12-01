@@ -428,7 +428,7 @@ class mochiCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return np.array([self.results.Om_m(z) for z in zs])
+        return self.results.Om_m(zs)
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """

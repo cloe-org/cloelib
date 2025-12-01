@@ -25,7 +25,6 @@ c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 class PositionsTracer_Weyl_GC:
     """Class to define the kernel for angular (galaxy) clustering.""" #when used in the context of the Weyl potential
-    # TO DO FOR WEYL PROJECT: Implement the parameters bhat; remove current implementation of galaxy bias;
     # For the Weyl measurement, we define parameters bhat*sigma_8 per bin --> we keep the per bin case and remove the other bias implementations
     
     def __init__(
@@ -61,8 +60,8 @@ class PositionsTracer_Weyl_GC:
         self.background = self.perturbations.background
         self.z = z
         
-        # Weyl project: Add z_ini 
-        # For this to work, perturbations should be initialized with redshifts = np.array([z_ini])
+        # WEYL: Add z_ini 
+        # WEYL: For this to work, perturbations should be initialized with redshifts = np.array([z_ini])
         self.z_ini = self.perturbations.z[0]
         
         
@@ -83,12 +82,13 @@ class PositionsTracer_Weyl_GC:
             for i in range(dndz.shape[0])
         ]
         
-        #For Weyl project: Only use per bin case
+
         # Using dict.get so I can provide a default since lax has to compile every branch of the conditional
+        # WEYL: Only use per bin case; We use bhat(z) = b(z)*sigma_8(z) instead of just b(z) as parameters
         def per_bin_case():
             bias_array = np.asarray(
                 [
-                    nuisance_params.get("b1_photo_bin%d" % bin, 1.0) #Rename parameter? In our case, we use the bhat=bias*sigma8 as parameters
+                    nuisance_params.get("bhat_bin%d" % bin, 1.0) # WEYL: Renamed parameter b1_photo -> bhat
                     for bin in range(self.n_z_bins)
                 ]
             )
@@ -98,7 +98,7 @@ class PositionsTracer_Weyl_GC:
         self.bias_array = per_bin_case()
 
     def get_window_positions(self, z) -> np.ndarray:
-        # WEYL PROJECT: This will be the positions window function when used for galaxy clustering
+        # WEYL: This will be the positions window function when used for galaxy clustering
         
         r"""Galaxy Positions window function.    
 
@@ -117,7 +117,7 @@ class PositionsTracer_Weyl_GC:
         window_positions: numpy.ndarray
            Window function for angular photometric galaxy clustering
         """
-        # Weyl: We need to act factor (1/sigma_8(z_ini))**2
+        # WEYL: We need to act factor (1/sigma_8(z_ini))**2
         # The following will work with a CAMB Background, assuming it is initialized with redshifts = np.array([z_ini])
         # Will need to adjust this to make it consistently work with any background
         sigma_8ini = self.perturbations.results.get_sigma8()[0]
@@ -171,7 +171,6 @@ class PositionsTracer_Weyl_GC:
         return result
 
     def get_window_magnification(self, z):         
-        #TO DO Weyl: Add factor D_1(z)/D_1(z_\ini)
         r"""Magnification photometric galaxy kernel.
 
         Calculates the weak lensing shear kernel for a given tomographic bin
@@ -206,7 +205,7 @@ class PositionsTracer_Weyl_GC:
             at specified scale for the redshifts defined in z
         """
         
-        #Weyl: Added factor D_1(z)/D_1(z_\ini)
+        # WEYL: Added factor D_1(z)/D_1(z_\ini)
         
         growth_factor = self.perturbations.growth_factor(z,1)/self.perturbations.growth_factor(self.z_ini,1)
         
@@ -227,7 +226,7 @@ class PositionsTracer_Weyl_GC:
         )
 
     def get_window(self, z) -> np.ndarray:
-        # NOTE WEYL PROJECT: This will be the total positions window function used for galaxy clustering; no modifications are needed here, as long as get_window_positions and get_window_magnification are properly modified
+        #WEYL: This will be the total positions window function used for galaxy clustering; no modifications are needed here, as long as get_window_positions and get_window_magnification are properly modified
         """
         Compute the angular photometric galaxy clustering window function.
 
@@ -250,7 +249,6 @@ class PositionsTracer_Weyl_GC:
     
 class PositionsTracer_Weyl_GGL:
     """Class to define the positions kernel for galaxy-galaxy lensing, including the Weyl potential.""" #when used in the context of the Weyl potential
-    # TO DO FOR WEYL PROJECT: Implement the parameters Jhat and bhat; remove current implementation of galaxy bias;
     
     def __init__(
         self,
@@ -259,7 +257,7 @@ class PositionsTracer_Weyl_GGL:
         z: np.ndarray,
         #galaxy_bias_model: str, #Not needed for Weyl measurement (we only use the per-bin case)
         nuisance_params: dict,
-        Jhat_params: dict,
+        Jhat_params: dict, #New parameter for Weyl project
     ):
         r"""
         Initialize the class instance.
@@ -286,7 +284,7 @@ class PositionsTracer_Weyl_GGL:
         self.background = self.perturbations.background
         self.z = z
         
-        # Weyl project: Add z_ini
+        # WEYL: Add z_ini
         self.z_ini = self.perturbations.z[0]
         
         # This is to add the necessary prefactor to shear, while avoiding it in GC
@@ -306,12 +304,13 @@ class PositionsTracer_Weyl_GGL:
             for i in range(dndz.shape[0])
         ]
         
-        # For Weyl project: Only use per bin case
         # Using dict.get so I can provide a default since lax has to compile every branch of the conditional
+    
+        # WEYL: Only use per bin case; We use bhat(z) = b(z)*sigma_8(z) instead of just b(z) as parameters
         def per_bin_case():
             bias_array = np.asarray(
                 [
-                    nuisance_params.get("b1_photo_bin%d" % bin, 1.0) #Rename parameter? In our case, we use the bhat=bias*sigma8 as parameters
+                    nuisance_params.get("bhat_bin%d" % bin, 1.0) # WEYL: Renamed parameter b1_photo -> bhat
                     for bin in range(self.n_z_bins)
                 ]
             )
@@ -470,7 +469,7 @@ class PositionsTracer_Weyl_GGL:
         )
     
     def get_window(self, z) -> np.ndarray:
-         # NOTE WEYL PROJECT: This will be the total positions window function used for GGL; no modifications are needed here, as long as get_window_positions_GGL(z) has been implemented
+         # WEYL: This will be the total positions window function used for GGL; no modifications are needed here, as long as get_window_positions and get_window_magnification have been changed appropriately
         """
         Compute the angular photometric galaxy clustering window function.
 

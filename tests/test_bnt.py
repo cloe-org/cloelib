@@ -133,3 +133,42 @@ class TestBNTMatrixCalculator(unittest.TestCase):
                 z=z,
                 background=background,
             )
+
+
+    def test_bnt_raises_when_2x2_system_singular(self):
+        """
+        Raises ValueError if the 2x2 linear system in BNT construction is singular.
+
+        We construct a case where the first two tomographic bins have identical
+        n(z), so that for i=2 the matrix built from (A_{i-1}, B_{i-1}) and
+        (A_{i-2}, B_{i-2}) has two identical rows and is therefore singular.
+        """
+        z = np.linspace(0.1, 2.0, 200)
+
+        # Helper to build a normalised Gaussian n(z)
+        def make_nz(z_grid, center, width):
+            nz = np.exp(-0.5 * ((z_grid - center) / width) ** 2)
+            nz /= np.trapz(nz, z_grid)
+            return nz
+
+        # First two bins identical → leads to singular 2×2 system for i=2
+        nz_base = make_nz(z, center=0.8, width=0.1)
+        d0 = nz_base.copy()
+        d1 = nz_base.copy()
+
+        # Third bin different, just to satisfy nbins >= 3
+        d2 = make_nz(z, center=1.2, width=0.1)
+
+        dndz_list = [d0, d1, d2]
+
+        bnt = BNTMatrixCalculator(
+            dndz_list=dndz_list,
+            z=z,
+            background=background,
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"BNT matrix construction failed: non-invertible 2x2 system",
+        ):
+            bnt.get_bnt_matrix()

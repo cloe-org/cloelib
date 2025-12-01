@@ -92,7 +92,13 @@ class BNTMatrixCalculator:
                 [[A_list[i - 1], A_list[i - 2]], [B_list[i - 1], B_list[i - 2]]]
             )
             A = -1.0 * np.array([A_list[i], B_list[i]])
-            soln = np.linalg.solve(mat, A)
+            try:
+                soln = np.linalg.solve(mat, A)
+            except np.linalg.LinAlgError as exc:
+                raise ValueError(
+                    "BNT matrix construction failed: non-invertible 2x2 "
+                    f"system encountered at tomographic bin index {i}."
+                ) from exc
             BNT_matrix[i, i - 1] = soln[0]
             BNT_matrix[i, i - 2] = soln[1]
 

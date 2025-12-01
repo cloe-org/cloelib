@@ -119,7 +119,15 @@ def _akima_coefficients(t: jnp.ndarray, m: jnp.ndarray, axis: int = 0):
 _akima_coefficients = jax.jit(_akima_coefficients, static_argnames=["axis"])
 
 
-def _akima_eval(t, u, b, c, d, tq, axis: int = 0):
+def _akima_eval(
+    t: jnp.ndarray,
+    u: jnp.ndarray,
+    b: jnp.ndarray,
+    c: jnp.ndarray,
+    d: jnp.ndarray,
+    tq: jnp.ndarray,
+    axis: int = 0,
+):
     """
     Evaluates the Akima 1D interpolation along the specified axis.
 
@@ -181,7 +189,7 @@ def _akima_eval(t, u, b, c, d, tq, axis: int = 0):
 _akima_eval = jax.jit(_akima_eval, static_argnames=["axis"])
 
 
-def akima_interpolation(u, t, tq, axis: int = 0):
+def akima_interpolation(u: jnp.ndarray, t: jnp.ndarray, tq: jnp.ndarray, axis: int = 0):
     """
     Performs Akima 1D interpolation along the specified axis.
 

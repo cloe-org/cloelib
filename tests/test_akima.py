@@ -11,6 +11,46 @@ from cloelib.auxiliary.akima import (
 jax.config.update("jax_enable_x64", True)
 
 
+def test_akima_length_mismatch():
+    """Test that _akima_slopes raises error on length mismatch."""
+    t = jnp.array([0.0, 1.0, 2.0])
+    u = jnp.array([0.0, 1.0])
+
+    with np.testing.assert_raises(ValueError):
+        _akima_slopes(t, u)
+
+
+def test_akima_isfinite():
+    """Test that _akima_slopes handles non-finite inputs."""
+    t = jnp.linspace(0.0, 4.0, 5)
+    u = jnp.sin(t)
+    t_new = jnp.linspace(0.0, 4.0, 10)
+
+    m = akima_interpolation(u, t, t_new)
+
+    assert jnp.all(jnp.isfinite(m))
+
+
+def test_akima_nan_input():
+    """Test that _akima_slopes raises error on NaN inputs."""
+    t = jnp.array([jnp.inf, 1.0, 2.0, 3.0])
+    u = jnp.array([0.0, jnp.nan, 2.0, 3.0])
+    t_new = jnp.array([0.5, jnp.nan, 2.5])
+
+    assert jnp.all(jnp.isnan(akima_interpolation(u, t, t_new)))
+
+
+def test_akima_slopes_constant():
+    """Test _akima_slopes with constant data."""
+    t = jnp.array([0.0, 1.0, 2.0, 3.0, 4.0])
+    u = jnp.array([5.0, 5.0, 5.0, 5.0, 5.0])
+
+    m = _akima_slopes(t, u)
+
+    # For constant data, all slopes should be 0.0
+    assert jnp.allclose(m, 0.0)
+
+
 def test_akima_slopes_basic():
     """Test _akima_slopes with simple linear data."""
     # Linear function
@@ -125,21 +165,21 @@ def test_akima_grad():
 
     def f(alpha, x, x_new: float):
         y = jnp.sin(alpha * x)
-        return akima_interpolation(y, x, x_new)[0]
+        return jnp.sum(akima_interpolation(y, x, x_new))
 
     grad_f = jax.grad(f, argnums=0)
 
     alpha = 0.5
-    grad = jax.vmap(grad_f, in_axes=(None, None, 0))(alpha, x, x_new)
+    grad = grad_f(alpha, x, x_new)
 
     # exact derivative
     dy_dalpha = x * jnp.cos(alpha * x)
 
     # Interpolate the exact derivative at the same x_new points
-    dy_dalpha_interp = akima_interpolation(dy_dalpha, x, x_new)
+    dy_dalpha_interp = jnp.sum(akima_interpolation(dy_dalpha, x, x_new))
 
     np.testing.assert_allclose(
         grad,
         dy_dalpha_interp,
-        rtol=1e-2,
+        rtol=1e-5,
     )

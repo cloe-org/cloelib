@@ -158,12 +158,12 @@ def test_akima_interpolation_monotonic():
     assert jnp.all(diffs >= -1e-10)
 
 
-def test_akima_grad():
+def test_akima_gradient_w_r_t_parameter():
     """Test gradients of akima_interpolation using JAX."""
     x = jnp.linspace(0, 10, 20)
     x_new = jnp.linspace(0, 10, 50)
 
-    def f(alpha, x, x_new: float):
+    def f(alpha, x, x_new):
         y = jnp.sin(alpha * x)
         return jnp.sum(akima_interpolation(y, x, x_new))
 
@@ -184,7 +184,7 @@ def test_akima_grad():
         rtol=1e-5,
     )
 
-    def test_gradient_w_r_t_u():
+    def test__akima_gradient_w_r_t_u():
         """Test automatic differentiation w.r.t. u (data values)."""
         t = jnp.linspace(0, 1, 10)
         u = jnp.sin(2 * jnp.pi * t)

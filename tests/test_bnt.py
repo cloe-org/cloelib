@@ -134,7 +134,6 @@ class TestBNTMatrixCalculator(unittest.TestCase):
                 background=background,
             )
 
-
     def test_bnt_raises_when_2x2_system_singular(self):
         """
         Raises ValueError if the 2x2 linear system in BNT construction is singular.

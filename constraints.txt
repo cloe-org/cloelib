@@ -1,0 +1,8 @@
+tensorflow==2.13.0
+tensorflow-probability==0.21.0
+keras==2.13.1
+tensorboard==2.13.0
+numpy==1.24.3
+protobuf<5,>=3.20.3
+cosmopower==0.1.3
+

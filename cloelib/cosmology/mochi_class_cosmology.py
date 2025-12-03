@@ -14,7 +14,10 @@ np.set_printoptions(threshold=sys.maxsize)
 
 # Cosmology imports (make sure it's the version of mochi_class that's being imported not the standard CLASS!)
 try:
+    import classy
     from classy import Class  # type: ignore
+
+    print(f"Loaded classy from {classy.__file__}")
 except ImportError as e:
     raise ImportError("classy could not be imported.") from e
 
@@ -38,12 +41,12 @@ class mochiCLASSBackground:
         As: float,
         ns: float,
         mnu: Union[float, Sequence[float], np.ndarray],
-        # w0: float,
-        # wa: float,
+        w0: float,
+        wa: float,
         mg_stable_basis_on: bool,
         stable_MG_dict: dict,
         mg_background_model: str,
-        # gamma_MG: float,
+        gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
     ) -> None:
@@ -77,14 +80,14 @@ class mochiCLASSBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
-        # self.w0 = w0  # Kept for protocol, but mochi_CLASS doesn't directly use it
-        # self.wa = wa  # Kept for protocol, but mochi_CLASS doesn't directly use it
-        # self.gamma_MG = (
-        #     gamma_MG  # Kept for protocol, but mochi_CLASS doesn't directly use it
-        # )
+        self.w0 = w0
+        self.wa = wa
+        self.gamma_MG = (
+            gamma_MG  # Kept for protocol, but mochi_CLASS doesn't directly use it
+        )
         self.mnu = mnu
         self.N_mnu = N_mnu
-        self.stable_basis_on = mg_stable_basis_on
+        self.mg_stable_basis_on = mg_stable_basis_on
         self.stable_MG_dict = stable_MG_dict
         self.mg_background_model = mg_background_model
         # We can set N_ur to a default value if not provided
@@ -182,8 +185,8 @@ class mochiCLASSBackground:
             if self.mg_background_model == "lcdm":
                 mochiclass_stable_basis_dict["expansion_model"] = "lcdm"
             elif self.mg_background_model == "wowa":
-                w0 = self.stable_MG_dict["w0"]
-                wa = self.stable_MG_dict["wa"]
+                w0 = self.w0
+                wa = self.wa
                 mochiclass_stable_basis_dict["expansion_model"] = "w0wa"
                 mochiclass_stable_basis_dict["expansion_smg"] = (
                     np.array2string(
@@ -226,8 +229,8 @@ class mochiCLASSBackground:
                     "use_ppf": "yes",
                     "c_gamma_over_c_fld": 0.4,
                     "fluid_equation_of_state": "CLP",
-                    "w0_fld": self.stable_MG_dict["w0"],
-                    "wa_fld": self.stable_MG_dict["wa"],
+                    "w0_fld": self.w0,
+                    "wa_fld": self.wa,
                     "cs2_fld": 1,
                 }
             elif (
@@ -428,7 +431,7 @@ class mochiCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return np.array([self.results.Om_m(z) for z in zs])
+        return self.results.Om_m(zs)
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """

@@ -106,8 +106,8 @@ def stable_basis_from_M2_ODE(
     As,
     ns,  # cosmological parameters
     lna_mochi,  # lna range for basis functions
-    w0=-1,
-    wa=0,  # background
+    w0,
+    wa,  # background
     b=2,  # M2 parameterisation, b is either one or two
     s=0,  # cs2 parameterisation
     a0=0,
@@ -133,8 +133,8 @@ def stable_basis_from_M2_ODE(
     # get Omega_DE from background - ONLY FOR wowa
     ###############################################
     stable_MG_dict = {
-        "w0": w0,
-        "wa": wa,
+        # "w0": w0,
+        # "wa": wa,
     }
 
     # background for w0wa (MG off)
@@ -147,6 +147,9 @@ def stable_basis_from_M2_ODE(
         ns=ns,
         mnu=0.0,
         N_mnu=0,
+        w0=w0,
+        wa=wa,
+        gamma_MG=0.55,
         mg_stable_basis_on=False,
         mg_background_model="wowa",
         stable_MG_dict=stable_MG_dict,

@@ -286,6 +286,11 @@ class CAMBBackground:
         """Sound horizon radius at last scattering in Mpc."""
         return self.results.get_derived_params()["rdrag"]
 
+    @property
+    def z_star(self) -> float:
+        """Redshift of recombination."""
+        return self.results.get_derived_params()["zstar"]
+
 
 class CAMBLinearPerturbations:
     """A wrapper for CAMB linear perturbation calculations."""

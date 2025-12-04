@@ -4,6 +4,7 @@
 from cloelib.observables.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
+from cloelib.observables.cmb_lensing import CMBLensingTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import simpsons_weights_jit
 from cloelib.profiling import profile_function
@@ -166,7 +167,8 @@ class AngularTwoPoint:
         )
         self.C_ell_calc = C_ell_calc
 
-        n_bin = self.tracer1.n_z_bins
+        n_bin1 = self.tracer1.n_z_bins
+        n_bin2 = self.tracer2.n_z_bins
         C_ell_out = {}
 
         # Prepare dictionary with tuples as keys for the output
@@ -184,6 +186,11 @@ class AngularTwoPoint:
         # Why? Because it expects the cross-correlation between positions and shear.
         # so the second dimension is filled with zeros.
         # POS - POS returns an array of shape (len(ells))
+        # CMBL - SHE returns an array of shape (2, len(ells))
+        # Why? Because it expects the cross-correlation between CMB lensing and shear.
+        # so the second dimension is filled with zeros.
+        # CMBL - POS returns an array of shape (len(ells))
+        # CMBL - CMBL returns an array of shape (len(ells))
 
         def pos_pos_rule(C, i, j):
             return {("POS", "POS", i, j): C[:, i - 1, j - 1]}
@@ -203,10 +210,25 @@ class AngularTwoPoint:
             arr = arr.at[0, 0, :].set(block)
             return {("SHE", "SHE", i, j): arr}
 
+        def cmbl_cmbl_rule(C, i, j):
+            return {("CMBL", "CMBL", i, j): C[:, i - 1, j - 1]}
+
+        def cmbl_pos_rule(C, i, j):
+            return {("CMBL", "POS", i, j): C[:, i - 1, j - 1]}
+
+        def cmbl_she_rule(C, i, j):
+            block = C[:, i - 1, j - 1]
+            return {
+                ("CMBL", "SHE", i, j): np.stack([block, np.zeros_like(block)])
+            }
+
         tracer_rules = {
             (PositionsTracer, PositionsTracer): pos_pos_rule,
             (PositionsTracer, ShearTracer): pos_she_rule,
             (ShearTracer, ShearTracer): she_she_rule,
+            (CMBLensingTracer, PositionsTracer): cmbl_pos_rule,
+            (CMBLensingTracer, ShearTracer): cmbl_she_rule,
+            (CMBLensingTracer, CMBLensingTracer): cmbl_cmbl_rule
         }
 
         # normalize the key so (A, B) and (B, A) are both supported
@@ -221,11 +243,16 @@ class AngularTwoPoint:
             )
 
         # Vectorized update of C_ell_out using dictionary comprehensions
+
+        a, b = sorted((n_bin1, n_bin2))
         C_ell_out = {
             k: v
-            for i in range(1, n_bin + 1)
-            for j in range(i, n_bin + 1)
-            for k, v in rule_fn(C_ell_calc, i, j).items()
+            for i in range(1, a + 1)
+            for j in range(i, b + 1)
+            for k, v in (
+                rule_fn(C_ell_calc, i, j) if n_bin1 <= n_bin2
+                else rule_fn(C_ell_calc, j, i)
+            ).items()
         }
 
         # Use dictionary comprehension for cosmolib_Cls creation

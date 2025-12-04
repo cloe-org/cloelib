@@ -267,6 +267,11 @@ class CLASSBackground:
         """Sound horizon radius at last scattering in Mpc."""
         return self.results.rs_drag()
 
+    @property
+    def z_star(self) -> float:
+        """Redshift of recombination."""
+        return self.results.get_current_derived_parameters(['z_star'])['z_star']
+
 
 class CLASSLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""

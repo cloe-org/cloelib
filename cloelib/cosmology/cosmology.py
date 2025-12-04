@@ -126,6 +126,11 @@ class Background(Protocol):
         """Sound horizon radius at last scattering in Mpc."""
         ...
 
+    @property
+    def z_star(self) -> float:
+        """Redshift of recombination."""
+        ...
+
 
 @runtime_checkable
 class Perturbations(Protocol):

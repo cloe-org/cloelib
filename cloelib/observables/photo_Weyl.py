@@ -118,10 +118,9 @@ class PositionsTracer_Weyl_GC:
            Window function for angular photometric galaxy clustering
         """
         # WEYL: We need to act factor (1/sigma_8(z_ini))**2
-        # The following will work with a CAMB Background, assuming it is initialized with redshifts = np.array([z_ini])
-        # Will need to adjust this to make it consistently work with any background
+        # WEYL: The following will work with a CAMB Background, assuming it is initialized with redshifts = np.array([z_ini])
+        # WEYL: Will need to adjust this to make it consistently work with any background
         sigma_8ini = self.perturbations.results.get_sigma8()[0]
-        #sigma_8ini = self.background.sigma8*self.perturbations.growth_factor(self.z_ini,1) #growth factor already normalized to 1 today
 
         def per_bin_case():
             window = (
@@ -354,15 +353,15 @@ class PositionsTracer_Weyl_GGL:
            Window function for angular photometric galaxy clustering
         """
 
-        # WEYL: Multiplied with Jhat; Removed factor (self.background.H0 / c_0) ** 2* Omega_m0* (1 + z)
+        # WEYL: Multiplied with Jhat; Remove factor Omega_m^{-1}(z)
         Omega_m0 = self.background.Omega_m(0.0)
+        Omega_m = Omega_m0*(1+z)**3*(self.background.H0/self.background.hubble_parameter(z)) 
         
         
-        # Weyl: We need to act factor (1/sigma_8(z_ini))**2
-        # The following will work with a CAMB Background, assuming it is initialized with redshifts = np.array([z_ini])
-        # Will need to adjust this to make it consistently work with any background
+        # WEYL: We need to act factor (1/sigma_8(z_ini))**2
+        # WEYL: The following will work with a CAMB Background, assuming it is initialized with redshifts = np.array([z_ini])
+        # WEYL: Will need to adjust this to make it consistently work with any background
         sigma_8ini = self.perturbations.results.get_sigma8()[0]
-        #sigma_8ini = self.background.sigma8*self.perturbations.growth_factor(self.z_ini,1) #growth factor already normalized to 1 today
         
         def per_bin_case():
             window = (
@@ -370,7 +369,7 @@ class PositionsTracer_Weyl_GGL:
                 * self.Jhat_array[: self.n_z_bins, None]
                 * self.dndz_shifted
                 * self.perturbations.background.hubble_parameter(z)
-                / (c_0* (self.background.H0 / c_0) ** 2* Omega_m0* (1 + z))
+                / (c_0* Omega_m)
                 / sigma_8ini**2
             )
             return window

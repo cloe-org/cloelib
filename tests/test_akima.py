@@ -51,6 +51,39 @@ def test_akima_slopes_constant():
     assert jnp.allclose(m, 0.0)
 
 
+def test_akima_constant_isfinite():
+    """Test akima with constant data."""
+    n = 10
+    t = jnp.linspace(0.0, 4.0, n)
+    u = jnp.ones(n) * 5.0
+
+    m = _akima_slopes(t, u)
+    assert jnp.isfinite(m).all()
+
+    b, c, d = _akima_coefficients(t, m)
+    assert jnp.isfinite(b).all()
+    assert jnp.isfinite(c).all()
+    assert jnp.isfinite(d).all()
+
+    t_new = jnp.array([0.5, 1.5, 2.5, 3.5])
+    result = _akima_eval(t, u, b, c, d, t_new)
+
+    assert jnp.isfinite(result).all()
+    assert jnp.allclose(result, 5.0)
+
+
+def test_akima_interpolation_constant():
+    """Test akima_interpolation with constant data."""
+    t = jnp.array([0.0, 1.0, 2.0, 3.0, 4.0])
+    u = jnp.array([5.0, 5.0, 5.0, 5.0, 5.0])
+    t_new = jnp.linspace(0.0, 4.0, 10)
+
+    result = akima_interpolation(u, t, t_new)
+
+    # For constant data, interpolation should return constant value
+    assert jnp.allclose(result, 5.0)
+
+
 def test_akima_slopes_basic():
     """Test _akima_slopes with simple linear data."""
     # Linear function

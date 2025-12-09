@@ -100,11 +100,13 @@ def rdrag_fitting_function(background, neff=3.046):
     )
     return r_d
 
-def hubble_rate(lna: float, h0: float, omega_m: float, omega_k: float,
-                w0: float, wa: float) -> np.ndarray:
+
+def hubble_rate(
+    lna: float, h0: float, omega_m: float, omega_k: float, w0: float, wa: float
+) -> np.ndarray:
     """
     Analytic integral of the Hubble rate H(z) for the w0wa model, see e.g.
-    Equ.(9) of 1910.09273. 
+    Equ.(9) of 1910.09273.
 
     Parameters
     ----------
@@ -133,17 +135,27 @@ def hubble_rate(lna: float, h0: float, omega_m: float, omega_k: float,
     """
     z = np.exp(-lna) - 1
     h_z = h0 * np.sqrt(
-        omega_m * (1 + z) ** 3 + omega_k * (1 + z) ** 2
-        + (1 - omega_m - omega_k) * (1 + z) ** ( 3 * (
-            1 + w0 + wa)) * np.exp(- 3 * wa * z / (1 + z)))
+        omega_m * (1 + z) ** 3
+        + omega_k * (1 + z) ** 2
+        + (1 - omega_m - omega_k)
+        * (1 + z) ** (3 * (1 + w0 + wa))
+        * np.exp(-3 * wa * z / (1 + z))
+    )
     return h_z
 
-def growth_function_ODE_derivative(lna: float, y: np.ndarray, h0: float,
-                                   omega_m: float, omega_m_geo: float,
-                                   omega_k: float, w0: float, wa: float
-                                   ) -> np.ndarray:
-    """ Calculates the derivative of the growth factor for the differential 
-    equation in the format for scipy.integrate.solve_ivp . Equation can be 
+
+def growth_function_ODE_derivative(
+    lna: float,
+    y: np.ndarray,
+    h0: float,
+    omega_m: float,
+    omega_m_geo: float,
+    omega_k: float,
+    w0: float,
+    wa: float,
+) -> np.ndarray:
+    """Calculates the derivative of the growth factor for the differential
+    equation in the format for scipy.integrate.solve_ivp . Equation can be
     found in 0810.1744, Equ. (10)
 
     Parameters
@@ -153,7 +165,7 @@ def growth_function_ODE_derivative(lna: float, y: np.ndarray, h0: float,
 
     y: np.ndarray
         current step of the ODE
-        
+
     h0: float
         Hubble parameter at z=0 in km/s/Mpc
 
@@ -181,24 +193,26 @@ def growth_function_ODE_derivative(lna: float, y: np.ndarray, h0: float,
     z = np.exp(-lna) - 1
 
     h_rate = hubble_rate(lna, h0, omega_m, omega_k, w0, wa)
-    h_geo= hubble_rate(lna, h0, omega_m_geo, omega_k, w0, wa)
+    h_geo = hubble_rate(lna, h0, omega_m_geo, omega_k, w0, wa)
 
-    hPrime_geo = optimize.approx_fprime(lna, hubble_rate, 2e-8, h0,
-                                        omega_m_geo, omega_k, w0, wa)
+    hPrime_geo = optimize.approx_fprime(
+        lna, hubble_rate, 2e-8, h0, omega_m_geo, omega_k, w0, wa
+    )
     c1 = 4 + hPrime_geo / h_geo
     c2 = 3 + hPrime_geo / h_geo - 3 / 2 * omega_m * (1 + z) ** 3 * (h0 / h_rate) ** 2
-    
+
     deriv[0] = y[1]
-    deriv[1] = - c1 * y[1] - c2 * y[0]
+    deriv[1] = -c1 * y[1] - c2 * y[0]
     return deriv
 
-def growth_function_ODE(background, zs: np.ndarray, omega_m = -1) -> np.ndarray:
-    """ Calculates the differential equation using scipy.integrate.solve_ivp .
+
+def growth_function_ODE(background, zs: np.ndarray, omega_m=-1) -> np.ndarray:
+    """Calculates the differential equation using scipy.integrate.solve_ivp .
     The initial values for the ODE are from Miranda et al. 1712.04289, p. 4
 
     Parameters
     ----------
-    background: Background 
+    background: Background
         background cosmology calculated e.g. by an Einstein-Boltzmann solver
 
     zs: numpy.ndarray
@@ -213,7 +227,7 @@ def growth_function_ODE(background, zs: np.ndarray, omega_m = -1) -> np.ndarray:
     growth: np.ndarray
         growth factor G(z) at the redshifts zs
     """
-    
+
     lna_vec = np.flip(np.log(1 / (1 + zs)))
     zinit = 1000
 
@@ -227,12 +241,18 @@ def growth_function_ODE(background, zs: np.ndarray, omega_m = -1) -> np.ndarray:
     wa = background.wa
     h0 = background.H0
 
-    e_z_init = hubble_rate(np.log(1 / (1 + zinit)), h0, omega_m, omega_k, w0,
-                           wa) / 100 / h0
+    e_z_init = (
+        hubble_rate(np.log(1 / (1 + zinit)), h0, omega_m, omega_k, w0, wa) / 100 / h0
+    )
 
-    y01 = (-6 / 5 * (1 - omega_m - omega_k) * (1 + zinit) ** (
-            3 * (1 + w0 + wa)) * np.exp(
-                - 3 * wa * zinit / (1 + zinit)) * e_z_init ** (-2))
+    y01 = (
+        -6
+        / 5
+        * (1 - omega_m - omega_k)
+        * (1 + zinit) ** (3 * (1 + w0 + wa))
+        * np.exp(-3 * wa * zinit / (1 + zinit))
+        * e_z_init ** (-2)
+    )
     y0 = np.array([1.0, y01])
 
     growth = integrate.solve_ivp(
@@ -240,17 +260,19 @@ def growth_function_ODE(background, zs: np.ndarray, omega_m = -1) -> np.ndarray:
         (np.min(lna_vec), np.max(lna_vec)),
         y0,
         t_eval=lna_vec,
-        args=(h0, omega_m, omega_m_geo, omega_k, w0, wa))
-    
+        args=(h0, omega_m, omega_m_geo, omega_k, w0, wa),
+    )
     return np.flip(growth.y[0])
+
 
 class SplitLinearPerturbations:
     """Class to output the rescaled linear matter power spectrum for the
     growth-geometry split, inheriting from the Perturbations parent class
     and using CLASS."""
-    
-    def __init__(self, background: Background, omega_m_growth: float,
-                 redshifts: np.ndarray):
+
+    def __init__(
+        self, background: Background, omega_m_growth: float, redshifts: np.ndarray
+    ):
         """Initialise SplitLinearPerturbations."""
         self.background = background
         self.omega_m_growth = omega_m_growth
@@ -271,11 +293,16 @@ class SplitLinearPerturbations:
         self.results.set(self.interface_args["CLASSparams"])
         self.results.compute()
 
+    @property
+    def _interface_args(self) -> dict:
+        """Save internal structure format of interface codes."""
+        return self.interface_args
+
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
-    ) -> np.ndarray:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Calculate the growth-geometry split CLASS linear matter power
-        spectrum. This implies a rescaling with the growth function of the 
+        spectrum. This implies a rescaling with the growth function of the
         matter power spectrum and also sigma_8, as in 2301.03694
 
         Parameters
@@ -294,14 +321,18 @@ class SplitLinearPerturbations:
 
         Returns
         -------
-        pk: numpy.ndarray
+        pk_linear_EBS: numpy.ndarray
             Linear matter power spectrum at the specified scale
-            and redshift
+            and redshift from the Einstein-Boltzmann solver. This is needed to
+            compute the boost factor in the class SplitNonLinearPerturbations.
+
+        pk_linear: numpy.ndarray
+            Rescaled linear matter power spectrum at the specified scale
+            and redshift.
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.pk_linear_EBS = np.array(
-            [[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        self.pk_linear_EBS = np.array([[self.results.pk(k, z) for k in ks] for z in zs])  # type:ignore[union-attr]
 
         omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
 
@@ -318,7 +349,6 @@ class SplitLinearPerturbations:
 
         # Rescale sigma_8
         self.sigma8_0 = g_z_growth[i] / g_z_geo[i] * self.sigma8_0_EBS()
-
         return self.pk_linear_EBS, self.pk_linear
 
     def sigma8_0_EBS(self) -> float:
@@ -330,14 +360,15 @@ class SplitLinearPerturbations:
         float
             The sigma8 value.
         """
-        self.sigma8_0 = self.results.sigma8()
+        self.sigma8_0 = self.results.sigma8()  # type: ignore[union-attr]
         return self.sigma8_0
-    
-    
+
+
 class SplitNonLinearPerturbations:
     """Class to output the rescaled non-linear matter power spectrum for the
     growth-geometry split, inheriting from the Perturbations parent class
     and using CLASS."""
+
     def __init__(
         self,
         background: Background,
@@ -402,9 +433,7 @@ class SplitNonLinearPerturbations:
 
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.pk_nonlinear_EBS = np.array(
-            [[self.results.pk(ki, zi) for ki in ks] for zi in zs]
-        )
+        self.pk_nonlinear_EBS = np.array([[self.results.pk(k, z) for k in ks] for z in zs])  # type:ignore[union-attr]
 
         # Compute the boost factor from the standard power spectra
         boost = self.pk_nonlinear_EBS / self.pk_linear_EBS
@@ -414,5 +443,4 @@ class SplitNonLinearPerturbations:
         # Add the boost to the rescaled power spectrum
         for i in range(len(zs)):
             self.pk_nonlinear[i, :] = boost[i, :] * self.pk_linear[i, :]
-
         return self.pk_nonlinear

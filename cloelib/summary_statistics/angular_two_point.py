@@ -12,6 +12,7 @@ from cloelib.profiling import profile_function
 import interpax
 import jax.numpy as np
 import jax
+from scipy import integrate
 
 # results imports
 from cosmolib.data import AngularPowerSpectrum
@@ -338,3 +339,42 @@ class AngularTwoPoint:
             for key, array in C_ell_out.items()
         }
         return cosmolib_Cls
+
+    def get_cosebis(self, ells, nl, ks, w_ell, ns):
+        """
+        Compute the cosebis from the angular power spectrum
+
+        Parameters:
+        - ells (jax.numpy.array):
+        array with the ells
+        - nl (jax.numpy.ndarray):
+            Noise power spectrum (not used yet).
+        - ks (jax.numpy.ndarray):
+            Wavenumber grid of the matter power spectrum.
+        - w_ell (np.array):
+            the kernel functions, the can be obtained via the function
+            get_W_ell in auxiliary functions.
+        - ns (jax.numpy.array):
+            the indices for the kernel function
+
+
+        Returns:
+        - dict: COSEBIs obtained from the angular power spectrum
+        """
+
+        cells = self.get_Cl(ells, nl, ks)
+        tomo_cosebis = {}
+        n_bin = self.tracer1.n_z_bins
+
+        for tomobin1 in range(1, n_bin + 1):
+            for tomobin2 in range(tomobin1, n_bin + 1):
+                key = (tomobin1, tomobin2)
+                cosebis = np.zeros_like(ns, dtype=np.float64)
+                for i, n in enumerate(ns):
+                    cl = cells["SHE", "SHE", tomobin1, tomobin2][0, 0]
+                    cosebis = cosebis.at[i].set(
+                        integrate.simpson(ells * cl * w_ell[n], ells)
+                    )
+                tomo_cosebis[key] = cosebis / (2 * np.pi)
+
+        return tomo_cosebis

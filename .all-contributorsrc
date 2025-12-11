@@ -288,6 +288,48 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "zahrabaghkhani",
+      "name": "Zahra Baghkhani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/47903409?v=4",
+      "profile": "https://github.com/zahrabaghkhani",
+      "contributions": [
+        "code",
+        "ideas",
+        "bug"
+      ]
+    },
+    {
+      "login": "fabriceroy",
+      "name": "Fabrice Roy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29073232?v=4",
+      "profile": "https://github.com/fabriceroy",
+      "contributions": [
+        "doc",
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "rreischke",
+      "name": "Robert Reischke",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31727230?v=4",
+      "profile": "https://github.com/rreischke",
+      "contributions": [
+        "ideas",
+        "mentoring"
+      ]
+    },
+    {
+      "login": "AngusWright",
+      "name": "Angus H. Wright",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5625880?v=4",
+      "profile": "https://github.com/AngusWright",
+      "contributions": [
+        "ideas",
+        "mentoring"
+      ]
     }
   ]
 }

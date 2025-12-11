@@ -27,12 +27,15 @@ dependencies = [
     "pytest-cov==6.1.1",
     "mypy==1.17",
     "pyinstrument>=4.6.2",
+    "cosmolib"
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
 camb = ["camb"]
 comet-emu = ["comet-emu"]
+pylevin = ["pylevin"]
+mpmath = ["mpmath"]
 tensorflow = ["tensorflow==2.13"]
 hmcode2020emu = ["HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"]
 

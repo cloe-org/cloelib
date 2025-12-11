@@ -165,8 +165,8 @@ def _akima_eval(
     if n != len(t):
         raise ValueError("Length of t must match size of u along interpolation axis.")
 
-    indices = jnp.searchsorted(t, tq) - 1
-    indices = jnp.clip(indices, 0, n - 1)
+    indices = jnp.searchsorted(t, tq, side="right") - 1
+    indices = jnp.clip(indices, 0, n - 2)
 
     tq = jnp.atleast_1d(tq)
     dt = tq - t[indices]

@@ -217,36 +217,38 @@ def test_akima_gradient_w_r_t_parameter():
         rtol=1e-5,
     )
 
-    def test__akima_gradient_w_r_t_u():
-        """Test automatic differentiation w.r.t. u (data values)."""
-        t = jnp.linspace(0, 1, 10)
-        u = jnp.sin(2 * jnp.pi * t)
-        t_new = jnp.linspace(0, 1, 5)
 
-        # Define function to differentiate
-        def f(u_var):
-            return jnp.sum(akima_interpolation(u_var, t, t_new))
+def test__akima_gradient_w_r_t_u():
+    """Test automatic differentiation w.r.t. u (data values)."""
+    t = jnp.linspace(0, 1, 10)
+    u = jnp.sin(2 * jnp.pi * t)
+    t_new = jnp.linspace(0, 1, 5)
 
-        # Compute gradient
-        grad_u = jax.grad(f)(u)
+    # Define function to differentiate
+    def f(u_var):
+        return jnp.sum(akima_interpolation(u_var, t, t_new))
 
-        # Gradient should exist and have correct shape
-        assert grad_u.shape == u.shape
-        assert jnp.all(jnp.isfinite(grad_u))
+    # Compute gradient
+    grad_u = jax.grad(f)(u)
 
-    def test_gradient_w_r_t_t_new():
-        """Test automatic differentiation w.r.t. t_new (query points)."""
-        t = jnp.linspace(0, 1, 10)
-        u = jnp.sin(2 * jnp.pi * t)
-        t_new = jnp.linspace(0, 1, 5)
+    # Gradient should exist and have correct shape
+    assert grad_u.shape == u.shape
+    assert jnp.all(jnp.isfinite(grad_u))
 
-        # Define function to differentiate
-        def f(t_new_var):
-            return jnp.sum(akima_interpolation(u, t, t_new_var))
 
-        # Compute gradient
-        grad_t_new = jax.grad(f)(t_new)
+def test_gradient_w_r_t_t_new():
+    """Test automatic differentiation w.r.t. t_new (query points)."""
+    t = jnp.linspace(0, 1, 10)
+    u = jnp.sin(2 * jnp.pi * t)
+    t_new = jnp.linspace(0, 1, 5)
 
-        # Gradient should exist and have correct shape
-        assert grad_t_new.shape == t_new.shape
-        assert jnp.all(jnp.isfinite(grad_t_new))
+    # Define function to differentiate
+    def f(t_new_var):
+        return jnp.sum(akima_interpolation(u, t, t_new_var))
+
+    # Compute gradient
+    grad_t_new = jax.grad(f)(t_new)
+
+    # Gradient should exist and have correct shape
+    assert grad_t_new.shape == t_new.shape
+    assert jnp.all(jnp.isfinite(grad_t_new))

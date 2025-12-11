@@ -42,8 +42,7 @@ jobs:
 
       - name: Install external prereq using pip
         run: |
-          pip install camb jax classy==3.3.1
-          pip install mgclassy==2.9.4.0 --no-deps
+          pip install camb jax mgclassy==2.9.4.0 classy==3.3.1
 
       - name: Install dependencies
         run: |

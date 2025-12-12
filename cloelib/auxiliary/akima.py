@@ -209,9 +209,14 @@ def akima_interpolation(u: jnp.ndarray, t: jnp.ndarray, tq: jnp.ndarray, axis: i
     jnp.ndarray
         Interpolated values of shape (..., k, ...) along `axis`.
     """
-    m = _akima_slopes(t, u, axis)
-    b, c, d = _akima_coefficients(t, m, axis)
-    return _akima_eval(t, u, b, c, d, tq, axis)
+
+    sort_idx = jnp.argsort(t)
+    t_sorted = t[sort_idx]
+    u_sorted = jnp.take(u, sort_idx, axis=axis)
+
+    m = _akima_slopes(t_sorted, u_sorted, axis)
+    b, c, d = _akima_coefficients(t_sorted, m, axis)
+    return _akima_eval(t_sorted, u_sorted, b, c, d, tq, axis)
 
 
 akima_interpolation = jax.jit(akima_interpolation, static_argnames=["axis"])

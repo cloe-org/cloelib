@@ -252,3 +252,44 @@ def test_gradient_w_r_t_t_new():
     # Gradient should exist and have correct shape
     assert grad_t_new.shape == t_new.shape
     assert jnp.all(jnp.isfinite(grad_t_new))
+
+
+def test_akima_unsorted_t():
+    """Test akima_interpolation with unsorted t array."""
+
+    n = 40
+
+    random_index = jax.random.permutation(jax.random.PRNGKey(42), n)
+
+    t = jnp.linspace(0, 10, n)[random_index]
+    u = jnp.sin(t)
+
+    tq = jnp.linspace(0, 10, 50)
+    u_interp = akima_interpolation(u, t, tq)
+
+    u_ref = jnp.sin(tq)
+
+    np.testing.assert_allclose(u_interp, u_ref, atol=1e-3, rtol=1e-3)
+
+
+def test_akima_unsorted_t_nd():
+    """Test akima_interpolation with unsorted t array and multidimensional u."""
+
+    n = 40
+    axis = 1
+
+    random_index = jax.random.permutation(jax.random.PRNGKey(42), n)
+
+    t = jnp.linspace(0, 10, n)[random_index]
+
+    # u shape (4, n, 3)
+    base = jnp.sin(t).reshape(1, n, 1)
+    u = jnp.broadcast_to(base, (4, n, 3))
+
+    tq = jnp.linspace(0, 10, 100)
+    u_interp = akima_interpolation(u, t, tq, axis=axis)
+
+    ref = jnp.sin(tq).reshape(1, tq.shape[0], 1)  # (1, k, 1)
+    u_ref = jnp.broadcast_to(ref, (4, tq.shape[0], 3))  # (4, k, 3)
+
+    np.testing.assert_allclose(u_interp, u_ref, atol=1e-3, rtol=1e-3)

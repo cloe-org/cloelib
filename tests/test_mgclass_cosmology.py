@@ -25,6 +25,7 @@ def mgclass_background_instance(scope="module"):
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        Y_He=0.25,
         mnu=0.0,
         w0=-1.0,
         wa=0.0,

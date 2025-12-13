@@ -29,6 +29,7 @@ class MGCLASSBackground:
         Omega_k0: float,
         As: float,
         ns: float,
+        Y_He: float,
         mnu: Union[float, Sequence[float], np.ndarray],
         w0: float,
         wa: float,
@@ -68,6 +69,7 @@ class MGCLASSBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
+        self.Y_He = Y_He
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = (
@@ -98,6 +100,7 @@ class MGCLASSBackground:
         )
         self.interface_args["MGCLASSparams"]["Omega_k"] = self.Omega_k0
         self.interface_args["MGCLASSparams"]["n_s"] = self.ns
+        self.interface_args["MGCLASSparams"]["YHe"] = self.Y_He
         self.interface_args["MGCLASSparams"]["A_s"] = self.As
         self.interface_args["MGCLASSparams"]["w0_fld"] = self.w0  # or w0
         self.interface_args["MGCLASSparams"]["wa_fld"] = self.wa  # or wa

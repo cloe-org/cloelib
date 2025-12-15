@@ -66,6 +66,29 @@ class HaloStatistics:
             self.interpolate_matter_power_spectrum(self.z, self.k)
         self.use_interpolation = use_interpolation
 
+        # to avoid recomputing sigma & dsigmadlnM
+        self._tabulated_sigma = {
+            "M": None,
+            "z": None,
+            "values": None,
+        }
+        self._tabulated_dlnsigmadlnM = {
+            "M": None,
+            "z": None,
+            "values": None,
+        }
+
+    def _are_mass_and_z_tabulated(self, z, M, reference_table):
+        """Check if mass and redshift are the tabluated values"""
+        if any(reference_table[key] is None for key in "Mz"):
+            return False
+        for name, test_val in (("M", M), ("z", z)):
+            if len(reference_table[name]) != len(test_val):
+                return False
+            elif (reference_table[name] != test_val).any():
+                return False
+        return True
+
     @property
     def background(self):
         r"""Returns the Background class instance"""
@@ -222,7 +245,6 @@ class HaloStatistics:
         delta_c:  float or numpy.ndarray
             Value of the critical overdensity a given redshift.
         """
-
         return (
             3.0
             / 20.0
@@ -321,8 +343,14 @@ class HaloStatistics:
         sigma_z_M: numpy.ndarray
             sigma_z_M[i,j], where i is the redshift axis and j the mass axis.
         """
-        R = self.radius_M(M)  # Mpc/h
-        return self.sigma_z_R(z, R)
+
+        if not self._are_mass_and_z_tabulated(z, M, self._tabulated_sigma):
+            R = self.radius_M(M)  # Mpc/h
+            self._tabulated_sigma["M"] = M
+            self._tabulated_sigma["z"] = z
+            self._tabulated_sigma["values"] = self.sigma_z_R(z, R)
+
+        return self._tabulated_sigma["values"]
 
     def nu_z_M(self, z, M):
         r"""Peak height.
@@ -344,11 +372,11 @@ class HaloStatistics:
         """
         return self.delta_c(z)[:, np.newaxis] / self.sigma_z_M(z, M)
 
-    def dlns_dlnR(self, z, M):
+    def dlns_dlnM(self, z, M):
         r"""Derivative of the logarithmic rms.
 
-        Computes the derivative of the log rms
-        with respect to the radius
+        Computes the derivative of the ln rms
+        with respect to the ln of mass
         at the requested redshift and mass points.
 
         Parameters
@@ -360,19 +388,63 @@ class HaloStatistics:
 
         Returns
         -------
-        dlns_dlnR: numpy.ndarray
-            dlns_dlnR[i,j], where i is the redshift axis and j the mass axis.
+        dlns_dlnM: numpy.ndarray
+            dlns_dlnM[i,j], where i is the redshift axis and j the mass axis.
         """
-        k = self.k  # h/Mpc
-        R = self.radius_M(M)  # Mpc/h
-        W, dWdx = self.window(k, R)
-        dsigma2_dR = np.pi**-2 * simps(
-            k.reshape(1, 1, len(k)) ** 3
-            * self.matter_power_spectrum(z, k).reshape(len(z), 1, len(k))
-            * W.reshape(1, len(R), len(k))
-            * dWdx.reshape(1, len(R), len(k)),
-            x=k,
-            axis=-1,
-        )
 
-        return R / (2 * self.sigma_z_M(z, M) ** 2) * dsigma2_dR
+        if not self._are_mass_and_z_tabulated(z, M, self._tabulated_dlnsigmadlnM):
+
+            k = self.k  # h/Mpc
+            R = self.radius_M(M)  # Mpc/h
+            W, dWdx = self.window(k, R)
+            dsigma2_dlnR = (
+                R
+                * np.pi**-2
+                * simps(
+                    k.reshape(1, 1, len(k)) ** 3
+                    * self.matter_power_spectrum(z, k).reshape(len(z), 1, len(k))
+                    * W.reshape(1, len(R), len(k))
+                    * dWdx.reshape(1, len(R), len(k)),
+                    x=k,
+                    axis=-1,
+                )
+            )
+            dsigma2_dlnM = dsigma2_dlnR / 3
+            sigma = self.sigma_z_M(z, M)
+
+            self._tabulated_dlnsigmadlnM["M"] = M
+            self._tabulated_dlnsigmadlnM["z"] = z
+            self._tabulated_dlnsigmadlnM["values"] = dsigma2_dlnM / (2 * sigma**2)
+
+        return self._tabulated_dlnsigmadlnM["values"]
+
+    # ----------------------------------
+    # Functions with precomputed values
+    # ----------------------------------
+
+    def dn_dm_fsigmanu(self, z, M, fsigmanu):
+        r"""Derivative of the number density with pre-computed
+        halo mass function.
+
+        Computes the derivative of the number density
+        at the requested redshift and mass points.
+
+        Parameters
+        ----------
+        z: numpy.ndarray
+            Redshift points.
+        M: numpy.ndarray
+            Mass points in h^{-1} Msun.
+        fsigmanu: numpy.ndarray
+            Multiplicity function.
+
+        Returns
+        -------
+        dn_dm: numpy.ndarray
+            dn_dm[i,j], where i is the redshift axis and j the mass axis.
+            Units: h^4 Mpc^{-3} Ms^{-1}.
+        """
+        rho_mean_0 = self._Omega_m(0) * derived_cosmology.rho_crit(self.background, 0.0)
+        rho_mean_0 /= self.background.h**2.0
+
+        return -rho_mean_0 / M**2.0 * fsigmanu * self.dlns_dlnM(z, M)

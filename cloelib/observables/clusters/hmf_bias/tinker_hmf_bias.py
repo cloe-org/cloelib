@@ -10,11 +10,6 @@ class TinkerHMFBias:
 
         self.halo_statistics = halo_statistics
 
-    @property
-    def background(self):
-        r"""Returns the Background class instance"""
-        return self.halo_statistics.perturbations.background
-
     def f_sigma_nu(self, z, M):
         r"""
         Computation of the multiplicity function.
@@ -25,9 +20,9 @@ class TinkerHMFBias:
         Parameters
         ----------
         z: numpy.ndarray
-            Redshift points
+            Redshift points.
         M: numpy.ndarray
-            Mass points in h^{-1} Msun
+            Mass points in h^{-1} Msun.
 
         Returns
         -------
@@ -55,9 +50,16 @@ class TinkerHMFBias:
         bias: numpy.ndarray
             bias[i,j], where i is the redshift axis and j the mass axis
         """
+        # compute inputs
+        delta_c = self.halo_statistics.delta_c(z)
+        nu = self.halo_statistics.nu_z_M(z, M)
         Delta = self.halo_statistics.get_Delta_crit(z) / self.halo_statistics._Omega_m(
             z
         )
+
+        ###################
+        # Bias computations
+        ###################
 
         # parameters
         p = [1.0, 0.24, 0.44, 0.88, 0.183, 1.5, 0.019, 0.107, 0.19, 2.4]
@@ -70,12 +72,12 @@ class TinkerHMFBias:
         c_par = p[9]
 
         # bias
-        nu = self.halo_statistics.nu_z_M(z, M).T
+        _nu = nu.T
         return (
             1.0
-            - A_par * nu**a_par / (nu**a_par + self.halo_statistics.delta_c(z) ** a_par)
-            + B_par * nu**b_par
-            + C_par * nu**c_par
+            - A_par * _nu**a_par / (_nu**a_par + delta_c**a_par)
+            + B_par * _nu**b_par
+            + C_par * _nu**c_par
         ).T
 
     def dn_dm(self, z, M):
@@ -97,10 +99,4 @@ class TinkerHMFBias:
             dn_dm[i,j], where i is the redshift axis and j the mass axis.
             Units: h^4 Mpc^{-3} Ms^{-1}.
         """
-        dlnsigmadlnR = self.halo_statistics.dlns_dlnR(z, M)
-        rho_mean_0 = self.halo_statistics._Omega_m(0) * derived_cosmology.rho_crit(
-            self.background, 0.0
-        )
-        rho_mean_0 /= self.background.h**2.0
-
-        return rho_mean_0 / M**2.0 * self.f_sigma_nu(z, M) * dlnsigmadlnR / (-3)
+        return self.halo_statistics.dn_dm_fsigmanu(z, M, self.f_sigma_nu(z, M))

@@ -102,6 +102,7 @@ jobs:
             exit 1
           fi
           echo "Version format is ok"
+
       # Get cluster_structure version
       - name: Checkout the cluster_structure branch to get its version
         uses: actions/checkout@v4
@@ -117,17 +118,16 @@ jobs:
             MAIN_VERSION="0.0.0"
           fi
           echo "MAIN_VERSION=$MAIN_VERSION" >> $GITHUB_ENV
+
       # Compare
-      - name: Check version update
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compare versions
         run: |
           IFS=. read -r C1 C2 C3 <<< "$CURRENT_VERSION"
           IFS=. read -r M1 M2 M3 <<< "$MAIN_VERSION"
           if [ "$C1" != "$M1" ]; then
             GOAL="$((M1 + 1)).0.0"
             if [ $C1 -lt $M1 ]; then
-              ERROR="  - Version number should increase: $CURRENT_VERSION<$PREVIOUS_VERSION"
+              ERROR="  - Version number should increase: $CURRENT_VERSION<$MAIN_VERSION"
             elif [ "$C1" != "$((M1 + 1))" ]; then
               ERROR="  - Increment should be done by 1: $GOAL"
             elif [ "$CURRENT_VERSION" != "$GOAL" ]; then
@@ -136,7 +136,7 @@ jobs:
           elif [ "$C2" != "$M2" ]; then
             GOAL="$C1.$((M2 + 1)).0"
             if [ $C2 -lt $M2 ]; then
-              ERROR="  - Version number should increase: $CURRENT_VERSION<$PREVIOUS_VERSION"
+              ERROR="  - Version number should increase: $CURRENT_VERSION<$MAIN_VERSION"
             elif [ "$C2" != "$((M2 + 1))" ]; then
               ERROR="  - Increments should be done by 1: $GOAL"
             elif [ "$CURRENT_VERSION" != "$GOAL" ]; then
@@ -145,32 +145,23 @@ jobs:
           elif [ "$C3" != "$M3" ]; then
             GOAL="$C1.$C2.$((M3 + 1))"
             if [ $C3 -lt $M3 ]; then
-              ERROR="  - Version number should increase: $CURRENT_VERSION<$PREVIOUS_VERSION"
+              ERROR="  - Version number should increase: $CURRENT_VERSION<$MAIN_VERSION"
             elif [ "$CURRENT_VERSION" != "$GOAL" ]; then
               ERROR="  - Increments should be done by 1: $GOAL"
             fi
           else
             ERROR="  - Version at cloelib/observables/clusters/__init__.py has not been updated!"
           fi
-          if [ "$ERROR" != "" ]; then
-            echo "Check failed:"
-            echo "$ERROR"
-            echo "#################"
-            echo "Removing version from PR title: $NEW_TITLE"
-            curl -s -X PATCH \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-              -d "{\"title\":\"$NEW_TITLE\"}" \
-              "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER" > /dev/null
-            exit 1
-          fi
-          echo "[ok] Version increased changed!"
+          echo "ERROR=$ERROR" >> $GITHUB_ENV
+
       # Add version number to PR title
       - name : Make new title for PR
         run: |
-          NEW_TITLE="${NEW_TITLE} [cluster-version:$CURRENT_VERSION] (cloe-org:$CLOE_ORG_TAG)"
-          echo "New title: $NEW_TITLE"
-          echo "NEW_TITLE=$NEW_TITLE" >> $GITHUB_ENV
+          if [ "$(printf "%s\n%s" "$CURRENT_VERSION" "$MAIN_VERSION" | sort -V | tail -n 1)" == "$CURRENT_VERSION" ]; then
+            NEW_TITLE="${NEW_TITLE} [cluster-version:$CURRENT_VERSION] (cloe-org:$CLOE_ORG_TAG)"
+            echo "New title: $NEW_TITLE"
+            echo "NEW_TITLE=$NEW_TITLE" >> $GITHUB_ENV
+          fi
       - name: Update PR title
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -182,3 +173,14 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -d "{\"title\":\"$NEW_TITLE\"}" \
             "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER" > /dev/null
+
+      - name: Check version update
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$ERROR" != "" ]; then
+            echo "Check failed:"
+            echo "$ERROR"
+            exit 1
+          fi
+          echo "[ok] Version increased changed!"

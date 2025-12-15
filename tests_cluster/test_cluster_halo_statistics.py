@@ -69,7 +69,7 @@ def test_halostatistics():
     assert_allclose(HS.nu_z_M(z_test, M_test)[0], _ref, rtol=5e-3)
     print("    dlns_dlnR")
     _ref = [-0.649273, -0.684757, -0.722659, -0.76278, -0.805423]
-    assert_allclose(HS.dlns_dlnR(z_test, M_test)[0], _ref, rtol=1e-3)
+    assert_allclose(3 * HS.dlns_dlnM(z_test, M_test)[0], _ref, rtol=1e-3)
 
     print("    bias Tinker")
     _ref = [2.218172, 2.762588, 3.537439, 4.660406, 6.319501]

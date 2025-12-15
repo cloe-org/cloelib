@@ -34,6 +34,8 @@ dynamic = ["version"]
 [project.optional-dependencies]
 camb = ["camb"]
 comet-emu = ["comet-emu"]
+pylevin = ["pylevin"]
+mpmath = ["mpmath"]
 tensorflow = ["tensorflow==2.13"]
 hmcode2020emu = ["HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"]
 

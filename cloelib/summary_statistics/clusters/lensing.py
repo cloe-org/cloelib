@@ -53,8 +53,14 @@ class ClusterWeakLensing:
         self.l_m_tab_sig = [31, 31, 31, 51]
         self.z_tab_sig = 31
 
-    def get_DeltaSigma(self, z_obs_edges, lambda_obs_edges, radius_edges):
-        """Compute excess surface density.
+    def _get_profile(
+        self,
+        z_obs_edges,
+        lambda_obs_edges,
+        radius_edges,
+        effective_inverse_critical_surface_mass_density=None,
+    ):
+        """Compute weak lensing profile, it can be excess surface density or reduced shear.
 
         Parameters
         ----------
@@ -64,11 +70,16 @@ class ClusterWeakLensing:
             Edges of richness bins for the integration.
         radius_edges : numpy.ndarray
             Edges of radial bins for the profile.
+        effective_inverse_critical_surface_mass_density : numpy.array, None
+            The effective inverse of the critical surface density.
+            If provided, it must be shape (ztrue, M, radius) and this function
+            returns the reduced shear, else it returns the excess surface density.
 
         Returns
         -------
-        deltasigma_mean_values : numpy.ndarray
-            Excess surface density in redshift, richness, and radial bins.
+        wl_profile_mean_values : numpy.ndarray
+            Weak lensing quantity (excess surface density or reduced shear) in redshift,
+            richness, and radial bins.
         """
         z_obs_edges_size = len(z_obs_edges) - 1
 
@@ -115,6 +126,66 @@ class ClusterWeakLensing:
 
         # redshift part
 
+        # Apply effective inverse critical surface mass density if provided
+        window_z_obs_use = window_z_obs
+        if effective_inverse_critical_surface_mass_density is not None:
+            window_z_obs_use *= effective_inverse_critical_surface_mass_density[
+                :, np.newaxis, :
+            ]
+
+        # output : (z_obs, lambda_obs, radius)
+        wl_profile_mean_values = (
+            self.cluster_statitstics_modeling.integrate_probe_function_in_redshift(
+                excess_surface_density_in_window_lambda_obs_mass_integrated,
+                window_z_obs_use,
+            )
+        ) / cluster_counts[:, :, np.newaxis]
+        return wl_profile_mean_values
+
+    def get_DeltaSigma(self, z_obs_edges, lambda_obs_edges, radius_edges):
+        """Compute excess surface density profile.
+
+        Parameters
+        ----------
+        z_obs_edges : numpy.ndarray
+            Edges of redshift bins for the integration.
+        lambda_obs_edges : numpy.ndarray
+            Edges of richness bins for the integration.
+        radius_edges : numpy.ndarray
+            Edges of radial bins for the profile.
+
+        Returns
+        -------
+        deltasigma_mean_values : numpy.ndarray
+            Excess surface density in redshift, richness, and radial bins.
+        """
+        # output : (z_obs, lambda_obs, radius)
+        return self._get_profile(
+            z_obs_edges,
+            lambda_obs_edges,
+            radius_edges,
+            effective_inverse_critical_surface_mass_density=None,
+        )
+
+    def get_gt(self, z_obs_edges, lambda_obs_edges, radius_edges):
+        """Compute reduced shear profile.
+
+        Parameters
+        ----------
+        z_obs_edges : numpy.ndarray
+            Edges of redshift bins for the integration.
+        lambda_obs_edges : numpy.ndarray
+            Edges of richness bins for the integration.
+        radius_edges : numpy.ndarray
+            Edges of radial bins for the profile.
+
+        Returns
+        -------
+        gt_mean_values : numpy.ndarray
+           Reduced shear in redshift, richness, and radial bins.
+        """
+        z_obs_edges_size = len(z_obs_edges) - 1
+
         # Effective inverse critical surface mass density : (z_obs, ztrue)
         effective_inverse_critical_surface_mass_density = np.zeros(
             (
@@ -131,11 +202,9 @@ class ClusterWeakLensing:
             )
 
         # output : (z_obs, lambda_obs, radius)
-        deltasigma_mean_values = (
-            self.cluster_statitstics_modeling.integrate_probe_function_in_redshift(
-                excess_surface_density_in_window_lambda_obs_mass_integrated,
-                window_z_obs
-                * effective_inverse_critical_surface_mass_density[:, np.newaxis, :],
-            )
-        ) / cluster_counts[:, :, np.newaxis]
-        return deltasigma_mean_values
+        return self._get_profile(
+            z_obs_edges,
+            lambda_obs_edges,
+            radius_edges,
+            effective_inverse_critical_surface_mass_density,
+        )

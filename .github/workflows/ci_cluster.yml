@@ -45,6 +45,7 @@ jobs:
         pip install black black-configparser
         black --check --diff cloelib/observables/clusters/
         black --check --diff tests_cluster/
+        black --check --diff notebooks/
     - name: Analysing the code import order with isort
       run: |
         pip install isort

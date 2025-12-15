@@ -186,7 +186,7 @@ def get_values():
     )
     print(f"nc_cov    :  {time.time()-t0:.4f} seconds")
     t0 = time.time()
-    deltasigma_mean_values = cluster_wl_statistics.get_DeltaSigma(
+    gt_mean_values = cluster_wl_statistics.get_gt(
         z_obs_edges=z_obs_profile_edges,
         lambda_obs_edges=lambda_obs_profile_edges,
         radius_edges=radius_profile_edges,
@@ -224,7 +224,7 @@ def get_values():
     )
     print_diff(
         "dsig",
-        deltasigma_mean_values[0:2],
+        gt_mean_values[0:2],
         benchmark_values.deltasigma,
     )
     print_diff(
@@ -244,7 +244,7 @@ def get_values():
     )
     return (
         cluster_counts,
-        deltasigma_mean_values,
+        gt_mean_values,
         cluster_clustering,
         cov_cluster_counts,
         cov_cluster_clustering,
@@ -259,7 +259,7 @@ def print_diff(name, value_test, value_ref, min_comparison_value=0):
 def test_clustersummmarystatitistics():
     (
         cluster_counts,
-        deltasigma_mean_values,
+        gt_mean_values,
         cluster_clustering,
         cov_cluster_counts,
         cov_cluster_clustering,
@@ -267,7 +267,7 @@ def test_clustersummmarystatitistics():
 
     assert_allclose(cluster_counts, benchmark_values.cluster_counts, rtol=1e-2)
 
-    assert_allclose(deltasigma_mean_values[0:2], benchmark_values.deltasigma, rtol=1e-2)
+    assert_allclose(gt_mean_values[0:2], benchmark_values.deltasigma, rtol=1e-2)
 
     assert_allclose(
         cluster_clustering[0:2], benchmark_values.cluster_clustering, rtol=1e-2

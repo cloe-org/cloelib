@@ -12,6 +12,9 @@ from typing import Optional, Union, Sequence
 # Cosmology imports
 try:
     from classy import Class  # type: ignore
+    from classy import __file__ as classyfile
+    
+    print(f"Loaded hi_class from {classyfile}.")
 except ImportError as e:
     raise ImportError("classy could not be imported.") from e
 

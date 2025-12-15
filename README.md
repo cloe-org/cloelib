@@ -178,7 +178,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pltaylor16"><img src="https://avatars.githubusercontent.com/u/22646673?v=4?s=100" width="100px;" alt="pltaylor16"/><br /><sub><b>pltaylor16</b></sub></a><br /><a href="#code-pltaylor16" title="Code">💻</a> <a href="#doc-pltaylor16" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/rreischke"><img src="https://avatars.githubusercontent.com/u/31727230?v=4?s=100" width="100px;" alt="Robert Reischke"/><br /><sub><b>Robert Reischke</b></sub></a><br /><a href="#ideas-rreischke" title="Ideas, Planning, & Feedback">🤔</a> <a href="#mentoring-rreischke" title="Mentoring">🧑‍🏫</a></td>
     </tr>
-    <tr>  
+    <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AngusWright"><img src="https://avatars.githubusercontent.com/u/5625880?v=4?s=100" width="100px;" alt="Angus H. Wright"/><br /><sub><b>Angus H. Wright</b></sub></a><br /><a href="#ideas-AngusWright" title="Ideas, Planning, & Feedback">🤔</a> <a href="#mentoring-AngusWright" title="Mentoring">🧑‍🏫</a></td>
     </tr>
   </tbody>

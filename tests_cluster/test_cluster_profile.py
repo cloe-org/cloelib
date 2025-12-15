@@ -27,6 +27,7 @@ def _get_castro_hs():
         mnu=0.06,
         As=2e-9,
         gamma_MG=0.0,
+        N_mnu=1,
     )
 
     background = CAMBBackground(**_cosmo_pars)

@@ -78,6 +78,7 @@ def test_clustering():
         mnu=_mnu,
         As=_As,
         gamma_MG=0.0,
+        N_mnu=1,
     )
 
     background = CAMBBackground(**_cosmo_pars)

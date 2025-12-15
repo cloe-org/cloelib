@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-gcc-ubuntu:
-    name: Unit tests and format
+    name: Unit tests
     runs-on: ubuntu-latest
 
     steps:

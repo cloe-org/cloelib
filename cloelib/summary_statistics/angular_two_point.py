@@ -194,7 +194,7 @@ class AngularTwoPoint:
 
             return {
                 ("POS", "SHE", i, j): np.stack([block1, np.zeros_like(block1)]),
-                ("POS", "SHE", i, j): np.stack([block2, np.zeros_like(block2)]),
+                ("POS", "SHE", j, i): np.stack([block2, np.zeros_like(block2)]),
             }
 
         def she_she_rule(C, i, j):

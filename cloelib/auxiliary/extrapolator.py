@@ -1,7 +1,7 @@
 """Extrapolator module."""
 
 import numpy as np
-from scipy.special import lambertw
+
 
 def extend_spectra(
     wavenumber_in,
@@ -263,11 +263,10 @@ def extend_spectra(
             else:
                 raise Exception("Wrong wavenumber extrapolation option.")
 
-        if (wavenumber_base[0] < wavenumber_in[0]):
-            
+        if wavenumber_base[0] < wavenumber_in[0]:
             i_first = len(wavenumber_minus)
 
-            if (option_wavenumber == "logk2"):
+            if option_wavenumber == "logk2":
                 # Use power law for wavenumber<wavenumber_in
 
                 n_extra_b = (
@@ -276,11 +275,15 @@ def extend_spectra(
 
                 boost_out[:, : len(wavenumber_minus)] = (
                     boost_out[:, i_first][:, None]
-                    * ((wavenumber_minus / wavenumber_in[0])[None, :]) ** n_extra_b[:, None]
+                    * ((wavenumber_minus / wavenumber_in[0])[None, :])
+                    ** n_extra_b[:, None]
                 )
             else:
                 # Use exponential going to 1 (assuming boost)
-                boost_out[:, : i_first] = boost_out[:, i_first][:, None]**((wavenumber_minus / wavenumber_in[0])[None, :])
+                boost_out[:, :i_first] = (
+                    boost_out[:, i_first][:, None]
+                    ** ((wavenumber_minus / wavenumber_in[0])[None, :])
+                )
 
                 # Use exponential going to 1 (assuming boost) with continuous derivative
                 # b_pr = (boost_out[:, i_first + 1] - boost_out[:, i_first])/(wavenumber_in[1]-wavenumber_in[0])
@@ -289,7 +292,6 @@ def extend_spectra(
                 # A_2 = b_pr*wavenumber_in[0]/(-c_0+lambertw(-c_0*np.exp(-c_0)))
 
                 # boost_out[:, : i_first] = A_2[:, None]*np.exp((wavenumber_minus - wavenumber_in[0])[None, :]*(b_pr/A_2)[:,None])+1+(A_0-A_2)[:,None]
-
 
         if (not flag_range) and option_cosmo == "hm_smooth":
             boost_hmcode = extrap_func(

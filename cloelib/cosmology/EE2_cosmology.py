@@ -8,7 +8,7 @@ from scipy import interpolate
 
 # General imports
 import numpy as np
-from typing import Optional, Sequence
+from typing import Sequence
 
 # Cosmology imports
 try:
@@ -27,7 +27,7 @@ class EE2NonLinearPerturbations:
         self,
         background: Background,
         linearperturbations: Perturbations,
-        redshifts: np.ndarray
+        redshifts: np.ndarray,
     ):
         """Initialize the HMemuNonLinearPerturbations intance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
@@ -41,14 +41,14 @@ class EE2NonLinearPerturbations:
         hubble = self.background.H0 / 100
 
         self.params_ee2 = {
-            'Omega_b': self.background.Omega_b0,
-            'Omega_m': self.background.Omega_m(0),
-            'h': hubble,
-            'A_s': self.background.As,
-            'n_s': self.background.ns,
-            'm_ncdm': _set_neutrino_masses(self.background),
-            'w0_fld': self.background.w0,
-            'wa_fld': self.background.wa
+            "Omega_b": self.background.Omega_b0,
+            "Omega_m": self.background.Omega_m(0),
+            "h": hubble,
+            "A_s": self.background.As,
+            "n_s": self.background.ns,
+            "m_ncdm": _set_neutrino_masses(self.background),
+            "w0_fld": self.background.w0,
+            "wa_fld": self.background.wa,
         }
 
         ee2_bounds = ee2.bounds
@@ -67,19 +67,24 @@ class EE2NonLinearPerturbations:
         boost_arr = np.array([boost[i] for i in range(len(self.z))])
 
         # Here only the method using interpolators will work in general
-        k_out, z_out, boost_out = \
-            extend_spectra(k_emu, self.z, boost_arr,
-                           flag_range=True,
-                           option_wavenumber="power_law",
-                           option_redshift="power_law", extrap_z = redshifts,
-                           option_cosmo="const", ns=self.background.ns)
-        
+        k_out, z_out, boost_out = extend_spectra(
+            k_emu,
+            self.z,
+            boost_arr,
+            flag_range=True,
+            option_wavenumber="power_law",
+            option_redshift="power_law",
+            extrap_z=redshifts,
+            option_cosmo="const",
+            ns=self.background.ns,
+        )
+
         self.k = k_out
         self.z = z_out
 
-        self.boost_interp = interpolate.RectBivariateSpline(self.z, np.log(self.k), boost_out, kx=1, ky=1)
-
-         
+        self.boost_interp = interpolate.RectBivariateSpline(
+            self.z, np.log(self.k), boost_out, kx=1, ky=1
+        )
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         r"""Compute the linear matter power spectrum.
@@ -99,7 +104,9 @@ class EE2NonLinearPerturbations:
             and redshift
 
         """
-        return self.boost_interp(zs, np.log(ks))*self.linearperturbations.matter_power_spectrum(zs, ks)
+        return self.boost_interp(
+            zs, np.log(ks)
+        ) * self.linearperturbations.matter_power_spectrum(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -125,7 +132,7 @@ class EE2NonLinearPerturbations:
         np.ndarray
             The growth factor as a function of redshift and wavenumber.
         """
-        
+
         return self.linearperturbations.growth_factor(zs, ks)
 
     def growth_rate(self) -> np.ndarray:
@@ -151,8 +158,9 @@ class EE2NonLinearPerturbations:
         float
             The sigma8 value.
         """
-        
+
         return self.linearperturbations.sigma8_0()
+
 
 def _set_neutrino_masses(background: Background) -> float:
     r"""Set neutrino masses in the parameters dictionary.
@@ -172,7 +180,7 @@ def _set_neutrino_masses(background: Background) -> float:
     float
         The total neutrino mass in eV.
     """
-    
+
     if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
         raise ValueError(
             "EE2 only supports a fixed number of effective"

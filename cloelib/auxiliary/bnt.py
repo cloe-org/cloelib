@@ -5,7 +5,9 @@ Module with one class to compute the BNT matrix.
 import numpy as np
 import jax.numpy as jnp
 from cloelib.cosmology.cosmology import Background
-from typing import List, Union
+from typing import List, TypeVar, Union
+
+T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 
 class BNTMatrixCalculator:
@@ -13,8 +15,8 @@ class BNTMatrixCalculator:
 
     def __init__(
         self,
-        dndz_list: List[Union[np.ndarray, jnp.ndarray]],
-        z: Union[np.ndarray, jnp.ndarray],
+        dndz_list: List[T],
+        z: T,
         background: Background,
     ):
         r"""

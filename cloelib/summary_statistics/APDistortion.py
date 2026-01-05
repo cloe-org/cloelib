@@ -63,3 +63,47 @@ class APDistortion:
         return self.background_fiducial.hubble_parameter(
             z
         ) / self.background.hubble_parameter(z)
+
+    def gamma_tr(self, z_true: T, z_meas: T) -> T:
+        r"""Distortion parameter due to line misidentification perpendicular
+        to the line of sight
+
+        ..math::
+            \gamma_\perp(z_{\rm true},z_{\rm meas}) =
+            \frac{D_{\rm M,fid}(z_{\rm meas})}{D_{\rm M,fid}(z_{\rm true})}\\
+        Parameters
+        ----------
+        z_true: np.ndarray
+            True redshift
+        z_meas: np.ndarray
+            Measured redshift
+        Returns
+        -------
+        gamma_tr: np.ndarray
+            Perpendicular distortion parameter due to line misidentification
+        """
+        return (self.background_fiducial.angular_diameter_distance(z_meas)
+                / self.background_fiducial.angular_diameter_distance(z_true)
+                * (1.0 + z_meas) / (1.0 + z_true))
+
+    def gamma_lo(self, z_true: T, z_meas: T) -> T:
+        r"""Distortion parameter due to line misidentification parallel
+        to the line of sight
+
+        ..math::
+            \gamma_\parallel(z_{\rm true},z_{\rm meas}) =
+            \frac{H_{\rm fid}(z_{\rm true})}{D_{\rm fid}(z_{\rm meas})}\\
+        Parameters
+        ----------
+        z_true: np.ndarray
+            True redshift
+        z_meas: np.ndarray
+            Measured redshift
+        Returns
+        -------
+        gamma_tr: np.ndarray
+            Parallel distortion parameter due to line misidentification
+        """
+        return (self.background_fiducial.hubble_parameter(z_true)
+                / self.background_fiducial.hubble_parameter(z_meas)
+                * (1.0 + z_meas) / (1.0 + z_true))

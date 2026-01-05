@@ -21,17 +21,13 @@ class CometEFT_SpectroPower:
 
     NLcode = "COMET"
 
-    def __init__(self, background: Background, RSD_parameters: dict, redshift: float):
+    def __init__(self, background: Background):
         r"""Class constructor.
 
         Parameters
         ----------
         background: Background
             Background class containing cosmology and background distances
-        RSD_parameters: dict
-            Dictionary containing bias and counterterm parameters
-        redshift: float
-            Redshift at which to evaluate :math:`P(k,\mu)`
         """
         self.background = background
 
@@ -45,10 +41,6 @@ class CometEFT_SpectroPower:
         self.parameters["w0"] = self.background.w0
         self.parameters["wa"] = self.background.wa
         self.parameters["Ok"] = self.background.Omega_k0
-        self.parameters.update(RSD_parameters)
-        self.parameters["z"] = redshift
-
-        self.redshift = redshift
 
         self.diagram_naming_relation = {
             "b1-b1": ["P0L_b1b1", "P1L_b1b1"],
@@ -108,7 +100,8 @@ class CometEFT_SpectroPower:
         # returns the neutrino mass in eV
         return mnu_arg
 
-    def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
+    def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray, z: float,
+                 RSD_parameters: dict) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields.
 
         Parameters
@@ -117,11 +110,19 @@ class CometEFT_SpectroPower:
             Wavenumber
         mu: np.ndarray
             Angle (cosinus) to the line of sight
+        z: float
+            Redshift
+        RSD_parameters: dict
+            Dictionary containing bias and counterterm parameters
+
         Returns
         -------
         Pk2d_rsd: np.ndarray
             2D power spectrum from couplings of density and velocity fields
         """
+        self.parameters.update(RSD_parameters)
+        self.parameters['z'] = z
+
         return np.squeeze(
             comet_inst.P2d_nostoch(
                 k=k[:, :, np.newaxis],
@@ -132,7 +133,7 @@ class CometEFT_SpectroPower:
         )
 
     def Pk2d_term_rsd(
-        self, k: np.ndarray, mu: np.ndarray, term_list: list
+        self, k: np.ndarray, mu: np.ndarray,  z: float, term_list: list
     ) -> np.ndarray:
         r"""2D power spectrum for a subset of specific diagrams of the loop expansion.
 
@@ -142,6 +143,8 @@ class CometEFT_SpectroPower:
             Wavenumber
         mu: np.ndarray
             Angle (cosinus) to the line of sight
+        z: float
+            Redshift
         term_list: list
             Identifiers of loop diagrams
         Returns
@@ -149,6 +152,7 @@ class CometEFT_SpectroPower:
         Pk2d_term_rsd: np.ndarray
             2D power spectrum of specific terms
         """
+        self.parameters['z'] = z
         term_list_expanded, index_map = [], {}
         for key in term_list:
             vals = self.diagram_naming_relation[key]

@@ -6,6 +6,7 @@ from cloelib.observables.spectro import SpectroPower
 from cloelib.summary_statistics.APDistortion import APDistortion
 from cloelib.auxiliary.math_utils import legendre
 from cloelib.auxiliary.fftlog import fftlog
+from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
 from typing import Optional
@@ -19,7 +20,6 @@ class LegendreMultipoles:
         self,
         spectro_power: SpectroPower,
         background_fiducial: Background,
-        parameters: dict,
         nbar: float,
     ):
         """Initialize the class instance.
@@ -32,14 +32,10 @@ class LegendreMultipoles:
             here)
         background_fiducial: Background
             Background class for computing fiducial background distances
-        parameters: dict
-            Dictionary containing shot noise and parameters related to
-            observational systematics
         nbar: float
             Mean number denisty of the sample
         """
         self.spectro_power = spectro_power
-        self.redshift = spectro_power.redshift
         self.background_fiducial = background_fiducial
         self.ap_distortion = APDistortion(spectro_power.background, background_fiducial)
 
@@ -47,7 +43,6 @@ class LegendreMultipoles:
         self.mu_grid = 0.5 * (self.mu_grid + 1.0)
         self.mu_weights *= 0.5
 
-        self.parameters = parameters
         self.nbar = nbar
 
     def _ensure_array(self, param):
@@ -70,7 +65,8 @@ class LegendreMultipoles:
         return np.asarray(param)
 
     def _k_AP(
-        self, k: np.ndarray, mu: np.ndarray, zs: float, use_AP: Optional[bool] = True
+        self, k: np.ndarray, mu: np.ndarray, z: float,
+        use_AP: Optional[bool] = True, gamma: Optional[list] = None
     ) -> np.ndarray:
         r"""AP-distorted wavenumber.
 
@@ -88,17 +84,23 @@ class LegendreMultipoles:
            Redshift
         use_AP: bool
             Flag to switch between with and without AP corrections
+        gamma: list, optional
+            Values of rescaling factors due to line misidentification for the
+            direction perpendicular and parallel to the line of sight (
+            default is None)
         Returns
         -------
         kAP: np.ndarray
            AP-distorted wavenumber
         """
-        q_tr = self.ap_distortion.q_AP_tr(zs) if use_AP else 1.0
-        q_lo = self.ap_distortion.q_AP_lo(zs) if use_AP else 1.0
+        q_tr = self.ap_distortion.q_AP_tr(z) if use_AP else 1.0
+        q_lo = self.ap_distortion.q_AP_lo(z) if use_AP else 1.0
+        if gamma: q_tr, q_lo = (q_tr * gamma[0], q_lo * gamma[1])
         return np.outer(k, np.sqrt(mu**2 / q_lo**2 + (1.0 - mu**2) / q_tr**2))
 
     def _mu_AP(
-        self, mu: np.ndarray, zs: float, use_AP: Optional[bool] = True
+        self, mu: np.ndarray, zs: float, use_AP: Optional[bool] = True,
+        gamma: Optional[list] = None
     ) -> np.ndarray:
         r"""AP-distorted angle (cosinus) to the line of sight.
 
@@ -114,6 +116,10 @@ class LegendreMultipoles:
            Redshift
         use_AP: bool
             Flag to switch between with and without AP corrections
+        gamma: list, optional
+            Values of rescaling factors due to line misidentification for the
+            direction perpendicular and parallel to the line of sight (
+            default is None)
         Returns
         -------
         muAP: np.ndarray
@@ -121,9 +127,13 @@ class LegendreMultipoles:
         """
         q_tr = self.ap_distortion.q_AP_tr(zs) if use_AP else 1.0
         q_lo = self.ap_distortion.q_AP_lo(zs) if use_AP else 1.0
+        if gamma: q_tr, q_lo = (q_tr * gamma[0], q_lo * gamma[1])
         return mu / q_lo / np.sqrt(mu**2 / q_lo**2 + (1.0 - mu**2) / q_tr**2)
 
-    def _damping_function(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
+    def _damping_function(
+        self, k: np.ndarray, mu: np.ndarray, z: float,
+        noise_syst_parameters: dict
+    ) -> np.ndarray:
         r"""Damping function due to GCsp redshift uncertainty.
 
         Parameters
@@ -132,20 +142,23 @@ class LegendreMultipoles:
             Wavenumber
         mu: np.ndarray
             Angle (cosinus) to the line of sight
+        z: float
+            Redshift
+        noise_syst_parameters: dict
+            Dictionary containing shot noise and parameters related to
+            observational systematics
         Returns
         -------
         damping_function: np.ndarray
             Damping function due to GCsp redshift uncertainty
         """
-        sigma_z = self.parameters["sigmaz"]
-        sigma_r = (
-            299792.458
-            * sigma_z
-            / self.background_fiducial.hubble_parameter(self.redshift)
-        )
-        return np.exp(-(k**2) * mu**2 * sigma_r**2)
+        sigma_z = noise_syst_parameters["sigmaz"]
+        sigma_r = (SPEED_OF_LIGHT / 100.0 * sigma_z /
+                   self.background_fiducial.hubble_parameter(z))
+        return np.exp(-k**2 * mu**2 * sigma_r**2)
 
-    def _Pk2d_noise(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
+    def _Pk2d_noise(self, k: np.ndarray, mu: np.ndarray,
+                    noise_syst_parameters: dict) -> np.ndarray:
         r"""2D power spectrum from expansion of stochastic field.
 
         Parameters
@@ -154,15 +167,18 @@ class LegendreMultipoles:
             Wavenumber
         mu: np.ndarray
             Angle (cosinus) to the line of sight
+        noise_syst_parameters: dict
+            Dictionary containing shot noise and parameters related to
+            observational systematics
         Returns
         -------
         Pk2d_noise: np.ndarray
             2D power spectrum from expansion of stochastic field
         """
         noise = (
-            self.parameters["NP0"] * self._Pk2d_noise_k0(k)
-            + self.parameters["NP20"] * self._Pk2d_noise_k0(k)
-            + self.parameters["NP22"] * self._Pk2d_noise_k2mu2(k, mu)
+            noise_syst_parameters["NP0"] * self._Pk2d_noise_k0(k)
+            + noise_syst_parameters["NP20"] * self._Pk2d_noise_k0(k)
+            + noise_syst_parameters["NP22"] * self._Pk2d_noise_k2mu2(k, mu)
         )
         return noise
 
@@ -213,7 +229,10 @@ class LegendreMultipoles:
         noise = k**2 * legendre(2, mu)
         return noise / self.nbar
 
-    def _Pk2d_tot(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
+    def _Pk2d_tot(
+        self, k: np.ndarray, mu: np.ndarray, z: float,
+        RSD_parameters: dict, noise_syst_parameters: dict
+    ) -> np.ndarray:
         r"""Total 2D power spectrum (including RSD, systematics, and noise).
 
         Parameters
@@ -222,20 +241,31 @@ class LegendreMultipoles:
             Wavenumber
         mu: np.ndarray
             Angle (cosinus) to the line of sight
+        z: float
+           Redshift
+        RSD_parameters: dict
+            Dictionary containing bias and counterterm parameters
+        noise_syst_parameters: dict
+            Dictionary containing shot noise and parameters related to
+            observational systematics
         Returns
         -------
         Pk2d_tot: np.ndarray
             Total 2D power spectrum (including RSD, systematics, and noise)
         """
-        return self.spectro_power.Pk2d_rsd(k, mu) * self._damping_function(k, mu) * (
-            1.0 - self.parameters["fout"]
-        ) ** 2 + self._Pk2d_noise(k, mu)
+        return (self.spectro_power.Pk2d_rsd(k, mu, z, RSD_parameters) *
+                self._damping_function(k, mu, z, noise_syst_parameters) *
+                (1.0 - noise_syst_parameters["fout"]) ** 2 +
+                self._Pk2d_noise(k, mu, noise_syst_parameters))
 
     def power_multipoles(
-        self,
-        k: np.ndarray,
+        self, k: np.ndarray, z: float,
+        RSD_parameters: Optional[dict] = None,
+        noise_syst_parameters: Optional[dict] = None,
+        species: Optional[dict] = None,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
+        gamma: Optional[list] = None
     ) -> dict:
         r"""Power spectrum Legendre multipoles.
 
@@ -243,26 +273,61 @@ class LegendreMultipoles:
         ----------
         k: np.ndarray
             Wavenumber
-        ells: np.ndarray
-            Legendre multipole order
-        use_AP: bool
-            Flag to switch between with and without AP corrections
+        z: float
+            Observed redshift
+        RSD_parameters: dict, optional
+            Dictionary of bias and counterterm parameters (default is None)
+        noise_syst_parameters: dict, optional
+            Dictionary of shot noise and systematics parameters (default is
+            None)
+        species: dict, optional
+            Dictionary containing the different samples (main and contaminants)
+            with each element being a subdictionary containing redshift,
+            fraction, and nuisance parameters (default is None)
+        ells: np.ndarray, optional
+            Legendre multipole order (default is [0, 2, 4])
+        use_AP: bool, optional
+            Flag to switch between with and without AP corrections (default is
+            True)
+        gamma: list, optional
+            Distortion factors due to misidentified emissione line (default is
+            None)
         Returns
         -------
         multipoles: dict
             Power spectrum Legendre multipoles
         """
         ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
+
+        if species is not None:
+            gamma_dict = {
+                key: [self.ap_distortion.gamma_tr(val["z"], z),
+                      self.ap_distortion.gamma_lo(val["z"], z)]
+                for key, val in species.items()}
+
+            multipoles_spec = {key: self.power_multipoles(
+                k=k, z=val["z"], RSD_parameters=val["RSD_parameters"],
+                noise_syst_parameters=val["noise_syst_parameters"],
+                ells=ells, use_AP=use_AP, gamma=gamma_dict[key])
+                for key, val in species.items()}
+
+            return {f'ell{ell}': np.sum(np.stack([
+                        multipoles_spec[key][f"ell{ell}"] * val["fraction"]**2
+                        for key, val in species.items()]), axis=0)
+                    for ell in ells}
+
         AP_factor = (
-            self.ap_distortion.q_AP_tr(self.redshift) ** 2
-            * self.ap_distortion.q_AP_lo(self.redshift)
+            self.ap_distortion.q_AP_tr(z) ** 2
+            * self.ap_distortion.q_AP_lo(z)
             if use_AP
             else 1.0
         )
+        if gamma: AP_factor *= gamma[0]**2 * gamma[1]
         prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / AP_factor
-        kAP = self._k_AP(k, self.mu_grid, self.redshift, use_AP=use_AP)
-        muAP = self._mu_AP(self.mu_grid, self.redshift, use_AP=use_AP)
-        Pk2d_tot = self._Pk2d_tot(kAP, muAP)
+        kAP = self._k_AP(k, self.mu_grid, z, use_AP=use_AP, gamma=gamma)
+        muAP = self._mu_AP(self.mu_grid, z, use_AP=use_AP, gamma=gamma)
+        Pk2d_tot = self._Pk2d_tot(kAP, muAP, z, RSD_parameters,
+                                  noise_syst_parameters)
         multipoles = {}
         for i, ell in enumerate(ells):
             leg = legendre(ell, self.mu_grid)
@@ -272,12 +337,180 @@ class LegendreMultipoles:
             multipoles[f"ell{ell}"] *= 2.0 * prefactors[i]
         return multipoles
 
-    def power_term_multipoles(
-        self,
-        k: np.ndarray,
-        term_list: list,
+    def _input_power_multipoles(
+        self, kin_arrays: dict, z: float,
+        RSD_parameters: Optional[dict] = None,
+        noise_syst_parameters: Optional[dict] = None,
+        use_AP: Optional[bool] = True,
+        gamma: Optional[list] = None
+    ):
+        r"""Input multipoles for convolution with mixing matrix
+
+        Parameters
+        ----------
+        kin_arrays: dict
+            Dictionary containing the input wavemodes for each Legendre
+            multipole (0, 2, 4) (comes from the mixing matrix dictionary
+            read in `convolved_power_multipoles`)
+        z: float
+            Redshift
+        RSD_parameters: dict, optional
+            Dictionary containing bias and counterterm parameters (default is
+            None)
+        noise_syst_parameters: dict, optional
+            Dictionary containing shot noise and parameters related to
+            observational systematics (default is None)
+        use_AP : bool, optional
+            Flag to switch between with and without AP corrections (default is
+            True)
+        gamma: list, optional
+            Distortion factors due to misidentified emissione line (default is
+            None)
+
+        Returns
+        -------
+        multipoles: dict
+            Power spectrum Legendre multipoles
+        """
+        ells_tot = [0, 2, 4]
+
+        if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
+            return self.power_multipoles(
+                    k=kin_arrays[0], z=z, RSD_parameters=RSD_parameters,
+                    noise_syst_parameters=noise_syst_parameters,
+                    ells=ells_tot, use_AP=use_AP, gamma=gamma)
+        else:
+            return {
+                f"ell{ell}": (
+                    self.power_multipoles(
+                        k=kin_arrays[i], z=z, RSD_parameters=RSD_parameters,
+                        noise_syst_parameters=noise_syst_parameters,
+                        ells=[ell], use_AP=use_AP, gamma=gamma)[f"ell{ell}"])
+                for i, ell in enumerate(ells_tot)}
+
+    def _convolve_with_mixing_matrix(self, mixing_matrix: dict,
+                                     multipoles_in: dict,
+                                     ells: np.ndarray):
+        r"""Convolution of input Legendre multipoles with mixing matrix
+
+        Parameters
+        ----------
+        mixing_matrix: dict
+            Dictionary containing the mixing matrix (comes from the mixing
+            matrix dictionary read in `convolved_power_multipoles`)
+        multipoles_in: dict
+            Dictionary containing the input Legendre multipoles
+        ells: np.ndarray
+            Order of convolved Legendre multipoles
+
+        Returns
+        -------
+        multipoles_out: dict
+            Dictionary containing the convolved Legendre multipoles
+        """
+        return {f"ell{ell}": sum(np.dot(mixing_matrix[f"W{ell}{ell_prime}"],
+                                        multipoles_in[f"ell{ell_prime}"])
+                                 for ell_prime in [0, 2, 4]) for ell in ells}
+
+    def convolved_power_multipoles(
+        self, z: float, mixing_matrix: Optional[dict] = None,
+        RSD_parameters: Optional[dict] = None,
+        noise_syst_parameters: Optional[dict] = None,
+        species: Optional[dict] = None,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
+        gamma: Optional[list] = None
+    ) -> dict:
+        r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
+
+        Parameters
+        ----------
+        z: float
+            Redshift
+        mixing_matrix: dict
+            Dictionary containing the mixing matrix
+            (used if `species` dictionary is None)
+        RSD_parameters: dict, optional
+            Dictionary of bias and counterterm parameters
+            (used if `species` keyword is None)
+        noise_syst_parameters: dict, optional
+            Dictionary of shot noise and systematics parameters
+            (used if `species` keyword is None)
+        species: dict, optional
+            Dictionary of different samples (main and contaminants), including
+            the mixing matrix, effective redshift, fraction, and nuisance
+            parameters for each
+        ells: np.ndarray
+            Legendre multipole order
+        use_AP: bool
+            Flag to switch between with and without AP corrections
+        gamma: list, optional
+            Distortion factors due to misidentified emissione line (default is
+            None)
+        Returns
+        -------
+        multipoles_out: dict
+            Dictionary containing the output wavemode array (read from the
+            mixing matrix dictionary) and the convolved Legendre multipoles
+        """
+        ells_tot = [0, 2, 4]
+        ells = self._ensure_array(ells) if ells is not None else ells_tot
+
+        if species is not None:
+            gamma_dict = {
+                key: [self.ap_distortion.gamma_tr(val["z"], z),
+                      self.ap_distortion.gamma_lo(val["z"], z)]
+                for key, val in species.items()}
+
+            multipoles_spec = {}
+
+            for key, val in species.items():
+                if "mixing_matrix" not in val:
+                    raise ValueError(
+                        f"Missing mixing matrix for species '{key}'"
+                )
+
+                multipoles_spec[key] = self.convolved_power_multipoles(
+                    z=val["z"], mixing_matrix=val["mixing_matrix"],
+                    RSD_parameters=val["RSD_parameters"],
+                    noise_syst_parameters=val["noise_syst_parameters"],
+                    species=None, ells=ells, use_AP=use_AP, gamma=gamma_dict[key]
+                )
+
+            return {
+                f"ell{ell}": np.sum(
+                    np.stack([
+                        multipoles_spec[key][f"ell{ell}"] * val["fraction"]**2
+                        for key, val in species.items()
+                    ]), axis=0,
+                )
+                for ell in ells
+            }
+
+        if mixing_matrix is None:
+            raise ValueError(
+                "Mixing matrix must be provided when species is None"
+            )
+
+        kin_arrays = [mixing_matrix[f"kin{ell}"] for ell in ells_tot]
+
+        multipoles_in = self._input_power_multipoles(
+            kin_arrays=kin_arrays, z=z,
+            RSD_parameters=RSD_parameters,
+            noise_syst_parameters=noise_syst_parameters,
+            use_AP=use_AP, gamma=gamma)
+
+        multipoles_out = self._convolve_with_mixing_matrix(
+            mixing_matrix, multipoles_in, ells)
+
+        return {"k": mixing_matrix["kout"], **multipoles_out}
+
+    def power_term_multipoles(
+        self, k: np.ndarray, z: float, term_list: list,
+        species: Optional[dict] = None,
+        ells: Optional[np.ndarray] = None,
+        use_AP: Optional[bool] = True,
+        gamma: Optional[list] = None
     ) -> dict:
         r"""Power spectrum Legendre multipoles of specified terms.
 
@@ -285,32 +518,58 @@ class LegendreMultipoles:
         ----------
         k: np.ndarray
             Wavenumber
+        z: float
+            Redshift
         term_list: list
             List of terms to compute
+        species: dict, optional
+            Dictionary containing the different samples (main and contaminants)
+            with each element being a subdictionary containing redshift,
+            fraction, and nuisance parameters (default is None)
         ells: np.ndarray
             Legendre multipole order
         use_AP: bool
             Flag to switch between with and without AP corrections
+        gamma: list, optional
+            Distortion factors due to misidentified emissione line (default is
+            None)
         Returns
         -------
         multipoles: dict
             Power spectrum Legendre multipoles of specified terms
         """
         ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
+
+        if species is not None:
+            gamma_dict = {
+                key: [self.ap_distortion.gamma_tr(val["z"], z),
+                      self.ap_distortion.gamma_lo(val["z"], z)]
+                for key, val in species.items()}
+
+            multipoles_spec = {key: self.power_term_multipoles(
+                k=k, z=val["z"], term_list=term_list,
+                ells=ells, use_AP=use_AP, gamma=gamma_dict[key])
+                for key, val in species.items()}
+
+            return {f'ell{ell}': np.stack([
+                        multipoles_spec[key][f"ell{ell}"] * val["fraction"]**2
+                        for key, val in species.items()]) for ell in ells}
+
         AP_factor = (
-            self.ap_distortion.q_AP_tr(self.redshift) ** 2
-            * self.ap_distortion.q_AP_lo(self.redshift)
+            self.ap_distortion.q_AP_tr(z) ** 2
+            * self.ap_distortion.q_AP_lo(z)
             if use_AP
             else 1.0
         )
+        if gamma: AP_factor *= gamma[0]**2 * gamma[1]
         prefactors = np.array([(2.0 * m + 1.0) for m in ells]) / 2.0 / AP_factor
-        kAP = self._k_AP(k, self.mu_grid, self.redshift, use_AP=use_AP)
-        muAP = self._mu_AP(self.mu_grid, self.redshift, use_AP=use_AP)
+        kAP = self._k_AP(k, self.mu_grid, z, use_AP=use_AP, gamma=gamma)
+        muAP = self._mu_AP(self.mu_grid, z, use_AP=use_AP, gamma=gamma)
         Pk2d = np.empty((len(term_list), len(k), len(self.mu_grid)))
         rsd_ids = [index for index, term in enumerate(term_list) if "noise" not in term]
         if rsd_ids:
             Pk2d[rsd_ids] = self.spectro_power.Pk2d_term_rsd(
-                kAP, muAP, term_list=[term_list[index] for index in rsd_ids]
+                kAP, muAP, z=z, term_list=[term_list[index] for index in rsd_ids]
             )
         noise_ids = [index for index in range(len(term_list)) if index not in rsd_ids]
         if noise_ids:
@@ -338,76 +597,103 @@ class LegendreMultipoles:
             multipoles[f"ell{ell}"] *= 2.0 * prefactors[i]
         return multipoles
 
-    def convolved_power_multipoles(
-        self,
-        mixing_matrix: dict,
-        ells: Optional[np.ndarray] = None,
+    def _input_power_term_multipoles(
+        self, kin_arrays: dict, z: float, term_list: list,
         use_AP: Optional[bool] = True,
-    ) -> dict:
-        r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
+        gamma: Optional[list] = None
+    ):
+        r"""Input multipoles for convolution with mixing matrix
+
+        Parameters
+        ----------
+        kin_arrays: dict
+            Dictionary containing the input wavemodes for each Legendre
+            multipole (0, 2, 4) (comes from the mixing matrix dictionary
+            read in `convolved_power_multipoles`)
+        z: float
+            Redshift
+        term_list: list
+            List of terms to compute
+        use_AP : bool, optional
+            Flag to switch between with and without AP corrections (default is
+            True)
+        gamma: list, optional
+            Distortion factors due to misidentified emissione line (default is
+            None)
+
+        Returns
+        -------
+        multipoles: dict
+            Power spectrum Legendre multipoles for specific terms
+        """
+        ells_tot = [0, 2, 4]
+
+        if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
+            return self.power_term_multipoles(
+                    k=kin_arrays[0], z=z, term_list=term_list,
+                    ells=ells_tot, use_AP=use_AP, gamma=gamma)
+        else:
+            return {
+                f"ell{ell}": (
+                    self.power_term_multipoles(
+                        k=kin_arrays[i], z=z, term_list=term_list,
+                        ells=[ell], use_AP=use_AP, gamma=gamma)[f"ell{ell}"])
+                for i, ell in enumerate(ells_tot)}
+
+    def _convolve_terms_with_mixing_matrix(self, mixing_matrix: dict,
+                                           multipoles_in: dict,
+                                           ells: np.ndarray):
+        r"""Convolution of input Legendre multipoles with mixing matrix
 
         Parameters
         ----------
         mixing_matrix: dict
-            Dicitonary containing the mixing matrix
+            Dictionary containing the mixing matrix (comes from the mixing
+            matrix dictionary read in `convolved_power_multipoles`)
+        multipoles_in: dict
+            Dictionary containing the input Legendre multipoles
         ells: np.ndarray
-            Legendre multipole order
-        use_AP: bool
-            Flag to switch between with and without AP corrections
+            Order of convolved Legendre multipoles
+
         Returns
         -------
         multipoles_out: dict
-            Convolved power spectrum Legendre multipoles
+            Dictionary containing the convolved Legendre multipoles
         """
-        ells_tot = [0, 2, 4]
-        ells = self._ensure_array(ells) if ells is not None else ells_tot
-
-        kin_arrays = [mixing_matrix[f"kin{ell}"] for ell in ells_tot]
-
-        if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
-            multipoles_in = self.power_multipoles(
-                k=kin_arrays[0], ells=ells_tot, use_AP=use_AP
-            )
-        else:
-            multipoles_in = {
-                f"ell{ell}": self.power_multipoles(
-                    k=kin_arrays[i], ells=[ell], use_AP=use_AP
-                )[f"ell{ell}"]
-                for i, ell in enumerate(ells_tot)
-            }
-
-        multipoles_out = {}
-        multipoles_out["k"] = mixing_matrix["kout"]
-        for ell in ells:
-            multipoles_out[f"ell{ell}"] = sum(
-                np.dot(
-                    mixing_matrix[f"W{ell}{ell_prime}"],
-                    multipoles_in[f"ell{ell_prime}"],
-                )
-                for ell_prime in ells_tot
-            )
-
-        return multipoles_out
+        return {f"ell{ell}": sum(np.dot(mixing_matrix[f"W{ell}{ell_prime}"],
+                                        multipoles_in[f"ell{ell_prime}"].T).T
+                                 for ell_prime in [0, 2, 4]) for ell in ells}
 
     def convolved_power_term_multipoles(
-        self,
-        mixing_matrix: dict,
-        term_list: list,
+        self, z: float, term_list: list,
+        mixing_matrix: Optional[dict] = None,
+        species: Optional[dict] = None,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
+        gamma: Optional[list] = None
     ) -> dict:
         r"""Convolved power spectrum multipoles of specified terms.
 
         Parameters
         ----------
-        mixing_matrix: dict
-            Dicitonary containing the mixing matrix
+        z: float
+            Redshift
         term_list: list
             List of terms to compute
+        mixing_matrix: dict
+            Dictionary containing the mixing matrix
+            (used if `species` dictionary is None)
+        species: dict, optional
+            Dictionary of different samples (main and contaminants), including
+            the mixing matrix, effective redshift, fraction, and nuisance
+            parameters for each
         ells: np.ndarray
             Legendre multipole order
         use_AP: bool
             Flag to switch between with and without AP corrections
+        gamma: list, optional
+            Distortion factors due to misidentified emissione line (default is
+            None)
         Returns
         -------
         multipoles_out: dict
@@ -416,32 +702,44 @@ class LegendreMultipoles:
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
 
+        if species is not None:
+            gamma_dict = {
+                key: [self.ap_distortion.gamma_tr(val["z"], z),
+                      self.ap_distortion.gamma_lo(val["z"], z)]
+                for key, val in species.items()}
+
+            multipoles_spec = {}
+
+            for key, val in species.items():
+                if "mixing_matrix" not in val:
+                    raise ValueError(
+                        f"Missing mixing matrix for species '{key}'")
+
+                multipoles_spec[key] = self.convolved_power_term_multipoles(
+                    z=val["z"], term_list=term_list,
+                    mixing_matrix=val["mixing_matrix"],
+                    species=None, ells=ells, use_AP=use_AP,
+                    gamma=gamma_dict[key])
+
+            return {f'ell{ell}': np.stack([
+                multipoles_spec[key][f"ell{ell}"] * val["fraction"]**2
+                for key, val in species.items()]) for ell in ells}
+
+        if mixing_matrix is None:
+            raise ValueError(
+                "Mixing matrix must be provided when species is None"
+            )
+
         kin_arrays = [mixing_matrix[f"kin{ell}"] for ell in ells_tot]
 
-        if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
-            multipoles_in = self.power_term_multipoles(
-                k=kin_arrays[0], term_list=term_list, ells=ells_tot, use_AP=use_AP
-            )
-        else:
-            multipoles_in = {
-                f"ell{ell}": self.power_term_multipoles(
-                    k=kin_arrays[i], term_list=term_list, ells=[ell], use_AP=use_AP
-                )[f"ell{ell}"]
-                for i, ell in enumerate(ells_tot)
-            }
+        multipoles_in = self._input_power_term_multipoles(
+            kin_arrays=kin_arrays, z=z, term_list=term_list,
+            use_AP=use_AP, gamma=gamma)
 
-        multipoles_out = {}
-        multipoles_out["k"] = mixing_matrix["kout"]
-        for ell in ells:
-            multipoles_out[f"ell{ell}"] = sum(
-                np.dot(
-                    mixing_matrix[f"W{ell}{ell_prime}"],
-                    multipoles_in[f"ell{ell_prime}"].T,
-                ).T
-                for ell_prime in ells_tot
-            )
+        multipoles_out = self._convolve_terms_with_mixing_matrix(
+            mixing_matrix, multipoles_in, ells)
 
-        return multipoles_out
+        return {"k": mixing_matrix["kout"], **multipoles_out}
 
     def _UVcutoff(self, k: np.ndarray, kcut: float, pow: float):
         r"""Cutoff of ultraviolet modes

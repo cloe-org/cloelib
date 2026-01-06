@@ -309,6 +309,153 @@ class HMemuNonLinearPerturbations:
         return self.sigma8_0[0]
 
 
+class HMemuBaryonPerturbations:
+    """Class for baryon boost using HMemu, inheriting from Perturbations parent class."""
+
+    def __init__(
+        self,
+        background: Background,
+        perturbations_nobar: Perturbations,
+        redshifts: np.ndarray,
+        log10TAGN: float,
+    ):
+        """Initialize the HMemuBaryonPerturbations intance."""
+        assert background.Omega_k0 == 0, "Non flat geometries not supported"
+
+        redshift_max = HM2020_emu.emulator["nonlinear"]["bounds"]["z"][1]
+
+        self.z = redshifts[redshifts <= redshift_max]
+        self.background = background
+        self.perturbations_nobar = perturbations_nobar
+
+        self.params_hm_emu = {
+            "omega_cdm": self.background.Omega_cdm0,
+            "omega_baryon": self.background.Omega_b0,
+            "As": self.background.As,
+            "ns": self.background.ns,
+            "hubble": self.background.H0 / 100,
+            "neutrino_mass": _set_neutrino_masses(self.background),
+            "w0": self.background.w0,
+            "wa": self.background.wa,
+            "log10TAGN": log10TAGN,
+        }
+
+        hm_bounds = HM2020_emu.emulator["nonlinear"]["bounds"]
+
+        for key in self.params_hm_emu.keys():
+            if np.prod(self.params_hm_emu[key] - hm_bounds[key]) > 0:
+                raise ValueError("HMcode 2020 NL emulator out of range.")
+            else:
+                self.params_hm_emu[key] = np.tile(self.params_hm_emu[key], len(self.z))
+
+        self.params_hm_emu["z"] = self.z
+
+        _, Pk_bar = HM2020_emu.get_nonlinear_pk(
+            nonu=False, **self.params_hm_emu, baryonic_boost=True
+        )
+
+        _, Pk_nobar = HM2020_emu.get_nonlinear_pk(
+            nonu=False, **self.params_hm_emu, baryonic_boost=False
+        )
+
+        k_emu = HM2020_emu.emulator["nonlinear"]["k"] * self.background.h
+
+        # Here only the method using interpolators will work in general
+        k_out, z_out, boost_out = extend_spectra(
+            k_emu,
+            self.z,
+            Pk_bar / Pk_nobar,
+            flag_range=True,
+            option_wavenumber="power_law",
+            option_redshift="power_law",
+            extrap_z=redshifts,
+            option_cosmo="const",
+            ns=self.background.ns,
+        )
+
+        self.Pk = perturbations_nobar.matter_power_spectrum(z_out, k_out) * boost_out
+
+        self.k = k_out
+        self.z = z_out
+
+        pk_interp = interpolate.RectBivariateSpline(self.z, self.k, self.Pk, kx=1, ky=1)
+
+        self.Pk_interp = pk_interp
+
+    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+        r"""Compute the linear matter power spectrum.
+
+        Parameters
+        ----------
+        ks: numpy.ndarray
+            Wave number in h Mpc^{-1}
+
+        zs: numpy.ndarray
+            redshifts
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+
+        """
+        return self.Pk_interp(zs, ks)
+
+    def growth_factor(self, zs, ks) -> np.ndarray:
+        r"""
+        Calculate the growth factor for given redshifts and wavenumbers.
+
+        .. math::
+            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+            /P_{\rm \delta\delta}(z=0, k)}\\
+
+        and normalizes as for :math:`D(z)/D(0)`.
+
+        We use here the growth from the fluctuations without baryons.
+
+        Parameters:
+        -----------
+        zs : array_like
+            Redshifts at which to calculate the growth factor.
+        ks : array_like
+            Wavenumbers at which to calculate the growth factor.
+
+        Returns:
+        --------
+        np.ndarray
+            The growth factor as a function of redshift and wavenumber.
+        """
+
+        return self.perturbations_nobar.growth_factor(zs, ks)
+
+    def growth_rate(self) -> np.ndarray:
+        """
+        Calculate the growth rate for given redshifts and wavenumbers.
+
+        We use here the growth from the fluctuations without baryons.
+
+        Returns:
+        --------
+        np.ndarray
+            The growth rate as a function of redshift and wavenumber.
+        """
+
+        return self.perturbations_nobar.growth_rate()
+
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+
+        return self.perturbations_nobar.sigma8_0()
+
+
 def _set_neutrino_masses(background: Background) -> float:
     r"""Set neutrino masses in the parameters dictionary.
 

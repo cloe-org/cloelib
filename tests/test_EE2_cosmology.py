@@ -1,12 +1,13 @@
 import pytest
 import numpy as np
 
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Perturbations
 from cloelib.cosmology.camb_cosmology import (
     CAMBBackground,
     CAMBLinearPerturbations,
 )
 from cloelib.cosmology.EE2_cosmology import EE2NonLinearPerturbations
+
 
 @pytest.fixture
 def camb_background_instance(scope="module"):
@@ -32,9 +33,11 @@ def camb_background_instance(scope="module"):
     )
     return camb_instance
 
+
 @pytest.fixture
 def zs(scope="module"):
     return np.linspace(0, 2, 20)
+
 
 @pytest.fixture
 def EE2_perturbation_instance(camb_background_instance, zs, scope="module"):

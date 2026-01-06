@@ -79,12 +79,15 @@ class EE2NonLinearPerturbations:
             ns=self.background.ns,
         )
 
-        self.k = k_out
-        self.z = z_out
-
         self.boost_interp = interpolate.RectBivariateSpline(
-            self.z, np.log(self.k), boost_out, kx=1, ky=1
+            z_out, np.log(k_out), boost_out, kx=1, ky=1
         )
+
+        # outputed k is different from k_out above to improve k sampling when
+        # later using the interpolator above for the C_ell calculation.
+        # This may be changed if C_ell calculation is modified.
+        self.k = linearperturbations.k
+        self.z = z_out
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         r"""Compute the linear matter power spectrum.

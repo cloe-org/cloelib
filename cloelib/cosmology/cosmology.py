@@ -18,31 +18,6 @@ import jax.numpy as jnp
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 
-def ensure_z_zero_included(redshifts: np.ndarray) -> np.ndarray:
-    """
-    Ensure z=0 is in redshift array for sigma8(z=0) computation.
-
-    This utility function checks if z=0 is present in the redshift array,
-    and adds it if missing. This is necessary for computing sigma8(z=0)
-    which is required for cosmological analyses.
-
-    Parameters
-    ----------
-    redshifts : np.ndarray
-        Array of redshift values
-
-    Returns
-    -------
-    np.ndarray
-        Redshift array with z=0 included (sorted)
-    """
-    z_min = redshifts.min()
-    if z_min > 0.001:
-        return np.sort(np.append(redshifts, 0.0))
-    else:
-        return redshifts
-
-
 @runtime_checkable
 class Background(Protocol):
     """Protocol for Background cosmology class."""

@@ -82,9 +82,9 @@ class APDistortion:
         gamma_tr: np.ndarray
             Perpendicular distortion parameter due to line misidentification
         """
-        return (self.background_fiducial.angular_diameter_distance(z_meas)
-                / self.background_fiducial.angular_diameter_distance(z_true)
-                * (1.0 + z_meas) / (1.0 + z_true))
+        return (self.background_fiducial.angular_diameter_distance(z_true)
+                / self.background_fiducial.angular_diameter_distance(z_meas)
+                * (1.0 + z_true) / (1.0 + z_meas))
 
     def gamma_lo(self, z_true: T, z_meas: T) -> T:
         r"""Distortion parameter due to line misidentification parallel
@@ -104,6 +104,6 @@ class APDistortion:
         gamma_tr: np.ndarray
             Parallel distortion parameter due to line misidentification
         """
-        return (self.background_fiducial.hubble_parameter(z_true)
-                / self.background_fiducial.hubble_parameter(z_meas)
-                * (1.0 + z_meas) / (1.0 + z_true))
+        return (self.background_fiducial.hubble_parameter(z_meas)
+                / self.background_fiducial.hubble_parameter(z_true)
+                * (1.0 + z_true) / (1.0 + z_meas))

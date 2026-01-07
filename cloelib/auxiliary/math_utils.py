@@ -4,9 +4,6 @@ from functools import lru_cache
 import numpy as np
 import jax
 import jax.numpy as jnp
-from typing import TypeVar, Union
-
-T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 
 def ensure_z_zero_included(redshifts: np.ndarray) -> np.ndarray:
@@ -34,7 +31,7 @@ def ensure_z_zero_included(redshifts: np.ndarray) -> np.ndarray:
         return redshifts
 
 
-def simpsons_weights_odd(num_el: int) -> T:
+def simpsons_weights_odd(num_el: int) -> jnp.ndarray:
     """Simpson's rule weights when num_el is odd."""
     w = jnp.zeros(num_el)
     w = w.at[0].set(1 / 3)
@@ -44,19 +41,19 @@ def simpsons_weights_odd(num_el: int) -> T:
     return w
 
 
-def simpsons_weights_even(num_el: int) -> T:
+def simpsons_weights_even(num_el: int) -> jnp.ndarray:
     """Simpson's rule weights when num_el is even."""
     num_el = int(num_el)
-    w_odd_end = simpsons_weights_odd(num_el - 1)
+    w_odd_end: jnp.ndarray = simpsons_weights_odd(num_el - 1)
     w_odd_end = w_odd_end.at[-1].add(1 / 2)
     w_odd_end = jnp.append(w_odd_end, 1 / 2)
-    w_odd_start = simpsons_weights_odd(num_el - 1)
+    w_odd_start: jnp.ndarray = simpsons_weights_odd(num_el - 1)
     w_odd_start = w_odd_start.at[0].add(1 / 2)
     w_odd_start = jnp.append(1 / 2, w_odd_start)
     return (w_odd_start + w_odd_end) / 2.0
 
 
-def simpsons_weights_jax(num_el: int) -> T:
+def simpsons_weights_jax(num_el: int) -> jnp.ndarray:
     """JAX-compatible Simpson's weights computation."""
     return jax.lax.cond(
         num_el % 2 == 1,

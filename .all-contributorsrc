@@ -341,6 +341,16 @@
         "ideas",
         "mentoring"
       ]
+    },
+    {
+      "login": "matteobaratto",
+      "name": "Matteo Baratto ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/75221958?v=4",
+      "profile": "https://github.com/matteobaratto",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
     }
   ]
 }

@@ -217,7 +217,7 @@ def Pkl_chebyshev_coeffs(
         3D array of Chebyshev coefficients for P(k, chi1, chi2).
     """
 
-    Pk = Pkl_unequaltime_interp(Pkl, ks, k_cheb)
+    Pk = 10**Pkl_unequaltime_interp(jnp.log10(Pkl), ks, k_cheb)
 
     return jnp.apply_along_axis(chebyshev_coefficients, 0, Pk)
 
@@ -319,14 +319,14 @@ def combine_kernels(tracer_1, tracer_2, chi, R):
     Combined kernel array of shaepe (n_bins_1, n_bins_2, len(R), len(chi)).
     """
 
-    W1_chi = get_kernel_array(tracer_1, chi)
-    W2_chi = get_kernel_array(tracer_2, chi)
-
     R_mesh, chi_mesh = jnp.meshgrid(R, chi, indexing="ij")
     chi_R = chi_mesh * R_mesh
+
+    W1_chi = jax.vmap(get_kernel_array, in_axes=(None, 0), out_axes=(2))(tracer_1, chi_mesh)
+    W2_chi = jax.vmap(get_kernel_array, in_axes=(None, 0), out_axes=(2))(tracer_2, chi_mesh)
 
     W1_chi_R = jax.vmap(get_kernel_array, in_axes=(None, 0), out_axes=(2))(tracer_1, chi_R)
     W2_chi_R = jax.vmap(get_kernel_array, in_axes=(None, 0), out_axes=(2))(tracer_2, chi_R)
 
-    return (jnp.einsum("ik,jkt->ijkt", W1_chi, W2_chi_R)
-        + jnp.einsum("jk,ikt->ijkt", W2_chi, W1_chi_R))
+    return (jnp.einsum("ikt,jkt->ijkt", W1_chi, W2_chi_R)
+        + jnp.einsum("jkt,ikt->ijkt", W2_chi, W1_chi_R))

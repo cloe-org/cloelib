@@ -100,6 +100,36 @@ def test_chebyshev_coefficients():
 
     np.testing.assert_allclose(cheb_coeff, cheb_coeff_blast, rtol=1e-5)
 
+    x = jnp.logspace(jnp.log10(1), jnp.log10(1000), 20)
+    f = x**2
+    coeffs = chebyshev_coefficients(f)
+
+    blast_coeffs = jnp.array([
+    75543.76021970608,
+    -143978.59106578442,
+    126310.33988252498,
+    -105188.83128233605,
+    85680.27355126342,
+    -69678.47497565328,
+    57225.543407614256,
+    -47720.80718239051,
+    40488.50842236123,
+    -34962.75175989318,
+    30713.04064698487,
+    -27425.10211314193,
+    24871.833786479478,
+    -22890.323098583416,
+    21363.083885207016,
+    -20206.107396030897,
+    19359.340355971337,
+    -18781.363851434588,
+    18444.77584188734,
+    -9167.147274751725
+    ])
+
+    np.testing.assert_allclose(coeffs, blast_coeffs, rtol=1e-5)
+
+
 
 def test_clenshaw_curtis_weights():
     n = 10

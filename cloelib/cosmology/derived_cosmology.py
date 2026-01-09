@@ -81,7 +81,7 @@ def rdrag_fitting_function(background, neff=3.046):
     """
     omega_cb = background.Omega_cdm0 * background.h**2
     omega_b = background.Omega_b0 * background.h**2
-    omega_nu = background.mnu * 93.14
+    omega_nu = background.mnu / 93.14
 
     r_d = (
         56.067

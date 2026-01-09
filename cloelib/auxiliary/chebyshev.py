@@ -5,7 +5,7 @@ import numpy as np
 import jax.numpy as jnp
 from jax import Array
 
-from cloelib.auxiliary.akima_spline import akima_interpolation
+from cloelib.auxiliary.akima import akima_interpolation
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 
 jax.config.update('jax_enable_x64', True)

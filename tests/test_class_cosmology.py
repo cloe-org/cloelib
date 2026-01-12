@@ -350,8 +350,8 @@ def test_class_perturbation_implements_protocol(class_perturbation_instances, ke
     class_instance = class_perturbation_instances[key]
     class_instance = class_perturbation_instances["Linear"]
     print([f for f in dir(class_instance) if not f.startswith("_")])
-    #print(class_instance)
-    #print(key)
+    # print(class_instance)
+    # print(key)
     assert isinstance(class_instance, Perturbations)
 
 

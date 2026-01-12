@@ -605,6 +605,18 @@ class mochiCLASSLinearPerturbations:
         arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+        sigma8_0 = self.results.get_current_derived_parameters(["sigma8"])["sigma8"]
+        return sigma8_0
+
 
 ####################################
 ############ NONLINEAR ############
@@ -719,3 +731,16 @@ class mochiCLASSNonLinearPerturbations:
         """
         arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
+
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+
+        sigma8_0 = self.results.get_current_derived_parameters(["sigma8"])["sigma8"]
+        return sigma8_0

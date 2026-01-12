@@ -400,6 +400,11 @@ class JAXLinearPerturbations:
         result = interp(a_s, atab, ftab)
         return result
 
+    def sigma8_0(self) -> float:
+        """Retrieve sigma8 at z=0."""
+
+        return self.background.interface_args["JAXparams"]["sigma_8"]
+
     def transfer_Eisenstein_Hu(self, ks):
         """Compute the Eisenstein & Hu matter transfer function.
 
@@ -836,6 +841,11 @@ class JAXNonLinearPerturbations:
         k_lz = jnp.expand_dims((ells + 0.5), 1) / chi
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
         return Pkl
+
+    def sigma8_0(self) -> float:
+        """Retrieve sigma8 at z=0."""
+
+        return self.background.interface_args["JAXparams"]["sigma_8"]
 
 
 # function takenfrom JAXCosmo. Should likely be moved to an utils.py

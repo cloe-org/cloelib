@@ -403,8 +403,8 @@ def test_camb_linear_perturbations_z_zero_automatic_inclusion(camb_background_in
 
     # Check that sigma8_0 was computed
     assert hasattr(linear_pert, "sigma8_0")
-    assert isinstance(linear_pert.sigma8_0, (float, np.floating))
-    assert linear_pert.sigma8_0 > 0  # Physical value
+    assert isinstance(linear_pert.sigma8_0(), (float, np.floating))
+    assert linear_pert.sigma8_0() > 0  # Physical value
 
 
 def test_camb_nonlinear_perturbations_z_zero_automatic_inclusion(
@@ -424,8 +424,8 @@ def test_camb_nonlinear_perturbations_z_zero_automatic_inclusion(
 
     # Check that sigma8_0 was computed
     assert hasattr(nonlinear_pert, "sigma8_0")
-    assert isinstance(nonlinear_pert.sigma8_0, (float, np.floating))
-    assert nonlinear_pert.sigma8_0 > 0  # Physical value
+    assert isinstance(nonlinear_pert.sigma8_0(), (float, np.floating))
+    assert nonlinear_pert.sigma8_0() > 0  # Physical value
 
 
 def test_camb_perturbations_z_zero_already_present(camb_background_instance):
@@ -439,7 +439,7 @@ def test_camb_perturbations_z_zero_already_present(camb_background_instance):
     assert len(linear_pert.z) == len(user_redshifts)  # Same length
     assert 0.0 in linear_pert.z
     assert hasattr(linear_pert, "sigma8_0")
-    assert linear_pert.sigma8_0 > 0
+    assert linear_pert.sigma8_0() > 0
 
 
 def test_camb_sigma8_consistency_linear_vs_nonlinear(camb_background_instance):
@@ -456,4 +456,4 @@ def test_camb_sigma8_consistency_linear_vs_nonlinear(camb_background_instance):
     assert hasattr(nonlinear_pert, "sigma8_0")
 
     # Values should be very close (same linear sigma8)
-    assert np.abs(linear_pert.sigma8_0 - nonlinear_pert.sigma8_0) < 1e-3
+    assert np.abs(linear_pert.sigma8_0() - nonlinear_pert.sigma8_0()) < 1e-3

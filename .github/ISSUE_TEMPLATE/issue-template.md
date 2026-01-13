@@ -10,10 +10,10 @@ assignees: ""
 
 <!-- Briefly describe the issue. What problem/feature/enhacement need to be addressed? -->
 
-### 🎯 Goals / Acceptance Criteria
+### ✅ Expected Outcome
 
-- [ ] **Goal 1**: Describe the first goal this issue addresses
-- [ ] **Goal 2**: Describe the second goal this issue addresses
+- **Goal 1**: Describe the first goal this issue addresses
+- **Goal 2**: Describe the second goal this issue addresses
 
 ### 🔄 Steps to Reproduce (if applicable)
 
@@ -21,18 +21,6 @@ assignees: ""
 2. Step 2
 3. Step 3
 
-### ✅ Expected Outcome
-
-<!-- What should happen when this issue is resolved? -->
-
-### 🐞 Current Behavior (if applicable)
-
-<!-- Describe the existing problem or bug -->
-
 ### 📌 Additional Notes
 
 <!-- Add any extra context, logs, or screenshots here -->
-
-### 👥 Assignees
-
-- @TBA

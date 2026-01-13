@@ -56,6 +56,9 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
                     "Multi-z arrays would lead to inconsistent C_ell calculations."
                 )
             self.z_ini = self.perturbations.z[0]
+            
+        #Calculate sigma8 at z_ini by calling sigma8 at redshift 0 and multiplying by growth factor at z_ini (and dividing through growth factor today in case it's not already normalized to 1).
+        self.sigma8_ini = self.perturbations.sigma8_0()*self.perturbations.growth_factor(self.z_ini, 0.01) / self.perturbations.growth_factor(0, 0.01)  
 
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z))
@@ -63,35 +66,10 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
             [nuisance_params.get("bhat_bin%d" % bin, 1.0) for bin in range(self.n_z_bins)]
         )
         self.bias_array = np.pad(bias_vals, (0, self.z.shape[0] - self.n_z_bins))
-    
-    def get_sigma8_ini(self):
-        """
-        Temporary solution until a consistent way to access sigma8 exists across all perturbation classes.
-        Try accessing sigma_8 via self.perturbations.results,
-        then via self.perturbations.perturbations.results.
-        """
-        # First attempt: perturbations.results.get_sigma8() (this will work for CAMB Perturbations)
-        try: 
-            return self.perturbations.results.get_sigma8()[0] 
-        except Exception:
-            pass
-
-        # Second attempt: perturbations.perturbations.results.get_sigma8() (this will work for an instance of Weyl_Perturbations, initialized using an instance of CAMB Perturbations)
-        try:
-            return self.perturbations.perturbations.results.get_sigma8()[0] 
-        except Exception:
-            pass
-
-        # If both fail, raise a meaningful error
-        raise AttributeError(
-            "Could not access sigma_8. Tried:\n"
-            " - self.perturbations.results.get_sigma8()[0]\n"
-            " - self.perturbations.perturbations.results.get_sigma8()[0]\n"
-        )
+        
 
     def get_window_positions(self, z) -> np.ndarray:
         """Weyl GC positions window: uses bhat and divides by sigma8_ini (single power)."""
-        sigma_8ini = self.get_sigma8_ini()
 
         def per_bin_case():
             window = (
@@ -99,7 +77,7 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
                 * self.dndz_shifted
                 * self.perturbations.background.hubble_parameter(z)
                 / c_0
-                / sigma_8ini
+                / self.sigma8_ini
             )
             return window
 
@@ -167,6 +145,8 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
                 )
             self.z_ini = self.perturbations.z[0]
         
+        #Calculate sigma8 at z_ini by calling sigma8 at redshift 0 and multiplying by growth factor at z_ini (and dividing through growth factor today in case it's not already normalized to 1).
+        self.sigma8_ini = self.perturbations.sigma8_0()*self.perturbations.growth_factor(self.z_ini, 0.01) / self.perturbations.growth_factor(0, 0.01)         
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z) in your scheme)
         bias_vals = np.asarray(
@@ -182,39 +162,12 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         self.Jhat_array = np.pad(jhat_vals, (0, self.z.shape[0] - self.n_z_bins))
 
         
-    def get_sigma8_ini(self):
-        """
-        Temporary solution until a consistent way to access sigma8 exists across all perturbation classes.
-        Try accessing sigma_8 via self.perturbations.results,
-        then via self.perturbations.perturbations.results.
-        """
-        # First attempt: perturbations.results.get_sigma8() (this will work for CAMB Perturbations)
-        try: 
-            return self.perturbations.results.get_sigma8()[0] 
-        except Exception:
-            pass
-
-        # Second attempt: perturbations.perturbations.results.get_sigma8() (this will work for an instance of Weyl_Perturbations, initialized using an instance of CAMB Perturbations)
-        try:
-            return self.perturbations.perturbations.results.get_sigma8()[0] 
-        except Exception:
-            pass
-
-        # If both fail, raise a meaningful error
-        raise AttributeError(
-            "Could not access sigma_8. Tried:\n"
-            " - self.perturbations.results.get_sigma8()[0]\n"
-            " - self.perturbations.perturbations.results.get_sigma8()[0]\n"
-        )
-        
     def get_window_positions(self, z) -> np.ndarray:
         """Weyl-modified positions window: multiplies by Jhat and by bhat; removes Omega_m^{-1}(z) factor;
-        divides by sigma8_ini^2 as in your original Weyl implementation."""
+        divides by sigma8_ini^2."""
         # compute Omega_m(z)
         Omega_m0 = self.background.Omega_m(0.0)
         Omega_m = Omega_m0 * (1 + z) ** 3 * (self.background.H0 / self.background.hubble_parameter(z))
-        
-        sigma_8ini = self.get_sigma8_ini()
 
         def per_bin_case():
             window = (
@@ -223,7 +176,7 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
                 * self.dndz_shifted
                 * self.perturbations.background.hubble_parameter(z)
                 / (c_0 * Omega_m)
-                / sigma_8ini ** 2
+                / sigma8_ini ** 2
             )
             return window
 

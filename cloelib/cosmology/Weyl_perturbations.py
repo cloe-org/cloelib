@@ -65,3 +65,6 @@ class Weyl_Perturbations:
 
         b = self.boost(zs, ks)
         return b * P_base
+
+    def sigma8_0(self) -> float:
+        return self.perturbations.sigma8_0()

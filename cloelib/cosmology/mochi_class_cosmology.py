@@ -14,13 +14,12 @@ np.set_printoptions(threshold=sys.maxsize)
 
 # Cosmology imports (make sure it's the version of mochi_class that's being imported not the standard CLASS!)
 try:
-    import classy
-    from classy import Class  # type: ignore
+    import mochi_classy
+    from mochi_classy import Class  # type: ignore
 
-    print(f"Loaded classy from {classy.__file__}")
+    print(f"Loaded mochi_classy from {mochi_classy.__file__}")
 except ImportError as e:
-    raise ImportError("classy could not be imported.") from e
-
+    raise ImportError("mochi_classy could not be imported.") from e
 
 ####################################
 ############ BACKGROUND ############

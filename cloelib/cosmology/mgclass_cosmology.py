@@ -396,6 +396,18 @@ class MGCLASSLinearPerturbations:
             * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])
         )
 
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+
+        return self.results.sigma8()
+
 
 class MGCLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
@@ -491,3 +503,15 @@ class MGCLASSNonLinearPerturbations:
         )
 
         return D_z_k
+
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+
+        return self.results.sigma8()

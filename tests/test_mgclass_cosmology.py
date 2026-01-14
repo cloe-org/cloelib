@@ -258,7 +258,9 @@ def test_mgclass_growth_rate(mgclass_perturbation_instances, key, zs, ks):
     assert result.ndim == 1
 
 
-def test_mgclass_sigma8_consistency_linear_vs_nonlinear(mgclass_background_instance, zs):
+def test_mgclass_sigma8_consistency_linear_vs_nonlinear(
+    mgclass_background_instance, zs
+    ):
     """Test that Linear and NonLinear give consistent sigma8(z=0) values."""
     mgclass_lin = MGCLASSLinearPerturbations(
         background=mgclass_background_instance, redshifts=zs

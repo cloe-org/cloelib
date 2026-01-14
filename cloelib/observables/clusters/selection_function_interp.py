@@ -16,10 +16,7 @@ class SelectionFunction_interp:
         C_l: float,
         M_piv: float = 3.0e14,
         z_piv: float = 0.45,
-        lobsNC_edges_NC=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
-        zobsNC_edges_NC=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
-        file_selection=None,
-        Omega_tot=None,
+        sel_cl_data=None,
     ):
         r"""
         Class defining the selection function of galaxy clusters, including
@@ -45,26 +42,19 @@ class SelectionFunction_interp:
             Mass pivot in the proxy - mass relation, in h^{-1} Msun
         z_piv: float
             Redshift pivot in the proxy - mass relation
-        lobsNC_edges_NC: array
+        lobsNC_edges: array
             edges of Lobs bins for Number Counts
-        zobsNC_edges_NC: array
+        zobsNC_edges: array
             edges of zobs bins for Number Counts
-        file_selection: array
-            multi-dimensional array storing fits file of the Selection outputted from Sinfonia
-            ASSUMPTION: we are reading the fits file outside of this module
-        Omega_tot: float
-            Total observed area
-
+        sel_cl_data: euclidlib.SelClFileReader
+            Object that read the SEL_CL output file and formats its accordingly. It must contain the attributtes: ztr_file, ltr_file, zobs_tot, lobs_tot, index_lobsfile_edges, index_zobsfile_edges, n_lobsNC, n_zobsNC, arrays, area_tile
         """
         self.A_l = A_l
         self.B_l = B_l
         self.C_l = C_l
         self.M_piv = M_piv
         self.z_piv = z_piv
-        self.lobsNC_edges_NC = lobsNC_edges_NC
-        self.zobsNC_edges_NC = zobsNC_edges_NC
-        self.file_selection = file_selection
-        self.Omega_tot = Omega_tot
+        self.sel_cl_data = sel_cl_data
 
     def lnlambda(self, z, M):
         r"""
@@ -151,191 +141,24 @@ class SelectionFunction_interp:
 
     ## NEW FUNCTION FROM SINFONIA FILE
 
-    def _read_redshifts_and_richness_from_file(self):
-
-        ## Definition of arrays for Obs and True quantities
-        ## ASSUMPTION: all tiles have the same ranges and binning
-
-        delta_zobs_file = self.file_selection[1].header["HIERARCH Z_OBS_STEP"]
-        delta_lobs_file = self.file_selection[1].header["HIERARCH LAMBDA_OBS_STEP"]
-        delta_ztr_file = self.file_selection[1].header["HIERARCH Z_TRUE_STEP"]
-        delta_ltr_file = self.file_selection[1].header["HIERARCH LAMBDA_TRUE_STEP"]
-
-        nsteps_zobs_file = self.file_selection[1].header["NAXIS1"]
-        nsteps_lobs_file = self.file_selection[1].header["NAXIS2"]
-        nsteps_ztr_file = self.file_selection[1].header["NAXIS3"]
-        nsteps_ltr_file = self.file_selection[1].header["NAXIS4"]
-
-        zobs_file = np.linspace(
-            self.file_selection[1].header["HIERARCH Z_OBS_START"],
-            self.file_selection[1].header["HIERARCH Z_OBS_END"],
-            nsteps_zobs_file,
-            endpoint=True,
-        )
-        lobs_file = np.linspace(
-            self.file_selection[1].header["HIERARCH LAMBDA_OBS_START"],
-            self.file_selection[1].header["HIERARCH LAMBDA_OBS_END"],
-            nsteps_lobs_file,
-            endpoint=True,
-        )
-        ztr_file = np.linspace(
-            self.file_selection[1].header["HIERARCH Z_TRUE_START"],
-            self.file_selection[1].header["HIERARCH Z_TRUE_END"],
-            nsteps_ztr_file,
-            endpoint=True,
-        )
-        ltr_file = np.linspace(
-            self.file_selection[1].header["HIERARCH LAMBDA_TRUE_START"],
-            self.file_selection[1].header["HIERARCH LAMBDA_TRUE_END"],
-            nsteps_ltr_file,
-            endpoint=True,
-        )
-
-        ## Check ranges of Obs arrays of the file and compare with NC Obs arrays
-        ## Deal with min and max in lobs and zobs:
-        ## max(lobs_file) might be < max(lobsNC_edges) so we put an IF condition for now: Prob for lambda > max(lobs_file) = 0
-        ## min(lobs_file) might be > min(lobsNC_edges) so we put an IF condition for now: Prob for lambda < min(lobs_file) = 0
-        ## max(zobs_file) might be < max(zobsNC_edges) so we put an IF condition for now: Prob for z > max(zobs_file) = 0
-        ## min(zobs_file) might be > min(zobsNC_edges) so we put an IF condition for now: Prob for z < min(zobs_file) = 0
-
-        ## max(lobs_file) might be < max(lobsNC_edges)
-        if lobs_file[-1] < self.lobsNC_edges[-1]:
-            n_new = int((self.lobsNC_edges[-1] - lobs_file[-1]) / delta_lobs_file)
-            lobs_added = np.linspace(
-                lobs_file[-1] + delta_lobs_file,
-                self.lobsNC_edges[-1],
-                n_new,
-                endpoint=True,
-            )
-            lobs_tot_high = np.concatenate((lobs_file, lobs_added), axis=0)
-        else:
-            lobs_tot_high = lobs_file
-        ## min(lobs_file) might be > min(lobsNC_edges)
-        if lobs_file[0] > self.lobsNC_edges[0]:
-            n_new = int((lobs_file[0] - self.lobsNC_edges[0]) / delta_lobs_file)
-            lobs_added = np.linspace(
-                self.lobsNC_edges[0],
-                lobs_file[0] - delta_lobs_file,
-                n_new,
-                endpoint=True,
-            )
-            lobs_tot = np.concatenate((lobs_added, lobs_tot_high), axis=0)
-            size_add_lmin = n_new
-        else:
-            lobs_tot = lobs_tot_high
-            size_add_lmin = 0
-        ## max(zobs_file) might be < max(zobsNC_edges)
-        if zobs_file[-1] < self.zobsNC_edges[-1]:
-            n_new = int((self.zobsNC_edges[-1] - zobs_file[-1]) / delta_zobs_file)
-            zobs_added = np.linspace(
-                zobs_file[-1] + delta_zobs_file,
-                self.zobsNC_edges[-1],
-                n_new,
-                endpoint=True,
-            )
-            zobs_tot_high = np.concatenate((zobs_file, zobs_added), axis=0)
-        else:
-            zobs_tot_high = zobs_file
-        ## min(zobs_file) might be > min(zobsNC_edges)
-        if zobs_file[0] > self.zobsNC_edges[0]:
-            n_new = int((zobs_file[0] - self.zobsNC_edges[0]) / delta_zobs_file)
-            zobs_added = np.linspace(
-                self.zobsNC_edges[0],
-                zobs_file[0] - delta_zobs_file,
-                n_new,
-                endpoint=True,
-            )
-            zobs_tot = np.concatenate((zobs_added, zobs_tot_high), axis=0)
-            size_add_zmin = n_new
-        else:
-            zobs_tot = zobs_tot_high
-            size_add_zmin = 0
-
-        return (
-            zobs_file,
-            lobs_file,
-            ztr_file,
-            ltr_file,
-            zobs_tot,
-            lobs_tot,
-            size_add_zmin,
-            size_add_lmin,
-        )
-
     def _compute_sum_of_I_ltr_ztr_lobs_lobs(
         self,
         zobs_tot,
         lobs_tot,
-        size_add_zmin,
-        size_add_lmin,
-        nsteps_ltr_file,
-        nsteps_ztr_file,
+        arrays,
+        area_tile,
     ):
-        nsteps_lobs_tot = len(lobs_tot)
-        nsteps_zobs_tot = len(zobs_tot)
-
         ## Start loop on the tiles, to: -----------------------------------------------------------
         ## extraxt 4d array, Completeness and Purity for the fits file
         ## evaluate the different ingredients and integrals to obtain tildeI(λtr,ztr,∆λobs,∆zobs)
         ## ASSUMPTION: the input file is normalised
 
-        ## Find number of tiles from fits file
-        num_headers = len(self.file_selection)
-        n_tile = int((num_headers - 1) / 7)
-
-        arrays = {}
-        ## Index of P_4d, Compl and Pur for each tile
-        index_4d_save = np.zeros(n_tile, dtype=int)
-        index_compl_save = np.zeros(n_tile, dtype=int)
-        index_pur_save = np.zeros(n_tile, dtype=int)
-        ## Array to store area of each tile: Effective area in deg2
-        area_tile = np.zeros(n_tile)
-
         ## Sum array over all tiles
-        sum_a = np.zeros(
-            (nsteps_ltr_file, nsteps_ztr_file, nsteps_lobs_tot, nsteps_zobs_tot)
-        )
+        sum_a = np.zeros_like(arrays[f"CG_seL_funcT_code_0"])
 
-        for it in range(n_tile):
+        for it in range(len(area_tile)):
 
             ## Select index to read 4d array, completeness and purity for the different tiles
-            index_4d = 1 + it
-            index_compl = 1 + 2 * n_tile + it
-            index_pur = 1 + 4 * n_tile + it
-            ## Save index
-            index_4d_save[it] = index_4d
-            index_compl_save[it] = index_compl
-            index_pur_save[it] = index_pur
-
-            ## Save 4d array, Completeness and Purity for each tile
-            arrays[f"CG_seL_funcT_{it}"] = self.file_selection[index_4d].data
-            ## np.shape(arrays[f"CG_seL_funcT_{it}"]): (ltr, ztr, lobs, zobs)
-            arrays[f"compl_{it}"] = self.file_selection[index_compl].data
-            ## np.shape(arrays[f"compl_{it}"]): (ltr, ztr)
-            arrays[f"purity_{it}"] = self.file_selection[index_pur].data
-            ## np.shape(arrays[f"purity_{it}"]): (lobs, zobs)
-
-            index_area = 1 + 6 * n_tile + it
-            area_tile[it] = self.file_selection[index_area].header[
-                "HIERARCH EFFECTIVE_AREA"
-            ]
-
-            ## Re-arrange ranges for 4d array, to match the Obs NC ranges
-            arrays[f"CG_seL_funcT_code_{it}"] = np.zeros(
-                (nsteps_ltr_file, nsteps_ztr_file, nsteps_lobs_tot, nsteps_zobs_tot)
-            )
-            arrays[f"CG_seL_funcT_code_{it}"][
-                :,
-                :,
-                size_add_lmin : nsteps_lobs_file + size_add_lmin,
-                size_add_zmin : nsteps_zobs_file + size_add_zmin,
-            ] = arrays[f"CG_seL_funcT_{it}"]
-            ## Re-arrange ranges Purity, to match the Obs NC ranges
-            arrays[f"purity_code_{it}"] = np.zeros((nsteps_lobs_tot, nsteps_zobs_tot))
-            arrays[f"purity_code_{it}"][
-                size_add_lmin : nsteps_lobs_file + size_add_lmin,
-                size_add_zmin : nsteps_zobs_file + size_add_zmin,
-            ] = arrays[f"purity_{it}"]
 
             ## Produce P_alpha(λobs|λtr,ztr) for all tiles
             ## P(lobs|ltr,ztr) = integrate P(lobs,zobs|ltr,ztr) over zobs
@@ -410,62 +233,42 @@ class SelectionFunction_interp:
         -------
         integ4d_interp_func: 2d interpolator
         """
-
-        # read arrays from file
-        (
-            zobs_file,
-            lobs_file,
-            ztr_file,
-            ltr_file,
-            zobs_tot,
-            lobs_tot,
-            size_add_zmin,
-            size_add_lmin,
-        ) = self._read_redshifts_and_richness_from_file()
-        nsteps_ltr_file = ltr_file.size
-        nsteps_ztr_file = ztr_file.size
-
         # Produce sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
         sum_a = self._compute_sum_of_I_ltr_ztr_lobs_lobs(
-            zobs_tot,
-            lobs_tot,
-            size_add_zmin,
-            size_add_lmin,
-            nsteps_ltr_file,
-            nsteps_ztr_file,
+            self.sel_cl_data.zobs_tot,
+            self.sel_cl_data.lobs_tot,
+            self.sel_cl_data.arrays,
+            self.sel_cl_data.area_tile,
         )
 
         ##############################
         ## tildeI(λtr,ztr,∆λobs,∆zobs)
         ##############################
 
-        ## Find common index between (lobs_file-->lobs_edges) and (zobs_file-->zobs_edges)
-        index_lobsfile_edges = [
-            np.abs(lobs_tot - value).argmin() for value in self.lobsNC_edges
-        ]
-        index_zobsfile_edges = [
-            np.abs(zobs_tot - value).argmin() for value in self.zobsNC_edges
-        ]
-
-        ## Define ranges for Obs arrays: arrays for grid in final NC
-        n_lobsNC = len(self.lobsNC_edges) - 1
-        n_zobsNC = len(self.zobsNC_edges) - 1
-
         ## Integrate 1/Omega_tot*sum_a = tildeI(λtr,ztr,∆λobs,∆zobs)
-        integ4d = np.zeros((n_lobsNC, n_zobsNC, nsteps_ltr_file, nsteps_ztr_file))
+        integ4d = np.zeros(
+            (
+                self.sel_cl_data.n_lobsNC,
+                self.sel_cl_data.n_zobsNC,
+                len(self.sel_cl_data.ltr_file),
+                len(self.sel_cl_data.ztr_file),
+            )
+        )
 
-        for ltab in range(n_lobsNC):
-            l_start = index_lobsfile_edges[ltab]
-            l_end = index_lobsfile_edges[ltab + 1]
-            lint = lobs_tot[l_start:l_end]
+        for ltab in range(self.sel_cl_data.n_lobsNC):
+            l_start = self.sel_cl_data.index_lobsfile_edges[ltab]
+            l_end = self.sel_cl_data.index_lobsfile_edges[ltab + 1]
+            lint = self.sel_cl_dataobs_tot[l_start:l_end]
 
-            for ztab in range(n_zobsNC):
-                z_start = index_zobsfile_edges[ztab]
-                z_end = index_zobsfile_edges[ztab + 1]
-                zint = zobs_tot[z_start:z_end]
+            for ztab in range(self.sel_cl_data.n_zobsNC):
+                z_start = self.sel_cl_data.index_zobsfile_edges[ztab]
+                z_end = self.sel_cl_data.index_zobsfile_edges[ztab + 1]
+                zint = self.sel_cl_datazobs_tot[z_start:z_end]
 
                 integrand = (
-                    1 / self.Omega_tot * sum_a[:, :, l_start:l_end, z_start:z_end]
+                    1
+                    / self.sel_cl_data.Omega_tot
+                    * sum_a[:, :, l_start:l_end, z_start:z_end]
                 )
                 result_z = integrate.simpson(integrand, x=zint, axis=-1)
                 result_l = integrate.simpson(result_z, x=lint, axis=-1)
@@ -475,11 +278,287 @@ class SelectionFunction_interp:
         integ4d_interp_func = [
             [
                 interpolate.RectBivariateSpline(
-                    ltr_file, ztr_file, integ4d[ltab, ztab, :, :]
+                    self.sel_cl_datatr_file,
+                    self.sel_cl_dataztr_file,
+                    integ4d[ltab, ztab, :, :],
                 )
-                for ztab in range(n_zobsNC)
+                for ztab in range(self.sel_cl_data.n_zobsNC)
             ]
-            for ltab in range(n_lobsNC)
+            for ltab in range(self.sel_cl_data.n_lobsNC)
         ]
 
         return integ4d_interp_func
+
+
+class SelClFileReader:
+    """Class to read ouput file from SEL_CL"""
+
+    def __init__(self, sf_filename, Omega_tot=None):
+        """Object to read ouput file from SEL_CL.
+
+        Parameters
+        ----------
+        file_selection: array
+            multi-dimensional array storing fits file of the Selection outputted from Sinfonia
+            ASSUMPTION: we are reading the fits file outside of this module
+        Omega_tot: float
+            Total observed area
+        """
+
+        ###############
+        # internal data
+        ###############
+
+        # To be adapted with fitsio - f = fitsio.FITS("your_file.fits")
+        self._file_selection = astropy.io.fits.open(sf_filename)
+
+        self._lobsNC_edges = lobsNC_edges
+        self._zobsNC_edges = zobsNC_edges
+
+        # Values to be filled by _read_redshifts_and_richness_from_file
+
+        self._zobs_file = None
+        self._lobs_file = None
+        self._size_add_zmin = None
+        self._size_add_lmin = None
+
+        #########################
+        # data to be used by cloe
+        #########################
+
+        self.Omega_tot = Omega_tot
+
+        # Values to be filled by _read_redshifts_and_richness_from_file
+        self.ztr_file = None
+        self.ltr_file = None
+        self.zobs_tot = None
+        self.lobs_tot = None
+
+        # will be filled after _read_redshifts_and_richness_from_file
+        self.index_lobsfile_edges = None
+        self.index_zobsfile_edges = None
+
+        # will be filled in prepare_data
+        self.n_lobsNC = None
+        self.n_zobsNC = None
+
+        ## 4d arrays, Completeness and Purity for the fits file. Filled by _read_redshifts_and_richness_from_file
+        self.arrays = {}
+
+        # Array to store area of each tile: Effective area in deg2. Filled by _read_redshifts_and_richness_from_file
+        self.area_tile = None
+
+    def _read_redshifts_and_richness_from_file(self, lobsNC_edges, zobsNC_edges):
+        """Read arrays
+
+        Parameters
+        ----------
+        lobsNC_edges: array
+            edges of Lobs bins for Number Counts
+        zobsNC_edges: array
+            edges of zobs bins for Number Counts
+        """
+
+        ## Definition of arrays for Obs and True quantities
+        ## ASSUMPTION: all tiles have the same ranges and binning
+
+        delta_zobs_file = self._file_selection[1].header["HIERARCH Z_OBS_STEP"]
+        delta_lobs_file = self._file_selection[1].header["HIERARCH LAMBDA_OBS_STEP"]
+        delta_ztr_file = self._file_selection[1].header["HIERARCH Z_TRUE_STEP"]
+        delta_ltr_file = self._file_selection[1].header["HIERARCH LAMBDA_TRUE_STEP"]
+
+        nsteps_zobs_file = self._file_selection[1].header["NAXIS1"]
+        nsteps_lobs_file = self._file_selection[1].header["NAXIS2"]
+        nsteps_ztr_file = self._file_selection[1].header["NAXIS3"]
+        nsteps_ltr_file = self._file_selection[1].header["NAXIS4"]
+
+        self._zobs_file = np.linspace(
+            self._file_selection[1].header["HIERARCH Z_OBS_START"],
+            self._file_selection[1].header["HIERARCH Z_OBS_END"],
+            nsteps_zobs_file,
+            endpoint=True,
+        )
+        self._lobs_file = np.linspace(
+            self._file_selection[1].header["HIERARCH LAMBDA_OBS_START"],
+            self._file_selection[1].header["HIERARCH LAMBDA_OBS_END"],
+            nsteps_lobs_file,
+            endpoint=True,
+        )
+        self.ztr_file = np.linspace(
+            self._file_selection[1].header["HIERARCH Z_TRUE_START"],
+            self._file_selection[1].header["HIERARCH Z_TRUE_END"],
+            nsteps_ztr_file,
+            endpoint=True,
+        )
+        self.ltr_file = np.linspace(
+            self._file_selection[1].header["HIERARCH LAMBDA_TRUE_START"],
+            self._file_selection[1].header["HIERARCH LAMBDA_TRUE_END"],
+            nsteps_ltr_file,
+            endpoint=True,
+        )
+
+        ## Check ranges of Obs arrays of the file and compare with NC Obs arrays
+        ## Deal with min and max in lobs and zobs:
+        ## max(lobs_file) might be < max(lobsNC_edges) so we put an IF condition for now: Prob for lambda > max(lobs_file) = 0
+        ## min(lobs_file) might be > min(lobsNC_edges) so we put an IF condition for now: Prob for lambda < min(lobs_file) = 0
+        ## max(zobs_file) might be < max(zobsNC_edges) so we put an IF condition for now: Prob for z > max(zobs_file) = 0
+        ## min(zobs_file) might be > min(zobsNC_edges) so we put an IF condition for now: Prob for z < min(zobs_file) = 0
+
+        ## max(lobs_file) might be < max(lobsNC_edges)
+        if self._lobs_file[-1] < lobsNC_edges[-1]:
+            n_new = int((lobsNC_edges[-1] - self._lobs_file[-1]) / delta_lobs_file)
+            lobs_added = np.linspace(
+                self._lobs_file[-1] + delta_lobs_file,
+                lobsNC_edges[-1],
+                n_new,
+                endpoint=True,
+            )
+            lobs_tot_high = np.concatenate((self._lobs_file, lobs_added), axis=0)
+        else:
+            lobs_tot_high = self._lobs_file
+        ## min(lobs_file) might be > min(lobsNC_edges)
+        if self._lobs_file[0] > lobsNC_edges[0]:
+            n_new = int((self._lobs_file[0] - lobsNC_edges[0]) / delta_lobs_file)
+            lobs_added = np.linspace(
+                lobsNC_edges[0],
+                self._lobs_file[0] - delta_lobs_file,
+                n_new,
+                endpoint=True,
+            )
+            self.lobs_tot = np.concatenate((lobs_added, lobs_tot_high), axis=0)
+            self._size_add_lmin = n_new
+        else:
+            self.lobs_tot = lobs_tot_high
+            self._size_add_lmin = 0
+        ## max(zobs_file) might be < max(zobsNC_edges)
+        if self._zobs_file[-1] < zobsNC_edges[-1]:
+            n_new = int((zobsNC_edges[-1] - self._zobs_file[-1]) / delta_zobs_file)
+            zobs_added = np.linspace(
+                self._zobs_file[-1] + delta_zobs_file,
+                zobsNC_edges[-1],
+                n_new,
+                endpoint=True,
+            )
+            zobs_tot_high = np.concatenate((self._zobs_file, zobs_added), axis=0)
+        else:
+            zobs_tot_high = self._zobs_file
+        ## min(zobs_file) might be > min(zobsNC_edges)
+        if self._zobs_file[0] > zobsNC_edges[0]:
+            n_new = int((self._zobs_file[0] - zobsNC_edges[0]) / delta_zobs_file)
+            zobs_added = np.linspace(
+                zobsNC_edges[0],
+                self._zobs_file[0] - delta_zobs_file,
+                n_new,
+                endpoint=True,
+            )
+            self.zobs_tot = np.concatenate((zobs_added, zobs_tot_high), axis=0)
+            self._size_add_zmin = n_new
+        else:
+            self.zobs_tot = zobs_tot_high
+            self._size_add_zmin = 0
+
+    def _get_formatted_arrays(self):
+        nsteps_ltr_file = len(self.ltr_file)
+        nsteps_ztr_file = len(self.ztr_file)
+        nsteps_lobs_tot = len(self.lobs_tot)
+        nsteps_zobs_tot = len(self.zobs_tot)
+
+        ## Start loop on the tiles, to: -----------------------------------------------------------
+        ## extraxt 4d array, Completeness and Purity for the fits file
+        ## evaluate the different ingredients and integrals to obtain tildeI(λtr,ztr,∆λobs,∆zobs)
+        ## ASSUMPTION: the input file is normalised
+
+        ## Find number of tiles from fits file
+        num_headers = len(self._file_selection)
+        n_tile = int((num_headers - 1) / 7)
+
+        ## Index of P_4d, Compl and Pur for each tile
+        index_4d_save = np.zeros(n_tile, dtype=int)
+        index_compl_save = np.zeros(n_tile, dtype=int)
+        index_pur_save = np.zeros(n_tile, dtype=int)
+
+        self.area_tile = np.zeros(n_tile)
+
+        for it in range(n_tile):
+
+            ## Select index to read 4d array, completeness and purity for the different tiles
+            index_4d = 1 + it
+            index_compl = 1 + 2 * n_tile + it
+            index_pur = 1 + 4 * n_tile + it
+            ## Save index
+            index_4d_save[it] = index_4d
+            index_compl_save[it] = index_compl
+            index_pur_save[it] = index_pur
+
+            ## Save 4d array, Completeness and Purity for each tile
+            self.arrays[f"CG_seL_funcT_{it}"] = self._file_selection[index_4d].data
+            ## np.shape(self.arrays[f"CG_seL_funcT_{it}"]): (ltr, ztr, lobs, zobs)
+            self.arrays[f"compl_{it}"] = self._file_selection[index_compl].data
+            ## np.shape(self.arrays[f"compl_{it}"]): (ltr, ztr)
+            self.arrays[f"purity_{it}"] = self._file_selection[index_pur].data
+            ## np.shape(self.arrays[f"purity_{it}"]): (lobs, zobs)
+
+            index_area = 1 + 6 * n_tile + it
+            self.area_tile[it] = self._file_selection[index_area].header[
+                "HIERARCH EFFECTIVE_AREA"
+            ]
+
+            ## Re-arrange ranges for 4d array, to match the Obs NC ranges
+            self.arrays[f"CG_seL_funcT_code_{it}"] = np.zeros(
+                (nsteps_ltr_file, nsteps_ztr_file, nsteps_lobs_tot, nsteps_zobs_tot)
+            )
+            self.arrays[f"CG_seL_funcT_code_{it}"][
+                :,
+                :,
+                self._size_add_lmin : nsteps_lobs_file + self._size_add_lmin,
+                self._size_add_zmin : nsteps_zobs_file + self._size_add_zmin,
+            ] = self.arrays[f"CG_seL_funcT_{it}"]
+            ## Re-arrange ranges Purity, to match the Obs NC ranges
+            self.arrays[f"purity_code_{it}"] = np.zeros(
+                (nsteps_lobs_tot, nsteps_zobs_tot)
+            )
+            self.arrays[f"purity_code_{it}"][
+                self._size_add_lmin : nsteps_lobs_file + self._size_add_lmin,
+                self._size_add_zmin : nsteps_zobs_file + self._size_add_zmin,
+            ] = self.arrays[f"purity_{it}"]
+
+    def prepare_data(
+        self,
+        lobsNC_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
+        zobsNC_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
+    ):
+        r"""
+        Selection Function from file.
+        Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
+        1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
+        Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
+
+        Parameters
+        ----------
+        lobsNC_edges: array
+            edges of Lobs bins for Number Counts
+        zobsNC_edges: array
+            edges of zobs bins for Number Counts
+
+        Returns
+        -------
+        integ4d_interp_func: 2d interpolator
+        """
+
+        # read arrays from file
+        self._read_redshifts_and_richness_from_file(lobsNC_edges, zobsNC_edges)
+
+        ## Find common index between (lobs_file-->lobs_edges) and (zobs_file-->zobs_edges)
+        self.index_lobsfile_edges = [
+            np.abs(self.lobs_tot - value).argmin() for value in lobsNC_edges
+        ]
+        self.index_zobsfile_edges = [
+            np.abs(self.zobs_tot - value).argmin() for value in zobsNC_edges
+        ]
+
+        # Get arrays by tiles
+        self._get_formatted_arrays()
+
+        ## Define ranges for Obs arrays: arrays for grid in final NC
+        self.n_lobsNC = len(lobsNC_edges) - 1
+        self.n_zobsNC = len(zobsNC_edges) - 1

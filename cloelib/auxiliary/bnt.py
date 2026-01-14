@@ -71,31 +71,21 @@ class BNTMatrixCalculator:
             The BNT transformation matrix with shape ``(nbins, nbins)``, always
             lower triangular with ones on the diagonal.
         """
-        A_list = []
-        B_list = []
-        for i in range(self.nbins):
-            nz = self.dndz_list[i]
-            A_list.append(
-                np.trapezoid(nz, self.z)
-                if hasattr(np, "trapezoid")
-                else np.trapz(nz, self.z)
-            )
-            B_list.append(
-                np.trapezoid(nz / self.chi, self.z)
-                if hasattr(np, "trapezoid")
-                else np.trapz(nz / self.chi, self.z)
-            )
+
+        trapz = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
+
+        nz_arr = np.stack(self.dndz_list, axis=0)
+        A = trapz(nz_arr, self.z, axis=1)
+        B = trapz(nz_arr / self.chi[None, :], self.z, axis=1)
 
         BNT_matrix = np.eye(self.nbins)
         BNT_matrix[1, 0] = -1.0
 
         for i in range(2, self.nbins):
-            mat = np.array(
-                [[A_list[i - 1], A_list[i - 2]], [B_list[i - 1], B_list[i - 2]]]
-            )
-            A = -1.0 * np.array([A_list[i], B_list[i]])
+            mat = np.array([[A[i - 1], A[i - 2]], [B[i - 1], B[i - 2]]])
+            rhs = -np.array([A[i], B[i]])
             try:
-                soln = np.linalg.solve(mat, A)
+                soln = np.linalg.solve(mat, rhs)
             except np.linalg.LinAlgError as exc:
                 raise ValueError(
                     "BNT matrix construction failed: non-invertible 2x2 "

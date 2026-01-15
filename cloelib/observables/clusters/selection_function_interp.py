@@ -279,8 +279,7 @@ class SelectionFunction_interp:
 
         return sel_cl_data_fmt
 
-    @staticmethod
-    def _compute_I_ltr_ztr_lobs_lobs(sel_cl_data_fmt):
+    def _compute_I_ltr_ztr_lobs_lobs(self, sel_cl_data_fmt):
         """Computes Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
         and add it to input dictionary.
 
@@ -317,16 +316,11 @@ class SelectionFunction_interp:
             )
             ## Normalization: we start from P(lobs,zobs | ltr,ztr) that is normalized. Then we integrate on zobs.
             ## P(lobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
-            N = integrate.simpson(
-                CG_ricH_seL_funcT, x=sel_cl_data_fmt["lambda_obs"], axis=2
-            )
-            ## To deal with zeros
-            norm_CG_ricH_seL_funcT = np.zeros_like(CG_ricH_seL_funcT, dtype=float)
-            norm_CG_ricH_seL_funcT = np.divide(
+            norm_CG_ricH_seL_funcT = self._normalize_array(
                 CG_ricH_seL_funcT,
-                N[:, :, np.newaxis],
-                out=norm_CG_ricH_seL_funcT,
-                where=N[:, :, np.newaxis] != 0,
+                normalization=integrate.simpson(
+                    CG_ricH_seL_funcT, x=sel_cl_data_fmt["lambda_obs"], axis=2
+                ),
             )
             ## np.shape(norm_CG_ricH_seL_funcT): (ltr, ztr, lobs)
 
@@ -339,14 +333,11 @@ class SelectionFunction_interp:
             )
             ## Normalization: we start from P(lobs,zobs|ltr,ztr) that is normalized. Then we integrate on lobs.
             ## P(zobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
-            N = integrate.simpson(CG_reD_seL_funcT, x=sel_cl_data_fmt["z_obs"], axis=2)
-            ## To deal with zeros
-            norm_CG_reD_seL_funcT = np.zeros_like(CG_reD_seL_funcT, dtype=float)
-            norm_CG_reD_seL_funcT = np.divide(
+            norm_CG_reD_seL_funcT = self._normalize_array(
                 CG_reD_seL_funcT,
-                N[:, :, np.newaxis],
-                out=norm_CG_reD_seL_funcT,
-                where=N[:, :, np.newaxis] != 0,
+                normalization=integrate.simpson(
+                    CG_reD_seL_funcT, x=sel_cl_data_fmt["z_obs"], axis=2
+                ),
             )
             ## np.shape(np.shape(norm_CG_reD_seL_funcT)): (ltr, ztr, zobs)
 
@@ -448,6 +439,35 @@ class SelectionFunction_interp:
         ]
 
         return integ4d_interp_func
+
+    def _normalize_array(
+        self,
+        array,
+        normalization,
+    ):
+        """Safe normalization (does not explode at norm=0).
+
+        Parameters
+        ----------
+        array : numpy.nparray
+            Array to be normalized
+        normalization : numpy.nparray
+            Normalization values, must have shape = array.shape[:-1]
+
+
+        Returns
+        -------
+        norm_array : numpy.ndarray
+            Normalized array
+        """
+        norm_array = np.zeros_like(array, dtype=float)
+        norm_array = np.divide(
+            array,
+            normalization[..., np.newaxis],
+            out=norm_array,
+            where=normalization[..., np.newaxis] != 0,
+        )
+        return norm_array
 
     @staticmethod
     def _redefine_array_with_obs_bins(

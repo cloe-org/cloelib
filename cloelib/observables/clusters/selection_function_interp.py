@@ -230,18 +230,22 @@ class SelectionFunction_interp:
         # Reshape tables
         ################
 
-        nsteps_ltr_orig = len(self._sel_cl_data_original["lambda_true"])
-        nsteps_ztr_orig = len(self._sel_cl_data_original["z_true"])
         nsteps_lobs_orig = len(self._sel_cl_data_original["lambda_obs"])
         nsteps_zobs_orig = len(self._sel_cl_data_original["z_obs"])
-        nsteps_lobs_fmt = len(sel_cl_data_fmt["lambda_obs"])
-        nsteps_zobs_fmt = len(sel_cl_data_fmt["z_obs"])
         n_tile = len(self._sel_cl_data_original["CG_seL_funcT"])
 
         sel_cl_data_fmt["CG_seL_funcT"] = np.zeros(
-            (n_tile, nsteps_ltr_orig, nsteps_ztr_orig, nsteps_lobs_fmt, nsteps_zobs_fmt)
+            (
+                n_tile,
+                len(self._sel_cl_data_original["lambda_true"]),
+                len(self._sel_cl_data_original["z_true"]),
+                len(sel_cl_data_fmt["lambda_obs"]),
+                len(sel_cl_data_fmt["z_obs"]),
+            )
         )
-        sel_cl_data_fmt["purity"] = np.zeros((n_tile, nsteps_lobs_fmt, nsteps_zobs_fmt))
+        sel_cl_data_fmt["purity"] = np.zeros(
+            (n_tile, len(sel_cl_data_fmt["lambda_obs"]), len(sel_cl_data_fmt["z_obs"]))
+        )
         # Keep completeness values
         sel_cl_data_fmt["completeness"] = np.array(
             [comp.copy() for comp in self._sel_cl_data_original["completeness"]]

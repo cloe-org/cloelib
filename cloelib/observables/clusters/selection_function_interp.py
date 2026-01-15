@@ -170,6 +170,7 @@ class SelectionFunction_interp:
             SEL_CL data reshaped with obs bins
         """
 
+        # list explicitly all values that will be filled:
         sel_cl_data_fmt = {
             "z_obs": None,
             "lambda_obs": None,
@@ -230,10 +231,15 @@ class SelectionFunction_interp:
         # Reshape tables
         ################
 
-        nsteps_lobs_orig = len(self._sel_cl_data_original["lambda_obs"])
-        nsteps_zobs_orig = len(self._sel_cl_data_original["z_obs"])
-        n_tile = len(self._sel_cl_data_original["CG_seL_funcT"])
+        # Keep completeness shape
+        sel_cl_data_fmt["completeness"] = np.array(
+            [comp.copy() for comp in self._sel_cl_data_original["completeness"]]
+        )
 
+        # reshape purity and seL_func
+
+        # initialize with zeros
+        n_tile = len(self._sel_cl_data_original["CG_seL_funcT"])
         sel_cl_data_fmt["CG_seL_funcT"] = np.zeros(
             (
                 n_tile,
@@ -246,26 +252,28 @@ class SelectionFunction_interp:
         sel_cl_data_fmt["purity"] = np.zeros(
             (n_tile, len(sel_cl_data_fmt["lambda_obs"]), len(sel_cl_data_fmt["z_obs"]))
         )
-        # Keep completeness values
-        sel_cl_data_fmt["completeness"] = np.array(
-            [comp.copy() for comp in self._sel_cl_data_original["completeness"]]
+
+        # find which indices on the table will be filled
+        lobs_orig_slice = slice(
+            _size_add_lmin,
+            _size_add_lmin + len(self._sel_cl_data_original["lambda_obs"]),
+        )
+        zobs_orig_slice = slice(
+            _size_add_zmin, _size_add_zmin + len(self._sel_cl_data_original["z_obs"])
         )
 
+        # fill tables
         for it in range(n_tile):
 
             ## Re-arrange ranges for 4d array, to match the Obs NC ranges
             sel_cl_data_fmt["CG_seL_funcT"][it][
-                :,
-                :,
-                _size_add_lmin : nsteps_lobs_orig + _size_add_lmin,
-                _size_add_zmin : nsteps_zobs_orig + _size_add_zmin,
+                :, :, lobs_orig_slice, zobs_orig_slice
             ] = self._sel_cl_data_original[f"CG_seL_funcT"][it]
 
             ## Re-arrange ranges Purity, to match the Obs NC ranges
-            sel_cl_data_fmt[f"purity"][it][
-                _size_add_lmin : nsteps_lobs_orig + _size_add_lmin,
-                _size_add_zmin : nsteps_zobs_orig + _size_add_zmin,
-            ] = self._sel_cl_data_original[f"purity"][it]
+            sel_cl_data_fmt[f"purity"][it][lobs_orig_slice, zobs_orig_slice] = (
+                self._sel_cl_data_original[f"purity"][it]
+            )
 
         ##################
         # Keep area values

@@ -46,15 +46,28 @@ class SelectionFunction_interp:
             edges of Lobs bins for Number Counts
         zobsNC_edges: array
             edges of zobs bins for Number Counts
-        sel_cl_data: euclidlib.SelClFileReader
-            Object that read the SEL_CL output file and formats its accordingly. It must contain the attributtes: ztr_file, ltr_file, zobs_tot, lobs_tot, index_lobsfile_edges, index_zobsfile_edges, n_lobsNC, n_zobsNC, arrays, area_tile
+        sel_cl_data: dict
+            Object that read the SEL_CL output file and formats its accordingly. It must contain the keys:
+
+                * z_obs: xxx
+                * lambda_obs: xxx
+                * z_true: xxx
+                * lambda_true: xxx
+                * z_obs_step: xxx
+                * lambda_obs_step: xxx
+                * CG_seL_funcT: xxx
+                * completeness: xxx
+                * purity: xxx
+                * area_tile: xxx
+                * Omega_tot: xxx
+
         """
         self.A_l = A_l
         self.B_l = B_l
         self.C_l = C_l
         self.M_piv = M_piv
         self.z_piv = z_piv
-        self.sel_cl_data = sel_cl_data
+        self._sel_cl_data_original = sel_cl_data
 
     def lnlambda(self, z, M):
         r"""
@@ -141,215 +154,8 @@ class SelectionFunction_interp:
 
     ## NEW FUNCTION FROM SINFONIA FILE
 
-    def _compute_sum_of_I_ltr_ztr_lobs_lobs(
-        self,
-        zobs_tot,
-        lobs_tot,
-        arrays,
-        area_tile,
-    ):
-        ## Start loop on the tiles, to: -----------------------------------------------------------
-        ## extraxt 4d array, Completeness and Purity for the fits file
-        ## evaluate the different ingredients and integrals to obtain tildeI(λtr,ztr,∆λobs,∆zobs)
-        ## ASSUMPTION: the input file is normalised
-
-        ## Sum array over all tiles
-        sum_a = np.zeros_like(arrays[f"CG_seL_funcT_code_0"])
-
-        for it in range(len(area_tile)):
-
-            ## Select index to read 4d array, completeness and purity for the different tiles
-
-            ## Produce P_alpha(λobs|λtr,ztr) for all tiles
-            ## P(lobs|ltr,ztr) = integrate P(lobs,zobs|ltr,ztr) over zobs
-            CG_ricH_seL_funcT_code = integrate.simpson(
-                arrays[f"CG_seL_funcT_code_{it}"], x=zobs_tot, axis=3
-            )
-            ## Normalization: we start from P(lobs,zobs | ltr,ztr) that is normalized. Then we integrate on zobs.
-            ## P(lobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
-            N = integrate.simpson(CG_ricH_seL_funcT_code, x=lobs_tot, axis=2)
-            ## To deal with zeros
-            arrays[f"norm_CG_ricH_seL_funcT_code_{it}"] = np.zeros_like(
-                CG_ricH_seL_funcT_code, dtype=float
-            )
-            arrays[f"norm_CG_ricH_seL_funcT_code_{it}"] = np.divide(
-                CG_ricH_seL_funcT_code,
-                N[:, :, np.newaxis],
-                out=arrays[f"norm_CG_ricH_seL_funcT_code_{it}"],
-                where=N[:, :, np.newaxis] != 0,
-            )
-            ## np.shape(arrays[f"norm_CG_ricH_seL_funcT_code_{it}"]): (ltr, ztr, lobs)
-
-            ## Produce P_alpha(zobs|λtr,ztr) for all tiles
-            ## P(zobs|ltr,ztr) = integrate P(lobs,zobs|ltr,ztr) over lobs
-            CG_reD_seL_funcT_code = integrate.simpson(
-                arrays[f"CG_seL_funcT_code_{it}"], x=lobs_tot, axis=2
-            )
-            ## Normalization: we start from P(lobs,zobs|ltr,ztr) that is normalized. Then we integrate on lobs.
-            ## P(zobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
-            N = integrate.simpson(CG_reD_seL_funcT_code, x=zobs_tot, axis=2)
-            ## To deal with zeros
-            norm_CG_reD_seL_funcT_code = np.zeros_like(
-                CG_reD_seL_funcT_code, dtype=float
-            )
-            norm_CG_reD_seL_funcT_code = np.divide(
-                CG_reD_seL_funcT_code,
-                N[:, :, np.newaxis],
-                out=norm_CG_reD_seL_funcT_code,
-                where=N[:, :, np.newaxis] != 0,
-            )
-            arrays[f"norm_CG_reD_seL_funcT_code_{it}"] = norm_CG_reD_seL_funcT_code
-            ## np.shape(np.shape(arrays[f"norm_CG_reD_seL_funcT_code_{it}"])): (ltr, ztr, zobs)
-
-            ## Evaluate multiplication for each tile
-            ## Omega_alpha * Pα(λobs|λtr,ztr) * Pα(zobs|λtr,ztr) / Pα(λobs,zobs) * Cα(λtr,ztr)
-            ## Dimensions: (ltr, ztr, lobs)*(ltr, ztr, zobs)*(lobs, zobs)*(ltr, ztr) --> (ltr,ztr,lobs,zobs)
-            ## ASSUMPTION: we do not need other rescaling for the effective area Omega_alpha.
-            ## Expand dimensions to make shapes align
-            a_exp = arrays[f"norm_CG_ricH_seL_funcT_code_{it}"][:, :, :, None]
-            b_exp = arrays[f"norm_CG_reD_seL_funcT_code_{it}"][:, :, None, :]
-            c_exp = arrays[f"purity_code_{it}"][None, None, :, :]
-            d_exp = arrays[f"compl_{it}"][:, :, None, None]
-            ## To avoid dividing by 0: putting elements with 0 values to NaN
-            c_exp_safe = np.where(c_exp == 0, np.nan, c_exp)
-            arrays[f"mult_{it}"] = area_tile[it] * a_exp * b_exp / c_exp_safe * d_exp
-            ## or do we want to put the division to 0? If YES:
-            ## arrays[f"mult_{it}"] = np.where(c_exp != 0, a_exp*b_exp*d_exp/c_exp, 0.0)
-            ## np.shape(arrays[f"mult_{it}"]) : (ltr,ztr,lobs,zobs)
-
-            ## Produce sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
-            sum_a += arrays[f"mult_{it}"]
-
-        return sum_a
-
-    def sel_func_interp(self):
-        r"""
-        Selection Function from file.
-        Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
-        1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
-        Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
-
-        Returns
-        -------
-        integ4d_interp_func: 2d interpolator
-        """
-        # Produce sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
-        sum_a = self._compute_sum_of_I_ltr_ztr_lobs_lobs(
-            self.sel_cl_data.zobs_tot,
-            self.sel_cl_data.lobs_tot,
-            self.sel_cl_data.arrays,
-            self.sel_cl_data.area_tile,
-        )
-
-        ##############################
-        ## tildeI(λtr,ztr,∆λobs,∆zobs)
-        ##############################
-
-        ## Integrate 1/Omega_tot*sum_a = tildeI(λtr,ztr,∆λobs,∆zobs)
-        integ4d = np.zeros(
-            (
-                self.sel_cl_data.n_lobsNC,
-                self.sel_cl_data.n_zobsNC,
-                len(self.sel_cl_data.ltr_file),
-                len(self.sel_cl_data.ztr_file),
-            )
-        )
-
-        for ltab in range(self.sel_cl_data.n_lobsNC):
-            l_start = self.sel_cl_data.index_lobsfile_edges[ltab]
-            l_end = self.sel_cl_data.index_lobsfile_edges[ltab + 1]
-            lint = self.sel_cl_dataobs_tot[l_start:l_end]
-
-            for ztab in range(self.sel_cl_data.n_zobsNC):
-                z_start = self.sel_cl_data.index_zobsfile_edges[ztab]
-                z_end = self.sel_cl_data.index_zobsfile_edges[ztab + 1]
-                zint = self.sel_cl_datazobs_tot[z_start:z_end]
-
-                integrand = (
-                    1
-                    / self.sel_cl_data.Omega_tot
-                    * sum_a[:, :, l_start:l_end, z_start:z_end]
-                )
-                result_z = integrate.simpson(integrand, x=zint, axis=-1)
-                result_l = integrate.simpson(result_z, x=lint, axis=-1)
-                integ4d[ltab, ztab, :, :] = result_l
-
-        ## Building Interpolator for tildeI(λtr, ztr, ∆λobs, ∆zobs)
-        integ4d_interp_func = [
-            [
-                interpolate.RectBivariateSpline(
-                    self.sel_cl_datatr_file,
-                    self.sel_cl_dataztr_file,
-                    integ4d[ltab, ztab, :, :],
-                )
-                for ztab in range(self.sel_cl_data.n_zobsNC)
-            ]
-            for ltab in range(self.sel_cl_data.n_lobsNC)
-        ]
-
-        return integ4d_interp_func
-
-
-class SelClFileReader:
-    """Class to read ouput file from SEL_CL"""
-
-    def __init__(self, sf_filename, Omega_tot=None):
-        """Object to read ouput file from SEL_CL.
-
-        Parameters
-        ----------
-        file_selection: array
-            multi-dimensional array storing fits file of the Selection outputted from Sinfonia
-            ASSUMPTION: we are reading the fits file outside of this module
-        Omega_tot: float
-            Total observed area
-        """
-
-        ###############
-        # internal data
-        ###############
-
-        # To be adapted with fitsio - f = fitsio.FITS("your_file.fits")
-        self._file_selection = astropy.io.fits.open(sf_filename)
-
-        self._lobsNC_edges = lobsNC_edges
-        self._zobsNC_edges = zobsNC_edges
-
-        # Values to be filled by _read_redshifts_and_richness_from_file
-
-        self._zobs_file = None
-        self._lobs_file = None
-        self._size_add_zmin = None
-        self._size_add_lmin = None
-
-        #########################
-        # data to be used by cloe
-        #########################
-
-        self.Omega_tot = Omega_tot
-
-        # Values to be filled by _read_redshifts_and_richness_from_file
-        self.ztr_file = None
-        self.ltr_file = None
-        self.zobs_tot = None
-        self.lobs_tot = None
-
-        # will be filled after _read_redshifts_and_richness_from_file
-        self.index_lobsfile_edges = None
-        self.index_zobsfile_edges = None
-
-        # will be filled in prepare_data
-        self.n_lobsNC = None
-        self.n_zobsNC = None
-
-        ## 4d arrays, Completeness and Purity for the fits file. Filled by _read_redshifts_and_richness_from_file
-        self.arrays = {}
-
-        # Array to store area of each tile: Effective area in deg2. Filled by _read_redshifts_and_richness_from_file
-        self.area_tile = None
-
-    def _read_redshifts_and_richness_from_file(self, lobsNC_edges, zobsNC_edges):
-        """Read arrays
+    def _get_sel_cl_data_formatted_with_obs_bins(self, lobsNC_edges, zobsNC_edges):
+        """Format SEL_CL data with obs bins
 
         Parameters
         ----------
@@ -357,45 +163,34 @@ class SelClFileReader:
             edges of Lobs bins for Number Counts
         zobsNC_edges: array
             edges of zobs bins for Number Counts
+
+        Returns
+        -------
+        sel_cl_data_fmt: dict
+            SEL_CL data reshaped with obs bins
         """
+
+        sel_cl_data_fmt = {
+            "z_obs": None,
+            "lambda_obs": None,
+            "z_true": None,
+            "lambda_true": None,
+            "index_lambda_obs_edges": None,
+            "index_z_obs_edges": None,
+            "CG_seL_funcT": None,
+            "purity": None,
+            "completeness": None,
+            "I_ltr_ztr_lobs_lobs": None,
+            "area_tile": None,
+            "Omega_tot": None,
+        }
+
+        ################
+        # Reshape arrays
+        ################
 
         ## Definition of arrays for Obs and True quantities
         ## ASSUMPTION: all tiles have the same ranges and binning
-
-        delta_zobs_file = self._file_selection[1].header["HIERARCH Z_OBS_STEP"]
-        delta_lobs_file = self._file_selection[1].header["HIERARCH LAMBDA_OBS_STEP"]
-        delta_ztr_file = self._file_selection[1].header["HIERARCH Z_TRUE_STEP"]
-        delta_ltr_file = self._file_selection[1].header["HIERARCH LAMBDA_TRUE_STEP"]
-
-        nsteps_zobs_file = self._file_selection[1].header["NAXIS1"]
-        nsteps_lobs_file = self._file_selection[1].header["NAXIS2"]
-        nsteps_ztr_file = self._file_selection[1].header["NAXIS3"]
-        nsteps_ltr_file = self._file_selection[1].header["NAXIS4"]
-
-        self._zobs_file = np.linspace(
-            self._file_selection[1].header["HIERARCH Z_OBS_START"],
-            self._file_selection[1].header["HIERARCH Z_OBS_END"],
-            nsteps_zobs_file,
-            endpoint=True,
-        )
-        self._lobs_file = np.linspace(
-            self._file_selection[1].header["HIERARCH LAMBDA_OBS_START"],
-            self._file_selection[1].header["HIERARCH LAMBDA_OBS_END"],
-            nsteps_lobs_file,
-            endpoint=True,
-        )
-        self.ztr_file = np.linspace(
-            self._file_selection[1].header["HIERARCH Z_TRUE_START"],
-            self._file_selection[1].header["HIERARCH Z_TRUE_END"],
-            nsteps_ztr_file,
-            endpoint=True,
-        )
-        self.ltr_file = np.linspace(
-            self._file_selection[1].header["HIERARCH LAMBDA_TRUE_START"],
-            self._file_selection[1].header["HIERARCH LAMBDA_TRUE_END"],
-            nsteps_ltr_file,
-            endpoint=True,
-        )
 
         ## Check ranges of Obs arrays of the file and compare with NC Obs arrays
         ## Deal with min and max in lobs and zobs:
@@ -404,125 +199,165 @@ class SelClFileReader:
         ## max(zobs_file) might be < max(zobsNC_edges) so we put an IF condition for now: Prob for z > max(zobs_file) = 0
         ## min(zobs_file) might be > min(zobsNC_edges) so we put an IF condition for now: Prob for z < min(zobs_file) = 0
 
-        ## max(lobs_file) might be < max(lobsNC_edges)
-        if self._lobs_file[-1] < lobsNC_edges[-1]:
-            n_new = int((lobsNC_edges[-1] - self._lobs_file[-1]) / delta_lobs_file)
-            lobs_added = np.linspace(
-                self._lobs_file[-1] + delta_lobs_file,
-                lobsNC_edges[-1],
-                n_new,
-                endpoint=True,
-            )
-            lobs_tot_high = np.concatenate((self._lobs_file, lobs_added), axis=0)
-        else:
-            lobs_tot_high = self._lobs_file
-        ## min(lobs_file) might be > min(lobsNC_edges)
-        if self._lobs_file[0] > lobsNC_edges[0]:
-            n_new = int((self._lobs_file[0] - lobsNC_edges[0]) / delta_lobs_file)
-            lobs_added = np.linspace(
-                lobsNC_edges[0],
-                self._lobs_file[0] - delta_lobs_file,
-                n_new,
-                endpoint=True,
-            )
-            self.lobs_tot = np.concatenate((lobs_added, lobs_tot_high), axis=0)
-            self._size_add_lmin = n_new
-        else:
-            self.lobs_tot = lobs_tot_high
-            self._size_add_lmin = 0
-        ## max(zobs_file) might be < max(zobsNC_edges)
-        if self._zobs_file[-1] < zobsNC_edges[-1]:
-            n_new = int((zobsNC_edges[-1] - self._zobs_file[-1]) / delta_zobs_file)
-            zobs_added = np.linspace(
-                self._zobs_file[-1] + delta_zobs_file,
-                zobsNC_edges[-1],
-                n_new,
-                endpoint=True,
-            )
-            zobs_tot_high = np.concatenate((self._zobs_file, zobs_added), axis=0)
-        else:
-            zobs_tot_high = self._zobs_file
-        ## min(zobs_file) might be > min(zobsNC_edges)
-        if self._zobs_file[0] > zobsNC_edges[0]:
-            n_new = int((self._zobs_file[0] - zobsNC_edges[0]) / delta_zobs_file)
-            zobs_added = np.linspace(
-                zobsNC_edges[0],
-                self._zobs_file[0] - delta_zobs_file,
-                n_new,
-                endpoint=True,
-            )
-            self.zobs_tot = np.concatenate((zobs_added, zobs_tot_high), axis=0)
-            self._size_add_zmin = n_new
-        else:
-            self.zobs_tot = zobs_tot_high
-            self._size_add_zmin = 0
+        zobs_fmt, _size_add_zmin = self._redefine_array_with_obs_bins(
+            self._sel_cl_data_original["z_obs"],
+            self._sel_cl_data_original["z_obs_step"],
+            zobsNC_edges,
+        )
+        lobs_fmt, _size_add_lmin = self._redefine_array_with_obs_bins(
+            self._sel_cl_data_original["lambda_obs"],
+            self._sel_cl_data_original["lambda_obs_step"],
+            lobsNC_edges,
+        )
 
-    def _get_formatted_arrays(self):
-        nsteps_ltr_file = len(self.ltr_file)
-        nsteps_ztr_file = len(self.ztr_file)
-        nsteps_lobs_tot = len(self.lobs_tot)
-        nsteps_zobs_tot = len(self.zobs_tot)
+        sel_cl_data_fmt["z_obs"] = zobs_fmt
+        sel_cl_data_fmt["lambda_obs"] = lobs_fmt
 
+        ## Find common index between (lobs_file-->lobs_edges) and (zobs_file-->zobs_edges)
+        sel_cl_data_fmt["index_lambda_obs_edges"] = [
+            np.abs(sel_cl_data_fmt["lambda_obs"] - value).argmin()
+            for value in lobsNC_edges
+        ]
+        sel_cl_data_fmt["index_z_obs_edges"] = [
+            np.abs(sel_cl_data_fmt["z_obs"] - value).argmin() for value in zobsNC_edges
+        ]
+
+        # Keep true values
+        sel_cl_data_fmt["z_true"] = self._sel_cl_data_original["z_true"]
+        sel_cl_data_fmt["lambda_true"] = self._sel_cl_data_original["lambda_true"]
+
+        ################
+        # Reshape tables
+        ################
+
+        nsteps_ltr_orig = len(self._sel_cl_data_original["lambda_true"])
+        nsteps_ztr_orig = len(self._sel_cl_data_original["z_true"])
+        nsteps_lobs_fmt = len(sel_cl_data_fmt["lambda_obs"])
+        nsteps_zobs_fmt = len(sel_cl_data_fmt["z_obs"])
+        n_tile = len(self._sel_cl_data_original["CG_seL_funcT"])
+
+        sel_cl_data_fmt["CG_seL_funcT"] = np.zeros(
+            (n_tile, nsteps_ltr_orig, nsteps_ztr_orig, nsteps_lobs_fmt, nsteps_zobs_fmt)
+        )
+        sel_cl_data_fmt["purity"] = np.zeros((n_tile, nsteps_lobs_fmt, nsteps_zobs_fmt))
+        # Keep completeness values
+        sel_cl_data_fmt["completeness"] = np.array(
+            [comp.copy() for comp in self._sel_cl_data_original["completeness"]]
+        )
+
+        for it in range(n_tile):
+
+            ## Re-arrange ranges for 4d array, to match the Obs NC ranges
+            sel_cl_data_fmt["CG_seL_funcT"][it][
+                :,
+                :,
+                _size_add_lmin : nsteps_lobs_file + _size_add_lmin,
+                _size_add_zmin : nsteps_zobs_file + _size_add_zmin,
+            ] = self._sel_cl_data_original[f"CG_seL_funcT"][it]
+
+            ## Re-arrange ranges Purity, to match the Obs NC ranges
+            sel_cl_data_fmt[f"purity"][it][
+                _size_add_lmin : nsteps_lobs_file + _size_add_lmin,
+                _size_add_zmin : nsteps_zobs_file + _size_add_zmin,
+            ] = self._sel_cl_data_original[f"purity"][it]
+
+        ##################
+        # Keep area values
+        ##################
+        sel_cl_data_fmt["area_tile"] = self._sel_cl_data_original["area_tile"].copy()
+        sel_cl_data_fmt["Omega_tot"] = self._sel_cl_data_original["Omega_tot"]
+
+        return sel_cl_data_fmt
+
+    @staticmethod
+    def _compute_I_ltr_ztr_lobs_lobs(sel_cl_data_fmt):
+        """Computes Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
+        and add it to input dictionary.
+
+        Parameters
+        ----------
+        sel_cl_data_fmt: dict
+            SEL_CL data reshaped with obs bins
+        """
         ## Start loop on the tiles, to: -----------------------------------------------------------
         ## extraxt 4d array, Completeness and Purity for the fits file
         ## evaluate the different ingredients and integrals to obtain tildeI(λtr,ztr,∆λobs,∆zobs)
         ## ASSUMPTION: the input file is normalised
+        n_tile = len(sel_cl_data_fmt["CG_seL_funcT"])
 
-        ## Find number of tiles from fits file
-        num_headers = len(self._file_selection)
-        n_tile = int((num_headers - 1) / 7)
-
-        ## Index of P_4d, Compl and Pur for each tile
-        index_4d_save = np.zeros(n_tile, dtype=int)
-        index_compl_save = np.zeros(n_tile, dtype=int)
-        index_pur_save = np.zeros(n_tile, dtype=int)
-
-        self.area_tile = np.zeros(n_tile)
+        sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = np.zeros(
+            (
+                n_tile,
+                len(sel_cl_data_fmt["lambda_true"]),
+                len(sel_cl_data_fmt["z_true"]),
+                len(sel_cl_data_fmt["lambda_obs"]),
+                len(sel_cl_data_fmt["z_obs"]),
+            ),
+            dtype=float,
+        )
 
         for it in range(n_tile):
 
             ## Select index to read 4d array, completeness and purity for the different tiles
-            index_4d = 1 + it
-            index_compl = 1 + 2 * n_tile + it
-            index_pur = 1 + 4 * n_tile + it
-            ## Save index
-            index_4d_save[it] = index_4d
-            index_compl_save[it] = index_compl
-            index_pur_save[it] = index_pur
 
-            ## Save 4d array, Completeness and Purity for each tile
-            self.arrays[f"CG_seL_funcT_{it}"] = self._file_selection[index_4d].data
-            ## np.shape(self.arrays[f"CG_seL_funcT_{it}"]): (ltr, ztr, lobs, zobs)
-            self.arrays[f"compl_{it}"] = self._file_selection[index_compl].data
-            ## np.shape(self.arrays[f"compl_{it}"]): (ltr, ztr)
-            self.arrays[f"purity_{it}"] = self._file_selection[index_pur].data
-            ## np.shape(self.arrays[f"purity_{it}"]): (lobs, zobs)
-
-            index_area = 1 + 6 * n_tile + it
-            self.area_tile[it] = self._file_selection[index_area].header[
-                "HIERARCH EFFECTIVE_AREA"
-            ]
-
-            ## Re-arrange ranges for 4d array, to match the Obs NC ranges
-            self.arrays[f"CG_seL_funcT_code_{it}"] = np.zeros(
-                (nsteps_ltr_file, nsteps_ztr_file, nsteps_lobs_tot, nsteps_zobs_tot)
+            ## Produce P_alpha(λobs|λtr,ztr) for all tiles
+            ## P(lobs|ltr,ztr) = integrate P(lobs,zobs|ltr,ztr) over zobs
+            CG_ricH_seL_funcT = integrate.simpson(
+                sel_cl_data_fmt["CG_seL_funcT"][it], x=sel_cl_data_fmt["z_obs"], axis=3
             )
-            self.arrays[f"CG_seL_funcT_code_{it}"][
-                :,
-                :,
-                self._size_add_lmin : nsteps_lobs_file + self._size_add_lmin,
-                self._size_add_zmin : nsteps_zobs_file + self._size_add_zmin,
-            ] = self.arrays[f"CG_seL_funcT_{it}"]
-            ## Re-arrange ranges Purity, to match the Obs NC ranges
-            self.arrays[f"purity_code_{it}"] = np.zeros(
-                (nsteps_lobs_tot, nsteps_zobs_tot)
+            ## Normalization: we start from P(lobs,zobs | ltr,ztr) that is normalized. Then we integrate on zobs.
+            ## P(lobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
+            N = integrate.simpson(
+                CG_ricH_seL_funcT, x=sel_cl_data_fmt["lambda_obs"], axis=2
             )
-            self.arrays[f"purity_code_{it}"][
-                self._size_add_lmin : nsteps_lobs_file + self._size_add_lmin,
-                self._size_add_zmin : nsteps_zobs_file + self._size_add_zmin,
-            ] = self.arrays[f"purity_{it}"]
+            ## To deal with zeros
+            norm_CG_ricH_seL_funcT = np.zeros_like(CG_ricH_seL_funcT_code, dtype=float)
+            norm_CG_ricH_seL_funcT = np.divide(
+                CG_ricH_seL_funcT,
+                N[:, :, np.newaxis],
+                out=norm_CG_ricH_seL_funcT,
+                where=N[:, :, np.newaxis] != 0,
+            )
+            ## np.shape(norm_CG_ricH_seL_funcT): (ltr, ztr, lobs)
 
-    def prepare_data(
+            ## Produce P_alpha(zobs|λtr,ztr) for all tiles
+            ## P(zobs|ltr,ztr) = integrate P(lobs,zobs|ltr,ztr) over lobs
+            CG_reD_seL_funcT = integrate.simpson(
+                sel_cl_data_fmt["CG_seL_funcT"][it],
+                x=sel_cl_data_fmt["lambda_obs"],
+                axis=2,
+            )
+            ## Normalization: we start from P(lobs,zobs|ltr,ztr) that is normalized. Then we integrate on lobs.
+            ## P(zobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
+            N = integrate.simpson(CG_reD_seL_funcT, x=sel_cl_data_fmt["z_obs"], axis=2)
+            ## To deal with zeros
+            norm_CG_reD_seL_funcT = np.zeros_like(CG_reD_seL_funcT, dtype=float)
+            norm_CG_reD_seL_funcT = np.divide(
+                CG_reD_seL_funcT,
+                N[:, :, np.newaxis],
+                out=norm_CG_reD_seL_funcT,
+                where=N[:, :, np.newaxis] != 0,
+            )
+            ## np.shape(np.shape(norm_CG_reD_seL_funcT)): (ltr, ztr, zobs)
+
+            ## Evaluate multiplication for each tile
+            ## Omega_alpha * Pα(λobs|λtr,ztr) * Pα(zobs|λtr,ztr) / Pα(λobs,zobs) * Cα(λtr,ztr)
+            ## Dimensions: (ltr, ztr, lobs)*(ltr, ztr, zobs)*(lobs, zobs)*(ltr, ztr) --> (ltr,ztr,lobs,zobs)
+            ## ASSUMPTION: we do not need other rescaling for the effective area Omega_alpha.
+            ## Expand dimensions to make shapes align
+            a_exp = norm_CG_ricH_seL_funcT_code[:, :, :, None]
+            b_exp = norm_CG_reD_seL_funcT_code[:, :, None, :]
+            c_exp = sel_cl_data_fmt["purity"][it][None, None, :, :]
+            d_exp = sel_cl_data_fmt["completeness"][it][:, :, None, None]
+            ## To avoid dividing by 0: putting elements with 0 values to NaN
+            c_exp_safe = np.where(c_exp == 0, np.nan, c_exp)
+            sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"][it] = (
+                sel_cl_data_fmt["area_tile"][it] * a_exp * b_exp / c_exp_safe * d_exp
+            )
+            ## or do we want to put the division to 0? If YES:
+            ##  sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"][it] = np.where(c_exp != 0, a_exp*b_exp*d_exp/c_exp, 0.0)
+
+    def sel_func_interp(
         self,
         lobsNC_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
         zobsNC_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
@@ -545,20 +380,195 @@ class SelClFileReader:
         integ4d_interp_func: 2d interpolator
         """
 
-        # read arrays from file
-        self._read_redshifts_and_richness_from_file(lobsNC_edges, zobsNC_edges)
+        # Format sel_cl data with obs bins
+        sel_cl_data_fmt = self._get_sel_cl_data_formatted_with_obs_bins(
+            lobsNC_edges, zobsNC_edges
+        )
 
-        ## Find common index between (lobs_file-->lobs_edges) and (zobs_file-->zobs_edges)
-        self.index_lobsfile_edges = [
-            np.abs(self.lobs_tot - value).argmin() for value in lobsNC_edges
-        ]
-        self.index_zobsfile_edges = [
-            np.abs(self.zobs_tot - value).argmin() for value in zobsNC_edges
-        ]
+        # Compute Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
+        self._compute_I_ltr_ztr_lobs_lobs(sel_cl_data_fmt)
 
-        # Get arrays by tiles
-        self._get_formatted_arrays()
+        sum_a = sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"].sum(axis=0)
+
+        ##############################
+        ## tildeI(λtr,ztr,∆λobs,∆zobs)
+        ##############################
 
         ## Define ranges for Obs arrays: arrays for grid in final NC
-        self.n_lobsNC = len(lobsNC_edges) - 1
-        self.n_zobsNC = len(zobsNC_edges) - 1
+        n_lobsNC = len(lobsNC_edges) - 1
+        n_zobsNC = len(zobsNC_edges) - 1
+
+        ## Integrate 1/Omega_tot*sum_a = tildeI(λtr,ztr,∆λobs,∆zobs)
+        integ4d = np.zeros(
+            (
+                n_lobsNC,
+                n_zobsNC,
+                len(sel_cl_data_fmt["lambda_true"]),
+                len(sel_cl_data_fmt["z_true"]),
+            )
+        )
+
+        for ltab in range(n_lobsNC):
+            l_start = sel_cl_data_fmt["index_lambda_obs_edges"][ltab]
+            l_end = sel_cl_data_fmt["index_lambda_obs_edges"][ltab + 1]
+            lint = sel_cl_data_fmt["lambda_obs"][l_start:l_end]
+
+            for ztab in range(n_zobsNC):
+                z_start = sel_cl_data_fmt["index_z_obs_edges"][ztab]
+                z_end = sel_cl_data_fmt["index_z_obs_edges"][ztab + 1]
+                zint = sel_cl_data_fmt["z_obs"][z_start:z_end]
+
+                integrand = (
+                    1 / sel_cl_data_fmt["Omega_tot"],
+                    *sum_a[:, :, l_start:l_end, z_start:z_end],
+                )
+                result_z = integrate.simpson(integrand, x=zint, axis=-1)
+                result_l = integrate.simpson(result_z, x=lint, axis=-1)
+                integ4d[ltab, ztab, :, :] = result_l
+
+        ## Building Interpolator for tildeI(λtr, ztr, ∆λobs, ∆zobs)
+        integ4d_interp_func = [
+            [
+                interpolate.RectBivariateSpline(
+                    sel_cl_data_fmt["lambda_true"],
+                    sel_cl_data_fmt["z_true"],
+                    integ4d[ltab, ztab, :, :],
+                )
+                for ztab in range(n_zobsNC)
+            ]
+            for ltab in range(n_lobsNC)
+        ]
+
+        return integ4d_interp_func
+
+    @staticmethod
+    def _redefine_array_with_obs_bins(
+        original_array,
+        original_array_step,
+        obs_bins,
+    ):
+        ## max(original_array) might be < max(obs_bins)
+        if original_array[-1] < obs_bins[-1]:
+            n_new = int((obs_bins[-1] - original_array[-1]) / original_array_step)
+            array_added = np.linspace(
+                original_array[-1] + original_array_step,
+                obs_bins[-1],
+                n_new,
+                endpoint=True,
+            )
+            array_tot_high = np.concatenate((original_array, array_added), axis=0)
+        else:
+            array_tot_high = original_array
+        ## min(original_array) might be > min(obs_bins)
+        if original_array[0] > obs_bins[0]:
+            n_new = int((original_array[0] - obs_bins[0]) / original_array_step)
+            array_added = np.linspace(
+                obs_bins[0],
+                original_array[0] - original_array_step,
+                n_new,
+                endpoint=True,
+            )
+            array_new = np.concatenate((array_added, array_tot_high), axis=0)
+            size_add_min = n_new
+        else:
+            array_new = array_tot_high
+            size_add_min = 0
+
+        return array_new, size_add_min
+
+
+def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
+    """Object to read ouput file from SEL_CL.
+
+    Parameters
+    ----------
+    file_selection: array
+        multi-dimensional array storing fits file of the Selection outputted from Sinfonia
+        ASSUMPTION: we are reading the fits file outside of this module
+    Omega_tot: float
+        Total observed area
+
+    Returns
+    -------
+    sel_cl_data: dict
+        Object that read the SEL_CL output file and formats its accordingly. It must contain the keys:
+
+            * z_obs: xxx
+            * lambda_obs: xxx
+            * z_true: xxx
+            * lambda_true: xxx
+            * z_obs_step: xxx
+            * lambda_obs_step: xxx
+            * CG_seL_funcT: xxx
+            * completeness: xxx
+            * purity: xxx
+            * area_tile: xxx
+            * Omega_tot: xxx
+    """
+
+    # To be adapted with fitsio - f = fitsio.FITS("your_file.fits")
+    file_selection = astropy.io.fits.open(sel_cl_filename)
+
+    # dictionary to store all outputs
+    sel_cl_data = {}
+    for i, name in enumerate(["Z_OBS", "LAMBDA_OBS", "Z_TRUE", "LAMBDA_TRUE"]):
+        sel_cl_data[name.lower()] = np.linspace(
+            file_selection[1].header[f"HIERARCH {name}_START"],
+            file_selection[1].header[f"HIERARCH {name}_END"],
+            file_selection[1].header[f"NAXIS{i+1}"],
+            endpoint=True,
+        )
+    for name in ["Z_OBS", "LAMBDA_OBS"]:
+        sel_cl_data[f"{name.lower()}_step"] = file_selection[1].header[
+            f"HIERARCH {name}_STEP"
+        ]
+
+    # Add selection tables per tile
+
+    ## Start loop on the tiles, to: -----------------------------------------------------------
+    ## extraxt 4d array, Completeness and Purity for the fits file
+
+    ## Find number of tiles from fits file
+    num_headers = len(file_selection)
+    n_tile = int((num_headers - 1) / 7)
+
+    ## Index of P_4d, Compl and Pur for each tile
+    # index_4d_save = np.zeros(n_tile, dtype=int)
+    # index_compl_save = np.zeros(n_tile, dtype=int)
+    # index_pur_save = np.zeros(n_tile, dtype=int)
+
+    sel_cl_data.update(
+        {
+            "CG_seL_funcT": [],
+            "completeness": [],
+            "purity": [],
+            "area_tile": np.zeros(n_tile),
+        }
+    )
+
+    for it in range(n_tile):
+
+        ## Select index to read 4d array, completeness and purity for the different tiles
+        index_4d = 1 + it
+        index_compl = 1 + 2 * n_tile + it
+        index_pur = 1 + 4 * n_tile + it
+        ## Save index
+        # index_4d_save[it] = index_4d
+        # index_compl_save[it] = index_compl
+        # index_pur_save[it] = index_pur
+
+        ## Save 4d array, Completeness and Purity for each tile
+        sel_cl_data["CG_seL_funcT"].append(file_selection[index_4d].data)
+        ## np.shape(sel_cl_data["CG_seL_funcT_{it}"]): (ltr, ztr, lobs, zobs)
+        sel_cl_data["completeness"].append(file_selection[index_compl].data)
+        ## np.shape(sel_cl_data["compl_{it}"]): (ltr, ztr)
+        sel_cl_data["purity"].append(file_selection[index_pur].data)
+
+        index_area = 1 + 6 * n_tile + it
+        sel_cl_data["area_tile"][it] = file_selection[index_area].header[
+            "HIERARCH EFFECTIVE_AREA"
+        ]
+
+    sel_cl_data["Omega_tot"] = sel_cl_data["area_tile"].sum()
+
+    return sel_cl_data

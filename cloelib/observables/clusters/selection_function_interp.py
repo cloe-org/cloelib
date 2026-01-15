@@ -239,10 +239,9 @@ class SelectionFunction_interp:
         # reshape purity and seL_func
 
         # initialize with zeros
-        n_tile = len(self._sel_cl_data_original["CG_seL_funcT"])
         sel_cl_data_fmt["CG_seL_funcT"] = np.zeros(
             (
-                n_tile,
+                len(self._sel_cl_data_original["CG_seL_funcT"]),
                 len(self._sel_cl_data_original["lambda_true"]),
                 len(self._sel_cl_data_original["z_true"]),
                 len(sel_cl_data_fmt["lambda_obs"]),
@@ -250,7 +249,11 @@ class SelectionFunction_interp:
             )
         )
         sel_cl_data_fmt["purity"] = np.zeros(
-            (n_tile, len(sel_cl_data_fmt["lambda_obs"]), len(sel_cl_data_fmt["z_obs"]))
+            (
+                len(self._sel_cl_data_original["CG_seL_funcT"]),
+                len(sel_cl_data_fmt["lambda_obs"]),
+                len(sel_cl_data_fmt["z_obs"]),
+            )
         )
 
         # find which indices on the table will be filled
@@ -292,20 +295,13 @@ class SelectionFunction_interp:
         ## extraxt 4d array, Completeness and Purity for the fits file
         ## evaluate the different ingredients and integrals to obtain tildeI(λtr,ztr,∆λobs,∆zobs)
         ## ASSUMPTION: the input file is normalised
-        n_tile = len(sel_cl_data_fmt["CG_seL_funcT"])
 
-        sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = np.zeros(
-            (
-                n_tile,
-                len(sel_cl_data_fmt["lambda_true"]),
-                len(sel_cl_data_fmt["z_true"]),
-                len(sel_cl_data_fmt["lambda_obs"]),
-                len(sel_cl_data_fmt["z_obs"]),
-            ),
+        sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = np.zeros_like(
+            sel_cl_data_fmt["CG_seL_funcT"],
             dtype=float,
         )
 
-        for it in range(n_tile):
+        for it in range(len(sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"])):
 
             ## Select index to read 4d array, completeness and purity for the different tiles
 
@@ -563,28 +559,28 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
 
     ## Find number of tiles from fits file
     num_headers = len(file_selection)
-    n_tile = int((num_headers - 1) / 7)
+    n_tiles = int((num_headers - 1) / 7)
 
     ## Index of P_4d, Compl and Pur for each tile
-    # index_4d_save = np.zeros(n_tile, dtype=int)
-    # index_compl_save = np.zeros(n_tile, dtype=int)
-    # index_pur_save = np.zeros(n_tile, dtype=int)
+    # index_4d_save = np.zeros(n_tiles, dtype=int)
+    # index_compl_save = np.zeros(n_tiles, dtype=int)
+    # index_pur_save = np.zeros(n_tiles, dtype=int)
 
     sel_cl_data.update(
         {
             "CG_seL_funcT": [],
             "completeness": [],
             "purity": [],
-            "area_tile": np.zeros(n_tile),
+            "area_tile": np.zeros(n_tiles),
         }
     )
 
-    for it in range(n_tile):
+    for it in range(n_tiles):
 
         ## Select index to read 4d array, completeness and purity for the different tiles
         index_4d = 1 + it
-        index_compl = 1 + 2 * n_tile + it
-        index_pur = 1 + 4 * n_tile + it
+        index_compl = 1 + 2 * n_tiles + it
+        index_pur = 1 + 4 * n_tiles + it
         ## Save index
         # index_4d_save[it] = index_4d
         # index_compl_save[it] = index_compl
@@ -597,7 +593,7 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
         ## np.shape(sel_cl_data["completeness"]): (ltr, ztr)
         sel_cl_data["purity"].append(file_selection[index_pur].data)
 
-        index_area = 1 + 6 * n_tile + it
+        index_area = 1 + 6 * n_tiles + it
         sel_cl_data["area_tile"][it] = file_selection[index_area].header[
             "HIERARCH EFFECTIVE_AREA"
         ]

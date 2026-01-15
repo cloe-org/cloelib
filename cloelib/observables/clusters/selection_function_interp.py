@@ -262,18 +262,14 @@ class SelectionFunction_interp:
             _size_add_zmin, _size_add_zmin + len(self._sel_cl_data_original["z_obs"])
         )
 
-        # fill tables
-        for it in range(n_tile):
-
-            ## Re-arrange ranges for 4d array, to match the Obs NC ranges
-            sel_cl_data_fmt["CG_seL_funcT"][it][
-                :, :, lobs_orig_slice, zobs_orig_slice
-            ] = self._sel_cl_data_original[f"CG_seL_funcT"][it]
-
-            ## Re-arrange ranges Purity, to match the Obs NC ranges
-            sel_cl_data_fmt[f"purity"][it][lobs_orig_slice, zobs_orig_slice] = (
-                self._sel_cl_data_original[f"purity"][it]
-            )
+        ## Re-arrange ranges for 4d array, to match the Obs NC ranges
+        sel_cl_data_fmt["CG_seL_funcT"][:, :, :, lobs_orig_slice, zobs_orig_slice] = (
+            self._sel_cl_data_original[f"CG_seL_funcT"]
+        )
+        ## Re-arrange ranges Purity, to match the Obs NC ranges
+        sel_cl_data_fmt[f"purity"][:, lobs_orig_slice, zobs_orig_slice] = (
+            self._sel_cl_data_original[f"purity"]
+        )
 
         ##################
         # Keep area values
@@ -574,9 +570,9 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
 
         ## Save 4d array, Completeness and Purity for each tile
         sel_cl_data["CG_seL_funcT"].append(file_selection[index_4d].data)
-        ## np.shape(sel_cl_data["CG_seL_funcT_{it}"]): (ltr, ztr, lobs, zobs)
+        ## np.shape(sel_cl_data["CG_seL_funcT"]): (ltr, ztr, lobs, zobs)
         sel_cl_data["completeness"].append(file_selection[index_compl].data)
-        ## np.shape(sel_cl_data["compl_{it}"]): (ltr, ztr)
+        ## np.shape(sel_cl_data["completeness"]): (ltr, ztr)
         sel_cl_data["purity"].append(file_selection[index_pur].data)
 
         index_area = 1 + 6 * n_tile + it
@@ -585,5 +581,9 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
         ]
 
     sel_cl_data["Omega_tot"] = sel_cl_data["area_tile"].sum()
+
+    # convert tables into arrays
+    for name in ("CG_seL_funcT", "completeness", "purity"):
+        sel_cl_data[name] = np.array(sel_cl_data[name])
 
     return sel_cl_data

@@ -401,6 +401,7 @@ class SelectionFunction_interp:
         n_zobsNC = len(zobsNC_edges) - 1
 
         ## Integrate 1/Omega_tot*sum_a = tildeI(λtr,ztr,∆λobs,∆zobs)
+        ## and build interpolator
         integ4d = np.zeros(
             (
                 n_lobsNC,
@@ -409,10 +410,13 @@ class SelectionFunction_interp:
                 len(sel_cl_data_fmt["z_true"]),
             )
         )
+        integ4d_interp_func = []
 
         for ltab in range(n_lobsNC):
             l_start, l_end = sel_cl_data_fmt["index_lambda_obs_edges"][ltab : ltab + 2]
             lint = sel_cl_data_fmt["lambda_obs"][l_start:l_end]
+
+            integ4d_interp_func.append([])
 
             for ztab in range(n_zobsNC):
                 z_start, z_end = sel_cl_data_fmt["index_z_obs_edges"][ztab : ztab + 2]
@@ -426,18 +430,13 @@ class SelectionFunction_interp:
                 result_l = integrate.simpson(result_z, x=lint, axis=-1)
                 integ4d[ltab, ztab, :, :] = result_l
 
-        ## Building Interpolator for tildeI(λtr, ztr, ∆λobs, ∆zobs)
-        integ4d_interp_func = [
-            [
-                interpolate.RectBivariateSpline(
-                    sel_cl_data_fmt["lambda_true"],
-                    sel_cl_data_fmt["z_true"],
-                    integ4d[ltab, ztab, :, :],
+                integ4d_interp_func[-1].append(
+                    interpolate.RectBivariateSpline(
+                        sel_cl_data_fmt["lambda_true"],
+                        sel_cl_data_fmt["z_true"],
+                        integ4d[ltab, ztab, :, :],
+                    )
                 )
-                for ztab in range(n_zobsNC)
-            ]
-            for ltab in range(n_lobsNC)
-        ]
 
         return integ4d_interp_func
 

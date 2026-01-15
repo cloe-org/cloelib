@@ -170,6 +170,16 @@ class SelectionFunction_interp:
             SEL_CL data reshaped with obs bins
         """
 
+        ## Definition of arrays for Obs and True quantities
+        ## ASSUMPTION: all tiles have the same ranges and binning
+
+        ## Check ranges of Obs arrays of the file and compare with NC Obs arrays
+        ## Deal with min and max in lobs and zobs:
+        ## max(lobs_file) might be < max(lobsNC_edges) so we put an IF condition for now: Prob for lambda > max(lobs_file) = 0
+        ## min(lobs_file) might be > min(lobsNC_edges) so we put an IF condition for now: Prob for lambda < min(lobs_file) = 0
+        ## max(zobs_file) might be < max(zobsNC_edges) so we put an IF condition for now: Prob for z > max(zobs_file) = 0
+        ## min(zobs_file) might be > min(zobsNC_edges) so we put an IF condition for now: Prob for z < min(zobs_file) = 0
+
         # list explicitly all values that will be filled:
         sel_cl_data_fmt = {
             "z_obs": None,
@@ -189,16 +199,6 @@ class SelectionFunction_interp:
         ################
         # Reshape arrays
         ################
-
-        ## Definition of arrays for Obs and True quantities
-        ## ASSUMPTION: all tiles have the same ranges and binning
-
-        ## Check ranges of Obs arrays of the file and compare with NC Obs arrays
-        ## Deal with min and max in lobs and zobs:
-        ## max(lobs_file) might be < max(lobsNC_edges) so we put an IF condition for now: Prob for lambda > max(lobs_file) = 0
-        ## min(lobs_file) might be > min(lobsNC_edges) so we put an IF condition for now: Prob for lambda < min(lobs_file) = 0
-        ## max(zobs_file) might be < max(zobsNC_edges) so we put an IF condition for now: Prob for z > max(zobs_file) = 0
-        ## min(zobs_file) might be > min(zobsNC_edges) so we put an IF condition for now: Prob for z < min(zobs_file) = 0
 
         zobs_fmt, _size_add_zmin = self._redefine_array_with_obs_bins(
             self._sel_cl_data_original["z_obs"],
@@ -346,17 +346,22 @@ class SelectionFunction_interp:
             ## Dimensions: (ltr, ztr, lobs)*(ltr, ztr, zobs)*(lobs, zobs)*(ltr, ztr) --> (ltr,ztr,lobs,zobs)
             ## ASSUMPTION: we do not need other rescaling for the effective area Omega_alpha.
             ## Expand dimensions to make shapes align
-            a_exp = norm_CG_ricH_seL_funcT[:, :, :, None]
-            b_exp = norm_CG_reD_seL_funcT[:, :, None, :]
-            c_exp = sel_cl_data_fmt["purity"][it][None, None, :, :]
-            d_exp = sel_cl_data_fmt["completeness"][it][:, :, None, None]
+
             ## To avoid dividing by 0: putting elements with 0 values to NaN
-            c_exp_safe = np.where(c_exp == 0, np.nan, c_exp)
+            pur_reshaped = sel_cl_data_fmt["purity"][it, None, None, :, :]
+            pur_reshaped = np.where(pur_reshaped == 0, np.nan, pur_reshaped)
+
             sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"][it] = (
-                sel_cl_data_fmt["area_tile"][it] * a_exp * b_exp / c_exp_safe * d_exp
+                sel_cl_data_fmt["area_tile"][it]
+                * norm_CG_ricH_seL_funcT[:, :, :, None]
+                * norm_CG_reD_seL_funcT[:, :, None, :]
+                / pur_reshaped
+                * sel_cl_data_fmt["completeness"][it, :, :, None, None]
             )
             ## or do we want to put the division to 0? If YES:
-            ##  sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"][it] = np.where(c_exp != 0, a_exp*b_exp*d_exp/c_exp, 0.0)
+            ##  sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"][it] = (
+            ##    np.where(pur_reshaped != 0, sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"][it], 0.0)
+            ##  )
 
     def sel_func_interp(
         self,

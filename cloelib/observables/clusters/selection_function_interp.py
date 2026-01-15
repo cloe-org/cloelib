@@ -232,6 +232,8 @@ class SelectionFunction_interp:
 
         nsteps_ltr_orig = len(self._sel_cl_data_original["lambda_true"])
         nsteps_ztr_orig = len(self._sel_cl_data_original["z_true"])
+        nsteps_lobs_orig = len(self._sel_cl_data_original["lambda_obs"])
+        nsteps_zobs_orig = len(self._sel_cl_data_original["z_obs"])
         nsteps_lobs_fmt = len(sel_cl_data_fmt["lambda_obs"])
         nsteps_zobs_fmt = len(sel_cl_data_fmt["z_obs"])
         n_tile = len(self._sel_cl_data_original["CG_seL_funcT"])
@@ -251,14 +253,14 @@ class SelectionFunction_interp:
             sel_cl_data_fmt["CG_seL_funcT"][it][
                 :,
                 :,
-                _size_add_lmin : nsteps_lobs_file + _size_add_lmin,
-                _size_add_zmin : nsteps_zobs_file + _size_add_zmin,
+                _size_add_lmin : nsteps_lobs_orig + _size_add_lmin,
+                _size_add_zmin : nsteps_zobs_orig + _size_add_zmin,
             ] = self._sel_cl_data_original[f"CG_seL_funcT"][it]
 
             ## Re-arrange ranges Purity, to match the Obs NC ranges
             sel_cl_data_fmt[f"purity"][it][
-                _size_add_lmin : nsteps_lobs_file + _size_add_lmin,
-                _size_add_zmin : nsteps_zobs_file + _size_add_zmin,
+                _size_add_lmin : nsteps_lobs_orig + _size_add_lmin,
+                _size_add_zmin : nsteps_zobs_orig + _size_add_zmin,
             ] = self._sel_cl_data_original[f"purity"][it]
 
         ##################
@@ -311,7 +313,7 @@ class SelectionFunction_interp:
                 CG_ricH_seL_funcT, x=sel_cl_data_fmt["lambda_obs"], axis=2
             )
             ## To deal with zeros
-            norm_CG_ricH_seL_funcT = np.zeros_like(CG_ricH_seL_funcT_code, dtype=float)
+            norm_CG_ricH_seL_funcT = np.zeros_like(CG_ricH_seL_funcT, dtype=float)
             norm_CG_ricH_seL_funcT = np.divide(
                 CG_ricH_seL_funcT,
                 N[:, :, np.newaxis],
@@ -345,8 +347,8 @@ class SelectionFunction_interp:
             ## Dimensions: (ltr, ztr, lobs)*(ltr, ztr, zobs)*(lobs, zobs)*(ltr, ztr) --> (ltr,ztr,lobs,zobs)
             ## ASSUMPTION: we do not need other rescaling for the effective area Omega_alpha.
             ## Expand dimensions to make shapes align
-            a_exp = norm_CG_ricH_seL_funcT_code[:, :, :, None]
-            b_exp = norm_CG_reD_seL_funcT_code[:, :, None, :]
+            a_exp = norm_CG_ricH_seL_funcT[:, :, :, None]
+            b_exp = norm_CG_reD_seL_funcT[:, :, None, :]
             c_exp = sel_cl_data_fmt["purity"][it][None, None, :, :]
             d_exp = sel_cl_data_fmt["completeness"][it][:, :, None, None]
             ## To avoid dividing by 0: putting elements with 0 values to NaN
@@ -419,8 +421,9 @@ class SelectionFunction_interp:
                 zint = sel_cl_data_fmt["z_obs"][z_start:z_end]
 
                 integrand = (
-                    1 / sel_cl_data_fmt["Omega_tot"],
-                    *sum_a[:, :, l_start:l_end, z_start:z_end],
+                    1
+                    / sel_cl_data_fmt["Omega_tot"]
+                    * sum_a[:, :, l_start:l_end, z_start:z_end]
                 )
                 result_z = integrate.simpson(integrand, x=zint, axis=-1)
                 result_l = integrate.simpson(result_z, x=lint, axis=-1)

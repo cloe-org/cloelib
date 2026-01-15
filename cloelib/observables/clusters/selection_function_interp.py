@@ -419,19 +419,16 @@ class SelectionFunction_interp:
         )
 
         for ltab in range(n_lobsNC):
-            l_start = sel_cl_data_fmt["index_lambda_obs_edges"][ltab]
-            l_end = sel_cl_data_fmt["index_lambda_obs_edges"][ltab + 1]
+            l_start, l_end = sel_cl_data_fmt["index_lambda_obs_edges"][ltab : ltab + 2]
             lint = sel_cl_data_fmt["lambda_obs"][l_start:l_end]
 
             for ztab in range(n_zobsNC):
-                z_start = sel_cl_data_fmt["index_z_obs_edges"][ztab]
-                z_end = sel_cl_data_fmt["index_z_obs_edges"][ztab + 1]
+                z_start, z_end = sel_cl_data_fmt["index_z_obs_edges"][ztab : ztab + 2]
                 zint = sel_cl_data_fmt["z_obs"][z_start:z_end]
 
                 integrand = (
-                    1
+                    sum_a[:, :, l_start:l_end, z_start:z_end]
                     / sel_cl_data_fmt["Omega_tot"]
-                    * sum_a[:, :, l_start:l_end, z_start:z_end]
                 )
                 result_z = integrate.simpson(integrand, x=zint, axis=-1)
                 result_l = integrate.simpson(result_z, x=lint, axis=-1)

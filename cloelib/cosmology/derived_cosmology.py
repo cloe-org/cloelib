@@ -3,6 +3,7 @@
 # cloelib imports
 from cloelib.auxiliary import units
 from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import Perturbations
 
 # General imports
 import numpy as np
@@ -271,7 +272,7 @@ class SplitLinearPerturbations:
     and using CLASS."""
 
     def __init__(
-        self, background: Background, omega_m_growth: float, redshifts: np.ndarray
+        self, background: Background, omega_m_growth: float, redshifts: np.ndarray, perturbations: Perturbations,
     ):
         """Initialise SplitLinearPerturbations."""
         self.background = background
@@ -279,19 +280,20 @@ class SplitLinearPerturbations:
         self.z = redshifts
         self.kmax = 100
         self.results = None  # Store CLASS results
+        self.perturbations = perturbations
 
         # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["non linear"] = "none"
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
+#        self.interface_args = copy.deepcopy(self.background.interface_args)
+#        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
+#        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
+#        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
+#        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
+#        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
+#        self.interface_args["CLASSparams"]["non linear"] = "none"
+#        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
+#        self.results = Class()
+#        self.results.set(self.interface_args["CLASSparams"])
+#        self.results.compute()
 
     @property
     def _interface_args(self) -> dict:
@@ -332,7 +334,7 @@ class SplitLinearPerturbations:
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.pk_linear_EBS = np.array([[self.results.pk(k, z) for k in ks] for z in zs])  # type:ignore[union-attr]
+        self.pk_linear_EBS = self.perturbations.matter_power_spectrum(zs,ks)  # type:ignore[union-attr]
 
         omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
 
@@ -360,8 +362,7 @@ class SplitLinearPerturbations:
         float
             The sigma8 value.
         """
-        self.sigma8_0 = self.results.sigma8()  # type: ignore[union-attr]
-        return self.sigma8_0
+        return self.perturbations.sigma8_0()
 
 
 class SplitNonLinearPerturbations:
@@ -376,7 +377,8 @@ class SplitNonLinearPerturbations:
         redshifts: np.ndarray,
         pk_linear_EBS: np.ndarray,
         pk_linear: np.ndarray,
-        nonlinear_model: Optional[str] = None,
+        perturbations: Perturbations,
+#        nonlinear_model: Optional[str] = None,
     ):
         """Initialize the CLASSNonLinearPerturbation instance."""
         self.background = background
@@ -385,25 +387,26 @@ class SplitNonLinearPerturbations:
         self.kmax = 100
         self.pk_linear_EBS = pk_linear_EBS
         self.pk_linear = pk_linear
+        self.perturbations = perturbations
 
-        if nonlinear_model is None:
-            nonlinear_model = "none"
+#        if nonlinear_model is None:
+#            nonlinear_model = "none"
 
         # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
-        self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
-        self.interface_args["CLASSparams"]["non linear"] = nonlinear_model
-        self.interface_args["CLASSparams"]["hmcode_version"] = 2016
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
+#        self.interface_args = copy.deepcopy(self.background.interface_args)
+#        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
+#        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
+#        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
+#        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
+#        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
+#        self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
+#        self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
+#        self.interface_args["CLASSparams"]["non linear"] = nonlinear_model
+#        self.interface_args["CLASSparams"]["hmcode_version"] = 2016
+#        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
+#        self.results = Class()
+#        self.results.set(self.interface_args["CLASSparams"])
+#        self.results.compute()
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -433,7 +436,7 @@ class SplitNonLinearPerturbations:
 
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.pk_nonlinear_EBS = np.array([[self.results.pk(k, z) for k in ks] for z in zs])  # type:ignore[union-attr]
+        self.pk_nonlinear_EBS = self.perturbations.matter_power_spectrum(zs,ks)  # type:ignore[union-attr]
 
         # Compute the boost factor from the standard power spectra
         boost = self.pk_nonlinear_EBS / self.pk_linear_EBS

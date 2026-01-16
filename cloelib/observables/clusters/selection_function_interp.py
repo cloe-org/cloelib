@@ -296,68 +296,61 @@ class SelectionFunction_interp:
         ## evaluate the different ingredients and integrals to obtain tildeI(λtr,ztr,∆λobs,∆zobs)
         ## ASSUMPTION: the input file is normalised
 
-        sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = np.zeros_like(
-            sel_cl_data_fmt["CG_seL_funcT"],
-            dtype=float,
+        ## Select index to read 4d array, completeness and purity for the different tiles
+
+        ## Produce P_alpha(λobs|λtr,ztr) for all tiles
+        ## P(lobs|ltr,ztr) = integrate P(lobs,zobs|ltr,ztr) over zobs
+        CG_ricH_seL_funcT = integrate.simpson(
+            sel_cl_data_fmt["CG_seL_funcT"], x=sel_cl_data_fmt["z_obs"], axis=4
         )
+        ## Normalization: we start from P(lobs,zobs | ltr,ztr) that is normalized. Then we integrate on zobs.
+        ## P(lobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
+        norm_CG_ricH_seL_funcT = self._normalize_array(
+            CG_ricH_seL_funcT,
+            normalization=integrate.simpson(
+                CG_ricH_seL_funcT, x=sel_cl_data_fmt["lambda_obs"], axis=3
+            ),
+        )
+        ## np.shape(norm_CG_ricH_seL_funcT): (ltr, ztr, lobs)
 
-        for it in range(len(sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"])):
+        ## Produce P_alpha(zobs|λtr,ztr) for all tiles
+        ## P(zobs|ltr,ztr) = integrate P(lobs,zobs|ltr,ztr) over lobs
+        CG_reD_seL_funcT = integrate.simpson(
+            sel_cl_data_fmt["CG_seL_funcT"],
+            x=sel_cl_data_fmt["lambda_obs"],
+            axis=3,
+        )
+        ## Normalization: we start from P(lobs,zobs|ltr,ztr) that is normalized. Then we integrate on lobs.
+        ## P(zobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
+        norm_CG_reD_seL_funcT = self._normalize_array(
+            CG_reD_seL_funcT,
+            normalization=integrate.simpson(
+                CG_reD_seL_funcT, x=sel_cl_data_fmt["z_obs"], axis=3
+            ),
+        )
+        ## np.shape(np.shape(norm_CG_reD_seL_funcT)): (ltr, ztr, zobs)
 
-            ## Select index to read 4d array, completeness and purity for the different tiles
+        ## Evaluate multiplication for each tile
+        ## Omega_alpha * Pα(λobs|λtr,ztr) * Pα(zobs|λtr,ztr) / Pα(λobs,zobs) * Cα(λtr,ztr)
+        ## Dimensions: (ltr, ztr, lobs)*(ltr, ztr, zobs)*(lobs, zobs)*(ltr, ztr) --> (ltr,ztr,lobs,zobs)
+        ## ASSUMPTION: we do not need other rescaling for the effective area Omega_alpha.
+        ## Expand dimensions to make shapes align
 
-            ## Produce P_alpha(λobs|λtr,ztr) for all tiles
-            ## P(lobs|ltr,ztr) = integrate P(lobs,zobs|ltr,ztr) over zobs
-            CG_ricH_seL_funcT = integrate.simpson(
-                sel_cl_data_fmt["CG_seL_funcT"][it], x=sel_cl_data_fmt["z_obs"], axis=3
-            )
-            ## Normalization: we start from P(lobs,zobs | ltr,ztr) that is normalized. Then we integrate on zobs.
-            ## P(lobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
-            norm_CG_ricH_seL_funcT = self._normalize_array(
-                CG_ricH_seL_funcT,
-                normalization=integrate.simpson(
-                    CG_ricH_seL_funcT, x=sel_cl_data_fmt["lambda_obs"], axis=2
-                ),
-            )
-            ## np.shape(norm_CG_ricH_seL_funcT): (ltr, ztr, lobs)
+        ## To avoid dividing by 0: putting elements with 0 values to NaN
+        pur_reshaped = sel_cl_data_fmt["purity"][:, None, None, :, :]
+        pur_reshaped = np.where(pur_reshaped == 0, np.nan, pur_reshaped)
 
-            ## Produce P_alpha(zobs|λtr,ztr) for all tiles
-            ## P(zobs|ltr,ztr) = integrate P(lobs,zobs|ltr,ztr) over lobs
-            CG_reD_seL_funcT = integrate.simpson(
-                sel_cl_data_fmt["CG_seL_funcT"][it],
-                x=sel_cl_data_fmt["lambda_obs"],
-                axis=2,
-            )
-            ## Normalization: we start from P(lobs,zobs|ltr,ztr) that is normalized. Then we integrate on lobs.
-            ## P(zobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
-            norm_CG_reD_seL_funcT = self._normalize_array(
-                CG_reD_seL_funcT,
-                normalization=integrate.simpson(
-                    CG_reD_seL_funcT, x=sel_cl_data_fmt["z_obs"], axis=2
-                ),
-            )
-            ## np.shape(np.shape(norm_CG_reD_seL_funcT)): (ltr, ztr, zobs)
-
-            ## Evaluate multiplication for each tile
-            ## Omega_alpha * Pα(λobs|λtr,ztr) * Pα(zobs|λtr,ztr) / Pα(λobs,zobs) * Cα(λtr,ztr)
-            ## Dimensions: (ltr, ztr, lobs)*(ltr, ztr, zobs)*(lobs, zobs)*(ltr, ztr) --> (ltr,ztr,lobs,zobs)
-            ## ASSUMPTION: we do not need other rescaling for the effective area Omega_alpha.
-            ## Expand dimensions to make shapes align
-
-            ## To avoid dividing by 0: putting elements with 0 values to NaN
-            pur_reshaped = sel_cl_data_fmt["purity"][it, None, None, :, :]
-            pur_reshaped = np.where(pur_reshaped == 0, np.nan, pur_reshaped)
-
-            sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"][it] = (
-                sel_cl_data_fmt["area_tile"][it]
-                * norm_CG_ricH_seL_funcT[:, :, :, None]
-                * norm_CG_reD_seL_funcT[:, :, None, :]
-                / pur_reshaped
-                * sel_cl_data_fmt["completeness"][it, :, :, None, None]
-            )
-            ## or do we want to put the division to 0? If YES:
-            ##  sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"][it] = (
-            ##    np.where(pur_reshaped != 0, sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"][it], 0.0)
-            ##  )
+        sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = (
+            sel_cl_data_fmt["area_tile"][:, None, None, None, None]
+            * norm_CG_ricH_seL_funcT[:, :, :, :, None]
+            * norm_CG_reD_seL_funcT[:, :, :, None, :]
+            / pur_reshaped
+            * sel_cl_data_fmt["completeness"][:, :, :, None, None]
+        )
+        ## or do we want to put the division to 0? If YES:
+        ##  sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = (
+        ##    np.where(pur_reshaped != 0, sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"], 0.0)
+        ##  )
 
     def sel_func_interp(
         self,

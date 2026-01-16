@@ -378,8 +378,10 @@ class CLASSLinearPerturbations:
         float
             The sigma8 value.
         """
-        if self.results.sigma8() is not None:
-            return self.results.sigma8()
+        sigma8_value = self.results.sigma8()
+        if sigma8_value is None:
+            raise ValueError("Could not calculate sigma8 value")
+        return float(sigma8_value)
 
 
 class CLASSNonLinearPerturbations:
@@ -498,5 +500,7 @@ class CLASSNonLinearPerturbations:
         float
             The sigma8 value.
         """
-        if self.results.sigma8() is not None:
-            return self.results.sigma8()
+        sigma8_value = self.results.sigma8()
+        if sigma8_value is None:
+            raise ValueError("Could not calculate sigma8 value")
+        return float(sigma8_value)

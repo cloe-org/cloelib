@@ -7,7 +7,7 @@ from scipy import integrate, interpolate
 from scipy.integrate import simps
 
 
-class SelectionFunction_interp:
+class InterpolatedSelectionFunction:
 
     def __init__(
         self,

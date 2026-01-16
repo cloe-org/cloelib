@@ -3,7 +3,7 @@
 import numpy as np
 
 
-class SelectionFunction:
+class GaussianSelectionFunction:
     def __init__(
         self,
         A_l: float,

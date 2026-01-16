@@ -554,47 +554,29 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
     n_tiles = int((num_headers - 1) / 7)
 
     ## Index of P_4d, Compl and Pur for each tile
-    # index_4d_save = np.zeros(n_tiles, dtype=int)
-    # index_compl_save = np.zeros(n_tiles, dtype=int)
-    # index_pur_save = np.zeros(n_tiles, dtype=int)
+    ## Select index to read 4d array, completeness and purity for the different tiles
+    ## Save 4d array, Completeness and Purity for each tile
+    ## np.shape(sel_cl_data["CG_seL_funcT"]): (ltr, ztr, lobs, zobs)
+    ## np.shape(sel_cl_data["completeness"]): (ltr, ztr)
+    ## np.shape(sel_cl_data["purity"]): (lobs, zobs)
 
-    sel_cl_data.update(
-        {
-            "CG_seL_funcT": [],
-            "completeness": [],
-            "purity": [],
-            "area_tile": np.zeros(n_tiles),
-        }
-    )
+    for name, first_ind in (
+        ("CG_seL_funcT", 1),
+        ("completeness", 1 + 2 * n_tiles),
+        ("purity", 1 + 4 * n_tiles),
+    ):
+        sel_cl_data[name] = np.array(
+            [file_selection[first_ind + it].data for it in range(n_tiles)]
+        )
 
-    for it in range(n_tiles):
-
-        ## Select index to read 4d array, completeness and purity for the different tiles
-        index_4d = 1 + it
-        index_compl = 1 + 2 * n_tiles + it
-        index_pur = 1 + 4 * n_tiles + it
-        ## Save index
-        # index_4d_save[it] = index_4d
-        # index_compl_save[it] = index_compl
-        # index_pur_save[it] = index_pur
-
-        ## Save 4d array, Completeness and Purity for each tile
-        sel_cl_data["CG_seL_funcT"].append(file_selection[index_4d].data)
-        ## np.shape(sel_cl_data["CG_seL_funcT"]): (ltr, ztr, lobs, zobs)
-        sel_cl_data["completeness"].append(file_selection[index_compl].data)
-        ## np.shape(sel_cl_data["completeness"]): (ltr, ztr)
-        sel_cl_data["purity"].append(file_selection[index_pur].data)
-
-        index_area = 1 + 6 * n_tiles + it
-        sel_cl_data["area_tile"][it] = file_selection[index_area].header[
-            "HIERARCH EFFECTIVE_AREA"
+    ## Tile areas
+    sel_cl_data["area_tile"] = np.array(
+        [
+            file_selection[1 + 6 * n_tiles + it].header["HIERARCH EFFECTIVE_AREA"]
+            for it in range(n_tiles)
         ]
-
+    )
     sel_cl_data["Omega_tot"] = sel_cl_data["area_tile"].sum()
-
-    # convert tables into arrays
-    for name in ("CG_seL_funcT", "completeness", "purity"):
-        sel_cl_data[name] = np.array(sel_cl_data[name])
 
     return sel_cl_data
 

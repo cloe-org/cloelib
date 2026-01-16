@@ -369,7 +369,7 @@ class CLASSLinearPerturbations:
         arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
-    def sigma8_0(self) -> Optional[float]:
+    def sigma8_0(self) -> float:
         """
         Calculate the sigma8 value for the current cosmology.
 
@@ -378,7 +378,10 @@ class CLASSLinearPerturbations:
         float
             The sigma8 value.
         """
-        return self.results.sigma8()
+        sigma8_value = self.results.sigma8()
+        if sigma8_value is None:
+            raise ValueError("Could not calculate sigma8 value")
+        return float(sigma8_value)
 
 
 class CLASSNonLinearPerturbations:
@@ -488,7 +491,7 @@ class CLASSNonLinearPerturbations:
         arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
-    def sigma8_0(self) -> Optional[float]:
+    def sigma8_0(self) -> float:
         """
         Calculate the sigma8 value for the current cosmology.
 
@@ -497,4 +500,7 @@ class CLASSNonLinearPerturbations:
         float
             The sigma8 value.
         """
-        return self.results.sigma8()
+        sigma8_value = self.results.sigma8()
+        if sigma8_value is None:
+            raise ValueError("Could not calculate sigma8 value")
+        return float(sigma8_value)

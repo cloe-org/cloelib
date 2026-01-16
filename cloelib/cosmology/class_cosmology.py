@@ -378,13 +378,8 @@ class CLASSLinearPerturbations:
         float
             The sigma8 value.
         """
-        results = self.results
-        if results is None:
-            raise RuntimeError("cosmology results are not available")
-        sigma8_value = results.sigma8()
-        if sigma8_value is None:
-            raise ValueError("Could not calculate sigma8 value")
-        return float(sigma8_value)
+
+        return self.results.sigma8()  # type: ignore[attr-defined]
 
 
 class CLASSNonLinearPerturbations:
@@ -503,10 +498,5 @@ class CLASSNonLinearPerturbations:
         float
             The sigma8 value.
         """
-        results = self.results
-        if results is None:
-            raise RuntimeError("cosmology results are not available")
-        sigma8_value = results.sigma8()
-        if sigma8_value is None:
-            raise ValueError("Could not calculate sigma8 value")
-        return float(sigma8_value)
+
+        return self.results.sigma8()  # type: ignore[attr-defined]

@@ -6,6 +6,8 @@ import numpy as np  # type: ignore
 from scipy import integrate, interpolate
 from scipy.integrate import simps
 
+from .mass_lambda_true.gaussian import GaussianMassLambdaTrue
+
 
 class InterpolatedSelectionFunction:
 
@@ -14,6 +16,9 @@ class InterpolatedSelectionFunction:
         A_l: float,
         B_l: float,
         C_l: float,
+        sig_A_l: float,
+        sig_B_l: float,
+        sig_C_l: float,
         M_piv: float = 3.0e14,
         z_piv: float = 0.45,
         sel_cl_data=None,
@@ -62,63 +67,10 @@ class InterpolatedSelectionFunction:
                 * Omega_tot: xxx
 
         """
-        self.A_l = A_l
-        self.B_l = B_l
-        self.C_l = C_l
-        self.M_piv = M_piv
-        self.z_piv = z_piv
+        self.mass_lambda_true = GaussianMassLambdaTrue(
+            A_l, B_l, C_l, sig_A_l, sig_B_l, sig_C_l, M_piv, z_piv
+        )
         self._sel_cl_data_original = sel_cl_data
-
-    def lnlambda(self, z, M):
-        r"""
-        Mean of the richness-mass relation PDF.
-
-        Computes the theoretical richness at
-        the requested true redshift and mass points.
-
-        Parameters
-        ----------
-        z: numpy.ndarray
-            True redshift points.
-        M: numpy.ndarray
-            True mass points in h^{-1} Msun.
-
-        Returns
-        -------
-        lnlambda : numpy.ndarray
-            lnlambda[i,j], where i is the true redhshift axis and j the mass axis
-        """
-        return (
-            np.log(self.A_l)
-            + self.B_l * np.log(M / (self.M_piv))
-            + self.C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
-        )
-
-    def scatter_lnl(self, z, M):
-        r"""
-        Intrinsic scatter of the proxy - mass relation.
-
-        Computes the scatter of the theoretical richness probability distribution
-        at the requested true redshift and mass points.
-
-        Parameters
-        ----------
-        z: numpy.ndarray
-            True redshift points.
-        M: numpy.ndarray
-            True mass points in h^{-1} Msun.
-
-        Returns
-        -------
-        scatter_lnl : numpy.ndarray
-            scatter_lnl[i,j], where i is the true redhshift axis and j the mass axis
-        """
-
-        return (
-            self.sig_A_l
-            + self.sig_B_l * np.log(M / (self.M_piv))
-            + self.sig_C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
-        )
 
     def P_lnlbd(self, z, M, Lambda):
         r"""
@@ -142,15 +94,7 @@ class InterpolatedSelectionFunction:
             P_lnlbd[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
-        lnlambda1 = self.lnlambda(z, M)[:, :, np.newaxis]
-        sigmalnl = self.scatter_lnl(z, M)[:, :, np.newaxis]
-        Lambda = Lambda[np.newaxis, np.newaxis, :]
-
-        return (
-            1.0
-            / (Lambda * np.sqrt(2.0 * np.pi * sigmalnl**2.0))
-            * np.exp(-((np.log(Lambda) - lnlambda1) ** 2.0) / (2.0 * sigmalnl**2.0))
-        )
+        return self.mass_lambda_true.P_lnlbd(z, M, Lambda)
 
     ## NEW FUNCTION FROM SINFONIA FILE
 

@@ -3,7 +3,7 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal, assert_raises
 
-from cloelib.observables.clusters.selection_function import SelectionFunction
+from cloelib.observables.clusters.selection_function import GaussianSelectionFunction
 
 
 def _test_selectionfunction(SF):
@@ -17,9 +17,11 @@ def _test_selectionfunction(SF):
 
     print("    lnlambda")
     _lnlambda_ref = [-1.533121, -1.423534, -1.3337, -1.257575, -1.191523]
-    assert_allclose(SF.lnlambda(z_test, M_test)[:, 0], _lnlambda_ref, rtol=1e-05)
+    assert_allclose(
+        SF.mass_lambda_true.lnlambda(z_test, M_test)[:, 0], _lnlambda_ref, rtol=1e-05
+    )
     print("    scatter_lnl")
-    assert_allclose(SF.scatter_lnl(z_test, M_test), 0.1, rtol=1e-05)
+    assert_allclose(SF.mass_lambda_true.scatter_lnl(z_test, M_test), 0.1, rtol=1e-05)
     print("    P_lnlbd")
     assert_allclose(SF.P_lnlbd(z_test, M_test, l_test), 0, atol=1e-10, rtol=1e-05)
     print("    scatter_lbdobs_lbd")
@@ -64,5 +66,5 @@ def test_selectionfunction():
         sig_z_z=0.1,
         sig_z_lambda=0.1,
     )
-    SF = SelectionFunction(**_sel_pars)
+    SF = GaussianSelectionFunction(**_sel_pars)
     _test_selectionfunction(SF)

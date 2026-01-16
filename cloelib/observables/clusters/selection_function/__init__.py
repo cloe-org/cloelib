@@ -1,2 +1,3 @@
-from .gaussian import GaussianSelectionFunction as SelectionFunction
+from .gaussian import GaussianSelectionFunction
 from .interpolated import InterpolatedSelectionFunction
+from .selection_function import SelectionFunction

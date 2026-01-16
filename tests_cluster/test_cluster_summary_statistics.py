@@ -11,7 +11,7 @@ from cloelib.observables.clusters.covariance import HaloCovariance
 from cloelib.observables.clusters.halo_statistics import HaloStatistics
 from cloelib.observables.clusters.hmf_bias import CastroHMFBias
 from cloelib.observables.clusters.profile import ProfileNFW
-from cloelib.observables.clusters.selection_function import SelectionFunction
+from cloelib.observables.clusters.selection_function import GaussianSelectionFunction
 from cloelib.summary_statistics.clusters import (
     ClusterClustering,
     ClusterCounts,
@@ -113,7 +113,7 @@ def get_values():
 
     # Istanciate objects
 
-    selectionFunction = SelectionFunction(**_sel_pars)
+    selectionFunction = GaussianSelectionFunction(**_sel_pars)
     HSCastro = CastroHMFBias(
         halo_statistics=HaloStatistics(
             perturbations,

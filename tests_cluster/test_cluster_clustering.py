@@ -4,7 +4,7 @@ from numpy.testing import assert_allclose, assert_equal, assert_raises
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.clusters.clustering import HaloClustering
-from cloelib.observables.clusters.selection_function import SelectionFunction
+from cloelib.observables.clusters.selection_function import GaussianSelectionFunction
 
 
 def _test_clustering(CL, perturbations):
@@ -107,6 +107,6 @@ def test_clustering():
         sig_z_z=0.1,
         sig_z_lambda=0.1,
     )
-    SF = SelectionFunction(**_sel_pars)
+    SF = GaussianSelectionFunction(**_sel_pars)
     CL = HaloClustering(perturbations, perturbations_fid, SF, nonu=nonu)
     _test_clustering(CL, perturbations)

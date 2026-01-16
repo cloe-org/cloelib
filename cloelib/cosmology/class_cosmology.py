@@ -378,8 +378,8 @@ class CLASSLinearPerturbations:
         float
             The sigma8 value.
         """
-
-        return self.results.sigma8()
+        if self.results.sigma8() is not None:
+           return self.results.sigma8()
 
 
 class CLASSNonLinearPerturbations:
@@ -498,5 +498,5 @@ class CLASSNonLinearPerturbations:
         float
             The sigma8 value.
         """
-
-        return self.results.sigma8()
+        if self.results.sigma8() is not None:
+           return self.results.sigma8()

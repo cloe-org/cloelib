@@ -1,17 +1,14 @@
-from cloelib.cosmology.cosmology import Perturbations
 import numpy as np
-from scipy.special import eval_legendre, spherical_jn
 from scipy.integrate import simpson as simps
+from scipy.special import eval_legendre, spherical_jn
+
+from cloelib.cosmology.cosmology import Perturbations
 
 
 class HaloCovariance:
     def __init__(
-            self,
-            perturbations: Perturbations,
-            k: np.ndarray,
-            area: float,
-            nbins_zob: int
-        ):
+        self, perturbations: Perturbations, k: np.ndarray, area: float, nbins_zob: int
+    ):
         self.background = perturbations.background
 
         self.area = area
@@ -52,7 +49,6 @@ class HaloCovariance:
 
         return KL
 
-    
     def cov_window(self, iz, zarr_iz, KL):
         """
         Computes the window function between redshifts bins
@@ -72,7 +68,9 @@ class HaloCovariance:
                 W[i,j,k] where i and j are two redshift bin and k are the wavenumbers
         """
 
-        rvec = self.background.comoving_distance(zarr_iz) * (self.background.H0/100.)  # Mpc h^{-1}
+        rvec = self.background.comoving_distance(zarr_iz) * (
+            self.background.H0 / 100.0
+        )  # Mpc h^{-1}
 
         Vz = (rvec[-1] ** 3 - rvec[0] ** 3) / 3  # Mpc^3 h^{-3}
 
@@ -91,7 +89,5 @@ class HaloCovariance:
             ).T
         )
         return (4 * np.pi) * np.sum(
-            self.rint[iz,:, :] * self.rint[: (iz + 1), :, :] * KL[:] ** 2, axis=-1
+            self.rint[iz, :, :] * self.rint[: (iz + 1), :, :] * KL[:] ** 2, axis=-1
         )
-
-

@@ -1,0 +1,187 @@
+name: Build and Check
+
+on:
+  push:
+    branches:
+      - main
+      - cluster_structure
+  pull_request:
+
+jobs:
+  build-gcc-ubuntu:
+    name: Unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: conda-incubator/setup-miniconda@v3
+      with:
+        python-version: '3.13'
+    - name: Install prereq using pip
+      run: |
+        pip install astropy cython
+        pip install camb classy jax
+        pip install pyinstrument
+    - name: Install the package
+      run: |
+        pip install .
+    - name: Run the unit tests
+      run: |
+        pip install pytest pytest-cov
+        pytest tests_cluster/ --cov=cloelib/ --ignore=tests_cluster/benchmark_values.py
+      env:
+        DISPLAY: test
+  check-formatting:
+    name: Check code formatting
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: conda-incubator/setup-miniconda@v3
+      with:
+        python-version: '3.13'
+    - name: Analysing the code formatting with black
+      run: |
+        pip install black black-configparser
+        black --check --diff cloelib/observables/clusters/
+        black --check --diff tests_cluster/
+        black --check --diff notebooks/
+    - name: Analysing the code import order with isort
+      run: |
+        pip install isort
+        isort --check --diff cloelib/observables/clusters/
+        isort --check --diff tests_cluster/
+#    - name: Install Sphinx prereq
+#      run: |
+#        conda install -c conda-forge sphinx sphinx_rtd_theme nbconvert pandoc ipython ipython_genutils
+  check-code-version:
+    name: Code version number
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/cluster_structure'
+    steps:
+      # Get current version
+      - name: Check out the code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # fetch all history
+          fetch-tags: true  # IMPORTANT: fetch tags too
+      - name: Get version from current branch
+        id: current_version
+        run: |
+          CURRENT_VERSION="$(grep -oP '__version__ = "\K[^"]+' cloelib/observables/clusters/__init__.py)"
+          echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+          echo "my branch is ${{ github.ref }}"
+          CLOE_ORG_TAG="$(git describe --tags --abbrev=0)"
+          echo "cloe-org tag: $CLOE_ORG_TAG"
+          echo "CLOE_ORG_TAG=$CLOE_ORG_TAG" >> $GITHUB_ENV
+      # Get PR title to be updated with version
+      - name : Get PR title and clean version number from it
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          NEW_TITLE="${TITLE% [cluster-version:*}"
+          echo "New title: $NEW_TITLE"
+          echo "NEW_TITLE=$NEW_TITLE" >> $GITHUB_ENV
+      - name: Get PR number
+        id: pr_number
+        run: |
+          # Fetch the pull request number from the GitHub context
+          PR_NUMBER=$(echo $GITHUB_REF | sed 's/refs\/pull\/\([0-9]*\)\/merge/\1/')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+      - name: Validate version format
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! echo "$CURRENT_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Invalid version format: $v"
+            echo "Removing version from PR title: $NEW_TITLE"
+            curl -s -X PATCH \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              -d "{\"title\":\"$NEW_TITLE\"}" \
+              "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER" > /dev/null
+            exit 1
+          fi
+          echo "Version format is ok"
+
+      # Get cluster_structure version
+      - name: Checkout the cluster_structure branch to get its version
+        uses: actions/checkout@v4
+        with:
+          ref: cluster_structure
+      - name: Get version from cluster_structure branch
+        id: cluster_structure_version
+        run: |
+          if [[ "$(git show origin/cluster_structure:cloelib/observables/clusters/__init__.py)" == *"__version__"* ]]; then
+            MAIN_VERSION="$(grep -oP '__version__ = "\K[^"]+' cloelib/observables/clusters/__init__.py)"
+          else
+            echo "No version found at cluster_structure, assuming version 0.0.0"
+            MAIN_VERSION="0.0.0"
+          fi
+          echo "MAIN_VERSION=$MAIN_VERSION" >> $GITHUB_ENV
+
+      # Compare
+      - name: Compare versions
+        run: |
+          IFS=. read -r C1 C2 C3 <<< "$CURRENT_VERSION"
+          IFS=. read -r M1 M2 M3 <<< "$MAIN_VERSION"
+          if [ "$C1" != "$M1" ]; then
+            GOAL="$((M1 + 1)).0.0"
+            if [ $C1 -lt $M1 ]; then
+              ERROR="  - Version number should increase: $CURRENT_VERSION<$MAIN_VERSION"
+            elif [ "$C1" != "$((M1 + 1))" ]; then
+              ERROR="  - Increment should be done by 1: $GOAL"
+            elif [ "$CURRENT_VERSION" != "$GOAL" ]; then
+              ERROR="  - When major version is increased, others should be zero: $GOAL"
+            fi
+          elif [ "$C2" != "$M2" ]; then
+            GOAL="$C1.$((M2 + 1)).0"
+            if [ $C2 -lt $M2 ]; then
+              ERROR="  - Version number should increase: $CURRENT_VERSION<$MAIN_VERSION"
+            elif [ "$C2" != "$((M2 + 1))" ]; then
+              ERROR="  - Increments should be done by 1: $GOAL"
+            elif [ "$CURRENT_VERSION" != "$GOAL" ]; then
+              ERROR="  - When middle version is increased, last number should be zero: $GOAL"
+            fi
+          elif [ "$C3" != "$M3" ]; then
+            GOAL="$C1.$C2.$((M3 + 1))"
+            if [ $C3 -lt $M3 ]; then
+              ERROR="  - Version number should increase: $CURRENT_VERSION<$MAIN_VERSION"
+            elif [ "$CURRENT_VERSION" != "$GOAL" ]; then
+              ERROR="  - Increments should be done by 1: $GOAL"
+            fi
+          else
+            ERROR="  - Version at cloelib/observables/clusters/__init__.py has not been updated!"
+          fi
+          echo "ERROR=$ERROR" >> $GITHUB_ENV
+
+      # Add version number to PR title
+      - name : Make new title for PR
+        run: |
+          if [ "$(printf "%s\n%s" "$CURRENT_VERSION" "$MAIN_VERSION" | sort -V | tail -n 1)" == "$CURRENT_VERSION" ]; then
+            NEW_TITLE="${NEW_TITLE} [cluster-version:$CURRENT_VERSION] (cloe-org:$CLOE_ORG_TAG)"
+            echo "New title: $NEW_TITLE"
+            echo "NEW_TITLE=$NEW_TITLE" >> $GITHUB_ENV
+          fi
+      - name: Update PR title
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Use the GitHub API to update the PR title
+          echo "Updating PR #$PR_NUMBER with new title: $NEW_TITLE"
+          curl -s -X PATCH \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "{\"title\":\"$NEW_TITLE\"}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER" > /dev/null
+
+      - name: Check version update
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$ERROR" != "" ]; then
+            echo "Check failed:"
+            echo "$ERROR"
+            exit 1
+          fi
+          echo "[ok] Version increased changed!"

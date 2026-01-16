@@ -1,7 +1,7 @@
-#import jax.numpy as np
+# import jax.numpy as np
 
 import numpy as np
-from numpy.testing import assert_raises, assert_equal, assert_allclose
+from numpy.testing import assert_allclose, assert_equal, assert_raises
 
 from cloelib.observables.clusters.selection_function import SelectionFunction
 
@@ -34,9 +34,7 @@ def _test_selectionfunction(SF):
     )
     print("    scatter_zobs_z")
     _scatter_zobs_z_ref = [0.159489, 0.526937, 1.635393, 5.087122, 15.948932]
-    assert_allclose(
-        SF.scatter_zobs_z(lob_test, z_test), _scatter_zobs_z_ref, rtol=1e-5
-    )
+    assert_allclose(SF.scatter_zobs_z(lob_test, z_test), _scatter_zobs_z_ref, rtol=1e-5)
     print("    P_zobs_z")
     _P_zobs_z_ref = [
         2.133197e00,

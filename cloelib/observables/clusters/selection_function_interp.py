@@ -528,7 +528,9 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
     """
 
     # To be adapted with fitsio - f = fitsio.FITS("your_file.fits")
-    file_selection = astropy.io.fits.open(sel_cl_filename)
+    from astropy.io import fits
+
+    file_selection = fits.open(sel_cl_filename)
 
     # dictionary to store all outputs
     sel_cl_data = {}
@@ -585,6 +587,7 @@ if __name__ == "__main__":
 
     # lobsNC_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
     # zobsNC_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
+    print("Test with mock data")
 
     sel_cl_data = {
         "z_obs": np.linspace(0.3, 1.5, 25),
@@ -645,4 +648,24 @@ if __name__ == "__main__":
         C_l=None,
         sel_cl_data=sel_cl_data,
     )
-    sfi.sel_func_interp()
+    interps = sfi.sel_func_interp()
+    print(interps[1][1]([10, 20, 30, 40], [0.3, 0.31]))
+
+    # Read data
+    import sys
+
+    if len(sys.argv) > 1:
+        print("Test with SEL_CL data")
+        in_file = sys.argv[1]
+
+        read_sel_cl_output(in_file, Omega_tot=None)
+
+        sfi = SelectionFunction_interp(
+            A_l=None,
+            B_l=None,
+            C_l=None,
+            sel_cl_data=sel_cl_data,
+        )
+        sfi.sel_func_interp()
+        interps = sfi.sel_func_interp()
+        print(interps[1][1]([10, 20, 30, 40], [0.3, 0.31]))

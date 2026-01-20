@@ -635,8 +635,6 @@ if __name__ == "__main__":
         print("Test with SEL_CL data")
         in_file = sys.argv[1]
 
-        read_sel_cl_output(in_file, Omega_tot=None)
-
         sfi = InterpolatedSelectionFunction(
             A_l=None,
             B_l=None,
@@ -644,7 +642,7 @@ if __name__ == "__main__":
             sig_A_l=None,
             sig_B_l=None,
             sig_C_l=None,
-            sel_cl_data=sel_cl_data,
+            sel_cl_data=read_sel_cl_output(in_file, Omega_tot=None),
         )
         sfi.sel_func_interp()
         interps = sfi.sel_func_interp()

@@ -75,6 +75,7 @@ jobs:
           echo "cloe-org tag: $CLOE_ORG_TAG"
           echo "CLOE_ORG_TAG=$CLOE_ORG_TAG" >> $GITHUB_ENV
           CLOE_ORG_SHA=$(git rev-parse origin/main)
+          CLOE_ORG_SHA=${CLOE_ORG_SHA:0:7}
           echo "Latest main commit: $CLOE_ORG_SHA"
           echo "CLOE_ORG_SHA=$CLOE_ORG_SHA" >> $GITHUB_ENV
       # Get PR title to be updated with version

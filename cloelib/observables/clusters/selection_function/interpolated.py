@@ -140,6 +140,8 @@ class InterpolatedSelectionFunction:
             "I_ltr_ztr_lobs_lobs": None,
             "area_tile": None,
             "Omega_tot": None,
+            "lobsNC_edges": lobsNC_edges,
+            "zobsNC_edges": zobsNC_edges,
         }
 
         ################
@@ -149,12 +151,12 @@ class InterpolatedSelectionFunction:
         zobs_fmt, _size_add_zmin = self._redefine_array_with_obs_bins(
             self._sel_cl_data_original["z_obs"],
             self._sel_cl_data_original["z_obs_step"],
-            zobsNC_edges,
+            sel_cl_data_fmt["zobsNC_edges"],
         )
         lobs_fmt, _size_add_lmin = self._redefine_array_with_obs_bins(
             self._sel_cl_data_original["lambda_obs"],
             self._sel_cl_data_original["lambda_obs_step"],
-            lobsNC_edges,
+            sel_cl_data_fmt["lobsNC_edges"],
         )
 
         sel_cl_data_fmt["z_obs"] = zobs_fmt
@@ -163,10 +165,11 @@ class InterpolatedSelectionFunction:
         ## Find common index between (lobs_file-->lobs_edges) and (zobs_file-->zobs_edges)
         sel_cl_data_fmt["index_lambda_obs_edges"] = [
             np.abs(sel_cl_data_fmt["lambda_obs"] - value).argmin()
-            for value in lobsNC_edges
+            for value in sel_cl_data_fmt["lobsNC_edges"]
         ]
         sel_cl_data_fmt["index_z_obs_edges"] = [
-            np.abs(sel_cl_data_fmt["z_obs"] - value).argmin() for value in zobsNC_edges
+            np.abs(sel_cl_data_fmt["z_obs"] - value).argmin()
+            for value in sel_cl_data_fmt["zobsNC_edges"]
         ]
 
         # Keep true values
@@ -329,53 +332,22 @@ class InterpolatedSelectionFunction:
         # Compute Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
         self._compute_I_ltr_ztr_lobs_lobs(sel_cl_data_fmt)
 
-        sum_a = sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"].sum(axis=0)
-
-        ##############################
-        ## tildeI(λtr,ztr,∆λobs,∆zobs)
-        ##############################
-
-        ## Define ranges for Obs arrays: arrays for grid in final NC
-        n_lobsNC = len(lobsNC_edges) - 1
-        n_zobsNC = len(zobsNC_edges) - 1
+        ## Integrate 1/Omega_tot*sum_a = tildeI(λtr,ztr,∆λobs,∆zobs)
+        integ4d = self._sel_func_integ(sel_cl_data_fmt)
 
         ## Integrate 1/Omega_tot*sum_a = tildeI(λtr,ztr,∆λobs,∆zobs)
         ## and build interpolator
-        integ4d = np.zeros(
-            (
-                n_lobsNC,
-                n_zobsNC,
-                len(sel_cl_data_fmt["lambda_true"]),
-                len(sel_cl_data_fmt["z_true"]),
-            )
-        )
-        integ4d_interp_func = []
-
-        for ltab in range(n_lobsNC):
-            l_start, l_end = sel_cl_data_fmt["index_lambda_obs_edges"][ltab : ltab + 2]
-            lint = sel_cl_data_fmt["lambda_obs"][l_start:l_end]
-
-            integ4d_interp_func.append([])
-
-            for ztab in range(n_zobsNC):
-                z_start, z_end = sel_cl_data_fmt["index_z_obs_edges"][ztab : ztab + 2]
-                zint = sel_cl_data_fmt["z_obs"][z_start:z_end]
-
-                integrand = (
-                    sum_a[:, :, l_start:l_end, z_start:z_end]
-                    / sel_cl_data_fmt["Omega_tot"]
+        integ4d_interp_func = [
+            [
+                interpolate.RectBivariateSpline(
+                    sel_cl_data_fmt["lambda_true"],
+                    sel_cl_data_fmt["z_true"],
+                    integ4d_lobs_zobs,
                 )
-                result_z = integrate.simpson(integrand, x=zint, axis=-1)
-                result_l = integrate.simpson(result_z, x=lint, axis=-1)
-                integ4d[ltab, ztab, :, :] = result_l
-
-                integ4d_interp_func[-1].append(
-                    interpolate.RectBivariateSpline(
-                        sel_cl_data_fmt["lambda_true"],
-                        sel_cl_data_fmt["z_true"],
-                        integ4d[ltab, ztab, :, :],
-                    )
-                )
+                for integ4d_lobs_zobs in integ4d_lobs
+            ]
+            for integ4d_lobs in integ4d
+        ]
 
         return integ4d_interp_func
 
@@ -442,6 +414,62 @@ class InterpolatedSelectionFunction:
             size_add_min = 0
 
         return array_new, size_add_min
+
+    @staticmethod
+    def _sel_func_integ(
+        sel_cl_data_fmt,
+    ):
+        r"""
+        Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
+        1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
+
+        Parameters
+        ----------
+        sel_cl_data_fmt: dict
+            Data
+
+        Returns
+        -------
+        integ4d: numpy.ndarry
+            Integral
+        """
+
+        sum_a = sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"].sum(axis=0)
+
+        ##############################
+        ## tildeI(λtr,ztr,∆λobs,∆zobs)
+        ##############################
+
+        ## Define ranges for Obs arrays: arrays for grid in final NC
+
+        ## Integrate 1/Omega_tot*sum_a = tildeI(λtr,ztr,∆λobs,∆zobs)
+        ## and build interpolator
+        integ4d = np.zeros(
+            (
+                len(sel_cl_data_fmt["lobsNC_edges"]) - 1,
+                len(sel_cl_data_fmt["zobsNC_edges"]) - 1,
+                len(sel_cl_data_fmt["lambda_true"]),
+                len(sel_cl_data_fmt["z_true"]),
+            )
+        )
+
+        for ltab in range(integ4d.shape[0]):
+            l_start, l_end = sel_cl_data_fmt["index_lambda_obs_edges"][ltab : ltab + 2]
+            lint = sel_cl_data_fmt["lambda_obs"][l_start:l_end]
+
+            for ztab in range(integ4d.shape[1]):
+                z_start, z_end = sel_cl_data_fmt["index_z_obs_edges"][ztab : ztab + 2]
+                zint = sel_cl_data_fmt["z_obs"][z_start:z_end]
+
+                integrand = (
+                    sum_a[:, :, l_start:l_end, z_start:z_end]
+                    / sel_cl_data_fmt["Omega_tot"]
+                )
+                result_z = integrate.simpson(integrand, x=zint, axis=-1)
+                result_l = integrate.simpson(result_z, x=lint, axis=-1)
+                integ4d[ltab, ztab, :, :] = result_l
+
+        return integ4d
 
 
 def read_sel_cl_output(sel_cl_filename, Omega_tot=None):

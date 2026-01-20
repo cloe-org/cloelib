@@ -6,6 +6,7 @@ import jax.numpy as jnp
 from jax import Array
 
 from cloelib.auxiliary.akima import akima_interpolation
+from cloelib.cosmology.cosmology import Perturbations
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 
 jax.config.update('jax_enable_x64', True)
@@ -139,40 +140,36 @@ def comoving_distance_to_redshift(chi, background):
 
 def Pkl_unequaltime(
     k: jnp.ndarray,
-    chi1: jnp.ndarray,
-    chi2: jnp.ndarray,
-    tracer_A,
-    tracer_B,
+    chi: jnp.ndarray,
+    R: jnp.ndarray,
+    perturbation: Perturbations,
 ) -> jnp.ndarray:
     """
-    Compute the unequal-time matter power spectrum P(k, chi1, chi2)
+    Compute the unequal-time matter power spectrum P(k, chi1, chi2) on the grid defined by k, chi, and R = chi1/chi2,
     using the geometric mean of the equal-time power spectra from two tracers.
 
     Arguments:
     k : jnp.ndarray
         Wavenumber at which to evaluate the power spectrum.
-    chi1 : jnp.ndarray
-        Comoving distance corresponding to the first tracer.
-    chi2 : jnp.ndarray
-        Comoving distance corresponding to the second tracer.
-    tracer_A : Tracer
-        First tracer object with perturbations attribute.
-    tracer_B : Tracer
-        Second tracer object with perturbations attribute.
+    chi: jnp.ndarray
+        Comoving distance.
+    R : jnp.ndarray
+        Ratio array corresponding to chi1/chi2.
+    perturbation : Perturbations
+        Perturbations object with matter_power_spectrum method.
     Returns:
-    Pk : jnp.ndarray shape (len(k), len(chi1), len(chi2))
-        Unequal-time matter power spectrum P(k, chi1, chi2).
+    Pk : jnp.ndarray shape (len(k), len(R), len(chi))
+        Unequal-time matter power spectrum P(k, R, chi).
     """
 
-    z1 = comoving_distance_to_redshift(chi1, tracer_A.background)
-    z2 = comoving_distance_to_redshift(chi2, tracer_B.background)
+    z_of_chi = comoving_distance_to_redshift(chi, perturbation.background)
+    chi_R_flatten = jnp.outer(chi, R).flatten()
 
-    Pk_A = tracer_A.perturbations.matter_power_spectrum(z1, k)
-    Pk_B = tracer_B.perturbations.matter_power_spectrum(z2, k)
+    # Equal-time power spectra
+    Pk_chi = perturbation.matter_power_spectrum(z_of_chi, k)
+    Pk_chi_R = 10**akima_interpolation(jnp.log10(Pk_chi), chi, chi_R_flatten, axis=0).reshape(len(chi), len(R), len(k))
 
-    Pk = jax.numpy.sqrt(jnp.einsum("ij,kj->jik", Pk_A, Pk_B))
-
-    return Pk
+    return jnp.sqrt(jnp.einsum("jk,jik->kji", Pk_chi, Pk_chi_R))
 
 
 @jax.jit
@@ -316,7 +313,7 @@ def combine_kernels(tracer_1, tracer_2, chi, R):
     R : array-like
         Array of R values.
     Returns:
-    Combined kernel array of shaepe (n_bins_1, n_bins_2, len(R), len(chi)).
+    Combined kernel array of shaepe (n_bins_1, n_bins_2, len(chi), len(R)).
     """
 
     R_mesh, chi_mesh = jnp.meshgrid(R, chi, indexing="ij")

@@ -6,7 +6,9 @@ import numpy as np  # type: ignore
 from scipy import integrate, interpolate
 from scipy.integrate import simps
 
-from .mass_lambda_true.gaussian import GaussianMassLambdaTrue
+from cloelib.observables.clusters.selection_function.mass_lambda_true.gaussian import (
+    GaussianMassLambdaTrue,
+)
 
 
 class InterpolatedSelectionFunction:
@@ -586,10 +588,13 @@ if __name__ == "__main__":
     sel_cl_data["area_tile"] = np.array([8, 9, 10])
     sel_cl_data["Omega_tot"] = sel_cl_data["area_tile"].sum()
 
-    sfi = SelectionFunction_interp(
+    sfi = InterpolatedSelectionFunction(
         A_l=None,
         B_l=None,
         C_l=None,
+        sig_A_l=None,
+        sig_B_l=None,
+        sig_C_l=None,
         sel_cl_data=sel_cl_data,
     )
     interps = sfi.sel_func_interp()
@@ -604,10 +609,13 @@ if __name__ == "__main__":
 
         read_sel_cl_output(in_file, Omega_tot=None)
 
-        sfi = SelectionFunction_interp(
+        sfi = InterpolatedSelectionFunction(
             A_l=None,
             B_l=None,
             C_l=None,
+            sig_A_l=None,
+            sig_B_l=None,
+            sig_C_l=None,
             sel_cl_data=sel_cl_data,
         )
         sfi.sel_func_interp()

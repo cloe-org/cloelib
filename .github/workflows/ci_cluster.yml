@@ -8,49 +8,49 @@ on:
   pull_request:
 
 jobs:
-###x  build-gcc-ubuntu:
-###x    name: Unit tests
-###x    runs-on: ubuntu-latest
-###x
-###x    steps:
-###x    - uses: actions/checkout@v4
-###x    - uses: conda-incubator/setup-miniconda@v3
-###x      with:
-###x        python-version: '3.13'
-###x    - name: Install prereq using pip
-###x      run: |
-###x        pip install astropy cython
-###x        pip install camb classy jax
-###x        pip install pyinstrument
-###x    - name: Install the package
-###x      run: |
-###x        pip install .
-###x    - name: Run the unit tests
-###x      run: |
-###x        pip install pytest pytest-cov
-###x        pytest tests_cluster/ --cov=cloelib/ --ignore=tests_cluster/benchmark_values.py
-###x      env:
-###x        DISPLAY: test
-###x  check-formatting:
-###x    name: Check code formatting
-###x    runs-on: ubuntu-latest
-###x
-###x    steps:
-###x    - uses: actions/checkout@v4
-###x    - uses: conda-incubator/setup-miniconda@v3
-###x      with:
-###x        python-version: '3.13'
-###x    - name: Analysing the code formatting with black
-###x      run: |
-###x        pip install black black-configparser
-###x        black --check --diff cloelib/observables/clusters/
-###x        black --check --diff tests_cluster/
-###x        black --check --diff notebooks/
-###x    - name: Analysing the code import order with isort
-###x      run: |
-###x        pip install isort
-###x        isort --check --diff cloelib/observables/clusters/
-###x        isort --check --diff tests_cluster/
+  build-gcc-ubuntu:
+    name: Unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: conda-incubator/setup-miniconda@v3
+      with:
+        python-version: '3.13'
+    - name: Install prereq using pip
+      run: |
+        pip install astropy cython
+        pip install camb classy jax
+        pip install pyinstrument
+    - name: Install the package
+      run: |
+        pip install .
+    - name: Run the unit tests
+      run: |
+        pip install pytest pytest-cov
+        pytest tests_cluster/ --cov=cloelib/ --ignore=tests_cluster/benchmark_values.py
+      env:
+        DISPLAY: test
+  check-formatting:
+    name: Check code formatting
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: conda-incubator/setup-miniconda@v3
+      with:
+        python-version: '3.13'
+    - name: Analysing the code formatting with black
+      run: |
+        pip install black black-configparser
+        black --check --diff cloelib/observables/clusters/
+        black --check --diff tests_cluster/
+        black --check --diff notebooks/
+    - name: Analysing the code import order with isort
+      run: |
+        pip install isort
+        isort --check --diff cloelib/observables/clusters/
+        isort --check --diff tests_cluster/
 #    - name: Install Sphinx prereq
 #      run: |
 #        conda install -c conda-forge sphinx sphinx_rtd_theme nbconvert pandoc ipython ipython_genutils
@@ -163,7 +163,7 @@ jobs:
       - name : Make new title for PR
         run: |
           if [ "$(printf "%s\n%s" "$CURRENT_VERSION" "$MAIN_VERSION" | sort -V | tail -n 1)" == "$CURRENT_VERSION" ]; then
-            NEW_TITLE="${NEW_TITLE} [cluster-version:$CURRENT_VERSION] (cloe-org:$CLOE_ORG_TAG-$CLOE_ORG_SHA)"
+            NEW_TITLE="${NEW_TITLE} [cluster-version:$CURRENT_VERSION] [cloe-org:$CLOE_ORG_TAG ($CLOE_ORG_SHA)]"
             echo "New title: $NEW_TITLE"
             echo "NEW_TITLE=$NEW_TITLE" >> $GITHUB_ENV
           fi

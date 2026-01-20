@@ -371,6 +371,17 @@
         "bug",
         "doc"
       ]
+    },
+    {
+      "login": "cosmicLinux",
+      "name": "Linus Thummel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142009018?v=4",
+      "profile": "https://www.ph.ed.ac.uk/people/linus-thummel",
+      "contributions": [
+        "code",
+        "doc",
+        "ideas"
+      ]
     }
   ]
 }

@@ -163,7 +163,7 @@ jobs:
       - name : Make new title for PR
         run: |
           if [ "$(printf "%s\n%s" "$CURRENT_VERSION" "$MAIN_VERSION" | sort -V | tail -n 1)" == "$CURRENT_VERSION" ]; then
-            NEW_TITLE="${NEW_TITLE} [cluster-version:$CURRENT_VERSION] [cloe-org:$CLOE_ORG_TAG ($CLOE_ORG_SHA)]"
+            NEW_TITLE="${NEW_TITLE} [cluster-version:$CURRENT_VERSION] [cloe-org:$CLOE_ORG_TAG - $CLOE_ORG_SHA]"
             echo "New title: $NEW_TITLE"
             echo "NEW_TITLE=$NEW_TITLE" >> $GITHUB_ENV
           fi

@@ -371,6 +371,17 @@
         "bug",
         "doc"
       ]
+    },
+    {
+      "login": "LisaGoh",
+      "name": "Lisa Goh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74064921?v=4",
+      "profile": "http://lisagoh.github.io",
+      "contributions": [
+        "code",
+        "doc",
+        "ideas"
+      ]
     }
   ]
 }

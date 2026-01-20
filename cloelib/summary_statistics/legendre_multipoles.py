@@ -152,7 +152,7 @@ class LegendreMultipoles:
         """
         sigma_z = self.parameters["sigmaz"]
         sigma_r = (
-            SPEED_OF_LIGHT / 100.0 * sigma_z
+            SPEED_OF_LIGHT / 1000.0 * sigma_z
             / self.background_fiducial.hubble_parameter(self.redshift)
         )
         return np.exp(-(k**2) * mu**2 * sigma_r**2)

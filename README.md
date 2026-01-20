@@ -183,6 +183,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/matteobaratto"><img src="https://avatars.githubusercontent.com/u/75221958?v=4?s=100" width="100px;" alt="Matteo Baratto "/><br /><sub><b>Matteo Baratto </b></sub></a><br /><a href="#code-matteobaratto" title="Code">💻</a> <a href="#ideas-matteobaratto" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MariaTsedrik"><img src="https://avatars.githubusercontent.com/u/93711395?v=4?s=100" width="100px;" alt="Maria Tsedrik"/><br /><sub><b>Maria Tsedrik</b></sub></a><br /><a href="#code-MariaTsedrik" title="Code">💻</a> <a href="#ideas-MariaTsedrik" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/arsouki"><img src="https://avatars.githubusercontent.com/u/162714090?v=4?s=100" width="100px;" alt="Arghavan Souki"/><br /><sub><b>Arghavan Souki</b></sub></a><br /><a href="#bug-arsouki" title="Bug reports">🐛</a> <a href="#doc-arsouki" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ryusei172525"><img src="https://avatars.githubusercontent.com/u/48290932?v=4?s=100" width="100px;" alt="Ryusei Kano"/><br /><sub><b>Ryusei Kano</b></sub></a><br /><a href="#code-ryusei172525" title="Code">💻</a> <a href="#doc-ryusei172525" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

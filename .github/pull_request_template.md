@@ -61,8 +61,6 @@ Resolves #IssueNumber
 - [ ] Quality of new/changed unit tests is acceptable
 - [ ] No data files have been included in the commits
 - [ ] Implementation follows the agreed task description point by point
-- [ ] Check that there are no `No newline at the end of file` warnings
 - [ ] Check that any added folder/file has been added to the `README.md` file
-- [ ] Check that the implementation follows the contributing guidelines and style choices
 - [ ] Check that the documentation has been updated accordantly
 - [ ] Check that the corresponding branch has been deleted after merging. If not, delete it

@@ -351,6 +351,26 @@
         "code",
         "ideas"
       ]
+    },
+    {
+      "login": "MariaTsedrik",
+      "name": "Maria Tsedrik",
+      "avatar_url": "https://avatars.githubusercontent.com/u/93711395?v=4",
+      "profile": "https://github.com/MariaTsedrik",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "arsouki",
+      "name": "Arghavan Souki",
+      "avatar_url": "https://avatars.githubusercontent.com/u/162714090?v=4",
+      "profile": "https://github.com/arsouki",
+      "contributions": [
+        "bug",
+        "doc"
+      ]
     }
   ]
 }

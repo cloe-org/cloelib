@@ -2,6 +2,7 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
+from cloelib.auxiliary.math_utils import ensure_z_zero_included
 
 # General imports
 import numpy as np
@@ -309,13 +310,14 @@ class CAMBLinearPerturbations:
         self.background.interface_args["CAMBparams"].WantTransfer = True
 
         self.kmax = 300.0
-        self.z = redshifts
+
+        # Ensure z=0 is included for sigma8(z=0) computation and proper interpolation
+        self.z = ensure_z_zero_included(redshifts)
 
         self.background.interface_args["CAMBparams"].set_matter_power(
-            redshifts=redshifts, kmax=self.kmax
+            redshifts=self.z, kmax=self.kmax
         )
         self.results = camb.get_results(self.background.interface_args["CAMBparams"])
-
         self.k, _, self.Pk = self.results.get_linear_matter_power_spectrum(
             hubble_units=False, k_hunit=False
         )
@@ -397,6 +399,11 @@ class CAMBLinearPerturbations:
 
         return D_z_k
 
+    def sigma8_0(self) -> float:
+        """Retrieve sigma8 at z=0."""
+
+        return self.results.get_sigma8().max()
+
 
 class CAMBNonLinearPerturbations:
     """A wrapper for CAMB nonlinear perturbation calculations."""
@@ -419,7 +426,9 @@ class CAMBNonLinearPerturbations:
         """
         self.background = background
         self.kmax = 500
-        self.z = redshifts
+
+        # Ensure z=0 is included for sigma8(z=0) computation and proper interpolation
+        self.z = ensure_z_zero_included(redshifts)
 
         # Configure CAMB parameters for nonlinear calculations
         self.background.interface_args["CAMBparams"].NonLinear = model.NonLinear_both
@@ -444,7 +453,7 @@ class CAMBNonLinearPerturbations:
             self.background.interface_args["CAMBparams"].NonLinearModel.set_params()
 
         self.background.interface_args["CAMBparams"].set_matter_power(
-            redshifts=redshifts, kmax=self.kmax
+            redshifts=self.z, kmax=self.kmax
         )
 
         # Compute nonlinear perturbations
@@ -528,3 +537,8 @@ class CAMBNonLinearPerturbations:
             / self.matter_power_spectrum(np.array([0.0]), ks)[0]
         )
         return D_z_k
+
+    def sigma8_0(self) -> float:
+        """Retrieve sigma8 at z=0."""
+
+        return self.results.get_sigma8().max()

@@ -90,7 +90,7 @@ def test_derived_cosmology():
             assert_allclose(background.rdrag, 147.50225, rtol=1e-1)
 
 
-def test_cb():
+def test_Omega_m_cb():
     # Cosmology parameters
     print("# Cosmology parameters")
     _cosmo_pars = dict(

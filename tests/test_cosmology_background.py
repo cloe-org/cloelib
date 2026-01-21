@@ -60,14 +60,10 @@ def test_background_required_attributes():
 def test_derived_cosmology():
     # Cosmology parameters
     print("# Cosmology parameters")
-    _H0 = 67.7
-    _h = _H0 / 100.0
-    _omch2 = 0.12
-    _ombh2 = 0.022
     _cosmo_pars = dict(
-        H0=_H0,
-        Omega_cdm0=_omch2 / _h**2,
-        Omega_b0=_ombh2 / _h**2,
+        H0=67.7,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_b0=0.022 / 0.677**2,
         Omega_k0=0.0,
         w0=-1.0,
         wa=0.0,
@@ -97,14 +93,10 @@ def test_derived_cosmology():
 def test_cb():
     # Cosmology parameters
     print("# Cosmology parameters")
-    _H0 = 67.7
-    _h = _H0 / 100.0
-    _omch2 = 0.12
-    _ombh2 = 0.022
     _cosmo_pars = dict(
-        H0=_H0,
-        Omega_cdm0=_omch2 / _h**2,
-        Omega_b0=_ombh2 / _h**2,
+        H0=67.7,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_b0=0.022 / 0.677**2,
         Omega_k0=0.0,
         w0=-1.0,
         wa=0.0,

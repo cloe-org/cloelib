@@ -74,6 +74,10 @@ jobs:
           CLOE_ORG_TAG="$(git describe --tags --abbrev=0)"
           echo "cloe-org tag: $CLOE_ORG_TAG"
           echo "CLOE_ORG_TAG=$CLOE_ORG_TAG" >> $GITHUB_ENV
+          CLOE_ORG_SHA=$(git rev-parse origin/main)
+          CLOE_ORG_SHA=${CLOE_ORG_SHA:0:7}
+          echo "Latest main commit: $CLOE_ORG_SHA"
+          echo "CLOE_ORG_SHA=$CLOE_ORG_SHA" >> $GITHUB_ENV
       # Get PR title to be updated with version
       - name : Get PR title and clean version number from it
         env:
@@ -159,7 +163,7 @@ jobs:
       - name : Make new title for PR
         run: |
           if [ "$(printf "%s\n%s" "$CURRENT_VERSION" "$MAIN_VERSION" | sort -V | tail -n 1)" == "$CURRENT_VERSION" ]; then
-            NEW_TITLE="${NEW_TITLE} [cluster-version:$CURRENT_VERSION] (cloe-org:$CLOE_ORG_TAG)"
+            NEW_TITLE="${NEW_TITLE} [cluster-version:$CURRENT_VERSION] [cloe-org:$CLOE_ORG_TAG - $CLOE_ORG_SHA]"
             echo "New title: $NEW_TITLE"
             echo "NEW_TITLE=$NEW_TITLE" >> $GITHUB_ENV
           fi

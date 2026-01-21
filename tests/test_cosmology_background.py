@@ -56,7 +56,7 @@ def test_background_required_attributes():
     assert attributes_required == attributes_found
 
 
-def test_cosmo():
+def test_derived_cosmology():
     # Cosmology parameters
     print("# Cosmology parameters")
     _H0 = 67.7
@@ -91,3 +91,36 @@ def test_cosmo():
         # to be fixed in another PR
         if _Background != JAXBackground:
             assert_allclose(background.rdrag, 147.50225, rtol=1e-1)
+
+
+def test_cb():
+    # Cosmology parameters
+    print("# Cosmology parameters")
+    _H0 = 67.7
+    _h = _H0 / 100.0
+    _omch2 = 0.12
+    _ombh2 = 0.022
+    _cosmo_pars = dict(
+        H0=_H0,
+        Omega_cdm0=_omch2 / _h**2,
+        Omega_b0=_ombh2 / _h**2,
+        Omega_k0=0.0,
+        w0=-1.0,
+        wa=0.0,
+        ns=0.96,
+        mnu=0.1,
+        As=2e-9,
+        gamma_MG=0.0,
+        N_mnu=1,
+    )
+
+    _z_test = np.zeros(1)
+    # not implemented for CLASSBackground yet
+    for _Background in (CAMBBackground, JAXBackground):
+        background = _Background(**_cosmo_pars)
+        assert (background.Omega_m_cb(_z_test) < background.Omega_m(_z_test)).all()
+        assert_allclose(
+            background.Omega_m_cb(_z_test)[0],
+            _cosmo_pars["Omega_cdm0"] + _cosmo_pars["Omega_b0"],
+            rtol=1e-03,
+        )

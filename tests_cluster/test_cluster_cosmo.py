@@ -34,16 +34,6 @@ def test_cosmo():
 
     # background
     background = CAMBBackground(**_cosmo_pars)
-    assert background.Omega_m_cb(0) < background.Omega_m(0)
-    assert_allclose(
-        background.Omega_m_cb(0),
-        _cosmo_pars["Omega_cdm0"] + _cosmo_pars["Omega_b0"],
-        rtol=1e-03,
-    )
-    assert_allclose(
-        derived_cosmology.rho_crit(background, 0), 1.27203085e11, rtol=1e-03
-    )
-    assert_allclose(background.rdrag, 147.50225, rtol=1e-05)
 
     # camb linear
     perturbations = CAMBLinearPerturbations(background, np.linspace(0.0, 2.0, 100))

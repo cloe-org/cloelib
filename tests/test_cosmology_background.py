@@ -23,6 +23,7 @@ def test_background_required_methods():
         "angular_diameter_distance",
         "Omega_b",
         "Omega_m",
+        "Omega_m_cb",
         "transverse_comoving_distance",
     }
     assert methods_required == methods_found

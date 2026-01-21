@@ -49,5 +49,5 @@ def stretch_dndz_jax(dndz: T, z: T, width: T) -> T:
     normalization = (
         -0.5 * (stretched[:, 0] + stretched[:, -1]) + jnp.sum(stretched, axis=1)
     ) * (z[1] - z[0])
-    #normalization = jnp.where(normalization==0.0, 1.0, normalization)
+    # normalization = jnp.where(normalization==0.0, 1.0, normalization)
     return stretched / (normalization[:, None])

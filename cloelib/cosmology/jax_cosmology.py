@@ -304,6 +304,19 @@ class JAXBackground:
             ]
         )
 
+    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Returns the matter density (no neutrinos) as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values (no neutrinos).
+        """
+        _Omega_m_use = self.Omega_b0+self.Omega_cdm0
+        return np.array([(_Omega_m_use) * (1+z)**3 /(self.hubble_parameter(z)/self.H0)**2  for z in zs])
+
     def w_a(self, a):
         """Write documentation (TODO)."""
         return self.w0 + (1.0 - a) * self.wa  # Equation (6) in Linder (2003)
@@ -672,6 +685,31 @@ class JAXLinearPerturbations:
         pk = pk * pknorm / factor
         return pk.squeeze()
 
+    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum without neutrinos.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for jax.")
+
 
 class JAXNonLinearPerturbations:
     """Class for perturbations cosmology using JAX, inheriting from Cosmology parent class."""
@@ -842,6 +880,30 @@ class JAXNonLinearPerturbations:
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
         return Pkl
 
+    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
+        r"""Computes the linear matter power spectrum without neutrinos.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for jax.")
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""
 

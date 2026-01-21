@@ -525,8 +525,8 @@ class CLASSNonLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        return np.array([self.results.scale_independent_growth_factor_f(zi)
-                for zi in self.z])
+        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        return np.array(arr)
 
     def matter_power_spectrum_cb(self, zs, ks, hubble_units=False,
                                  k_hunit=False) -> np.ndarray:
@@ -553,8 +553,6 @@ class CLASSNonLinearPerturbations:
             and redshift
         """
         raise NotImplementedError("Not implemented for CLASS.")
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
-        return np.array(arr)
 
     def sigma8_0(self) -> float:
         """

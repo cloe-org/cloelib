@@ -418,7 +418,7 @@ class CLASSLinearPerturbations:
             The sigma8 value.
         """
 
-        return 0
+        return self.results.sigma8()  # type: ignore[union-attr]
 
 
 class CLASSNonLinearPerturbations:
@@ -564,4 +564,4 @@ class CLASSNonLinearPerturbations:
             The sigma8 value.
         """
 
-        return 0
+        return self.results.sigma8()  # type: ignore[union-attr]

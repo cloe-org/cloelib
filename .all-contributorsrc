@@ -371,6 +371,15 @@
         "bug",
         "doc"
       ]
+    },
+    {
+      "login": "zsirap",
+      "name": "zsirap",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50758399?v=4",
+      "profile": "https://github.com/zsirap",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }

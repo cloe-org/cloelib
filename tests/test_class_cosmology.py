@@ -393,3 +393,14 @@ def test_class_growth_rate(class_perturbation_instances, key, zs, ks):
     result = class_instance.growth_rate()
     assert isinstance(result, np.ndarray)
     assert result.ndim == 1
+
+
+def test_class_sigma8_consistency_linear_vs_nonlinear(class_background_instance, zs):
+    """Test that Linear and NonLinear give consistent sigma8(z=0) values."""
+    class_lin = CLASSLinearPerturbations(
+        background=class_background_instance, redshifts=zs
+    )
+    class_non = CLASSNonLinearPerturbations(
+        background=class_background_instance, redshifts=zs, nonlinear_model="halofit"
+    )
+    assert np.abs(class_lin.sigma8_0() - class_non.sigma8_0()) < 1e-3

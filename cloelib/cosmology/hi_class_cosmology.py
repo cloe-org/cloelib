@@ -13,7 +13,7 @@ from typing import Optional, Union, Sequence
 try:
     from classy import Class  # type: ignore
     from classy import __file__ as classyfile
-    
+
     print(f"Loaded hi_class from {classyfile}.")
 except ImportError as e:
     raise ImportError("classy could not be imported.") from e
@@ -67,7 +67,9 @@ class hi_classBackground:
         self.ns = ns
         self.w0 = w0
         self.wa = wa
-        self.gamma_MG = gamma_MG  # Kept for protocol, but hi_class doesn't directly use it
+        self.gamma_MG = (
+            gamma_MG  # Kept for protocol, but hi_class doesn't directly use it
+        )
         self.mnu = mnu
         self.N_mnu = N_mnu
         # We can set N_ur to a default value if not provided
@@ -99,7 +101,9 @@ class hi_classBackground:
 
         # Set neutrino parameters
         if self.N_mnu > 0:
-            self.interface_args["hi_classparams"]["m_ncdm"] = self._set_neutrino_masses()
+            self.interface_args["hi_classparams"]["m_ncdm"] = (
+                self._set_neutrino_masses()
+            )
         self.interface_args["hi_classparams"]["N_ncdm"] = self.N_mnu
         self.interface_args["hi_classparams"]["N_ur"] = self.N_ur
 
@@ -188,7 +192,9 @@ class hi_classBackground:
         Returns:
             np.ndarray: Hubble parameter values at specified redshifts.
         """
-        H = np.array([self.results.Hubble(z) for z in zs])  # hi_class returns H in 1/Mpc
+        H = np.array(
+            [self.results.Hubble(z) for z in zs]
+        )  # hi_class returns H in 1/Mpc
         if units == "km/s/Mpc":
             return H * hi_classBackground.c0  # Convert to km/s/Mpc
         elif units == "1/Mpc":

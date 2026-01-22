@@ -38,6 +38,7 @@ class hi_classBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        params_smg: Optional[dict] = {},
     ) -> None:
         """
         Initialize the hi_classBackground instance with cosmological parameters.
@@ -57,6 +58,7 @@ class hi_classBackground:
             N_mnu (int): Number of massive neutrino species.
             N_ur (Optional[float]): Effective number of ultra-relativistic species.
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
+            params_smg (Optional[dict]): Modified gravity parameters, or other extra parameters not passed by default.
         """
         self.H0 = H0
         self.h = self.H0 / 100
@@ -106,6 +108,27 @@ class hi_classBackground:
             )
         self.interface_args["hi_classparams"]["N_ncdm"] = self.N_mnu
         self.interface_args["hi_classparams"]["N_ur"] = self.N_ur
+
+        # Set modified gravity parameters, or other extra parameters not passed by default
+        for key_smg in params_smg:
+            if key_smg in self.interface_args["hi_classparams"]:
+                raise ValueError(
+                    f"'{key_smg}' is either passed as argument of hi_classBackground or has an enforced default value. It can't be passed again in params_smg."
+                )
+
+        # if a modified gravity model is specified, we need some extra handling for a possible DE fluid component
+        if "gravity_model" in params_smg:
+            # by default there is no DE fluid when there is a Horndeski scalar field, but one can include both with a nonzero Omega_fld
+            self.interface_args["hi_classparams"]["Omega_fld"] = params_smg.get(
+                "Omega_fld", 0.0
+            )
+            # if there is no DE fluid, hi_class cannot read fluid related parameters
+            if float(self.interface_args["hi_classparams"]["Omega_fld"]) == 0.0:
+                self.interface_args["hi_classparams"].pop("w0_fld")
+                self.interface_args["hi_classparams"].pop("wa_fld")
+                self.interface_args["hi_classparams"].pop("use_ppf")
+
+        self.interface_args["hi_classparams"].update(params_smg)
 
         # Initialize hi_class
         self.results = Class()

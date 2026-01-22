@@ -231,8 +231,7 @@ class LegendreMultipoles:
             1.0 - self.parameters["fout"]
         ) ** 2 + self._Pk2d_noise(k, mu)
 
-    def _Pk2d_term(self, k: np.ndarray, mu: np.ndarray,
-                   term_list: list) -> np.ndarray:
+    def _Pk2d_term(self, k: np.ndarray, mu: np.ndarray, term_list: list) -> np.ndarray:
         r"""2D power spectrum of specific RSD terms, accounting for systematics.
 
         Parameters
@@ -248,9 +247,11 @@ class LegendreMultipoles:
         Pk2d_term: np.ndarray
             2D power spectrum of specific RSD terms
         """
-        return (self.spectro_power.Pk2d_term_rsd(k, mu, term_list=term_list) *
-                self._damping_function(k, mu) *
-                (1.0 - self.parameters["fout"]) ** 2)
+        return (
+            self.spectro_power.Pk2d_term_rsd(k, mu, term_list=term_list)
+            * self._damping_function(k, mu)
+            * (1.0 - self.parameters["fout"]) ** 2
+        )
 
     def power_multipoles(
         self,

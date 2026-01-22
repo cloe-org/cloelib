@@ -9,7 +9,8 @@ from cloelib.auxiliary.akima import akima_interpolation
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 
-jax.config.update('jax_enable_x64', True)
+jax.config.update("jax_enable_x64", True)
+
 
 def dct_type1(f_values: Array) -> Array:
     """Compute the Discrete Cosine Transform (DCT) of type I.
@@ -167,7 +168,9 @@ def Pkl_unequaltime(
 
     # Equal-time power spectra
     Pk_chi = perturbation.matter_power_spectrum(z_of_chi, k)
-    Pk_chi_R = 10**akima_interpolation(jnp.log10(Pk_chi), chi, chi_R_flatten, axis=0).reshape(len(chi), len(R), len(k))
+    Pk_chi_R = 10 ** akima_interpolation(
+        jnp.log10(Pk_chi), chi, chi_R_flatten, axis=0
+    ).reshape(len(chi), len(R), len(k))
 
     return jnp.sqrt(jnp.einsum("jk,jik->kji", Pk_chi, Pk_chi_R))
 
@@ -214,7 +217,7 @@ def Pkl_chebyshev_coeffs(
         3D array of Chebyshev coefficients for P(k, chi1, chi2).
     """
 
-    Pk = 10**Pkl_unequaltime_interp(jnp.log10(Pkl), ks, k_cheb)
+    Pk = 10 ** Pkl_unequaltime_interp(jnp.log10(Pkl), ks, k_cheb)
 
     return jnp.apply_along_axis(chebyshev_coefficients, 0, Pk)
 
@@ -299,7 +302,8 @@ def get_kernel_array(tracer, chi_grid):
         return _get_kernel_array_shear(tracer, chi_grid)
     else:
         raise ValueError("Tracer type not supported for kernel array computation.")
-    
+
+
 def combine_kernels(tracer_1, tracer_2, chi, R):
     """
     Combine the kernels of two tracers over given chi and R grids.
@@ -316,14 +320,18 @@ def combine_kernels(tracer_1, tracer_2, chi, R):
     Combined kernel array of shaepe (n_bins_1, n_bins_2, len(chi), len(R)).
     """
 
-    R_mesh, chi_mesh = jnp.meshgrid(R, chi, indexing="ij")
-    chi_R = chi_mesh * R_mesh
+    W1_chi = get_kernel_array(tracer_1, chi)  # shape (n_bins_1, len(chi))
+    W2_chi = get_kernel_array(tracer_2, chi)  # shape (n_bins_2, len(chi))
 
-    W1_chi = jax.vmap(get_kernel_array, in_axes=(None, 0), out_axes=(2))(tracer_1, chi_mesh)
-    W2_chi = jax.vmap(get_kernel_array, in_axes=(None, 0), out_axes=(2))(tracer_2, chi_mesh)
+    chi_R = jnp.outer(chi, R).flatten()
 
-    W1_chi_R = jax.vmap(get_kernel_array, in_axes=(None, 0), out_axes=(2))(tracer_1, chi_R)
-    W2_chi_R = jax.vmap(get_kernel_array, in_axes=(None, 0), out_axes=(2))(tracer_2, chi_R)
+    W1_chi_R = get_kernel_array(tracer_1, chi_R).reshape(
+        W1_chi.shape[0], len(chi), len(R)
+    )  # shape (n_bins_1, len(chi), len(R))
+    W2_chi_R = get_kernel_array(tracer_2, chi_R).reshape(
+        W2_chi.shape[0], len(chi), len(R)
+    )  # shape (n_bins_2, len(chi), len(R))
 
-    return (jnp.einsum("ikt,jkt->ijkt", W1_chi, W2_chi_R)
-        + jnp.einsum("jkt,ikt->ijkt", W2_chi, W1_chi_R))
+    return jnp.einsum("ik,jkt->ijkt", W1_chi, W2_chi_R) + jnp.einsum(
+        "jk,ikt->ijkt", W2_chi, W1_chi_R
+    )

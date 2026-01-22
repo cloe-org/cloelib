@@ -371,7 +371,7 @@ class CAMBLinearPerturbations:
     def matter_power_spectrum_cb(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        r"""Computes the linear matter power spectrum without neutrinos.
+        r"""Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).
 
         Parameters
         ----------
@@ -547,7 +547,7 @@ class CAMBNonLinearPerturbations:
     def matter_power_spectrum_cb(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        r"""Computes the linear matter power spectrum without neutrinos.
+        r"""Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).
 
         Parameters
         ----------

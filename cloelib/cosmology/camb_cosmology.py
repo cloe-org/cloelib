@@ -368,8 +368,9 @@ class CAMBLinearPerturbations:
         ).P(zs, ks)
         return pk_values
 
-    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False,
-                                 k_hunit=False) -> np.ndarray:
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
         r"""Computes the linear matter power spectrum without neutrinos.
 
         Parameters
@@ -393,10 +394,14 @@ class CAMBLinearPerturbations:
             and redshift
         """
         pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args['CAMBparams'],
-            nonlinear=False, extrap_kmax=self.kmax,
-            hubble_units=hubble_units, k_hunit=k_hunit,
-            var1="delta_nonu", var2="delta_nonu").P(zs, ks)
+            self.background.interface_args["CAMBparams"],
+            nonlinear=False,
+            extrap_kmax=self.kmax,
+            hubble_units=hubble_units,
+            k_hunit=k_hunit,
+            var1="delta_nonu",
+            var2="delta_nonu",
+        ).P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:
@@ -539,8 +544,9 @@ class CAMBNonLinearPerturbations:
         ).P(zs, ks)
         return pk_values
 
-    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False,
-                                 k_hunit=False) -> np.ndarray:
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
         r"""Computes the linear matter power spectrum without neutrinos.
 
         Parameters
@@ -563,11 +569,14 @@ class CAMBNonLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args['CAMBparams'],
-            nonlinear=True, extrap_kmax=self.kmax,
-            hubble_units=hubble_units, k_hunit=k_hunit,
-            var1="delta_nonu", var2="delta_nonu").P(zs, ks)
+        pk_values = self.results.get_matter_power_interpolator(
+            nonlinear=True,
+            extrap_kmax=self.kmax,
+            hubble_units=hubble_units,
+            k_hunit=k_hunit,
+            var1="delta_nonu",
+            var2="delta_nonu",
+        ).P(zs, ks)
         return pk_values
 
     def growth_rate(self) -> np.ndarray:

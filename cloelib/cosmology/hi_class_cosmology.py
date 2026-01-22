@@ -421,13 +421,16 @@ class hi_classLinearPerturbations:
     def growth_rate(self) -> np.ndarray:
         """
         Calculate the growth rate f(z).
+        The standard expression for scale-independent f assumes LCDM and isn't valid in modified gravity.
+        Instead, we use the scale-dependent growth rate at large k (1 Mpc^-1)
 
         Returns
         -------
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
+
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -541,13 +544,16 @@ class hi_classNonLinearPerturbations:
     def growth_rate(self) -> np.ndarray:
         """
         Calculate the growth rate f(z).
+        The standard expression for scale-independent f assumes LCDM and isn't valid in modified gravity.
+        Instead, we use the scale-dependent growth rate at large k (1 Mpc^-1)
 
         Returns
         -------
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
+
         return np.array(arr)
 
     def sigma8_0(self) -> float:

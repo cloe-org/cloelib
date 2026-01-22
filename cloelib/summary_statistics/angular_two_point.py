@@ -218,9 +218,7 @@ class AngularTwoPoint:
 
         def cmbl_she_rule(C, i, j):
             block = C[:, i - 1, j - 1]
-            return {
-                ("CMBL", "SHE", i, j): np.stack([block, np.zeros_like(block)])
-            }
+            return {("CMBL", "SHE", i, j): np.stack([block, np.zeros_like(block)])}
 
         tracer_rules = {
             (PositionsTracer, PositionsTracer): pos_pos_rule,
@@ -228,7 +226,7 @@ class AngularTwoPoint:
             (ShearTracer, ShearTracer): she_she_rule,
             (CMBLensingTracer, PositionsTracer): cmbl_pos_rule,
             (CMBLensingTracer, ShearTracer): cmbl_she_rule,
-            (CMBLensingTracer, CMBLensingTracer): cmbl_cmbl_rule
+            (CMBLensingTracer, CMBLensingTracer): cmbl_cmbl_rule,
         }
 
         # normalize the key so (A, B) and (B, A) are both supported
@@ -250,7 +248,8 @@ class AngularTwoPoint:
             for i in range(1, a + 1)
             for j in range(i, b + 1)
             for k, v in (
-                rule_fn(C_ell_calc, i, j) if n_bin1 <= n_bin2
+                rule_fn(C_ell_calc, i, j)
+                if n_bin1 <= n_bin2
                 else rule_fn(C_ell_calc, j, i)
             ).items()
         }

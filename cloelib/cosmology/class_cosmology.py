@@ -270,7 +270,7 @@ class CLASSBackground:
     @property
     def z_star(self) -> float:
         """Redshift of recombination."""
-        return self.results.get_current_derived_parameters(['z_star'])['z_star']
+        return self.results.get_current_derived_parameters(["z_star"])["z_star"]
 
 
 class CLASSLinearPerturbations:

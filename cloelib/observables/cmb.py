@@ -10,9 +10,6 @@ from cloelib.cosmology.cosmology import Perturbations
 
 # General imports
 import jax.numpy as np  # type: ignore
-import jax  # type: ignore
-import interpax  # type: ignore
-import jax.lax as lx
 
 
 # UNITS

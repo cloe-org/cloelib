@@ -105,7 +105,7 @@ class Background(Protocol):
         """Compute the matter density as a function of redshift."""
         ...
 
-    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
         """Computes the cold dark matter + baryons (no neutrinos) as a function of redshift."""
         ...
 

@@ -238,7 +238,7 @@ class CLASSBackground:
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
-    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
 

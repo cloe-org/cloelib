@@ -304,7 +304,7 @@ class JAXBackground:
             ]
         )
 
-    def Omega_m_cb(self, zs: jnp.ndarray) -> jnp.ndarray:
+    def Omega_cb(self, zs: jnp.ndarray) -> jnp.ndarray:
         """
         Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
 

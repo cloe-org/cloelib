@@ -254,7 +254,7 @@ class CAMBBackground:
         """
         return self.results.angular_diameter_distance(zs)
 
-    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
 
@@ -278,7 +278,7 @@ class CAMBBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return self.Omega_m_cb(zs) + self.results.get_Omega("nu", z=zs)
+        return self.Omega_cb(zs) + self.results.get_Omega("nu", z=zs)
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """

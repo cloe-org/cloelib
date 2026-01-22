@@ -106,7 +106,7 @@ class Background(Protocol):
         ...
 
     def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
-        """Computes the matter density without neutrinos as a function of redshift."""
+        """Computes the cold dark matter + baryons (no neutrinos) as a function of redshift."""
         ...
 
     def hubble_parameter(self, zs: T, units: str = "km/s/Mpc") -> T:

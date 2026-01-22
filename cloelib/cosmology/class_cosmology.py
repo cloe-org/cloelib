@@ -240,7 +240,7 @@ class CLASSBackground:
 
     def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
         """
-        Returns the matter density (no neutrinos) as a function of redshift.
+        Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.

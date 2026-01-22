@@ -231,6 +231,27 @@ class LegendreMultipoles:
             1.0 - self.parameters["fout"]
         ) ** 2 + self._Pk2d_noise(k, mu)
 
+    def _Pk2d_term(self, k: np.ndarray, mu: np.ndarray,
+                   term_list: list) -> np.ndarray:
+        r"""2D power spectrum of specific RSD terms, accounting for systematics.
+
+        Parameters
+        ----------
+        k: np.ndarray
+            Wavenumber
+        mu: np.ndarray
+            Angle (cosinus) to the line of sight
+        term_list: list
+            List of terms to compute
+        Returns
+        -------
+        Pk2d_term: np.ndarray
+            2D power spectrum of specific RSD terms
+        """
+        return (self.spectro_power.Pk2d_term_rsd(k, mu, term_list=term_list) *
+                self._damping_function(k, mu) *
+                (1.0 - self.parameters["fout"]) ** 2)
+
     def power_multipoles(
         self,
         k: np.ndarray,
@@ -309,7 +330,7 @@ class LegendreMultipoles:
         Pk2d = np.empty((len(term_list), len(k), len(self.mu_grid)))
         rsd_ids = [index for index, term in enumerate(term_list) if "noise" not in term]
         if rsd_ids:
-            Pk2d[rsd_ids] = self.spectro_power.Pk2d_term_rsd(
+            Pk2d[rsd_ids] = self._Pk2d_term(
                 kAP, muAP, term_list=[term_list[index] for index in rsd_ids]
             )
         noise_ids = [index for index in range(len(term_list)) if index not in rsd_ids]

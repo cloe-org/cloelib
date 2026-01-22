@@ -2,11 +2,10 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, Perturbations
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
 import numpy as np
-from typing import Optional, Union, Sequence, TypeVar
+from typing import Union, TypeVar
 import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
@@ -49,7 +48,9 @@ class Weyl_Perturbations:
         gf_den = self.perturbations.growth_factor(zs, k0_arr)
         return gf_num / gf_den
 
-    def matter_power_spectrum(self, zs: T, ks: T, hubble_units: bool = False, k_hunit: bool = False) -> T:
+    def matter_power_spectrum(
+        self, zs: T, ks: T, hubble_units: bool = False, k_hunit: bool = False
+    ) -> T:
         """
         Return boosted matter power spectrum:
           P_boosted(zs, ks) = boost(zs, ks) * P_base(z_ini_array, ks)
@@ -60,8 +61,9 @@ class Weyl_Perturbations:
         z_ini_arr = zs * 0 + self.z_ini
 
         # Evaluate the base power at z_ini_arr and ks
-        P_base = self.perturbations.matter_power_spectrum(z_ini_arr, ks,
-                                                          hubble_units=hubble_units, k_hunit=k_hunit)
+        P_base = self.perturbations.matter_power_spectrum(
+            z_ini_arr, ks, hubble_units=hubble_units, k_hunit=k_hunit
+        )
 
         b = self.boost(zs, ks)
         return b * P_base

@@ -215,7 +215,7 @@ class AngularTwoPoint:
             key = key[::-1]
 
         rule_fn = tracer_rules.get(key)
-        
+
         # ADDED FOR WEYL PROJECT: accept subclasses by scanning with isinstance
         if rule_fn is None:
             for (A, B), fn in tracer_rules.items():
@@ -225,7 +225,7 @@ class AngularTwoPoint:
                 if isinstance(self.tracer1, B) and isinstance(self.tracer2, A):
                     rule_fn = fn
                     break
-                    
+
         if rule_fn is None:
             raise ValueError(
                 f"No rule defined for tracers {type(self.tracer1)}, {type(self.tracer2)}"

@@ -339,8 +339,9 @@ class CLASSLinearPerturbations:
         # To match array convention of CAMB
         return self.Pk_linear
 
-    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False,
-                                 k_hunit=False) -> np.ndarray:
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
         r"""Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).
 
         Parameters
@@ -364,7 +365,6 @@ class CLASSLinearPerturbations:
             and redshift
         """
         raise NotImplementedError("Not implemented for CLASS.")
-
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -486,6 +486,33 @@ class CLASSNonLinearPerturbations:
         # To match array convention of CAMB
         return self.Pk_nonlinear
 
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
+        """Calculate the CLASS non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for CLASS.")
+
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
@@ -527,32 +554,6 @@ class CLASSNonLinearPerturbations:
         """
         arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
-
-    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False,
-                                 k_hunit=False) -> np.ndarray:
-        r"""Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
-        """
-        raise NotImplementedError("Not implemented for CLASS.")
 
     def sigma8_0(self) -> float:
         """

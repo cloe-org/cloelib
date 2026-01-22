@@ -892,7 +892,7 @@ class JAXNonLinearPerturbations:
     def matter_power_spectrum_cb(
         self, zs: jnp.ndarray, ks: jnp.ndarray, hubble_units=False, k_hunit=False
     ) -> jnp.ndarray:
-        r"""Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).
+        r"""Compute the non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).
 
         Parameters
         ----------

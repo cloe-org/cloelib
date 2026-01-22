@@ -294,6 +294,35 @@ class hi_classBackground:
         """
         return np.array([self.results.Om_b(z) for z in zs])
 
+    # this method can be used to retrieve all modified gravity background quantities
+    def get_background(self) -> dict:
+        """
+        Return all background quantities
+
+        Return a dictionary of background quantities at all times.
+        The name and list of quantities in the returned dictionary are
+        defined in hi_class, in background_output_titles() and
+        background_output_data(). The keys of the dictionary refer to
+        redshift 'z', proper time 'proper time [Gyr]', conformal time
+        'conf. time [Mpc]', and many quantities such as the Hubble
+        rate, distances, densities, pressures, or growth factors. For
+        each key, the dictionary contains an array of values
+        corresponding to each sampled value of time.
+
+        This function works for whatever request in the 'output'
+        field, and even if 'output' was not passed or left blank.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        background : dict
+            Dictionary of all background quantities at each time
+        """
+        return self.results.get_background()
+
     @property
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering in Mpc."""

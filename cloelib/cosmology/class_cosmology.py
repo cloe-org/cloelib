@@ -269,7 +269,7 @@ class CLASSBackground:
 
     @property
     def z_star(self) -> float:
-        """Redshift of recombination."""
+        """Redshift of photon decoupling."""
         return self.results.get_current_derived_parameters(["z_star"])["z_star"]
 
 

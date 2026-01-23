@@ -289,7 +289,7 @@ class CAMBBackground:
 
     @property
     def z_star(self) -> float:
-        """Redshift of recombination."""
+        """Redshift of photon decoupling."""
         return self.results.get_derived_params()["zstar"]
 
 

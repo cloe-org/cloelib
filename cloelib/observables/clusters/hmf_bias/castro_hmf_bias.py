@@ -3,14 +3,17 @@ from scipy import interpolate
 from scipy.special import gamma
 
 from cloelib.cosmology import derived_cosmology
-from cloelib.observables.clusters.halo_statistics import HaloStatistics
+from cloelib.observables.clusters.halo_model import HaloModel
+
+from .hmf_bias_auxiliary import HMFBiasAuxiliary
 
 
 class CastroHMFBias:
 
-    def __init__(self, halo_statistics: HaloStatistics):
+    def __init__(self, halo_model: HaloModel):
 
-        self.halo_statistics = halo_statistics
+        self.halo_model = halo_model
+        self.auxiliary = HMFBiasAuxiliary(halo_model)
 
     def f_sigma_nu(self, z, M):
         r"""
@@ -32,9 +35,9 @@ class CastroHMFBias:
             f_sigma_nu[i,j], where i is the redshift axis and j the mass axis
         """
         # compute inputs
-        Omega_m = self.halo_statistics._Omega_m(z)
-        dlnsigmadlnM = self.halo_statistics.dlns_dlnM(z, M)
-        nu = self.halo_statistics.nu_z_M(z, M)
+        Omega_m = self.halo_model._Omega_m(z)
+        dlnsigmadlnM = self.halo_model.dlns_dlnM(z, M)
+        nu = self.halo_model.nu_z_M(z, M)
 
         ##################
         # HMF computations
@@ -103,10 +106,10 @@ class CastroHMFBias:
             M = np.append(M, M[-1] * np.arange(2, 6))
 
         # compute inputs
-        Omega_m = self.halo_statistics._Omega_m(z)
-        delta_c = self.halo_statistics.delta_c(z)
-        dlnsigmadlnM = self.halo_statistics.dlns_dlnM(z, M)
-        nu = self.halo_statistics.nu_z_M(z, M)
+        Omega_m = self.halo_model._Omega_m(z)
+        delta_c = self.halo_model.delta_c(z)
+        dlnsigmadlnM = self.halo_model.dlns_dlnM(z, M)
+        nu = self.halo_model.nu_z_M(z, M)
 
         ###################
         # Bias computations
@@ -115,9 +118,7 @@ class CastroHMFBias:
         # Compute main quantities
         dlnsigmadlnR = 3 * dlnsigmadlnM
         fsigmanu = self.f_sigma_nu(z, M)
-        S8 = self.halo_statistics.sigma8 * np.sqrt(
-            self.halo_statistics._Omega_m(0.0) / 0.3
-        )
+        S8 = self.halo_model.sigma8 * np.sqrt(self.halo_model._Omega_m(0.0) / 0.3)
 
         dlnfsigmanu_dlnnu = np.zeros(fsigmanu.shape)
         for i in range(len(Omega_m)):
@@ -159,4 +160,4 @@ class CastroHMFBias:
             dn_dm[i,j], where i is the redshift axis and j the mass axis.
             Units: h^4 Mpc^{-3} Ms^{-1}.
         """
-        return self.halo_statistics.dn_dm_fsigmanu(z, M, self.f_sigma_nu(z, M))
+        return self.auxiliary.dn_dm_fsigmanu(z, M, self.f_sigma_nu(z, M))

@@ -8,9 +8,9 @@ from numpy.testing import assert_allclose, assert_equal, assert_raises
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.clusters.clustering import HaloClustering
 from cloelib.observables.clusters.covariance import HaloCovariance
-from cloelib.observables.clusters.halo_statistics import HaloStatistics
+from cloelib.observables.clusters.halo_model import HaloModel
+from cloelib.observables.clusters.halo_profile import NFWHaloProfile
 from cloelib.observables.clusters.hmf_bias import CastroHMFBias
-from cloelib.observables.clusters.profile import ProfileNFW
 from cloelib.observables.clusters.selection_function import SelectionFunction
 from cloelib.summary_statistics.clusters import (
     ClusterClustering,
@@ -78,19 +78,6 @@ def get_values():
         sig_z_lambda=5.0e-6,
     )
 
-    _prof_pars = dict(
-        r_interp=np.logspace(-10, 2.5, 200),
-        two_halo="None",
-        offcentering=False,
-        rms_off=0.0,
-        f_off=0.0,
-        trunc_fact=3.0,
-        zs_max=2.0,
-        mean_nz=0.4,
-        sigma_nz=0.3,
-        alpha_nz=0.4,
-    )
-
     integ_k_arr = np.geomspace(1e-4, 10, 500)
     integ_mass_arr = np.logspace(12.0, 16.0, 51)
     integ_lambda_true_arr = np.geomspace(5.0, 250.0, 51)
@@ -114,18 +101,17 @@ def get_values():
     # Istanciate objects
 
     selectionFunction = SelectionFunction(**_sel_pars)
-    HSCastro = CastroHMFBias(
-        halo_statistics=HaloStatistics(
-            perturbations,
-            z=integ_ztrue_arr,
-            k=integ_k_arr,
-            overdensity_type=overdensity_type,
-        )
+    HS = HaloModel(
+        perturbations,
+        z=integ_ztrue_arr,
+        k=integ_k_arr,
+        overdensity_type=overdensity_type,
     )
+    HSCastro = CastroHMFBias(halo_model=HS)
     covariance = HaloCovariance(
         perturbations, area=area, nbins_zob=len(z_obs_nc_edges), k=integ_k_arr
     )
-    profileNFW = ProfileNFW(HSCastro, k=integ_k_arr, z=integ_ztrue_arr, **_prof_pars)
+    profileNFW = NFWHaloProfile(HS, two_halo="None")
     haloClustering = HaloClustering(
         perturbations, perturbations_fid, selectionFunction, k=integ_k_arr
     )

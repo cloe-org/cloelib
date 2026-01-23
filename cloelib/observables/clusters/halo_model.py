@@ -2,11 +2,12 @@ import numpy as np
 from scipy import interpolate
 from scipy.integrate import simpson as simps
 
+from cloelib.auxiliary import units
 from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.cosmology import Perturbations
 
 
-class HaloStatistics:
+class HaloModel:
     def __init__(
         self,
         perturbations: Perturbations,
@@ -17,9 +18,11 @@ class HaloStatistics:
         z=np.linspace(1.0e-5, 2.0 - 1.0e-5, 100),
         k=np.geomspace(1e-4, 10, 500),
     ):
-        r"""A class computing halo mass function and halo bias.
+        r"""Auxiliary class computing quantities used in galaxy cluster models.
 
         Initialize the class with given perturbations and overdensity definition.
+        If requested, cosmological functions (e.g., the matter power spectrum)
+        are interpolated.
 
         Parameters
         ----------
@@ -39,7 +42,7 @@ class HaloStatistics:
             If `True`, massive neutrinos are excluded from the density parameter
             summation.
         use_interpolation : bool, optional
-            If true, class uses interpolation for matter power spectrum computation.
+            If true, the class interpolates the matter power spectrum.
             A default interpolation is set when class is instanciated with
             use_interpolation=True. For a more customized interpolation, check
             the interpolate_matter_power_spectrum function.
@@ -60,10 +63,9 @@ class HaloStatistics:
         self.__sigma8 = None
 
         # set interpolation usage
-        self.z = z
         self.k = k
         if use_interpolation:
-            self.interpolate_matter_power_spectrum(self.z, self.k)
+            self.interpolate_matter_power_spectrum(z, self.k)
         self.use_interpolation = use_interpolation
 
         # to avoid recomputing sigma & dsigmadlnM
@@ -417,34 +419,3 @@ class HaloStatistics:
             self._tabulated_dlnsigmadlnM["values"] = dsigma2_dlnM / (2 * sigma**2)
 
         return self._tabulated_dlnsigmadlnM["values"]
-
-    # ----------------------------------
-    # Functions with precomputed values
-    # ----------------------------------
-
-    def dn_dm_fsigmanu(self, z, M, fsigmanu):
-        r"""Derivative of the number density with pre-computed
-        halo mass function.
-
-        Computes the derivative of the number density
-        at the requested redshift and mass points.
-
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points.
-        M: numpy.ndarray
-            Mass points in h^{-1} Msun.
-        fsigmanu: numpy.ndarray
-            Multiplicity function.
-
-        Returns
-        -------
-        dn_dm: numpy.ndarray
-            dn_dm[i,j], where i is the redshift axis and j the mass axis.
-            Units: h^4 Mpc^{-3} Ms^{-1}.
-        """
-        rho_mean_0 = self._Omega_m(0) * derived_cosmology.rho_crit(self.background, 0.0)
-        rho_mean_0 /= self.background.h**2.0
-
-        return -rho_mean_0 / M**2.0 * fsigmanu * self.dlns_dlnM(z, M)

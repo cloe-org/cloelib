@@ -1,14 +1,17 @@
 import numpy as np
 
 from cloelib.cosmology import derived_cosmology
-from cloelib.observables.clusters.halo_statistics import HaloStatistics
+from cloelib.observables.clusters.halo_model import HaloModel
+
+from .hmf_bias_auxiliary import HMFBiasAuxiliary
 
 
 class TinkerHMFBias:
 
-    def __init__(self, halo_statistics: HaloStatistics):
+    def __init__(self, halo_model: HaloModel):
 
-        self.halo_statistics = halo_statistics
+        self.halo_model = halo_model
+        self.auxiliary = HMFBiasAuxiliary(halo_model)
 
     def f_sigma_nu(self, z, M):
         r"""
@@ -51,11 +54,9 @@ class TinkerHMFBias:
             bias[i,j], where i is the redshift axis and j the mass axis
         """
         # compute inputs
-        delta_c = self.halo_statistics.delta_c(z)
-        nu = self.halo_statistics.nu_z_M(z, M)
-        Delta = self.halo_statistics.get_Delta_crit(z) / self.halo_statistics._Omega_m(
-            z
-        )
+        delta_c = self.halo_model.delta_c(z)
+        nu = self.halo_model.nu_z_M(z, M)
+        Delta = self.halo_model.get_Delta_crit(z) / self.halo_model._Omega_m(z)
 
         ###################
         # Bias computations
@@ -99,4 +100,4 @@ class TinkerHMFBias:
             dn_dm[i,j], where i is the redshift axis and j the mass axis.
             Units: h^4 Mpc^{-3} Ms^{-1}.
         """
-        return self.halo_statistics.dn_dm_fsigmanu(z, M, self.f_sigma_nu(z, M))
+        return self.auxiliary.dn_dm_fsigmanu(z, M, self.f_sigma_nu(z, M))

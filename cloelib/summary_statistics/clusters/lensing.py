@@ -3,7 +3,7 @@ import numpy as np
 from scipy.integrate import simpson as simps
 
 # cloelib imports
-from cloelib.observables.clusters.profile import Profile
+from cloelib.observables.clusters.halo_profile import HaloProfile
 from cloelib.summary_statistics.clusters.statistics_modeling import (
     ClusterStatisticsModeling,
 )
@@ -23,7 +23,7 @@ class ClusterWeakLensing:
     def __init__(
         self,
         cluster_statitstics_modeling: ClusterStatisticsModeling,
-        profile: Profile,
+        profile: HaloProfile,
         halo_concentration: float,
     ):
         """
@@ -195,7 +195,7 @@ class ClusterWeakLensing:
         )
         for ind_z in range(z_obs_edges_size):
             effective_inverse_critical_surface_mass_density[ind_z] = (
-                self.profile.m_sig_crit_m1(
+                self.profile.auxiliary.m_sig_crit_m1(
                     self.cluster_statitstics_modeling.tabulated_integrands["ztrue"],
                     ind_z,
                 )

@@ -40,7 +40,7 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths:
+          paths: ["."]
           options:
             docstring_style: google # Use Google-style docstrings
             show_source: false

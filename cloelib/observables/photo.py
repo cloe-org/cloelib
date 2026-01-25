@@ -375,14 +375,8 @@ class PositionsTracer:
             {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
         $$
 
-        ### This docstring does not correspond to the function
-
         Parameters:
           z (numpy.ndarray): Redshift at which weight is evaluated (array of `float`).
-          bin_i (int): Index of desired tomographic bin.
-            Tomographic bin indices start from 1
-          k (float): Wavenumber at which to evaluate the Modified Gravity
-            $\Sigma(z,k)$ function
 
         Returns:
           (numpy.ndarray): 1-D Numpy array of shear kernel values for specified bin

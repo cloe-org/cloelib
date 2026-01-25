@@ -400,13 +400,8 @@ class JAXLinearPerturbations:
     def transfer_Eisenstein_Hu(self, ks):
         """Compute the Eisenstein & Hu matter transfer function.
 
-        ### This docstring does not correspond to the function ###
-
         Args:
-          cosmo (Background): Background cosmology
-          k (array_like): Wave number in h Mpc^{-1}
-          type (optional[str]): Type of transfer function. Either 'eisenhu' or 'eisenhu_osc'
-          (def: 'eisenhu_osc')
+          ks (array_like): Wave number in h Mpc^{-1}
 
         Returns:
           T (array_like): Value of the transfer function at the requested wave number
@@ -414,7 +409,6 @@ class JAXLinearPerturbations:
         Notes:
           The Eisenstein & Hu transfer functions are computed using the fitting
           formulae of :cite:`1998:EisensteinHu`
-
         """
         #############################################
         # Quantities computed from 1998:EisensteinHu

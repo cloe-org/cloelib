@@ -3,9 +3,12 @@ name: Docs
 on:
   push:
     branches:
-      - main        # Pushes to main update 'dev'
+      - main
     tags:
       - 'v*'        # Tags update 'stable' and version numbers
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -43,20 +46,21 @@ jobs:
           git config --local user.name  "${{ github.actor }}"
           git config --local user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
 
+      - name: Verify Docs Build (Dry Run)
+        if: github.event_name == 'pull_request'
+        run: mkdocs build --strict
+
+      # Deploy only on Push
+      # This runs ONLY on Pushes (merges to main or tags).
+      # It is skipped entirely for PRs.
       - name: Deploy documentation
+        if: github.event_name == 'push'
         run: |
+          # Your deployment logic (using the tag/main logic discussed before)
           if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION="${GITHUB_REF#refs/tags/}"
-            echo "Deploying release $VERSION"
-
-            # Push the specific version AND update the 'stable' alias
-            mike deploy --push --update-aliases $VERSION stable
-            mike set-default --push stable
-
-          # If the Main branch is pushed
+             VERSION="${GITHUB_REF#refs/tags/}"
+             mike deploy --push --update-aliases $VERSION stable
+             mike set-default --push stable
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
-            echo "Deploying dev docs from main"
-
-            # Update 'dev' and alias it to 'latest'
-            mike deploy --push --update-aliases dev latest
+             mike deploy --push --update-aliases dev latest
           fi

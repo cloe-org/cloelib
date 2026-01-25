@@ -10,8 +10,12 @@ import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
+
 class SpectroPower(Protocol):
     r"""Protocol to define the $P(k,\mu)$ interface."""
+
+    """Name of non-linear code"""
+    NLcode: str
 
     @property
     def background(self) -> Background:

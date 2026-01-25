@@ -22,8 +22,9 @@ License:
 This project is licensed under the MIT LICENSE.
 """
 
-__all__ : list[str] = []
+import jax
 
-from cloelib.cosmology import *
-from cloelib.observables import *
+# Enable double precision in JAX
+jax.config.update("jax_enable_x64", True)
 
+__all__: list[str] = []

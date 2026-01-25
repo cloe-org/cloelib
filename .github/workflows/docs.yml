@@ -2,7 +2,10 @@ name: Docs
 
 on:
   push:
-    branches: [main, develop]
+    branches:
+      - main        # Pushes to main update 'dev'
+    tags:
+      - 'v*'        # Tags update 'stable' and version numbers
   workflow_dispatch:
 
 permissions:
@@ -42,16 +45,18 @@ jobs:
 
       - name: Deploy documentation
         run: |
-          BRANCH="${GITHUB_REF#refs/heads/}"
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+            echo "Deploying release $VERSION"
 
-          if [[ "$BRANCH" == "develop" ]]; then
-            echo "Deploying dev docs from develop branch"
-            mike deploy --push --update-aliases dev latest
-          elif [[ "$BRANCH" == "main" ]]; then
-            echo "Deploying stable docs from main branch"
-            mike deploy --push --update-aliases stable
+            # Push the specific version AND update the 'stable' alias
+            mike deploy --push --update-aliases $VERSION stable
             mike set-default --push stable
-          else
-            echo "Branch $BRANCH is not configured for doc deploy"
-            exit 0
+
+          # If the Main branch is pushed
+          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+            echo "Deploying dev docs from main"
+
+            # Update 'dev' and alias it to 'latest'
+            mike deploy --push --update-aliases dev latest
           fi

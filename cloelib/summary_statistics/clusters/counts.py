@@ -148,7 +148,7 @@ class ClusterCounts:
         z_mid = 0.5 * (z_obs_edges[1:] + z_obs_edges[:-1])
 
         # power spectrum at the center of observed redshift bins (z_obs, k)
-        pk = self.cluster_statitstics_modeling.halo_model.matter_power_spectrum(
+        pk = self.cluster_statitstics_modeling.matter_statistics.matter_power_spectrum(
             z_mid, self.cluster_statitstics_modeling.tabulated_integrands["k"]
         )
 

@@ -6,7 +6,7 @@ from scipy.integrate import simpson as simps
 from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.observables.clusters.covariance import HaloCovariance
-from cloelib.observables.clusters.hmf_bias import HMFBias
+from cloelib.observables.clusters.halo_abundance import HaloAbundance
 from cloelib.observables.clusters.selection_function import SelectionFunction
 
 # import jax
@@ -41,7 +41,7 @@ class ClusterStatisticsModeling:
 
     def __init__(
         self,
-        hmfbias: HMFBias,
+        halo_abundance: HaloAbundance,
         selectionfunction: SelectionFunction,
         integ_k_arr: np.ndarray,
         integ_mass_arr: np.ndarray,
@@ -54,7 +54,7 @@ class ClusterStatisticsModeling:
 
         Parameters
         ----------
-        hmfbias : HMFBias
+        HaloAbundance : HaloAbundance
             Halo mass function and bias object
         selectionfunction : SelectionFunction
             Selection function object
@@ -70,9 +70,33 @@ class ClusterStatisticsModeling:
             Effective area of the survey in deg2.
         """
         # observable objects
-        self.hmfbias = hmfbias
-        self.halo_model = self.hmfbias.halo_model
+        self.halo_abundance = halo_abundance
         self.selectionfunction = selectionfunction
+
+        # check if the integration points lie within the interpolation ranges
+        if self.matter_statistics.interpolate_pk:
+            z_knots, k_knots = self.matter_statistics.Pk_interp.get_knots()
+            if (
+                integ_ztrue_arr.min() <= z_knots.min()
+                or integ_ztrue_arr.max() >= z_knots.max()
+            ):
+                raise ValueError(
+                    "integ_ztrue_arr points lie outside the P(k,z) interpolation range."
+                )
+            if integ_k_arr.min() <= k_knots.min() or integ_k_arr.max() >= k_knots.max():
+                raise ValueError(
+                    "integ_k_arr points lie outside the P(k,z) interpolation range."
+                )
+
+        if self.matter_statistics.interpolate_da:
+            z_knots = self.matter_statistics.da_interp.get_knots()
+            if (
+                integ_ztrue_arr.min() <= z_knots.min()
+                or integ_ztrue_arr.max() >= z_knots.max()
+            ):
+                raise ValueError(
+                    "integ_ztrue_arr points lie outside the D_A interpolation range."
+                )
 
         # integration tables
         self.tabulated_integrands = {
@@ -86,20 +110,26 @@ class ClusterStatisticsModeling:
             ),
             # volume element at each point of z array
             "dv/dz(ztrue)": derived_cosmology.dV_dzdO(
-                self.halo_model.perturbations.background,
+                self.matter_statistics.perturbations.background,
                 integ_ztrue_arr,
                 hubble_units=True,
             )
             * area
             * (np.pi**2.0 / 180.0**2.0),
             # hmf at the center of observed redshift bins
-            "dn/dM(ztrue,M)": self.hmfbias.dn_dm(integ_ztrue_arr, integ_mass_arr),
+            "dn/dM(ztrue,M)": self.halo_abundance.dn_dm(
+                integ_ztrue_arr, integ_mass_arr
+            ),
             # halo bias at the center of observed redshift bins
             # only work for virial overdensity
-            "bias(ztrue,M)": self.hmfbias.bias(integ_ztrue_arr, integ_mass_arr),
+            "bias(ztrue,M)": self.halo_abundance.bias(integ_ztrue_arr, integ_mass_arr),
             # kernel for integration in k
             "dk": integ_k_arr**2.0 / (2.0 * np.pi**2),
         }
+
+    @property
+    def matter_statistics(self):
+        return self.halo_abundance.core.matter_statistics
 
     # ----------------------------
     # cluster statistics functions

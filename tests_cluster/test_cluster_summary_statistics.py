@@ -6,11 +6,11 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal, assert_raises
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
-from cloelib.observables.clusters.clustering import HaloClustering
 from cloelib.observables.clusters.covariance import HaloCovariance
-from cloelib.observables.clusters.halo_model import HaloModel
+from cloelib.observables.clusters.halo_abundance import CastroHaloAbundance
+from cloelib.observables.clusters.halo_clustering import HaloClustering
 from cloelib.observables.clusters.halo_profile import NFWHaloProfile
-from cloelib.observables.clusters.hmf_bias import CastroHMFBias
+from cloelib.observables.clusters.matter_statistics import MatterStatistics
 from cloelib.observables.clusters.selection_function import SelectionFunction
 from cloelib.summary_statistics.clusters import (
     ClusterClustering,
@@ -84,7 +84,6 @@ def get_values():
     integ_ztrue_arr = np.linspace(1.0e-5, 6.0 - 1.0e-5, 200)
 
     halo_concentration = 0.1
-    overdensity_type = "vir"
     area = 10313
 
     # Integration bins
@@ -101,13 +100,12 @@ def get_values():
     # Istanciate objects
 
     selectionFunction = SelectionFunction(**_sel_pars)
-    HS = HaloModel(
+    HS = MatterStatistics(
         perturbations,
         z=integ_ztrue_arr,
         k=integ_k_arr,
-        overdensity_type=overdensity_type,
     )
-    HSCastro = CastroHMFBias(halo_model=HS)
+    HSCastro = CastroHaloAbundance(matter_statistics=HS)
     covariance = HaloCovariance(
         perturbations, area=area, nbins_zob=len(z_obs_nc_edges), k=integ_k_arr
     )
@@ -127,13 +125,21 @@ def get_values():
     t1 = time.time()
 
     # Istanciate objects
+    integ_ztrue_arr_new = integ_ztrue_arr.copy()
+    integ_ztrue_arr_new[0] += 1.0e-10
+    integ_ztrue_arr_new[-1] -= 1.0e-10
+
+    integ_k_arr_new = integ_k_arr.copy()
+    integ_k_arr_new[0] += 1.0e-10
+    integ_k_arr_new[-1] -= 1.0e-10
+
     cluster_statitstics_modeling = ClusterStatisticsModeling(
         HSCastro,
         selectionFunction,
-        integ_k_arr=integ_k_arr,
+        integ_k_arr=integ_k_arr_new,
         integ_mass_arr=integ_mass_arr,
         integ_lambda_true_arr=integ_lambda_true_arr,
-        integ_ztrue_arr=integ_ztrue_arr,
+        integ_ztrue_arr=integ_ztrue_arr_new,
         area=area,
     )
     cluster_counts_statistics = ClusterCounts(

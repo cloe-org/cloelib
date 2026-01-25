@@ -283,7 +283,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         AngularTwoPoint object.
 
         Parameters:
-            angular_two_point (AngularTwoPoint): Object providing Cl evaluation and tracers. 
+            angular_two_point (AngularTwoPoint): Object providing Cl evaluation and tracers.
             ells (jnp.ndarray): Multipole moments at which the Cl spectrum is evaluated.
             ks (jnp.ndarray): Wavenumber grid (only needed for computing Cl via angular_two_point).
         """

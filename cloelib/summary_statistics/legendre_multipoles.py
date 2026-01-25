@@ -248,7 +248,7 @@ class LegendreMultipoles:
     ) -> dict:
         r"""Power spectrum Legendre multipoles.
 
-        Parameters: 
+        Parameters:
             k (np.ndarray): Wavenumber
             ells (np.ndarray): Legendre multipole order
             use_AP (bool): Flag to switch between with and without AP corrections

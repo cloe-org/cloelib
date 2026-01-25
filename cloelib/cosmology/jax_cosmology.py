@@ -201,10 +201,10 @@ class JAXBackground:
         """
         Calculate the comoving distance for given redshifts.
 
-        Args: 
+        Args:
           zs (array_like): Redshifts at which to calculate the comoving distance.
 
-        Returns: 
+        Returns:
           (np.ndarray): The comoving distance as a function of redshift.
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
@@ -252,10 +252,10 @@ class JAXBackground:
         """
         Calculate the angular diameter distance for given redshifts.
 
-        Args: 
+        Args:
           zs (array_like): Redshifts at which to calculate the angular diameter distance.
 
-        Returns: 
+        Returns:
           (np.ndarray): The angular diameter distance as a function of redshift.
         """
         return self.transverse_comoving_distance(zs) / (1 + zs)
@@ -402,16 +402,16 @@ class JAXLinearPerturbations:
 
         ### This docstring does not correspond to the function ###
 
-        Args: 
+        Args:
           cosmo (Background): Background cosmology
           k (array_like): Wave number in h Mpc^{-1}
           type (optional[str]): Type of transfer function. Either 'eisenhu' or 'eisenhu_osc'
           (def: 'eisenhu_osc')
 
-        Returns: 
+        Returns:
           T (array_like): Value of the transfer function at the requested wave number
 
-        Notes: 
+        Notes:
           The Eisenstein & Hu transfer functions are computed using the fitting
           formulae of :cite:`1998:EisensteinHu`
 
@@ -607,7 +607,7 @@ class JAXLinearPerturbations:
 
         ### This docstring does not correspond to the function ###
 
-        Args: 
+        Args:
         zs: array_like, optional
             Redshifts
 
@@ -923,8 +923,8 @@ def romb(function, a, b, args=(), divmax=6, return_error=False):
     If `show` is 1, the triangular array of the intermediate results
     will be printed.  If `vec_func` is True (default is False), then
     `function` is assumed to support vector arguments.
-  
-    Args: 
+
+    Args:
       function (callable): Function to be integrated.
       a (float): Lower limit of integration.
       b (float): Upper limit of integration.
@@ -933,20 +933,20 @@ def romb(function, a, b, args=(), divmax=6, return_error=False):
         extra arguments.
       divmax (optional[int]): Maximum order of extrapolation. Default is 10.
 
-    Returns: 
+    Returns:
       results (float): Result of the integration.
 
     See Also
     --------
-    fixed_quad : Fixed-order Gaussian quadrature.  
-    quad : Adaptive quadrature using QUADPACK.  
-    dblquad : Double integrals.  
-    tplquad : Triple integrals.  
-    romb : Integrators for sampled data.  
-    simps : Integrators for sampled data.  
-    cumtrapz : Cumulative integration for sampled data.  
-    ode : ODE integrator.  
-    odeint : ODE integrator.  
+    fixed_quad : Fixed-order Gaussian quadrature.
+    quad : Adaptive quadrature using QUADPACK.
+    dblquad : Double integrals.
+    tplquad : Triple integrals.
+    romb : Integrators for sampled data.
+    simps : Integrators for sampled data.
+    cumtrapz : Cumulative integration for sampled data.
+    ode : ODE integrator.
+    odeint : ODE integrator.
     References
     ----------
     .. [1] 'Romberg's method' http://en.wikipedia.org/wiki/Romberg%27s_method

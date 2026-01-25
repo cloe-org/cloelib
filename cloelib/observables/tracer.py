@@ -56,10 +56,10 @@ class Tracer(Protocol):
         """
         Compute general window(s) given the selected tracer.
 
-        Args: 
+        Args:
           z (float): Redshift at which window kernel is being evaluated
 
-        Returns: 
+        Returns:
           window (np.ndarray):
         """
         ...

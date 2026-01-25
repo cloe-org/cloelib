@@ -5,7 +5,7 @@ on:
     branches:
       - main
     tags:
-      - 'v*'        # Tags update 'stable' and version numbers
+      - "v*" # Tags update 'stable' and version numbers
   pull_request:
     branches:
       - main

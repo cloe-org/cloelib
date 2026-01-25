@@ -327,13 +327,13 @@ class CAMBLinearPerturbations:
     ) -> np.ndarray:
         r"""Compute the linear matter power spectrum.
 
-        Args: 
+        Args:
             zs (numpy.ndarray): redshifts
             ks (numpy.ndarray): wavenumber
             hubble_units (Optional[bool]): Flag to specify if output in h units
             k_hunit (Optional[bool]): Flag to specify if wavenumber in h units
 
-        Returns: 
+        Returns:
             pk (numpy.ndarray): Linear matter power spectrum at the specified scale and redshift
         """
         pk_values = camb.get_matter_power_interpolator(
@@ -373,7 +373,7 @@ class CAMBLinearPerturbations:
             zs (numpy.ndarray): redshifts
             ks (numpy.ndarray): wavenumber
 
-        Returns: 
+        Returns:
             (np.ndarray): The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(
@@ -452,13 +452,13 @@ class CAMBNonLinearPerturbations:
     ) -> np.ndarray:
         r"""Compute the nonlinear matter power spectrum.
 
-        Args: 
+        Args:
             zs (numpy.ndarray): redshifts
             ks (numpy.ndarray): wavenumber
             hubble_units (Optional[bool]): Flag to specify if output in h units
             k_hunit (Optional[bool]): Flag to specify if wavenumber in h units
 
-        Returns: 
+        Returns:
             pk (numpy.ndarray): Nonlinear matter power spectrum at the specified scale and redshift
         """
         pk_values = self.results.get_matter_power_interpolator(
@@ -493,11 +493,11 @@ class CAMBNonLinearPerturbations:
 
         and normalizes as for $D(z)/D(0)$.
 
-        Args: 
+        Args:
             zs (numpy.ndarray): redshifts
             ks (numpy.ndarray): wavenumber
 
-        Returns: 
+        Returns:
             (np.ndarray): The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(

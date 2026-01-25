@@ -1,6 +1,6 @@
 # cloelib
 
-Welcome to cloelib - The Library for the Cosmology Likelihood for Observables in Euclid 
+Welcome to cloelib - The Library for the Cosmology Likelihood for Observables in Euclid
 
 ## Installation
 

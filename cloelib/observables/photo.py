@@ -71,7 +71,7 @@ class ShearTracer:
         Args:
           z (float): Redshift at which kernel is being evaluated
 
-        Returns: 
+        Returns:
           window_IA (np.ndarray):
         """
         Omega_m0 = self.background.Omega_m(0.0)
@@ -112,7 +112,7 @@ class ShearTracer:
           z (np.ndarray): 1D array of redshift values (must be evenly spaced). Used to compute comoving distances
             and define integration domain.
 
-        Returns: 
+        Returns:
           (np.ndarray): 2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
             for each redshift bin over the evaluation grid.
 
@@ -172,10 +172,10 @@ class ShearTracer:
 
         Computes general window given the selected tracer
 
-        Parameters: 
+        Parameters:
           z (float): Redshift at which window kernel is being evaluated
 
-        Returns: 
+        Returns:
           window (np.ndarray):
         """
         total_window = self.get_window_lensing(z) + self.get_window_IA(z)
@@ -339,7 +339,7 @@ class PositionsTracer:
           z (np.ndarray): 1D array of redshift values (must be evenly spaced). Used to compute comoving distances
             and define integration domain.
 
-        Returns: 
+        Returns:
           (np.ndarray): 2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
             for each redshift bin over the evaluation grid.
 
@@ -377,7 +377,7 @@ class PositionsTracer:
 
         ### This docstring does not correspond to the function
 
-        Parameters: 
+        Parameters:
           z (numpy.ndarray): Redshift at which weight is evaluated (array of `float`).
           bin_i (int): Index of desired tomographic bin.
             Tomographic bin indices start from 1

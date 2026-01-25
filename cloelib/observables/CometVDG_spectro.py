@@ -24,7 +24,7 @@ class CometVDG_SpectroPower:
     def __init__(self, background: Background, RSD_parameters: dict, redshift: float):
         r"""Class constructor.
 
-        Args: 
+        Args:
           background (Background): Background class containing cosmology and background distances
           RSD_parameters (dict): Dictionary containing bias and counterterm parameters
           redshift (float): Redshift at which to evaluate $P(k,\mu)$
@@ -110,11 +110,11 @@ class CometVDG_SpectroPower:
     def _Winfty(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""Large-scale limit of the velocity difference generating function.
 
-        Args: 
+        Args:
           k (np.ndarray): Wavenumber
           mu (np.ndarray): Angle (cosinus) to the line of sight
 
-        Returns: 
+        Returns:
           Winfty (np.ndarray): Damping function
         """
         f = comet_inst.params["f"]
@@ -127,11 +127,11 @@ class CometVDG_SpectroPower:
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields.
 
-        Args: 
+        Args:
           k (np.ndarray): Wavenumber
           mu (np.ndarray): Angle (cosinus) to the line of sight
 
-        Returns: 
+        Returns:
           Pk2d_rsd (np.ndarray): 2D power spectrum from couplings of density and velocity fields
         """
         Pk2d = np.squeeze(
@@ -150,12 +150,12 @@ class CometVDG_SpectroPower:
     ) -> np.ndarray:
         r"""2D power spectrum for a subset of specific diagrams of the loop expansion.
 
-        Args: 
+        Args:
           k (np.ndarray): Wavenumber
           mu (np.ndarray): Angle (cosinus) to the line of sight
           term_list (list): Identifiers of loop diagrams
-        
-        Returns: 
+
+        Returns:
           Pk2d_term_rsd (np.ndarray): 2D power spectrum of specific terms
         """
         term_list_expanded, index_map = [], {}

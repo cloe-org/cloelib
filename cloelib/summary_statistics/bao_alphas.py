@@ -24,7 +24,7 @@ class BaryonAcousticOscillations:
         """Initialize the class instance.
 
         Parameters:
-            background (Background): Object following the Background protocol; used to compute background 
+            background (Background): Object following the Background protocol; used to compute background
                 quantities needed for the alphas in a given cosmology
             background_fiducial (Background): Object following the Background protocol; used to compute background
                 quantities in the fiducial cosmology
@@ -51,9 +51,9 @@ class BaryonAcousticOscillations:
         Dilation parameter along the line of sight
 
         $$
-            \alpha_\parallel(z) = \frac{H_{\rm fid}(z)}{H(z)} \frac{r_{\rm d,fid}}{r_{\rm d}} 
+            \alpha_\parallel(z) = \frac{H_{\rm fid}(z)}{H(z)} \frac{r_{\rm d,fid}}{r_{\rm d}}
         $$
-        
+
         Parameters:
             zs (np.array): redshift
 
@@ -103,7 +103,7 @@ class BaryonAcousticOscillations:
         r"""Alpha_AP.
 
         Ratio of alpha_parallel and alpha_perpendicular
-        
+
         $$
             \alpha_{\rm AP} = (\alpha_\parallel * \alpha_\perp)^{2/3}
         $$

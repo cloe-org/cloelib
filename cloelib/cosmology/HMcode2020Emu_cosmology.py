@@ -104,7 +104,7 @@ class HMemuLinearPerturbations:
             zs (array_like): Redshifts at which to calculate the growth factor.
             ks (array_like): Wavenumbers at which to calculate the growth factor.
 
-        Returns: 
+        Returns:
             (np.ndarray): The growth factor as a function of redshift and wavenumber.
         """
         if hasattr(self, "Pk_interp") and self.Pk_interp is not None:
@@ -116,7 +116,7 @@ class HMemuLinearPerturbations:
         """
         Calculate the growth rate for given redshifts and wavenumbers.
 
-        Returns: 
+        Returns:
             (np.ndarray): The growth rate as a function of redshift and wavenumber.
         """
         self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
@@ -217,11 +217,11 @@ class HMemuNonLinearPerturbations:
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         r"""Compute the linear matter power spectrum.
 
-        Args: 
+        Args:
             ks (numpy.ndarray): Wave number in h Mpc^{-1}
             zs (numpy.ndarray): redshifts
 
-        Returns: 
+        Returns:
             pk (numpy.ndarray): Linear matter power spectrum at the specified scale and redshift
 
         """
@@ -238,11 +238,11 @@ class HMemuNonLinearPerturbations:
 
         and normalizes as for $D(z)/D(0)$.
 
-        Args: 
+        Args:
             zs (array_like): Redshifts at which to calculate the growth factor.
             ks (array_like): Wavenumbers at which to calculate the growth factor.
 
-        Returns: 
+        Returns:
             (np.ndarray): The growth factor as a function of redshift and wavenumber.
         """
         if hasattr(self, "Pk_interp") and self.Pk_interp is not None:

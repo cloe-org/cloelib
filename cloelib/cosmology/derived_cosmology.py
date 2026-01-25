@@ -15,11 +15,11 @@ def rho_crit(background, zs: np.ndarray) -> np.ndarray:
 
     Units: Mpc^{-3} Msun
 
-    Args: 
+    Args:
       background (Background): Background class containing cosmology
       zs (np.ndarray): Redshifts.
 
-    Returns: 
+    Returns:
       (float): Critical density value at the specified redshift.
     """
     log10_h_in_seconds = np.log10(background.hubble_parameter(zs) / units.MPC_TO_KM)
@@ -42,7 +42,7 @@ def dV_dzdO(background, zs: np.ndarray, hubble_units=False) -> np.ndarray:
         Flag to specify if output in h units, defaults to False
 
 
-    Returns: 
+    Returns:
       (np.ndarray): volume element in Mpc^3 h^{-3}
     """
     _dV_dzdO = (
@@ -62,11 +62,11 @@ def rdrag_fitting_function(background, neff=3.046):
     Uses the fitting formula Eq.17
     of [1411.1074](https://arxiv.org/abs/1411.1074)
 
-    Args: 
+    Args:
       background (Background): Background class containing cosmology
       neff (float): Effective number of neutrinos.
 
-    Returns: 
+    Returns:
       r_d (float): Sound horizon at drag epoch in Mpc
     """
     omega_cb = background.Omega_cdm0 * background.h**2

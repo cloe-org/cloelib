@@ -184,6 +184,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MariaTsedrik"><img src="https://avatars.githubusercontent.com/u/93711395?v=4?s=100" width="100px;" alt="Maria Tsedrik"/><br /><sub><b>Maria Tsedrik</b></sub></a><br /><a href="#code-MariaTsedrik" title="Code">💻</a> <a href="#ideas-MariaTsedrik" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/arsouki"><img src="https://avatars.githubusercontent.com/u/162714090?v=4?s=100" width="100px;" alt="Arghavan Souki"/><br /><sub><b>Arghavan Souki</b></sub></a><br /><a href="#bug-arsouki" title="Bug reports">🐛</a> <a href="#doc-arsouki" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zsirap"><img src="https://avatars.githubusercontent.com/u/50758399?v=4?s=100" width="100px;" alt="zsirap"/><br /><sub><b>zsirap</b></sub></a><br /><a href="#code-zsirap" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ktanidis"><img src="https://avatars.githubusercontent.com/u/60473500?v=4?s=100" width="100px;" alt="Konstantinos Tanidis"/><br /><sub><b>Konstantinos Tanidis</b></sub></a><br /><a href="#code-ktanidis" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

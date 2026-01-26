@@ -15,22 +15,17 @@ except (ImportError, AttributeError, TypeError) as e:
 
 
 class PBJSpectroPower:
-    r"""Class to retrieve :math:`P(k,\mu)` with the EFT model from PBJ."""
+    r"""Class to retrieve $P(k,\mu)$ with the EFT model from PBJ."""
 
     NLcode = "PBJ"
 
     def __init__(self, linear_perturbations: Perturbations, nuisance_parameters: dict):
         r"""Class constructor.
 
-        Parameters
-        ----------
-        linear_perturbations: Perturbations
-            Perturbations object containing cosmology, linear power spectrum,
+        Args:
+          linear_perturbations (Perturbations): Perturbations object containing cosmology, linear power spectrum,
             redshift and growth functions
-        nuisance_parameters: dict
-            Dictionary containing bias and counterterm parameters
-        redshift: float
-            Redshift at which to evaluate :math:`P(k,\mu)`
+          nuisance_parameters (dict): Dictionary containing bias and counterterm parameters
         """
         self.linear_perturbations = linear_perturbations
         self.background = linear_perturbations.background
@@ -52,19 +47,12 @@ class PBJSpectroPower:
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields.
 
-        Parameters
-        ----------
-        k: np.ndarray
-            Wavenumber
-        mu: np.ndarray
-            Angle (cosinus) to the line of sight
-        parameters: dict
-            Ensemble of cosmological and nuisance parameters
+        Args:
+          k (np.ndarray): Wavenumber
+          mu (np.ndarray): Angle (cosinus) to the line of sight
 
-        Returns
-        -------
-        Pk2d_rsd: np.ndarray
-            2D power spectrum from couplings of density and velocity fields
+        Returns:
+          Pk2d_rsd (np.ndarray): 2D power spectrum from couplings of density and velocity fields
         """
         plinear = self.linear_perturbations.matter_power_spectrum(
             0.0, pbj_obj.kL, hubble_units=False, k_hunit=False

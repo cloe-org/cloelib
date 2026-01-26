@@ -27,19 +27,23 @@ def _L_coeffs(ells):
     # Avoid invalid sqrt for ell<2 by using a safe ell in the algebra
     ell_s = np.maximum(ell, 2.0)
 
-    Lm1 = -ell_s * (ell_s - 1.0) / (
-        (2.0 * ell_s - 1.0) * np.sqrt((2.0 * ell_s - 3.0) * (2.0 * ell_s + 1.0))
+    Lm1 = (
+        -ell_s
+        * (ell_s - 1.0)
+        / ((2.0 * ell_s - 1.0) * np.sqrt((2.0 * ell_s - 3.0) * (2.0 * ell_s + 1.0)))
     )
     L0 = (2.0 * ell_s**2 + 2.0 * ell_s - 1.0) / (
         (2.0 * ell_s - 1.0) * (2.0 * ell_s + 3.0)
     )
-    Lp1 = -(ell_s + 1.0) * (ell_s + 2.0) / (
-        (2.0 * ell_s + 3.0) * np.sqrt((2.0 * ell_s + 1.0) * (2.0 * ell_s + 5.0))
+    Lp1 = (
+        -(ell_s + 1.0)
+        * (ell_s + 2.0)
+        / ((2.0 * ell_s + 3.0) * np.sqrt((2.0 * ell_s + 1.0) * (2.0 * ell_s + 5.0)))
     )
 
     mask = ell >= 2.0
     Lm1 = np.where(mask, Lm1, 0.0)
-    L0  = np.where(mask, L0,  0.0)
+    L0 = np.where(mask, L0, 0.0)
     Lp1 = np.where(mask, Lp1, 0.0)
     return Lm1, L0, Lp1
 
@@ -49,7 +53,7 @@ def _alpha_coeffs(ells):
     ell = ells.astype(np.float64)
     denom = 2.0 * ell + 1.0
     am1 = (2.0 * ell - 3.0) / denom
-    a0  = np.ones_like(ell)
+    a0 = np.ones_like(ell)
     ap1 = (2.0 * ell + 5.0) / denom
 
     # For ell<2 the L's are zero anyway; keep alphas harmless.
@@ -63,7 +67,7 @@ def _alpha_coeffs(ells):
 def _interp_linear_2d_queries(chi, y_bz, xq_lz):
     """
     Linear 2D interpolator for the RSD window
-    
+
     """
     Z = chi.shape[0]
     idx = np.searchsorted(chi, xq_lz, side="right") - 1
@@ -93,22 +97,18 @@ def _interp_linear_2d_queries(chi, y_bz, xq_lz):
 @jax.jit
 def photo_rsd_window(ells, chi, S_bin_z):
     Lm1, L0, Lp1 = _L_coeffs(ells)
-    am1, _, ap1  = _alpha_coeffs(ells)
+    am1, _, ap1 = _alpha_coeffs(ells)
 
     chi_q_m1 = am1[:, None] * chi[None, :]
     chi_q_p1 = ap1[:, None] * chi[None, :]
 
     S_m1 = _interp_linear_2d_queries(chi, S_bin_z, chi_q_m1)
-    S_0  = np.broadcast_to(S_bin_z[None, :, :], S_m1.shape)
+    S_0 = np.broadcast_to(S_bin_z[None, :, :], S_m1.shape)
     S_p1 = _interp_linear_2d_queries(chi, S_bin_z, chi_q_p1)
 
-    return (Lm1[:, None, None] * S_m1
-            + L0[:,  None, None] * S_0
-            + Lp1[:, None, None] * S_p1)
-
-
-
-
+    return (
+        Lm1[:, None, None] * S_m1 + L0[:, None, None] * S_0 + Lp1[:, None, None] * S_p1
+    )
 
 
 class ShearTracer:
@@ -284,7 +284,7 @@ class PositionsTracer:
         z: np.ndarray,
         galaxy_bias_model: str,
         nuisance_params: dict,
-        include_rsd: bool = False,   # NEW
+        include_rsd: bool = False,  # NEW
     ):
         r"""
         Initialize the class instance.
@@ -420,7 +420,6 @@ class PositionsTracer:
 
         return window_positions
 
-
     def get_window_rsd(self, ells, H, f, chi) -> np.ndarray:
         r"""
         Linear photo-RSD window :math:`W^{\rm RSD}_i(\ell,z)` tabulated on the internal z-grid.
@@ -477,7 +476,6 @@ class PositionsTracer:
         # S_i(z) = H(z) f(z) n_i(z) / c
         S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted
         return photo_rsd_window(ells, chi, S)
-
 
     def get_magnification_efficiency(self, z):
         r"""

@@ -48,9 +48,18 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                  | `PBJ` (not publicly available)                                     |
 | NA                                                | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git) | NA                                                                 |
 
-We do not provide installation support for `PBJ` and `class`.
+We do not provide installation support for `PBJ`.
 
-Furthermore, it requires the installation of `pyinstrument` for the time profiling. It's an optional dependency and is not installed with the main cloelib package.
+### Optional Dependencies
+
+Several optional dependencies enhance **cloelib** capabilities:
+
+- **`pyinstrument`** – Time profiling for performance optimization
+- **`pylevin`**, **`mpmath`** – Required for specific observational probes (i.e: COSEBIs)
+- **`tensorflow`** – Needed for certain emulator backends (i.e: `HMCode2020emu`)
+
+These are not included in the default installation but can be added as shown above.
+
 
 ---
 
@@ -65,16 +74,14 @@ pip install .
 You can also install (some) supported dependencies:
 
 ```sh
-pip install .[camb,hmcode2020emu,comet-emu,pyinstrument]
+pip install .[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument]
 ```
 
 **Note:** Some shells or terminals may not interpret the brackets correctly. If you encounter an error, try adding quotation marks:
 
 ```sh
-pip install ."[camb,hmcode2020emu,comet-emu]"
+pip install ."[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument]"
 ```
-
-**Note:** We do not offer installation support for `PBJ` and `CLASS`. For installation instructions, please refer to the official documentation of each package.
 
 To work with the latest stable release of the code, move to the latest tag by typing:
 
@@ -103,6 +110,7 @@ git checkout -b feature/your-feature-name
 ```
 
 2️⃣ Implement your changes following project style guidelines.
+
 3️⃣ Commit your modifications:
 
 ```sh

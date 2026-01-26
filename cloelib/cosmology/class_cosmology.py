@@ -183,7 +183,7 @@ class CLASSBackground:
             units (str): Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').
 
         Returns:
-            np.ndarray: Hubble parameter values at specified redshifts.
+            (np.ndarray): Hubble parameter values at specified redshifts.
         """
         H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
         if units == "km/s/Mpc":
@@ -201,7 +201,7 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Comoving distance values.
+            (np.ndarray): Comoving distance values.
         """
         return np.array([self.results.comoving_distance(z) for z in zs])
 
@@ -213,7 +213,7 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Transverse comoving distance values.
+            (np.ndarray): Transverse comoving distance values.
         """
         x = self.comoving_distance(zs)
 
@@ -234,7 +234,7 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Angular diameter distance values.
+            (np.ndarray): Angular diameter distance values.
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
@@ -246,7 +246,7 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Matter density values.
+            (np.ndarray): Matter density values.
         """
         return np.array([self.results.Om_m(z) for z in zs])
 
@@ -258,7 +258,7 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Matter density values.
+            (np.ndarray): Matter density values.
         """
         return np.array([self.results.Om_b(z) for z in zs])
 
@@ -301,24 +301,14 @@ class CLASSLinearPerturbations:
     ) -> np.ndarray:
         """Calculate the CLASS linear matter power spectrum.
 
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
+        Args:
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
+            hubble_units (Optional[bool]): Flag to specify if output in h units
+            k_hunit (Optional[bool]): Flag to specify if wavenumber in h units
 
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
+        Returns:
+            pk (numpy.ndarray): Linear matter power spectrum at the specified scale
             and redshift
         """
         if hubble_units or k_hunit:
@@ -331,24 +321,19 @@ class CLASSLinearPerturbations:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        .. math::
+        $$
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
             /P_{\rm \delta\delta}(z=0, k)}\\
+        $$
 
-        and normalizes as for :math:`D(z)/D(0)`.
+        and normalizes as for $D(z)/D(0)$.
 
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
+        Args:
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
 
         Returns:
-        --------
-        np.ndarray
-            The growth factor at the specified redshift and wavenumber.
+            (np.ndarray): The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(
             self.matter_power_spectrum(zs, ks)
@@ -361,13 +346,23 @@ class CLASSLinearPerturbations:
         """
         Calculate the growth rate f(z).
 
-        Returns
-        -------
-        np.ndarray
-            Scale-independent growth rate f(z)
+        Returns:
+            (np.ndarray): Scale-independent growth rate f(z)
         """
         arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
+
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+
+        return self.results.sigma8()  # type: ignore[union-attr]
 
 
 class CLASSNonLinearPerturbations:
@@ -407,24 +402,14 @@ class CLASSNonLinearPerturbations:
     ) -> np.ndarray:
         """Calculate the CLASS non-linear matter power spectrum.
 
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
+        Args:
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
+            hubble_units (Optional [bool]): Flag to specify if output in h units
+            k_hunit (Optional [bool]): Flag to specify if wavenumber in h units
 
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Non-linear matter power spectrum at the specified scale
+        Returns:
+            pk (numpy.ndarray): Non-linear matter power spectrum at the specified scale
             and redshift
         """
         if hubble_units or k_hunit:
@@ -439,24 +424,19 @@ class CLASSNonLinearPerturbations:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        .. math::
+        $$
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
             /P_{\rm \delta\delta}(z=0, k)}\\
+        $$
 
-        and normalizes as for :math:`D(z)/D(0)`.
+        and normalizes as for $D(z)/D(0)$.
 
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
+        Args:
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
 
         Returns:
-        --------
-        np.ndarray
-            The growth factor at the specified redshift and wavenumber.
+            (np.ndarray): The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(
             self.matter_power_spectrum(zs, ks)
@@ -469,10 +449,20 @@ class CLASSNonLinearPerturbations:
         """
         Calculate the growth rate f(z).
 
-        Returns
-        -------
-        np.ndarray
-            Scale-independent growth rate f(z)
+        Returns:
+            (np.ndarray): Scale-independent growth rate f(z)
         """
         arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
+
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+
+        return self.results.sigma8()  # type: ignore[union-attr]

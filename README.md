@@ -64,8 +64,6 @@ These are not included in the default installation but can be added as shown abo
 
 ## 🚀 Installation
 
-## 🚀 Installation
-
 **Quick Start** 🎯
 
 1. **Set up your environment** – Create a fresh conda/mamba environment using the [cloe-org-environments](https://github.com/cloe-org/cloe-org-environments) repository. Then, clone `cloelib`:

@@ -30,7 +30,8 @@ class PBJSpectroPower:
         self.linear_perturbations = linear_perturbations
         self.background = linear_perturbations.background
         self.parameters = nuisance_parameters
-        self.redshift = linear_perturbations.z
+        self.mask_z0 = linear_perturbations.z != 0.0
+        self.redshift = linear_perturbations.z[self.mask_z0]
 
         self.cosmo = {
             "h": self.background.h,
@@ -64,7 +65,7 @@ class PBJSpectroPower:
             True,
             kgrid=k,
             mu=mu,
-            f=self.linear_perturbations.growth_rate(),
+            f=self.linear_perturbations.growth_rate()[self.mask_z0],
             D=self.linear_perturbations.growth_factor(self.redshift, 0.05)[0],
             cosmo=self.cosmo,
             IRres=True,
@@ -104,7 +105,7 @@ class PBJSpectroPower:
             True,
             kgrid=k,
             mu=mu,
-            f=self.linear_perturbations.growth_rate(),
+            f=self.linear_perturbations.growth_rate()[self.mask_z0],
             D=self.linear_perturbations.growth_factor(self.redshift, 0.05)[0],
             cosmo=self.cosmo,
             IRres=True,

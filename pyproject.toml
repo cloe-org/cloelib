@@ -21,7 +21,7 @@ dependencies = [
     "interpax",
     "jax",
     "numpy>2.0",
-    "quadax==0.2.7",
+    "quadax",
     "scipy>1.14",
     "pytest",
     "pytest-cov",
@@ -39,6 +39,7 @@ hmcode2020emu = ["HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020
 pylevin = ["pylevin"]
 mpmath = ["mpmath"]
 tensorflow = ["tensorflow"]
+tf-keras = ["tf-keras"]
 
 [tool.hatch.version]
 source = "vcs"

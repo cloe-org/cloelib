@@ -60,7 +60,6 @@ Several optional dependencies enhance **cloelib** capabilities:
 
 These are not included in the default installation but can be added as shown above.
 
-
 ---
 
 ## 🚀 Installation

@@ -65,8 +65,8 @@ class mochiCLASSBackground:
             wa (float): Time evolution of the equation of state.
             gamma_MG (float): Modified gravity growth parameter (not directly used in CLASS, but kept for protocol compliance).
             mg_stable_basis_on (bool): Flag to indicate if stable basis for modified gravity is used.
-            stable_MG_dict (dict) : Dictionary of stable basis parameters lna_smg, Delta_M2, D_kin, cs2 and alpha_B0 for input into mochi_class.
-            mg_background_model (str) : Desired background expansion model ('lcdm', 'wowa') for modified gravity in mochi_class.
+            stable_MG_dict (dict): Dictionary of stable basis parameters lna_smg, Delta_M2, D_kin, cs2 and alpha_B0 for input into mochi_class.
+            mg_background_model (str): Desired background expansion model ('lcdm', 'wowa') for modified gravity in mochi_class.
             N_mnu (int): Number of massive neutrino species.
             N_ur (Optional[float]): Effective number of ultra-relativistic species.
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.

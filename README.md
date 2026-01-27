@@ -42,12 +42,12 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 
 `cloelib` interfaces with the following external codes, each used by a specific internal module for its calculations:
 
-| Background                                        | Perturbations                                                      | SpectroPower                                                       |
-| ------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| [camb](https://camb.readthedocs.io)               | [camb](https://camb.readthedocs.io)                                | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
-| [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                  | `PBJ` (not publicly available)                                     |
-| NA                                                | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git) | NA                                                                 |
-| [mochi_class](https://github.com/mcataneo/mochi_class_public)  | [mochi_class](https://github.com/mcataneo/mochi_class_public) | NA                                                                 |
+| Background                                                    | Perturbations                                                      | SpectroPower                                                       |
+| ------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| [camb](https://camb.readthedocs.io)                           | [camb](https://camb.readthedocs.io)                                | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
+| [class](https://github.com/lesgourg/class_public)             | [class](https://github.com/lesgourg/class_public)                  | `PBJ` (not publicly available)                                     |
+| NA                                                            | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git) | NA                                                                 |
+| [mochi_class](https://github.com/mcataneo/mochi_class_public) | [mochi_class](https://github.com/mcataneo/mochi_class_public)      | NA                                                                 |
 
 We do not provide installation support for `PBJ` and `class`.
 

@@ -88,6 +88,10 @@ class mochiCLASSBackground:
         self.N_mnu = N_mnu
         self.mg_stable_basis_on = mg_stable_basis_on
         self.stable_MG_dict = stable_MG_dict
+        self.s = stable_MG_dict["s"]
+        self.a0 = stable_MG_dict["a0"]
+        self.a1 = stable_MG_dict["a1"]
+        self.b = stable_MG_dict["b"]
         self.mg_background_model = mg_background_model
         # We can set N_ur to a default value if not provided
         self._provided_N_ur = N_ur
@@ -284,7 +288,10 @@ class mochiCLASSBackground:
         # Initialize CLASS
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
+        try:
+            self.results.compute()
+        except mochi_classy._classy.CosmoComputationError as e:
+            raise RuntimeError(f"Error computing CLASS results: {e}")
 
     @property
     def _interface_args(self) -> dict:
@@ -509,8 +516,8 @@ class mochiCLASSLinearPerturbations:
         """Initialize the CLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
-        self.kmax = 10
         self.k = ks
+        self.kmax = ks[-1]
         self.results = None  # Store CLASS results
 
         # Ensure CLASS is initialized with necessary parameters
@@ -520,11 +527,14 @@ class mochiCLASSLinearPerturbations:
         self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
         self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["non linear"] = "none"
+        self.interface_args["CLASSparams"]["non_linear"] = "none"
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
+        try:
+            self.results.compute()
+        except mochi_classy._classy.CosmoComputationError as e:
+            raise RuntimeError(f"Error computing CLASS results: {e}")
 
     @property
     def _interface_args(self) -> dict:
@@ -558,9 +568,12 @@ class mochiCLASSLinearPerturbations:
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        # ks /= self.background.h
+        self.Pk_linear = np.array(
+            [[self.results.pk_lin(ki, zi) for ki in ks] for zi in zs]
+        )  # type: ignore[union-attr]
         # To match array convention of CAMB
-        return self.Pk_linear
+        return self.Pk_linear  # * (self.background.h) ** 3
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -631,15 +644,13 @@ class mochiCLASSNonLinearPerturbations:
         redshifts: np.ndarray,
         ks: np.ndarray,
         nonlinear_model: Optional[str] = None,
+        log10TAGN: Optional[float] = None,
     ):
         """Initialize the CLASSNonLinearPerturbation instance."""
         self.background = background
         self.k = ks
         self.z = redshifts
-        self.kmax = 100
-
-        if nonlinear_model is None:
-            nonlinear_model = "none"
+        self.kmax = ks[-1]
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -650,11 +661,23 @@ class mochiCLASSNonLinearPerturbations:
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
         self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
-        self.interface_args["CLASSparams"]["non linear"] = nonlinear_model
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
+        if background.mg_stable_basis_on is False:
+            self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
+            if nonlinear_model == "hmcode" and log10TAGN is not None:
+                self.interface_args["CLASSparams"]["hmcode_version"] = (
+                    "2020_baryonic_feedback"
+                )
+                self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
+        else:
+            self.interface_args["CLASSparams"]["non_linear"] = "None"
+
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
+        try:
+            self.results.compute()
+        except mochi_classy._classy.CosmoComputationError as e:
+            raise RuntimeError(f"Error computing CLASS results: {e}")
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False

@@ -74,7 +74,7 @@ class ShearTracer:
         Returns:
           window_IA (np.ndarray):
         """
-        Omega_m0 = self.background.Omega_m(0.0)
+        Omega_m0 = self.background.Omega_m(np.array([0.0]))[0]
         Hz = self.perturbations.background.hubble_parameter(z)
         Dz = self.perturbations.growth_factor(
             self.perturbations.z, self.perturbations.k
@@ -155,7 +155,7 @@ class ShearTracer:
           (numpy.ndarray): 1-D Numpy array of shear kernel values for specified bin
             at specified scale for the redshifts defined in z
         """
-        Omega_m0 = self.background.Omega_m(0.0)
+        Omega_m0 = self.background.Omega_m(np.array([0.0]))[0]
         factor = (
             3
             / 2
@@ -382,7 +382,7 @@ class PositionsTracer:
           (numpy.ndarray): 1-D Numpy array of shear kernel values for specified bin
             at specified scale for the redshifts defined in z
         """
-        Omega_m0 = self.background.Omega_m(0.0)
+        Omega_m0 = self.background.Omega_m(np.array([0.0]))[0]
         factor = (
             3
             / 2

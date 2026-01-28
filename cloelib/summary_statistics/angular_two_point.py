@@ -368,7 +368,7 @@ class AngularTwoPoint:
 
         for tomobin1 in range(1, n_bin + 1):
             for tomobin2 in range(tomobin1, n_bin + 1):
-                key = (tomobin1, tomobin2)
+                key = ("SHE", "SHE", tomobin1, tomobin2)
                 cosebis = np.zeros_like(ns, dtype=np.float64)
                 for i, n in enumerate(ns):
                     cl = cells["SHE", "SHE", tomobin1, tomobin2][0, 0]

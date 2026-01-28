@@ -380,6 +380,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "ChaitanyaChawak",
+      "name": "Chaitanya",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55046588?v=4",
+      "profile": "https://chaitanyachawak.github.io/",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ]
 }

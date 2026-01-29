@@ -36,4 +36,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## 🙏 Acknowledgements
 
-For contributions to this project, we follow the [all-contributors](https://allcontributors.org) specification. We appreciate all forms of contributions, including code, documentation, and more. Please refer to the [README](../README.md) for detailed guidelines on how to contribute and be recognized for your efforts!
+For contributions to this project, we follow the [all-contributors](https://allcontributors.org) specification. We appreciate all forms of contributions, including code, documentation, and more. 

@@ -1,11 +1,10 @@
-
 # Contributing to cloelib
 
-Thank you for your interest in contributing to **cloelib**! We are doing an effor to keep an open science approach 
+Thank you for your interest in contributing to **cloelib**! We are doing an effor to keep an open science approach
 
 ## Ways to Contribute
 
-Check out [open issues](https://github.com/cloe-org/cloelib/issues) to see if development is already planned. We welcome community support on issues tagged with [`help wanted`](https://github.com/cloe-org/cloelib/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22). 
+Check out [open issues](https://github.com/cloe-org/cloelib/issues) to see if development is already planned. We welcome community support on issues tagged with [`help wanted`](https://github.com/cloe-org/cloelib/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22).
 
 If you have suggestions or found a bug, [open an issue](https://github.com/cloe-org/cloelib/issues/new) and follow the provided templates. Tag @cloe-maintainers to notify them about a possible new contribution.
 
@@ -45,14 +44,13 @@ git push origin feature/your-feature-name
 
 ### 5️⃣ Open a Pull Request
 
-
 Submit a pull request to the main repository. Please use the PR template and ensure you include:
 
 - A clear description of your changes
 - References to related issues
 - Tests demonstrating the fix or feature
 
-Our maintainers will review your contribution, and we'll work together to get it merged! 
+Our maintainers will review your contribution, and we'll work together to get it merged!
 
 ---
 
@@ -66,7 +64,7 @@ We maintain high code quality using automated tools via [pre-commit](https://pre
 
 Our CI/CD pipeline also runs **unit tests** with [pytest](https://docs.pytest.org/).
 
-All checks must pass before merging. We recommend using draft PRs if you need to iterate. 
+All checks must pass before merging. We recommend using draft PRs if you need to iterate.
 
 ---
 

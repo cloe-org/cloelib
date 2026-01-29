@@ -17,23 +17,26 @@ except ImportError:
     raise ImportError("BACCOemu could not be imported")
 
 
-
 class BACCOemuLinearPerturbations:
     """Class for perturbations cosmology using BACCOemu, inheriting from Perturbations parent class."""
 
-    def __init__(self, background: Background, redshifts: np.ndarray, cold: bool = False):
+    def __init__(
+        self, background: Background, redshifts: np.ndarray, cold: bool = False
+    ):
         """Intialize the HMemuLinearPerturbations instance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
-        self.emu = baccoemu.Matter_powerspectrum(verbose=False, nonlinear_boost=False, baryonic_boost=False)
-        redshift_max = 1/self.emu.emulator["linear"]["bounds"][-1][0].item()-1
+        self.emu = baccoemu.Matter_powerspectrum(
+            verbose=False, nonlinear_boost=False, baryonic_boost=False
+        )
+        redshift_max = 1 / self.emu.emulator["linear"]["bounds"][-1][0].item() - 1
 
         self.z = redshifts[redshifts <= redshift_max]
         self.background = background
         self.cold = cold
 
         self.params_emu = {
-            "omega_cold": self.background.Omega_cdm0+self.background.Omega_b0,
+            "omega_cold": self.background.Omega_cdm0 + self.background.Omega_b0,
             "omega_baryon": self.background.Omega_b0,
             "A_s": self.background.As,
             "ns": self.background.ns,
@@ -43,10 +46,10 @@ class BACCOemuLinearPerturbations:
             "wa": self.background.wa,
         }
 
-        self.params_emu["expfactor"] = 1/(1+self.z)
+        self.params_emu["expfactor"] = 1 / (1 + self.z)
 
         k_emu, Pk = self.emu.get_linear_pk(cold=self.cold, **self.params_emu)
-        
+
         # Warning: a lot of parameters currently hard-coded
         k_out, z_out, Pk_out = extend_spectra(
             k_emu * self.background.h,
@@ -103,7 +106,7 @@ class BACCOemuLinearPerturbations:
             D_z_k = np.sqrt(self.Pk_interp(zs, ks) / self.Pk_interp(0, ks))
 
         return D_z_k
-    
+
     def sigma8_0(self) -> float:
         """
         Calculate the sigma8 value for the current cosmology.
@@ -113,8 +116,8 @@ class BACCOemuLinearPerturbations:
         float
             The sigma8 value.
         """
-        return self.emu.get_sigma8(cold=self.cold,**self.params_emu)
-    
+        return self.emu.get_sigma8(cold=self.cold, **self.params_emu)
+
     def sigma12_0(self) -> float:
         """
         Calculate the sigma12 value for the current cosmology.
@@ -124,7 +127,8 @@ class BACCOemuLinearPerturbations:
         float
             The sigma8 value.
         """
-        return self.emu.get_sigma12(cold=self.cold,**self.params_emu)
+        return self.emu.get_sigma12(cold=self.cold, **self.params_emu)
+
 
 class BACCOemuNonLinearPerturbations:
     """Class for non linear perturbations cosmology using BACCOemu, inheriting from Perturbations parent class."""
@@ -135,9 +139,9 @@ class BACCOemuNonLinearPerturbations:
         linearperturbations: Perturbations,
         redshifts: np.ndarray,
         cold: Optional[bool] = False,
-        nonlinear_model_name: Optional[str] = 'Arico2023',
+        nonlinear_model_name: Optional[str] = "Arico2023",
         baryonic_boost: Optional[str] = None,
-        baryonic_model_name: Optional[str] = 'Burger2025',
+        baryonic_model_name: Optional[str] = "Burger2025",
         M_c: Optional[float] = None,
         eta: Optional[float] = None,
         beta: Optional[float] = None,
@@ -149,16 +153,20 @@ class BACCOemuNonLinearPerturbations:
         """Initialize the HMemuNonLinearPerturbations intance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
-        self.emu = baccoemu.Matter_powerspectrum(verbose=False, nonlinear_model_name=nonlinear_model_name,
-                                                 baryonic_boost=baryonic_boost, baryonic_model_name=baryonic_model_name)
+        self.emu = baccoemu.Matter_powerspectrum(
+            verbose=False,
+            nonlinear_model_name=nonlinear_model_name,
+            baryonic_boost=baryonic_boost,
+            baryonic_model_name=baryonic_model_name,
+        )
 
-        redshift_max = 1/self.emu.emulator["nonlinear"]["bounds"][-1][0].item()-1
+        redshift_max = 1 / self.emu.emulator["nonlinear"]["bounds"][-1][0].item() - 1
 
         self.z = redshifts[redshifts <= redshift_max]
         self.background = background
 
         self.params_emu = {
-            "omega_cold": self.background.Omega_cdm0+self.background.Omega_b0,
+            "omega_cold": self.background.Omega_cdm0 + self.background.Omega_b0,
             "omega_baryon": self.background.Omega_b0,
             "A_s": self.background.As,
             "ns": self.background.ns,
@@ -177,13 +185,22 @@ class BACCOemuNonLinearPerturbations:
             self.params_emu["theta_inn"] = theta_inn
             self.params_emu["M_inn"] = M_inn
 
-        self.params_emu["expfactor"] = 1/(1+self.z)
+        self.params_emu["expfactor"] = 1 / (1 + self.z)
 
         # Low-k extrapolation taken care by baccoemu (nonlinear boosts tends to 1)
-        low_k = self.emu.emulator["linear"]["k"] < self.emu.emulator["nonlinear"]["k"][0]
-        all_k = np.concatenate((self.emu.emulator["linear"]["k"][low_k], self.emu.emulator["nonlinear"]["k"]))
+        low_k = (
+            self.emu.emulator["linear"]["k"] < self.emu.emulator["nonlinear"]["k"][0]
+        )
+        all_k = np.concatenate(
+            (
+                self.emu.emulator["linear"]["k"][low_k],
+                self.emu.emulator["nonlinear"]["k"],
+            )
+        )
 
-        _, Pk = self.emu.get_nonlinear_pk(cold=cold, baryonic_boost=baryonic_boost, k=all_k, **self.params_emu)
+        _, Pk = self.emu.get_nonlinear_pk(
+            cold=cold, baryonic_boost=baryonic_boost, k=all_k, **self.params_emu
+        )
 
         # Warning: a lot of parameters currently hard-coded
         k_out, z_out, Pk_out = extend_spectra(
@@ -251,7 +268,6 @@ class BACCOemuNonLinearPerturbations:
             D_z_k = np.sqrt(self.Pk_interp(zs, ks) / self.Pk_interp(0, ks))
 
         return D_z_k
-    
 
     def sigma8_0(self) -> float:
         """
@@ -262,9 +278,8 @@ class BACCOemuNonLinearPerturbations:
         float
             The sigma8 value.
         """
-        return self.emu.get_sigma8(cold=self.cold,**self.params_emu)
-    
-    
+        return self.emu.get_sigma8(cold=self.cold, **self.params_emu)
+
     def sigma12_0(self) -> float:
         """
         Calculate the sigma12 value for the current cosmology.
@@ -274,4 +289,4 @@ class BACCOemuNonLinearPerturbations:
         float
             The sigma8 value.
         """
-        return self.emu.get_sigma12(cold=self.cold,**self.params_emu)
+        return self.emu.get_sigma12(cold=self.cold, **self.params_emu)

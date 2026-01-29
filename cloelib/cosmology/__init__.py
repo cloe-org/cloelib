@@ -9,4 +9,3 @@ Supported External Codes:
 - **Background**: `camb`, `class`
 - **Perturbations**: `camb`, `class`, `HMCode2020emu`, `baccoemu`
 """
-

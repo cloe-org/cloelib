@@ -240,45 +240,6 @@ class InterpolatedSelectionFunction:
         sel_cl_data_fmt: dict
             SEL_CL data reshaped with obs bins
         """
-        ## Start loop on the tiles, to: -----------------------------------------------------------
-        ## extraxt 4d array, Completeness and Purity for the fits file
-        ## evaluate the different ingredients and integrals to obtain tildeI(λtr,ztr,∆λobs,∆zobs)
-        ## ASSUMPTION: the input file is normalised
-
-        ## Select index to read 4d array, completeness and purity for the different tiles
-
-        ## Produce P_alpha(λobs|λtr,ztr) for all tiles
-        ## P(lobs|ltr,ztr) = integrate P(lobs,zobs|ltr,ztr) over zobs
-        CG_ricH_seL_funcT = integrate.simpson(
-            sel_cl_data_fmt["CG_seL_funcT"], x=sel_cl_data_fmt["z_obs"], axis=4
-        )
-        ## Normalization: we start from P(lobs,zobs | ltr,ztr) that is normalized. Then we integrate on zobs.
-        ## P(lobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
-        norm_CG_ricH_seL_funcT = self._normalize_array(
-            CG_ricH_seL_funcT,
-            normalization=integrate.simpson(
-                CG_ricH_seL_funcT, x=sel_cl_data_fmt["lambda_obs"], axis=3
-            ),
-        )
-        ## np.shape(norm_CG_ricH_seL_funcT): (ltr, ztr, lobs)
-
-        ## Produce P_alpha(zobs|λtr,ztr) for all tiles
-        ## P(zobs|ltr,ztr) = integrate P(lobs,zobs|ltr,ztr) over lobs
-        CG_reD_seL_funcT = integrate.simpson(
-            sel_cl_data_fmt["CG_seL_funcT"],
-            x=sel_cl_data_fmt["lambda_obs"],
-            axis=3,
-        )
-        ## Normalization: we start from P(lobs,zobs|ltr,ztr) that is normalized. Then we integrate on lobs.
-        ## P(zobs|ltr,ztr) in theory is still normalized. But we do not use the full theoretical x range.
-        norm_CG_reD_seL_funcT = self._normalize_array(
-            CG_reD_seL_funcT,
-            normalization=integrate.simpson(
-                CG_reD_seL_funcT, x=sel_cl_data_fmt["z_obs"], axis=3
-            ),
-        )
-        ## np.shape(np.shape(norm_CG_reD_seL_funcT)): (ltr, ztr, zobs)
-
         ## Evaluate multiplication for each tile
         ## Omega_alpha * Pα(λobs|λtr,ztr) * Pα(zobs|λtr,ztr) / Pα(λobs,zobs) * Cα(λtr,ztr)
         ## Dimensions: (ltr, ztr, lobs)*(ltr, ztr, zobs)*(lobs, zobs)*(ltr, ztr) --> (ltr,ztr,lobs,zobs)
@@ -291,10 +252,9 @@ class InterpolatedSelectionFunction:
 
         sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = (
             sel_cl_data_fmt["area_tile"][:, None, None, None, None]
-            * norm_CG_ricH_seL_funcT[:, :, :, :, None]
-            * norm_CG_reD_seL_funcT[:, :, :, None, :]
-            / pur_reshaped
+            * sel_cl_data_fmt["CG_seL_funcT"]
             * sel_cl_data_fmt["completeness"][:, :, :, None, None]
+            / pur_reshaped
         )
         ## or do we want to put the division to 0? If YES:
         ##  sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = (

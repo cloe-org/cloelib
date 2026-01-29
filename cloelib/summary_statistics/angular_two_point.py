@@ -15,7 +15,7 @@ import jax
 from scipy import integrate
 
 # results imports
-from cosmolib.data import AngularPowerSpectrum
+from cosmolib.data import AngularPowerSpectrum, COSEBI
 
 
 @jax.jit
@@ -375,6 +375,11 @@ class AngularTwoPoint:
                     cosebis = cosebis.at[i].set(
                         integrate.simpson(ells * cl * w_ell[n], ells)
                     )
-                tomo_cosebis[key] = cosebis / (2 * np.pi)
+                tomo_cosebis[key] = COSEBI(
+                    array=cosebis / (2 * np.pi),
+                    mode=n,
+                    nmodes=max(ns),
+                    software="cloelib, `get_cosebis` method",
+                )
 
         return tomo_cosebis

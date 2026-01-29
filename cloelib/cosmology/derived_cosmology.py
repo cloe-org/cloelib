@@ -2,19 +2,10 @@
 
 # cloelib imports
 from cloelib.auxiliary import units
-from cloelib.cosmology.cosmology import Background
 
 # General imports
 import numpy as np
 from scipy import optimize, integrate
-import copy
-from typing import Optional
-
-# Cosmology imports
-try:
-    from classy import Class  # type: ignore
-except ImportError as e:
-    raise ImportError("classy could not be imported.") from e
 
 _log10_GRAVITATIONAL_CONSTANT = np.log10(units.GRAVITATIONAL_CONSTANT)
 
@@ -242,13 +233,11 @@ def growth_function_ODE(background, zs: np.ndarray, omega_m=-1) -> np.ndarray:
     h0 = background.H0
 
     e_z_init = (
-        hubble_rate(np.log(1 / (1 + zinit)), h0, omega_m, omega_k, w0, wa) / 100 / h0
-    )
+        hubble_rate(np.log(1 / (1 + zinit)), h0, omega_m, omega_k, w0, wa
+                    ) / 100 / h0)
 
     y01 = (
-        -6
-        / 5
-        * (1 - omega_m - omega_k)
+        -6 / 5 * (1 - omega_m - omega_k)
         * (1 + zinit) ** (3 * (1 + w0 + wa))
         * np.exp(-3 * wa * zinit / (1 + zinit))
         * e_z_init ** (-2)
@@ -263,184 +252,3 @@ def growth_function_ODE(background, zs: np.ndarray, omega_m=-1) -> np.ndarray:
         args=(h0, omega_m, omega_m_geo, omega_k, w0, wa),
     )
     return np.flip(growth.y[0])
-
-
-class SplitLinearPerturbations:
-    """Class to output the rescaled linear matter power spectrum for the
-    growth-geometry split, inheriting from the Perturbations parent class
-    and using CLASS."""
-
-    def __init__(
-        self, background: Background, omega_m_growth: float, redshifts: np.ndarray
-    ):
-        """Initialise SplitLinearPerturbations."""
-        self.background = background
-        self.omega_m_growth = omega_m_growth
-        self.z = redshifts
-        self.kmax = 100
-        self.results = None  # Store CLASS results
-
-        # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["non linear"] = "none"
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
-
-    @property
-    def _interface_args(self) -> dict:
-        """Save internal structure format of interface codes."""
-        return self.interface_args
-
-    def matter_power_spectrum(
-        self, zs, ks, hubble_units=False, k_hunit=False
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """Calculate the growth-geometry split CLASS linear matter power
-        spectrum. This implies a rescaling with the growth function of the
-        matter power spectrum and also sigma_8, as in 2301.03694
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk_linear_EBS: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift from the Einstein-Boltzmann solver. This is needed to
-            compute the boost factor in the class SplitNonLinearPerturbations.
-
-        pk_linear: numpy.ndarray
-            Rescaled linear matter power spectrum at the specified scale
-            and redshift.
-        """
-        if hubble_units or k_hunit:
-            raise ValueError("This CLASS method does not yet support h-units")
-        self.pk_linear_EBS = np.array([[self.results.pk(k, z) for k in ks] for z in zs])  # type:ignore[union-attr]
-
-        omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
-
-        # Compute the growth factor
-        g_z_geo = growth_function_ODE(self.background, zs, omega_m_geo)
-        g_z_growth = growth_function_ODE(self.background, zs, self.omega_m_growth)
-
-        self.pk_linear = np.zeros_like(self.pk_linear_EBS)
-
-        # Rescale the matter power spectrum with G(z)
-        for i in range(len(zs)):
-            rescale_fac = g_z_growth[i] ** 2 / g_z_geo[i] ** 2
-            self.pk_linear[i, :] = rescale_fac * self.pk_linear_EBS[i, :]
-
-        # Rescale sigma_8
-        self.sigma8_0 = g_z_growth[i] / g_z_geo[i] * self.sigma8_0_EBS()
-        return self.pk_linear_EBS, self.pk_linear
-
-    def sigma8_0_EBS(self) -> float:
-        """
-        Calculate the sigma8 value for the current cosmology from the EBS.
-
-        Returns:
-        --------
-        float
-            The sigma8 value.
-        """
-        self.sigma8_0 = self.results.sigma8()  # type: ignore[union-attr]
-        return self.sigma8_0
-
-
-class SplitNonLinearPerturbations:
-    """Class to output the rescaled non-linear matter power spectrum for the
-    growth-geometry split, inheriting from the Perturbations parent class
-    and using CLASS."""
-
-    def __init__(
-        self,
-        background: Background,
-        omega_m_growth: float,
-        redshifts: np.ndarray,
-        pk_linear_EBS: np.ndarray,
-        pk_linear: np.ndarray,
-        nonlinear_model: Optional[str] = None,
-    ):
-        """Initialize the CLASSNonLinearPerturbation instance."""
-        self.background = background
-        self.omega_m_growth = omega_m_growth
-        self.z = redshifts
-        self.kmax = 100
-        self.pk_linear_EBS = pk_linear_EBS
-        self.pk_linear = pk_linear
-
-        if nonlinear_model is None:
-            nonlinear_model = "none"
-
-        # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
-        self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
-        self.interface_args["CLASSparams"]["non linear"] = nonlinear_model
-        self.interface_args["CLASSparams"]["hmcode_version"] = 2016
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
-
-    def matter_power_spectrum(
-        self, zs, ks, hubble_units=False, k_hunit=False
-    ) -> np.ndarray:
-        """Calculate the split CLASS non-linear matter power spectrum.
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Non-linear matter power spectrum at the specified scale
-            and redshift
-        """
-
-        if hubble_units or k_hunit:
-            raise ValueError("This CLASS method does not yet support h-units")
-        self.pk_nonlinear_EBS = np.array([[self.results.pk(k, z) for k in ks] for z in zs])  # type:ignore[union-attr]
-
-        # Compute the boost factor from the standard power spectra
-        boost = self.pk_nonlinear_EBS / self.pk_linear_EBS
-
-        self.pk_nonlinear = self.pk_nonlinear_EBS
-
-        # Add the boost to the rescaled power spectrum
-        for i in range(len(zs)):
-            self.pk_nonlinear[i, :] = boost[i, :] * self.pk_linear[i, :]
-        return self.pk_nonlinear

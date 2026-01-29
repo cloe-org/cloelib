@@ -81,14 +81,9 @@ class SplitLinearPerturbations:
 
         Returns
         -------
-        pk_linear_EBS: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift from the Einstein-Boltzmann solver. This is needed to
-            compute the boost factor in the class SplitNonLinearPerturbations.
-
-        pk_linear: numpy.ndarray
+        Pk: numpy.ndarray
             Rescaled linear matter power spectrum at the specified scale
-            and redshift.
+            and redshift. This follows Eq. (6) of 2301.03694
         """
 
         self.k = ks

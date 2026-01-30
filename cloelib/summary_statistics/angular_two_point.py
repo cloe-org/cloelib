@@ -391,7 +391,7 @@ class AngularTwoPoint:
 
                 tomo_cosebis[key] = COSEBI(
                     array=cosebis / (2 * np.pi),
-                    mode=n,
+                    mode=ns,
                     nmodes=max(ns),
                     software=self._software_tag(self.get_cosebis),
                 )

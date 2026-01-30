@@ -2,31 +2,11 @@
 
 ## cloelib
 
-::: cloelib
-options:
-show_root_heading: false
-show_signature: true
-members: []
-
 ::: cloelib.cosmology
 options:
 show_root_toc_entry: true
 show_root_heading: true
 members: false
-
-::: cloelib.cosmology.camb_cosmology
-options:
-show_root_toc_entry: true
-show_root_heading: true
-show_submodules: false
-heading_level: 3
-
-::: cloelib.cosmology.class_cosmology
-options:
-show_root_toc_entry: true
-show_root_heading: true
-show_submodules: false
-heading_level: 3
 
 ::: cloelib.cosmology.cosmology
 options:
@@ -36,6 +16,20 @@ show_submodules: false
 heading_level: 3
 
 ::: cloelib.cosmology.derived_cosmology
+options:
+show_root_toc_entry: true
+show_root_heading: true
+show_submodules: false
+heading_level: 3
+
+::: cloelib.cosmology.camb_cosmology
+options:
+show_root_toc_entry: true
+show_root_heading: true
+show_submodules: false
+heading_level: 3
+
+::: cloelib.cosmology.class_cosmology
 options:
 show_root_toc_entry: true
 show_root_heading: true

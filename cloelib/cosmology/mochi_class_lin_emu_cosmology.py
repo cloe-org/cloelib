@@ -8,7 +8,6 @@ from cloelib.auxiliary.extrapolator import extend_spectra
 import numpy as np
 from scipy import interpolate
 import os
-from typing import Optional
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
@@ -22,7 +21,9 @@ class mochiCLASSEmuLinearPerturbations:
     based on the stable basis parametrisation.
     """
 
-    def __init__(self, background: Background, redshifts: np.ndarray, cp_file: str = None):
+    def __init__(
+        self, background: Background, redshifts: np.ndarray, cp_file: str = None
+    ):
         """
         Initialize the emulator with a given cosmological background and redshift array.
 
@@ -43,7 +44,7 @@ class mochiCLASSEmuLinearPerturbations:
 
         self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
-        self.k_emu = np.logspace(-3, 1, 300)  #hard-coded for now
+        self.k_emu = np.logspace(-3, 1, 300)  # hard-coded for now
         h = float(background.h)
         self.k_emu *= h
 
@@ -59,9 +60,9 @@ class mochiCLASSEmuLinearPerturbations:
         # Currently emulator implemented for stable basis parametrisation,
         # NOT for the standard mochi_class input of c_s^2, Delta_Mpl etc.
         cp_bounds = {
-            "s": np.array([-0.3,0.3]),
+            "s": np.array([-0.3, 0.3]),
             "a0": np.array([-1, 1]),
-            "a1": np.array([-1,0]),
+            "a1": np.array([-1, 0]),
             "w0": np.array([-1.5, -0.5]),
             "wa": np.array([-0.5, 0.5]),
             "z": np.array([0.0, 5.0]),
@@ -162,7 +163,7 @@ class mochiCLASSEmuLinearPerturbations:
             D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
         return D_z_k
-    
+
     # TODO: implement growth rate and sigma8 predictions
     # def growth_rate(self) -> np.ndarray:
     #     """
@@ -187,4 +188,3 @@ class mochiCLASSEmuLinearPerturbations:
     #         The sigma8 value.
     #     """
     #     return self.sigma8[0]
-

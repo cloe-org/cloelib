@@ -528,7 +528,6 @@ class mochiCLASSLinearPerturbations:
         self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.interface_args["CLASSparams"]["non_linear"] = "none"
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
         try:
@@ -651,6 +650,7 @@ class mochiCLASSNonLinearPerturbations:
         self.k = ks
         self.z = redshifts
         self.kmax = ks[-1]
+        self.nonlinear_model = nonlinear_model
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -659,18 +659,16 @@ class mochiCLASSNonLinearPerturbations:
         self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
         self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
-        self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        if background.mg_stable_basis_on is False:
-            self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
-            if nonlinear_model == "hmcode" and log10TAGN is not None:
+        if not background.mg_stable_basis_on:
+            self.interface_args["CLASSparams"]["non_linear"] = self.nonlinear_model
+            if self.nonlinear_model == "hmcode" and log10TAGN is not None:
                 self.interface_args["CLASSparams"]["hmcode_version"] = (
                     "2020_baryonic_feedback"
                 )
                 self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
+                self.interface_args["CLASSparams"]["hmcode_min_k_max"] = self.kmax
         else:
-            self.interface_args["CLASSparams"]["non_linear"] = "None"
+            self.interface_args["CLASSparams"]["non_linear"] = "none"
 
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])

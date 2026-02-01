@@ -5,6 +5,7 @@
 We welcome feedback from the **Euclid community** and beyond to refine and improve this library!
 
 [![CI](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml)
+[![Docs](https://github.com/cloe-org/cloelib/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/cloe-org/cloelib/actions/workflows/docs.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
 [![Tests: pytest](https://img.shields.io/badge/tests-pytest-blue?logo=pytest)](https://docs.pytest.org/)
 [![Linting: Ruff](https://img.shields.io/badge/linting-ruff-purple?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)

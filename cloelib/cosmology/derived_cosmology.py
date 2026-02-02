@@ -94,7 +94,7 @@ def rdrag_fitting_function(background, neff=3.046):
 def z_star_fitting_function(background, neff=3.046):
     r"""Compute the redshift of photon decoupling.
 
-    Assumes a cosmology-independent z_star for now.
+    Assumes a cosmology-independent z_star.
 
     Parameters
     ----------

@@ -42,7 +42,7 @@ class GaussianMassLambdaTrue:
         self.M_piv = M_piv
         self.z_piv = z_piv
 
-    def lnlambda(self, z, M):
+    def mean_lnrichness(self, z, M):
         r"""
         Mean of the richness-mass relation PDF.
 
@@ -58,8 +58,8 @@ class GaussianMassLambdaTrue:
 
         Returns
         -------
-        lnlambda : numpy.ndarray
-            lnlambda[i,j], where i is the true redhshift axis and j the mass axis
+        lnrichness : numpy.ndarray
+            lnrichness[i,j], where i is the true redhshift axis and j the mass axis
         """
         return (
             np.log(self.A_l)
@@ -67,7 +67,7 @@ class GaussianMassLambdaTrue:
             + self.C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
         )
 
-    def scatter_lnl(self, z, M):
+    def scatter_lnrichness(self, z, M):
         r"""
         Intrinsic scatter of the proxy - mass relation.
 
@@ -83,8 +83,8 @@ class GaussianMassLambdaTrue:
 
         Returns
         -------
-        scatter_lnl : numpy.ndarray
-            scatter_lnl[i,j], where i is the true redhshift axis and j the mass axis
+        scatter_lnrichness : numpy.ndarray
+            scatter_lnrichness[i,j], where i is the true redhshift axis and j the mass axis
         """
 
         return (
@@ -93,7 +93,7 @@ class GaussianMassLambdaTrue:
             + self.sig_C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
         )
 
-    def prob_true_richness_given_mass(self, z, M, lambda_true):
+    def prob_richness_given_mass(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.
 
@@ -111,18 +111,19 @@ class GaussianMassLambdaTrue:
 
         Returns
         -------
-        prob_true_richness_given_mass: numpy.ndarray
-            prob_true_richness_given_mass[i,j,k], where i is the redshift, j is the mass,
+        prob_richness_given_mass: numpy.ndarray
+            prob_richness_given_mass[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
-        lnlambda1 = self.lnlambda(z, M)[:, :, np.newaxis]
-        sigmalnl = self.scatter_lnl(z, M)[:, :, np.newaxis]
+        _mean_lnlambda = self.mean_lnrichness(z, M)[:, :, np.newaxis]
+        _sigma_lnrichness = self.scatter_lnrichness(z, M)[:, :, np.newaxis]
         _lambda_true = lambda_true[np.newaxis, np.newaxis, :]
 
         return (
             1.0
-            / (_lambda_true * np.sqrt(2.0 * np.pi * sigmalnl**2.0))
+            / (_lambda_true * np.sqrt(2.0 * np.pi * _sigma_lnrichness**2.0))
             * np.exp(
-                -((np.log(_lambda_true) - lnlambda1) ** 2.0) / (2.0 * sigmalnl**2.0)
+                -((np.log(_lambda_true) - _mean_lnlambda) ** 2.0)
+                / (2.0 * _sigma_lnrichness**2.0)
             )
         )

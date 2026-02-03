@@ -105,7 +105,7 @@ class ClusterStatisticsModeling:
             "lambda_true": integ_lambda_true_arr,  # true richness array
             "ztrue": integ_ztrue_arr,  # true redshift array
             # P(lambda_true|M,z), this quantity is also used by cluster clustering
-            "PDF_mass_richness_scaling": self.selectionfunction.mass_lambda_true.prob_true_richness_given_mass(
+            "PDF_mass_richness_scaling": self.selectionfunction.mass_lambda_true.prob_richness_given_mass(
                 integ_ztrue_arr, integ_mass_arr, integ_lambda_true_arr
             ),
             # volume element at each point of z array
@@ -203,7 +203,7 @@ class ClusterStatisticsModeling:
                 np.newaxis, :, :, :
             ]  # (1, z, M, ltr)
             * windows_lambda_obs_lambda_true[:, :, np.newaxis, :],  # (lobs, z, 1, ltr)
-            x=lambda_true,
+            x=self.tabulated_integrands["lambda_true"],
             axis=-1,
         )
 

@@ -15,16 +15,20 @@ def _test_selectionfunction(SF):
 
     XXX = 1
 
-    print("    lnlambda")
-    _lnlambda_ref = [-1.533121, -1.423534, -1.3337, -1.257575, -1.191523]
+    print("    lnrichness")
+    _lnrichness_ref = [-1.533121, -1.423534, -1.3337, -1.257575, -1.191523]
     assert_allclose(
-        SF.mass_lambda_true.lnlambda(z_test, M_test)[:, 0], _lnlambda_ref, rtol=1e-05
+        SF.mass_lambda_true.mean_lnrichness(z_test, M_test)[:, 0],
+        _lnrichness_ref,
+        rtol=1e-05,
     )
-    print("    scatter_lnl")
-    assert_allclose(SF.mass_lambda_true.scatter_lnl(z_test, M_test), 0.1, rtol=1e-05)
-    print("    prob_true_richness_given_mass")
+    print("    scatter_lnrichness")
     assert_allclose(
-        SF.mass_lambda_true.prob_true_richness_given_mass(z_test, M_test, l_test),
+        SF.mass_lambda_true.scatter_lnrichness(z_test, M_test), 0.1, rtol=1e-05
+    )
+    print("    prob_richness_given_mass")
+    assert_allclose(
+        SF.mass_lambda_true.prob_richness_given_mass(z_test, M_test, l_test),
         0,
         atol=1e-10,
         rtol=1e-05,

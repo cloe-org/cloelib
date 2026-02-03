@@ -188,13 +188,19 @@ class ClusterStatisticsModeling:
 
         # if external_richness_selection_function == 'CG_ESF' :
         #     window_lambda_obs  = self.int_Plobltr_Dlob[lambda_bin](self.tabulated_integrands["ztrue"], self.tabulated_integrands["lambda_true"]).T
-
+        windows_lambda_obs_lambda_true = (
+            self.selectionfunction.window_richness_observed_richness_true(
+                lambda_obs_edges,
+                l_m_tab_sig,
+                self.tabulated_integrands["ztrue"],
+                self.tabulated_integrands["lambda_true"],
+            )
+        )
         return self.selectionfunction.window_richness_observed(
-            lambda_obs_edges,
-            l_m_tab_sig,
             self.tabulated_integrands["ztrue"],
             self.tabulated_integrands["lambda_true"],
             self.tabulated_integrands["M"],
+            windows_lambda_obs_lambda_true,
         )
 
     # ---------------------

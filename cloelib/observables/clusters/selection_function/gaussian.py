@@ -329,27 +329,16 @@ class GaussianSelectionFunction:
             Integral of P(lambda_obs|M, z_true) in lambda_obs bins.
             Dimentions: (lambda_obs_edges, z_true, M).
         """
-
-        # if external_richness_selection_function == 'CG_ESF' :
-        #     window_lambda_obs  = self.int_Plobltr_Dlob[lambda_bin](self.tabulated_integrands["z_true"], self.tabulated_integrands["lambda_true"]).T
-
-        window_lambda_obs = np.zeros(
-            (
-                *windows_lambda_obs_lambda_true.shape[:-1],
-                mass.size,
-            )
+        return simps(
+            self.mass_lambda_true.prob_true_richness_given_mass(
+                z_true, mass, lambda_true
+            )[
+                np.newaxis, :, :, :
+            ]  # (1, z, M, ltr)
+            * windows_lambda_obs_lambda_true[:, :, np.newaxis, :],  # (lobs, z, 1, ltr)
+            x=lambda_true,
+            axis=-1,
         )
-        for ind_lambda, _window_lambda_obs in enumerate(windows_lambda_obs_lambda_true):
-            # Window function
-            window_lambda_obs[ind_lambda] = simps(
-                self.mass_lambda_true.prob_true_richness_given_mass(
-                    z_true, mass, lambda_true
-                )
-                * _window_lambda_obs[:, np.newaxis, :],
-                x=lambda_true,
-                axis=-1,
-            )
-        return window_lambda_obs
 
     def window_z_richness_observed(
         self,

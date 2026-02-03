@@ -2,8 +2,10 @@
 import numpy as np
 from scipy.integrate import simpson as simps
 
+from cloelib.observables.clusters.halo_abundance import CastroHaloAbundance
+
 # cloelib imports
-from cloelib.observables.clusters.profile import Profile
+from cloelib.observables.clusters.halo_profile import HaloProfile
 from cloelib.summary_statistics.clusters.statistics_modeling import (
     ClusterStatisticsModeling,
 )
@@ -23,7 +25,7 @@ class ClusterWeakLensing:
     def __init__(
         self,
         cluster_statitstics_modeling: ClusterStatisticsModeling,
-        profile: Profile,
+        profile: HaloProfile,
         halo_concentration: float,
     ):
         """
@@ -39,6 +41,18 @@ class ClusterWeakLensing:
         halo_concentration : float
             Halo concentration
         """
+        halo_abundance = cluster_statitstics_modeling.halo_abundance
+        Delta_abundance = halo_abundance.overdensity_type
+        Delta_profile = profile.core.overdensity_type
+        if isinstance(halo_abundance, CastroHaloAbundance) and Delta_profile != "vir":
+            raise ValueError(
+                f"If the Castro HMF is used, only virial overdensities can be considered. The current overdensity in the profile modeling is {Delta_profile}."
+            )
+        if Delta_abundance != Delta_profile:
+            raise ValueError(
+                f"The overdensity definition of the mass profile ({Delta_profiles}) differs from the one adopted for halo abundance modeling ({Delta_abundance}).)"
+            )
+
         # cluster counts summary statistics, contains tables for integrals
         # and functions to compute binned integrals of counts
         self.cluster_statitstics_modeling = cluster_statitstics_modeling
@@ -195,7 +209,7 @@ class ClusterWeakLensing:
         )
         for ind_z in range(z_obs_edges_size):
             effective_inverse_critical_surface_mass_density[ind_z] = (
-                self.profile.m_sig_crit_m1(
+                self.profile.core.sigma_crit_inv_eff(
                     self.cluster_statitstics_modeling.tabulated_integrands["ztrue"],
                     ind_z,
                 )

@@ -7,11 +7,12 @@ on:
       - cluster_structure
   pull_request:
 
+
 jobs:
-  build-gcc-ubuntu:
+
+  unit-tests:
     name: Unit tests
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
     - uses: conda-incubator/setup-miniconda@v3
@@ -31,6 +32,7 @@ jobs:
         pytest tests_cluster/ --cov=cloelib/ --ignore=tests_cluster/benchmark_values.py
       env:
         DISPLAY: test
+
   check-formatting:
     name: Check code formatting
     runs-on: ubuntu-latest
@@ -54,6 +56,7 @@ jobs:
 #    - name: Install Sphinx prereq
 #      run: |
 #        conda install -c conda-forge sphinx sphinx_rtd_theme nbconvert pandoc ipython ipython_genutils
+#
   check-code-version:
     name: Code version number
     runs-on: ubuntu-latest
@@ -74,6 +77,10 @@ jobs:
           CLOE_ORG_TAG="$(git describe --tags --abbrev=0)"
           echo "cloe-org tag: $CLOE_ORG_TAG"
           echo "CLOE_ORG_TAG=$CLOE_ORG_TAG" >> $GITHUB_ENV
+          CLOE_ORG_SHA=$(git rev-parse origin/main)
+          CLOE_ORG_SHA=${CLOE_ORG_SHA:0:7}
+          echo "Latest main commit: $CLOE_ORG_SHA"
+          echo "CLOE_ORG_SHA=$CLOE_ORG_SHA" >> $GITHUB_ENV
       # Get PR title to be updated with version
       - name : Get PR title and clean version number from it
         env:
@@ -159,7 +166,7 @@ jobs:
       - name : Make new title for PR
         run: |
           if [ "$(printf "%s\n%s" "$CURRENT_VERSION" "$MAIN_VERSION" | sort -V | tail -n 1)" == "$CURRENT_VERSION" ]; then
-            NEW_TITLE="${NEW_TITLE} [cluster-version:$CURRENT_VERSION] (cloe-org:$CLOE_ORG_TAG)"
+            NEW_TITLE="${NEW_TITLE} [cluster-version:$CURRENT_VERSION] [cloe-org:$CLOE_ORG_TAG - $CLOE_ORG_SHA]"
             echo "New title: $NEW_TITLE"
             echo "NEW_TITLE=$NEW_TITLE" >> $GITHUB_ENV
           fi
@@ -185,3 +192,49 @@ jobs:
             exit 1
           fi
           echo "[ok] Version increased changed!"
+
+  check-notebook:
+    name: Check notebook
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: conda-incubator/setup-miniconda@v3
+      with:
+        python-version: '3.13'
+    - name: Install prereq using pip
+      run: |
+        #python -m pip install --upgrade pip
+        pip install astropy cython
+        pip install camb classy jax
+        pip install pyinstrument
+        pip install matplotlib
+    - name: Install the package and nb kernel
+      run: |
+        pip install .
+        pip install jupyter nbconvert ipykernel
+    - name: Debug python environment
+      run: |
+        which python
+        python --version
+        python -c "import sys; print(sys.executable)"
+        pip show cloelib
+    - name: Download validation data
+      working-directory: notebooks
+      run: |
+        FILE_ID="1K0CiK3hZ-jBfJOTczvu3BT8G9Bs2Q_ky"
+        wget --quiet --save-cookies cookies.txt --keep-session-cookies \
+          "https://drive.google.com/uc?export=download&id=${FILE_ID}" -O- \
+          | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1/p' \
+          | wget --load-cookies cookies.txt \
+              "https://drive.google.com/uc?export=download&confirm=\1&id=${FILE_ID}" \
+              -O "data.zip"
+        unzip data.zip
+    - name: Run notebooks
+      working-directory: notebooks
+      run: |
+        jupyter nbconvert \
+          --to notebook \
+          --execute \
+          --ExecutePreprocessor.timeout=600 \
+          *.ipynb

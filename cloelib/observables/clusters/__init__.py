@@ -1,3 +1,3 @@
 """Modules relative to galaxy clusters"""
 
-__version__ = "1.5.3"
+__version__ = "1.7.0"

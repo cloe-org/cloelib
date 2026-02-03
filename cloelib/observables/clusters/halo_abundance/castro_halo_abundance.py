@@ -3,21 +3,29 @@ from scipy import interpolate
 from scipy.special import gamma
 
 from cloelib.cosmology import derived_cosmology
-from cloelib.observables.clusters.halo_statistics import HaloStatistics
+from cloelib.observables.clusters.matter_statistics import MatterStatistics
+
+from .halo_abundance_core import HaloAbundanceCore
 
 
-class CastroHMFBias:
+class CastroHaloAbundance:
 
-    def __init__(self, halo_statistics: HaloStatistics):
+    def __init__(self, matter_statistics: MatterStatistics):
 
-        self.halo_statistics = halo_statistics
+        self.core = HaloAbundanceCore(matter_statistics)
+
+    # For sanity checks in summary_statistics
+    @property
+    def overdensity_type(self):
+        return "vir"
 
     def f_sigma_nu(self, z, M):
         r"""
         Computation of the multiplicity function.
 
         Computes the Castro et al. (2023) multiplicity function
-        at the requested redshift and mass points.
+        at the requested redshift and mass points. Valid only for
+        virial overdensities.
 
         Parameters
         ----------
@@ -32,9 +40,9 @@ class CastroHMFBias:
             f_sigma_nu[i,j], where i is the redshift axis and j the mass axis
         """
         # compute inputs
-        Omega_m = self.halo_statistics._Omega_m(z)
-        dlnsigmadlnM = self.halo_statistics.dlns_dlnM(z, M)
-        nu = self.halo_statistics.nu_z_M(z, M)
+        Omega_m = self.core.matter_statistics._Omega_m(z)
+        dlnsigmadlnM = self.core.dlns_dlnM(z, M)
+        nu = self.core.nu_z_M(z, M)
 
         ##################
         # HMF computations
@@ -76,7 +84,8 @@ class CastroHMFBias:
         Computation of the halo bias.
 
         Computes the Castro et al. (2024) halo bias
-        at the requested redshift and mass points.
+        at the requested redshift and mass points. Valid only
+        for virial overdensities.
 
         Parameters
         ----------
@@ -103,10 +112,10 @@ class CastroHMFBias:
             M = np.append(M, M[-1] * np.arange(2, 6))
 
         # compute inputs
-        Omega_m = self.halo_statistics._Omega_m(z)
-        delta_c = self.halo_statistics.delta_c(z)
-        dlnsigmadlnM = self.halo_statistics.dlns_dlnM(z, M)
-        nu = self.halo_statistics.nu_z_M(z, M)
+        Omega_m = self.core.matter_statistics._Omega_m(z)
+        delta_c = self.core.delta_c(z)
+        dlnsigmadlnM = self.core.dlns_dlnM(z, M)
+        nu = self.core.nu_z_M(z, M)
 
         ###################
         # Bias computations
@@ -115,9 +124,7 @@ class CastroHMFBias:
         # Compute main quantities
         dlnsigmadlnR = 3 * dlnsigmadlnM
         fsigmanu = self.f_sigma_nu(z, M)
-        S8 = self.halo_statistics.sigma8 * np.sqrt(
-            self.halo_statistics._Omega_m(0.0) / 0.3
-        )
+        S8 = self.core.sigma8 * np.sqrt(self.core.matter_statistics._Omega_m(0.0) / 0.3)
 
         dlnfsigmanu_dlnnu = np.zeros(fsigmanu.shape)
         for i in range(len(Omega_m)):
@@ -159,4 +166,4 @@ class CastroHMFBias:
             dn_dm[i,j], where i is the redshift axis and j the mass axis.
             Units: h^4 Mpc^{-3} Ms^{-1}.
         """
-        return self.halo_statistics.dn_dm_fsigmanu(z, M, self.f_sigma_nu(z, M))
+        return self.core.dn_dm_fsigmanu(z, M, self.f_sigma_nu(z, M))

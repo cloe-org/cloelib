@@ -3,7 +3,7 @@ import numpy as np
 from scipy.integrate import simpson as simps
 
 # cloelib imports
-from cloelib.observables.clusters.clustering import HaloClustering
+from cloelib.observables.clusters.halo_clustering import HaloClustering
 from cloelib.summary_statistics.clusters.statistics_modeling import (
     ClusterStatisticsModeling,
 )
@@ -89,7 +89,7 @@ class ClusterClustering:
         # corrected power specrum (lambda_obs, ztrue, k)
         pk_halo = (
             b_eff**2 * photoz_corr0 + b_eff * photoz_corr1 + photoz_corr2
-        ) * self.cluster_statitstics_modeling.halo_statistics.matter_power_spectrum(
+        ) * self.cluster_statitstics_modeling.matter_statistics.matter_power_spectrum(
             self.cluster_statitstics_modeling.tabulated_integrands["ztrue"],
             self.cluster_statitstics_modeling.tabulated_integrands["k"],
         )

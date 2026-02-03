@@ -14,6 +14,7 @@ class GaussianMassLambdaTrue:
         sig_C_l: float,
         M_piv: float = 3.0e14,
         z_piv: float = 0.45,
+        tabulte_P_lnlbd: bool = True,
     ):
         r"""
         Class defining the selection function of galaxy clusters, including
@@ -41,6 +42,15 @@ class GaussianMassLambdaTrue:
         self.sig_C_l = sig_C_l
         self.M_piv = M_piv
         self.z_piv = z_piv
+
+        self.tabulte_P_lnlbd = tabulte_P_lnlbd
+        # to avoid recomputing P_lnlbd
+        self._tabulated_P_lnlbd_args = {
+            "M": None,
+            "z": None,
+            "lambda_true": None,
+        }
+        self._tabulated_P_lnlbd = None
 
     def lnlambda(self, z, M):
         r"""
@@ -93,7 +103,7 @@ class GaussianMassLambdaTrue:
             + self.sig_C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
         )
 
-    def P_lnlbd(self, z, M, Lambda):
+    def _P_lnlbd(self, z, M, Lambda):
         r"""
         Proxy - mass relation PDF.
 
@@ -124,3 +134,46 @@ class GaussianMassLambdaTrue:
             / (Lambda * np.sqrt(2.0 * np.pi * sigmalnl**2.0))
             * np.exp(-((np.log(Lambda) - lnlambda1) ** 2.0) / (2.0 * sigmalnl**2.0))
         )
+
+    def _are_args_tabulated(self, z, M, lambda_true):
+        """Check if args are the tabluated values"""
+        if any(value is None for key, value in self._tabulated_P_lnlbd_args.items()):
+            return False
+        _locals = locals()
+        for name, ref_val in self._tabulated_P_lnlbd_args.items():
+            test_val = _locals[name]
+            if len(ref_val) != len(test_val):
+                return False
+            elif (ref_val != test_val).any():
+                return False
+        return True
+
+    def P_lnlbd(self, z, M, lambda_true):
+        r"""
+        Proxy - mass relation PDF.
+
+        Computes the theoretical richness probability distribution
+        at the requested true mass, redshift, and richness points.
+
+        Parameters
+        ----------
+        z: numpy.ndarray
+            True redshift points.
+        M: numpy.ndarray
+            True mass points in h^{-1} Msun.
+        lambda_true: numpy.ndarray
+            True richness points.
+
+        Returns
+        -------
+        P_lnlbd: numpy.ndarray
+            P_lnlbd[i,j,k], where i is the redshift, j is the mass,
+            and k is the observed richness index
+        """
+        if not self.tabulte_P_lnlbd or not self._are_args_tabulated(z, M, lambda_true):
+            self._tabulated_P_lnlbd_args["M"] = M
+            self._tabulated_P_lnlbd_args["z"] = z
+            self._tabulated_P_lnlbd_args["lambda_true"] = lambda_true
+            self._tabulated_P_lnlbd = self._P_lnlbd(z, M, lambda_true)
+
+        return self._tabulated_P_lnlbd

@@ -105,7 +105,7 @@ class GaussianMassLambdaTrue:
             + self.sig_C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
         )
 
-    def _prob_true_richness_given_mass(self, z, M, Lambda):
+    def _prob_true_richness_given_mass(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.
 
@@ -118,7 +118,7 @@ class GaussianMassLambdaTrue:
             True redshift points.
         M: numpy.ndarray
             True mass points in h^{-1} Msun.
-        Lambda: numpy.ndarray
+        lambda_true: numpy.ndarray
             True richness points.
 
         Returns
@@ -129,12 +129,14 @@ class GaussianMassLambdaTrue:
         """
         lnlambda1 = self.lnlambda(z, M)[:, :, np.newaxis]
         sigmalnl = self.scatter_lnl(z, M)[:, :, np.newaxis]
-        Lambda = Lambda[np.newaxis, np.newaxis, :]
+        _lambda_true = lambda_true[np.newaxis, np.newaxis, :]
 
         return (
             1.0
-            / (Lambda * np.sqrt(2.0 * np.pi * sigmalnl**2.0))
-            * np.exp(-((np.log(Lambda) - lnlambda1) ** 2.0) / (2.0 * sigmalnl**2.0))
+            / (_lambda_true * np.sqrt(2.0 * np.pi * sigmalnl**2.0))
+            * np.exp(
+                -((np.log(_lambda_true) - lnlambda1) ** 2.0) / (2.0 * sigmalnl**2.0)
+            )
         )
 
     def _are_args_tabulated(self, z, M, lambda_true):

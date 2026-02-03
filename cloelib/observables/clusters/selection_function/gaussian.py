@@ -71,7 +71,7 @@ class GaussianSelectionFunction:
         self.sig_z_z = sig_z_z
         self.sig_z_lambda = sig_z_lambda
 
-    def prob_true_richness_given_mass(self, z, M, Lambda):
+    def prob_true_richness_given_mass(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.
 
@@ -84,7 +84,7 @@ class GaussianSelectionFunction:
             True redshift points.
         M: numpy.ndarray
             True mass points in h^{-1} Msun.
-        Lambda: numpy.ndarray
+        lambda_true: numpy.ndarray
             True richness points.
 
         Returns
@@ -93,9 +93,9 @@ class GaussianSelectionFunction:
             prob_true_richness_given_mass[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
-        return self.mass_lambda_true.prob_true_richness_given_mass(z, M, Lambda)
+        return self.mass_lambda_true.prob_true_richness_given_mass(z, M, lambda_true)
 
-    def scatter_lbdobs_lbd(self, z, Lambda):
+    def scatter_lbdobs_lbd(self, z, lambda_true):
         r"""
         Statistical uncertainty on the observed mass proxy.
 
@@ -106,7 +106,7 @@ class GaussianSelectionFunction:
         ----------
         z: numpy.ndarray
             True redshift points.
-        Lambda: numpy.ndarray
+        lambda_true: numpy.ndarray
             True richness points.
 
         Returns
@@ -117,9 +117,9 @@ class GaussianSelectionFunction:
         """
         return (
             self.sig_lambda_norm + self.sig_lambda_z * z[:, np.newaxis]
-        ) * Lambda**self.sig_lambda_exponent
+        ) * lambda_true**self.sig_lambda_exponent
 
-    def P_lbdobs_lbd(self, z, Lambda, Lambda_obs):
+    def P_lbdobs_lbd(self, z, lambda_true, lambda_obs):
         r"""
         Observed mass proxy PDF.
 
@@ -130,9 +130,9 @@ class GaussianSelectionFunction:
         ----------
         z: numpy.ndarray
             True redshift points.
-        Lambda: numpy.ndarray
+        lambda_true: numpy.ndarray
             True richness points.
-        Lambda_obs: numpy.ndarray
+        lambda_obs: numpy.ndarray
             Observed richness points.
 
         Returns
@@ -142,7 +142,7 @@ class GaussianSelectionFunction:
             j is the the theoretical richness axis,
             and k is the observed richness
         """
-        sigma_lbdobslbd = self.scatter_lbdobs_lbd(z, Lambda)[:, :, np.newaxis]
+        sigma_lbdobslbd = self.scatter_lbdobs_lbd(z, lambda_true)[:, :, np.newaxis]
 
         return (
             1.0
@@ -150,8 +150,8 @@ class GaussianSelectionFunction:
             * np.exp(
                 -(
                     (
-                        Lambda_obs[np.newaxis, np.newaxis, :]
-                        - Lambda[np.newaxis, :, np.newaxis]
+                        lambda_obs[np.newaxis, np.newaxis, :]
+                        - lambda_true[np.newaxis, :, np.newaxis]
                     )
                     ** 2.0
                 )
@@ -159,7 +159,7 @@ class GaussianSelectionFunction:
             )
         )
 
-    def scatter_zobs_z(self, Lambda_obs, z):
+    def scatter_zobs_z(self, lambda_obs, z):
         r"""
         Statistical uncertainty on the observed redshift.
 
@@ -170,7 +170,7 @@ class GaussianSelectionFunction:
         ----------
         z: numpy.ndarray
             True redshift points.
-        Lambda_obs: numpy.ndarray
+        lambda_obs: numpy.ndarray
             Observed richness points.
 
         Returns
@@ -179,9 +179,9 @@ class GaussianSelectionFunction:
             scatter_zobs_z[i,j] where i is the true redshift axis
             and j the observed richness axis
         """
-        return self.sig_z_z * z + self.sig_z_lambda * Lambda_obs
+        return self.sig_z_z * z + self.sig_z_lambda * lambda_obs
 
-    def P_zobs_z(self, z_obs, Lambda_obs, z):
+    def P_zobs_z(self, z_obs, lambda_obs, z):
         r"""
         Observed redshift PDF.
 
@@ -192,7 +192,7 @@ class GaussianSelectionFunction:
         ----------
         z_obs: numpy.ndarray
             Observed redshift points.
-        Lambda_obs: numpy.ndarray
+        lambda_obs: numpy.ndarray
             Observed richness points.
         z: numpy.ndarray
             True redshift points.
@@ -204,7 +204,7 @@ class GaussianSelectionFunction:
             j is the observed richness axis,
             and k is the true redshift axis
         """
-        sigmazobsz = self.scatter_zobs_z(Lambda_obs, z)
+        sigmazobsz = self.scatter_zobs_z(lambda_obs, z)
 
         return (
             1.0

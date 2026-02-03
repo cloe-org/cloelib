@@ -222,7 +222,7 @@ class HaloClustering:
         return Pk_IR
 
     def photoz_rsd_correction(
-        self, z: np.ndarray, Lambda_obs: np.ndarray
+        self, z: np.ndarray, lambda_obs: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Compute the correction that accounts for photo-z uncertainty and RSD (Kaiser effect)
@@ -231,7 +231,7 @@ class HaloClustering:
         ----------
         z:  np.ndarray
             redshift
-        Lambda_obs: numpy.ndarray
+        lambda_obs: numpy.ndarray
             Observed richness points.
 
         Returns
@@ -244,7 +244,7 @@ class HaloClustering:
         f_gr = (self._Omega_m(z) ** 0.55)[:, np.newaxis]
 
         ks = self.k * (
-            self.selectionfunction.scatter_zobs_z(Lambda_obs, z)
+            self.selectionfunction.scatter_zobs_z(lambda_obs, z)
             * (units.SPEED_OF_LIGHT * 1e-3)
             / self.background.hubble_parameter(z)
             * (self.background.H0 / 100)

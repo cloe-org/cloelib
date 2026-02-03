@@ -13,7 +13,7 @@ T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 @runtime_checkable
 class SelectionFunction(Protocol):
-    def prob_true_richness_given_mass(self, z: T, M: T, Lambda: T) -> T:
+    def prob_true_richness_given_mass(self, z: T, M: T, lambda_true: T) -> T:
         r"""
         Proxy - mass relation PDF.
 
@@ -26,7 +26,7 @@ class SelectionFunction(Protocol):
             True redshift points.
         M: numpy.ndarray
             True mass points in h^{-1} Msun.
-        Lambda: numpy.ndarray
+        lambda_true: numpy.ndarray
             True richness points.
 
         Returns

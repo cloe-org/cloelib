@@ -32,6 +32,7 @@ class ClusterStatisticsModeling:
             * M (numpy.ndarray) : Values of mass to be used in integrations
             * lambda_true (numpy.ndarray) : Values of true richness to be used in integrations
             * ztrue (numpy.ndarray) : Values of true redshift to be used in integrations
+            * PDF_mass_richness_scaling (numpy.ndarray) : Values for P(lambda_true|M, ztrue)
             * dv/dz(ztrue) (numpy.ndarray) : Values for volume element at each redshift
             * dn/dM(ztrue,M) (numpy.ndarray) : Values for the halo mass function dn/dmdz
             * bias(ztrue,M) (numpy.ndarray) : Values for the halo bias halo_bias
@@ -103,6 +104,10 @@ class ClusterStatisticsModeling:
             "M": integ_mass_arr,  # mass array in Msun h^-1
             "lambda_true": integ_lambda_true_arr,  # true richness array
             "ztrue": integ_ztrue_arr,  # true redshift array
+            # P(lambda_true|M,z), this quantity is also used by cluster clustering
+            "PDF_mass_richness_scaling": self.selectionfunction.mass_lambda_true.prob_true_richness_given_mass(
+                integ_ztrue_arr, integ_mass_arr, integ_lambda_true_arr
+            ),
             # volume element at each point of z array
             "dv/dz(ztrue)": derived_cosmology.dV_dzdO(
                 self.matter_statistics.perturbations.background,
@@ -181,6 +186,7 @@ class ClusterStatisticsModeling:
             Dimentions: (lambda_obs_edges, ztrue, M).
         """
 
+        # P(lambda_true|M,z), this quantity is also used by cluster clustering
         # if external_richness_selection_function == 'CG_ESF' :
         #     window_lambda_obs  = self.int_Plobltr_Dlob[lambda_bin](self.tabulated_integrands["ztrue"], self.tabulated_integrands["lambda_true"]).T
         windows_lambda_obs_lambda_true = (
@@ -191,11 +197,14 @@ class ClusterStatisticsModeling:
                 self.tabulated_integrands["lambda_true"],
             )
         )
-        return self.selectionfunction.window_richness_observed(
-            self.tabulated_integrands["ztrue"],
-            self.tabulated_integrands["lambda_true"],
-            self.tabulated_integrands["M"],
-            windows_lambda_obs_lambda_true,
+
+        return simps(
+            self.tabulated_integrands["PDF_mass_richness_scaling"][
+                np.newaxis, :, :, :
+            ]  # (1, z, M, ltr)
+            * windows_lambda_obs_lambda_true[:, :, np.newaxis, :],  # (lobs, z, 1, ltr)
+            x=lambda_true,
+            axis=-1,
         )
 
     # ---------------------

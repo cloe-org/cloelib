@@ -298,54 +298,14 @@ class GaussianSelectionFunction:
             )
         return window_lambda_obs_lambda_true
 
-    def window_richness_observed(
-        self,
-        z_true,
-        lambda_true,
-        mass,
-        windows_lambda_obs_lambda_true,
-    ):
-        r"""Compute the window function of each observed richness bin, given by:
-
-        ..math:
-            W_{\Delta\lambda_{\rm obs}}(M, z_{\rm true}) = \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs} P(\lambda_{\rm obs}|M, z_{\rm true})
-
-        Parameters
-        ----------
-        lambda_true : numpy.ndarray
-            True richness to integrate the window.
-        z_true : numpy.ndarray
-            True redshift to compute the window.
-        mass : numpy.ndarray
-            Mass to compute the window.
-        windows_lambda_obs_lambda_true : numpy.ndarray
-            Integral P(lambda_obs|lambda_true, z_true) in lambda_obs bins,
-            must be shape (lambda_obs_edges, z_true, lambda_true).
-
-
-        Returns
-        -------
-        window_lambda_obs : numpy.ndarray
-            Integral of P(lambda_obs|M, z_true) in lambda_obs bins.
-            Dimentions: (lambda_obs_edges, z_true, M).
-        """
-        return simps(
-            self.mass_lambda_true.prob_true_richness_given_mass(
-                z_true, mass, lambda_true
-            )[
-                np.newaxis, :, :, :
-            ]  # (1, z, M, ltr)
-            * windows_lambda_obs_lambda_true[:, :, np.newaxis, :],  # (lobs, z, 1, ltr)
-            x=lambda_true,
-            axis=-1,
-        )
-
     def window_z_richness_observed(
         self,
-        lambda_obs_edges,
         z_obs_edges,
-        lambda_true,
+        lambda_obs_edges,
         z_true,
+        lambda_true,
+        z_tab_sig,
+        l_m_tab_sig,
     ):
         r"""
         Computes the window function for observed redshift and richness bins, i. e.:
@@ -366,19 +326,37 @@ class GaussianSelectionFunction:
 
         Parameters
         ----------
-        lambda_obs_edges : numpy.ndarray
-            Edges of richness bins for the integration.
         z_obs_edges : numpy.ndarray
             Edges of redshift bins for the integration.
-        lambda_true : numpy.ndarray
-            True richness to compute the window.
+        lambda_obs_edges : numpy.ndarray
+            Edges of richness bins for the integration.
         z_true : numpy.ndarray
             True redshift to compute the window.
+        lambda_true : numpy.ndarray
+            True richness to compute the window.
+        z_tab_sig : int, None
+            Number of points to be used for z_obs integration.
+        l_m_tab_sig : List, None
+            Number of points to be used for the lambda_obs integration
+            in each lambda_obs bin. Must be same size of lambda_obs_edges.
 
         Returns
         -------
         numpy.ndarray
             Window function for observed redshift and richness bins.
-            Dimensions: (lambda_obs_edges, z_obs_edges, lambda_true, z_true)
+            Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         """
-        raise NotImplementedError("Function not implemented yet.")
+        return (
+            self.window_z_observed(z_obs_edges, lambda_obs_edges, z_tab_sig, z_true)[
+                :, :, :, np.newaxis
+            ]
+            # Dimentions: (z_obs_edges, lambda_obs_edges, z_true, 1).
+            * self.window_richness_observed_richness_true(
+                self,
+                lambda_obs_edges,
+                l_m_tab_sig,
+                z_true,
+                lambda_true,
+            )[np.newaxis, :, :, :]
+            # Dimentions: (1, lambda_obs_edges, z_true, lambda_true)
+        )

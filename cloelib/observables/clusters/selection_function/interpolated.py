@@ -285,10 +285,10 @@ class InterpolatedSelectionFunction:
 
     def window_z_richness_observed(
         self,
-        lambda_obs_edges,
         z_obs_edges,
-        lambda_true,
+        lambda_obs_edges,
         z_true,
+        lambda_true,
     ):
         r"""
         Computes the window function for observed redshift and richness bins, i. e.:
@@ -323,6 +323,7 @@ class InterpolatedSelectionFunction:
         numpy.ndarray
             Window function for observed redshift and richness bins.
             Dimensions: (lambda_obs_edges, z_obs_edges, lambda_true, z_true)
+            Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         """
         window = np.zeros(
             len(lambda_obs_edges) - 1,
@@ -336,6 +337,8 @@ class InterpolatedSelectionFunction:
         for i, integ4d_lobs in enumerate(integ4d_interp_func):
             for j, integ4d_lobs_zobs in enumerate(integ4d_lobs):
                 window[i, j] = integ4d_lobs_zobs(lambda_true, z_true)
+        # fix order of axes
+        return window.transpose(1, 0, 3, 2)
 
     def _normalize_array(
         self,

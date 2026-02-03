@@ -49,10 +49,6 @@ class InterpolatedSelectionFunction:
             Mass pivot in the proxy - mass relation, in h^{-1} Msun
         z_piv: float
             Redshift pivot in the proxy - mass relation
-        lobsNC_edges: array
-            edges of Lobs bins for Number Counts
-        zobsNC_edges: array
-            edges of zobs bins for Number Counts
         sel_cl_data: dict
             Object that read the SEL_CL output file and formats its accordingly. It must contain the keys:
 
@@ -74,40 +70,16 @@ class InterpolatedSelectionFunction:
         )
         self._sel_cl_data_original = sel_cl_data
 
-    def prob_true_richness_given_mass(self, z, M, lambda_true):
-        r"""
-        Proxy - mass relation PDF.
-
-        Computes the theoretical richness probability distribution
-        at the requested true mass, redshift, and richness points.
-
-        Parameters
-        ----------
-        z: numpy.ndarray
-            True redshift points.
-        M: numpy.ndarray
-            True mass points in h^{-1} Msun.
-        lambda_true: numpy.ndarray
-            True richness points.
-
-        Returns
-        -------
-        prob_true_richness_given_mass: numpy.ndarray
-            prob_true_richness_given_mass[i,j,k], where i is the redshift, j is the mass,
-            and k is the observed richness index
-        """
-        return self.mass_lambda_true.prob_true_richness_given_mass(z, M, lambda_true)
-
     ## NEW FUNCTION FROM SINFONIA FILE
 
-    def _get_sel_cl_data_formatted_with_obs_bins(self, lobsNC_edges, zobsNC_edges):
+    def _get_sel_cl_data_formatted_with_obs_bins(self, lambda_obs_edges, z_obs_edges):
         """Format SEL_CL data with obs bins
 
         Parameters
         ----------
-        lobsNC_edges: array
+        lambda_obs_edges: array
             edges of Lobs bins for Number Counts
-        zobsNC_edges: array
+        z_obs_edges: array
             edges of zobs bins for Number Counts
 
         Returns
@@ -121,10 +93,10 @@ class InterpolatedSelectionFunction:
 
         ## Check ranges of Obs arrays of the file and compare with NC Obs arrays
         ## Deal with min and max in lobs and zobs:
-        ## max(lobs_file) might be < max(lobsNC_edges) so we put an IF condition for now: Prob for lambda > max(lobs_file) = 0
-        ## min(lobs_file) might be > min(lobsNC_edges) so we put an IF condition for now: Prob for lambda < min(lobs_file) = 0
-        ## max(zobs_file) might be < max(zobsNC_edges) so we put an IF condition for now: Prob for z > max(zobs_file) = 0
-        ## min(zobs_file) might be > min(zobsNC_edges) so we put an IF condition for now: Prob for z < min(zobs_file) = 0
+        ## max(lobs_file) might be < max(lambda_obs_edges) so we put an IF condition for now: Prob for lambda > max(lobs_file) = 0
+        ## min(lobs_file) might be > min(lambda_obs_edges) so we put an IF condition for now: Prob for lambda < min(lobs_file) = 0
+        ## max(zobs_file) might be < max(z_obs_edges) so we put an IF condition for now: Prob for z > max(zobs_file) = 0
+        ## min(zobs_file) might be > min(z_obs_edges) so we put an IF condition for now: Prob for z < min(zobs_file) = 0
 
         # list explicitly all values that will be filled:
         sel_cl_data_fmt = {
@@ -140,8 +112,8 @@ class InterpolatedSelectionFunction:
             "I_ltr_ztr_lobs_lobs": None,
             "area_tile": None,
             "Omega_tot": None,
-            "lobsNC_edges": lobsNC_edges,
-            "zobsNC_edges": zobsNC_edges,
+            "lambda_obs_edges": lambda_obs_edges,
+            "z_obs_edges": z_obs_edges,
         }
 
         ################
@@ -151,12 +123,12 @@ class InterpolatedSelectionFunction:
         zobs_fmt, _size_add_zmin = self._redefine_array_with_obs_bins(
             self._sel_cl_data_original["z_obs"],
             self._sel_cl_data_original["z_obs_step"],
-            sel_cl_data_fmt["zobsNC_edges"],
+            sel_cl_data_fmt["z_obs_edges"],
         )
         lobs_fmt, _size_add_lmin = self._redefine_array_with_obs_bins(
             self._sel_cl_data_original["lambda_obs"],
             self._sel_cl_data_original["lambda_obs_step"],
-            sel_cl_data_fmt["lobsNC_edges"],
+            sel_cl_data_fmt["lambda_obs_edges"],
         )
 
         sel_cl_data_fmt["z_obs"] = zobs_fmt
@@ -165,11 +137,11 @@ class InterpolatedSelectionFunction:
         ## Find common index between (lobs_file-->lobs_edges) and (zobs_file-->zobs_edges)
         sel_cl_data_fmt["index_lambda_obs_edges"] = [
             np.abs(sel_cl_data_fmt["lambda_obs"] - value).argmin()
-            for value in sel_cl_data_fmt["lobsNC_edges"]
+            for value in sel_cl_data_fmt["lambda_obs_edges"]
         ]
         sel_cl_data_fmt["index_z_obs_edges"] = [
             np.abs(sel_cl_data_fmt["z_obs"] - value).argmin()
-            for value in sel_cl_data_fmt["zobsNC_edges"]
+            for value in sel_cl_data_fmt["z_obs_edges"]
         ]
 
         # Keep true values
@@ -261,10 +233,10 @@ class InterpolatedSelectionFunction:
         ##    np.where(pur_reshaped != 0, sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"], 0.0)
         ##  )
 
-    def sel_func_interp(
+    def _build_windows_interpolators(
         self,
-        lobsNC_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
-        zobsNC_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
+        lambda_obs_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
+        z_obs_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
     ):
         r"""
         Selection Function from file.
@@ -274,10 +246,10 @@ class InterpolatedSelectionFunction:
 
         Parameters
         ----------
-        lobsNC_edges: array
-            edges of Lobs bins for Number Counts
-        zobsNC_edges: array
-            edges of zobs bins for Number Counts
+        lambda_obs_edges : numpy.ndarray
+            Edges of richness bins for the integration.
+        z_obs_edges : numpy.ndarray
+            Edges of redshift bins for the integration.
 
         Returns
         -------
@@ -286,7 +258,7 @@ class InterpolatedSelectionFunction:
 
         # Format sel_cl data with obs bins
         sel_cl_data_fmt = self._get_sel_cl_data_formatted_with_obs_bins(
-            lobsNC_edges, zobsNC_edges
+            lambda_obs_edges, z_obs_edges
         )
 
         # Compute Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
@@ -310,6 +282,60 @@ class InterpolatedSelectionFunction:
         ]
 
         return integ4d_interp_func
+
+    def window_z_richness_observed(
+        self,
+        lambda_obs_edges,
+        z_obs_edges,
+        lambda_true,
+        z_true,
+    ):
+        r"""
+        Computes the window function for observed redshift and richness bins, i. e.:
+
+
+        ..math:
+            W_{\Delta\lambda_{\rm obs}, \Delta z_{\rm obs}}(\lambda_{\rm true}, z_{\rm true}) =
+            \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs}
+            \int_{\Delta z_{\rm obs}}d z_{\rm obs}
+            P(\lambda_{\rm obs}, z_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
+            \frac{c(\lambda_{\rm true}, z_{\rm true})}{p(\rm obs}, z_{\rm obs})}
+
+
+
+        Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
+        1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
+        Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
+
+        Parameters
+        ----------
+        lambda_obs_edges : numpy.ndarray
+            Edges of richness bins for the integration.
+        z_obs_edges : numpy.ndarray
+            Edges of redshift bins for the integration.
+        lambda_true : numpy.ndarray
+            True richness to compute the window.
+        z_true : numpy.ndarray
+            True redshift to compute the window.
+
+        Returns
+        -------
+        numpy.ndarray
+            Window function for observed redshift and richness bins.
+            Dimensions: (lambda_obs_edges, z_obs_edges, lambda_true, z_true)
+        """
+        window = np.zeros(
+            len(lambda_obs_edges) - 1,
+            len(z_obs_edges) - 1,
+            lambda_true.size,
+            z_true.size,
+        )
+        integ4d_interp_func = self._build_windows_interpolators(
+            lambda_obs_edges, z_obs_edges
+        )
+        for i, integ4d_lobs in enumerate(integ4d_interp_func):
+            for j, integ4d_lobs_zobs in enumerate(integ4d_lobs):
+                window[i, j] = integ4d_lobs_zobs(lambda_true, z_true)
 
     def _normalize_array(
         self,
@@ -406,8 +432,8 @@ class InterpolatedSelectionFunction:
         ## and build interpolator
         integ4d = np.zeros(
             (
-                len(sel_cl_data_fmt["lobsNC_edges"]) - 1,
-                len(sel_cl_data_fmt["zobsNC_edges"]) - 1,
+                len(sel_cl_data_fmt["lambda_obs_edges"]) - 1,
+                len(sel_cl_data_fmt["z_obs_edges"]) - 1,
                 len(sel_cl_data_fmt["lambda_true"]),
                 len(sel_cl_data_fmt["z_true"]),
             )
@@ -519,8 +545,8 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
 
 if __name__ == "__main__":
 
-    # lobsNC_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
-    # zobsNC_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
+    # lambda_obs_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
+    # z_obs_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
     print("Test with mock data")
 
     sel_cl_data = {
@@ -585,7 +611,7 @@ if __name__ == "__main__":
         sig_C_l=None,
         sel_cl_data=sel_cl_data,
     )
-    interps = sfi.sel_func_interp()
+    interps = sfi._build_windows_interpolators()
     print(interps[1][1]([10, 20, 30, 40], [0.3, 0.31]))
 
     # Read data
@@ -604,6 +630,6 @@ if __name__ == "__main__":
             sig_C_l=None,
             sel_cl_data=read_sel_cl_output(in_file, Omega_tot=None),
         )
-        sfi.sel_func_interp()
-        interps = sfi.sel_func_interp()
+        sfi._build_windows_interpolators()
+        interps = sfi._build_windows_interpolators()
         print(interps[1][1]([10, 20, 30, 40], [0.3, 0.31]))

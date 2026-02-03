@@ -24,7 +24,7 @@ def _test_selectionfunction(SF):
     assert_allclose(SF.mass_lambda_true.scatter_lnl(z_test, M_test), 0.1, rtol=1e-05)
     print("    prob_true_richness_given_mass")
     assert_allclose(
-        SF.prob_true_richness_given_mass(z_test, M_test, l_test),
+        SF.mass_lambda_true.prob_true_richness_given_mass(z_test, M_test, l_test),
         0,
         atol=1e-10,
         rtol=1e-05,

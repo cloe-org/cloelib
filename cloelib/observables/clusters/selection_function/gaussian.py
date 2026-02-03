@@ -71,30 +71,6 @@ class GaussianSelectionFunction:
         self.sig_z_z = sig_z_z
         self.sig_z_lambda = sig_z_lambda
 
-    def prob_true_richness_given_mass(self, z, M, lambda_true):
-        r"""
-        Proxy - mass relation PDF.
-
-        Computes the theoretical richness probability distribution
-        at the requested true mass, redshift, and richness points.
-
-        Parameters
-        ----------
-        z: numpy.ndarray
-            True redshift points.
-        M: numpy.ndarray
-            True mass points in h^{-1} Msun.
-        lambda_true: numpy.ndarray
-            True richness points.
-
-        Returns
-        -------
-        prob_true_richness_given_mass: numpy.ndarray
-            prob_true_richness_given_mass[i,j,k], where i is the redshift, j is the mass,
-            and k is the observed richness index
-        """
-        return self.mass_lambda_true.prob_true_richness_given_mass(z, M, lambda_true)
-
     def scatter_lbdobs_lbd(self, z, lambda_true):
         r"""
         Statistical uncertainty on the observed mass proxy.
@@ -216,7 +192,7 @@ class GaussianSelectionFunction:
         r"""Compute the window function of each observed redshift bin, given by:
 
         ..math:
-            W_{\Delta z^{\rm obs}}(\lambda^{\rm obs}, z^{\rm true}) = \int_{\Delta z^{\rm obs}}dz^{\rm obs} P(z^{\rm obs}|\lambda^{\rm obs}, z^{\rm true})
+            W_{\Delta z_{\rm obs}}(\lambda_{\rm obs}, z_{\rm true}) = \int_{\Delta z_{\rm obs}}dz_{\rm obs} P(z_{\rm obs}|\lambda_{\rm obs}, z_{\rm true})
 
         Parameters
         ----------
@@ -272,7 +248,7 @@ class GaussianSelectionFunction:
         r"""Compute the window function of each observed richness bin, given by:
 
         ..math:
-            W_{\Delta\lambda^{\rm obs}}(\lambda_{\rm true}, z^{\rm true}) = \int_{\Delta\lambda^{\rm obs}}d\lambda^{\rm obs} P(\lambda^{\rm obs}|\lambda_{\rm true}, z^{\rm true})
+            W_{\Delta\lambda_{\rm obs}}(\lambda_{\rm true}, z_{\rm true}) = \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs} P(\lambda_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
 
         Parameters
         ----------
@@ -332,7 +308,7 @@ class GaussianSelectionFunction:
         r"""Compute the window function of each observed richness bin, given by:
 
         ..math:
-            W_{\Delta\lambda^{\rm obs}}(M, z^{\rm true}) = \int_{\Delta\lambda^{\rm obs}}d\lambda^{\rm obs} P(\lambda^{\rm obs}|M, z^{\rm true})
+            W_{\Delta\lambda_{\rm obs}}(M, z_{\rm true}) = \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs} P(\lambda_{\rm obs}|M, z_{\rm true})
 
         Parameters
         ----------
@@ -366,9 +342,54 @@ class GaussianSelectionFunction:
         for ind_lambda, _window_lambda_obs in enumerate(windows_lambda_obs_lambda_true):
             # Window function
             window_lambda_obs[ind_lambda] = simps(
-                self.prob_true_richness_given_mass(z_true, mass, lambda_true)
+                self.mass_lambda_true.prob_true_richness_given_mass(
+                    z_true, mass, lambda_true
+                )
                 * _window_lambda_obs[:, np.newaxis, :],
                 x=lambda_true,
                 axis=-1,
             )
         return window_lambda_obs
+
+    def window_z_richness_observed(
+        self,
+        lambda_obs_edges,
+        z_obs_edges,
+        lambda_true,
+        z_true,
+    ):
+        r"""
+        Computes the window function for observed redshift and richness bins, i. e.:
+
+
+        ..math:
+            W_{\Delta\lambda_{\rm obs}, \Delta z_{\rm obs}}(\lambda_{\rm true}, z_{\rm true}) =
+            \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs}
+            \int_{\Delta z_{\rm obs}}d z_{\rm obs}
+            P(\lambda_{\rm obs}, z_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
+            \frac{c(\lambda_{\rm true}, z_{\rm true})}{p(\rm obs}, z_{\rm obs})}
+
+
+
+        Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
+        1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
+        Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
+
+        Parameters
+        ----------
+        lambda_obs_edges : numpy.ndarray
+            Edges of richness bins for the integration.
+        z_obs_edges : numpy.ndarray
+            Edges of redshift bins for the integration.
+        lambda_true : numpy.ndarray
+            True richness to compute the window.
+        z_true : numpy.ndarray
+            True redshift to compute the window.
+
+        Returns
+        -------
+        numpy.ndarray
+            Window function for observed redshift and richness bins.
+            Dimensions: (lambda_obs_edges, z_obs_edges, lambda_true, z_true)
+        """
+        raise NotImplementedError("Function not implemented yet.")

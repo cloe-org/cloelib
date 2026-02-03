@@ -134,7 +134,7 @@ class ClusterStatisticsModeling:
         r"""Compute the window function of each observed redshift bin, given by:
 
         ..math:
-            W_{\Delta z^{\rm obs}}(\lambda^{\rm obs}, z^{\rm true}) = \int_{\Delta z^{\rm obs}}dz^{\rm obs} P(z^{\rm obs}|\lambda^{\rm obs}, z^{\rm true})
+            W_{\Delta z_{\rm obs}}(\lambda_{\rm obs}, z_{\rm true}) = \int_{\Delta z_{\rm obs}}dz_{\rm obs} P(z_{\rm obs}|\lambda_{\rm obs}, z_{\rm true})
 
         Parameters
         ----------
@@ -163,7 +163,7 @@ class ClusterStatisticsModeling:
         r"""Compute the window function of each observed richness bin, given by:
 
         ..math:
-            W_{\Delta\lambda^{\rm obs}}(M, z^{\rm true}) = \int_{\Delta\lambda^{\rm obs}}d\lambda^{\rm obs} P(\lambda^{\rm obs}|M, z^{\rm true})
+            W_{\Delta\lambda_{\rm obs}}(M, z_{\rm true}) = \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs} P(\lambda_{\rm obs}|M, z_{\rm true})
 
         Parameters
         ----------

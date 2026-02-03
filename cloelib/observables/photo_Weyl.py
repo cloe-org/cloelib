@@ -97,7 +97,7 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
             )[0, 0]
         )
 
-        Omega_m0 = self.background.Omega_m(np.array([0.0]))[0]
+        Omega_m0 = self.background.Omega_m(0.0)
         factor = (
             3
             / 2
@@ -184,7 +184,7 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         """Weyl-modified positions window: multiplies by Jhat and by bhat; removes Omega_m^{-1}(z) factor;
         divides by sigma8_ini^2."""
         # compute Omega_m(z)
-        Omega_m0 = self.background.Omega_m(np.array([0.0]))[0]
+        Omega_m0 = self.background.Omega_m(0.0)
         Omega_m = (
             Omega_m0
             * (1 + z) ** 3
@@ -214,7 +214,7 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
             )[0, 0]
         )
 
-        Omega_m0 = self.background.Omega_m(np.array([0.0]))[0]
+        Omega_m0 = self.background.Omega_m(0.0)
         factor = (
             3
             / 2

@@ -33,21 +33,23 @@ def _test_selectionfunction(SF):
         atol=1e-10,
         rtol=1e-05,
     )
-    print("    scatter_lbdobs_lbd")
-    _scatter_lbdobs_lbd_ref = [0.101, 0.113324, 0.127151, 0.142666, 0.160074]
+    print("    scatter_lambda_obs")
+    _scatter_lambda_obs_ref = [0.101, 0.113324, 0.127151, 0.142666, 0.160074]
     assert_allclose(
-        SF.scatter_lbdobs_lbd(z_test, l_test)[0], _scatter_lbdobs_lbd_ref, rtol=1e-05
+        SF._scatter_lambda_obs(z_test, l_test)[0], _scatter_lambda_obs_ref, rtol=1e-05
     )
-    print("    P_lbdobs_lbd")
-    _P_lbdobs_lbd_ref = [2.06231e-07, 0.00000e00, 0.00000e00, 0.00000e00, 0.00000e00]
+    print("    prob_lambda_obs")
+    _prob_lambda_obs_ref = [2.06231e-07, 0.00000e00, 0.00000e00, 0.00000e00, 0.00000e00]
     assert_allclose(
-        SF.P_lbdobs_lbd(z_test, l_test, lob_test)[0, 0], _P_lbdobs_lbd_ref, rtol=1e-05
+        SF._prob_lambda_obs(z_test, l_test, lob_test)[0, 0],
+        _prob_lambda_obs_ref,
+        rtol=1e-05,
     )
-    print("    scatter_zobs_z")
-    _scatter_zobs_z_ref = [0.159489, 0.526937, 1.635393, 5.087122, 15.948932]
-    assert_allclose(SF.scatter_zobs_z(lob_test, z_test), _scatter_zobs_z_ref, rtol=1e-5)
-    print("    P_zobs_z")
-    _P_zobs_z_ref = [
+    print("    scatter_z_obs")
+    _scatter_z_obs_ref = [0.159489, 0.526937, 1.635393, 5.087122, 15.948932]
+    assert_allclose(SF.scatter_z_obs(lob_test, z_test), _scatter_z_obs_ref, rtol=1e-5)
+    print("    prob_zobs")
+    _prob_zobs_ref = [
         2.133197e00,
         7.240213e-01,
         2.365759e-01,
@@ -55,7 +57,7 @@ def _test_selectionfunction(SF):
         2.497394e-02,
     ]
     assert_allclose(
-        SF.P_zobs_z(zob_test, lob_test, z_test)[0], _P_zobs_z_ref, rtol=5e-07
+        SF._prob_zobs(zob_test, lob_test, z_test)[0], _prob_zobs_ref, rtol=5e-07
     )
 
 

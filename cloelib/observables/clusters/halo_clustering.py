@@ -244,7 +244,7 @@ class HaloClustering:
         f_gr = (self._Omega_m(z) ** 0.55)[:, np.newaxis]
 
         ks = self.k * (
-            self.selectionfunction.scatter_zobs_z(lambda_obs, z)
+            self.selectionfunction.scatter_z_obs(lambda_obs, z)
             * (units.SPEED_OF_LIGHT * 1e-3)
             / self.background.hubble_parameter(z)
             * (self.background.H0 / 100)

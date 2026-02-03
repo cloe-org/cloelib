@@ -3,7 +3,7 @@
 import numpy as np
 
 
-class GaussianMassLambdaTrue:
+class LognormalPowerLawLambdaTrue:
     def __init__(
         self,
         A_l: float,

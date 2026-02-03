@@ -3,8 +3,8 @@
 import numpy as np
 from scipy.integrate import simpson as simps
 
-from cloelib.observables.clusters.selection_function.mass_lambda_true.gaussian import (
-    GaussianMassLambdaTrue,
+from cloelib.observables.clusters.selection_function.lambda_true.lognormal_powerlaw import (
+    LognormalPowerLawLambdaTrue,
 )
 
 
@@ -62,7 +62,7 @@ class GaussianSelectionFunction:
         z_piv: float
             Redshift pivot in the proxy - mass relation
         """
-        self.mass_lambda_true = GaussianMassLambdaTrue(
+        self.mass_lambda_true = LognormalPowerLawLambdaTrue(
             A_l, B_l, C_l, sig_A_l, sig_B_l, sig_C_l, M_piv, z_piv
         )
         self.sig_lambda_norm = sig_lambda_norm

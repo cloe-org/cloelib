@@ -6,8 +6,8 @@ import numpy as np  # type: ignore
 from scipy import integrate, interpolate
 from scipy.integrate import simps
 
-from cloelib.observables.clusters.selection_function.mass_lambda_true.gaussian import (
-    GaussianMassLambdaTrue,
+from cloelib.observables.clusters.selection_function.lambda_true.lognormal_powerlaw import (
+    LognormalPowerLawLambdaTrue,
 )
 
 
@@ -65,7 +65,7 @@ class InterpolatedSelectionFunction:
                 * Omega_tot: xxx
 
         """
-        self.mass_lambda_true = GaussianMassLambdaTrue(
+        self.mass_lambda_true = LognormalPowerLawLambdaTrue(
             A_l, B_l, C_l, sig_A_l, sig_B_l, sig_C_l, M_piv, z_piv
         )
         self._sel_cl_data_original = sel_cl_data

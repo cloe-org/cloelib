@@ -32,7 +32,6 @@ class ClusterStatisticsModeling:
             * M (numpy.ndarray) : Values of mass to be used in integrations
             * lambda_true (numpy.ndarray) : Values of true richness to be used in integrations
             * ztrue (numpy.ndarray) : Values of true redshift to be used in integrations
-            * PDF_mass_richness_scaling (numpy.ndarray) : Values for P(lambda_true|M, ztrue)
             * dv/dz(ztrue) (numpy.ndarray) : Values for volume element at each redshift
             * dn/dM(ztrue,M) (numpy.ndarray) : Values for the halo mass function dn/dmdz
             * bias(ztrue,M) (numpy.ndarray) : Values for the halo bias halo_bias
@@ -104,10 +103,6 @@ class ClusterStatisticsModeling:
             "M": integ_mass_arr,  # mass array in Msun h^-1
             "lambda_true": integ_lambda_true_arr,  # true richness array
             "ztrue": integ_ztrue_arr,  # true redshift array
-            # P(lambda_true|M,z), this quantity is also used by cluster clustering
-            "PDF_mass_richness_scaling": self.selectionfunction.P_lnlbd(
-                integ_ztrue_arr, integ_mass_arr, integ_lambda_true_arr
-            ),
             # volume element at each point of z array
             "dv/dz(ztrue)": derived_cosmology.dV_dzdO(
                 self.matter_statistics.perturbations.background,

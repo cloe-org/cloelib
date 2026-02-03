@@ -13,7 +13,7 @@ T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 @runtime_checkable
 class SelectionFunction(Protocol):
-    def P_lnlbd(self, z: T, M: T, Lambda: T) -> T:
+    def prob_true_richness_given_mass(self, z: T, M: T, Lambda: T) -> T:
         r"""
         Proxy - mass relation PDF.
 
@@ -31,8 +31,8 @@ class SelectionFunction(Protocol):
 
         Returns
         -------
-        P_lnlbd: numpy.ndarray
-            P_lnlbd[i,j,k], where i is the redshift, j is the mass,
+        prob_true_richness_given_mass: numpy.ndarray
+            prob_true_richness_given_mass[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
         ...

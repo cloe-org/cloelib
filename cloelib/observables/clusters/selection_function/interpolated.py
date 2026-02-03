@@ -74,7 +74,7 @@ class InterpolatedSelectionFunction:
         )
         self._sel_cl_data_original = sel_cl_data
 
-    def P_lnlbd(self, z, M, Lambda):
+    def prob_true_richness_given_mass(self, z, M, Lambda):
         r"""
         Proxy - mass relation PDF.
 
@@ -92,11 +92,11 @@ class InterpolatedSelectionFunction:
 
         Returns
         -------
-        P_lnlbd: numpy.ndarray
-            P_lnlbd[i,j,k], where i is the redshift, j is the mass,
+        prob_true_richness_given_mass: numpy.ndarray
+            prob_true_richness_given_mass[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
-        return self.mass_lambda_true.P_lnlbd(z, M, Lambda)
+        return self.mass_lambda_true.prob_true_richness_given_mass(z, M, Lambda)
 
     ## NEW FUNCTION FROM SINFONIA FILE
 

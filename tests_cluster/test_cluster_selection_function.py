@@ -22,8 +22,13 @@ def _test_selectionfunction(SF):
     )
     print("    scatter_lnl")
     assert_allclose(SF.mass_lambda_true.scatter_lnl(z_test, M_test), 0.1, rtol=1e-05)
-    print("    P_lnlbd")
-    assert_allclose(SF.P_lnlbd(z_test, M_test, l_test), 0, atol=1e-10, rtol=1e-05)
+    print("    prob_true_richness_given_mass")
+    assert_allclose(
+        SF.prob_true_richness_given_mass(z_test, M_test, l_test),
+        0,
+        atol=1e-10,
+        rtol=1e-05,
+    )
     print("    scatter_lbdobs_lbd")
     _scatter_lbdobs_lbd_ref = [0.101, 0.113324, 0.127151, 0.142666, 0.160074]
     assert_allclose(

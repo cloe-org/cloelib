@@ -71,7 +71,7 @@ class GaussianSelectionFunction:
         self.sig_z_z = sig_z_z
         self.sig_z_lambda = sig_z_lambda
 
-    def P_lnlbd(self, z, M, Lambda):
+    def prob_true_richness_given_mass(self, z, M, Lambda):
         r"""
         Proxy - mass relation PDF.
 
@@ -89,11 +89,11 @@ class GaussianSelectionFunction:
 
         Returns
         -------
-        P_lnlbd: numpy.ndarray
-            P_lnlbd[i,j,k], where i is the redshift, j is the mass,
+        prob_true_richness_given_mass: numpy.ndarray
+            prob_true_richness_given_mass[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
-        return self.mass_lambda_true.P_lnlbd(z, M, Lambda)
+        return self.mass_lambda_true.prob_true_richness_given_mass(z, M, Lambda)
 
     def scatter_lbdobs_lbd(self, z, Lambda):
         r"""
@@ -366,7 +366,7 @@ class GaussianSelectionFunction:
         for ind_lambda, _window_lambda_obs in enumerate(windows_lambda_obs_lambda_true):
             # Window function
             window_lambda_obs[ind_lambda] = simps(
-                self.P_lnlbd(z_true, mass, lambda_true)
+                self.prob_true_richness_given_mass(z_true, mass, lambda_true)
                 * _window_lambda_obs[:, np.newaxis, :],
                 x=lambda_true,
                 axis=-1,

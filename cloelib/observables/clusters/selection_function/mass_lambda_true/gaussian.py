@@ -14,7 +14,7 @@ class GaussianMassLambdaTrue:
         sig_C_l: float,
         M_piv: float = 3.0e14,
         z_piv: float = 0.45,
-        tabulte_P_lnlbd: bool = True,
+        tabulte_prob_true_richness_given_mass: bool = True,
     ):
         r"""
         Class defining the selection function of galaxy clusters, including
@@ -43,14 +43,16 @@ class GaussianMassLambdaTrue:
         self.M_piv = M_piv
         self.z_piv = z_piv
 
-        self.tabulte_P_lnlbd = tabulte_P_lnlbd
-        # to avoid recomputing P_lnlbd
-        self._tabulated_P_lnlbd_args = {
+        self.tabulte_prob_true_richness_given_mass = (
+            tabulte_prob_true_richness_given_mass
+        )
+        # to avoid recomputing prob_true_richness_given_mass
+        self._tabulated_prob_true_richness_given_mass_args = {
             "M": None,
             "z": None,
             "lambda_true": None,
         }
-        self._tabulated_P_lnlbd = None
+        self._tabulated_prob_true_richness_given_mass = None
 
     def lnlambda(self, z, M):
         r"""
@@ -103,7 +105,7 @@ class GaussianMassLambdaTrue:
             + self.sig_C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
         )
 
-    def _P_lnlbd(self, z, M, Lambda):
+    def _prob_true_richness_given_mass(self, z, M, Lambda):
         r"""
         Proxy - mass relation PDF.
 
@@ -121,8 +123,8 @@ class GaussianMassLambdaTrue:
 
         Returns
         -------
-        P_lnlbd: numpy.ndarray
-            P_lnlbd[i,j,k], where i is the redshift, j is the mass,
+        prob_true_richness_given_mass: numpy.ndarray
+            prob_true_richness_given_mass[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
         lnlambda1 = self.lnlambda(z, M)[:, :, np.newaxis]
@@ -137,10 +139,13 @@ class GaussianMassLambdaTrue:
 
     def _are_args_tabulated(self, z, M, lambda_true):
         """Check if args are the tabluated values"""
-        if any(value is None for key, value in self._tabulated_P_lnlbd_args.items()):
+        if any(
+            value is None
+            for key, value in self._tabulated_prob_true_richness_given_mass_args.items()
+        ):
             return False
         _locals = locals()
-        for name, ref_val in self._tabulated_P_lnlbd_args.items():
+        for name, ref_val in self._tabulated_prob_true_richness_given_mass_args.items():
             test_val = _locals[name]
             if len(ref_val) != len(test_val):
                 return False
@@ -148,7 +153,7 @@ class GaussianMassLambdaTrue:
                 return False
         return True
 
-    def P_lnlbd(self, z, M, lambda_true):
+    def prob_true_richness_given_mass(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.
 
@@ -166,14 +171,21 @@ class GaussianMassLambdaTrue:
 
         Returns
         -------
-        P_lnlbd: numpy.ndarray
-            P_lnlbd[i,j,k], where i is the redshift, j is the mass,
+        prob_true_richness_given_mass: numpy.ndarray
+            prob_true_richness_given_mass[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
-        if not self.tabulte_P_lnlbd or not self._are_args_tabulated(z, M, lambda_true):
-            self._tabulated_P_lnlbd_args["M"] = M
-            self._tabulated_P_lnlbd_args["z"] = z
-            self._tabulated_P_lnlbd_args["lambda_true"] = lambda_true
-            self._tabulated_P_lnlbd = self._P_lnlbd(z, M, lambda_true)
+        if (
+            not self.tabulte_prob_true_richness_given_mass
+            or not self._are_args_tabulated(z, M, lambda_true)
+        ):
+            self._tabulated_prob_true_richness_given_mass_args["M"] = M
+            self._tabulated_prob_true_richness_given_mass_args["z"] = z
+            self._tabulated_prob_true_richness_given_mass_args["lambda_true"] = (
+                lambda_true
+            )
+            self._tabulated_prob_true_richness_given_mass = (
+                self._prob_true_richness_given_mass(z, M, lambda_true)
+            )
 
-        return self._tabulated_P_lnlbd
+        return self._tabulated_prob_true_richness_given_mass

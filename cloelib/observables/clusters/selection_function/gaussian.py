@@ -1,8 +1,11 @@
 # General imports
 # import jax.numpy as np
 import numpy as np
+from scipy.integrate import simpson as simps
 
-from .mass_lambda_true.gaussian import GaussianMassLambdaTrue
+from cloelib.observables.clusters.selection_function.mass_lambda_true.gaussian import (
+    GaussianMassLambdaTrue,
+)
 
 
 class GaussianSelectionFunction:
@@ -208,3 +211,117 @@ class GaussianSelectionFunction:
             / (np.sqrt(2.0 * np.pi * sigmazobsz**2.0))
             * np.exp(-((z_obs[:, np.newaxis] - z) ** 2.0) / (2.0 * sigmazobsz**2.0))
         )
+
+    def window_z_observed(self, z_obs_edges, lambda_obs_edges, z_tab_sig, z_true):
+        r"""Compute the window function of each observed redshift bin, given by:
+
+        ..math:
+            W_{\Delta z^{\rm obs}}(\lambda^{\rm obs}, z^{\rm true}) = \int_{\Delta z^{\rm obs}}dz^{\rm obs} P(z^{\rm obs}|\lambda^{\rm obs}, z^{\rm true})
+
+        Parameters
+        ----------
+        z_obs_edges : numpy.ndarray
+            Edges of redshift bins for the integration.
+        lambda_obs_edges : numpy.ndarray
+            Edges of richness bins for the integration.
+        z_tab_sig : int, None
+            Number of points to be used for z_obs integration.
+
+        Returns
+        -------
+        window_z_obs : numpy.ndarray
+            Integral of P(z_obs|lambda_obs, z_true) in z_obs bins,
+            where (z_true) are the values in self.tabulated_integrands.
+            Dimentions: (z_obs_edges, lambda_obs_edges, z_true).
+        """
+
+        z_obs_edges_size = len(z_obs_edges) - 1
+        lambda_obs_edges_size = len(lambda_obs_edges) - 1
+
+        # for z_obs integration
+        z_obs_tabs = np.linspace(z_obs_edges[:-1], z_obs_edges[1:], z_tab_sig)
+
+        # reshape for multiplication
+        _z_obs_tabs = z_obs_tabs[:, :, np.newaxis]
+        _lambda_obs = lambda_obs_edges[np.newaxis, :-1, np.newaxis]
+
+        # Window function
+        window_z_obs = np.zeros(
+            (
+                z_obs_edges_size,
+                lambda_obs_edges_size,
+                z_true.size,
+            )
+        )
+        for ind_z in range(z_obs_edges_size):
+            window_z_obs[ind_z] = simps(
+                self.P_zobs_z(_z_obs_tabs[:, ind_z], _lambda_obs, z_true),
+                x=z_obs_tabs[:, ind_z],
+                axis=0,
+            )
+        return window_z_obs
+
+    def window_richness_observed(
+        self,
+        lambda_obs_edges,
+        l_m_tab_sig,
+        z_true,
+        lambda_true,
+        mass,
+    ):
+        r"""Compute the window function of each observed richness bin, given by:
+
+        ..math:
+            W_{\Delta\lambda^{\rm obs}}(M, z^{\rm true}) = \int_{\Delta\lambda^{\rm obs}}d\lambda^{\rm obs} P(\lambda^{\rm obs}|M, z^{\rm true})
+
+        Parameters
+        ----------
+        lambda_obs_edges : numpy.ndarray
+            Edges of richness bins for the integration.
+        l_m_tab_sig : List, None
+            Number of points to be used for the lambda_obs integration
+            in each lambda_obs bin. Must be same size of lambda_obs_edges.
+
+        Returns
+        -------
+        window_lambda_obs : numpy.ndarray
+            Integral of P(lambda_obs|M, z_true) in lambda_obs bins,
+            where (M, z_true) are the values in self.tabulated_integrands.
+            Dimentions: (lambda_obs_edges, z_true, M).
+        """
+
+        # if external_richness_selection_function == 'CG_ESF' :
+        #     window_lambda_obs  = self.int_Plobltr_Dlob[lambda_bin](self.tabulated_integrands["z_true"], self.tabulated_integrands["lambda_true"]).T
+
+        lambda_obs_edges_size = len(lambda_obs_edges) - 1
+        window_lambda_obs = np.zeros(
+            (
+                lambda_obs_edges_size,
+                z_true.size,
+                mass.size,
+            )
+        )
+        for ind_lambda in range(lambda_obs_edges_size):
+            # integrate P(lambda_obs|lambda_true, z) in lambda_obs
+            l_tab = np.geomspace(
+                lambda_obs_edges[ind_lambda],
+                lambda_obs_edges[ind_lambda + 1],
+                l_m_tab_sig[ind_lambda],
+            )
+            _integration_P_lbdobs_lbd = simps(
+                self.P_lbdobs_lbd(
+                    z_true,
+                    lambda_true,
+                    l_tab,
+                ),
+                x=l_tab,
+                axis=-1,
+            )
+            # Window function
+            window_lambda_obs[ind_lambda] = simps(
+                self.P_lnlbd(z_true, mass, lambda_true)
+                * _integration_P_lbdobs_lbd[:, np.newaxis, :],
+                x=lambda_true,
+                axis=-1,
+            )
+        return window_lambda_obs

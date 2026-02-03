@@ -157,35 +157,12 @@ class ClusterStatisticsModeling:
             where (ztrue) are the values in self.tabulated_integrands.
             Dimentions: (z_obs_edges, lambda_obs_edges, ztrue).
         """
-
-        z_obs_edges_size = len(z_obs_edges) - 1
-        lambda_obs_edges_size = len(lambda_obs_edges) - 1
-
-        # for z_obs integration
-        z_obs_tabs = np.linspace(z_obs_edges[:-1], z_obs_edges[1:], z_tab_sig)
-
-        # reshape for multiplication
-        _z_obs_tabs = z_obs_tabs[:, :, np.newaxis]
-        _lambda_obs = lambda_obs_edges[np.newaxis, :-1, np.newaxis]
-        _ztrue = self.tabulated_integrands["ztrue"][np.newaxis, np.newaxis, :]
-
-        # Window function
-        window_z_obs = np.zeros(
-            (
-                z_obs_edges_size,
-                lambda_obs_edges_size,
-                self.tabulated_integrands["ztrue"].size,
-            )
+        return self.selectionfunction.window_z_observed(
+            z_obs_edges,
+            lambda_obs_edges,
+            z_tab_sig,
+            self.tabulated_integrands["ztrue"],
         )
-        for ind_z in range(z_obs_edges_size):
-            window_z_obs[ind_z] = simps(
-                self.selectionfunction.P_zobs_z(
-                    _z_obs_tabs[:, ind_z], _lambda_obs, _ztrue
-                ),
-                x=z_obs_tabs[:, ind_z],
-                axis=0,
-            )
-        return window_z_obs
 
     def window_richness_observed(self, lambda_obs_edges, l_m_tab_sig):
         r"""Compute the window function of each observed richness bin, given by:
@@ -212,38 +189,13 @@ class ClusterStatisticsModeling:
         # if external_richness_selection_function == 'CG_ESF' :
         #     window_lambda_obs  = self.int_Plobltr_Dlob[lambda_bin](self.tabulated_integrands["ztrue"], self.tabulated_integrands["lambda_true"]).T
 
-        lambda_obs_edges_size = len(lambda_obs_edges) - 1
-        window_lambda_obs = np.zeros(
-            (
-                lambda_obs_edges_size,
-                self.tabulated_integrands["ztrue"].size,
-                self.tabulated_integrands["M"].size,
-            )
+        return self.selectionfunction.window_richness_observed(
+            lambda_obs_edges,
+            l_m_tab_sig,
+            self.tabulated_integrands["ztrue"],
+            self.tabulated_integrands["lambda_true"],
+            self.tabulated_integrands["M"],
         )
-        for ind_lambda in range(lambda_obs_edges_size):
-            # integrate P(lambda_obs|lambda_true, z) in lambda_obs
-            l_tab = np.geomspace(
-                lambda_obs_edges[ind_lambda],
-                lambda_obs_edges[ind_lambda + 1],
-                l_m_tab_sig[ind_lambda],
-            )
-            _integration_P_lbdobs_lbd = simps(
-                self.selectionfunction.P_lbdobs_lbd(
-                    self.tabulated_integrands["ztrue"],
-                    self.tabulated_integrands["lambda_true"],
-                    l_tab,
-                ),
-                x=l_tab,
-                axis=-1,
-            )
-            # Window function
-            window_lambda_obs[ind_lambda] = simps(
-                self.tabulated_integrands["PDF_mass_richness_scaling"]
-                * _integration_P_lbdobs_lbd[:, np.newaxis, :],
-                x=self.tabulated_integrands["lambda_true"],
-                axis=-1,
-            )
-        return window_lambda_obs
 
     # ---------------------
     # integration functions

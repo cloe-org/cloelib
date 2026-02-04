@@ -59,8 +59,14 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
     perturbations, z_auto, z_cross, dndz = camb_cmb_setup
 
     # Create nuisance parameters
-    nuisance_pos = {'b1_photo_bin1': 1.0, 'dz_pos_1': 0.0, 'magnification_bias_1': 0.0}
-    nuisance_shear = {'AIA': 0., 'CIA': 0.0, 'EtaIA':0.0, 'multiplicative_bias_1': 0.0, 'dz_shear_1': 0.0}
+    nuisance_pos = {"b1_photo_bin1": 1.0, "dz_pos_1": 0.0, "magnification_bias_1": 0.0}
+    nuisance_shear = {
+        "AIA": 0.0,
+        "CIA": 0.0,
+        "EtaIA": 0.0,
+        "multiplicative_bias_1": 0.0,
+        "dz_shear_1": 0.0,
+    }
 
     # Create CMB lensing tracers
     cmblens_cross = CMBLensingTracer(perturbations=perturbations, z=z_cross)
@@ -72,16 +78,16 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
     # Check that the window functions have the expected shape
     assert window_cross.shape == (1, len(z_cross))
     assert window_auto.shape == (1, len(z_auto))
-    
+
     # Create position tracer
     pos_tracer = PositionsTracer(
         perturbations=perturbations,
         dndz=dndz,
         z=z_cross,
-        galaxy_bias_model='per_bin',
+        galaxy_bias_model="per_bin",
         nuisance_params=nuisance_pos,
     )
-    
+
     # Create shear tracer
     shear_tracer = ShearTracer(
         perturbations=perturbations,
@@ -91,21 +97,37 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
     )
 
     nl = 10
-    ells = np.logspace(1., np.log10(100), nl)
+    ells = np.logspace(1.0, np.log10(100), nl)
 
     twopoint_kpos = AngularTwoPoint(cmblens_cross, pos_tracer)
     twopoint_kshe = AngularTwoPoint(cmblens_cross, shear_tracer)
     twopoint_kk = AngularTwoPoint(cmblens_auto, cmblens_auto)
 
-    cells ={**twopoint_kpos.get_Cl(ells, 0, perturbations.k),
-            **twopoint_kshe.get_Cl(ells, 0, perturbations.k),
-            **twopoint_kk.get_Cl(ells, 0, perturbations.k)}
+    cells = {
+        **twopoint_kpos.get_Cl(ells, 0, perturbations.k),
+        **twopoint_kshe.get_Cl(ells, 0, perturbations.k),
+        **twopoint_kk.get_Cl(ells, 0, perturbations.k),
+    }
 
     # Check that cells has the right number of elements and right keys
     assert len(cells.keys()) == 3
-    assert ('CMBL', 'POS', 1, 1) in cells.keys()
-    assert ('CMBL', 'SHE', 1, 1) in cells.keys()
-    assert ('CMBL', 'CMBL', 1, 1) in cells.keys()
-    assert cells[('CMBL', 'POS', 1, 1)].shape == (nl,)
-    assert cells[('CMBL', 'SHE', 1, 1)].shape == (2, nl)
-    assert cells[('CMBL', 'CMBL', 1, 1)].shape == (nl,)
+    assert ("CMBL", "POS", 1, 1) in cells.keys()
+    assert ("CMBL", "SHE", 1, 1) in cells.keys()
+    assert ("CMBL", "CMBL", 1, 1) in cells.keys()
+    assert cells[("CMBL", "POS", 1, 1)].shape == (nl,)
+    assert cells[("CMBL", "SHE", 1, 1)].shape == (2, nl)
+    assert cells[("CMBL", "CMBL", 1, 1)].shape == (nl,)
+
+    # We also check everything works well if we reverse the order of the probes
+    twopoint_posk = AngularTwoPoint(pos_tracer, cmblens_cross)
+    twopoint_shek = AngularTwoPoint(shear_tracer, cmblens_cross)
+    cells_reverse = {
+        **twopoint_posk.get_Cl(ells, 0, perturbations.k),
+        **twopoint_shek.get_Cl(ells, 0, perturbations.k),
+    }
+
+    assert len(cells_reverse.keys()) == 2
+    assert ("CMBL", "POS", 1, 1) in cells_reverse.keys()
+    assert ("CMBL", "SHE", 1, 1) in cells_reverse.keys()
+    assert cells_reverse[("CMBL", "POS", 1, 1)].shape == (nl,)
+    assert cells_reverse[("CMBL", "SHE", 1, 1)].shape == (2, nl)

@@ -257,7 +257,6 @@ class AngularTwoPoint:
             )
 
         # Vectorized update of C_ell_out using dictionary comprehensions
-
         a, b = sorted((n_bin1, n_bin2))
         C_ell_out = {
             k: v

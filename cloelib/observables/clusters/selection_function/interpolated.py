@@ -617,13 +617,19 @@ if __name__ == "__main__":
     sel_cl_data["area_tile"] = np.array([8, 9, 10])
     sel_cl_data["Omega_tot"] = sel_cl_data["area_tile"].sum()
 
+    from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
+        LognormalPowerLawLambdaTrueDistribution,
+    )
+
     sfi = InterpolatedSelectionFunction(
-        A_l=None,
-        B_l=None,
-        C_l=None,
-        sig_A_l=None,
-        sig_B_l=None,
-        sig_C_l=None,
+        lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
+            A_l=None,
+            B_l=None,
+            C_l=None,
+            sig_A_l=None,
+            sig_B_l=None,
+            sig_C_l=None,
+        ),
         sel_cl_data=sel_cl_data,
     )
     interps = sfi._build_windows_interpolators()

@@ -14,6 +14,7 @@ class LognormalPowerLawLambdaTrueDistribution:
         sig_C_l: float,
         M_piv: float = 3.0e14,
         z_piv: float = 0.45,
+        tabulate_prob_richness: bool = True,
     ):
         r"""
         Class defining the selection function of galaxy clusters, including
@@ -41,6 +42,15 @@ class LognormalPowerLawLambdaTrueDistribution:
         self.sig_C_l = sig_C_l
         self.M_piv = M_piv
         self.z_piv = z_piv
+
+        self.tabulate_prob_richness = tabulate_prob_richness
+        # to avoid recomputing prob_richness
+        self._tabulated_prob_richness_args = {
+            "M": None,
+            "z": None,
+            "lambda_true": None,
+        }
+        self._tabulated_prob_richness = None
 
     def mean_lnrichness(self, z, M):
         r"""
@@ -93,7 +103,7 @@ class LognormalPowerLawLambdaTrueDistribution:
             + self.sig_C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
         )
 
-    def prob_richness(self, z, M, lambda_true):
+    def _prob_richness(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.
 
@@ -127,3 +137,50 @@ class LognormalPowerLawLambdaTrueDistribution:
                 / (2.0 * _sigma_lnrichness**2.0)
             )
         )
+
+    def _are_args_tabulated(self, z, M, lambda_true):
+        """Check if args are the tabluated values"""
+        if any(
+            value is None for key, value in self._tabulated_prob_richness_args.items()
+        ):
+            return False
+        _locals = locals()
+        for name, ref_val in self._tabulated_prob_richness_args.items():
+            test_val = _locals[name]
+            if len(ref_val) != len(test_val):
+                return False
+            elif (ref_val != test_val).any():
+                return False
+        return True
+
+    def prob_richness(self, z, M, lambda_true):
+        r"""
+        Proxy - mass relation PDF.
+
+        Computes the theoretical richness probability distribution
+        at the requested true mass, redshift, and richness points.
+
+        Parameters
+        ----------
+        z: numpy.ndarray
+            True redshift points.
+        M: numpy.ndarray
+            True mass points in h^{-1} Msun.
+        lambda_true: numpy.ndarray
+            True richness points.
+
+        Returns
+        -------
+        prob_richness: numpy.ndarray
+            prob_richness[i,j,k], where i is the redshift, j is the mass,
+            and k is the observed richness index
+        """
+        if not self.tabulate_prob_richness or not self._are_args_tabulated(
+            z, M, lambda_true
+        ):
+            self._tabulated_prob_richness_args["M"] = M
+            self._tabulated_prob_richness_args["z"] = z
+            self._tabulated_prob_richness_args["lambda_true"] = lambda_true
+            self._tabulated_prob_richness = self._prob_richness(z, M, lambda_true)
+
+        return self._tabulated_prob_richness

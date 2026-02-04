@@ -8,7 +8,7 @@ from numpy.testing import assert_allclose, assert_equal, assert_raises
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.clusters.covariance import HaloCovariance
 from cloelib.observables.clusters.halo_abundance import CastroHaloAbundance
-from cloelib.observables.clusters.halo_clustering import HaloClustering
+from cloelib.observables.clusters.halo_clustering import TwoPoint3DHaloClustering
 from cloelib.observables.clusters.halo_profile import NFWHaloProfile
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
 from cloelib.observables.clusters.selection_function import SelectionFunction
@@ -52,9 +52,6 @@ def get_values():
     _cosmo_pars_fid = {**_cosmo_pars}
     _cosmo_pars_fid["H0"] = 73.0
     background_fid = CAMBBackground(**_cosmo_pars_fid)
-    perturbations_fid = CAMBLinearPerturbations(
-        background_fid, np.linspace(0.0, 2.0, 100)
-    )
     print(f"cosmo     :  {time.time()-t0:.4f} seconds")
     t0 = time.time()
 
@@ -100,19 +97,17 @@ def get_values():
     # Istanciate objects
 
     selectionFunction = SelectionFunction(**_sel_pars)
-    HS = MatterStatistics(
+    matter_stat = MatterStatistics(
         perturbations,
         z=integ_ztrue_arr,
         k=integ_k_arr,
     )
-    HSCastro = CastroHaloAbundance(matter_statistics=HS)
+    HSCastro = CastroHaloAbundance(matter_statistics=matter_stat)
     covariance = HaloCovariance(
         perturbations, area=area, nbins_zob=len(z_obs_nc_edges), k=integ_k_arr
     )
-    profileNFW = NFWHaloProfile(HS, two_halo="None")
-    haloClustering = HaloClustering(
-        perturbations, perturbations_fid, selectionFunction, k=integ_k_arr
-    )
+    profileNFW = NFWHaloProfile(matter_stat, two_halo="None")
+    haloClustering = TwoPoint3DHaloClustering(matter_stat, background_fid)
 
     print(f"init obs  :  {time.time()-t0:.4f} seconds")
     t0 = time.time()
@@ -145,7 +140,6 @@ def get_values():
     cluster_counts_statistics = ClusterCounts(
         cluster_statitstics_modeling,
         covariance,
-        photoz_rsd_correction=haloClustering.photoz_rsd_correction,
     )
     cluster_wl_statistics = ClusterWeakLensing(
         cluster_statitstics_modeling,

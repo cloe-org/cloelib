@@ -2,59 +2,50 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal, assert_raises
 
+from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
-from cloelib.observables.clusters.halo_clustering import HaloClustering
-from cloelib.observables.clusters.selection_function import SelectionFunction
+from cloelib.observables.clusters.auxiliary import photoz_rsd_correction
+from cloelib.observables.clusters.halo_clustering import TwoPoint3DHaloClustering
+from cloelib.observables.clusters.matter_statistics import MatterStatistics
 
 
 def _test_clustering(CL, perturbations):
     z_test = np.array([0.0, 1.0])
     r_test = np.array([30.0, 60.0, 90.0])
     lob_test = np.array([50.0])
+    k_test = np.geomspace(1e-4, 10, 500)
 
-    print("    APcorr_func")
+    print("    alcock_paczynski_correction_factor")
     ref_APcorr = np.array([1.0162, 1.016033])
-    assert_allclose(CL.APcorr_func(z_test), ref_APcorr, rtol=1e-04)
+    assert_allclose(
+        CL.core.alcock_paczynski_correction_factor(z_test), ref_APcorr, rtol=1e-04
+    )
 
-    print("    WF_ra")
-    ref_WF_ra0 = np.array(
+    print("    radial_shell_window_and_volume")
+    ref_radial_shell_window_and_volume0 = np.array(
         [
             [[9.99995884e-01, -1.35023865e-05], [9.99989679e-01, 8.02679298e-06]],
             [[9.99995885e-01, -1.37175506e-05], [9.99989682e-01, 8.32722698e-06]],
         ]
     )
 
-    ref_WF_ra1 = np.array(
+    ref_radial_shell_window_and_volume1 = np.array(
         [[830784.512318, 2254986.533435], [830373.221984, 2253870.173956]]
     )
 
-    WF, VF = CL.WF_ra(z_test, r_test)
-    assert_allclose(WF[:, :, [0, -1]], ref_WF_ra0, rtol=1e-03)
-    assert_allclose(VF, ref_WF_ra1, rtol=1e-03)
+    WF, VF = CL.core.radial_shell_window_and_volume(z_test, k_test, r_test)
+    assert_allclose(WF[:, :, [0, -1]], ref_radial_shell_window_and_volume0, rtol=1e-03)
+    assert_allclose(VF, ref_radial_shell_window_and_volume1, rtol=1e-03)
 
     print("    Pk_IR_func")
     ref_Pk_IR = np.array([[4.2284186e02, 1.0611498e-01], [1.5616818e02, 3.9339960e-02]])
 
     Pk_test = perturbations.matter_power_spectrum(
-        z_test, CL.k, hubble_units=True, k_hunit=True
+        z_test, k_test, hubble_units=True, k_hunit=True
     )
-    assert_allclose(CL.Pk_IR_func(Pk_test)[:, [0, -1]], ref_Pk_IR, rtol=1e-4)
-
-    print("    photoz_rsd_correction")
-    ref_phz_rsd_0 = np.array(
-        [[5.7111615e-01, 5.9122967e-06], [8.0073649e-01, 1.0336005e-05]]
+    assert_allclose(
+        CL.core.Pk_IR_func(k_test, Pk_test)[:, [0, -1]], ref_Pk_IR, rtol=1e-4
     )
-    ref_phz_rsd_1 = np.array(
-        [[1.0873061e-01, 1.3813213e-16], [3.8109362e-01, 1.2259151e-15]]
-    )
-    ref_phz_rsd_2 = np.array(
-        [[1.2568793e-02, 2.4204413e-27], [9.1092102e-02, 1.0905091e-25]]
-    )
-
-    corr0, corr1, corr2 = CL.photoz_rsd_correction(z_test, lob_test)
-    assert_allclose(corr0[:, [0, -1]], ref_phz_rsd_0, rtol=1e-04)
-    assert_allclose(corr1[:, [0, -1]], ref_phz_rsd_1, rtol=1e-04)
-    assert_allclose(corr2[:, [0, -1]], ref_phz_rsd_2, rtol=1e-04)
 
 
 def test_clustering():
@@ -83,30 +74,63 @@ def test_clustering():
 
     background = CAMBBackground(**_cosmo_pars)
     perturbations = CAMBLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
+    matter_statistics = MatterStatistics(
+        perturbations,
+        # z=integ_ztrue_arr,
+        k=np.geomspace(1e-4, 10, 500),
+    )
 
     _cosmo_pars_fid = {**_cosmo_pars}
     _cosmo_pars_fid["H0"] = 73.0
     background_fid = CAMBBackground(**_cosmo_pars_fid)
-    perturbations_fid = CAMBLinearPerturbations(
-        background_fid, np.linspace(0.0, 2.0, 100)
-    )
-    k_min = 1e-3
-    k_max = 1e0
-    k_div = 2
-    nonu = True
-    _sel_pars = dict(
-        A_l=0.5,
-        B_l=0.6,
-        C_l=0.5,
-        sig_A_l=0.1,
-        sig_B_l=0.0,
-        sig_C_l=0.0,
-        sig_lambda_norm=0.1,
-        sig_lambda_z=0.1,
-        sig_lambda_exponent=0.1,
-        sig_z_z=0.1,
-        sig_z_lambda=0.1,
-    )
-    SF = SelectionFunction(**_sel_pars)
-    CL = HaloClustering(perturbations, perturbations_fid, SF, nonu=nonu)
+    CL = TwoPoint3DHaloClustering(matter_statistics, background_fid, nonu=True)
     _test_clustering(CL, perturbations)
+
+
+def test_cosmo_photoz_rsd_correction():
+
+    print("# Cosmology parameters")
+    _cosmo_pars = dict(
+        H0=67.7,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_k0=0.0,
+        w0=-1.0,
+        wa=0.0,
+        ns=0.96,
+        mnu=0.06,
+        As=2e-9,
+        gamma_MG=0.0,
+        N_mnu=1,
+    )
+
+    z_test = np.array([0.0, 1.0])
+    lob_test = np.array([50.0])
+    k_test = np.geomspace(1e-4, 10, 500)
+    zobs_scatter = np.array([5.0, 5.1])
+
+    background = CAMBBackground(**_cosmo_pars)
+
+    corr0, corr1, corr2 = photoz_rsd_correction(
+        background,
+        z_test,
+        k_test,
+        zobs_scatter,
+        nonu=True,
+    )
+
+    # test values
+
+    ref_phz_rsd_0 = np.array(
+        [[5.7111615e-01, 5.9122967e-06], [8.0073649e-01, 1.0336005e-05]]
+    )
+    ref_phz_rsd_1 = np.array(
+        [[1.0873061e-01, 1.3813213e-16], [3.8109362e-01, 1.2259151e-15]]
+    )
+    ref_phz_rsd_2 = np.array(
+        [[1.2568793e-02, 2.4204413e-27], [9.1092102e-02, 1.0905091e-25]]
+    )
+
+    assert_allclose(corr0[:, [0, -1]], ref_phz_rsd_0, rtol=1e-04)
+    assert_allclose(corr1[:, [0, -1]], ref_phz_rsd_1, rtol=1e-04)
+    assert_allclose(corr2[:, [0, -1]], ref_phz_rsd_2, rtol=1e-04)

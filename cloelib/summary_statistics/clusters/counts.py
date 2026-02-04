@@ -3,6 +3,7 @@ import numpy as np
 from scipy.integrate import simpson as simps
 
 # cloelib imports
+from cloelib.observables.clusters.auxiliary import photoz_rsd_correction
 from cloelib.observables.clusters.covariance import HaloCovariance
 from cloelib.summary_statistics.clusters.statistics_modeling import (
     ClusterStatisticsModeling,
@@ -35,7 +36,6 @@ class ClusterCounts:
         self,
         cluster_statitstics_modeling: ClusterStatisticsModeling,
         covariance: HaloCovariance,
-        photoz_rsd_correction,
     ):
         """
         Initializes the cluster counts
@@ -47,8 +47,6 @@ class ClusterCounts:
             for cluster statistics and tabled values for integration.
         covariance : HaloCovariance
             Halo covariance object
-        photoz_rsd_correction : function
-            Function that computers the RSD correction
         """
         # cluster counts summary statistics, contains tables for integrals
         # and functions to compute binned integrals of counts
@@ -56,12 +54,6 @@ class ClusterCounts:
 
         # observable objects
         self.covariance = covariance
-
-        # ---------------------------------------------------------------
-        # Note : This is a patch as this function is currently implemented
-        # in HaloClustering, should it be moved to SelectionFunction?
-        # ---------------------------------------------------------------
-        self.photoz_rsd_correction = photoz_rsd_correction
 
         # hardcoded quantities for integration
         self.l_m_tab_sig = [31, 31, 31, 51]
@@ -154,7 +146,15 @@ class ClusterCounts:
 
         # corrected halo Pk (only 0-th order correction is enough for number counts covariance)
         # can neglect richness dependence here
-        pk *= self.photoz_rsd_correction(z_mid, 0)[0]
+        pk *= photoz_rsd_correction(
+            self.cluster_statitstics_modeling.matter_statistics.background,
+            z_mid,
+            self.cluster_statitstics_modeling.tabulated_integrands["k"],
+            self.cluster_statitstics_modeling.selectionfunction.scatter_zobs_z(
+                0, z_mid
+            ),
+            self.cluster_statitstics_modeling.matter_statistics.nonu,
+        )[0]
 
         # spherical harmonic expansion coefficients (covariance)
         KL = self.covariance.Kl_coeff()

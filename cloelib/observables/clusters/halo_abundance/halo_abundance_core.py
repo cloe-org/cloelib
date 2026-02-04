@@ -2,6 +2,10 @@ import numpy as np
 from scipy.integrate import simpson as simps
 
 from cloelib.cosmology import derived_cosmology
+from cloelib.observables.clusters.auxiliary import (
+    tophat_window,
+    tophat_window_derivative,
+)
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
 
 
@@ -106,11 +110,8 @@ class HaloAbundanceCore:
         dWdx: numpy.ndarray
             dWdx[i,j], where i is the wavenumber axis and j the radius axis
         """
-        x = R[:, np.newaxis] * k
-        W = 3.0 * (np.sin(x) - x * np.cos(x)) / x**3.0
-        dWdx = 3.0 * (np.sin(x) * (x**2.0 - 3.0) + 3.0 * x * np.cos(x)) / x**4.0
-
-        return W, dWdx
+        kr = k * R[:, np.newaxis]
+        return tophat_window(kr), tophat_window_derivative(kr)
 
     def radius_M(self, M):
         r"""Radius from a mass.

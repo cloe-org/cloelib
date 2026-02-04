@@ -2,6 +2,9 @@
 
 import numpy as np
 from astropy import units as ap_units
+from scipy.special import erf
+
+from cloelib.auxiliary import units
 
 
 def convert_to_Delta_crit(
@@ -124,3 +127,138 @@ def convert_distance(distance, units_in, units_out, angular_diameter_distance=No
         )
 
     return out
+
+
+def photoz_rsd_correction(
+    background,
+    z: np.ndarray,
+    k: np.ndarray,
+    z_obs_scatter: np.ndarray,
+    nonu: bool,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Compute the correction that accounts for photo-z uncertainty and RSD (Kaiser effect),
+    from `(Kaiser (1987)) <(https://doi.org/10.1093/mnras/227.1.1>`_.
+
+    Parameters
+    ----------
+    background: Background
+        Background class containing cosmology
+    k:  np.ndarray
+        wavenumber
+    z:  np.ndarray
+        redshift
+    z_obs_scatter: float, numpy.ndarray
+        Observed redshift scatter. If array, first dimension must be z.
+    nonu: bool
+        Consider neutrinos to compute the growth rate
+
+    Returns
+    -------
+    corr0, corr1, corr2: np.ndarray
+        Correction terms to the power spectrum monopole
+        Shape (z.size, k.size, other dimensions of z_obs_scatter)
+    """
+    if nonu:
+        _Omega_m_func = background.Omega_m_cb
+    else:
+        _Omega_m_func = background.Omega_m
+    ks = np.atleast_1d(k)
+    zs = np.atleast_1d(z)
+    z_obs_scatter_arr = np.array(z_obs_scatter)
+
+    # growth rate and scaled k, shape (z.size, k.size)
+    f_gr = (_Omega_m_func(zs) ** 0.55)[:, np.newaxis]
+    ks_z = (
+        ks[np.newaxis, :]
+        * (units.SPEED_OF_LIGHT * 1e-3)
+        / background.hubble_parameter(zs)[:, np.newaxis]
+        * (background.H0 / 100)
+    )
+
+    # check if z_obs_scatter has more dimensions
+    ndim_z_obs_scatter = len(z_obs_scatter_arr.shape)
+    if ndim_z_obs_scatter > 1:
+        # if it does, add them to f_gr, ks_z
+        extra_axes = tuple(range(2, ndim_z_obs_scatter + 1))
+        f_gr = np.expand_dims(f_gr, axis=extra_axes)
+        ks_z = np.expand_dims(ks_z, axis=extra_axes)
+    if ndim_z_obs_scatter > 0:
+        # if z_obs_scatter is array, add k dimention in 2nd place
+        z_obs_scatter_arr = z_obs_scatter_arr[:, np.newaxis, ...]
+
+    # multiply by scatter
+    ks_z = ks_z * z_obs_scatter_arr
+
+    erf_ks = erf(ks_z)
+
+    corr0 = np.sqrt(np.pi) / (2 * ks_z) * erf_ks
+    corr1 = f_gr / ks_z**3 * (np.sqrt(np.pi) / 2 * erf_ks - ks_z * np.exp(-(ks_z**2)))
+    corr2 = (
+        f_gr**2
+        / ks_z**5
+        * (
+            3 * np.sqrt(np.pi) / 8 * erf_ks
+            - ks_z / 4 * (2 * ks_z**2 + 3) * np.exp(-(ks_z**2))
+        )
+    )
+
+    # correct for numerical inaccuracy
+    # note: for jax, use corr1 = corr1.at[idx].set(2 / 3.0)
+    idx = erf_ks < 0.02
+    corr1[idx] = 2 / 3.0
+    corr2[idx] = 1 / 5.0
+
+    return corr0, corr1, corr2
+
+
+def tophat_window(kr):
+    r"""compute top-hat window and its derivative.
+
+    Parameters
+    ----------
+    kr: numpy.ndarray
+           Wavenumber times radius.
+
+    Returns
+    -------
+    numpy.ndarray
+        Top-hat window function
+    """
+    return 3.0 * (np.sin(kr) - kr * np.cos(kr)) / kr**3.0
+
+
+def tophat_window_derivative(kr):
+    r"""Compute derivative of the top-hat window.
+
+    Parameters
+    ----------
+    kr: numpy.ndarray
+           Wavenumber times radius.
+
+    Returns
+    -------
+    numpy.ndarray
+        Derivative of top-hat window function
+    """
+    return 3.0 * (np.sin(kr) * (kr**2.0 - 3.0) + 3.0 * kr * np.cos(kr)) / kr**4.0
+
+
+def isotropic_volume_distance(z, da, hz):
+    """Compute isotropic volume distance
+
+    Parameters
+    ----------
+    z : np.ndarray
+        redshift
+    da : np.ndarray
+        Angular diameter distance
+    hz : np.ndarray
+        Hubble parameter as a function of redshift.
+
+    Returns
+    -------
+    np.ndarray
+        Isotropic volume distance
+    """
+    return ((1 + z) ** 2 * da**2 * units.SPEED_OF_LIGHT * z / hz) ** (1 / 3.0)

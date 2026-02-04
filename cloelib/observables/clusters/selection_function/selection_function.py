@@ -60,3 +60,25 @@ class SelectionFunction(Protocol):
             Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         """
         ...
+
+    def scatter_z_obs(self, lambda_obs, z):
+        r"""
+        Statistical uncertainty on the observed redshift.
+
+        Computes the scatter of the observed redshift PDF
+        at the requested true redshift and observed richness points.
+
+        Parameters
+        ----------
+        z: numpy.ndarray
+            True redshift points.
+        lambda_obs: numpy.ndarray
+            Observed richness points.
+
+        Returns
+        -------
+        scatter_z_obs: numpy.ndarray
+            scatter_z_obs[i,j] where i is the true redshift axis
+            and j the observed richness axis
+        """
+        ...

@@ -104,10 +104,6 @@ class ClusterStatisticsModeling:
             "M": integ_mass_arr,  # mass array in Msun h^-1
             "lambda_true": integ_lambda_true_arr,  # true richness array
             "ztrue": integ_ztrue_arr,  # true redshift array
-            # P(lambda_true|M,z), this quantity is also used by cluster clustering
-            "PDF_mass_richness_scaling": self.selectionfunction.lambda_true_distribution.prob_richness(
-                integ_ztrue_arr, integ_mass_arr, integ_lambda_true_arr
-            ),
             # volume element at each point of z array
             "dv/dz(ztrue)": derived_cosmology.dV_dzdO(
                 self.matter_statistics.perturbations.background,
@@ -157,7 +153,7 @@ class ClusterStatisticsModeling:
             where (ztrue) are the values in self.tabulated_integrands.
             Dimensions: (z_obs_edges, lambda_obs_edges, ztrue).
         """
-        return self.selectionfunction.window_z_observed(
+        return self.selectionfunction._window_z_observed(
             z_obs_edges,
             lambda_obs_edges,
             z_tab_sig,
@@ -186,25 +182,12 @@ class ClusterStatisticsModeling:
             Dimensions: (lambda_obs_edges, ztrue, M).
         """
 
-        # P(lambda_true|M,z), this quantity is also used by cluster clustering
-        # if external_richness_selection_function == 'CG_ESF' :
-        #     window_lambda_obs  = self.int_Plobltr_Dlob[lambda_bin](self.tabulated_integrands["ztrue"], self.tabulated_integrands["lambda_true"]).T
-        windows_lambda_obs_lambda_true = (
-            self.selectionfunction.window_richness_observed_richness_true(
-                lambda_obs_edges,
-                l_m_tab_sig,
-                self.tabulated_integrands["ztrue"],
-                self.tabulated_integrands["lambda_true"],
-            )
-        )
-
-        return simps(
-            self.tabulated_integrands["PDF_mass_richness_scaling"][
-                np.newaxis, :, :, :
-            ]  # (1, z, M, ltr)
-            * windows_lambda_obs_lambda_true[:, :, np.newaxis, :],  # (lobs, z, 1, ltr)
-            x=self.tabulated_integrands["lambda_true"],
-            axis=-1,
+        return self.selectionfunction._window_richness_observed(
+            lambda_obs_edges,
+            l_m_tab_sig,
+            self.tabulated_integrands["ztrue"],
+            self.tabulated_integrands["M"],
+            self.tabulated_integrands["lambda_true"],
         )
 
     # ---------------------

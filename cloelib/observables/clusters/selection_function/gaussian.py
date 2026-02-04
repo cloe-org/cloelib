@@ -162,7 +162,7 @@ class GaussianSelectionFunction:
             * np.exp(-((z_obs[:, np.newaxis] - z) ** 2.0) / (2.0 * sigmazobsz**2.0))
         )
 
-    def window_z_observed(self, z_obs_edges, lambda_obs_edges, z_tab_sig, z_true):
+    def _window_z_observed(self, z_obs_edges, lambda_obs_edges, z_tab_sig, z_true):
         r"""Compute the window function of each observed redshift bin, given by:
 
         ..math:
@@ -212,7 +212,7 @@ class GaussianSelectionFunction:
             )
         return window_z_obs
 
-    def window_richness_observed_richness_true(
+    def _window_richness_observed_richness_true(
         self,
         lambda_obs_edges,
         l_m_tab_sig,
@@ -272,6 +272,56 @@ class GaussianSelectionFunction:
             )
         return window_lambda_obs_lambda_true
 
+    def _window_richness_observed(
+        self,
+        lambda_obs_edges,
+        l_m_tab_sig,
+        z_true,
+        mass,
+        lambda_true,
+    ):
+        r"""Compute the window function of each observed richness bin, given by:
+
+        ..math:
+            W_{\Delta\lambda_{\rm obs}}(\lambda_{\rm true}, z_{\rm true}) = \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs} P(\lambda_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
+
+        Parameters
+        ----------
+        lambda_obs_edges : numpy.ndarray
+            Edges of richness bins for the integration.
+        l_m_tab_sig : List, None
+            Number of points to be used for the lambda_obs integration
+            in each lambda_obs bin. Must be same size of lambda_obs_edges.
+        z_true : numpy.ndarray
+            True redshift to compute the window.
+        mass : numpy.ndarray
+            Mass to compute the window.
+        lambda_true : numpy.ndarray
+            Values to be used for marginalization over true richness.
+
+        Returns
+        -------
+        window_lambda_obs : numpy.ndarray
+            Integral of P(lambda_obs|\lambda_{\rm true}, z_true) in lambda_obs bins.
+            Dimensions: (lambda_obs_edges, z_true, \lambda_{\rm true}).
+        """
+        windows_lambda_obs_lambda_true = self._window_richness_observed_richness_true(
+            lambda_obs_edges,
+            l_m_tab_sig,
+            z_true,
+            lambda_true,
+        )
+        pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
+            z_true, mass, lambda_true
+        )
+
+        return simps(
+            pdf_mass_richness_scaling[np.newaxis, :, :, :]  # (1, z, M, ltr)
+            * windows_lambda_obs_lambda_true[:, :, np.newaxis, :],  # (lobs, z, 1, ltr)
+            x=lambda_true,
+            axis=-1,
+        )
+
     def window_redshift_richness_observed(
         self,
         z_obs_edges,
@@ -321,16 +371,17 @@ class GaussianSelectionFunction:
         """
         # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         window_lambda_true = (
-            self.window_z_observed(z_obs_edges, lambda_obs_edges, z_tab_sig, z_true)[
+            self._window_z_observed(z_obs_edges, lambda_obs_edges, z_tab_sig, z_true)[
                 :, :, :, np.newaxis
             ]
             # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, 1).
-            * self.window_richness_observed_richness_true(
+            * self._window_richness_observed(
                 self,
                 lambda_obs_edges,
                 l_m_tab_sig,
                 z_true,
                 lambda_true,
+                mass,
             )[np.newaxis, :, :, :]
             # Dimensions: (1, lambda_obs_edges, z_true, lambda_true)
         )

@@ -43,7 +43,7 @@ class InterpolatedSelectionFunction:
                 * lambda_true: xxx
                 * z_obs_step: xxx
                 * lambda_obs_step: xxx
-                * CG_seL_funcT: xxx
+                * prob_lambda_z_obs: xxx
                 * completeness: xxx
                 * purity: xxx
                 * area_tile: xxx
@@ -87,7 +87,7 @@ class InterpolatedSelectionFunction:
             "lambda_true": None,
             "index_lambda_obs_edges": None,
             "index_z_obs_edges": None,
-            "CG_seL_funcT": None,
+            "prob_lambda_z_obs": None,
             "purity": None,
             "completeness": None,
             "I_ltr_ztr_lobs_lobs": None,
@@ -141,9 +141,9 @@ class InterpolatedSelectionFunction:
         # reshape purity and seL_func
 
         # initialize with zeros
-        sel_cl_data_fmt["CG_seL_funcT"] = np.zeros(
+        sel_cl_data_fmt["prob_lambda_z_obs"] = np.zeros(
             (
-                len(self._sel_cl_data_original["CG_seL_funcT"]),
+                len(self._sel_cl_data_original["prob_lambda_z_obs"]),
                 len(self._sel_cl_data_original["lambda_true"]),
                 len(self._sel_cl_data_original["z_true"]),
                 len(sel_cl_data_fmt["lambda_obs"]),
@@ -152,7 +152,7 @@ class InterpolatedSelectionFunction:
         )
         sel_cl_data_fmt["purity"] = np.zeros(
             (
-                len(self._sel_cl_data_original["CG_seL_funcT"]),
+                len(self._sel_cl_data_original["prob_lambda_z_obs"]),
                 len(sel_cl_data_fmt["lambda_obs"]),
                 len(sel_cl_data_fmt["z_obs"]),
             )
@@ -168,8 +168,8 @@ class InterpolatedSelectionFunction:
         )
 
         ## Re-arrange ranges for 4d array, to match the Obs NC ranges
-        sel_cl_data_fmt["CG_seL_funcT"][:, :, :, lobs_orig_slice, zobs_orig_slice] = (
-            self._sel_cl_data_original[f"CG_seL_funcT"]
+        sel_cl_data_fmt["prob_lambda_z_obs"][:, :, :, lobs_orig_slice, zobs_orig_slice] = (
+            self._sel_cl_data_original[f"prob_lambda_z_obs"]
         )
         ## Re-arrange ranges Purity, to match the Obs NC ranges
         sel_cl_data_fmt[f"purity"][:, lobs_orig_slice, zobs_orig_slice] = (
@@ -205,7 +205,7 @@ class InterpolatedSelectionFunction:
 
         sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = (
             sel_cl_data_fmt["area_tile"][:, None, None, None, None]
-            * sel_cl_data_fmt["CG_seL_funcT"]
+            * sel_cl_data_fmt["prob_lambda_z_obs"]
             * sel_cl_data_fmt["completeness"][:, :, :, None, None]
             / pur_reshaped
         )
@@ -499,7 +499,7 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
             * lambda_true: xxx
             * z_obs_step: xxx
             * lambda_obs_step: xxx
-            * CG_seL_funcT: xxx
+            * prob_lambda_z_obs: xxx
             * completeness: xxx
             * purity: xxx
             * area_tile: xxx
@@ -537,12 +537,12 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
     ## Index of P_4d, Compl and Pur for each tile
     ## Select index to read 4d array, completeness and purity for the different tiles
     ## Save 4d array, Completeness and Purity for each tile
-    ## np.shape(sel_cl_data["CG_seL_funcT"]): (ltr, ztr, lobs, zobs)
+    ## np.shape(sel_cl_data["prob_lambda_z_obs"]): (ltr, ztr, lobs, zobs)
     ## np.shape(sel_cl_data["completeness"]): (ltr, ztr)
     ## np.shape(sel_cl_data["purity"]): (lobs, zobs)
 
     for name, first_ind in (
-        ("CG_seL_funcT", 1),
+        ("prob_lambda_z_obs", 1),
         ("completeness", 1 + 2 * n_tiles),
         ("purity", 1 + 4 * n_tiles),
     ):
@@ -588,7 +588,7 @@ if __name__ == "__main__":
         _rich_norm(rich, z, rich_piv) / (1 + _rich_norm(rich, z, rich_piv))
     )
 
-    sel_cl_data["CG_seL_funcT"] = np.exp(
+    sel_cl_data["prob_lambda_z_obs"] = np.exp(
         -(
             (
                 (

@@ -352,8 +352,12 @@ class InterpolatedSelectionFunction:
             axis=-1,
         )
 
+    #######
+    # Utils
+    #######
+
+    @staticmethod
     def _normalize_array(
-        self,
         array,
         normalization,
     ):

@@ -3,7 +3,7 @@
 import numpy as np
 
 
-class LognormalPowerLawLambdaTrue:
+class LognormalPowerLawLambdaTrueDistribution:
     def __init__(
         self,
         A_l: float,
@@ -93,7 +93,7 @@ class LognormalPowerLawLambdaTrue:
             + self.sig_C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
         )
 
-    def prob_richness_given_mass(self, z, M, lambda_true):
+    def prob_richness(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.
 
@@ -111,8 +111,8 @@ class LognormalPowerLawLambdaTrue:
 
         Returns
         -------
-        prob_richness_given_mass: numpy.ndarray
-            prob_richness_given_mass[i,j,k], where i is the redshift, j is the mass,
+        prob_richness: numpy.ndarray
+            prob_richness[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
         _mean_lnlambda = self.mean_lnrichness(z, M)[:, :, np.newaxis]

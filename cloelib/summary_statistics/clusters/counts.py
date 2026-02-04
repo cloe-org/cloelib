@@ -188,11 +188,11 @@ class ClusterCounts:
             Number counts in redshift and richness bins
         window_lambda_obs : numpy.ndarray
             Integral of P(lamda_obs|M, ztrue) in lambda_obs bins.
-            Dimentions: (lambda_obs, ztrue, M) with (ztrue, M) in cluster_statitstics_modeling.tabulated_integrands.
+            Dimensions: (lambda_obs, ztrue, M) with (ztrue, M) in cluster_statitstics_modeling.tabulated_integrands.
             Is in the intermediate_integration_products output of get_NC.
         window_z_obs : numpy.ndarray
             Integral of P(z_obs|lambda_obs, ztrue) in z_obs bins.
-            Dimentions: (z_obs, lambda_obs, ztrue) with (ztrue) in cluster_statitstics_modeling.tabulated_integrands.
+            Dimensions: (z_obs, lambda_obs, ztrue) with (ztrue) in cluster_statitstics_modeling.tabulated_integrands.
             Is in the intermediate_integration_products output of get_NC.
 
         Returns

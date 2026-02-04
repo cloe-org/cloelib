@@ -25,17 +25,22 @@ class SelectionFunction(Protocol):
 
 
         ..math:
-            W_{\Delta\lambda_{\rm obs}, \Delta z_{\rm obs}}(\lambda_{\rm true}, z_{\rm true}) =
+            W_{\Delta\lambda_{\rm obs}, \Delta z_{\rm obs}}(M, z_{\rm true}) =
+            \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs}
+            \int_{\Delta z_{\rm obs}}d z_{\rm obs}
+            P(\lambda_{\rm obs}, z_{\rm obs}|M, z_{\rm true})
+            \frac{c(M, z_{\rm true})}{p(\rm obs}, z_{\rm obs})}
+
+        which can be written in some cases as:
+
+        ..math:
+            W_{\Delta\lambda_{\rm obs}, \Delta z_{\rm obs}}(M, z_{\rm true}) =
+            \int_{0}^{\infty}d\lambda_{\rm true}
+            P(\lambda_{\rm true}|M, z_{\rm true})
             \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs}
             \int_{\Delta z_{\rm obs}}d z_{\rm obs}
             P(\lambda_{\rm obs}, z_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
             \frac{c(\lambda_{\rm true}, z_{\rm true})}{p(\rm obs}, z_{\rm obs})}
-
-
-
-        Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
-        1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
-        Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
 
         Parameters
         ----------
@@ -45,8 +50,8 @@ class SelectionFunction(Protocol):
             Edges of richness bins for the integration.
         z_true : numpy.ndarray
             True redshift to compute the window.
-        lambda_true : numpy.ndarray
-            True richness to compute the window.
+        mass : numpy.ndarray
+            Mass to compute the window.
 
         Returns
         -------

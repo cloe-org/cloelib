@@ -105,7 +105,7 @@ class ClusterStatisticsModeling:
             "lambda_true": integ_lambda_true_arr,  # true richness array
             "ztrue": integ_ztrue_arr,  # true redshift array
             # P(lambda_true|M,z), this quantity is also used by cluster clustering
-            "PDF_mass_richness_scaling": self.selectionfunction.mass_lambda_true.prob_richness_given_mass(
+            "PDF_mass_richness_scaling": self.selectionfunction.lambda_true_distribution.prob_richness(
                 integ_ztrue_arr, integ_mass_arr, integ_lambda_true_arr
             ),
             # volume element at each point of z array
@@ -155,7 +155,7 @@ class ClusterStatisticsModeling:
         window_z_obs : numpy.ndarray
             Integral of P(z_obs|lambda_obs, ztrue) in z_obs bins,
             where (ztrue) are the values in self.tabulated_integrands.
-            Dimentions: (z_obs_edges, lambda_obs_edges, ztrue).
+            Dimensions: (z_obs_edges, lambda_obs_edges, ztrue).
         """
         return self.selectionfunction.window_z_observed(
             z_obs_edges,
@@ -183,7 +183,7 @@ class ClusterStatisticsModeling:
         window_lambda_obs : numpy.ndarray
             Integral of P(lambda_obs|M, ztrue) in lambda_obs bins,
             where (M, ztrue) are the values in self.tabulated_integrands.
-            Dimentions: (lambda_obs_edges, ztrue, M).
+            Dimensions: (lambda_obs_edges, ztrue, M).
         """
 
         # P(lambda_true|M,z), this quantity is also used by cluster clustering
@@ -265,7 +265,7 @@ class ClusterStatisticsModeling:
         window_lambda_obs : numpy.ndarray
             Integral of P(lambda_obs|M, ztrue) in lambda_obs bins,
             where (M, ztrue) are the values in self.tabulated_integrands.
-            Dimentions: (lambda_obs, ztrue, M)
+            Dimensions: (lambda_obs, ztrue, M)
 
         Returns
         -------
@@ -309,7 +309,7 @@ class ClusterStatisticsModeling:
         window_z_obs : numpy.ndarray
             Integral of P(z_obs|lambda_obs, ztrue) in z_obs bins,
             where (ztrue) are the values in self.tabulated_integrands.
-            Dimentions: (z_obs, lambda_obs, ztrue, ...) with (ztrue) in tabulated_integrands.
+            Dimensions: (z_obs, lambda_obs, ztrue, ...) with (ztrue) in tabulated_integrands.
 
         Returns
         -------

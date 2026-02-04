@@ -254,7 +254,7 @@ class ClusterClustering:
             Is in the intermediate_integration_products output of get_xi.
         window_z_obs : numpy.ndarray
             Integral of P(z_obs|lambda_obs, ztrue) in z_obs bins.
-            Dimentions: (z_obs, lambda_obs, ztrue) with (ztrue) in cluster_statitstics_modeling.tabulated_integrands.
+            Dimensions: (z_obs, lambda_obs, ztrue) with (ztrue) in cluster_statitstics_modeling.tabulated_integrands.
             Is in the intermediate_integration_products output of get_xi.
         cluster_counts : numpy.ndarray
             Number counts in redshift and richness bins

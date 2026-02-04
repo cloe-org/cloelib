@@ -6,8 +6,8 @@ import numpy as np  # type: ignore
 from scipy import integrate, interpolate
 from scipy.integrate import simps
 
-from cloelib.observables.clusters.selection_function.lambda_true.lognormal_powerlaw import (
-    LognormalPowerLawLambdaTrue,
+from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
+    LambdaTrueDistribution,
 )
 
 
@@ -15,14 +15,7 @@ class InterpolatedSelectionFunction:
 
     def __init__(
         self,
-        A_l: float,
-        B_l: float,
-        C_l: float,
-        sig_A_l: float,
-        sig_B_l: float,
-        sig_C_l: float,
-        M_piv: float = 3.0e14,
-        z_piv: float = 0.45,
+        lambda_true_distribution: LambdaTrueDistribution,
         sel_cl_data=None,
     ):
         r"""
@@ -39,16 +32,8 @@ class InterpolatedSelectionFunction:
 
         Parameters
         ----------
-        A_l : float
-            Amplitude of the proxy - mass scaling relation
-        B_l : float
-            Mass slope of the proxy - mass scaling relation
-        C_l : float
-            Redshift slope of the proxy - mass scaling relation
-        M_piv: float
-            Mass pivot in the proxy - mass relation, in h^{-1} Msun
-        z_piv: float
-            Redshift pivot in the proxy - mass relation
+        lambda_true_distribution: LambdaTrueDistribution,
+            Object that contains the distribution of true richness given mass
         sel_cl_data: dict
             Object that read the SEL_CL output file and formats its accordingly. It must contain the keys:
 
@@ -65,12 +50,8 @@ class InterpolatedSelectionFunction:
                 * Omega_tot: xxx
 
         """
-        self.mass_lambda_true = LognormalPowerLawLambdaTrue(
-            A_l, B_l, C_l, sig_A_l, sig_B_l, sig_C_l, M_piv, z_piv
-        )
+        self.lambda_true_distribution = lambda_true_distribution
         self._sel_cl_data_original = sel_cl_data
-
-    ## NEW FUNCTION FROM SINFONIA FILE
 
     def _get_sel_cl_data_formatted_with_obs_bins(self, lambda_obs_edges, z_obs_edges):
         """Format SEL_CL data with obs bins
@@ -244,6 +225,15 @@ class InterpolatedSelectionFunction:
         1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
         Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
 
+
+        ..math:
+            W_{\Delta\lambda_{\rm obs}, \Delta z_{\rm obs}}(\lambda_{\rm true}, z_{\rm true}) =
+            \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs}
+            \int_{\Delta z_{\rm obs}}d z_{\rm obs}
+            P(\lambda_{\rm obs}, z_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
+            \frac{c(\lambda_{\rm true}, z_{\rm true})}{p(\rm obs}, z_{\rm obs})}
+
+
         Parameters
         ----------
         lambda_obs_edges : numpy.ndarray
@@ -295,7 +285,9 @@ class InterpolatedSelectionFunction:
 
 
         ..math:
-            W_{\Delta\lambda_{\rm obs}, \Delta z_{\rm obs}}(\lambda_{\rm true}, z_{\rm true}) =
+            W_{\Delta\lambda_{\rm obs}, \Delta z_{\rm obs}}(M, z_{\rm true}) =
+            \int_{0}^{\infty}d\lambda_{\rm true}
+            P(\lambda_{\rm true}|M, z_{\rm true})
             \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs}
             \int_{\Delta z_{\rm obs}}d z_{\rm obs}
             P(\lambda_{\rm obs}, z_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
@@ -325,7 +317,7 @@ class InterpolatedSelectionFunction:
             Dimensions: (lambda_obs_edges, z_obs_edges, lambda_true, z_true)
             Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         """
-        window = np.zeros(
+        window_lambda_true = np.zeros(
             len(lambda_obs_edges) - 1,
             len(z_obs_edges) - 1,
             lambda_true.size,
@@ -336,9 +328,9 @@ class InterpolatedSelectionFunction:
         )
         for i, integ4d_lobs in enumerate(integ4d_interp_func):
             for j, integ4d_lobs_zobs in enumerate(integ4d_lobs):
-                window[i, j] = integ4d_lobs_zobs(lambda_true, z_true)
+                window_lambda_true[i, j] = integ4d_lobs_zobs(lambda_true, z_true)
         # fix order of axes
-        return window.transpose(1, 0, 3, 2)
+        window_lambda_true = window_lambda_true.transpose(1, 0, 3, 2)
 
     def _normalize_array(
         self,

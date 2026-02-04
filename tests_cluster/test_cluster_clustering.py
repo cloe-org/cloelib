@@ -5,6 +5,9 @@ from numpy.testing import assert_allclose, assert_equal, assert_raises
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.clusters.halo_clustering import HaloClustering
 from cloelib.observables.clusters.selection_function import GaussianSelectionFunction
+from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
+    LognormalPowerLawLambdaTrueDistribution,
+)
 
 
 def _test_clustering(CL, perturbations):
@@ -94,19 +97,26 @@ def test_clustering():
     k_max = 1e0
     k_div = 2
     nonu = True
-    _sel_pars = dict(
+    _lambda_true_dist_pars = dict(
         A_l=0.5,
         B_l=0.6,
         C_l=0.5,
         sig_A_l=0.1,
         sig_B_l=0.0,
         sig_C_l=0.0,
+    )
+    _sel_pars = dict(
         sig_lambda_norm=0.1,
         sig_lambda_z=0.1,
         sig_lambda_exponent=0.1,
         sig_z_z=0.1,
         sig_z_lambda=0.1,
     )
-    SF = GaussianSelectionFunction(**_sel_pars)
+    SF = GaussianSelectionFunction(
+        **_sel_pars,
+        lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
+            **_lambda_true_dist_pars
+        ),
+    )
     CL = HaloClustering(perturbations, perturbations_fid, SF, nonu=nonu)
     _test_clustering(CL, perturbations)

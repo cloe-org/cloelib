@@ -12,6 +12,9 @@ from cloelib.observables.clusters.halo_clustering import HaloClustering
 from cloelib.observables.clusters.halo_profile import NFWHaloProfile
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
 from cloelib.observables.clusters.selection_function import GaussianSelectionFunction
+from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
+    LognormalPowerLawLambdaTrueDistribution,
+)
 from cloelib.summary_statistics.clusters import (
     ClusterClustering,
     ClusterCounts,
@@ -64,13 +67,15 @@ def get_values():
 
     # Parameters
 
-    _sel_pars = dict(
+    _lambda_true_dist_pars = dict(
         A_l=52.0,
         B_l=0.9,
         C_l=0.5,
         sig_A_l=0.2,
         sig_B_l=-0.05,
         sig_C_l=0.001,
+    )
+    _sel_pars = dict(
         sig_lambda_norm=0.9,
         sig_lambda_z=0.1,
         sig_lambda_exponent=0.4,
@@ -99,7 +104,12 @@ def get_values():
 
     # Istanciate objects
 
-    selectionFunction = GaussianSelectionFunction(**_sel_pars)
+    selectionFunction = GaussianSelectionFunction(
+        **_sel_pars,
+        lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
+            **_lambda_true_dist_pars
+        ),
+    )
     HS = MatterStatistics(
         perturbations,
         z=integ_ztrue_arr,

@@ -4,6 +4,9 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal, assert_raises
 
 from cloelib.observables.clusters.selection_function import GaussianSelectionFunction
+from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
+    LognormalPowerLawLambdaTrueDistribution,
+)
 
 
 def _test_selectionfunction(SF):
@@ -18,17 +21,17 @@ def _test_selectionfunction(SF):
     print("    lnrichness")
     _lnrichness_ref = [-1.533121, -1.423534, -1.3337, -1.257575, -1.191523]
     assert_allclose(
-        SF.mass_lambda_true.mean_lnrichness(z_test, M_test)[:, 0],
+        SF.lambda_true_distribution.mean_lnrichness(z_test, M_test)[:, 0],
         _lnrichness_ref,
         rtol=1e-05,
     )
     print("    scatter_lnrichness")
     assert_allclose(
-        SF.mass_lambda_true.scatter_lnrichness(z_test, M_test), 0.1, rtol=1e-05
+        SF.lambda_true_distribution.scatter_lnrichness(z_test, M_test), 0.1, rtol=1e-05
     )
-    print("    prob_richness_given_mass")
+    print("    prob_richness")
     assert_allclose(
-        SF.mass_lambda_true.prob_richness_given_mass(z_test, M_test, l_test),
+        SF.lambda_true_distribution.prob_richness(z_test, M_test, l_test),
         0,
         atol=1e-10,
         rtol=1e-05,
@@ -64,18 +67,25 @@ def _test_selectionfunction(SF):
 def test_selectionfunction():
     # SelectionFunction
     print("# SelectionFunction")
-    _sel_pars = dict(
+    _lambda_true_dist_pars = dict(
         A_l=0.5,
         B_l=0.6,
         C_l=0.5,
         sig_A_l=0.1,
         sig_B_l=0.0,
         sig_C_l=0.0,
+    )
+    _sel_pars = dict(
         sig_lambda_norm=0.1,
         sig_lambda_z=0.1,
         sig_lambda_exponent=0.1,
         sig_z_z=0.1,
         sig_z_lambda=0.1,
     )
-    SF = GaussianSelectionFunction(**_sel_pars)
+    SF = GaussianSelectionFunction(
+        **_sel_pars,
+        lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
+            **_lambda_true_dist_pars
+        ),
+    )
     _test_selectionfunction(SF)

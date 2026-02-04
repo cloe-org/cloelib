@@ -3,27 +3,20 @@
 import numpy as np
 from scipy.integrate import simpson as simps
 
-from cloelib.observables.clusters.selection_function.lambda_true.lognormal_powerlaw import (
-    LognormalPowerLawLambdaTrue,
+from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
+    LambdaTrueDistribution,
 )
 
 
 class GaussianSelectionFunction:
     def __init__(
         self,
-        A_l: float,
-        B_l: float,
-        C_l: float,
-        sig_A_l: float,
-        sig_B_l: float,
-        sig_C_l: float,
+        lambda_true_distribution: LambdaTrueDistribution,
         sig_lambda_norm: float,
         sig_lambda_z: float,
         sig_lambda_exponent: float,
         sig_z_z: float,
         sig_z_lambda: float,
-        M_piv: float = 3.0e14,
-        z_piv: float = 0.45,
     ):
         r"""
         Class defining the selection function of galaxy clusters, including
@@ -32,21 +25,8 @@ class GaussianSelectionFunction:
 
         Parameters
         ----------
-        A_l : float
-            Amplitude of the proxy - mass scaling relation
-        B_l : float
-            Mass slope of the proxy - mass scaling relation
-        C_l : float
-            Redshift slope of the proxy - mass scaling relation
-        sig_A_l : float
-            Amplitude of the proxy - mass scaling relation
-            intrinsic scatter
-        sig_B_l : float
-            Mass slope of the proxy - mass scaling relation
-            intrinsic scatter
-        sig_C_l : float
-            Redshift slope of the proxy - mass scaling relation
-            intrinsic scatter
+        lambda_true_distribution: LambdaTrueDistribution,
+            Object that contains the distribution of true richness given mass
         sig_lambda_norm: float
             Amplitude of the observed proxy - true proxy relation
         sig_lambda_z: float
@@ -57,14 +37,8 @@ class GaussianSelectionFunction:
             Amplitude of the observed redshift - true redshift relation
         sig_z_lambda: float
             Proxy evolution of the observed redshift - true redshift relation
-        M_piv: float
-            Mass pivot in the proxy - mass relation, in h^{-1} Msun
-        z_piv: float
-            Redshift pivot in the proxy - mass relation
         """
-        self.mass_lambda_true = LognormalPowerLawLambdaTrue(
-            A_l, B_l, C_l, sig_A_l, sig_B_l, sig_C_l, M_piv, z_piv
-        )
+        self.lambda_true_distribution = lambda_true_distribution
         self.sig_lambda_norm = sig_lambda_norm
         self.sig_lambda_z = sig_lambda_z
         self.sig_lambda_exponent = sig_lambda_exponent
@@ -209,7 +183,7 @@ class GaussianSelectionFunction:
         -------
         window_z_obs : numpy.ndarray
             Integral of P(z_obs|lambda_obs, z_true) in z_obs bins.
-            Dimentions: (z_obs_edges, lambda_obs_edges, z_true).
+            Dimensions: (z_obs_edges, lambda_obs_edges, z_true).
         """
 
         z_obs_edges_size = len(z_obs_edges) - 1
@@ -266,7 +240,7 @@ class GaussianSelectionFunction:
         -------
         window_lambda_obs : numpy.ndarray
             Integral of P(lambda_obs|\lambda_{\rm true}, z_true) in lambda_obs bins.
-            Dimentions: (lambda_obs_edges, z_true, \lambda_{\rm true}).
+            Dimensions: (lambda_obs_edges, z_true, \lambda_{\rm true}).
         """
 
         # if external_richness_selection_function == 'CG_ESF' :
@@ -298,11 +272,12 @@ class GaussianSelectionFunction:
             )
         return window_lambda_obs_lambda_true
 
-    def window_z_richness_observed(
+    def window_redshift_richness_observed(
         self,
         z_obs_edges,
         lambda_obs_edges,
         z_true,
+        mass,
         lambda_true,
         z_tab_sig,
         l_m_tab_sig,
@@ -312,17 +287,13 @@ class GaussianSelectionFunction:
 
 
         ..math:
-            W_{\Delta\lambda_{\rm obs}, \Delta z_{\rm obs}}(\lambda_{\rm true}, z_{\rm true}) =
+            W_{\Delta\lambda_{\rm obs}, \Delta z_{\rm obs}}(M, z_{\rm true}) =
+            \int_{0}^{\infty}d\lambda_{\rm true}
+            P(\lambda_{\rm true}|M, z_{\rm true})
             \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs}
             \int_{\Delta z_{\rm obs}}d z_{\rm obs}
             P(\lambda_{\rm obs}, z_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
             \frac{c(\lambda_{\rm true}, z_{\rm true})}{p(\rm obs}, z_{\rm obs})}
-
-
-
-        Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
-        1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
-        Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
 
         Parameters
         ----------
@@ -332,8 +303,10 @@ class GaussianSelectionFunction:
             Edges of richness bins for the integration.
         z_true : numpy.ndarray
             True redshift to compute the window.
+        mass : numpy.ndarray
+            Mass to compute the window.
         lambda_true : numpy.ndarray
-            True richness to compute the window.
+            Values to be used for marginalization over true richness.
         z_tab_sig : int, None
             Number of points to be used for z_obs integration.
         l_m_tab_sig : List, None
@@ -344,13 +317,14 @@ class GaussianSelectionFunction:
         -------
         numpy.ndarray
             Window function for observed redshift and richness bins.
-            Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
+            Dimensions: (z_obs_edges, lambda_obs_edges, z_true, mass)
         """
-        return (
+        # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
+        window_lambda_true = (
             self.window_z_observed(z_obs_edges, lambda_obs_edges, z_tab_sig, z_true)[
                 :, :, :, np.newaxis
             ]
-            # Dimentions: (z_obs_edges, lambda_obs_edges, z_true, 1).
+            # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, 1).
             * self.window_richness_observed_richness_true(
                 self,
                 lambda_obs_edges,
@@ -358,5 +332,5 @@ class GaussianSelectionFunction:
                 z_true,
                 lambda_true,
             )[np.newaxis, :, :, :]
-            # Dimentions: (1, lambda_obs_edges, z_true, lambda_true)
+            # Dimensions: (1, lambda_obs_edges, z_true, lambda_true)
         )

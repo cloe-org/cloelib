@@ -391,6 +391,16 @@
         "bug",
         "review"
       ]
+    },
+    {
+      "login": "raphkou",
+      "name": "raphkou",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61792335?v=4",
+      "profile": "https://github.com/raphkou",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }

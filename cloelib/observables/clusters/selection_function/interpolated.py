@@ -273,7 +273,7 @@ class InterpolatedSelectionFunction:
 
         return integ4d_interp_func
 
-    def window_z_richness_observed(
+    def window_redshift_richness_observed(
         self,
         z_obs_edges,
         lambda_obs_edges,
@@ -314,9 +314,11 @@ class InterpolatedSelectionFunction:
         -------
         numpy.ndarray
             Window function for observed redshift and richness bins.
-            Dimensions: (lambda_obs_edges, z_obs_edges, lambda_true, z_true)
             Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         """
+        ################################################
+        # Compute P(Delta lobs, Delta zobs|ltrue, ztrue)
+        ################################################
         window_lambda_true = np.zeros(
             len(lambda_obs_edges) - 1,
             len(z_obs_edges) - 1,
@@ -331,6 +333,24 @@ class InterpolatedSelectionFunction:
                 window_lambda_true[i, j] = integ4d_lobs_zobs(lambda_true, z_true)
         # fix order of axes
         window_lambda_true = window_lambda_true.transpose(1, 0, 3, 2)
+        # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
+
+        ################################################
+        # Compute P(Delta lobs, Delta zobs|mass, ztrue)
+        ################################################
+
+        pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
+            z_true, mass, lambda_true
+        )
+
+        return simps(
+            pdf_mass_richness_scaling[
+                np.newaxis, np.newaxis, :, :, :
+            ]  # (1, 1, z, M, ltr)
+            * window_lambda_true[:, :, :, np.newaxis, :],  # (zobs, lobs, z, 1, ltr)
+            x=lambda_true,
+            axis=-1,
+        )
 
     def _normalize_array(
         self,

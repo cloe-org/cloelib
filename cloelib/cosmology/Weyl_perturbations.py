@@ -25,6 +25,7 @@ class Weyl_Perturbations:
         self.perturbations = perturbations
         self.z = redshifts
         self.z_ini = float(z_ini)
+        self.k = perturbations.k
 
     @property
     def background(self) -> Background:

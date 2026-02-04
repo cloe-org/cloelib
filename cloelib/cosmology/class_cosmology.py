@@ -270,7 +270,6 @@ class CLASSBackground:
             Omegab_0 = self.results.Om_b(zs)
         return Omegab_0
 
-
     @property
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering in Mpc."""
@@ -300,7 +299,6 @@ class CLASSLinearPerturbations:
         self.results.set(self.interface_args["CLASSparams"])
         self.results.compute()
         self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
-
 
     @property
     def _interface_args(self) -> dict:

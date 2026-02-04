@@ -59,9 +59,11 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
         self.sigma8_ini = (
             self.perturbations.sigma8_0()
             * self.perturbations.growth_factor(
-                np.array([self.z_ini]), np.array([0.01])
+                np.array([self.z_ini]), self.perturbations.k[:1]
             )[0, 0]
-            / self.perturbations.growth_factor(np.array([0]), np.array([0.01]))[0, 0]
+            / self.perturbations.growth_factor(np.array([0]), self.perturbations.k[:1])[
+                0, 0
+            ]
         )
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z))
@@ -91,9 +93,9 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
     def get_window_magnification(self, z):
         """Weyl GC magnification: multiply by growth_factor (normalized to z_ini) once."""
         growth_factor = (
-            self.perturbations.growth_factor(z, np.array([0.01]))[:, 0]
+            self.perturbations.growth_factor(z, self.perturbations.k[:1])[:, 0]
             / self.perturbations.growth_factor(
-                np.array([self.z_ini]), np.array([0.01])
+                np.array([self.z_ini]), self.perturbations.k[:1]
             )[0, 0]
         )
 
@@ -159,9 +161,11 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         self.sigma8_ini = (
             self.perturbations.sigma8_0()
             * self.perturbations.growth_factor(
-                np.array([self.z_ini]), np.array([0.01])
+                np.array([self.z_ini]), self.perturbations.k[:1]
             )[0, 0]
-            / self.perturbations.growth_factor(np.array([0]), np.array([0.01]))[0, 0]
+            / self.perturbations.growth_factor(np.array([0]), self.perturbations.k[:1])[
+                0, 0
+            ]
         )
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z) in your scheme)
@@ -208,9 +212,9 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         """Override magnification window: include growth factor squared (Weyl-specific)."""
         # Weyl project: added growth factor normalized to its value at z_ini
         growth_factor = (
-            self.perturbations.growth_factor(z, np.array([0.01]))[:, 0]
+            self.perturbations.growth_factor(z, self.perturbations.k[:1])[:, 0]
             / self.perturbations.growth_factor(
-                np.array([self.z_ini]), np.array([0.01])
+                np.array([self.z_ini]), self.perturbations.k[:1]
             )[0, 0]
         )
 

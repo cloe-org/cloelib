@@ -212,66 +212,6 @@ class GaussianSelectionFunction:
             )
         return window_z_obs
 
-    def _window_richness_observed_richness_true(
-        self,
-        lambda_obs_edges,
-        l_m_tab_sig,
-        z_true,
-        lambda_true,
-    ):
-        r"""Compute the window function of each observed richness bin, given by:
-
-        ..math:
-            W_{\Delta\lambda_{\rm obs}}(\lambda_{\rm true}, z_{\rm true}) = \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs} P(\lambda_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
-
-        Parameters
-        ----------
-        lambda_obs_edges : numpy.ndarray
-            Edges of richness bins for the integration.
-        l_m_tab_sig : List, None
-            Number of points to be used for the lambda_obs integration
-            in each lambda_obs bin. Must be same size of lambda_obs_edges.
-        z_true : numpy.ndarray
-            True redshift to compute the window.
-        lambda_true : numpy.ndarray
-            True richness to compute the window.
-
-        Returns
-        -------
-        window_lambda_obs : numpy.ndarray
-            Integral of P(lambda_obs|\lambda_{\rm true}, z_true) in lambda_obs bins.
-            Dimensions: (lambda_obs_edges, z_true, \lambda_{\rm true}).
-        """
-
-        # if external_richness_selection_function == 'CG_ESF' :
-        #     window_lambda_obs  = self.int_Plobltr_Dlob[lambda_bin](self.tabulated_integrands["z_true"], self.tabulated_integrands["lambda_true"]).T
-
-        lambda_obs_edges_size = len(lambda_obs_edges) - 1
-        window_lambda_obs_lambda_true = np.zeros(
-            (
-                lambda_obs_edges_size,
-                z_true.size,
-                lambda_true.size,
-            )
-        )
-        for ind_lambda in range(lambda_obs_edges_size):
-            # integrate P(lambda_obs|lambda_true, z) in lambda_obs
-            l_tab = np.geomspace(
-                lambda_obs_edges[ind_lambda],
-                lambda_obs_edges[ind_lambda + 1],
-                l_m_tab_sig[ind_lambda],
-            )
-            window_lambda_obs_lambda_true[ind_lambda] = simps(
-                self._prob_lambda_obs(
-                    z_true,
-                    lambda_true,
-                    l_tab,
-                ),
-                x=l_tab,
-                axis=-1,
-            )
-        return window_lambda_obs_lambda_true
-
     def _window_richness_observed(
         self,
         lambda_obs_edges,
@@ -283,7 +223,11 @@ class GaussianSelectionFunction:
         r"""Compute the window function of each observed richness bin, given by:
 
         ..math:
-            W_{\Delta\lambda_{\rm obs}}(\lambda_{\rm true}, z_{\rm true}) = \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs} P(\lambda_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
+            W_{\Delta\lambda_{\rm obs}}(M, z_{\rm true}) =
+            \int_{0}^{\infty}d\lambda_{\rm true}
+            P(\lambda_{\rm true}|M, z_{\rm true})
+            \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs}
+            P(\lambda_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
 
         Parameters
         ----------
@@ -305,12 +249,37 @@ class GaussianSelectionFunction:
             Integral of P(lambda_obs|\lambda_{\rm true}, z_true) in lambda_obs bins.
             Dimensions: (lambda_obs_edges, z_true, \lambda_{\rm true}).
         """
-        windows_lambda_obs_lambda_true = self._window_richness_observed_richness_true(
-            lambda_obs_edges,
-            l_m_tab_sig,
-            z_true,
-            lambda_true,
+        ################################################
+        # Compute P(Delta lobs|ltrue, ztrue)
+        ################################################
+
+        windows_lambda_obs_lambda_true = np.zeros(
+            (
+                len(lambda_obs_edges) - 1,
+                z_true.size,
+                lambda_true.size,
+            )
         )
+        for ind_lambda in range(len(windows_lambda_obs_lambda_true)):
+            # integrate P(lambda_obs|lambda_true, z) in lambda_obs
+            l_tab = np.geomspace(
+                lambda_obs_edges[ind_lambda],
+                lambda_obs_edges[ind_lambda + 1],
+                l_m_tab_sig[ind_lambda],
+            )
+            windows_lambda_obs_lambda_true[ind_lambda] = simps(
+                self._prob_lambda_obs(
+                    z_true,
+                    lambda_true,
+                    l_tab,
+                ),
+                x=l_tab,
+                axis=-1,
+            )
+
+        ################################################
+        # Compute P(Delta lobs|mass, ztrue)
+        ################################################
         pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
             z_true, mass, lambda_true
         )

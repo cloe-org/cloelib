@@ -112,14 +112,14 @@ class InterpolatedSelectionFunction:
         # also gets which indices correspond to the originals
 
         sel_cl_data_fmt["z_obs"], zobs_orig_slice = self._expand_array(
-            self._sel_cl_data_original["z_obs"],
-            self._sel_cl_data_original["z_obs_step"],
+            self._sel_cl_data_original["arrays"]["z_obs"],
+            self._sel_cl_data_original["aux"]["z_obs_step"],
             sel_cl_data_fmt["z_obs_bin_edges"][0],
             sel_cl_data_fmt["z_obs_bin_edges"][-1],
         )
         sel_cl_data_fmt["lambda_obs"], lobs_orig_slice = self._expand_array(
-            self._sel_cl_data_original["lambda_obs"],
-            self._sel_cl_data_original["lambda_obs_step"],
+            self._sel_cl_data_original["arrays"]["lambda_obs"],
+            self._sel_cl_data_original["aux"]["lambda_obs_step"],
             sel_cl_data_fmt["lambda_obs_bin_edges"][0],
             sel_cl_data_fmt["lambda_obs_bin_edges"][-1],
         )
@@ -143,8 +143,8 @@ class InterpolatedSelectionFunction:
         ]
 
         # Keep true values
-        sel_cl_data_fmt["z_true"] = self._sel_cl_data_original["z_true"]
-        sel_cl_data_fmt["lambda_true"] = self._sel_cl_data_original["lambda_true"]
+        sel_cl_data_fmt["z_true"] = self._sel_cl_data_original["arrays"]["z_true"]
+        sel_cl_data_fmt["lambda_true"] = self._sel_cl_data_original["arrays"]["lambda_true"]
 
         ################
         # Reshape tables
@@ -152,7 +152,7 @@ class InterpolatedSelectionFunction:
 
         # Keep completeness shape
         sel_cl_data_fmt["completeness"] = np.array(
-            [comp.copy() for comp in self._sel_cl_data_original["completeness"]]
+            [comp.copy() for comp in self._sel_cl_data_original["tables"]["completeness"]]
         )
 
         # reshape purity and seL_func
@@ -160,16 +160,16 @@ class InterpolatedSelectionFunction:
         # initialize with zeros
         sel_cl_data_fmt["prob_lambda_z_obs"] = np.zeros(
             (
-                len(self._sel_cl_data_original["prob_lambda_z_obs"]),
-                len(self._sel_cl_data_original["lambda_true"]),
-                len(self._sel_cl_data_original["z_true"]),
+                len(self._sel_cl_data_original["tables"]["prob_lambda_z_obs"]),
+                len(self._sel_cl_data_original["arrays"]["lambda_true"]),
+                len(self._sel_cl_data_original["arrays"]["z_true"]),
                 len(sel_cl_data_fmt["lambda_obs"]),
                 len(sel_cl_data_fmt["z_obs"]),
             )
         )
         sel_cl_data_fmt["purity"] = np.zeros(
             (
-                len(self._sel_cl_data_original["prob_lambda_z_obs"]),
+                len(self._sel_cl_data_original["tables"]["prob_lambda_z_obs"]),
                 len(sel_cl_data_fmt["lambda_obs"]),
                 len(sel_cl_data_fmt["z_obs"]),
             )
@@ -187,8 +187,8 @@ class InterpolatedSelectionFunction:
         ##################
         # Keep area values
         ##################
-        sel_cl_data_fmt["area_tile"] = self._sel_cl_data_original["area_tile"].copy()
-        sel_cl_data_fmt["Omega_tot"] = self._sel_cl_data_original["Omega_tot"]
+        sel_cl_data_fmt["area_tile"] = self._sel_cl_data_original["aux"]["area_tile"].copy()
+        sel_cl_data_fmt["Omega_tot"] = self._sel_cl_data_original["aux"]["Omega_tot"]
 
         #################################################################################
         # Compute Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
@@ -473,16 +473,16 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
     file_selection = fits.open(sel_cl_filename)
 
     # dictionary to store all outputs
-    sel_cl_data = {}
+    sel_cl_data = {"arrays":{}, "tables":{}, "aux":{}}
     for i, name in enumerate(["Z_OBS", "LAMBDA_OBS", "Z_TRUE", "LAMBDA_TRUE"]):
-        sel_cl_data[name.lower()] = np.linspace(
+        sel_cl_data["arrays"][name.lower()] = np.linspace(
             file_selection[1].header[f"HIERARCH {name}_START"],
             file_selection[1].header[f"HIERARCH {name}_END"],
             file_selection[1].header[f"NAXIS{i+1}"],
             endpoint=True,
         )
     for name in ["Z_OBS", "LAMBDA_OBS"]:
-        sel_cl_data[f"{name.lower()}_step"] = file_selection[1].header[
+        sel_cl_data["aux"][f"{name.lower()}_step"] = file_selection[1].header[
             f"HIERARCH {name}_STEP"
         ]
 
@@ -507,19 +507,19 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
         ("completeness", "COMP_LAMBDA_Z_TRUE_TRUE_"),
         ("purity", "PURITY_LAMBDA_Z_OBS_OBS_"),
     ):
-        sel_cl_data[name] = np.array(
+        sel_cl_data["tables"][name] = np.array(
             [get_hdu(f"{extname_pref}{it}").data for it in range(n_tiles)]
         )
 
     ## Tile areas
-    sel_cl_data["area_tile"] = np.array(
+    sel_cl_data["aux"]["area_tile"] = np.array(
         [
             get_hdu(f"AREA_{it}").header["HIERARCH EFFECTIVE_AREA"]
             for it in range(n_tiles)
         ]
     )
 
-    sel_cl_data["Omega_tot"] = sel_cl_data["area_tile"].sum()
+    sel_cl_data["aux"]["Omega_tot"] = sel_cl_data["aux"]["area_tile"].sum()
 
     return sel_cl_data
 

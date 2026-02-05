@@ -249,10 +249,10 @@ class CLASSBackground:
             (np.ndarray): Matter density values.
         """
         try:
-            Omegam_0 = np.array([self.results.Om_m(z) for z in zs])
+            Omegam = np.array([self.results.Om_m(z) for z in zs])
         except TypeError:
-            Omegam_0 = self.results.Om_m(zs)
-        return Omegam_0
+            Omegam = self.results.Om_m(zs)
+        return Omegam
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -265,10 +265,10 @@ class CLASSBackground:
             (np.ndarray): Matter density values.
         """
         try:
-            Omegab_0 = np.array([self.results.Om_b(z) for z in zs])
+            Omegab = np.array([self.results.Om_b(z) for z in zs])
         except TypeError:
-            Omegab_0 = self.results.Om_b(zs)
-        return Omegab_0
+            Omegab = self.results.Om_b(zs)
+        return Omegab
 
     @property
     def rdrag(self) -> float:

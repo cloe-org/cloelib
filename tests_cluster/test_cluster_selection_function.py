@@ -157,6 +157,7 @@ def test_interpolated_selectionfunction():
             sig_C_l=None,
         ),
         sel_cl_data=sel_cl_data,
+        prob_contains_completeness=False,
     )
     interps = sfi._build_windows_interpolators()
 

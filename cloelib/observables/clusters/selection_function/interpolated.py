@@ -17,6 +17,7 @@ class InterpolatedSelectionFunction:
         self,
         lambda_true_distribution: LambdaTrueDistribution,
         sel_cl_data=None,
+        prob_contains_completeness=True,
     ):
         r"""
         Class defining the selection function of galaxy clusters, including
@@ -49,9 +50,13 @@ class InterpolatedSelectionFunction:
                 * area_tile: xxx
                 * Omega_tot: xxx
 
+        prob_contains_completeness : bool
+            If sel_cl_data["prob_lambda_z_obs"] already accounts for the completeness.
+
         """
         self.lambda_true_distribution = lambda_true_distribution
         self._sel_cl_data_original = sel_cl_data
+        self.prob_contains_completeness = prob_contains_completeness
 
     def _get_sel_cl_data_formatted_with_obs_bins(self, lambda_obs_edges, z_obs_edges):
         """Format SEL_CL data with obs bins.
@@ -200,9 +205,12 @@ class InterpolatedSelectionFunction:
         sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = (
             sel_cl_data_fmt["area_tile"][:, None, None, None, None]
             * sel_cl_data_fmt["prob_lambda_z_obs"]
-            * sel_cl_data_fmt["completeness"][:, :, :, None, None]
             / pur_reshaped
         )
+        if not self.prob_contains_completeness:
+            sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] *= sel_cl_data_fmt["completeness"][
+                :, :, :, None, None
+            ]
         ## or do we want to put the division to 0? If YES:
         ##  sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = (
         ##    np.where(pur_reshaped != 0, sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"], 0.0)

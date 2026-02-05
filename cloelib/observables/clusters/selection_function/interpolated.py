@@ -565,57 +565,16 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
 
 if __name__ == "__main__":
 
-    # lambda_obs_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
-    # z_obs_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
-    print("Test with mock data")
-
-    sel_cl_data = {
-        "z_obs": np.linspace(0.3, 1.5, 25),
-        "lambda_obs": np.linspace(25, 200, 27),
-        "z_true": np.linspace(0, 3, 31),
-        "lambda_true": np.linspace(5, 300, 29),
-    }
-    sel_cl_data["z_obs_step"] = (
-        sel_cl_data["z_obs"][1:] - sel_cl_data["z_obs"][:-1]
-    ).mean()
-    sel_cl_data["lambda_obs_step"] = (
-        sel_cl_data["lambda_obs"][1:] - sel_cl_data["lambda_obs"][:-1]
-    ).mean()
-
-    # tables
-
-    _rich_norm = lambda rich, z, rich_piv: rich / (rich_piv + z)
-    _cp_func = lambda rich, z, rich_piv: (
-        _rich_norm(rich, z, rich_piv) / (1 + _rich_norm(rich, z, rich_piv))
-    )
-    _prob_func = lambda ltr, lob, ztr, zob, lsig: np.exp(
-        -0.1 * ((ltr - lob) / lsig) ** 2 - (ztr - zob) ** 2
-    )
-
-    sel_cl_data["prob_lambda_z_obs"] = _prob_func(
-        sel_cl_data["lambda_obs"][None, None, None, :, None],
-        sel_cl_data["lambda_true"][None, :, None, None, None],
-        sel_cl_data["z_obs"][None, None, None, None, :],
-        sel_cl_data["z_true"][None, None, :, None, None],
-        np.array([10, 10, 10])[:, None, None, None, None],
-    )
-    sel_cl_data["completeness"] = _cp_func(
-        sel_cl_data["lambda_true"][None, :, None],
-        sel_cl_data["z_true"][None, None, :],
-        np.array([10, 15, 10])[:, None, None],
-    )
-    sel_cl_data["purity"] = _cp_func(
-        sel_cl_data["lambda_obs"][None, :, None],
-        sel_cl_data["z_obs"][None, None, :],
-        np.array([10, 10, 15])[:, None, None],
-    )
-
-    sel_cl_data["area_tile"] = np.array([8, 9, 10])
-    sel_cl_data["Omega_tot"] = sel_cl_data["area_tile"].sum()
-
+    # Read data
+    import sys
     from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
         LognormalPowerLawLambdaTrueDistribution,
     )
+
+    print("Test with SEL_CL data")
+    if len(sys.argv) == 1:
+        raise ValueError("Missing SEL_CL input file")
+    in_file = sys.argv[1]
 
     sfi = InterpolatedSelectionFunction(
         lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
@@ -626,32 +585,8 @@ if __name__ == "__main__":
             sig_B_l=None,
             sig_C_l=None,
         ),
-        sel_cl_data=sel_cl_data,
+        sel_cl_data=read_sel_cl_output(in_file, Omega_tot=None),
     )
+    sfi._build_windows_interpolators()
     interps = sfi._build_windows_interpolators()
     print(interps[1][1]([10, 20, 30, 40], [0.3, 0.31]))
-
-    # Read data
-    import sys
-    from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
-        LognormalPowerLawLambdaTrueDistribution,
-    )
-
-    if len(sys.argv) > 1:
-        print("Test with SEL_CL data")
-        in_file = sys.argv[1]
-
-        sfi = InterpolatedSelectionFunction(
-            lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
-                A_l=None,
-                B_l=None,
-                C_l=None,
-                sig_A_l=None,
-                sig_B_l=None,
-                sig_C_l=None,
-            ),
-            sel_cl_data=read_sel_cl_output(in_file, Omega_tot=None),
-        )
-        sfi._build_windows_interpolators()
-        interps = sfi._build_windows_interpolators()
-        print(interps[1][1]([10, 20, 30, 40], [0.3, 0.31]))

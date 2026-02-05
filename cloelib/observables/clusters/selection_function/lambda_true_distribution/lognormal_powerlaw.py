@@ -43,7 +43,6 @@ class LognormalPowerLawLambdaTrueDistribution:
         self.M_piv = M_piv
         self.z_piv = z_piv
 
-        self.tabulate_prob_richness = tabulate_prob_richness
         # to avoid recomputing prob_richness
         self._tabulated_prob_richness_args = {
             "M": None,
@@ -175,9 +174,7 @@ class LognormalPowerLawLambdaTrueDistribution:
             prob_richness[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
-        if not self.tabulate_prob_richness or not self._are_args_tabulated(
-            z, M, lambda_true
-        ):
+        if not self._are_args_tabulated(z, M, lambda_true):
             self._tabulated_prob_richness_args["M"] = M
             self._tabulated_prob_richness_args["z"] = z
             self._tabulated_prob_richness_args["lambda_true"] = lambda_true

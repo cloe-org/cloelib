@@ -1,5 +1,3 @@
-## LAST UPDATE 12/09/2025
-## as of now, the class is only including functions needed for this specific implementation
 # General imports
 import jax.numpy as np  # type: ignore
 import numpy as np  # type: ignore
@@ -38,15 +36,18 @@ class InterpolatedSelectionFunction:
         sel_cl_data: dict
             Object that read the SEL_CL output file and formats its accordingly. It must contain the keys:
 
-                * z_obs: xxx
-                * lambda_obs: xxx
-                * z_true: xxx
-                * lambda_true: xxx
-                * z_obs_step: xxx
-                * lambda_obs_step: xxx
-                * prob_lambda_z_obs: xxx
-                * completeness: xxx
-                * purity: xxx
+                * arrays:
+                    * z_obs: xxx
+                    * lambda_obs: xxx
+                    * z_true: xxx
+                    * lambda_true: xxx
+                * tables:
+                    * prob_lambda_z_obs: xxx
+                    * completeness: xxx
+                    * purity: xxx
+                * aux:
+                    * z_obs_step: xxx
+                    * lambda_obs_step: xxx
                 * area_tile: xxx
                 * Omega_tot: xxx
 
@@ -83,112 +84,114 @@ class InterpolatedSelectionFunction:
         sel_cl_data_fmt: dict
             SEL_CL data reshaped with obs bins
 
+                * arrays:
+                    * z_obs: xxx
+                    * lambda_obs: xxx
+                    * z_true: xxx
+                    * lambda_true: xxx
+                * tables:
+                    * prob_lambda_z_obs: xxx
+                    * completeness: xxx
+                    * purity: xxx
+                    * I_ltr_ztr_lobs_lobs: xxx
+                * obs_bins_slices:
+                    * z: xxx
+                    * lambda: xxx
+                * area_tile: xxx
+                * Omega_tot: xxx
+
         Note
         ----
             It assumes all tiles have the same ranges and binning!
         """
         # list explicitly all values that will be filled:
         sel_cl_data_fmt = {
-            "z_obs": None,
-            "lambda_obs": None,
-            "z_true": None,
-            "lambda_true": None,
-            "lambda_obs_slices": None,
-            "z_obs_slices": None,
-            "prob_lambda_z_obs": None,
-            "purity": None,
-            "completeness": None,
-            "I_ltr_ztr_lobs_lobs": None,
+            "arrays": {
+                "z_obs": None,
+                "lambda_obs": None,
+                "z_true": None,
+                "lambda_true": None,
+            },
+            "tables": {
+                "prob_lambda_z_obs": None,
+                "purity": None,
+                "completeness": None,
+                "I_ltr_ztr_lobs_lobs": None,
+            },
             "area_tile": None,
             "Omega_tot": None,
-            "lambda_obs_bin_edges": lambda_obs_edges,
-            "z_obs_bin_edges": z_obs_edges,
+            "obs_bins_slices": {
+                "lambda": None,
+                "z": None,
+            },
         }
+
+        ##################
+        # Keep area values
+        ##################
+        sel_cl_data_fmt["area_tile"] = self._sel_cl_data_original["area_tile"]
+        sel_cl_data_fmt["Omega_tot"] = self._sel_cl_data_original["Omega_tot"]
 
         ################
         # Reshape arrays
         ################
 
-        # also gets which indices correspond to the originals
+        # Keep true values
+        sel_cl_data_fmt["arrays"]["z_true"] = self._sel_cl_data_original["arrays"][
+            "z_true"
+        ]
+        sel_cl_data_fmt["arrays"]["lambda_true"] = self._sel_cl_data_original["arrays"][
+            "lambda_true"
+        ]
 
-        sel_cl_data_fmt["z_obs"], zobs_orig_slice = self._expand_array(
+        # reshape obs and gets which slices correspond to the originals
+        sel_cl_data_fmt["arrays"]["z_obs"], zobs_orig_slice = self._expand_array(
             self._sel_cl_data_original["arrays"]["z_obs"],
             self._sel_cl_data_original["aux"]["z_obs_step"],
-            sel_cl_data_fmt["z_obs_bin_edges"][0],
-            sel_cl_data_fmt["z_obs_bin_edges"][-1],
+            z_obs_edges[0],
+            z_obs_edges[-1],
         )
-        sel_cl_data_fmt["lambda_obs"], lobs_orig_slice = self._expand_array(
+        sel_cl_data_fmt["arrays"]["lambda_obs"], lobs_orig_slice = self._expand_array(
             self._sel_cl_data_original["arrays"]["lambda_obs"],
             self._sel_cl_data_original["aux"]["lambda_obs_step"],
-            sel_cl_data_fmt["lambda_obs_bin_edges"][0],
-            sel_cl_data_fmt["lambda_obs_bin_edges"][-1],
+            lambda_obs_edges[0],
+            lambda_obs_edges[-1],
         )
-
-        ## Find slices that return the correct range for each obs bins
-        _index_lambda_obs_edges = [
-            np.abs(sel_cl_data_fmt["lambda_obs"] - value).argmin()
-            for value in sel_cl_data_fmt["lambda_obs_bin_edges"]
-        ]
-        sel_cl_data_fmt["lambda_obs_slices"] = [
-            slice(low, high)
-            for low, high in zip(_index_lambda_obs_edges, _index_lambda_obs_edges[1:])
-        ]
-        _index_z_obs_edges = [
-            np.abs(sel_cl_data_fmt["z_obs"] - value).argmin()
-            for value in sel_cl_data_fmt["z_obs_bin_edges"]
-        ]
-        sel_cl_data_fmt["z_obs_slices"] = [
-            slice(low, high)
-            for low, high in zip(_index_z_obs_edges, _index_z_obs_edges[1:])
-        ]
-
-        # Keep true values
-        sel_cl_data_fmt["z_true"] = self._sel_cl_data_original["arrays"]["z_true"]
-        sel_cl_data_fmt["lambda_true"] = self._sel_cl_data_original["arrays"]["lambda_true"]
 
         ################
         # Reshape tables
         ################
 
         # Keep completeness shape
-        sel_cl_data_fmt["completeness"] = np.array(
-            [comp.copy() for comp in self._sel_cl_data_original["tables"]["completeness"]]
-        )
+        sel_cl_data_fmt["tables"]["completeness"] = self._sel_cl_data_original[
+            "tables"
+        ]["completeness"]
 
-        # reshape purity and seL_func
-
-        # initialize with zeros
-        sel_cl_data_fmt["prob_lambda_z_obs"] = np.zeros(
+        # Re-arrange ranges for prob_lambda_z_obs
+        sel_cl_data_fmt["tables"]["prob_lambda_z_obs"] = np.zeros(
             (
-                len(self._sel_cl_data_original["tables"]["prob_lambda_z_obs"]),
-                len(self._sel_cl_data_original["arrays"]["lambda_true"]),
-                len(self._sel_cl_data_original["arrays"]["z_true"]),
-                len(sel_cl_data_fmt["lambda_obs"]),
-                len(sel_cl_data_fmt["z_obs"]),
+                sel_cl_data_fmt["area_tile"].size,
+                sel_cl_data_fmt["arrays"]["lambda_true"].size,
+                sel_cl_data_fmt["arrays"]["z_true"].size,
+                sel_cl_data_fmt["arrays"]["lambda_obs"].size,
+                sel_cl_data_fmt["arrays"]["z_obs"].size,
             )
         )
-        sel_cl_data_fmt["purity"] = np.zeros(
-            (
-                len(self._sel_cl_data_original["tables"]["prob_lambda_z_obs"]),
-                len(sel_cl_data_fmt["lambda_obs"]),
-                len(sel_cl_data_fmt["z_obs"]),
-            )
-        )
-
-        ## Re-arrange ranges for 4d array, to match the Obs NC ranges
-        sel_cl_data_fmt["prob_lambda_z_obs"][
+        sel_cl_data_fmt["tables"]["prob_lambda_z_obs"][
             :, :, :, lobs_orig_slice, zobs_orig_slice
-        ] = self._sel_cl_data_original[f"prob_lambda_z_obs"]
-        ## Re-arrange ranges Purity, to match the Obs NC ranges
-        sel_cl_data_fmt[f"purity"][:, lobs_orig_slice, zobs_orig_slice] = (
-            self._sel_cl_data_original[f"purity"]
-        )
+        ] = self._sel_cl_data_original["tables"]["prob_lambda_z_obs"]
 
-        ##################
-        # Keep area values
-        ##################
-        sel_cl_data_fmt["area_tile"] = self._sel_cl_data_original["aux"]["area_tile"].copy()
-        sel_cl_data_fmt["Omega_tot"] = self._sel_cl_data_original["aux"]["Omega_tot"]
+        # Re-arrange ranges for purity
+        sel_cl_data_fmt["tables"]["purity"] = np.zeros(
+            (
+                sel_cl_data_fmt["area_tile"].size,
+                sel_cl_data_fmt["arrays"]["lambda_obs"].size,
+                sel_cl_data_fmt["arrays"]["z_obs"].size,
+            )
+        )
+        sel_cl_data_fmt["tables"]["purity"][:, lobs_orig_slice, zobs_orig_slice] = (
+            self._sel_cl_data_original["tables"]["purity"]
+        )
 
         #################################################################################
         # Compute Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
@@ -200,32 +203,49 @@ class InterpolatedSelectionFunction:
         # ASSUMPTION: we do not need other rescaling for the effective area Omega_alpha.
 
         ## To avoid dividing by 0: putting elements with 0 values to NaN
-        pur_reshaped = sel_cl_data_fmt["purity"][:, None, None, :, :]
+        pur_reshaped = sel_cl_data_fmt["tables"]["purity"][:, None, None, :, :]
         pur_reshaped = np.where(pur_reshaped == 0, np.nan, pur_reshaped)
 
         # compute multiplication
-        sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = (
+        sel_cl_data_fmt["tables"]["I_ltr_ztr_lobs_lobs"] = (
             sel_cl_data_fmt["area_tile"][:, None, None, None, None]
-            * sel_cl_data_fmt["prob_lambda_z_obs"]
+            * sel_cl_data_fmt["tables"]["prob_lambda_z_obs"]
             / pur_reshaped
         )
         if not self.prob_contains_completeness:
-            sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] *= sel_cl_data_fmt["completeness"][
-                :, :, :, None, None
-            ]
+            sel_cl_data_fmt["tables"]["I_ltr_ztr_lobs_lobs"] *= sel_cl_data_fmt[
+                "tables"
+            ]["completeness"][:, :, :, None, None]
 
         ## Do we want to put the division to 0? If YES:
-        ## sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"] = (
-        ##   np.where(pur_reshaped != 0, sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"], 0.0)
+        ## sel_cl_data_fmt["tables"]["I_ltr_ztr_lobs_lobs"] = (
+        ##   np.where(pur_reshaped != 0, sel_cl_data_fmt["tables"]["I_ltr_ztr_lobs_lobs"], 0.0)
         ## )
+
+        ##################
+        # For integrations
+        ##################
+
+        # Find slices that return the correct range for each obs bins
+        _index_lambda_obs_edges = np.abs(
+            sel_cl_data_fmt["arrays"]["lambda_obs"][None, :]
+            - np.array(lambda_obs_edges)[:, None]
+        ).argmin(axis=1)
+        _index_z_obs_edges = np.abs(
+            sel_cl_data_fmt["arrays"]["z_obs"][None, :] - np.array(z_obs_edges)[:, None]
+        ).argmin(axis=1)
+        sel_cl_data_fmt["obs_bins_slices"]["lambda"] = [
+            slice(low, high)
+            for low, high in zip(_index_lambda_obs_edges, _index_lambda_obs_edges[1:])
+        ]
+        sel_cl_data_fmt["obs_bins_slices"]["z"] = [
+            slice(low, high)
+            for low, high in zip(_index_z_obs_edges, _index_z_obs_edges[1:])
+        ]
 
         return sel_cl_data_fmt
 
-    def _build_windows_interpolators(
-        self,
-        lambda_obs_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
-        z_obs_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
-    ):
+    def _build_windows_interpolators(self, lambda_obs_edges, z_obs_edges):
         r"""
         Selection Function from file.
         Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
@@ -253,49 +273,46 @@ class InterpolatedSelectionFunction:
         integ4d_interp_func: 2d interpolator
         """
 
-        ##################################
         # Format sel_cl data with obs bins
-        ##################################
+
         sel_cl_data_fmt = self._reshape_data_with_obs_bins(
             lambda_obs_edges, z_obs_edges
         )
 
-        ##########################################################
-        ## Integrate sum_a/Omega_tot = tildeI(λtr,ztr,∆λobs,∆zobs)
-        ##########################################################
-        integ4d = np.zeros(
-            (
-                len(sel_cl_data_fmt["lambda_obs_bin_edges"]) - 1,
-                len(sel_cl_data_fmt["z_obs_bin_edges"]) - 1,
-                len(sel_cl_data_fmt["lambda_true"]),
-                len(sel_cl_data_fmt["z_true"]),
-            )
-        )
+        # Integrate sum_a/Omega_tot = tildeI(λtr,ztr,∆λobs,∆zobs)
 
         tilde_I = (
-            sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"].sum(axis=0)
+            sel_cl_data_fmt["tables"]["I_ltr_ztr_lobs_lobs"].sum(axis=0)
             / sel_cl_data_fmt["Omega_tot"]
         )
-        for ltab, l_slice in enumerate(sel_cl_data_fmt["lambda_obs_slices"]):
-            for ztab, z_slice in enumerate(sel_cl_data_fmt["z_obs_slices"]):
+
+        integ4d = np.zeros(
+            (
+                len(lambda_obs_edges) - 1,
+                len(z_obs_edges) - 1,
+                len(sel_cl_data_fmt["arrays"]["lambda_true"]),
+                len(sel_cl_data_fmt["arrays"]["z_true"]),
+            )
+        )
+        for ltab, l_slice in enumerate(sel_cl_data_fmt["obs_bins_slices"]["lambda"]):
+            for ztab, z_slice in enumerate(sel_cl_data_fmt["obs_bins_slices"]["z"]):
                 integ4d[ltab, ztab, :, :] = integrate.simpson(
                     integrate.simpson(
                         tilde_I[:, :, l_slice, z_slice],
-                        x=sel_cl_data_fmt["z_obs"][z_slice],
+                        x=sel_cl_data_fmt["arrays"]["z_obs"][z_slice],
                         axis=-1,
                     ),
-                    x=sel_cl_data_fmt["lambda_obs"][l_slice],
+                    x=sel_cl_data_fmt["arrays"]["lambda_obs"][l_slice],
                     axis=-1,
                 )
 
-        ##################################
         # build interpolator
-        ##################################
+
         integ4d_interp_func = [
             [
                 interpolate.RectBivariateSpline(
-                    sel_cl_data_fmt["lambda_true"],
-                    sel_cl_data_fmt["z_true"],
+                    sel_cl_data_fmt["arrays"]["lambda_true"],
+                    sel_cl_data_fmt["arrays"]["z_true"],
                     integ4d_lobs_zobs,
                 )
                 for integ4d_lobs_zobs in integ4d_lobs
@@ -306,11 +323,7 @@ class InterpolatedSelectionFunction:
         return integ4d_interp_func
 
     def window_redshift_richness_observed(
-        self,
-        z_obs_edges,
-        lambda_obs_edges,
-        z_true,
-        lambda_true,
+        self, z_obs_edges, lambda_obs_edges, z_true, lambda_true
     ):
         r"""
         Computes the window function for observed redshift and richness bins, i. e.:
@@ -360,12 +373,11 @@ class InterpolatedSelectionFunction:
         integ4d_interp_func = self._build_windows_interpolators(
             lambda_obs_edges, z_obs_edges
         )
-        for i, integ4d_lobs in enumerate(integ4d_interp_func):
-            for j, integ4d_lobs_zobs in enumerate(integ4d_lobs):
-                window_lambda_true[i, j] = integ4d_lobs_zobs(lambda_true, z_true)
-        # fix order of axes
+        for ltab, integ4d_lobs in enumerate(integ4d_interp_func):
+            for ztab, integ4d_lobs_zobs in enumerate(integ4d_lobs):
+                window_lambda_true[ltab, ztab] = integ4d_lobs_zobs(lambda_true, z_true)
+        # fix order of axes -> (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         window_lambda_true = window_lambda_true.transpose(1, 0, 3, 2)
-        # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
 
         ################################################
         # Compute P(Delta lobs, Delta zobs|mass, ztrue)
@@ -389,12 +401,7 @@ class InterpolatedSelectionFunction:
     #######
 
     @staticmethod
-    def _expand_array(
-        array,
-        array_step,
-        lower_value,
-        upper_value,
-    ):
+    def _expand_array(array, array_step, lower_value, upper_value):
         """
         Expands lower/upper boundaries of array.
 
@@ -418,21 +425,14 @@ class InterpolatedSelectionFunction:
             ``array == array_new[recover_original]``
         """
         upper_addition = np.arange(
-            array[-1] + array_step,
-            upper_value + array_step,
-            array_step,
+            array[-1] + array_step, upper_value + array_step, array_step
         )
         # tick here: make a decreasing array and flip it
         lower_addition = np.arange(
-            array[0] - array_step,
-            lower_value - array_step,
-            -array_step,
+            array[0] - array_step, lower_value - array_step, -array_step
         )[::-1]
 
-        array_new = np.append(
-            lower_addition,
-            np.append(array, upper_addition),
-        )
+        array_new = np.append(lower_addition, np.append(array, upper_addition))
         recover_original = slice(lower_addition.size, lower_addition.size + array.size)
 
         return array_new, recover_original
@@ -452,19 +452,22 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
     Returns
     -------
     sel_cl_data: dict
-        Object that read the SEL_CL output file and formats its accordingly. It must contain the keys:
+        Object that read the SEL_CL output file and formats its accordingly. It will contain the keys:
 
-            * z_obs: xxx
-            * lambda_obs: xxx
-            * z_true: xxx
-            * lambda_true: xxx
-            * z_obs_step: xxx
-            * lambda_obs_step: xxx
-            * prob_lambda_z_obs: xxx
-            * completeness: xxx
-            * purity: xxx
-            * area_tile: xxx
-            * Omega_tot: xxx
+                * arrays:
+                    * z_obs: xxx
+                    * lambda_obs: xxx
+                    * z_true: xxx
+                    * lambda_true: xxx
+                * tables:
+                    * prob_lambda_z_obs: xxx
+                    * completeness: xxx
+                    * purity: xxx
+                * aux:
+                    * z_obs_step: xxx
+                    * lambda_obs_step: xxx
+                * area_tile: xxx
+                * Omega_tot: xxx
     """
 
     # To be adapted with fitsio - f = fitsio.FITS("your_file.fits")
@@ -473,20 +476,25 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
     file_selection = fits.open(sel_cl_filename)
 
     # dictionary to store all outputs
-    sel_cl_data = {"arrays":{}, "tables":{}, "aux":{}}
-    for i, name in enumerate(["Z_OBS", "LAMBDA_OBS", "Z_TRUE", "LAMBDA_TRUE"]):
-        sel_cl_data["arrays"][name.lower()] = np.linspace(
+    sel_cl_data = {}
+
+    ############
+    # get arrays
+    ############
+
+    sel_cl_data["arrays"] = {
+        name.lower(): np.linspace(
             file_selection[1].header[f"HIERARCH {name}_START"],
             file_selection[1].header[f"HIERARCH {name}_END"],
             file_selection[1].header[f"NAXIS{i+1}"],
             endpoint=True,
         )
-    for name in ["Z_OBS", "LAMBDA_OBS"]:
-        sel_cl_data["aux"][f"{name.lower()}_step"] = file_selection[1].header[
-            f"HIERARCH {name}_STEP"
-        ]
+        for name in ("Z_OBS", "LAMBDA_OBS", "Z_TRUE", "LAMBDA_TRUE")
+    }
 
-    # Add selection tables per tile
+    ############
+    # get tables
+    ############
 
     def get_hdu(extname):
         for hdu in file_selection:
@@ -494,32 +502,40 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
                 return hdu
         raise ValueError(f"Missing EXTNAME={extname} hdu from SEL_CL file!")
 
-    ## Find number of tiles from fits file
+    # Find number of tiles from fits file
     # this number will eventually be at file_selection[0].header
-    _num_headers = len(file_selection)
-    n_tiles = int((_num_headers - 1) / 7)
+    n_tiles = int((len(file_selection) - 1) / 7)
 
-    ## np.shape(sel_cl_data["prob_lambda_z_obs"]): (ltr, ztr, lobs, zobs)
-    ## np.shape(sel_cl_data["completeness"]): (ltr, ztr)
-    ## np.shape(sel_cl_data["purity"]): (lobs, zobs)
-    for name, extname_pref in (
-        ("prob_lambda_z_obs", "PROB_LAMBDA_Z_OBS_TRUE_"),
-        ("completeness", "COMP_LAMBDA_Z_TRUE_TRUE_"),
-        ("purity", "PURITY_LAMBDA_Z_OBS_OBS_"),
-    ):
-        sel_cl_data["tables"][name] = np.array(
-            [get_hdu(f"{extname_pref}{it}").data for it in range(n_tiles)]
+    sel_cl_data["tables"] = {
+        name: np.array([get_hdu(f"{extname_pref}{it}").data for it in range(n_tiles)])
+        for name, extname_pref in (
+            ("prob_lambda_z_obs", "PROB_LAMBDA_Z_OBS_TRUE_"),  # (ltr, ztr, lobs, zobs)
+            ("completeness", "COMP_LAMBDA_Z_TRUE_TRUE_"),  # (ltr, ztr)
+            ("purity", "PURITY_LAMBDA_Z_OBS_OBS_"),  # (lobs, zobs)
         )
+    }
 
-    ## Tile areas
-    sel_cl_data["aux"]["area_tile"] = np.array(
+    ##########
+    # aux data
+    ##########
+
+    # step size of obs quantities
+    sel_cl_data["aux"] = {
+        f"{name.lower()}_step": file_selection[1].header[f"HIERARCH {name}_STEP"]
+        for name in ["Z_OBS", "LAMBDA_OBS"]
+    }
+
+    # Tile areas
+    sel_cl_data["area_tile"] = np.array(
         [
             get_hdu(f"AREA_{it}").header["HIERARCH EFFECTIVE_AREA"]
             for it in range(n_tiles)
         ]
     )
 
-    sel_cl_data["aux"]["Omega_tot"] = sel_cl_data["aux"]["area_tile"].sum()
+    if Omega_tot is None:
+        Omega_tot = sel_cl_data["area_tile"].sum()
+    sel_cl_data["Omega_tot"] = Omega_tot
 
     return sel_cl_data
 
@@ -548,6 +564,8 @@ if __name__ == "__main__":
         ),
         sel_cl_data=read_sel_cl_output(in_file, Omega_tot=None),
     )
-    sfi._build_windows_interpolators()
-    interps = sfi._build_windows_interpolators()
+    interps = sfi._build_windows_interpolators(
+        lambda_obs_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
+        z_obs_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
+    )
     print(interps[1][1]([10, 20, 30, 40], [0.3, 0.31]))

@@ -252,11 +252,9 @@ class InterpolatedSelectionFunction:
             lambda_obs_edges, z_obs_edges
         )
 
-        ##################################
-        ## Integrate 1/Omega_tot*sum_a = tildeI(λtr,ztr,∆λobs,∆zobs)
-        ##################################
-        sum_a = sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"].sum(axis=0)
-
+        ##########################################################
+        ## Integrate sum_a/Omega_tot = tildeI(λtr,ztr,∆λobs,∆zobs)
+        ##########################################################
         integ4d = np.zeros(
             (
                 len(sel_cl_data_fmt["lambda_obs_edges"]) - 1,
@@ -266,6 +264,10 @@ class InterpolatedSelectionFunction:
             )
         )
 
+        tilde_I = (
+            sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"].sum(axis=0)
+            / sel_cl_data_fmt["Omega_tot"]
+        )
         for ltab in range(integ4d.shape[0]):
             l_start, l_end = sel_cl_data_fmt["index_lambda_obs_edges"][ltab : ltab + 2]
             lint = sel_cl_data_fmt["lambda_obs"][l_start:l_end]
@@ -274,10 +276,7 @@ class InterpolatedSelectionFunction:
                 z_start, z_end = sel_cl_data_fmt["index_z_obs_edges"][ztab : ztab + 2]
                 zint = sel_cl_data_fmt["z_obs"][z_start:z_end]
 
-                integrand = (
-                    sum_a[:, :, l_start:l_end, z_start:z_end]
-                    / sel_cl_data_fmt["Omega_tot"]
-                )
+                integrand = tilde_I[:, :, l_start:l_end, z_start:z_end]
                 result_z = integrate.simpson(integrand, x=zint, axis=-1)
                 result_l = integrate.simpson(result_z, x=lint, axis=-1)
                 integ4d[ltab, ztab, :, :] = result_l

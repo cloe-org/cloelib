@@ -588,25 +588,16 @@ if __name__ == "__main__":
     _cp_func = lambda rich, z, rich_piv: (
         _rich_norm(rich, z, rich_piv) / (1 + _rich_norm(rich, z, rich_piv))
     )
+    _prob_func = lambda ltr, lob, ztr, zob, lsig: np.exp(
+        -0.1 * ((ltr - lob) / lsig) ** 2 - (ztr - zob) ** 2
+    )
 
-    sel_cl_data["prob_lambda_z_obs"] = np.exp(
-        -(
-            (
-                (
-                    sel_cl_data["lambda_obs"][None, None, :, None]
-                    - sel_cl_data["lambda_true"][:, None, None, None]
-                )[None, ...]
-                / np.array([10, 10, 10])[:, None, None, None, None]
-            )
-            ** 2
-        )
-        - (
-            (
-                sel_cl_data["z_obs"][None, None, None, :]
-                - sel_cl_data["z_true"][None, :, None, None]
-            )[None, ...]
-        )
-        ** 2
+    sel_cl_data["prob_lambda_z_obs"] = _prob_func(
+        sel_cl_data["lambda_obs"][None, None, None, :, None],
+        sel_cl_data["lambda_true"][None, :, None, None, None],
+        sel_cl_data["z_obs"][None, None, None, None, :],
+        sel_cl_data["z_true"][None, None, :, None, None],
+        np.array([10, 10, 10])[:, None, None, None, None],
     )
     sel_cl_data["completeness"] = _cp_func(
         sel_cl_data["lambda_true"][None, :, None],

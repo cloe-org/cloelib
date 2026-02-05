@@ -357,66 +357,32 @@ class InterpolatedSelectionFunction:
     #######
 
     @staticmethod
-    def _normalize_array(
-        array,
-        normalization,
-    ):
-        """Safe normalization (does not explode at norm=0).
-
-        Parameters
-        ----------
-        array : numpy.nparray
-            Array to be normalized
-        normalization : numpy.nparray
-            Normalization values, must have shape = array.shape[:-1]
-
-
-        Returns
-        -------
-        norm_array : numpy.ndarray
-            Normalized array
-        """
-        norm_array = np.zeros_like(array, dtype=float)
-        norm_array = np.divide(
-            array,
-            normalization[..., np.newaxis],
-            out=norm_array,
-            where=normalization[..., np.newaxis] != 0,
-        )
-        return norm_array
-
-    @staticmethod
     def _redefine_array_with_obs_bins(
         original_array,
         original_array_step,
         obs_bins,
     ):
-        ## max(original_array) might be < max(obs_bins)
-        if original_array[-1] < obs_bins[-1]:
-            n_new = int((obs_bins[-1] - original_array[-1]) / original_array_step)
-            array_added = np.linspace(
-                original_array[-1] + original_array_step,
-                obs_bins[-1],
-                n_new,
-                endpoint=True,
-            )
-            array_tot_high = np.concatenate((original_array, array_added), axis=0)
-        else:
-            array_tot_high = original_array
-        ## min(original_array) might be > min(obs_bins)
-        if original_array[0] > obs_bins[0]:
-            n_new = int((original_array[0] - obs_bins[0]) / original_array_step)
-            array_added = np.linspace(
-                obs_bins[0],
-                original_array[0] - original_array_step,
-                n_new,
-                endpoint=True,
-            )
-            array_new = np.concatenate((array_added, array_tot_high), axis=0)
-            size_add_min = n_new
-        else:
-            array_new = array_tot_high
-            size_add_min = 0
+        """
+        Adds lower/upper points to original array if obs bins
+        covers a larger range.
+        """
+        upper_addition = np.arange(
+            original_array[-1] + original_array_step,
+            obs_bins[-1] + original_array_step,
+            original_array_step,
+        )
+        # tick here: make a decreasing array and flip it
+        lower_addition = np.arange(
+            original_array[0] - original_array_step,
+            obs_bins[0] - original_array_step,
+            -original_array_step,
+        )[::-1]
+
+        array_new = np.append(
+            lower_addition,
+            np.append(original_array, upper_addition),
+        )
+        size_add_min = lower_addition.size
 
         return array_new, size_add_min
 

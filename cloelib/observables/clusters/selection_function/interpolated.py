@@ -168,9 +168,9 @@ class InterpolatedSelectionFunction:
         )
 
         ## Re-arrange ranges for 4d array, to match the Obs NC ranges
-        sel_cl_data_fmt["prob_lambda_z_obs"][:, :, :, lobs_orig_slice, zobs_orig_slice] = (
-            self._sel_cl_data_original[f"prob_lambda_z_obs"]
-        )
+        sel_cl_data_fmt["prob_lambda_z_obs"][
+            :, :, :, lobs_orig_slice, zobs_orig_slice
+        ] = self._sel_cl_data_original[f"prob_lambda_z_obs"]
         ## Re-arrange ranges Purity, to match the Obs NC ranges
         sel_cl_data_fmt[f"purity"][:, lobs_orig_slice, zobs_orig_slice] = (
             self._sel_cl_data_original[f"purity"]
@@ -527,36 +527,37 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
 
     # Add selection tables per tile
 
-    ## Start loop on the tiles, to: -----------------------------------------------------------
-    ## extraxt 4d array, Completeness and Purity for the fits file
+    def get_hdu(extname):
+        for hdu in file_selection:
+            if hdu.header.get("EXTNAME") == extname:
+                return hdu
+        raise ValueError(f"Missing EXTNAME={extname} hdu from SEL_CL file!")
 
     ## Find number of tiles from fits file
-    num_headers = len(file_selection)
-    n_tiles = int((num_headers - 1) / 7)
+    # this number will eventually be at file_selection[0].header
+    _num_headers = len(file_selection)
+    n_tiles = int((_num_headers - 1) / 7)
 
-    ## Index of P_4d, Compl and Pur for each tile
-    ## Select index to read 4d array, completeness and purity for the different tiles
-    ## Save 4d array, Completeness and Purity for each tile
     ## np.shape(sel_cl_data["prob_lambda_z_obs"]): (ltr, ztr, lobs, zobs)
     ## np.shape(sel_cl_data["completeness"]): (ltr, ztr)
     ## np.shape(sel_cl_data["purity"]): (lobs, zobs)
-
-    for name, first_ind in (
-        ("prob_lambda_z_obs", 1),
-        ("completeness", 1 + 2 * n_tiles),
-        ("purity", 1 + 4 * n_tiles),
+    for name, extname_pref in (
+        ("prob_lambda_z_obs", "PROB_LAMBDA_Z_OBS_TRUE_"),
+        ("completeness", "COMP_LAMBDA_Z_TRUE_TRUE_"),
+        ("purity", "PURITY_LAMBDA_Z_OBS_OBS_"),
     ):
         sel_cl_data[name] = np.array(
-            [file_selection[first_ind + it].data for it in range(n_tiles)]
+            [get_hdu(f"{extname_pref}{it}").data for it in range(n_tiles)]
         )
 
     ## Tile areas
     sel_cl_data["area_tile"] = np.array(
         [
-            file_selection[1 + 6 * n_tiles + it].header["HIERARCH EFFECTIVE_AREA"]
+            get_hdu(f"AREA_{it}").header["HIERARCH EFFECTIVE_AREA"]
             for it in range(n_tiles)
         ]
     )
+
     sel_cl_data["Omega_tot"] = sel_cl_data["area_tile"].sum()
 
     return sel_cl_data
@@ -641,18 +642,23 @@ if __name__ == "__main__":
 
     # Read data
     import sys
+    from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
+        LognormalPowerLawLambdaTrueDistribution,
+    )
 
     if len(sys.argv) > 1:
         print("Test with SEL_CL data")
         in_file = sys.argv[1]
 
         sfi = InterpolatedSelectionFunction(
-            A_l=None,
-            B_l=None,
-            C_l=None,
-            sig_A_l=None,
-            sig_B_l=None,
-            sig_C_l=None,
+            lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
+                A_l=None,
+                B_l=None,
+                C_l=None,
+                sig_A_l=None,
+                sig_B_l=None,
+                sig_C_l=None,
+            ),
             sel_cl_data=read_sel_cl_output(in_file, Omega_tot=None),
         )
         sfi._build_windows_interpolators()

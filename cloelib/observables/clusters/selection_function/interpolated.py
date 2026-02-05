@@ -101,8 +101,8 @@ class InterpolatedSelectionFunction:
             "I_ltr_ztr_lobs_lobs": None,
             "area_tile": None,
             "Omega_tot": None,
-            "lambda_obs_edges": lambda_obs_edges,
-            "z_obs_edges": z_obs_edges,
+            "lambda_obs_bin_edges": lambda_obs_edges,
+            "z_obs_bin_edges": z_obs_edges,
         }
 
         ################
@@ -114,24 +114,32 @@ class InterpolatedSelectionFunction:
         sel_cl_data_fmt["z_obs"], zobs_orig_slice = self._expand_array(
             self._sel_cl_data_original["z_obs"],
             self._sel_cl_data_original["z_obs_step"],
-            sel_cl_data_fmt["z_obs_edges"][0],
-            sel_cl_data_fmt["z_obs_edges"][-1],
+            sel_cl_data_fmt["z_obs_bin_edges"][0],
+            sel_cl_data_fmt["z_obs_bin_edges"][-1],
         )
         sel_cl_data_fmt["lambda_obs"], lobs_orig_slice = self._expand_array(
             self._sel_cl_data_original["lambda_obs"],
             self._sel_cl_data_original["lambda_obs_step"],
-            sel_cl_data_fmt["lambda_obs_edges"][0],
-            sel_cl_data_fmt["lambda_obs_edges"][-1],
+            sel_cl_data_fmt["lambda_obs_bin_edges"][0],
+            sel_cl_data_fmt["lambda_obs_bin_edges"][-1],
         )
 
-        ## Find common index between (lobs_file-->lobs_edges) and (zobs_file-->zobs_edges)
-        sel_cl_data_fmt["index_lambda_obs_edges"] = [
+        ## Find slices that return the correct range for each obs bins
+        _index_lambda_obs_edges = [
             np.abs(sel_cl_data_fmt["lambda_obs"] - value).argmin()
-            for value in sel_cl_data_fmt["lambda_obs_edges"]
+            for value in sel_cl_data_fmt["lambda_obs_bin_edges"]
         ]
-        sel_cl_data_fmt["index_z_obs_edges"] = [
+        sel_cl_data_fmt["lambda_obs_slices"] = [
+            slice(low, high)
+            for low, high in zip(_index_lambda_obs_edges, _index_lambda_obs_edges[1:])
+        ]
+        _index_z_obs_edges = [
             np.abs(sel_cl_data_fmt["z_obs"] - value).argmin()
-            for value in sel_cl_data_fmt["z_obs_edges"]
+            for value in sel_cl_data_fmt["z_obs_bin_edges"]
+        ]
+        sel_cl_data_fmt["z_obs_slices"] = [
+            slice(low, high)
+            for low, high in zip(_index_z_obs_edges, _index_z_obs_edges[1:])
         ]
 
         # Keep true values
@@ -257,8 +265,8 @@ class InterpolatedSelectionFunction:
         ##########################################################
         integ4d = np.zeros(
             (
-                len(sel_cl_data_fmt["lambda_obs_edges"]) - 1,
-                len(sel_cl_data_fmt["z_obs_edges"]) - 1,
+                len(sel_cl_data_fmt["lambda_obs_bin_edges"]) - 1,
+                len(sel_cl_data_fmt["z_obs_bin_edges"]) - 1,
                 len(sel_cl_data_fmt["lambda_true"]),
                 len(sel_cl_data_fmt["z_true"]),
             )
@@ -268,18 +276,17 @@ class InterpolatedSelectionFunction:
             sel_cl_data_fmt["I_ltr_ztr_lobs_lobs"].sum(axis=0)
             / sel_cl_data_fmt["Omega_tot"]
         )
-        for ltab in range(integ4d.shape[0]):
-            l_start, l_end = sel_cl_data_fmt["index_lambda_obs_edges"][ltab : ltab + 2]
-            lint = sel_cl_data_fmt["lambda_obs"][l_start:l_end]
-
-            for ztab in range(integ4d.shape[1]):
-                z_start, z_end = sel_cl_data_fmt["index_z_obs_edges"][ztab : ztab + 2]
-                zint = sel_cl_data_fmt["z_obs"][z_start:z_end]
-
-                integrand = tilde_I[:, :, l_start:l_end, z_start:z_end]
-                result_z = integrate.simpson(integrand, x=zint, axis=-1)
-                result_l = integrate.simpson(result_z, x=lint, axis=-1)
-                integ4d[ltab, ztab, :, :] = result_l
+        for ltab, l_slice in enumerate(sel_cl_data_fmt["lambda_obs_slices"]):
+            for ztab, z_slice in enumerate(sel_cl_data_fmt["z_obs_slices"]):
+                integ4d[ltab, ztab, :, :] = integrate.simpson(
+                    integrate.simpson(
+                        tilde_I[:, :, l_slice, z_slice],
+                        x=sel_cl_data_fmt["z_obs"][z_slice],
+                        axis=-1,
+                    ),
+                    x=sel_cl_data_fmt["lambda_obs"][l_slice],
+                    axis=-1,
+                )
 
         ##################################
         # build interpolator

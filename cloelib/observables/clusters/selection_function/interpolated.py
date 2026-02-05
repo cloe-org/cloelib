@@ -101,19 +101,20 @@ class InterpolatedSelectionFunction:
         # Reshape arrays
         ################
 
-        zobs_fmt, _size_add_zmin = self._redefine_array_with_obs_bins(
+        # also gets which indices correspond to the originals
+
+        sel_cl_data_fmt["z_obs"], zobs_orig_slice = self._expand_array(
             self._sel_cl_data_original["z_obs"],
             self._sel_cl_data_original["z_obs_step"],
-            sel_cl_data_fmt["z_obs_edges"],
+            sel_cl_data_fmt["z_obs_edges"].min(),
+            sel_cl_data_fmt["z_obs_edges"].max(),
         )
-        lobs_fmt, _size_add_lmin = self._redefine_array_with_obs_bins(
+        sel_cl_data_fmt["lambda_obs"], lobs_orig_slice = self._expand_array(
             self._sel_cl_data_original["lambda_obs"],
             self._sel_cl_data_original["lambda_obs_step"],
-            sel_cl_data_fmt["lambda_obs_edges"],
+            sel_cl_data_fmt["lambda_obs_edges"].min(),
+            sel_cl_data_fmt["lambda_obs_edges"].max(),
         )
-
-        sel_cl_data_fmt["z_obs"] = zobs_fmt
-        sel_cl_data_fmt["lambda_obs"] = lobs_fmt
 
         ## Find common index between (lobs_file-->lobs_edges) and (zobs_file-->zobs_edges)
         sel_cl_data_fmt["index_lambda_obs_edges"] = [
@@ -156,15 +157,6 @@ class InterpolatedSelectionFunction:
                 len(sel_cl_data_fmt["lambda_obs"]),
                 len(sel_cl_data_fmt["z_obs"]),
             )
-        )
-
-        # find which indices on the table will be filled
-        lobs_orig_slice = slice(
-            _size_add_lmin,
-            _size_add_lmin + len(self._sel_cl_data_original["lambda_obs"]),
-        )
-        zobs_orig_slice = slice(
-            _size_add_zmin, _size_add_zmin + len(self._sel_cl_data_original["z_obs"])
         )
 
         ## Re-arrange ranges for 4d array, to match the Obs NC ranges
@@ -357,34 +349,53 @@ class InterpolatedSelectionFunction:
     #######
 
     @staticmethod
-    def _redefine_array_with_obs_bins(
-        original_array,
-        original_array_step,
-        obs_bins,
+    def _expand_array(
+        array,
+        array_step,
+        lower_value,
+        upper_value,
     ):
         """
-        Adds lower/upper points to original array if obs bins
-        covers a larger range.
+        Expands lower/upper boundaries of array.
+
+        Parameters
+        ----------
+        array : np.ndarray
+            Original array
+        array_step : float
+            Step size of original array
+        lower_value : float
+            Lower value for expansion. Not used if array.min()<lower_value.
+        upper_value : float
+            Upper value for expansion. Not used if array.max()>upper_value.
+
+        Returns
+        -------
+        array_new : np.ndarray
+            Array with expanded boundaries
+        recover_original : slice
+            Slice that recovers original array from new one:
+            ``array == array_new[recover_original]``
         """
         upper_addition = np.arange(
-            original_array[-1] + original_array_step,
-            obs_bins[-1] + original_array_step,
-            original_array_step,
+            array[-1] + array_step,
+            upper_value + array_step,
+            array_step,
         )
         # tick here: make a decreasing array and flip it
         lower_addition = np.arange(
-            original_array[0] - original_array_step,
-            obs_bins[0] - original_array_step,
-            -original_array_step,
+            array[0] - array_step,
+            lower_value - array_step,
+            -array_step,
         )[::-1]
 
         array_new = np.append(
             lower_addition,
-            np.append(original_array, upper_addition),
+            np.append(array, upper_addition),
         )
-        size_add_min = lower_addition.size
+        recover_original = slice(lower_addition.size, lower_addition.size + array.size)
 
-        return array_new, size_add_min
+        return array_new, recover_original
 
     @staticmethod
     def _sel_func_integ(

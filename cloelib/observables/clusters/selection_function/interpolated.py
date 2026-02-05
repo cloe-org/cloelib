@@ -54,7 +54,16 @@ class InterpolatedSelectionFunction:
         self._sel_cl_data_original = sel_cl_data
 
     def _get_sel_cl_data_formatted_with_obs_bins(self, lambda_obs_edges, z_obs_edges):
-        """Format SEL_CL data with obs bins
+        """Format SEL_CL data with obs bins.
+
+        Check ranges of Obs arrays of the file and compare with NC Obs arrays.
+
+        Deals with min and max in lobs and zobs:
+
+         * max(lobs_file) might be < max(lambda_obs_edges)
+         * min(lobs_file) might be > min(lambda_obs_edges)
+         * max(zobs_file) might be < max(z_obs_edges)
+         * min(zobs_file) might be > min(z_obs_edges)
 
         Parameters
         ----------
@@ -67,18 +76,11 @@ class InterpolatedSelectionFunction:
         -------
         sel_cl_data_fmt: dict
             SEL_CL data reshaped with obs bins
+
+        Note
+        ----
+            It assumes all tiles have the same ranges and binning!
         """
-
-        ## Definition of arrays for Obs and True quantities
-        ## ASSUMPTION: all tiles have the same ranges and binning
-
-        ## Check ranges of Obs arrays of the file and compare with NC Obs arrays
-        ## Deal with min and max in lobs and zobs:
-        ## max(lobs_file) might be < max(lambda_obs_edges) so we put an IF condition for now: Prob for lambda > max(lobs_file) = 0
-        ## min(lobs_file) might be > min(lambda_obs_edges) so we put an IF condition for now: Prob for lambda < min(lobs_file) = 0
-        ## max(zobs_file) might be < max(z_obs_edges) so we put an IF condition for now: Prob for z > max(zobs_file) = 0
-        ## min(zobs_file) might be > min(z_obs_edges) so we put an IF condition for now: Prob for z < min(zobs_file) = 0
-
         # list explicitly all values that will be filled:
         sel_cl_data_fmt = {
             "z_obs": None,
@@ -106,14 +108,14 @@ class InterpolatedSelectionFunction:
         sel_cl_data_fmt["z_obs"], zobs_orig_slice = self._expand_array(
             self._sel_cl_data_original["z_obs"],
             self._sel_cl_data_original["z_obs_step"],
-            sel_cl_data_fmt["z_obs_edges"].min(),
-            sel_cl_data_fmt["z_obs_edges"].max(),
+            sel_cl_data_fmt["z_obs_edges"][0],
+            sel_cl_data_fmt["z_obs_edges"][-1],
         )
         sel_cl_data_fmt["lambda_obs"], lobs_orig_slice = self._expand_array(
             self._sel_cl_data_original["lambda_obs"],
             self._sel_cl_data_original["lambda_obs_step"],
-            sel_cl_data_fmt["lambda_obs_edges"].min(),
-            sel_cl_data_fmt["lambda_obs_edges"].max(),
+            sel_cl_data_fmt["lambda_obs_edges"][0],
+            sel_cl_data_fmt["lambda_obs_edges"][-1],
         )
 
         ## Find common index between (lobs_file-->lobs_edges) and (zobs_file-->zobs_edges)

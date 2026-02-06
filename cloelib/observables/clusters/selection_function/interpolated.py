@@ -120,14 +120,13 @@ class InterpolatedSelectionFunction:
         # Reshaped arrays
         #################
 
-        # reshape obs and gets which slices correspond to the originals
-        out_data["arrays"]["z_obs"], zobs_orig_slice = self._expand_array(
+        out_data["arrays"]["z_obs"] = self._expand_array(
             self._sel_cl_data["arrays"]["z_obs"],
             self._sel_cl_data["aux"]["z_obs_step"],
             z_obs_edges[0],
             z_obs_edges[-1],
         )
-        out_data["arrays"]["lambda_obs"], lobs_orig_slice = self._expand_array(
+        out_data["arrays"]["lambda_obs"] = self._expand_array(
             self._sel_cl_data["arrays"]["lambda_obs"],
             self._sel_cl_data["aux"]["lambda_obs_step"],
             lambda_obs_edges[0],
@@ -137,6 +136,19 @@ class InterpolatedSelectionFunction:
         #################
         # Reshaped tables
         #################
+
+        # finds which slices correspond to the original arrays
+        # i. e. array == expanded_array[slice]
+        _lobs_orig_slice = self._get_bin_slices(
+            out_data["arrays"]["lambda_obs"],
+            self._sel_cl_data["arrays"]["lambda_obs"][[0, -1]],
+            endpoint=True,
+        )[0]
+        _zobs_orig_slice = self._get_bin_slices(
+            out_data["arrays"]["z_obs"],
+            self._sel_cl_data["arrays"]["z_obs"][[0, -1]],
+            endpoint=True,
+        )[0]
 
         # Re-arrange ranges for prob_lambda_z_obs
         out_data["tables"]["prob_lambda_z_obs"] = np.zeros(
@@ -149,7 +161,7 @@ class InterpolatedSelectionFunction:
             )
         )
         out_data["tables"]["prob_lambda_z_obs"][
-            :, :, :, lobs_orig_slice, zobs_orig_slice
+            :, :, :, _lobs_orig_slice, _zobs_orig_slice
         ] = self._sel_cl_data["tables"]["prob_lambda_z_obs"]
 
         # Re-arrange ranges for purity
@@ -160,7 +172,7 @@ class InterpolatedSelectionFunction:
                 out_data["arrays"]["z_obs"].size,
             )
         )
-        out_data["tables"]["purity"][:, lobs_orig_slice, zobs_orig_slice] = (
+        out_data["tables"]["purity"][:, _lobs_orig_slice, _zobs_orig_slice] = (
             self._sel_cl_data["tables"]["purity"]
         )
 
@@ -174,14 +186,14 @@ class InterpolatedSelectionFunction:
         # ASSUMPTION: we do not need other rescaling for the effective area Omega_alpha.
 
         ## To avoid dividing by 0: putting elements with 0 values to NaN
-        pur_reshaped = out_data["tables"]["purity"][:, None, None, :, :]
-        pur_reshaped = np.where(pur_reshaped == 0, np.nan, pur_reshaped)
+        _pur_reshaped = out_data["tables"]["purity"][:, None, None, :, :]
+        _pur_reshaped = np.where(_pur_reshaped == 0, np.nan, _pur_reshaped)
 
         # compute multiplication
         out_data["tables"]["I_ltr_ztr_lobs_lobs"] = (
             out_data["area_tile"][:, None, None, None, None]
             * out_data["tables"]["prob_lambda_z_obs"]
-            / pur_reshaped
+            / _pur_reshaped
         )
         if not self.prob_contains_completeness:
             out_data["tables"]["I_ltr_ztr_lobs_lobs"] *= out_data["tables"][
@@ -198,12 +210,12 @@ class InterpolatedSelectionFunction:
         ##################
 
         # Find slices that return the correct range for each obs bins
-        out_data["obs_bins_slices"]["lambda"] = self._get_bin_slices(
-            out_data["arrays"]["lambda_obs"], lambda_obs_edges
-        )
-        out_data["obs_bins_slices"]["z"] = self._get_bin_slices(
-            out_data["arrays"]["z_obs"], z_obs_edges
-        )
+        out_data["obs_bins_slices"] = {
+            "lambda": self._get_bin_slices(
+                out_data["arrays"]["lambda_obs"], lambda_obs_edges
+            ),
+            "z": self._get_bin_slices(out_data["arrays"]["z_obs"], z_obs_edges),
+        }
 
         return out_data
 
@@ -339,7 +351,7 @@ class InterpolatedSelectionFunction:
             for ztab, interp_lobs_zobs in enumerate(interp_lobs):
                 window_lambda_true[ltab, ztab] = interp_lobs_zobs(lambda_true, z_true)
 
-        # fix order of axes -> (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
+        # chage order of axes to (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         window_lambda_true = window_lambda_true.transpose(1, 0, 3, 2)
 
         ################################################
@@ -348,13 +360,11 @@ class InterpolatedSelectionFunction:
 
         pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
             z_true, mass, lambda_true
-        )
+        )  # (z, M, lambda_true)
 
         return simps(
-            pdf_mass_richness_scaling[
-                np.newaxis, np.newaxis, :, :, :
-            ]  # (1, 1, z, M, ltr)
-            * window_lambda_true[:, :, :, np.newaxis, :],  # (zobs, lobs, z, 1, ltr)
+            pdf_mass_richness_scaling[np.newaxis, np.newaxis, :, :, :]
+            * window_lambda_true[:, :, :, np.newaxis, :],
             x=lambda_true,
             axis=-1,
         )
@@ -381,11 +391,8 @@ class InterpolatedSelectionFunction:
 
         Returns
         -------
-        array_new : np.ndarray
+        np.ndarray
             Array with expanded boundaries
-        recover_original : slice
-            Slice that recovers original array from new one:
-            ``array == array_new[recover_original]``
         """
         upper_addition = np.arange(
             array[-1] + array_step, upper_value + array_step, array_step
@@ -395,13 +402,10 @@ class InterpolatedSelectionFunction:
             array[0] - array_step, lower_value - array_step, -array_step
         )[::-1]
 
-        array_new = np.append(lower_addition, np.append(array, upper_addition))
-        recover_original = slice(lower_addition.size, lower_addition.size + array.size)
-
-        return array_new, recover_original
+        return np.append(lower_addition, np.append(array, upper_addition))
 
     @staticmethod
-    def _get_bin_slices(array, bins_edges):
+    def _get_bin_slices(array, bins_edges, endpoint=False):
         """
         Finds slices that return the correct range for each bin.
 
@@ -411,24 +415,23 @@ class InterpolatedSelectionFunction:
             Original array
         bins_edges : list
             Edges of bins.
+        endpoint : bool
+            Include upper value of edges in slices.
 
         Returns
         -------
-        bins_slices : slice
-            Slice that returns the values in the array
+        list[slice]
+            List of slices that returns the values in the array
             for each bin of bins_edges.
         """
         # first, find indices at the bin edges
-        _index_edges = np.abs(
+        ind_edges = np.abs(
             array[np.newaxis, :] - np.array(bins_edges)[:, np.newaxis]
         ).argmin(axis=1)
 
-        ## then construct slices with them
-        bins_slices = [
-            slice(low, high) for low, high in zip(_index_edges, _index_edges[1:])
-        ]
+        shift = 1 if endpoint else 0
 
-        return bins_slices
+        return [slice(low, high + shift) for low, high in zip(ind_edges, ind_edges[1:])]
 
 
 def read_sel_cl_output(sel_cl_filename, Omega_tot=None):

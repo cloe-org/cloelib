@@ -151,25 +151,25 @@ class InterpolatedSelectionFunction:
         out_data["tables"]["prob_lambda_z_obs"] = np.zeros(
             (
                 out_data["area_tile"].size,
-                out_data["arrays"]["lambda_true"].size,
-                out_data["arrays"]["z_true"].size,
-                out_data["arrays"]["lambda_obs"].size,
                 out_data["arrays"]["z_obs"].size,
+                out_data["arrays"]["lambda_obs"].size,
+                out_data["arrays"]["z_true"].size,
+                out_data["arrays"]["lambda_true"].size,
             )
         )
         out_data["tables"]["prob_lambda_z_obs"][
-            :, :, :, _lobs_orig_slice, _zobs_orig_slice
+            :, _zobs_orig_slice, _lobs_orig_slice, :, :
         ] = self._sel_cl_data["tables"]["prob_lambda_z_obs"]
 
         # Re-arrange ranges for purity
         out_data["tables"]["purity"] = np.zeros(
             (
                 out_data["area_tile"].size,
-                out_data["arrays"]["lambda_obs"].size,
                 out_data["arrays"]["z_obs"].size,
+                out_data["arrays"]["lambda_obs"].size,
             )
         )
-        out_data["tables"]["purity"][:, _lobs_orig_slice, _zobs_orig_slice] = (
+        out_data["tables"]["purity"][:, _zobs_orig_slice, _lobs_orig_slice] = (
             self._sel_cl_data["tables"]["purity"]
         )
 
@@ -179,10 +179,10 @@ class InterpolatedSelectionFunction:
 
         # Evaluate multiplication for each tile
         # Pα(λobs|λtr,ztr) * Pα(zobs|λtr,ztr) / Pα(λobs,zobs) * Cα(λtr,ztr)
-        # Dimensions: (ltr, ztr, lobs)*(ltr, ztr, zobs)*(lobs, zobs)*(ltr, ztr) --> (ltr,ztr,lobs,zobs)
+        # Dimensions: (lob, ztr, ltr)*(zob, ztr, ltr)*(zob, lob)*(ztr, ltr) --> (zob,lob,ztr,ltr)
 
         ## To avoid dividing by 0: putting elements with 0 values to NaN
-        _pur_reshaped = out_data["tables"]["purity"][:, None, None, :, :]
+        _pur_reshaped = out_data["tables"]["purity"][:, :, :, None, None]
         _pur_reshaped = np.where(_pur_reshaped == 0, np.nan, _pur_reshaped)
 
         # compute multiplication
@@ -191,7 +191,7 @@ class InterpolatedSelectionFunction:
         )
         if not self.prob_contains_completeness:
             out_data["tables"]["prob_comp_pur"] *= out_data["tables"]["completeness"][
-                :, :, :, None, None
+                :, None, None, :, :
             ]
 
         ## Do we want to put the division to 0? If YES:
@@ -218,7 +218,7 @@ class InterpolatedSelectionFunction:
         Selection Function from file.
         Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
         Pα(λobs,zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr) Omega_alpha/Omega_tot.
-        Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
+        Builds the interpolators over (ztr,ltr) for all bins in Lobs_NC and zobs_NC.
 
 
         ..math:
@@ -238,7 +238,8 @@ class InterpolatedSelectionFunction:
 
         Returns
         -------
-        integ4d_interp_func: 2d interpolator
+        integ4d_interp_func: list[list[RectBivariateSpline]]
+            Interpolator of f(z_true, lambda_true) per (z_obs_bins, lambda_obs_bins).
         """
 
         # Format sel_cl data with obs bins
@@ -249,29 +250,29 @@ class InterpolatedSelectionFunction:
 
         # Integrate sum_a/Omega_tot = tildeI(λtr,ztr,∆λobs,∆zobs)
 
-        tilde_I = (
+        integrand = (
             np.expand_dims(sel_cl_data_fmt["area_tile"], axis=(1, 2, 3, 4))
             * sel_cl_data_fmt["tables"]["prob_comp_pur"]
         ).sum(axis=0) / sel_cl_data_fmt["area_tile"].sum()
 
         integ4d = np.zeros(
             (
-                len(lambda_obs_edges) - 1,
                 len(z_obs_edges) - 1,
-                len(sel_cl_data_fmt["arrays"]["lambda_true"]),
+                len(lambda_obs_edges) - 1,
                 len(sel_cl_data_fmt["arrays"]["z_true"]),
+                len(sel_cl_data_fmt["arrays"]["lambda_true"]),
             )
         )
         for ltab, l_slice in enumerate(sel_cl_data_fmt["obs_bins_slices"]["lambda"]):
             for ztab, z_slice in enumerate(sel_cl_data_fmt["obs_bins_slices"]["z"]):
-                integ4d[ltab, ztab, :, :] = integrate.simpson(
+                integ4d[ztab, ltab, :, :] = integrate.simpson(
                     integrate.simpson(
-                        tilde_I[:, :, l_slice, z_slice],
+                        integrand[z_slice, l_slice, :, :],
                         x=sel_cl_data_fmt["arrays"]["z_obs"][z_slice],
-                        axis=-1,
+                        axis=0,
                     ),
                     x=sel_cl_data_fmt["arrays"]["lambda_obs"][l_slice],
-                    axis=-1,
+                    axis=0,
                 )
 
         # build interpolator
@@ -279,13 +280,13 @@ class InterpolatedSelectionFunction:
         integ4d_interp_func = [
             [
                 interpolate.RectBivariateSpline(
-                    sel_cl_data_fmt["arrays"]["lambda_true"],
                     sel_cl_data_fmt["arrays"]["z_true"],
-                    integ4d_lobs_zobs,
+                    sel_cl_data_fmt["arrays"]["lambda_true"],
+                    integ4d_zobs_lobs,
                 )
-                for integ4d_lobs_zobs in integ4d_lobs
+                for integ4d_zobs_lobs in integ4d_zobs
             ]
-            for integ4d_lobs in integ4d
+            for integ4d_zobs in integ4d
         ]
 
         return integ4d_interp_func
@@ -305,12 +306,6 @@ class InterpolatedSelectionFunction:
             \int_{\Delta z_{\rm obs}}d z_{\rm obs}
             P(\lambda_{\rm obs}, z_{\rm obs}|\lambda_{\rm true}, z_{\rm true})
             \frac{c(\lambda_{\rm true}, z_{\rm true})}{p(\rm obs}, z_{\rm obs})}
-
-
-
-        Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
-        Pα(λobs,zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr) Omega_alpha/Omega_tot.
-        Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
 
         Parameters
         ----------
@@ -336,17 +331,14 @@ class InterpolatedSelectionFunction:
         interpolators = self._build_windows_interpolators(lambda_obs_edges, z_obs_edges)
 
         window_lambda_true = np.zeros(
-            len(lambda_obs_edges) - 1,
             len(z_obs_edges) - 1,
-            lambda_true.size,
+            len(lambda_obs_edges) - 1,
             z_true.size,
+            lambda_true.size,
         )
-        for ltab, interp_lobs in enumerate(interpolators):
-            for ztab, interp_lobs_zobs in enumerate(interp_lobs):
-                window_lambda_true[ltab, ztab] = interp_lobs_zobs(lambda_true, z_true)
-
-        # chage order of axes to (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
-        window_lambda_true = window_lambda_true.transpose(1, 0, 3, 2)
+        for ztab, interp_zobs in enumerate(interpolators):
+            for ltab, interp_zobs_lobs in enumerate(interp_zobs):
+                window_lambda_true[ztab, ltab] = interp_lobs_zobs(z_true, lambda_true)
 
         ################################################
         # Compute P(Delta lobs, Delta zobs|mass, ztrue)
@@ -506,6 +498,15 @@ def read_sel_cl_output(sel_cl_filename):
             ("purity", "PURITY_LAMBDA_Z_OBS_OBS_"),  # (lobs, zobs)
         )
     }
+
+    # make all tables follow the axis order: (zobs, lobs, ztr, ltr)
+    sel_cl_data["tables"]["prob_lambda_z_obs"] = sel_cl_data["tables"][
+        "prob_lambda_z_obs"
+    ].transpose(0, 4, 3, 2, 1)
+    sel_cl_data["tables"]["completeness"] = sel_cl_data["tables"][
+        "completeness"
+    ].transpose(0, 2, 1)
+    sel_cl_data["tables"]["purity"] = sel_cl_data["tables"]["purity"].transpose(0, 2, 1)
 
     ########
     # others

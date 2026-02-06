@@ -125,26 +125,25 @@ def _gen_ideal_selcl_data():
 
     sel_cl_data["tables"] = {
         "prob_lambda_z_obs": _prob_func(
-            sel_cl_data["arrays"]["lambda_obs"][None, None, None, :, None],
-            sel_cl_data["arrays"]["lambda_true"][None, :, None, None, None],
-            sel_cl_data["arrays"]["z_obs"][None, None, None, None, :],
-            sel_cl_data["arrays"]["z_true"][None, None, :, None, None],
+            sel_cl_data["arrays"]["lambda_obs"][None, None, :, None, None],
+            sel_cl_data["arrays"]["lambda_true"][None, None, None, None, :],
+            sel_cl_data["arrays"]["z_obs"][None, :, None, None, None],
+            sel_cl_data["arrays"]["z_true"][None, None, None, :, None],
             np.array([10, 10, 10])[:, None, None, None, None],
         ),
         "completeness": _cp_func(
-            sel_cl_data["arrays"]["lambda_true"][None, :, None],
-            sel_cl_data["arrays"]["z_true"][None, None, :],
+            sel_cl_data["arrays"]["lambda_true"][None, None, :],
+            sel_cl_data["arrays"]["z_true"][None, :, None],
             np.array([10, 15, 10])[:, None, None],
         ),
         "purity": _cp_func(
-            sel_cl_data["arrays"]["lambda_obs"][None, :, None],
-            sel_cl_data["arrays"]["z_obs"][None, None, :],
+            sel_cl_data["arrays"]["lambda_obs"][None, None, :],
+            sel_cl_data["arrays"]["z_obs"][None, :, None],
             np.array([10, 10, 15])[:, None, None],
         ),
     }
 
     sel_cl_data["area_tile"] = np.array([8, 9, 10])
-    sel_cl_data["Omega_tot"] = sel_cl_data["area_tile"].sum()
 
     return sel_cl_data
 
@@ -179,6 +178,6 @@ def test_interpolated_selectionfunction():
             [0.9165816, 0.91947089],
             [0.9862405, 0.98939537],
         ]
-    )
+    ).T
 
-    assert_allclose(interps[1][1]([10, 20, 30, 40], [0.3, 0.31]), ref_data, rtol=1e-07)
+    assert_allclose(interps[1][1]([0.3, 0.31], [10, 20, 30, 40]), ref_data, rtol=1e-07)

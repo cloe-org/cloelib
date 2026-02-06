@@ -36,20 +36,19 @@ class InterpolatedSelectionFunction:
         sel_cl_data: dict
             Object that read the SEL_CL output file and formats its accordingly. It must contain the keys:
 
-                * area_tile: xxx
-                * Omega_tot: xxx
-                * arrays:
-                    * z_obs: xxx
-                    * lambda_obs: xxx
-                    * z_true: xxx
-                    * lambda_true: xxx
+                * area_tile: area of each homogeneous region
+                * arrays: arrays of tabulation
+                    * z_obs: observed redshift values
+                    * lambda_obs: observed richenss values
+                    * z_true: true redshift values
+                    * lambda_true: true richenss values
                 * tables:
-                    * prob_lambda_z_obs: xxx
-                    * completeness: xxx
-                    * purity: xxx
+                    * prob_lambda_z_obs: P(lambda_obs, z_obs|lambda_true, z_true)
+                    * completeness: completeness(lambda_true, z_true)
+                    * purity: purity(ambda_obs, z_obs)
                 * step_size:
-                    * z_obs_step: xxx
-                    * lambda_obs_step: xxx
+                    * z_obs: size of steps in z_obs array
+                    * lambda_obs: size of steps in lambda_obs array
 
         prob_contains_completeness : bool
             If sel_cl_data["prob_lambda_z_obs"] already accounts for the completeness.
@@ -61,7 +60,7 @@ class InterpolatedSelectionFunction:
 
     def _reshape_data_with_obs_bins(self, lambda_obs_edges, z_obs_edges):
         """Reshapes SEL_CL data with obs bins and computes
-        Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
+        Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
 
         Check ranges of Obs arrays of the file and compare with NC Obs arrays.
 
@@ -84,21 +83,20 @@ class InterpolatedSelectionFunction:
         out_data: dict
             SEL_CL data reshaped with obs bins
 
-                * area_tile: xxx
-                * Omega_tot: xxx
-                * arrays:
-                    * z_obs: xxx
-                    * lambda_obs: xxx
-                    * z_true: xxx
-                    * lambda_true: xxx
-                * tables:
-                    * prob_lambda_z_obs: xxx
-                    * completeness: xxx
-                    * purity: xxx
+                * area_tile: area of each homogeneous region
+                * arrays: arrays of tabulation
+                    * z_obs: expanded observed redshift values
+                    * lambda_obs: expanded observed richenss values
+                    * z_true: true redshift values
+                    * lambda_true: true richenss values
+                * tables: new tables expanded with lambda_obs_edges, z_obs_edges
+                    * prob_lambda_z_obs: P(lambda_obs, z_obs|lambda_true, z_true)
+                    * completeness: completeness(lambda_true, z_true)
+                    * purity: purity(ambda_obs, z_obs)
                     * I_ltr_ztr_lobs_lobs: xxx
-                * obs_bins_slices:
-                    * z: xxx
-                    * lambda: xxx
+                * obs_bins_slices: slices that return the correct range for each obs bins
+                    * z: slices for z_obs_edges
+                    * lambda: slices for lambda_obs_edges
 
         Note
         ----
@@ -108,7 +106,6 @@ class InterpolatedSelectionFunction:
         # output instanciated with quantities that remain the same:
         out_data = {
             "area_tile": self._sel_cl_data["area_tile"],
-            "Omega_tot": self._sel_cl_data["Omega_tot"],
             "arrays": {
                 key: self._sel_cl_data["arrays"][key]
                 for key in ("z_true", "lambda_true")
@@ -176,14 +173,13 @@ class InterpolatedSelectionFunction:
             self._sel_cl_data["tables"]["purity"]
         )
 
-        #################################################################################
-        # Compute Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
-        #################################################################################
+        #####################################################################
+        # Compute Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
+        #####################################################################
 
         # Evaluate multiplication for each tile
-        # Omega_alpha * Pα(λobs|λtr,ztr) * Pα(zobs|λtr,ztr) / Pα(λobs,zobs) * Cα(λtr,ztr)
+        # Pα(λobs|λtr,ztr) * Pα(zobs|λtr,ztr) / Pα(λobs,zobs) * Cα(λtr,ztr)
         # Dimensions: (ltr, ztr, lobs)*(ltr, ztr, zobs)*(lobs, zobs)*(ltr, ztr) --> (ltr,ztr,lobs,zobs)
-        # ASSUMPTION: we do not need other rescaling for the effective area Omega_alpha.
 
         ## To avoid dividing by 0: putting elements with 0 values to NaN
         _pur_reshaped = out_data["tables"]["purity"][:, None, None, :, :]
@@ -191,9 +187,7 @@ class InterpolatedSelectionFunction:
 
         # compute multiplication
         out_data["tables"]["I_ltr_ztr_lobs_lobs"] = (
-            out_data["area_tile"][:, None, None, None, None]
-            * out_data["tables"]["prob_lambda_z_obs"]
-            / _pur_reshaped
+            out_data["tables"]["prob_lambda_z_obs"] / _pur_reshaped
         )
         if not self.prob_contains_completeness:
             out_data["tables"]["I_ltr_ztr_lobs_lobs"] *= out_data["tables"][
@@ -223,7 +217,7 @@ class InterpolatedSelectionFunction:
         r"""
         Selection Function from file.
         Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
-        1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
+        Pα(λobs,zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr) Omega_alpha/Omega_tot.
         Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
 
 
@@ -256,9 +250,9 @@ class InterpolatedSelectionFunction:
         # Integrate sum_a/Omega_tot = tildeI(λtr,ztr,∆λobs,∆zobs)
 
         tilde_I = (
-            sel_cl_data_fmt["tables"]["I_ltr_ztr_lobs_lobs"].sum(axis=0)
-            / sel_cl_data_fmt["Omega_tot"]
-        )
+            np.expand_dims(sel_cl_data_fmt["area_tile"], axis=(1, 2, 3, 4))
+            * sel_cl_data_fmt["tables"]["I_ltr_ztr_lobs_lobs"]
+        ).sum(axis=0) / sel_cl_data_fmt["area_tile"].sum()
 
         integ4d = np.zeros(
             (
@@ -315,7 +309,7 @@ class InterpolatedSelectionFunction:
 
 
         Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
-        1/Omega_tot * sum_alpha Omega_alpha*Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr).
+        Pα(λobs,zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr) Omega_alpha/Omega_tot.
         Builds the interpolators over (ltr,ztr) for all bins in Lobs_NC and zobs_NC.
 
         Parameters
@@ -434,7 +428,7 @@ class InterpolatedSelectionFunction:
         return [slice(low, high + shift) for low, high in zip(ind_edges, ind_edges[1:])]
 
 
-def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
+def read_sel_cl_output(sel_cl_filename):
     """Object to read ouput file from SEL_CL.
 
     Parameters
@@ -442,28 +436,25 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
     sel_cl_filename: str
         Name of fits file containing a multi-dimensional of the Selection
         outputted from Sinfonia.
-    Omega_tot: float
-        Total observed area
 
     Returns
     -------
     sel_cl_data: dict
         Object that read the SEL_CL output file and formats its accordingly. It will contain the keys:
 
-                * area_tile: xxx
-                * Omega_tot: xxx
-                * arrays:
-                    * z_obs: xxx
-                    * lambda_obs: xxx
-                    * z_true: xxx
-                    * lambda_true: xxx
+                * area_tile: area of each homogeneous region
+                * arrays: arrays of tabulation
+                    * z_obs: observed redshift values
+                    * lambda_obs: observed richenss values
+                    * z_true: true redshift values
+                    * lambda_true: true richenss values
                 * tables:
-                    * prob_lambda_z_obs: xxx
-                    * completeness: xxx
-                    * purity: xxx
+                    * prob_lambda_z_obs: P(lambda_obs, z_obs|lambda_true, z_true)
+                    * completeness: completeness(lambda_true, z_true)
+                    * purity: purity(ambda_obs, z_obs)
                 * step_size:
-                    * z_obs: xxx
-                    * lambda_obs: xxx
+                    * z_obs: size of steps in z_obs array
+                    * lambda_obs: size of steps in lambda_obs array
     """
 
     # To be adapted with fitsio - f = fitsio.FITS("your_file.fits")
@@ -534,10 +525,6 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
         ]
     )
 
-    if Omega_tot is None:
-        Omega_tot = sel_cl_data["area_tile"].sum()
-    sel_cl_data["Omega_tot"] = Omega_tot
-
     return sel_cl_data
 
 
@@ -564,7 +551,7 @@ if __name__ == "__main__":
             sig_B_l=None,
             sig_C_l=None,
         ),
-        sel_cl_data=read_sel_cl_output(in_file, Omega_tot=None),
+        sel_cl_data=read_sel_cl_output(in_file),
     )
     interps = sfi._build_windows_interpolators(
         lambda_obs_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),

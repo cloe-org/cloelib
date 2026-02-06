@@ -47,7 +47,7 @@ class InterpolatedSelectionFunction:
                     * prob_lambda_z_obs: xxx
                     * completeness: xxx
                     * purity: xxx
-                * aux:
+                * step_size:
                     * z_obs_step: xxx
                     * lambda_obs_step: xxx
 
@@ -122,13 +122,13 @@ class InterpolatedSelectionFunction:
 
         out_data["arrays"]["z_obs"] = self._expand_array(
             self._sel_cl_data["arrays"]["z_obs"],
-            self._sel_cl_data["aux"]["z_obs_step"],
+            self._sel_cl_data["step_size"]["z_obs"],
             z_obs_edges[0],
             z_obs_edges[-1],
         )
         out_data["arrays"]["lambda_obs"] = self._expand_array(
             self._sel_cl_data["arrays"]["lambda_obs"],
-            self._sel_cl_data["aux"]["lambda_obs_step"],
+            self._sel_cl_data["step_size"]["lambda_obs"],
             lambda_obs_edges[0],
             lambda_obs_edges[-1],
         )
@@ -439,9 +439,9 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
 
     Parameters
     ----------
-    file_selection: array
-        multi-dimensional array storing fits file of the Selection outputted from Sinfonia
-        ASSUMPTION: we are reading the fits file outside of this module
+    sel_cl_filename: str
+        Name of fits file containing a multi-dimensional of the Selection
+        outputted from Sinfonia.
     Omega_tot: float
         Total observed area
 
@@ -461,15 +461,15 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
                     * prob_lambda_z_obs: xxx
                     * completeness: xxx
                     * purity: xxx
-                * aux:
-                    * z_obs_step: xxx
-                    * lambda_obs_step: xxx
+                * step_size:
+                    * z_obs: xxx
+                    * lambda_obs: xxx
     """
 
     # To be adapted with fitsio - f = fitsio.FITS("your_file.fits")
     from astropy.io import fits
 
-    file_selection = fits.open(sel_cl_filename)
+    hdul = fits.open(sel_cl_filename)
 
     # dictionary to store all outputs
     sel_cl_data = {}
@@ -478,14 +478,19 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
     # get arrays
     ############
 
+    _arrays_steps = {
+        hdul[1].header[f"CTYPE{i}"]: hdul[1].header[f"NAXIS{i}"]
+        for i in range(1, 1 + hdul[1].header["NAXIS"])
+    }
+
     sel_cl_data["arrays"] = {
         name.lower(): np.linspace(
-            file_selection[1].header[f"HIERARCH {name}_START"],
-            file_selection[1].header[f"HIERARCH {name}_END"],
-            file_selection[1].header[f"NAXIS{i+1}"],
+            hdul[1].header[f"HIERARCH {name}_START"],
+            hdul[1].header[f"HIERARCH {name}_END"],
+            num_steps,
             endpoint=True,
         )
-        for i, name in enumerate(["Z_OBS", "LAMBDA_OBS", "Z_TRUE", "LAMBDA_TRUE"])
+        for name, num_steps in _arrays_steps.items()
     }
 
     ############
@@ -493,14 +498,14 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
     ############
 
     def get_hdu(extname):
-        for hdu in file_selection:
+        for hdu in hdul:
             if hdu.header.get("EXTNAME") == extname:
                 return hdu
         raise ValueError(f"Missing EXTNAME={extname} hdu from SEL_CL file!")
 
     # Find number of tiles from fits file
-    # this number will eventually be at file_selection[0].header
-    n_tiles = int((len(file_selection) - 1) / 7)
+    # this number will eventually be at hdul[0].header
+    n_tiles = int((len(hdul) - 1) / 7)
 
     sel_cl_data["tables"] = {
         name: np.array([get_hdu(f"{extname_pref}{it}").data for it in range(n_tiles)])
@@ -511,13 +516,13 @@ def read_sel_cl_output(sel_cl_filename, Omega_tot=None):
         )
     }
 
-    ##########
-    # aux data
-    ##########
+    ########
+    # others
+    ########
 
     # step size of obs quantities
-    sel_cl_data["aux"] = {
-        f"{name.lower()}_step": file_selection[1].header[f"HIERARCH {name}_STEP"]
+    sel_cl_data["step_size"] = {
+        name.lower(): hdul[1].header[f"HIERARCH {name}_STEP"]
         for name in ["Z_OBS", "LAMBDA_OBS"]
     }
 

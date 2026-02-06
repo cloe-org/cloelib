@@ -103,11 +103,11 @@ def _gen_ideal_selcl_data():
             "lambda_true": np.linspace(5, 300, 29),
         }
     }
-    sel_cl_data["aux"] = {
-        "z_obs_step": (
+    sel_cl_data["step_size"] = {
+        "z_obs": (
             sel_cl_data["arrays"]["z_obs"][1:] - sel_cl_data["arrays"]["z_obs"][:-1]
         ).mean(),
-        "lambda_obs_step": (
+        "lambda_obs": (
             sel_cl_data["arrays"]["lambda_obs"][1:]
             - sel_cl_data["arrays"]["lambda_obs"][:-1]
         ).mean(),

@@ -60,7 +60,7 @@ class InterpolatedSelectionFunction:
 
     def _reshape_data_with_obs_bins(self, lambda_obs_edges, z_obs_edges):
         """Reshapes SEL_CL data with obs bins and computes
-        Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
+        Pα(λobs, zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr)
 
         Check ranges of Obs arrays of the file and compare with NC Obs arrays.
 
@@ -93,7 +93,7 @@ class InterpolatedSelectionFunction:
                     * prob_lambda_z_obs: P(lambda_obs, z_obs|lambda_true, z_true)
                     * completeness: completeness(lambda_true, z_true)
                     * purity: purity(ambda_obs, z_obs)
-                    * I_ltr_ztr_lobs_lobs: xxx
+                    * prob_comp_pur: prob_lambda_z_obs*completeness/purity
                 * obs_bins_slices: slices that return the correct range for each obs bins
                     * z: slices for z_obs_edges
                     * lambda: slices for lambda_obs_edges
@@ -186,17 +186,17 @@ class InterpolatedSelectionFunction:
         _pur_reshaped = np.where(_pur_reshaped == 0, np.nan, _pur_reshaped)
 
         # compute multiplication
-        out_data["tables"]["I_ltr_ztr_lobs_lobs"] = (
+        out_data["tables"]["prob_comp_pur"] = (
             out_data["tables"]["prob_lambda_z_obs"] / _pur_reshaped
         )
         if not self.prob_contains_completeness:
-            out_data["tables"]["I_ltr_ztr_lobs_lobs"] *= out_data["tables"][
-                "completeness"
-            ][:, :, :, None, None]
+            out_data["tables"]["prob_comp_pur"] *= out_data["tables"]["completeness"][
+                :, :, :, None, None
+            ]
 
         ## Do we want to put the division to 0? If YES:
-        ## out_data["tables"]["I_ltr_ztr_lobs_lobs"] = (
-        ##   np.where(pur_reshaped != 0, out_data["tables"]["I_ltr_ztr_lobs_lobs"], 0.0)
+        ## out_data["tables"]["prob_comp_pur"] = (
+        ##   np.where(pur_reshaped != 0, out_data["tables"]["prob_comp_pur"], 0.0)
         ## )
 
         ##################
@@ -251,7 +251,7 @@ class InterpolatedSelectionFunction:
 
         tilde_I = (
             np.expand_dims(sel_cl_data_fmt["area_tile"], axis=(1, 2, 3, 4))
-            * sel_cl_data_fmt["tables"]["I_ltr_ztr_lobs_lobs"]
+            * sel_cl_data_fmt["tables"]["prob_comp_pur"]
         ).sum(axis=0) / sel_cl_data_fmt["area_tile"].sum()
 
         integ4d = np.zeros(

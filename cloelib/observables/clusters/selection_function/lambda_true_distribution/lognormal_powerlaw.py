@@ -14,7 +14,6 @@ class LognormalPowerLawLambdaTrueDistribution:
         sig_C_l: float,
         M_piv: float = 3.0e14,
         z_piv: float = 0.45,
-        tabulate_prob_richness: bool = True,
     ):
         r"""
         Class defining the selection function of galaxy clusters, including
@@ -49,7 +48,6 @@ class LognormalPowerLawLambdaTrueDistribution:
             "z": None,
             "lambda_true": None,
         }
-        self._tabulated_prob_richness = None
 
     def mean_lnrichness(self, z, M):
         r"""

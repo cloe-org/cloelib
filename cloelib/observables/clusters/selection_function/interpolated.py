@@ -545,6 +545,7 @@ if __name__ == "__main__":
 
     # Read data
     import sys
+
     from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
         LognormalPowerLawLambdaTrueDistribution,
     )

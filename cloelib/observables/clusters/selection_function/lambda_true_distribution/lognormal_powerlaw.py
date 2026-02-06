@@ -2,6 +2,8 @@
 # import jax.numpy as np
 import numpy as np
 
+from cloelib.observables.clusters.auxiliary import tabulated_return
+
 
 class LognormalPowerLawLambdaTrueDistribution:
     def __init__(
@@ -14,7 +16,6 @@ class LognormalPowerLawLambdaTrueDistribution:
         sig_C_l: float,
         M_piv: float = 3.0e14,
         z_piv: float = 0.45,
-        tabulate_prob_richness: bool = True,
     ):
         r"""
         Class defining the selection function of galaxy clusters, including
@@ -44,12 +45,14 @@ class LognormalPowerLawLambdaTrueDistribution:
         self.z_piv = z_piv
 
         # to avoid recomputing prob_richness
-        self._tabulated_prob_richness_args = {
-            "M": None,
-            "z": None,
-            "lambda_true": None,
+        self._tabulated_prob_richness = {
+            "inputs": {
+                "M": None,
+                "z": None,
+                "lambda_true": None,
+            },
+            "values": None,
         }
-        self._tabulated_prob_richness = None
 
     def mean_lnrichness(self, z, M):
         r"""
@@ -137,21 +140,6 @@ class LognormalPowerLawLambdaTrueDistribution:
             )
         )
 
-    def _are_args_tabulated(self, z, M, lambda_true):
-        """Check if args are the tabluated values"""
-        if any(
-            value is None for key, value in self._tabulated_prob_richness_args.items()
-        ):
-            return False
-        _locals = locals()
-        for name, ref_val in self._tabulated_prob_richness_args.items():
-            test_val = _locals[name]
-            if len(ref_val) != len(test_val):
-                return False
-            elif (ref_val != test_val).any():
-                return False
-        return True
-
     def prob_richness(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.
@@ -174,10 +162,8 @@ class LognormalPowerLawLambdaTrueDistribution:
             prob_richness[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
-        if not self._are_args_tabulated(z, M, lambda_true):
-            self._tabulated_prob_richness_args["M"] = M
-            self._tabulated_prob_richness_args["z"] = z
-            self._tabulated_prob_richness_args["lambda_true"] = lambda_true
-            self._tabulated_prob_richness = self._prob_richness(z, M, lambda_true)
-
-        return self._tabulated_prob_richness
+        return tabulated_return(
+            self._tabulated_prob_richness,
+            self._prob_richness,
+            {"z": z, "M": M, "lambda_true": lambda_true},
+        )

@@ -54,7 +54,7 @@ class InterpolatedSelectionFunction:
         """
         self.lambda_true_distribution = lambda_true_distribution
         self._sel_cl_data = sel_cl_data
-        self.prob_contains_completeness = prob_contains_completeness
+        self._prob_contains_completeness = prob_contains_completeness
         self._extrapolate = extrapolate
 
     def _compute_prob_comp_pur(self, z_obs_edges, lambda_obs_edges):
@@ -156,7 +156,7 @@ class InterpolatedSelectionFunction:
         ## )
 
         # Add completeness?
-        if not self.prob_contains_completeness:
+        if not self._prob_contains_completeness:
             prob_data["prob_comp_pur"] *= self._sel_cl_data["tables"]["completeness"][
                 :, np.newaxis, np.newaxis, :, :
             ]
@@ -200,7 +200,7 @@ class InterpolatedSelectionFunction:
         Returns
         -------
         interpolators: list[list[RectBivariateSpline]]
-            Interpolator of f(z_true, lambda_true) per (z_obs_bins, lambda_obs_bins).
+            Interpolator of W(z_true, lambda_true) per (z_obs_bins, lambda_obs_bins).
         """
 
         if self._extrapolate is None:
@@ -294,9 +294,9 @@ class InterpolatedSelectionFunction:
             Window function for observed redshift and richness bins.
             Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         """
-        ################################################
-        # Compute P(Delta lobs, Delta zobs|ltrue, ztrue)
-        ################################################
+        ################################################################
+        # Compute W_{Delta lambda_obs, Delta z_obs}(lambda_true, z_true)
+        ################################################################
 
         interpolators = self._build_windows_interpolators(z_obs_edges, lambda_obs_edges)
 
@@ -310,9 +310,9 @@ class InterpolatedSelectionFunction:
             for ltab, interp_zobs_lobs in enumerate(interp_zobs):
                 window_lambda_true[ztab, ltab] = interp_lobs_zobs(z_true, lambda_true)
 
-        ################################################
-        # Compute P(Delta lobs, Delta zobs|mass, ztrue)
-        ################################################
+        ######################################################
+        # Compute W_{Delta lambda_obs, Delta z_obs}(M, z_true)
+        ######################################################
 
         pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
             z_true, mass, lambda_true

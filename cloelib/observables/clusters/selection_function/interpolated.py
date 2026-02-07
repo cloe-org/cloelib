@@ -294,9 +294,9 @@ class InterpolatedSelectionFunction:
             Window function for observed redshift and richness bins.
             Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         """
-        ################################################
-        # Compute P(Delta lobs, Delta zobs|ltrue, ztrue)
-        ################################################
+        ################################################################
+        # Compute W_{Delta lambda_obs, Delta z_obs}(lambda_true, z_true)
+        ################################################################
 
         interpolators = self._build_windows_interpolators(z_obs_edges, lambda_obs_edges)
 
@@ -310,9 +310,9 @@ class InterpolatedSelectionFunction:
             for ltab, interp_zobs_lobs in enumerate(interp_zobs):
                 window_lambda_true[ztab, ltab] = interp_lobs_zobs(z_true, lambda_true)
 
-        ################################################
-        # Compute P(Delta lobs, Delta zobs|mass, ztrue)
-        ################################################
+        ######################################################
+        # Compute W_{Delta lambda_obs, Delta z_obs}(M, z_true)
+        ######################################################
 
         pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
             z_true, mass, lambda_true

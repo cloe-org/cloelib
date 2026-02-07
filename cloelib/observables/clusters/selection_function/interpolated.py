@@ -57,9 +57,9 @@ class InterpolatedSelectionFunction:
         self.prob_contains_completeness = prob_contains_completeness
         self._extrapolate = extrapolate
 
-    def _reshape_data_with_obs_bins(self, z_obs_edges, lambda_obs_edges):
-        """Reshapes SEL_CL data with obs bins and computes
-        Pα(λobs, zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr)
+    def _compute_prob_comp_pur(self, z_obs_edges, lambda_obs_edges):
+        """Computes Pα(λobs, zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr)
+        with SEL_CL data shaped to contain obs bins ranges.
 
         Deals with min and max in lobs and zobs:
 
@@ -80,20 +80,11 @@ class InterpolatedSelectionFunction:
         out_data: dict
             SEL_CL data reshaped with obs bins
 
-                * area_tile: area of each homogeneous region
-                * arrays: arrays of tabulation
-                    * z_obs: expanded observed redshift values
-                    * lambda_obs: expanded observed richenss values
-                    * z_true: true redshift values
-                    * lambda_true: true richenss values
-                * tables: new tables expanded with lambda_obs_edges, z_obs_edges
-                    * prob_lambda_z_obs: P(lambda_obs, z_obs|lambda_true, z_true)
-                    * completeness: completeness(lambda_true, z_true)
-                    * purity: purity(ambda_obs, z_obs)
-                    * prob_comp_pur: prob_lambda_z_obs*completeness/purity
-                * obs_bins_slices: slices that return the correct range for each obs bins
-                    * z: slices for z_obs_edges
-                    * lambda: slices for lambda_obs_edges
+                * z_obs: expanded observed redshift values
+                * lambda_obs: expanded observed richenss values
+                * prob_comp_pur: prob_lambda_z_obs*completeness/purity
+                * z_obs_bins_slices: slices for each z obs bins in prob_comp_pur
+                * lambda_obs_bins_slices: slices for each lambda obs bins in prob_comp_pur
 
         Note
         ----
@@ -101,112 +92,93 @@ class InterpolatedSelectionFunction:
         """
 
         # output instanciated with quantities that remain the same:
-        out_data = {
-            "area_tile": self._sel_cl_data["area_tile"],
-            "arrays": {
-                key: self._sel_cl_data["arrays"][key]
-                for key in ("z_true", "lambda_true")
-            },
-            "tables": {"completeness": self._sel_cl_data["tables"]["completeness"]},
-        }
+        out_data = {}
 
         #################
         # Reshaped arrays
         #################
 
-        out_data["arrays"]["z_obs"] = self._expand_array(
+        out_data["z_obs"] = self._expand_array(
             self._sel_cl_data["arrays"]["z_obs"],
             self._sel_cl_data["step_size"]["z_obs"],
             z_obs_edges[0],
             z_obs_edges[-1],
         )
-        out_data["arrays"]["lambda_obs"] = self._expand_array(
+        out_data["lambda_obs"] = self._expand_array(
             self._sel_cl_data["arrays"]["lambda_obs"],
             self._sel_cl_data["step_size"]["lambda_obs"],
             lambda_obs_edges[0],
             lambda_obs_edges[-1],
         )
 
-        #################
-        # Reshaped tables
-        #################
-
-        # finds which slices correspond to the original arrays
-        # i. e. array == expanded_array[slice]
-        _lobs_orig_slice = self._get_bin_slices(
-            out_data["arrays"]["lambda_obs"],
-            self._sel_cl_data["arrays"]["lambda_obs"][[0, -1]],
-            endpoint=True,
-        )[0]
-        _zobs_orig_slice = self._get_bin_slices(
-            out_data["arrays"]["z_obs"],
-            self._sel_cl_data["arrays"]["z_obs"][[0, -1]],
-            endpoint=True,
-        )[0]
-
-        # Re-arrange ranges for prob_lambda_z_obs
-        out_data["tables"]["prob_lambda_z_obs"] = self._extrapolate * np.ones(
-            (
-                out_data["area_tile"].size,
-                out_data["arrays"]["z_obs"].size,
-                out_data["arrays"]["lambda_obs"].size,
-                out_data["arrays"]["z_true"].size,
-                out_data["arrays"]["lambda_true"].size,
-            )
-        )
-        out_data["tables"]["prob_lambda_z_obs"][
-            :, _zobs_orig_slice, _lobs_orig_slice, :, :
-        ] = self._sel_cl_data["tables"]["prob_lambda_z_obs"]
-
-        # Re-arrange ranges for purity
-        out_data["tables"]["purity"] = self._extrapolate * np.ones(
-            (
-                out_data["area_tile"].size,
-                out_data["arrays"]["z_obs"].size,
-                out_data["arrays"]["lambda_obs"].size,
-            )
-        )
-        out_data["tables"]["purity"][:, _zobs_orig_slice, _lobs_orig_slice] = (
-            self._sel_cl_data["tables"]["purity"]
-        )
-
         #####################################################################
         # Compute Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
         #####################################################################
 
-        # Evaluate multiplication for each tile
-        # Pα(λobs|λtr,ztr) * Pα(zobs|λtr,ztr) / Pα(λobs,zobs) * Cα(λtr,ztr)
-        # Dimensions: (lob, ztr, ltr)*(zob, ztr, ltr)*(zob, lob)*(ztr, ltr) --> (zob,lob,ztr,ltr)
-
-        ## To avoid dividing by 0: putting elements with 0 values to NaN
-        _pur_reshaped = out_data["tables"]["purity"][:, :, :, None, None]
-        _pur_reshaped = np.where(_pur_reshaped == 0, np.nan, _pur_reshaped)
-
-        # compute multiplication
-        out_data["tables"]["prob_comp_pur"] = (
-            out_data["tables"]["prob_lambda_z_obs"] / _pur_reshaped
+        # finds which slices correspond to the original arrays
+        # i. e. array == expanded_array[slice]
+        _zobs_orig_slice = self._get_bin_slices(
+            out_data["z_obs"],
+            self._sel_cl_data["arrays"]["z_obs"][[0, -1]],
+            endpoint=True,
+        )[0]
+        _lobs_orig_slice = self._get_bin_slices(
+            out_data["lambda_obs"],
+            self._sel_cl_data["arrays"]["lambda_obs"][[0, -1]],
+            endpoint=True,
+        )[0]
+        # make tuple to fill output with data from self._sel_cl_data
+        _fill = (
+            slice(self._sel_cl_data["area_tile"].size),
+            _zobs_orig_slice,
+            _lobs_orig_slice,
+            slice(self._sel_cl_data["arrays"]["z_true"].size),
+            slice(self._sel_cl_data["arrays"]["lambda_true"].size),
         )
-        if not self.prob_contains_completeness:
-            out_data["tables"]["prob_comp_pur"] *= out_data["tables"]["completeness"][
-                :, None, None, :, :
-            ]
+
+        # Istanciate output
+        out_data["prob_comp_pur"] = self._extrapolate * np.ones(
+            (
+                self._sel_cl_data["area_tile"].size,
+                out_data["z_obs"].size,
+                out_data["lambda_obs"].size,
+                self._sel_cl_data["arrays"]["z_true"].size,
+                self._sel_cl_data["arrays"]["lambda_true"].size,
+            )
+        )
+
+        # Add prob_lambda_z_obs
+        out_data["prob_comp_pur"][_fill] = self._sel_cl_data["tables"][
+            "prob_lambda_z_obs"
+        ]
+
+        # Divide by purity, seting 0 to NaN to avoid dividing by 0
+        _pur_reshaped = self._sel_cl_data["tables"]["purity"][:, :, :, None, None]
+        _pur_reshaped = np.where(_pur_reshaped == 0, np.nan, _pur_reshaped)
+        out_data["prob_comp_pur"][_fill] /= _pur_reshaped
 
         ## Do we want to put the division to 0? If YES:
-        ## out_data["tables"]["prob_comp_pur"] = (
-        ##   np.where(pur_reshaped != 0, out_data["tables"]["prob_comp_pur"], 0.0)
+        ## out_data["prob_comp_pur"][_fill] = (
+        ##   np.where(pur_reshaped != 0, out_data["prob_comp_pur"][_fill], 0.0)
         ## )
+
+        # Add completeness?
+        if not self.prob_contains_completeness:
+            out_data["prob_comp_pur"] *= self._sel_cl_data["tables"]["completeness"][
+                :, np.newaxis, np.newaxis, :, :
+            ]
 
         ##################
         # For integrations
         ##################
 
         # Find slices that return the correct range for each obs bins
-        out_data["obs_bins_slices"] = {
-            "lambda": self._get_bin_slices(
-                out_data["arrays"]["lambda_obs"], lambda_obs_edges
-            ),
-            "z": self._get_bin_slices(out_data["arrays"]["z_obs"], z_obs_edges),
-        }
+        out_data["lambda_obs_bins_slices"] = self._get_bin_slices(
+            out_data["lambda_obs"], lambda_obs_edges
+        )
+        out_data["z_obs_bins_slices"] = self._get_bin_slices(
+            out_data["z_obs"], z_obs_edges
+        )
 
         return out_data
 
@@ -254,36 +226,33 @@ class InterpolatedSelectionFunction:
                 err = ",".join(err)
                 raise ValueError(f"Cannot use these bins: {err} out of bounds.")
 
-        # Format sel_cl data with obs bins
-
-        sel_cl_data_fmt = self._reshape_data_with_obs_bins(
-            z_obs_edges, lambda_obs_edges
-        )
+        # Prob*completeness/purity formatted with obs bins
+        prob_data = self._compute_prob_comp_pur(z_obs_edges, lambda_obs_edges)
 
         # Integrate sum_a/Omega_tot = tildeI(λtr,ztr,∆λobs,∆zobs)
 
         integrand = (
-            np.expand_dims(sel_cl_data_fmt["area_tile"], axis=(1, 2, 3, 4))
-            * sel_cl_data_fmt["tables"]["prob_comp_pur"]
-        ).sum(axis=0) / sel_cl_data_fmt["area_tile"].sum()
+            np.expand_dims(self._sel_cl_data["area_tile"], axis=(1, 2, 3, 4))
+            * prob_data["prob_comp_pur"]
+        ).sum(axis=0) / self._sel_cl_data["area_tile"].sum()
 
         integ4d = np.zeros(
             (
                 len(z_obs_edges) - 1,
                 len(lambda_obs_edges) - 1,
-                len(sel_cl_data_fmt["arrays"]["z_true"]),
-                len(sel_cl_data_fmt["arrays"]["lambda_true"]),
+                len(self._sel_cl_data["arrays"]["z_true"]),
+                len(self._sel_cl_data["arrays"]["lambda_true"]),
             )
         )
-        for ltab, l_slice in enumerate(sel_cl_data_fmt["obs_bins_slices"]["lambda"]):
-            for ztab, z_slice in enumerate(sel_cl_data_fmt["obs_bins_slices"]["z"]):
+        for ztab, z_slice in enumerate(prob_data["z_obs_bins_slices"]):
+            for ltab, l_slice in enumerate(prob_data["lambda_obs_bins_slices"]):
                 integ4d[ztab, ltab, :, :] = integrate.simpson(
                     integrate.simpson(
                         integrand[z_slice, l_slice, :, :],
-                        x=sel_cl_data_fmt["arrays"]["z_obs"][z_slice],
+                        x=prob_data["z_obs"][z_slice],
                         axis=0,
                     ),
-                    x=sel_cl_data_fmt["arrays"]["lambda_obs"][l_slice],
+                    x=prob_data["lambda_obs"][l_slice],
                     axis=0,
                 )
 
@@ -292,8 +261,8 @@ class InterpolatedSelectionFunction:
         integ4d_interp_func = [
             [
                 interpolate.RectBivariateSpline(
-                    sel_cl_data_fmt["arrays"]["z_true"],
-                    sel_cl_data_fmt["arrays"]["lambda_true"],
+                    self._sel_cl_data["arrays"]["z_true"],
+                    self._sel_cl_data["arrays"]["lambda_true"],
                     integ4d_zobs_lobs,
                 )
                 for integ4d_zobs_lobs in integ4d_zobs
@@ -565,6 +534,7 @@ if __name__ == "__main__":
             sig_C_l=None,
         ),
         sel_cl_data=read_sel_cl_output(in_file),
+        extrapolate=0,
     )
     interps = sfi._build_windows_interpolators(
         lambda_obs_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),

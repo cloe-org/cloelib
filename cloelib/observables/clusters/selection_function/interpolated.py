@@ -23,9 +23,6 @@ class InterpolatedSelectionFunction:
         sample purity, completeness, mass-observable relation, and
         uncertainties on observed quantities.
 
-        This is the NEW version, evaluated from the interpolation of SinFonia output file.
-        Should be consistent with selection_function.py in the structure.
-
         Parameters
         ----------
         lambda_true_distribution: LambdaTrueDistribution,
@@ -63,8 +60,6 @@ class InterpolatedSelectionFunction:
     def _reshape_data_with_obs_bins(self, z_obs_edges, lambda_obs_edges):
         """Reshapes SEL_CL data with obs bins and computes
         Pα(λobs, zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr)
-
-        Check ranges of Obs arrays of the file and compare with NC Obs arrays.
 
         Deals with min and max in lobs and zobs:
 
@@ -215,12 +210,13 @@ class InterpolatedSelectionFunction:
 
         return out_data
 
-    def _build_windows_interpolators(self, lambda_obs_edges, z_obs_edges):
+    def _build_windows_interpolators(self, z_obs_edges, lambda_obs_edges):
         r"""
         Selection Function from file.
         Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
         Pα(λobs,zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr) Omega_alpha/Omega_tot.
-        Builds the interpolators over (ztr,ltr) for all bins in Lobs_NC and zobs_NC.
+        Builds the interpolators over (ztr,ltr) for all bins in
+        z_obs_edges, lambda_obs_edges.
 
 
         ..math:
@@ -344,7 +340,7 @@ class InterpolatedSelectionFunction:
         # Compute P(Delta lobs, Delta zobs|ltrue, ztrue)
         ################################################
 
-        interpolators = self._build_windows_interpolators(lambda_obs_edges, z_obs_edges)
+        interpolators = self._build_windows_interpolators(z_obs_edges, lambda_obs_edges)
 
         window_lambda_true = np.zeros(
             len(z_obs_edges) - 1,

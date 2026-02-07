@@ -26,10 +26,6 @@ class InterpolatedSelectionFunction:
         This is the NEW version, evaluated from the interpolation of SinFonia output file.
         Should be consistent with selection_function.py in the structure.
 
-        Main outputs:
-        - interpolator for tildeI(λtr,ztr,∆λobs,∆zobs) already summed over all tiles and integrated in Delta_Lobs and Delta_zobs
-        - mass-observable relation.
-
         Parameters
         ----------
         lambda_true_distribution: LambdaTrueDistribution,
@@ -64,7 +60,7 @@ class InterpolatedSelectionFunction:
         self.prob_contains_completeness = prob_contains_completeness
         self._extrapolate = extrapolate
 
-    def _reshape_data_with_obs_bins(self, lambda_obs_edges, z_obs_edges):
+    def _reshape_data_with_obs_bins(self, z_obs_edges, lambda_obs_edges):
         """Reshapes SEL_CL data with obs bins and computes
         Pα(λobs, zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr)
 
@@ -79,10 +75,10 @@ class InterpolatedSelectionFunction:
 
         Parameters
         ----------
-        lambda_obs_edges: array
-            edges of Lobs bins for Number Counts
-        z_obs_edges: array
-            edges of zobs bins for Number Counts
+        z_obs_edges : numpy.ndarray
+            Edges of redshift bins for the integration.
+        lambda_obs_edges : numpy.ndarray
+            Edges of richness bins for the integration.
 
         Returns
         -------
@@ -265,7 +261,7 @@ class InterpolatedSelectionFunction:
         # Format sel_cl data with obs bins
 
         sel_cl_data_fmt = self._reshape_data_with_obs_bins(
-            lambda_obs_edges, z_obs_edges
+            z_obs_edges, lambda_obs_edges
         )
 
         # Integrate sum_a/Omega_tot = tildeI(λtr,ztr,∆λobs,∆zobs)
@@ -329,14 +325,14 @@ class InterpolatedSelectionFunction:
 
         Parameters
         ----------
-        lambda_obs_edges : numpy.ndarray
-            Edges of richness bins for the integration.
         z_obs_edges : numpy.ndarray
             Edges of redshift bins for the integration.
-        lambda_true : numpy.ndarray
-            True richness to compute the window.
+        lambda_obs_edges : numpy.ndarray
+            Edges of richness bins for the integration.
         z_true : numpy.ndarray
             True redshift to compute the window.
+        lambda_true : numpy.ndarray
+            True richness to compute the window.
 
         Returns
         -------

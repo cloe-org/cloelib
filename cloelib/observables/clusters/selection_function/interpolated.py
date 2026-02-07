@@ -54,7 +54,7 @@ class InterpolatedSelectionFunction:
         """
         self.lambda_true_distribution = lambda_true_distribution
         self._sel_cl_data = sel_cl_data
-        self.prob_contains_completeness = prob_contains_completeness
+        self._prob_contains_completeness = prob_contains_completeness
         self._extrapolate = extrapolate
 
     def _compute_prob_comp_pur(self, z_obs_edges, lambda_obs_edges):
@@ -156,7 +156,7 @@ class InterpolatedSelectionFunction:
         ## )
 
         # Add completeness?
-        if not self.prob_contains_completeness:
+        if not self._prob_contains_completeness:
             prob_data["prob_comp_pur"] *= self._sel_cl_data["tables"]["completeness"][
                 :, np.newaxis, np.newaxis, :, :
             ]
@@ -200,7 +200,7 @@ class InterpolatedSelectionFunction:
         Returns
         -------
         interpolators: list[list[RectBivariateSpline]]
-            Interpolator of f(z_true, lambda_true) per (z_obs_bins, lambda_obs_bins).
+            Interpolator of W(z_true, lambda_true) per (z_obs_bins, lambda_obs_bins).
         """
 
         if self._extrapolate is None:

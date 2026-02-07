@@ -164,6 +164,7 @@ def test_interpolated_selectionfunction():
         ),
         sel_cl_data=sel_cl_data,
         prob_contains_completeness=False,
+        extrapolate=0,
     )
     interps = sfi._build_windows_interpolators(
         lambda_obs_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),

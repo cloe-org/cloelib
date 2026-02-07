@@ -16,6 +16,7 @@ class InterpolatedSelectionFunction:
         lambda_true_distribution: LambdaTrueDistribution,
         sel_cl_data=None,
         prob_contains_completeness=True,
+        extrapolate=None,
     ):
         r"""
         Class defining the selection function of galaxy clusters, including
@@ -52,11 +53,16 @@ class InterpolatedSelectionFunction:
 
         prob_contains_completeness : bool
             If sel_cl_data["prob_lambda_z_obs"] already accounts for the completeness.
+        extrapolate : float, None
+            Behaviour for when z/lambda obs bins are outside the values contained in sel_cl_data.
+            If float, sets the float value when out of bounds, if None raises an error.
+            Used for prob_lambda_z_obs and purity.
 
         """
         self.lambda_true_distribution = lambda_true_distribution
         self._sel_cl_data = sel_cl_data
         self.prob_contains_completeness = prob_contains_completeness
+        self._extrapolate = extrapolate
 
     def _reshape_data_with_obs_bins(self, lambda_obs_edges, z_obs_edges):
         """Reshapes SEL_CL data with obs bins and computes
@@ -148,7 +154,7 @@ class InterpolatedSelectionFunction:
         )[0]
 
         # Re-arrange ranges for prob_lambda_z_obs
-        out_data["tables"]["prob_lambda_z_obs"] = np.zeros(
+        out_data["tables"]["prob_lambda_z_obs"] = self._extrapolate * np.ones(
             (
                 out_data["area_tile"].size,
                 out_data["arrays"]["z_obs"].size,
@@ -162,7 +168,7 @@ class InterpolatedSelectionFunction:
         ] = self._sel_cl_data["tables"]["prob_lambda_z_obs"]
 
         # Re-arrange ranges for purity
-        out_data["tables"]["purity"] = np.zeros(
+        out_data["tables"]["purity"] = self._extrapolate * np.ones(
             (
                 out_data["area_tile"].size,
                 out_data["arrays"]["z_obs"].size,
@@ -241,6 +247,20 @@ class InterpolatedSelectionFunction:
         integ4d_interp_func: list[list[RectBivariateSpline]]
             Interpolator of f(z_true, lambda_true) per (z_obs_bins, lambda_obs_bins).
         """
+
+        if self._extrapolate is None:
+            err = []
+            if z_obs_edges[0] < self._sel_cl_data["arrays"]["z_obs"][0]:
+                err.append("lower z_obs_edges")
+            if z_obs_edges[-1] > self._sel_cl_data["arrays"]["z_obs"][-1]:
+                err.append("upper z_obs_edges")
+            if lambda_obs_edges[0] < self._sel_cl_data["arrays"]["lambda_obs"][0]:
+                err.append("lower lambda_obs_edges")
+            if lambda_obs_edges[-1] > self._sel_cl_data["arrays"]["lambda_obs"][-1]:
+                err.append("upper lambda_obs_edges")
+            if len(err) > 0:
+                err = ",".join(err)
+                raise ValueError(f"Cannot use these bins: {err} out of bounds.")
 
         # Format sel_cl data with obs bins
 

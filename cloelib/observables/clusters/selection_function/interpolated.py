@@ -58,15 +58,8 @@ class InterpolatedSelectionFunction:
         self._extrapolate = extrapolate
 
     def _compute_prob_comp_pur(self, z_obs_edges, lambda_obs_edges):
-        """Computes Pα(λobs, zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr)
+        """Computes Prob(lambda_obs, z_obs)*completeness/purity
         with SEL_CL data shaped to contain obs bins ranges.
-
-        Deals with min and max in lobs and zobs:
-
-            * max(lobs_file) might be < max(lambda_obs_edges)
-            * min(lobs_file) might be > min(lambda_obs_edges)
-            * max(zobs_file) might be < max(z_obs_edges)
-            * min(zobs_file) might be > min(z_obs_edges)
 
         Parameters
         ----------
@@ -77,7 +70,7 @@ class InterpolatedSelectionFunction:
 
         Returns
         -------
-        out_data: dict
+        prob_data: dict
             SEL_CL data reshaped with obs bins
 
                 * z_obs: expanded observed redshift values
@@ -92,38 +85,38 @@ class InterpolatedSelectionFunction:
         """
 
         # output instanciated with quantities that remain the same:
-        out_data = {}
+        prob_data = {}
 
         #################
         # Reshaped arrays
         #################
 
-        out_data["z_obs"] = self._expand_array(
+        prob_data["z_obs"] = self._expand_array(
             self._sel_cl_data["arrays"]["z_obs"],
             self._sel_cl_data["step_size"]["z_obs"],
             z_obs_edges[0],
             z_obs_edges[-1],
         )
-        out_data["lambda_obs"] = self._expand_array(
+        prob_data["lambda_obs"] = self._expand_array(
             self._sel_cl_data["arrays"]["lambda_obs"],
             self._sel_cl_data["step_size"]["lambda_obs"],
             lambda_obs_edges[0],
             lambda_obs_edges[-1],
         )
 
-        #####################################################################
-        # Compute Pα(λobs|λtr,ztr)*Pα(zobs|λtr,ztr)/Pα(λobs,zobs)*Cα(λtr,ztr)
-        #####################################################################
+        ######################################################
+        # Computes Prob(lambda_obs, z_obs)*completeness/purity
+        ######################################################
 
         # finds which slices correspond to the original arrays
         # i. e. array == expanded_array[slice]
         _zobs_orig_slice = self._get_bin_slices(
-            out_data["z_obs"],
+            prob_data["z_obs"],
             self._sel_cl_data["arrays"]["z_obs"][[0, -1]],
             endpoint=True,
         )[0]
         _lobs_orig_slice = self._get_bin_slices(
-            out_data["lambda_obs"],
+            prob_data["lambda_obs"],
             self._sel_cl_data["arrays"]["lambda_obs"][[0, -1]],
             endpoint=True,
         )[0]
@@ -137,34 +130,34 @@ class InterpolatedSelectionFunction:
         )
 
         # Istanciate output
-        out_data["prob_comp_pur"] = self._extrapolate * np.ones(
+        prob_data["prob_comp_pur"] = self._extrapolate * np.ones(
             (
                 self._sel_cl_data["area_tile"].size,
-                out_data["z_obs"].size,
-                out_data["lambda_obs"].size,
+                prob_data["z_obs"].size,
+                prob_data["lambda_obs"].size,
                 self._sel_cl_data["arrays"]["z_true"].size,
                 self._sel_cl_data["arrays"]["lambda_true"].size,
             )
         )
 
         # Add prob_lambda_z_obs
-        out_data["prob_comp_pur"][_fill] = self._sel_cl_data["tables"][
+        prob_data["prob_comp_pur"][_fill] = self._sel_cl_data["tables"][
             "prob_lambda_z_obs"
         ]
 
         # Divide by purity, seting 0 to NaN to avoid dividing by 0
         _pur_reshaped = self._sel_cl_data["tables"]["purity"][:, :, :, None, None]
         _pur_reshaped = np.where(_pur_reshaped == 0, np.nan, _pur_reshaped)
-        out_data["prob_comp_pur"][_fill] /= _pur_reshaped
+        prob_data["prob_comp_pur"][_fill] /= _pur_reshaped
 
         ## Do we want to put the division to 0? If YES:
-        ## out_data["prob_comp_pur"][_fill] = (
-        ##   np.where(pur_reshaped != 0, out_data["prob_comp_pur"][_fill], 0.0)
+        ## prob_data["prob_comp_pur"][_fill] = (
+        ##   np.where(pur_reshaped != 0, prob_data["prob_comp_pur"][_fill], 0.0)
         ## )
 
         # Add completeness?
         if not self.prob_contains_completeness:
-            out_data["prob_comp_pur"] *= self._sel_cl_data["tables"]["completeness"][
+            prob_data["prob_comp_pur"] *= self._sel_cl_data["tables"]["completeness"][
                 :, np.newaxis, np.newaxis, :, :
             ]
 
@@ -173,21 +166,19 @@ class InterpolatedSelectionFunction:
         ##################
 
         # Find slices that return the correct range for each obs bins
-        out_data["lambda_obs_bins_slices"] = self._get_bin_slices(
-            out_data["lambda_obs"], lambda_obs_edges
+        prob_data["lambda_obs_bins_slices"] = self._get_bin_slices(
+            prob_data["lambda_obs"], lambda_obs_edges
         )
-        out_data["z_obs_bins_slices"] = self._get_bin_slices(
-            out_data["z_obs"], z_obs_edges
+        prob_data["z_obs_bins_slices"] = self._get_bin_slices(
+            prob_data["z_obs"], z_obs_edges
         )
 
-        return out_data
+        return prob_data
 
     def _build_windows_interpolators(self, z_obs_edges, lambda_obs_edges):
-        r"""
-        Selection Function from file.
-        Computes the integral over Delta_Lobs_NC and Delta_zobs_NC of
-        Pα(λobs,zobs|λtr,ztr)/pα(λobs,zobs)*cα(λtr,ztr) Omega_alpha/Omega_tot.
-        Builds the interpolators over (ztr,ltr) for all bins in
+        r"""Computes the integral over z_obs_edges and lambda_obs_edges of
+        Prob(lambda_obs, z_obs)*completeness/purity*Omega_alpha/Omega_tot.
+        Builds the interpolators over (z_true, lambda_true) for all bins in
         z_obs_edges, lambda_obs_edges.
 
 
@@ -208,7 +199,7 @@ class InterpolatedSelectionFunction:
 
         Returns
         -------
-        integ4d_interp_func: list[list[RectBivariateSpline]]
+        interpolators: list[list[RectBivariateSpline]]
             Interpolator of f(z_true, lambda_true) per (z_obs_bins, lambda_obs_bins).
         """
 
@@ -229,14 +220,14 @@ class InterpolatedSelectionFunction:
         # Prob*completeness/purity formatted with obs bins
         prob_data = self._compute_prob_comp_pur(z_obs_edges, lambda_obs_edges)
 
-        # Integrate sum_a/Omega_tot = tildeI(λtr,ztr,∆λobs,∆zobs)
+        # Integrate with Omega_alpha/Sum(Omega_alpha)
 
         integrand = (
             np.expand_dims(self._sel_cl_data["area_tile"], axis=(1, 2, 3, 4))
             * prob_data["prob_comp_pur"]
         ).sum(axis=0) / self._sel_cl_data["area_tile"].sum()
 
-        integ4d = np.zeros(
+        window_ltrue = np.zeros(
             (
                 len(z_obs_edges) - 1,
                 len(lambda_obs_edges) - 1,
@@ -246,7 +237,7 @@ class InterpolatedSelectionFunction:
         )
         for ztab, z_slice in enumerate(prob_data["z_obs_bins_slices"]):
             for ltab, l_slice in enumerate(prob_data["lambda_obs_bins_slices"]):
-                integ4d[ztab, ltab, :, :] = integrate.simpson(
+                window_ltrue[ztab, ltab, :, :] = integrate.simpson(
                     integrate.simpson(
                         integrand[z_slice, l_slice, :, :],
                         x=prob_data["z_obs"][z_slice],
@@ -258,26 +249,24 @@ class InterpolatedSelectionFunction:
 
         # build interpolator
 
-        integ4d_interp_func = [
+        interpolators = [
             [
                 interpolate.RectBivariateSpline(
                     self._sel_cl_data["arrays"]["z_true"],
                     self._sel_cl_data["arrays"]["lambda_true"],
-                    integ4d_zobs_lobs,
+                    window_ltrue_zobs_lobs,
                 )
-                for integ4d_zobs_lobs in integ4d_zobs
+                for window_ltrue_zobs_lobs in window_ltrue_zobs
             ]
-            for integ4d_zobs in integ4d
+            for window_ltrue_zobs in window_ltrue
         ]
 
-        return integ4d_interp_func
+        return interpolators
 
     def window_redshift_richness_observed(
         self, z_obs_edges, lambda_obs_edges, z_true, lambda_true
     ):
-        r"""
-        Computes the window function for observed redshift and richness bins, i. e.:
-
+        r"""Computes the window function for observed redshift and richness bins, i. e.:
 
         ..math:
             W_{\Delta\lambda_{\rm obs}, \Delta z_{\rm obs}}(M, z_{\rm true}) =
@@ -342,8 +331,7 @@ class InterpolatedSelectionFunction:
 
     @staticmethod
     def _expand_array(array, array_step, lower_value, upper_value):
-        """
-        Expands lower/upper boundaries of array.
+        """Expands lower/upper boundaries of array.
 
         Parameters
         ----------

@@ -55,7 +55,7 @@ class SelectionFunction(Protocol):
         -------
         numpy.ndarray
             Window function for observed redshift and richness bins.
-            Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
+            Dimensions: (z_obs_edges, lambda_obs_edges, z_true, mass)
         """
         ...
 

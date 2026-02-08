@@ -262,7 +262,7 @@ class InterpolatedSelectionFunction:
         return interpolators
 
     def window_redshift_richness_observed(
-        self, z_obs_edges, lambda_obs_edges, z_true, lambda_true
+        self, z_obs_edges, lambda_obs_edges, z_true, mass, lambda_true
     ):
         r"""Computes the window function for observed redshift and richness bins, i. e.:
 
@@ -283,8 +283,10 @@ class InterpolatedSelectionFunction:
             Edges of richness bins for the integration.
         z_true : numpy.ndarray
             True redshift to compute the window.
+        mass : numpy.ndarray
+            Mass to compute the window.
         lambda_true : numpy.ndarray
-            True richness to compute the window.
+            Values to be used for marginalization over true richness.
 
         Returns
         -------

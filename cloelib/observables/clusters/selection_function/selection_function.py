@@ -14,11 +14,7 @@ T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 @runtime_checkable
 class SelectionFunction(Protocol):
     def window_z_richness_observed(
-        self,
-        z_obs_edges,
-        lambda_obs_edges,
-        z_true,
-        lambda_true,
+        self, z_obs_edges, lambda_obs_edges, z_true, mass, lambda_true
     ):
         r"""
         Computes the window function for observed redshift and richness bins, i. e.:
@@ -52,6 +48,8 @@ class SelectionFunction(Protocol):
             True redshift to compute the window.
         mass : numpy.ndarray
             Mass to compute the window.
+        lambda_true : numpy.ndarray
+            Values to be used for marginalization over true richness.
 
         Returns
         -------

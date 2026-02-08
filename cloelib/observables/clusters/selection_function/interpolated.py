@@ -18,8 +18,7 @@ class InterpolatedSelectionFunction:
         prob_contains_completeness=True,
         extrapolate=None,
     ):
-        r"""
-        Class defining the selection function of galaxy clusters, including
+        r"""Class defining the selection function of galaxy clusters, including
         sample purity, completeness, mass-observable relation, and
         uncertainties on observed quantities.
 
@@ -49,8 +48,7 @@ class InterpolatedSelectionFunction:
         extrapolate : float, None
             Behaviour for when z/lambda obs bins are outside the values contained in sel_cl_data.
             If float, sets the float value when out of bounds, if None raises an error.
-            Used for prob_lambda_z_obs and purity.
-
+            Used for computation of Prob(lambda_obs, z_obs)*completeness/purity.
         """
         self.lambda_true_distribution = lambda_true_distribution
         self._sel_cl_data = sel_cl_data
@@ -361,8 +359,7 @@ class InterpolatedSelectionFunction:
 
     @staticmethod
     def _get_bin_slices(array, bins_edges, endpoint=False):
-        """
-        Finds slices that return the correct range for each bin.
+        """Finds slices that return the correct range for each bin.
 
         Parameters
         ----------

@@ -78,7 +78,7 @@ def test_gaussian_selectionfunction():
     print("    scatter_lambda_obs")
     _scatter_lambda_obs_ref = [0.101, 0.113324, 0.127151, 0.142666, 0.160074]
     assert_allclose(
-        selection_function._scatter_lambda_obs(z_test, l_test)[0],
+        selection_function._scatter_lambda_obs(z_test[:, None], l_test[None, :])[0],
         _scatter_lambda_obs_ref,
         rtol=1e-05,
     )
@@ -94,12 +94,14 @@ def test_gaussian_selectionfunction():
     print("    prob_lambda_obs")
     _prob_lambda_obs_ref = [2.06231e-07, 0.00000e00, 0.00000e00, 0.00000e00, 0.00000e00]
     assert_allclose(
-        selection_function._prob_lambda_obs(z_test, l_test, lob_test)[0, 0],
+        selection_function._prob_lambda_obs(
+            z_test[:, None, None], l_test[None, :, None], lob_test[None, None, :]
+        )[0, 0],
         _prob_lambda_obs_ref,
         rtol=1e-05,
     )
-    print("    prob_zobs")
-    _prob_zobs_ref = [
+    print("    prob_z_obs")
+    _prob_z_obs_ref = [
         2.133197e00,
         7.240213e-01,
         2.365759e-01,
@@ -107,8 +109,10 @@ def test_gaussian_selectionfunction():
         2.497394e-02,
     ]
     assert_allclose(
-        selection_function._prob_zobs(zob_test, lob_test, z_test)[0],
-        _prob_zobs_ref,
+        selection_function._prob_z_obs(
+            zob_test[:, None, None], lob_test[None, :], z_test
+        )[0, 0],
+        _prob_z_obs_ref,
         rtol=5e-07,
     )
 
@@ -129,10 +133,10 @@ def _gen_gaussian_selcl_data(gaussian_sf, arrays):
 
     # tables
     _prob_func = lambda zob, lob, ztr, ltr, alpha: (
-        gaussian_sf._prob_lambda_obs(ztr, ltr, lob).transpose(2, 0, 1)[
-            None, None, :, :, :
-        ]
-        * gaussian_sf._prob_zobs(zob[:, None], lob[None, :, None], ztr)[
+        gaussian_sf._prob_lambda_obs(
+            ztr[None, :, None], ltr[None, None, :], lob[:, None, None]
+        )[None, None, ...]
+        * gaussian_sf._prob_z_obs(zob[:, None, None], lob[None, :, None], ztr)[
             None, :, :, :, None
         ]
         * alpha[:, None, None, None, None]

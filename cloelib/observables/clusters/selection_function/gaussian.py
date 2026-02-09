@@ -71,12 +71,17 @@ class GaussianSelectionFunction:
         Returns
         -------
         scatter_lbobs_lbdz: numpy.ndarray
-            scatter_lbobs_lbdz[i,j], where i is the true redshift axis
-            and j is the true richness axis
+            Statistical uncertainty on the observed mass proxy.
         """
         return (
-            self.sig_lambda_norm + self.sig_lambda_z * z[:, np.newaxis]
+            self.sig_lambda_norm + self.sig_lambda_z * z
         ) * lambda_true**self.sig_lambda_exponent
+
+    @staticmethod
+    def _gaussian(value, mean, sigma):
+        return np.exp(-((value - mean) ** 2.0) / (2.0 * sigma**2.0)) / (
+            np.sqrt(2.0 * np.pi * sigma**2.0)
+        )
 
     def _prob_lambda_obs(self, z, lambda_true, lambda_obs):
         r"""
@@ -97,25 +102,10 @@ class GaussianSelectionFunction:
         Returns
         -------
         prob_lambda_obs: numpy.ndarray
-            prob_lambda_obs[i,j,k], where i is the redshift axis,
-            j is the the theoretical richness axis,
-            and k is the observed richness
+            Observed mass proxy PDF.
         """
-        sigma_lambda_obs = self._scatter_lambda_obs(z, lambda_true)[:, :, np.newaxis]
-
-        return (
-            1.0
-            / (np.sqrt(2.0 * np.pi * sigma_lambda_obs**2.0))
-            * np.exp(
-                -(
-                    (
-                        lambda_obs[np.newaxis, np.newaxis, :]
-                        - lambda_true[np.newaxis, :, np.newaxis]
-                    )
-                    ** 2.0
-                )
-                / (2.0 * sigma_lambda_obs**2.0)
-            )
+        return self._gaussian(
+            lambda_obs, lambda_true, self._scatter_lambda_obs(z, lambda_true)
         )
 
     def scatter_z_obs(self, lambda_obs, z):
@@ -135,12 +125,11 @@ class GaussianSelectionFunction:
         Returns
         -------
         scatter_z_obs: numpy.ndarray
-            scatter_z_obs[i,j] where i is the true redshift axis
-            and j the observed richness axis
+            Statistical uncertainty on the observed redshift.
         """
         return self.sig_z_z * z + self.sig_z_lambda * lambda_obs
 
-    def _prob_zobs(self, z_obs, lambda_obs, z):
+    def _prob_z_obs(self, z_obs, lambda_obs, z):
         r"""
         Observed redshift PDF.
 
@@ -158,16 +147,10 @@ class GaussianSelectionFunction:
 
         Returns
         -------
-        prob_zobs: numpy.ndarray
-            prob_zobs[i,j,k] where i is the observed redshift axis,
-            j is the observed richness axis,
-            and k is the true redshift axis
+        numpy.ndarray
+            Observed redshift PDF.
         """
-        sigma_zobs = self.scatter_z_obs(lambda_obs, z)
-
-        return np.exp(
-            -((z_obs[:, np.newaxis] - z) ** 2.0) / (2.0 * sigma_zobs**2.0)
-        ) / (np.sqrt(2.0 * np.pi * sigma_zobs**2.0))
+        return self._gaussian(z_obs, z, self.scatter_z_obs(lambda_obs, z))
 
     def window_z_observed(
         self, z_obs_edges, lambda_obs_edges, z_true, lambda_true=None
@@ -199,11 +182,12 @@ class GaussianSelectionFunction:
         lambda_obs_bins_size = len(lambda_obs_edges) - 1
 
         # for z_obs integration
-        z_obs_tabs = np.linspace(z_obs_edges[:-1], z_obs_edges[1:], self.z_tab_integ)
+        z_obs_tabs = np.linspace(z_obs_edges[:-1], z_obs_edges[1:], self.z_tab_integ).T
 
         # reshape for multiplication
-        _z_obs_tabs = z_obs_tabs[:, :, np.newaxis]
+        _z_obs_tabs = z_obs_tabs[:, :, np.newaxis, np.newaxis]
         _lambda_obs = lambda_obs_edges[np.newaxis, :-1, np.newaxis]
+        _z_true = z_true[np.newaxis, np.newaxis, :]
 
         # Window function
         window_z_obs = np.zeros(
@@ -215,8 +199,8 @@ class GaussianSelectionFunction:
         )
         for ind_z in range(z_obs_bins_size):
             window_z_obs[ind_z] = simps(
-                self._prob_zobs(_z_obs_tabs[:, ind_z], _lambda_obs, z_true),
-                x=z_obs_tabs[:, ind_z],
+                self._prob_z_obs(_z_obs_tabs[ind_z], _lambda_obs, _z_true),
+                x=z_obs_tabs[ind_z],
                 axis=0,
             )
         return window_z_obs
@@ -283,9 +267,9 @@ class GaussianSelectionFunction:
             )
             windows_lambda_obs_lambda_true[ind_lambda] = simps(
                 self._prob_lambda_obs(
-                    z_true,
-                    lambda_true,
-                    l_tab,
+                    z_true[:, np.newaxis, np.newaxis],
+                    lambda_true[np.newaxis, :, np.newaxis],
+                    l_tab[np.newaxis, np.newaxis, :],
                 ),
                 x=l_tab,
                 axis=-1,

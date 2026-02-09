@@ -148,7 +148,7 @@ class ClusterStatisticsModeling:
             where (ztrue) are the values in self.tabulated_integrands.
             Dimensions: (z_obs_edges, lambda_obs_edges, ztrue).
         """
-        return selection_function._window_z_observed(
+        return selection_function.window_z_observed(
             z_obs_edges,
             lambda_obs_edges,
             self.tabulated_integrands["ztrue"],
@@ -175,7 +175,7 @@ class ClusterStatisticsModeling:
             Dimensions: (lambda_obs_edges, ztrue, M).
         """
 
-        return selection_function._window_richness_observed(
+        return selection_function.window_richness_observed(
             lambda_obs_edges,
             self.tabulated_integrands["ztrue"],
             self.tabulated_integrands["M"],

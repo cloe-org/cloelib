@@ -355,7 +355,7 @@ class InterpolatedSelectionFunction:
             axis=-1,
         )
 
-    def _window_z_observed(self, z_obs_edges, lambda_obs_edges, z_true, lambda_true):
+    def window_z_observed(self, z_obs_edges, lambda_obs_edges, z_true, lambda_true):
         r"""Compute the window function of each observed redshift bin, given by:
 
         ..math:
@@ -388,7 +388,7 @@ class InterpolatedSelectionFunction:
             axis=-1,
         )
 
-    def _window_richness_observed(
+    def window_richness_observed(
         self,
         lambda_obs_edges,
         l_m_tab_sig,

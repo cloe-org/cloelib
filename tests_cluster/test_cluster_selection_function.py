@@ -12,64 +12,7 @@ from cloelib.observables.clusters.selection_function.lambda_true_distribution im
 )
 
 
-def _test_selectionfunction(SF):
-    z_test = np.linspace(0.01, 1.0, 5)
-    zob_test = np.linspace(0.1, 1.1, 5)
-    M_test = 1.0e14
-    l_test = np.logspace(0.0, 2.0, 5)
-    lob_test = np.logspace(0.2, 2.2, 5)
-
-    XXX = 1
-
-    print("    lnrichness")
-    _lnrichness_ref = [-1.533121, -1.423534, -1.3337, -1.257575, -1.191523]
-    assert_allclose(
-        SF.lambda_true_distribution.mean_lnrichness(z_test, M_test)[:, 0],
-        _lnrichness_ref,
-        rtol=1e-05,
-    )
-    print("    scatter_lnrichness")
-    assert_allclose(
-        SF.lambda_true_distribution.scatter_lnrichness(z_test, M_test), 0.1, rtol=1e-05
-    )
-    print("    prob_richness")
-    assert_allclose(
-        SF.lambda_true_distribution.prob_richness(z_test, M_test, l_test),
-        0,
-        atol=1e-10,
-        rtol=1e-05,
-    )
-    print("    scatter_lambda_obs")
-    _scatter_lambda_obs_ref = [0.101, 0.113324, 0.127151, 0.142666, 0.160074]
-    assert_allclose(
-        SF._scatter_lambda_obs(z_test, l_test)[0], _scatter_lambda_obs_ref, rtol=1e-05
-    )
-    print("    prob_lambda_obs")
-    _prob_lambda_obs_ref = [2.06231e-07, 0.00000e00, 0.00000e00, 0.00000e00, 0.00000e00]
-    assert_allclose(
-        SF._prob_lambda_obs(z_test, l_test, lob_test)[0, 0],
-        _prob_lambda_obs_ref,
-        rtol=1e-05,
-    )
-    print("    scatter_z_obs")
-    _scatter_z_obs_ref = [0.159489, 0.526937, 1.635393, 5.087122, 15.948932]
-    assert_allclose(SF.scatter_z_obs(lob_test, z_test), _scatter_z_obs_ref, rtol=1e-5)
-    print("    prob_zobs")
-    _prob_zobs_ref = [
-        2.133197e00,
-        7.240213e-01,
-        2.365759e-01,
-        7.777955e-02,
-        2.497394e-02,
-    ]
-    assert_allclose(
-        SF._prob_zobs(zob_test, lob_test, z_test)[0], _prob_zobs_ref, rtol=5e-07
-    )
-
-
-def test_gaussian_selectionfunction():
-    # SelectionFunction
-    print("# SelectionFunction")
+def _get_test_gaussian_sf():
     _lambda_true_dist_pars = dict(
         A_l=0.5,
         B_l=0.6,
@@ -85,7 +28,7 @@ def test_gaussian_selectionfunction():
         sig_z_z=0.1,
         sig_z_lambda=0.1,
     )
-    SF = GaussianSelectionFunction(
+    return GaussianSelectionFunction(
         **_sel_pars,
         lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
             **_lambda_true_dist_pars
@@ -93,18 +36,86 @@ def test_gaussian_selectionfunction():
         lambda_tab_integ=[31, 31, 31, 51],
         z_tab_integ=31,
     )
-    _test_selectionfunction(SF)
 
 
-def _gen_ideal_selcl_data():
-    sel_cl_data = {
-        "arrays": {
-            "z_obs": np.linspace(0.3, 1.5, 25),
-            "lambda_obs": np.linspace(25, 200, 27),
-            "z_true": np.linspace(0, 3, 31),
-            "lambda_true": np.linspace(5, 300, 29),
-        }
-    }
+def test_gaussian_selectionfunction():
+    print("# SelectionFunction")
+    selection_function = _get_test_gaussian_sf()
+
+    # tests
+    z_test = np.linspace(0.01, 1.0, 5)
+    zob_test = np.linspace(0.1, 1.1, 5)
+    M_test = 1.0e14
+    l_test = np.logspace(0.0, 2.0, 5)
+    lob_test = np.logspace(0.2, 2.2, 5)
+
+    # Tests
+
+    print("    lnrichness")
+    _lnrichness_ref = [-1.533121, -1.423534, -1.3337, -1.257575, -1.191523]
+    assert_allclose(
+        selection_function.lambda_true_distribution.mean_lnrichness(z_test, M_test)[
+            :, 0
+        ],
+        _lnrichness_ref,
+        rtol=1e-05,
+    )
+    print("    scatter_lnrichness")
+    assert_allclose(
+        selection_function.lambda_true_distribution.scatter_lnrichness(z_test, M_test),
+        0.1,
+        rtol=1e-05,
+    )
+    print("    prob_true_richness")
+    assert_allclose(
+        selection_function.lambda_true_distribution.prob_richness(
+            z_test, M_test, l_test
+        ),
+        0,
+        atol=1e-10,
+        rtol=1e-05,
+    )
+    print("    scatter_lambda_obs")
+    _scatter_lambda_obs_ref = [0.101, 0.113324, 0.127151, 0.142666, 0.160074]
+    assert_allclose(
+        selection_function._scatter_lambda_obs(z_test, l_test)[0],
+        _scatter_lambda_obs_ref,
+        rtol=1e-05,
+    )
+    print("    scatter_z_obs")
+    _scatter_z_obs_ref = [0.159489, 0.526937, 1.635393, 5.087122, 15.948932]
+    assert_allclose(
+        selection_function.scatter_z_obs(lob_test, z_test),
+        _scatter_z_obs_ref,
+        rtol=1e-5,
+    )
+
+    # Prob functions tests
+    print("    prob_lambda_obs")
+    _prob_lambda_obs_ref = [2.06231e-07, 0.00000e00, 0.00000e00, 0.00000e00, 0.00000e00]
+    assert_allclose(
+        selection_function._prob_lambda_obs(z_test, l_test, lob_test)[0, 0],
+        _prob_lambda_obs_ref,
+        rtol=1e-05,
+    )
+    print("    prob_zobs")
+    _prob_zobs_ref = [
+        2.133197e00,
+        7.240213e-01,
+        2.365759e-01,
+        7.777955e-02,
+        2.497394e-02,
+    ]
+    assert_allclose(
+        selection_function._prob_zobs(zob_test, lob_test, z_test)[0],
+        _prob_zobs_ref,
+        rtol=5e-07,
+    )
+
+
+def _gen_ideal_gaussian_selcl_data(arrays):
+    sel_cl_data = {"arrays": arrays}
+
     sel_cl_data["step_size"] = {
         "z_obs": (
             sel_cl_data["arrays"]["z_obs"][1:] - sel_cl_data["arrays"]["z_obs"][:-1]
@@ -114,46 +125,57 @@ def _gen_ideal_selcl_data():
             - sel_cl_data["arrays"]["lambda_obs"][:-1]
         ).mean(),
     }
+    sel_cl_data["area_tile"] = np.ones(3)
 
     # tables
-
-    _rich_norm = lambda rich, z, rich_piv: rich / (rich_piv + z)
-    _cp_func = lambda rich, z, rich_piv: (
-        _rich_norm(rich, z, rich_piv) / (1 + _rich_norm(rich, z, rich_piv))
-    )
-    _prob_func = lambda ltr, lob, ztr, zob, lsig: np.exp(
-        -0.1 * ((ltr - lob) / lsig) ** 2 - (ztr - zob) ** 2
+    gaussian_sf = _get_test_gaussian_sf()
+    _prob_func = lambda zob, lob, ztr, ltr, alpha: (
+        gaussian_sf._prob_lambda_obs(ztr, ltr, lob).transpose(2, 0, 1)[
+            None, None, :, :, :
+        ]
+        * gaussian_sf._prob_zobs(zob[:, None], lob[None, :, None], ztr)[
+            None, :, :, :, None
+        ]
+        * alpha[:, None, None, None, None]
     )
 
     sel_cl_data["tables"] = {
         "prob_lambda_z_obs": _prob_func(
-            sel_cl_data["arrays"]["lambda_obs"][None, None, :, None, None],
-            sel_cl_data["arrays"]["lambda_true"][None, None, None, None, :],
-            sel_cl_data["arrays"]["z_obs"][None, :, None, None, None],
-            sel_cl_data["arrays"]["z_true"][None, None, None, :, None],
-            np.array([10, 10, 10])[:, None, None, None, None],
+            sel_cl_data["arrays"]["z_obs"],
+            sel_cl_data["arrays"]["lambda_obs"],
+            sel_cl_data["arrays"]["z_true"],
+            sel_cl_data["arrays"]["lambda_true"],
+            sel_cl_data["area_tile"],
         ),
-        "completeness": _cp_func(
-            sel_cl_data["arrays"]["lambda_true"][None, None, :],
-            sel_cl_data["arrays"]["z_true"][None, :, None],
-            np.array([10, 15, 10])[:, None, None],
+        "completeness": np.ones(
+            (
+                sel_cl_data["area_tile"].size,
+                sel_cl_data["arrays"]["z_true"].size,
+                sel_cl_data["arrays"]["lambda_true"].size,
+            )
         ),
-        "purity": _cp_func(
-            sel_cl_data["arrays"]["lambda_obs"][None, None, :],
-            sel_cl_data["arrays"]["z_obs"][None, :, None],
-            np.array([10, 10, 15])[:, None, None],
+        "purity": np.ones(
+            (
+                sel_cl_data["area_tile"].size,
+                sel_cl_data["arrays"]["z_obs"].size,
+                sel_cl_data["arrays"]["lambda_obs"].size,
+            )
         ),
     }
-
-    sel_cl_data["area_tile"] = np.array([8, 9, 10])
 
     return sel_cl_data
 
 
 def test_interpolated_selectionfunction():
 
-    print("Test with mock data")
-    sel_cl_data = _gen_ideal_selcl_data()
+    test_arrays = {
+        "z_true": np.linspace(0, 3, 31),
+        "lambda_true": np.linspace(5, 300, 29),
+        "z_obs": np.linspace(0.3, 1.5, 25),
+        "lambda_obs": np.linspace(25, 200, 27),
+    }
+    print("Test with gaussian input data")
+    sel_cl_data = _gen_ideal_gaussian_selcl_data(test_arrays)
 
     sfi = InterpolatedSelectionFunction(
         lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
@@ -168,19 +190,21 @@ def test_interpolated_selectionfunction():
         prob_contains_completeness=False,
         extrapolate=0,
     )
+
+    # Prob functions tests
     interps = sfi._build_windows_interpolators(
-        lambda_obs_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
-        z_obs_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
+        lambda_obs_edges=test_arrays["lambda_obs"][::2],
+        z_obs_edges=test_arrays["z_obs"][::3],
     )
 
     # data generated by the code, must be updated at some point
     ref_data = np.array(
         [
-            [0.32536723, 0.32631985],
-            [0.66257855, 0.66461609],
-            [0.9165816, 0.91947089],
-            [0.9862405, 0.98939537],
+            [9.778339e-05, 9.812106e-05, 9.844903e-05, 9.876724e-05],
+            [9.997279e-05, 1.003186e-04, 1.006545e-04, 1.009805e-04],
+            [9.997279e-05, 1.003186e-04, 1.006545e-04, 1.009805e-04],
         ]
-    ).T
-
-    assert_allclose(interps[1][1]([0.3, 0.31], [10, 20, 30, 40]), ref_data, rtol=1e-07)
+    )
+    x = np.linspace(2.99, 3.01, 3)
+    y = np.linspace(36.5, 36.7, 4)
+    assert_allclose(interps[1][1](x, y), ref_data, rtol=1e-06)

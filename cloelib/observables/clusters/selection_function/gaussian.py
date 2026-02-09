@@ -171,7 +171,7 @@ class GaussianSelectionFunction:
             * np.exp(-((z_obs[:, np.newaxis] - z) ** 2.0) / (2.0 * sigmazobsz**2.0))
         )
 
-    def _window_z_observed(self, z_obs_edges, lambda_obs_edges, z_true):
+    def window_z_observed(self, z_obs_edges, lambda_obs_edges, z_true):
         r"""Compute the window function of each observed redshift bin, given by:
 
         ..math:
@@ -219,7 +219,7 @@ class GaussianSelectionFunction:
             )
         return window_z_obs
 
-    def _window_richness_observed(
+    def window_richness_observed(
         self,
         lambda_obs_edges,
         z_true,

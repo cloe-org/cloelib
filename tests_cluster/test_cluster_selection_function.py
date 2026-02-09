@@ -90,6 +90,8 @@ def test_gaussian_selectionfunction():
         lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
             **_lambda_true_dist_pars
         ),
+        lambda_tab_integ=[31, 31, 31, 51],
+        z_tab_integ=31,
     )
     _test_selectionfunction(SF)
 

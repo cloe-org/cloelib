@@ -5,6 +5,7 @@ from scipy.integrate import simpson as simps
 # cloelib imports
 from cloelib.observables.clusters.auxiliary import photoz_rsd_correction
 from cloelib.observables.clusters.halo_clustering import HaloClustering
+from cloelib.observables.clusters.selection_function import SelectionFunction
 from cloelib.summary_statistics.clusters.statistics_modeling import (
     ClusterStatisticsModeling,
 )
@@ -25,6 +26,7 @@ class ClusterClustering:
         self,
         cluster_statitstics_modeling: ClusterStatisticsModeling,
         clustering: HaloClustering,
+        selection_function: SelectionFunction,
     ):
         """
         Initializes the cluster profile lensing
@@ -36,6 +38,8 @@ class ClusterClustering:
             for cluster statistics and tabled values for integration.
         clustering : HaloClusteringCore
             Halo clustering object
+        selection_function : SelectionFunction
+            Selection function object
         """
         # cluster counts summary statistics, contains tables for integrals
         # and functions to compute binned integrals of counts
@@ -43,10 +47,7 @@ class ClusterClustering:
 
         # observable objects
         self.clustering = clustering
-
-        # hardcoded quantities for integration
-        self.l_m_tab_sig = [31, 51]
-        self.z_tab_sig = 31
+        self.selection_function = selection_function
 
     def get_xi(
         self,
@@ -88,11 +89,11 @@ class ClusterClustering:
 
         # integral of P(z_obs|lambda_obs, z) on z_obs bins : (z_obs, lambda_obs, ztrue)
         window_z_obs = self.cluster_statitstics_modeling.window_z_observed(
-            z_obs_edges, lambda_obs_edges, self.z_tab_sig
+            self.selection_function, z_obs_edges, lambda_obs_edges
         )
         # integral of P(lambda_obs|M, z) on lambda_obs bins : (lambda_obs_edges, M, ztrue)
         _window_lambda_obs = self.cluster_statitstics_modeling.window_richness_observed(
-            lambda_obs_edges, self.l_m_tab_sig
+            self.selection_function, lambda_obs_edges
         )
         # integral of P(lambda_obs|M, z)*dn/dM on lambda_obs bins and mass : (lambda_obs, ztrue)
         window_lambda_obs_mass_integrated = (
@@ -138,7 +139,7 @@ class ClusterClustering:
             z=self.cluster_statitstics_modeling.tabulated_integrands["ztrue"],
             k=self.cluster_statitstics_modeling.tabulated_integrands["k"],
             z_obs_scatter=(
-                self.cluster_statitstics_modeling.selectionfunction.scatter_z_obs(
+                self.selection_function.scatter_z_obs(
                     0.5 * (lambda_obs_edges[1:] + lambda_obs_edges[:-1])[np.newaxis, :],
                     self.cluster_statitstics_modeling.tabulated_integrands["ztrue"][
                         :, np.newaxis

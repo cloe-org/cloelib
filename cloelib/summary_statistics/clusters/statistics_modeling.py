@@ -7,7 +7,6 @@ from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.observables.clusters.covariance import HaloCovariance
 from cloelib.observables.clusters.halo_abundance import HaloAbundance
-from cloelib.observables.clusters.selection_function import SelectionFunction
 
 # import jax
 
@@ -42,7 +41,6 @@ class ClusterStatisticsModeling:
     def __init__(
         self,
         halo_abundance: HaloAbundance,
-        selectionfunction: SelectionFunction,
         integ_k_arr: np.ndarray,
         integ_mass_arr: np.ndarray,
         integ_lambda_true_arr: np.ndarray,
@@ -56,8 +54,6 @@ class ClusterStatisticsModeling:
         ----------
         HaloAbundance : HaloAbundance
             Halo mass function and bias object
-        selectionfunction : SelectionFunction
-            Selection function object
         integ_k_arr : numpy.ndarray
             Values of k to be used in integrations, stored in tabulated_integrands
         integ_mass_arr : numpy.ndarray
@@ -71,7 +67,6 @@ class ClusterStatisticsModeling:
         """
         # observable objects
         self.halo_abundance = halo_abundance
-        self.selectionfunction = selectionfunction
 
         # check if the integration points lie within the interpolation ranges
         if self.matter_statistics.interpolate_pk:
@@ -131,20 +126,20 @@ class ClusterStatisticsModeling:
     # cluster statistics functions
     # ----------------------------
 
-    def window_z_observed(self, z_obs_edges, lambda_obs_edges, z_tab_sig):
+    def window_z_observed(self, selection_function, z_obs_edges, lambda_obs_edges):
         r"""Compute the window function of each observed redshift bin, given by:
 
         ..math:
             W_{\Delta z_{\rm obs}}(\lambda_{\rm obs}, z_{\rm true}) = \int_{\Delta z_{\rm obs}}dz_{\rm obs} P(z_{\rm obs}|\lambda_{\rm obs}, z_{\rm true})
 
         Parameters
-        ----------
+        ---------
+        selection_function : SelectionFunction
+            Selection function object
         z_obs_edges : numpy.ndarray
             Edges of redshift bins for the integration.
         lambda_obs_edges : numpy.ndarray
             Edges of richness bins for the integration.
-        z_tab_sig : int, None
-            Number of points to be used for z_obs integration.
 
         Returns
         -------
@@ -153,14 +148,13 @@ class ClusterStatisticsModeling:
             where (ztrue) are the values in self.tabulated_integrands.
             Dimensions: (z_obs_edges, lambda_obs_edges, ztrue).
         """
-        return self.selectionfunction._window_z_observed(
+        return selection_function._window_z_observed(
             z_obs_edges,
             lambda_obs_edges,
-            z_tab_sig,
             self.tabulated_integrands["ztrue"],
         )
 
-    def window_richness_observed(self, lambda_obs_edges, l_m_tab_sig):
+    def window_richness_observed(self, selection_function, lambda_obs_edges):
         r"""Compute the window function of each observed richness bin, given by:
 
         ..math:
@@ -168,11 +162,10 @@ class ClusterStatisticsModeling:
 
         Parameters
         ----------
+        selection_function : SelectionFunction
+            Selection function object
         lambda_obs_edges : numpy.ndarray
             Edges of richness bins for the integration.
-        l_m_tab_sig : List, None
-            Number of points to be used for the lambda_obs integration
-            in each lambda_obs bin. Must be same size of lambda_obs_edges.
 
         Returns
         -------
@@ -182,9 +175,8 @@ class ClusterStatisticsModeling:
             Dimensions: (lambda_obs_edges, ztrue, M).
         """
 
-        return self.selectionfunction._window_richness_observed(
+        return selection_function._window_richness_observed(
             lambda_obs_edges,
-            l_m_tab_sig,
             self.tabulated_integrands["ztrue"],
             self.tabulated_integrands["M"],
             self.tabulated_integrands["lambda_true"],

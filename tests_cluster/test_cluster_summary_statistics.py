@@ -101,12 +101,6 @@ def get_values():
 
     # Istanciate objects
 
-    selectionFunction = GaussianSelectionFunction(
-        **_sel_pars,
-        lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
-            **_lambda_true_dist_pars
-        ),
-    )
     matter_stat = MatterStatistics(
         perturbations,
         z=integ_ztrue_arr,
@@ -118,6 +112,30 @@ def get_values():
     )
     profileNFW = NFWHaloProfile(matter_stat, two_halo="None")
     haloClustering = TwoPoint3DHaloClustering(matter_stat, background_fid)
+
+    lambda_true_distribution = LognormalPowerLawLambdaTrueDistribution(
+        **_lambda_true_dist_pars
+    )
+
+    # set a selection function per probe
+    sf_counts = GaussianSelectionFunction(
+        **_sel_pars,
+        lambda_true_distribution=lambda_true_distribution,
+        lambda_tab_integ=[31, 31, 31, 51],
+        z_tab_integ=31,
+    )
+    sf_profiles = GaussianSelectionFunction(
+        **_sel_pars,
+        lambda_true_distribution=lambda_true_distribution,
+        lambda_tab_integ=[31, 31, 31, 51],
+        z_tab_integ=31,
+    )
+    sf_clustering = GaussianSelectionFunction(
+        **_sel_pars,
+        lambda_true_distribution=lambda_true_distribution,
+        lambda_tab_integ=[31, 51],
+        z_tab_integ=31,
+    )
 
     print(f"init obs  :  {time.time()-t0:.4f} seconds")
     t0 = time.time()
@@ -140,7 +158,6 @@ def get_values():
 
     cluster_statitstics_modeling = ClusterStatisticsModeling(
         HSCastro,
-        selectionFunction,
         integ_k_arr=integ_k_arr_new,
         integ_mass_arr=integ_mass_arr,
         integ_lambda_true_arr=integ_lambda_true_arr,
@@ -150,15 +167,18 @@ def get_values():
     cluster_counts_statistics = ClusterCounts(
         cluster_statitstics_modeling,
         covariance,
+        selection_function=sf_counts,
     )
     cluster_wl_statistics = ClusterWeakLensing(
         cluster_statitstics_modeling,
         profileNFW,
         halo_concentration=halo_concentration,
+        selection_function=sf_profiles,
     )
     cluster_clustering_statistics = ClusterClustering(
         cluster_statitstics_modeling,
         haloClustering,
+        selection_function=sf_clustering,
     )
 
     print(f"init stat :  {time.time()-t0:.4f} seconds")

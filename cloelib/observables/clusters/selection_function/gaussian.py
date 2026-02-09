@@ -163,13 +163,11 @@ class GaussianSelectionFunction:
             j is the observed richness axis,
             and k is the true redshift axis
         """
-        sigmazobsz = self.scatter_z_obs(lambda_obs, z)
+        sigma_zobs = self.scatter_z_obs(lambda_obs, z)
 
-        return (
-            1.0
-            / (np.sqrt(2.0 * np.pi * sigmazobsz**2.0))
-            * np.exp(-((z_obs[:, np.newaxis] - z) ** 2.0) / (2.0 * sigmazobsz**2.0))
-        )
+        return np.exp(
+            -((z_obs[:, np.newaxis] - z) ** 2.0) / (2.0 * sigma_zobs**2.0)
+        ) / (np.sqrt(2.0 * np.pi * sigma_zobs**2.0))
 
     def window_z_observed(
         self, z_obs_edges, lambda_obs_edges, z_true, lambda_true=None
@@ -260,8 +258,9 @@ class GaussianSelectionFunction:
         lambda_obs_bins_size = len(lambda_obs_edges) - 1
         if len(self.lambda_tab_integ) != lambda_obs_bins_size:
             raise ValueError(
-                "Number of bins from lambda_obs_edges is different"
-                f" from internal lambda_tab_integ setup!"
+                f"Number of bins from lambda_obs_edges ({lambda_obs_bins_size})"
+                " is different from internal lambda_tab_integ"
+                f" ({(len(self.lambda_tab_integ))}) setup!"
             )
 
         ################################################
@@ -348,16 +347,24 @@ class GaussianSelectionFunction:
         """
         # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         window_lambda_true = (
-            self._window_z_observed(z_obs_edges, lambda_obs_edges, z_true)[
+            self.window_z_observed(z_obs_edges, lambda_obs_edges, z_true)[
                 :, :, :, np.newaxis
             ]
             # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, 1).
-            * self._window_richness_observed(
-                self,
+            * self.window_richness_observed(
                 lambda_obs_edges,
                 z_true,
                 lambda_true,
                 mass,
             )[np.newaxis, :, :, :]
             # Dimensions: (1, lambda_obs_edges, z_true, lambda_true)
+        )
+        pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
+            z_true, mass, lambda_true
+        )  # (z, M, lambda_true)
+        return simps(
+            pdf_mass_richness_scaling[np.newaxis, np.newaxis, :, :, :]
+            * window_lambda_true[:, :, :, np.newaxis, :],
+            x=lambda_true,
+            axis=-1,
         )

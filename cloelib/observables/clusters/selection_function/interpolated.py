@@ -295,14 +295,16 @@ class InterpolatedSelectionFunction:
         interpolators = self._build_windows_interpolators(z_obs_edges, lambda_obs_edges)
 
         window_lambda_true = np.zeros(
-            len(z_obs_edges) - 1,
-            len(lambda_obs_edges) - 1,
-            z_true.size,
-            lambda_true.size,
+            (
+                len(z_obs_edges) - 1,
+                len(lambda_obs_edges) - 1,
+                z_true.size,
+                lambda_true.size,
+            )
         )
         for ztab, interp_zobs in enumerate(interpolators):
             for ltab, interp_zobs_lobs in enumerate(interp_zobs):
-                window_lambda_true[ztab, ltab] = interp_lobs_zobs(z_true, lambda_true)
+                window_lambda_true[ztab, ltab] = interp_zobs_lobs(z_true, lambda_true)
 
         return window_lambda_true
 
@@ -367,8 +369,6 @@ class InterpolatedSelectionFunction:
             Edges of redshift bins for the integration.
         lambda_obs_edges : numpy.ndarray
             Edges of richness bins for the integration.
-        z_tab_sig : int, None
-            Number of points to be used for z_obs integration.
         z_true : numpy.ndarray
             True redshift to compute the window.
 
@@ -391,7 +391,6 @@ class InterpolatedSelectionFunction:
     def window_richness_observed(
         self,
         lambda_obs_edges,
-        l_m_tab_sig,
         z_true,
         mass,
         lambda_true,
@@ -409,9 +408,6 @@ class InterpolatedSelectionFunction:
         ----------
         lambda_obs_edges : numpy.ndarray
             Edges of richness bins for the integration.
-        l_m_tab_sig : List, None
-            Number of points to be used for the lambda_obs integration
-            in each lambda_obs bin. Must be same size of lambda_obs_edges.
         z_true : numpy.ndarray
             True redshift to compute the window.
         mass : numpy.ndarray
@@ -423,12 +419,12 @@ class InterpolatedSelectionFunction:
         -------
         window_lambda_obs : numpy.ndarray
             Integral of P(lambda_obs|\lambda_{\rm true}, z_true) in lambda_obs bins.
-            Dimensions: (lambda_obs_edges, z_true, \lambda_{\rm true}).
+            Dimensions: (lambda_obs_edges, z_true, M).
         """
         _z_obs_edges = self._sel_cl_data["arrays"]["z_obs"][[0, -1]]
         return self.window_redshift_richness_observed(
             _z_obs_edges, lambda_obs_edges, z_true, mass, lambda_true
-        )
+        )[0]
 
     #######
     # Utils

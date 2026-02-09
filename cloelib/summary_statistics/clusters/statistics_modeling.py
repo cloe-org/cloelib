@@ -152,6 +152,7 @@ class ClusterStatisticsModeling:
             z_obs_edges,
             lambda_obs_edges,
             self.tabulated_integrands["ztrue"],
+            self.tabulated_integrands["lambda_true"],
         )
 
     def window_richness_observed(self, selection_function, lambda_obs_edges):

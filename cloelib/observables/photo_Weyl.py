@@ -192,7 +192,7 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         Omega_m = (
             Omega_m0
             * (1 + z) ** 3
-            * (self.background.H0 / self.background.hubble_parameter(z))
+            * (self.background.H0 / self.background.hubble_parameter(z)) ** 2
         )
 
         def per_bin_case():

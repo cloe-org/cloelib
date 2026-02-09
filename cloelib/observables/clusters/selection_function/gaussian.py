@@ -129,7 +129,7 @@ class GaussianSelectionFunction:
         """
         return self.sig_z_z * z + self.sig_z_lambda * lambda_obs
 
-    def _prob_zobs(self, z_obs, lambda_obs, z):
+    def _prob_z_obs(self, z_obs, lambda_obs, z):
         r"""
         Observed redshift PDF.
 
@@ -147,7 +147,7 @@ class GaussianSelectionFunction:
 
         Returns
         -------
-        prob_zobs: numpy.ndarray
+        numpy.ndarray
             Observed redshift PDF.
         """
         return self._gaussian(z_obs, z, self.scatter_z_obs(lambda_obs, z))
@@ -199,7 +199,7 @@ class GaussianSelectionFunction:
         )
         for ind_z in range(z_obs_bins_size):
             window_z_obs[ind_z] = simps(
-                self._prob_zobs(_z_obs_tabs[ind_z], _lambda_obs, _z_true),
+                self._prob_z_obs(_z_obs_tabs[ind_z], _lambda_obs, _z_true),
                 x=z_obs_tabs[ind_z],
                 axis=0,
             )

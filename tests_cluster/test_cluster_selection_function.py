@@ -100,8 +100,8 @@ def test_gaussian_selectionfunction():
         _prob_lambda_obs_ref,
         rtol=1e-05,
     )
-    print("    prob_zobs")
-    _prob_zobs_ref = [
+    print("    prob_z_obs")
+    _prob_z_obs_ref = [
         2.133197e00,
         7.240213e-01,
         2.365759e-01,
@@ -109,10 +109,10 @@ def test_gaussian_selectionfunction():
         2.497394e-02,
     ]
     assert_allclose(
-        selection_function._prob_zobs(
+        selection_function._prob_z_obs(
             zob_test[:, None, None], lob_test[None, :], z_test
         )[0, 0],
-        _prob_zobs_ref,
+        _prob_z_obs_ref,
         rtol=5e-07,
     )
 
@@ -136,7 +136,7 @@ def _gen_gaussian_selcl_data(gaussian_sf, arrays):
         gaussian_sf._prob_lambda_obs(
             ztr[None, :, None], ltr[None, None, :], lob[:, None, None]
         )[None, None, ...]
-        * gaussian_sf._prob_zobs(zob[:, None, None], lob[None, :, None], ztr)[
+        * gaussian_sf._prob_z_obs(zob[:, None, None], lob[None, :, None], ztr)[
             None, :, :, :, None
         ]
         * alpha[:, None, None, None, None]

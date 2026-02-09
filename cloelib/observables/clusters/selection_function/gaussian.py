@@ -97,9 +97,7 @@ class GaussianSelectionFunction:
         Returns
         -------
         prob_lambda_obs: numpy.ndarray
-            prob_lambda_obs[i,j,k], where i is the redshift axis,
-            j is the the theoretical richness axis,
-            and k is the observed richness
+            Observed mass proxy PDF.
         """
         sigma_lambda_obs = self._scatter_lambda_obs(z, lambda_true)[:, :, np.newaxis]
 
@@ -159,15 +157,13 @@ class GaussianSelectionFunction:
         Returns
         -------
         prob_zobs: numpy.ndarray
-            prob_zobs[i,j,k] where i is the observed redshift axis,
-            j is the observed richness axis,
-            and k is the true redshift axis
+            Observed redshift PDF.
         """
         sigma_zobs = self.scatter_z_obs(lambda_obs, z)
 
-        return np.exp(
-            -((z_obs[:, np.newaxis] - z) ** 2.0) / (2.0 * sigma_zobs**2.0)
-        ) / (np.sqrt(2.0 * np.pi * sigma_zobs**2.0))
+        return np.exp(-((z_obs - z) ** 2.0) / (2.0 * sigma_zobs**2.0)) / (
+            np.sqrt(2.0 * np.pi * sigma_zobs**2.0)
+        )
 
     def window_z_observed(
         self, z_obs_edges, lambda_obs_edges, z_true, lambda_true=None
@@ -199,11 +195,12 @@ class GaussianSelectionFunction:
         lambda_obs_bins_size = len(lambda_obs_edges) - 1
 
         # for z_obs integration
-        z_obs_tabs = np.linspace(z_obs_edges[:-1], z_obs_edges[1:], self.z_tab_integ)
+        z_obs_tabs = np.linspace(z_obs_edges[:-1], z_obs_edges[1:], self.z_tab_integ).T
 
         # reshape for multiplication
-        _z_obs_tabs = z_obs_tabs[:, :, np.newaxis]
+        _z_obs_tabs = z_obs_tabs[:, :, np.newaxis, np.newaxis]
         _lambda_obs = lambda_obs_edges[np.newaxis, :-1, np.newaxis]
+        _z_true = z_true[np.newaxis, np.newaxis, :]
 
         # Window function
         window_z_obs = np.zeros(
@@ -215,8 +212,8 @@ class GaussianSelectionFunction:
         )
         for ind_z in range(z_obs_bins_size):
             window_z_obs[ind_z] = simps(
-                self._prob_zobs(_z_obs_tabs[:, ind_z], _lambda_obs, z_true),
-                x=z_obs_tabs[:, ind_z],
+                self._prob_zobs(_z_obs_tabs[ind_z], _lambda_obs, _z_true),
+                x=z_obs_tabs[ind_z],
                 axis=0,
             )
         return window_z_obs

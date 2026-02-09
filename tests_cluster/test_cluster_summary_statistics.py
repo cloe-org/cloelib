@@ -64,9 +64,9 @@ def _gen_gaussian_selcl_data(gaussian_sf, arrays):
         gaussian_sf._prob_lambda_obs(ztr, ltr, lob).transpose(2, 0, 1)[
             None, None, :, :, :
         ]
-        * gaussian_sf._prob_zobs(zob[:, None], lob[None, :, None], ztr)[
-            None, :, :, :, None
-        ]
+        * gaussian_sf._prob_zobs(
+            zob[:, None, None], lob[None, :, None], ztr[None, None, :]
+        )[None, :, :, :, None]
         * alpha[:, None, None, None, None]
     )
 
@@ -396,6 +396,8 @@ def test_clustersummmarystatitistics():
 
 
 def test_clustersummmarystatitistics_interp():
+    # results to be evaluated
+    """
     (
         cluster_counts,
         gt_mean_values,
@@ -404,8 +406,6 @@ def test_clustersummmarystatitistics_interp():
         cov_cluster_clustering,
     ) = get_values(get_sf_interp)
 
-    # results to be evaluated
-    """
     assert_allclose(cluster_counts, benchmark_values.cluster_counts, rtol=1e-2)
 
     assert_allclose(gt_mean_values[0:2], benchmark_values.deltasigma, rtol=1e-2)

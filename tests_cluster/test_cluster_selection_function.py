@@ -107,7 +107,9 @@ def test_gaussian_selectionfunction():
         2.497394e-02,
     ]
     assert_allclose(
-        selection_function._prob_zobs(zob_test, lob_test, z_test)[0],
+        selection_function._prob_zobs(
+            zob_test[:, None, None], lob_test[None, :], z_test[None, :]
+        )[0, 0],
         _prob_zobs_ref,
         rtol=5e-07,
     )
@@ -132,7 +134,7 @@ def _gen_gaussian_selcl_data(gaussian_sf, arrays):
         gaussian_sf._prob_lambda_obs(ztr, ltr, lob).transpose(2, 0, 1)[
             None, None, :, :, :
         ]
-        * gaussian_sf._prob_zobs(zob[:, None], lob[None, :, None], ztr)[
+        * gaussian_sf._prob_zobs(zob[:, None, None], lob[None, :, None], ztr)[
             None, :, :, :, None
         ]
         * alpha[:, None, None, None, None]

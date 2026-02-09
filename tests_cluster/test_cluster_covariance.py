@@ -35,6 +35,7 @@ def test_count_covariance():
 
     area = 15000
     nbins_z = 10
+    z_tab_integ = 31
 
     k_min = 1e-4
     k_max = 2e0
@@ -43,7 +44,7 @@ def test_count_covariance():
     zbins = np.linspace(0, 2, nbins_z + 1)
     k_test = np.geomspace(k_min, k_max, k_div)
 
-    CC = HaloCovariance(perturbations, k_test, area, nbins_z)
+    CC = HaloCovariance(perturbations, k_test, area, nbins_z, z_tab_integ)
 
     print("    Covariance coefficients")
     KL = CC.Kl_coeff()
@@ -54,10 +55,9 @@ def test_count_covariance():
 
     print("    Covariance window")
     iz = 0
-    zarr_iz = np.linspace(zbins[iz], zbins[iz + 1], 31)
     # All validation values have to be updated with extarnal values
     assert_allclose(
-        CC.cov_window(iz, zarr_iz, KL)[0, :5],
+        CC.cov_window(iz, zbins[iz : iz + 2], KL)[0, :5],
         np.array([0.99959593, 0.99956826, 0.9995387, 0.99950711, 0.99947336]),
         rtol=1e-6,
     )

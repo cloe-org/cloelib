@@ -7,7 +7,6 @@ from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbat
 from cloelib.observables.clusters.auxiliary import photoz_rsd_correction
 from cloelib.observables.clusters.halo_clustering import TwoPoint3DHaloClustering
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
-from cloelib.observables.clusters.selection_function import GaussianSelectionFunction
 from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
     LognormalPowerLawLambdaTrueDistribution,
 )
@@ -108,12 +107,6 @@ def test_clustering():
         sig_lambda_exponent=0.1,
         sig_z_z=0.1,
         sig_z_lambda=0.1,
-    )
-    SF = GaussianSelectionFunction(
-        **_sel_pars,
-        lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
-            **_lambda_true_dist_pars
-        ),
     )
     CL = TwoPoint3DHaloClustering(matter_statistics, background_fid, nonu=True)
     _test_clustering(CL, perturbations)

@@ -152,15 +152,17 @@ class ClusterCounts:
         # compute spatial covariance (z_obs, z_obs)
         spatial_cov = np.zeros((z_obs_edges_size, z_obs_edges_size))
         for ind_z in range(z_obs_edges_size):
-            z_tab = np.linspace(
-                z_obs_edges[ind_z],
-                z_obs_edges[ind_z + 1],
-                self.selection_function.z_tab_integ,
-            )
             spatial_cov[ind_z, : (ind_z + 1)] = (
                 self.cluster_statitstics_modeling.integrate_probe_function_in_dk(
                     np.sqrt(pk[ind_z] * pk[: (ind_z + 1)])
-                    * self.covariance.cov_window(ind_z, z_tab, KL),
+                    * self.covariance.cov_window(
+                        ind_z,
+                        (
+                            z_obs_edges[ind_z],
+                            z_obs_edges[ind_z + 1],
+                        ),
+                        KL,
+                    ),
                 )
             )
             # fill 2nd half of symmetrical matrix

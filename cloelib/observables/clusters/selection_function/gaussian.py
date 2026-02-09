@@ -17,8 +17,8 @@ class GaussianSelectionFunction:
         sig_lambda_exponent: float,
         sig_z_z: float,
         sig_z_lambda: float,
-        z_tab_integ : int,
-        lambda_tab_integ : list,
+        z_tab_integ: int,
+        lambda_tab_integ: list,
     ):
         r"""
         Class defining the selection function of galaxy clusters, including

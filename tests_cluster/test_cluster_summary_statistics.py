@@ -108,7 +108,11 @@ def get_values():
     )
     HSCastro = CastroHaloAbundance(matter_statistics=matter_stat)
     covariance = HaloCovariance(
-        perturbations, area=area, nbins_zob=len(z_obs_nc_edges), k=integ_k_arr
+        perturbations,
+        area=area,
+        nbins_zob=len(z_obs_nc_edges),
+        k=integ_k_arr,
+        z_tab_integ=31,
     )
     profileNFW = NFWHaloProfile(matter_stat, two_halo="None")
     haloClustering = TwoPoint3DHaloClustering(matter_stat, background_fid)

@@ -329,23 +329,24 @@ class GaussianSelectionFunction:
             Window function for observed redshift and richness bins.
             Dimensions: (z_obs_edges, lambda_obs_edges, z_true, mass)
         """
+        # Dimensions: (z, M, lambda_true)
+        pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
+            z_true, mass, lambda_true
+        )
         # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)
         window_lambda_true = (
+            # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, 1).
             self.window_z_observed(z_obs_edges, lambda_obs_edges, z_true)[
                 :, :, :, np.newaxis
             ]
-            # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, 1).
+            # Dimensions: (1, lambda_obs_edges, z_true, lambda_true)
             * self.window_richness_observed(
                 lambda_obs_edges,
                 z_true,
                 lambda_true,
                 mass,
             )[np.newaxis, :, :, :]
-            # Dimensions: (1, lambda_obs_edges, z_true, lambda_true)
         )
-        pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
-            z_true, mass, lambda_true
-        )  # (z, M, lambda_true)
         return simps(
             pdf_mass_richness_scaling[np.newaxis, np.newaxis, :, :, :]
             * window_lambda_true[:, :, :, np.newaxis, :],

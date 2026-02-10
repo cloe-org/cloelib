@@ -341,14 +341,15 @@ class InterpolatedSelectionFunction:
             Window function for observed redshift and richness bins.
             Dimensions: (z_obs_edges, lambda_obs_edges, z_true, mass)
         """
-
-        window_lambda_true = self._window_redshift_richness_observed_by_lambda_true(
-            z_obs_edges, lambda_obs_edges, z_true, lambda_true
-        )  # (z_obs, lambda_obs, z, lambda_true)
-
+        # Dimensions: (z, M, lambda_true)
         pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
             z_true, mass, lambda_true
-        )  # (z, M, lambda_true)
+        )
+
+        # Dimensions: (z_obs, lambda_obs, z, lambda_true)
+        window_lambda_true = self._window_redshift_richness_observed_by_lambda_true(
+            z_obs_edges, lambda_obs_edges, z_true, lambda_true
+        )
 
         return simps(
             pdf_mass_richness_scaling[np.newaxis, np.newaxis, :, :, :]
@@ -382,11 +383,7 @@ class InterpolatedSelectionFunction:
             z_obs_edges, lambda_obs_edges, z_true, lambda_true
         )  # (z_obs, lambda_obs, z, lambda_true)
 
-        return simps(
-            window_lambda_true,
-            x=lambda_true,
-            axis=-1,
-        )
+        return simps(window_lambda_true, x=lambda_true, axis=-1)
 
     def window_richness_observed(
         self,

@@ -24,14 +24,16 @@ The Perturbations protocol defines what every perturbation calculator must provi
 
 - **`background`**: Reference to the associated Background object
 
-This is key! Perturbations *always* needs a Background to compute distances, densities, etc.
+This is key! Perturbations _always_ needs a Background to compute distances, densities, etc.
 
 ### Required Methods
 
 #### `matter_power_spectrum(zs, ks)`
+
 Compute the matter power spectrum P(k, z).
 
-**Inputs**: 
+**Inputs**:
+
 - `zs`: Redshifts (can be array)
 - `ks`: Wavenumbers in h/Mpc (can be array)
 
@@ -40,16 +42,19 @@ Compute the matter power spectrum P(k, z).
 **Note**: Can be linear or non-linear depending on implementation!
 
 #### `growth_factor(zs, ks)`
+
 Calculate the linear growth factor D(z, k).
 
 Normalized such that D(z=0) ≈ 1 in matter-dominated era.
 
 #### `growth_rate(zs, ks=None)`
+
 Calculate the linear growth rate f(z) = d ln D / d ln a.
 
 For scale-independent models, `ks` can be `None`.
 
 #### `sigma8_0()`
+
 Compute σ₈ at redshift z=0.
 
 The RMS matter fluctuation in 8 Mpc/h spheres—a key cosmological parameter!
@@ -65,12 +70,14 @@ Interfaces with [CAMB](https://camb.readthedocs.io) for perturbation calculation
 **When to use**: Fast, accurate, production-ready
 
 **Features**:
+
 - Linear and non-linear power spectra
 - Multiple non-linear models (Halofit, HMCode, ...)
 - Neutrino effects
 - Modified gravity
 
 **Example**:
+
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBPerturbations
 
@@ -111,6 +118,7 @@ Interfaces with [CLASS](https://github.com/lesgourg/class_public).
 **When to use**: CLASS-specific features, comparison studies
 
 **Example**:
+
 ```python
 from cloelib.cosmology.class_cosmology import CLASSBackground, CLASSPerturbations
 
@@ -130,6 +138,7 @@ Fast emulator for non-linear power spectra using [HMCode2020Emu](https://github.
 **When to use**: Fast non-linear predictions, MCMC sampling
 
 **Features**:
+
 - Lightning-fast (emulator!)
 - Accurate non-linear P(k)
 - Limited parameter range
@@ -143,6 +152,7 @@ Pure JAX implementation for automatic differentiation.
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
 **Example**:
+
 ```python
 import jax
 from cloelib.cosmology.jax_cosmology import JAXBackground, JAXPerturbations
@@ -172,7 +182,7 @@ import numpy as np
 
 class MySolverPerturbations:
     """Interface to MySolver for perturbation calculations."""
-    
+
     def __init__(
         self,
         background: Background,
@@ -183,7 +193,7 @@ class MySolverPerturbations:
     ):
         """
         Initialize perturbation calculator.
-        
+
         Args:
             background: Background object (any implementation)
             nonlinear_model: Which non-linear model to use
@@ -192,73 +202,73 @@ class MySolverPerturbations:
         """
         self._background = background
         self.nonlinear_model = nonlinear_model
-        
+
         # Initialize your solver
         self._solver = MySolver(
             H0=background.H0,
             Omega_b=background.Omega_b0,
             # ... pass cosmological parameters from background
         )
-        
+
         # Set up k and z grids
         self._solver.set_k_grid(kmin=1e-4, kmax=kmax, nk=200)
         self._solver.set_z_grid(zmin=0.0, zmax=zmax, nz=50)
-        
+
         # Compute power spectrum
         self._solver.compute_power_spectrum(nonlinear=nonlinear_model)
-    
+
     @property
     def background(self) -> Background:
         """Return the background object."""
         return self._background
-    
+
     def matter_power_spectrum(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         """
         Compute matter power spectrum P(k, z).
-        
+
         Args:
             zs: Redshifts (1D array)
             ks: Wavenumbers in h/Mpc (1D array)
-            
+
         Returns:
             P(k, z) in (Mpc/h)³, shape (len(zs), len(ks))
         """
         # Ensure inputs are arrays
         zs = np.atleast_1d(zs)
         ks = np.atleast_1d(ks)
-        
+
         # Call solver and interpolate
         P_k_z = self._solver.get_power_spectrum(zs, ks)
-        
+
         return P_k_z
-    
+
     def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         """Calculate linear growth factor D(z, k)."""
         zs = np.atleast_1d(zs)
         ks = np.atleast_1d(ks)
-        
+
         # Most codes compute scale-independent D(z)
         # If scale-dependent, use ks; otherwise ignore
         D_z = self._solver.get_growth_factor(zs)
-        
+
         # Return shape (len(zs), len(ks)) even if scale-independent
         return D_z[:, np.newaxis] * np.ones((len(zs), len(ks)))
-    
+
     def growth_rate(self, zs: np.ndarray | None = None, ks: np.ndarray | None = None) -> np.ndarray:
         """Calculate growth rate f(z) = d ln D / d ln a."""
         if zs is None:
             raise ValueError("zs must be provided")
-        
+
         zs = np.atleast_1d(zs)
         f_z = self._solver.get_growth_rate(zs)
-        
+
         # If ks provided, expand to 2D array
         if ks is not None:
             ks = np.atleast_1d(ks)
             f_z = f_z[:, np.newaxis] * np.ones((len(zs), len(ks)))
-        
+
         return f_z
-    
+
     def sigma8_0(self) -> float:
         """Compute σ₈ at z=0."""
         return self._solver.get_sigma8()
@@ -288,8 +298,8 @@ Pay attention to array shapes—it's easy to get confused!
 def matter_power_spectrum(self, zs, ks):
     """
     Output shape: (len(zs), len(ks))
-    
-    Example: 
+
+    Example:
         zs = [0.0, 0.5, 1.0]  # 3 redshifts
         ks = [0.1, 0.2, ...]  # 100 wavenumbers
         P_k_z has shape (3, 100)
@@ -327,17 +337,17 @@ def test_initialization(background):
 def test_matter_power_spectrum(background):
     """Test P(k, z) calculation."""
     pert = MySolverPerturbations(background=background)
-    
+
     z = np.array([0.0, 0.5, 1.0])
     k = np.logspace(-2, 1, 50)
     P_k_z = pert.matter_power_spectrum(z, k)
-    
+
     # Check shape
     assert P_k_z.shape == (len(z), len(k))
-    
+
     # Check positivity
     assert np.all(P_k_z > 0)
-    
+
     # Check power decreases at high z (structure less developed)
     assert np.all(P_k_z[0, :] > P_k_z[-1, :])
 
@@ -345,21 +355,21 @@ def test_sigma8(background):
     """Test σ₈ calculation."""
     pert = MySolverPerturbations(background=background)
     sigma8 = pert.sigma8_0()
-    
+
     # Reasonable range for σ₈
     assert 0.5 < sigma8 < 1.2
 
 def test_growth_factor(background):
     """Test growth factor calculation."""
     pert = MySolverPerturbations(background=background)
-    
+
     z = np.array([0.0, 1.0, 2.0])
     k = np.array([0.1, 1.0])
     D = pert.growth_factor(z, k)
-    
+
     # Check shape
     assert D.shape == (len(z), len(k))
-    
+
     # Check D decreases with z (earlier = less grown)
     assert np.all(D[0, :] > D[1, :])
     assert np.all(D[1, :] > D[2, :])
@@ -387,11 +397,11 @@ class MyPerturbations:
             'Omega_c': background.Omega_cdm0,
             # ... more parameters
         }
-        
+
         # Initialize external code
         self._external = ExternalCode(**params)
         self._external.compute()
-        
+
         # Store for later use
         self._z_grid = ...
         self._k_grid = ...
@@ -413,11 +423,11 @@ class MyPerturbations:
         ks = np.array(ks_tuple)
         # ... compute
         return result
-    
+
     # Wrapper to handle arrays
     def matter_power_spectrum(self, zs, ks):
         return self._matter_power_spectrum_cached(
-            tuple(zs.flat), 
+            tuple(zs.flat),
             tuple(ks.flat)
         )
 ```
@@ -435,15 +445,15 @@ class MyPerturbations:
         z_grid = np.linspace(0, 5, 100)
         k_grid = np.logspace(-3, 2, 200)
         P_grid = self._compute_on_grid(z_grid, k_grid)
-        
+
         # Set up interpolator
         self._interpolator = RectBivariateSpline(
-            z_grid, 
+            z_grid,
             np.log10(k_grid),
             P_grid,
             kx=3, ky=3  # Cubic interpolation
         )
-    
+
     def matter_power_spectrum(self, zs, ks):
         # Interpolate
         return self._interpolator(zs, np.log10(ks), grid=True)
@@ -467,7 +477,7 @@ Make it clear what you're computing:
 def matter_power_spectrum(self, zs, ks, nonlinear=True):
     """
     Compute matter power spectrum.
-    
+
     Args:
         nonlinear: If True, include non-linear corrections.
                    If False, return linear theory P(k).

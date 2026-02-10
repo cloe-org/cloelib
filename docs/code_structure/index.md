@@ -14,11 +14,11 @@ Think of **cloelib** as a cosmic LEGO set—modular, flexible, and designed to l
 
 Each layer builds on the previous one, creating a flexible pipeline from fundamental cosmology to final data products!
 
-### Why This Design? 
+### Why This Design?
 
-**Modularity**: Want to swap CAMB for CLASS? Just plug in a different implementation!  
-**Flexibility**: Need a custom tracer? Implement the protocol and you're done!  
-**Reproducibility**: Clear interfaces mean everyone knows what's expected.  
+**Modularity**: Want to swap CAMB for CLASS? Just plug in a different implementation!
+**Flexibility**: Need a custom tracer? Implement the protocol and you're done!
+**Reproducibility**: Clear interfaces mean everyone knows what's expected.
 **Fun**: Seriously, protocols make extending the library feel like solving a puzzle! 🧩
 
 ## 🧱 The Four Building Blocks
@@ -27,9 +27,9 @@ Each layer builds on the previous one, creating a flexible pipeline from fundame
 
 The foundation of everything! Background handles the cosmological stage—distances, Hubble parameter, matter densities. Think of it as setting up the universe before anything interesting happens.
 
-**What it does**: Compute background quantities as functions of redshift  
-**Key question**: "How far away is that galaxy?"  
-**Interfaces with**: Nothing (it's the foundation!)  
+**What it does**: Compute background quantities as functions of redshift
+**Key question**: "How far away is that galaxy?"
+**Interfaces with**: Nothing (it's the foundation!)
 **You'll love it if**: You're implementing a new Boltzmann solver or emulator
 
 ➡️ [Dive into Background](background.md)
@@ -38,9 +38,9 @@ The foundation of everything! Background handles the cosmological stage—distan
 
 Now things get interesting! Perturbations computes how structure forms and evolves—matter power spectra, growth factors, all the good stuff that makes galaxies cluster.
 
-**What it does**: Calculate perturbation theory quantities  
-**Key question**: "How lumpy is the universe at this scale and time?"  
-**Interfaces with**: Background (it needs those distances!)  
+**What it does**: Calculate perturbation theory quantities
+**Key question**: "How lumpy is the universe at this scale and time?"
+**Interfaces with**: Background (it needs those distances!)
 **You'll love it if**: You're adding non-linear models or new structure formation codes
 
 ➡️ [Explore Perturbations](perturbations.md)
@@ -49,9 +49,9 @@ Now things get interesting! Perturbations computes how structure forms and evolv
 
 This is where we connect theory to what telescopes actually measure! Observables handles survey-specific calculations—selection functions, biases, window functions.
 
-**What it does**: Compute survey-specific observables  
-**Key question**: "What does my telescope see?"  
-**Interfaces with**: Perturbations (for tracers) or Background (for spectro)  
+**What it does**: Compute survey-specific observables
+**Key question**: "What does my telescope see?"
+**Interfaces with**: Perturbations (for tracers) or Background (for spectro)
 **You'll love it if**: You're adding new types of measurements or survey configurations
 
 ➡️ [Check out Observables](observables.md)
@@ -60,9 +60,9 @@ This is where we connect theory to what telescopes actually measure! Observables
 
 The grand finale! Summary Statistics produces the final data products you compare with observations—angular power spectra, correlation functions, multipoles.
 
-**What it does**: Compute final statistical quantities  
-**Key question**: "What numbers do I put in my likelihood?"  
-**Interfaces with**: Observables (it needs those tracers!)  
+**What it does**: Compute final statistical quantities
+**Key question**: "What numbers do I put in my likelihood?"
+**Interfaces with**: Observables (it needs those tracers!)
 **You'll love it if**: You're implementing new statistical estimators
 
 ➡️ [Discover Summary Statistics](summary_statistics.md)
@@ -150,7 +150,7 @@ Or jump to:
 Stuck? Confused? Just curious? We're here to help!
 
 - 💬 [GitHub Discussions](https://github.com/cloe-org/cloelib/discussions) - Ask questions, share ideas
-- 🐛 [GitHub Issues](https://github.com/cloe-org/cloelib/issues) - Report bugs, request features  
+- 🐛 [GitHub Issues](https://github.com/cloe-org/cloelib/issues) - Report bugs, request features
 - 👥 Tag `@cloe-maintainers` - Get help from the team
 
 Remember: **cloelib** is meant to be fun (and scientifically robust)! 🎉 We're building tools to help us understand the universe—how cool is that? 🌌

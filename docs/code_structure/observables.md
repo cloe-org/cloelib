@@ -18,10 +18,12 @@ Key questions Observables answer:
 
 **cloelib** has two types of observable protocols, each serving different purposes:
 
-### 🌈 **Tracer Protocol** 
+### 🌈 **Tracer Protocol**
+
 For photometric observables (angular correlations, weak lensing)
 
-### 🌌 **SpectroPower Protocol**  
+### 🌌 **SpectroPower Protocol**
+
 For spectroscopic observables (3D clustering, redshift-space distortions)
 
 Let's explore both! 🚀
@@ -43,16 +45,19 @@ Tracers need perturbations to compute power spectra and growth!
 ### Required Methods
 
 #### `get_window(z)`
+
 Compute the window function W(z) at given redshifts.
 
 **Returns**: Window function values, shape depends on number of redshift bins
 
 #### `_window_integrand(z, zprime)`
+
 Window integrand for Limber integration.
 
 Used internally by summary statistics calculators.
 
 #### `_get_prefactor(ell)`
+
 Compute prefactor for Limber approximation.
 
 Handles different tracer types (shear has extra factors, galaxy clustering doesn't).
@@ -65,13 +70,15 @@ For weak gravitational lensing (cosmic shear) measurements.
 
 **Location**: `cloelib/observables/photo.py`
 
-**What it does**: 
+**What it does**:
+
 - Computes lensing window function W^κ(z)
 - Includes lensing efficiency
 - Handles intrinsic alignments
 - Applies nuisance parameters (multiplicative bias, photo-z errors)
 
 **Example**:
+
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBPerturbations
 from cloelib.observables.photo import ShearTracer
@@ -117,6 +124,7 @@ window = tracer.get_window(z)  # Shape: (n_bins, len(z))
 ```
 
 **Special Features**:
+
 - Lensing efficiency calculation
 - Intrinsic alignment modeling (NLA model)
 - Photo-z error handling
@@ -129,12 +137,14 @@ For galaxy clustering (galaxy positions) measurements.
 **Location**: `cloelib/observables/photo.py`
 
 **What it does**:
+
 - Computes galaxy clustering window function W^g(z)
 - Handles galaxy bias
 - Applies magnification bias
 - Handles photo-z uncertainties
 
 **Example**:
+
 ```python
 from cloelib.observables.photo import PositionsTracer
 
@@ -173,7 +183,7 @@ import jax.numpy as jnp
 
 class CMBLensingTracer:
     """Tracer for CMB lensing convergence."""
-    
+
     def __init__(
         self,
         perturbations: Perturbations,
@@ -181,7 +191,7 @@ class CMBLensingTracer:
     ):
         """
         Initialize CMB lensing tracer.
-        
+
         Args:
             perturbations: Perturbations object
             z_cmb: Redshift of last scattering surface
@@ -190,35 +200,35 @@ class CMBLensingTracer:
         self.background = perturbations.background
         self.z_cmb = z_cmb
         self.prefact_toggle = 1  # Include lensing prefactor
-    
+
     def get_window(self, z: np.ndarray) -> np.ndarray:
         """
         Compute CMB lensing window function.
-        
+
         The window peaks at z ~ z_cmb/2 (halfway to CMB).
         """
         # Comoving distances
         chi_z = self.background.comoving_distance(z)
         chi_cmb = self.background.comoving_distance(self.z_cmb)
-        
+
         # CMB lensing efficiency: peaks halfway
         efficiency = (chi_cmb - chi_z) / chi_cmb * chi_z / chi_cmb
         efficiency[z >= self.z_cmb] = 0.0  # No lensing beyond CMB
-        
+
         # Hubble parameter
         H_z = self.background.hubble_parameter(z, units="1/Mpc")
-        
+
         # Window function
         window = 1.5 * self.background.Omega_m(0.0) * (1 + z) * H_z * efficiency
-        
+
         return window
-    
+
     def _window_integrand(self, z: np.ndarray, zprime: np.ndarray) -> np.ndarray:
         """Window integrand for Limber integration."""
         # This is used by AngularTwoPoint
         # Usually just returns get_window for the z argument
         return self.get_window(z)
-    
+
     def _get_prefactor(self, ell: np.ndarray) -> np.ndarray:
         """Prefactor for Limber approximation."""
         # CMB lensing has same prefactor as shear
@@ -251,19 +261,19 @@ def test_cmb_lensing_tracer():
     """Test CMB lensing tracer."""
     bg = CAMBBackground(H0=67.5, ...)
     pert = CAMBPerturbations(background=bg)
-    
+
     tracer = CMBLensingTracer(perturbations=pert)
-    
+
     z = np.linspace(0.1, 2.0, 50)
     window = tracer.get_window(z)
-    
+
     # Check shape
     assert window.shape == z.shape
-    
+
     # Window should peak somewhere between 0 and z_cmb
     peak_idx = np.argmax(window)
     assert 0 < z[peak_idx] < tracer.z_cmb
-    
+
     # Window should be zero beyond z_cmb
     z_high = np.array([1200.0])
     assert tracer.get_window(z_high)[0] == 0.0
@@ -290,9 +300,11 @@ Note: SpectroPower uses Background directly, not Perturbations! This is because 
 ### Required Methods
 
 #### `Pk2d_rsd(k, mu, **args)`
+
 Compute 2D power spectrum P(k, μ) with redshift-space distortions.
 
 **Inputs**:
+
 - `k`: Wavenumbers (1D array)
 - `mu`: Cosine of angle to line-of-sight (1D array)
 - `**args`: Additional parameters (redshift, cosmological parameters, etc.)
@@ -300,6 +312,7 @@ Compute 2D power spectrum P(k, μ) with redshift-space distortions.
 **Returns**: P(k, μ), shape (len(k), len(mu))
 
 #### `Pk2d_term_rsd(k, mu, **args)`
+
 Compute individual terms of the perturbation theory expansion.
 
 Useful for checking contributions of different terms.
@@ -315,6 +328,7 @@ Fast emulator using [comet-emu](https://comet-emu.readthedocs.io) with EFT model
 **When to use**: Fast predictions for clustering, MCMC sampling
 
 **Example**:
+
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground
 from cloelib.observables.CometEFT_spectro import CometEFT_spectro
@@ -360,9 +374,9 @@ import numpy as np
 
 class MyEmulatorSpectro:
     """Interface to MyEmulator for spectroscopic power spectra."""
-    
+
     NLcode: str = "MyEmulator"
-    
+
     def __init__(
         self,
         background: Background,
@@ -371,7 +385,7 @@ class MyEmulatorSpectro:
     ):
         """
         Initialize spectro power emulator.
-        
+
         Args:
             background: Background cosmology
             z_pk: Redshift for power spectrum
@@ -380,7 +394,7 @@ class MyEmulatorSpectro:
         self._background = background
         self.z_pk = z_pk
         self.model = model
-        
+
         # Initialize emulator with cosmological parameters
         self._emulator = MyEmulator(
             Omega_m=background.Omega_m(0.0),
@@ -388,49 +402,49 @@ class MyEmulatorSpectro:
             h=background.h,
             # ... other parameters
         )
-    
+
     @property
     def background(self) -> Background:
         """Return background object."""
         return self._background
-    
+
     def Pk2d_rsd(
-        self, 
-        k: np.ndarray, 
-        mu: np.ndarray, 
+        self,
+        k: np.ndarray,
+        mu: np.ndarray,
         **args
     ) -> np.ndarray:
         """
         Compute 2D power spectrum with RSD.
-        
+
         Args:
             k: Wavenumbers in h/Mpc
             mu: Cosine of angle to LOS
             **args: Can include z, bias, f, etc.
-            
+
         Returns:
             P(k, μ) in (Mpc/h)³, shape (len(k), len(mu))
         """
         # Extract parameters from args
         z = args.get('z', self.z_pk)
         bias = args.get('bias', 1.0)
-        
+
         # Get growth rate
         f = self._compute_growth_rate(z)
-        
+
         # Compute real-space power
         P_real = self._emulator.get_power(k, z)
-        
+
         # Apply Kaiser formula (simple RSD model)
         # P(k, μ) = P_real(k) * (b + f μ²)²
         beta = f / bias
         kaiser = (bias + f * mu**2)**2
-        
+
         # Broadcast to 2D
         P_k_mu = P_real[:, np.newaxis] * kaiser[np.newaxis, :]
-        
+
         return P_k_mu
-    
+
     def Pk2d_term_rsd(
         self,
         k: np.ndarray,
@@ -443,7 +457,7 @@ class MyEmulatorSpectro:
             'tree': self._compute_tree_level(k, mu),
             'one_loop': self._compute_one_loop(k, mu),
         }
-    
+
     def _compute_growth_rate(self, z: float) -> float:
         """Helper to compute f(z)."""
         # Can use approximations or call Perturbations if available
@@ -459,17 +473,17 @@ SpectroPower implementations often need to handle various inputs:
 def Pk2d_rsd(self, k, mu, **args):
     """
     Flexible input handling.
-    
+
     args can contain:
         - z: redshift (default: self.z_pk)
-        - bias: galaxy bias (default: 1.0)  
+        - bias: galaxy bias (default: 1.0)
         - f: growth rate (default: computed from cosmology)
         - sigma_v: velocity dispersion (default: 0.0)
     """
     z = args.get('z', self.z_pk)
     bias = args.get('bias', 1.0)
     f = args.get('f', self._compute_f(z))
-    
+
     # Use these to compute P(k, μ)
     ...
 ```
@@ -487,7 +501,7 @@ def test_my_emulator_init():
     """Test initialization."""
     bg = CAMBBackground(H0=67.5, ...)
     spectro = MyEmulatorSpectro(background=bg, z_pk=1.0)
-    
+
     assert spectro.background is bg
     assert spectro.z_pk == 1.0
     assert spectro.NLcode == "MyEmulator"
@@ -496,18 +510,18 @@ def test_pk2d_rsd():
     """Test P(k, μ) calculation."""
     bg = CAMBBackground(...)
     spectro = MyEmulatorSpectro(background=bg, z_pk=1.0)
-    
+
     k = np.array([0.1, 0.2, 0.5])
     mu = np.array([0.0, 0.5, 1.0])
-    
+
     P_k_mu = spectro.Pk2d_rsd(k, mu, bias=2.0)
-    
+
     # Check shape
     assert P_k_mu.shape == (len(k), len(mu))
-    
+
     # Check positivity
     assert np.all(P_k_mu > 0)
-    
+
     # Check RSD enhancement at μ=1 (line of sight)
     # Should have P(k, μ=1) > P(k, μ=0) due to Kaiser effect
     assert np.all(P_k_mu[:, -1] > P_k_mu[:, 0])
@@ -516,14 +530,14 @@ def test_with_different_parameters():
     """Test parameter flexibility."""
     bg = CAMBBackground(...)
     spectro = MyEmulatorSpectro(background=bg, z_pk=0.5)
-    
+
     k = np.logspace(-2, 0, 20)
     mu = np.linspace(0, 1, 10)
-    
+
     # Test with different biases
     P1 = spectro.Pk2d_rsd(k, mu, bias=1.0)
     P2 = spectro.Pk2d_rsd(k, mu, bias=2.0)
-    
+
     # Higher bias should give higher power
     assert np.all(P2 > P1)
 ```
@@ -543,7 +557,7 @@ from cloelib.observables.spectro import SpectroPower
 # For Tracer
 assert isinstance(my_tracer, Tracer)
 
-# For SpectroPower  
+# For SpectroPower
 assert isinstance(my_spectro, SpectroPower)
 ```
 
@@ -575,7 +589,7 @@ class MyTracer:
     def _get_window_cached(self, z_tuple):
         z = np.array(z_tuple)
         return self._compute_window(z)
-    
+
     def get_window(self, z):
         return self._get_window_cached(tuple(z.flat))
 ```

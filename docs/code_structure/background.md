@@ -43,22 +43,28 @@ Every Background implementation must provide:
 
 Every Background implementation must provide these methods:
 
-#### `Omega_b(zs)` 
+#### `Omega_b(zs)`
+
 Compute baryon density as a function of redshift.
 
 #### `Omega_m(zs)`
+
 Compute total matter density as a function of redshift.
 
 #### `hubble_parameter(zs, units="km/s/Mpc")`
+
 Compute the Hubble parameter H(z).
 
 #### `comoving_distance(zs)`
+
 Calculate comoving distance to given redshifts (in Mpc).
 
 #### `transverse_comoving_distance(zs)`
+
 Calculate transverse comoving distance (accounts for curvature).
 
 #### `angular_diameter_distance(zs)`
+
 Calculate angular diameter distance (in Mpc).
 
 ## Existing Implementations
@@ -72,6 +78,7 @@ Interfaces with the [CAMB](https://camb.readthedocs.io) Boltzmann solver.
 **When to use**: Production runs, well-tested, fast performance
 
 **Example**:
+
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground
 
@@ -104,6 +111,7 @@ Interfaces with the [CLASS](https://github.com/lesgourg/class_public) Boltzmann 
 **When to use**: When you need CLASS-specific features or comparing with CLASS-based pipelines
 
 **Example**:
+
 ```python
 from cloelib.cosmology.class_cosmology import CLASSBackground
 
@@ -124,6 +132,7 @@ Pure JAX implementation for automatic differentiation.
 **When to use**: When you need gradients, GPU acceleration, or JIT compilation
 
 **Example**:
+
 ```python
 from cloelib.cosmology.jax_cosmology import JAXBackground
 import jax
@@ -153,7 +162,7 @@ import numpy as np
 
 class MySolverBackground:
     """Interface to MySolver for background calculations."""
-    
+
     def __init__(
         self,
         H0: float,
@@ -174,38 +183,38 @@ class MySolverBackground:
         self._H0 = H0
         self._Omega_b0 = Omega_b0
         # ... store all parameters
-        
+
         # Initialize your solver
         self._solver = MySolver(H0=H0, Omega_b=Omega_b0, ...)
         self._solver.compute()  # If needed
-    
+
     @property
     def H0(self) -> float:
         """Hubble parameter at z=0 in km/s/Mpc."""
         return self._H0
-    
+
     @property
     def h(self) -> float:
         """Dimensionless Hubble constant."""
         return self.H0 / 100.0
-    
+
     # Implement ALL other required properties...
-    
+
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """Compute Hubble parameter at given redshifts."""
         # Call your solver's methods
         H_z = self._solver.get_hubble(zs)
-        
+
         # Handle unit conversion if needed
         if units == "1/Mpc":
             H_z = H_z * 1000.0 / self.h  # Convert from km/s/Mpc to 1/Mpc
-        
+
         return H_z
-    
+
     def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """Calculate comoving distance for given redshifts."""
         return self._solver.get_comoving_distance(zs)
-    
+
     # Implement ALL other required methods...
 ```
 
@@ -253,13 +262,13 @@ def test_hubble_parameter():
     bg = MySolverBackground(...)
     z = np.array([0.0, 0.5, 1.0])
     H_z = bg.hubble_parameter(z)
-    
+
     # Check shape
     assert H_z.shape == z.shape
-    
+
     # Check H(0) = H0
     assert np.isclose(H_z[0], bg.H0)
-    
+
     # Check H(z) increases with z (for ΛCDM)
     assert H_z[1] > H_z[0]
     assert H_z[2] > H_z[1]
@@ -269,7 +278,7 @@ def test_comoving_distance():
     bg = MySolverBackground(...)
     z = np.array([0.1, 0.5, 1.0])
     chi = bg.comoving_distance(z)
-    
+
     # Check monotonicity
     assert np.all(np.diff(chi) > 0)
 ```
@@ -289,22 +298,22 @@ class MyBackground:
     def __init__(self, ...):
         # Initialize the external solver
         self._external_solver = ExternalSolver(...)
-        
+
         # Run calculations if needed
         self._external_solver.compute_background()
-        
+
         # Cache results if beneficial
         self._cache = {}
-    
+
     def comoving_distance(self, zs):
         # Check cache first (optional but recommended)
         cache_key = tuple(zs)
         if cache_key in self._cache:
             return self._cache[cache_key]
-        
+
         # Call external code
         result = self._external_solver.get_distance(zs)
-        
+
         # Cache and return
         self._cache[cache_key] = result
         return result
@@ -342,15 +351,15 @@ Handle edge cases gracefully:
 def comoving_distance(self, zs):
     # Ensure zs is an array
     zs = np.atleast_1d(zs)
-    
+
     # Check for negative redshifts
     if np.any(zs < 0):
         raise ValueError("Redshifts must be non-negative")
-    
+
     # Handle z=0 specially if needed
     result = self._solver.get_distance(zs)
     result[zs == 0] = 0.0  # Distance to z=0 is 0
-    
+
     return result
 ```
 

@@ -11,7 +11,7 @@ Summary Statistics compute the final statistical quantities that go into your li
 - **C_ℓ**: Angular power spectra for photometric surveys
 - **ξ(θ)**: Angular correlation functions
 - **P_ℓ(k)**: Legendre multipoles for spectroscopic surveys
-- **α_∥, α_⊥**: BAO distortion parameters
+- **α*∥, α*⊥**: BAO distortion parameters
 - **COSEBIs**: Complete Orthogonal Sets of E/B-Integrals
 
 These are what you actually measure and compare to theory! 📈
@@ -28,12 +28,14 @@ Compute angular power spectra C_ℓ from two tracers.
 
 **Location**: `cloelib/summary_statistics/angular_two_point.py`
 
-**What it does**: 
+**What it does**:
+
 - Takes two `Tracer` objects
 - Integrates over redshift using Limber approximation
 - Outputs C_ℓ as a function of multipole ℓ
 
 **Example**:
+
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBPerturbations
 from cloelib.observables.photo import ShearTracer, PositionsTracer
@@ -97,7 +99,7 @@ C_ell = two_point.compute_Cl(ells)
 
 # Shape: (3, 3, len(ells))
 # C_ell[0, 0, :] = bin 1 × bin 1
-# C_ell[0, 1, :] = bin 1 × bin 2  
+# C_ell[0, 1, :] = bin 1 × bin 2
 # C_ell[1, 1, :] = bin 2 × bin 2
 # etc.
 ```
@@ -111,6 +113,7 @@ Compute real-space angular correlation functions ξ(θ).
 **What it does**: Transforms C_ℓ → ξ(θ) using Hankel transforms
 
 **Example**:
+
 ```python
 from cloelib.summary_statistics.angular_correlation_function import AngularCorrelationFunction
 
@@ -141,11 +144,13 @@ Compute multipoles P_ℓ(k) from 2D power spectrum P(k, μ).
 **Location**: `cloelib/summary_statistics/legendre_multipoles.py`
 
 **What it does**:
+
 - Takes a `SpectroPower` object
 - Integrates P(k, μ) over μ with Legendre polynomials
 - Outputs P₀(k), P₂(k), P₄(k), ...
 
 **Example**:
+
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground
 from cloelib.observables.CometEFT_spectro import CometEFT_spectro
@@ -166,7 +171,7 @@ multipoles = leg_multi.compute_multipoles(
 )
 
 P0 = multipoles[0]  # Monopole
-P2 = multipoles[2]  # Quadrupole  
+P2 = multipoles[2]  # Quadrupole
 P4 = multipoles[4]  # Hexadecapole
 
 print(f"Monopole at k=0.1: {P0[20]:.2e}")
@@ -180,13 +185,14 @@ print(f"Monopole at k=0.1: {P0[20]:.2e}")
 
 #### BAOAlphas
 
-Compute BAO distortion parameters α_∥ and α_⊥.
+Compute BAO distortion parameters α*∥ and α*⊥.
 
 **Location**: `cloelib/summary_statistics/bao_alphas.py`
 
 **What it does**: Extract Alcock-Paczynski distortions from BAO
 
 **Example**:
+
 ```python
 from cloelib.summary_statistics.bao_alphas import compute_bao_alphas
 
@@ -216,7 +222,8 @@ Compute full Alcock-Paczynski distortion matrix.
 
 **Location**: Various modules with `cosebi` in the name
 
-**When to use**: 
+**When to use**:
+
 - Separating E/B modes cleanly
 - Dealing with survey boundaries
 - Optimal filtering
@@ -229,7 +236,7 @@ Want to implement a new statistic? The pattern is straightforward! 🚀
 
 ### Step 1: Decide What You Need
 
-**For photometric statistics**: You'll work with `Tracer` objects  
+**For photometric statistics**: You'll work with `Tracer` objects
 **For spectroscopic statistics**: You'll work with `SpectroPower` objects
 
 ### Step 2: Implement Your Calculator
@@ -241,11 +248,11 @@ import numpy as np
 
 class MyCustomStatistic:
     """Custom statistic for photometric data."""
-    
+
     def __init__(self, tracer1: Tracer, tracer2: Tracer):
         """
         Initialize with two tracers.
-        
+
         Args:
             tracer1: First tracer
             tracer2: Second tracer
@@ -254,7 +261,7 @@ class MyCustomStatistic:
         self.tracer2 = tracer2
         self.perturbations = tracer1.perturbations
         self.background = self.perturbations.background
-    
+
     def compute_statistic(
         self,
         scales: np.ndarray,
@@ -262,11 +269,11 @@ class MyCustomStatistic:
     ) -> np.ndarray:
         """
         Compute your custom statistic.
-        
+
         Args:
             scales: Physical scales (e.g., angles, distances)
             **kwargs: Additional parameters
-            
+
         Returns:
             Your statistic evaluated at scales
         """
@@ -274,16 +281,16 @@ class MyCustomStatistic:
         z = kwargs.get('z_grid', np.linspace(0.1, 3.0, 100))
         W1 = self.tracer1.get_window(z)
         W2 = self.tracer2.get_window(z)
-        
+
         # Get power spectrum
         k = kwargs.get('k_grid', np.logspace(-3, 1, 200))
         P_k = self.perturbations.matter_power_spectrum(z, k)
-        
+
         # Your custom integration/transformation
         result = self._integrate_custom(scales, W1, W2, P_k, z, k)
-        
+
         return result
-    
+
     def _integrate_custom(self, scales, W1, W2, P_k, z, k):
         """Your custom integration kernel."""
         # Implement your math here!
@@ -292,13 +299,13 @@ class MyCustomStatistic:
         # - Hankel transforms
         # - Special function evaluations
         # - etc.
-        
+
         result = np.zeros(len(scales))
         for i, scale in enumerate(scales):
             # Compute statistic for this scale
             integrand = self._compute_integrand(scale, W1, W2, P_k, z, k)
             result[i] = np.trapz(integrand, z)
-        
+
         return result
 ```
 
@@ -317,27 +324,27 @@ def test_custom_statistic():
     # Set up cosmology and tracers
     bg = CAMBBackground(...)
     pert = CAMBPerturbations(background=bg)
-    
+
     z = np.linspace(0.1, 2.0, 50)
     dndz = np.exp(-((z - 1.0) / 0.3)**2)
     dndz = dndz / np.trapz(dndz, z)
-    
+
     tracer = ShearTracer(
         perturbations=pert,
         dndz=dndz[np.newaxis, :],
         z=z,
         nuisance_params={...}
     )
-    
+
     # Compute statistic
     stat = MyCustomStatistic(tracer, tracer)
     scales = np.logspace(-2, 1, 20)
     result = stat.compute_statistic(scales)
-    
+
     # Basic sanity checks
     assert result.shape == scales.shape
     assert np.all(np.isfinite(result))
-    
+
     # Add physics-based checks
     # e.g., positivity, monotonicity, etc.
 ```
@@ -345,6 +352,7 @@ def test_custom_statistic():
 ### Step 4: Document It!
 
 Add to the summary statistics section of the docs with:
+
 - What it computes
 - When to use it
 - Example usage
@@ -360,22 +368,22 @@ Most angular statistics use Limber:
 def compute_Cl_limber(self, ell, W1, W2, z_grid, k_grid, P_k_z):
     """
     Compute C_ℓ using Limber approximation.
-    
+
     C_ℓ = ∫ dz [W1(z) W2(z) / χ²(z)] P(k=ℓ/χ, z)
     """
     chi = self.background.comoving_distance(z_grid)
     H_z = self.background.hubble_parameter(z_grid, units="1/Mpc")
-    
+
     # Limber: k = (ℓ + 0.5) / χ
     k_limber = (ell + 0.5) / chi
-    
+
     # Interpolate P(k, z) at Limber k values
     P_limber = self._interpolate_power(k_limber, z_grid, k_grid, P_k_z)
-    
+
     # Integrate
     integrand = W1 * W2 * P_limber / (chi**2 * H_z)
     C_ell = np.trapz(integrand, z_grid)
-    
+
     return C_ell
 ```
 
@@ -389,19 +397,19 @@ from scipy.special import jv  # Bessel functions
 def compute_xi_from_Cl(theta, ells, C_ell):
     """
     Transform C_ℓ → ξ(θ) using Hankel transform.
-    
+
     ξ(θ) = (1/2π) ∫ dℓ ℓ C_ℓ J₀(ℓθ)
     """
     xi = np.zeros(len(theta))
-    
+
     for i, th in enumerate(theta):
         # Bessel function J₀(ℓθ)
         bessel = jv(0, ells * np.radians(th))
-        
+
         # Integrate
         integrand = ells * C_ell * bessel
         xi[i] = np.trapz(integrand, ells) / (2 * np.pi)
-    
+
     return xi
 ```
 
@@ -415,16 +423,16 @@ from scipy.special import legendre
 def compute_multipole(k, mu, P_k_mu, ell):
     """
     Compute P_ℓ(k) from P(k, μ).
-    
+
     P_ℓ(k) = (2ℓ+1)/2 ∫₋₁¹ dμ P(k, μ) Lℓ(μ)
     """
     # Legendre polynomial
     L_ell = legendre(ell)
-    
+
     # Integrate over μ
     integrand = P_k_mu * L_ell(mu)
     P_ell = (2 * ell + 1) / 2.0 * np.trapz(integrand, mu)
-    
+
     return P_ell
 ```
 

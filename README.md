@@ -204,6 +204,9 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://chaitanyachawak.github.io/"><img src="https://avatars.githubusercontent.com/u/55046588?v=4?s=100" width="100px;" alt="Chaitanya"/><br /><sub><b>Chaitanya</b></sub></a><br /><a href="#code-ChaitanyaChawak" title="Code">💻</a> <a href="#bug-ChaitanyaChawak" title="Bug reports">🐛</a> <a href="#review-ChaitanyaChawak" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/raphkou"><img src="https://avatars.githubusercontent.com/u/61792335?v=4?s=100" width="100px;" alt="raphkou"/><br /><sub><b>raphkou</b></sub></a><br /><a href="#bug-raphkou" title="Bug reports">🐛</a> <a href="#code-raphkou" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ivansladoljev"><img src="https://avatars.githubusercontent.com/u/144113061?v=4?s=100" width="100px;" alt="Ivan Sladoljev"/><br /><sub><b>Ivan Sladoljev</b></sub></a><br /><a href="#code-ivansladoljev" title="Code">💻</a> <a href="#ideas-ivansladoljev" title="Ideas, Planning, & Feedback">🤔</a></td>
+    </tr>
   </tbody>
 </table>
 

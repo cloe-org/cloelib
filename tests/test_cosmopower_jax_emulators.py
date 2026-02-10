@@ -856,7 +856,7 @@ def test_parameter_out_of_bounds():
         gamma_MG=0.0,
     )
 
-    with pytest.raises(ValueError, match="out of range"):
+    with pytest.raises(ValueError, match="out of emulator range"):
         w0waCDM.Linear(background=bad_background, redshifts=np.array([0.0, 1.0]))
 
 
@@ -950,7 +950,7 @@ def test_str_representation_1mass(background_w0wa_1mass, z_array):
 
     assert "Cosmopower-JAX" in info_str
     assert "w0waCDM" in info_str
-    assert "1 massive neutrino" in info_str
+    assert "one massive neutrino" in info_str
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
@@ -962,7 +962,7 @@ def test_str_representation_3degen(background_w0wa_3degen, z_array):
 
     assert "Cosmopower-JAX" in info_str
     assert "w0waCDM" in info_str
-    assert "3 degenerate neutrinos" in info_str
+    assert "three degenerate massive neutrinos" in info_str
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
@@ -1135,7 +1135,7 @@ def test_log10TAGN_below_bounds(background_w0wa, z_array):
     """Test that log10TAGN below bounds raises error"""
     linear = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
 
-    with pytest.raises(ValueError, match="out of range"):
+    with pytest.raises(ValueError, match="out of emulator range"):
         w0waCDM.NonLinear(
             background=background_w0wa,
             linearperturbations=linear,
@@ -1145,13 +1145,13 @@ def test_log10TAGN_below_bounds(background_w0wa, z_array):
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
-def test_log10TAGN_above_bounds(background_lcdm, z_array):
+def test_log10TAGN_above_bounds(background_w0wa, z_array):
     """Test that log10TAGN above bounds raises error"""
-    linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    linear = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
 
-    with pytest.raises(ValueError, match="out of range"):
-        LCDM.NonLinear(
-            background=background_lcdm,
+    with pytest.raises(ValueError, match="out of emulator range"):
+        w0waCDM.NonLinear(
+            background=background_w0wa,
             linearperturbations=linear,
             redshifts=z_array,
             log10TAGN=9.0,  # Above 8.5 bound

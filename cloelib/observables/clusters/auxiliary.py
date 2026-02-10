@@ -55,7 +55,7 @@ def convert_to_Delta_crit(
 
     if overdensity_type in ["mean", "vir"]:
         if nonu:
-            Omega_m = background.Omega_m_cb(z)
+            Omega_m = background.Omega_cb(z)
         else:
             Omega_m = background.Omega_m(z)
 
@@ -160,7 +160,7 @@ def photoz_rsd_correction(
         Shape (z.size, k.size, other dimensions of z_obs_scatter)
     """
     if nonu:
-        _Omega_m_func = background.Omega_m_cb
+        _Omega_m_func = background.Omega_cb
     else:
         _Omega_m_func = background.Omega_m
     ks = np.atleast_1d(k)

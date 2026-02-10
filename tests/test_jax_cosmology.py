@@ -1,6 +1,8 @@
 import jax.numpy as jnp
 import pytest
-from numpy.testing import assert_allclose
+
+# To uncomment when test_matter_power_spectrum_cb is set up:
+# from numpy.testing import assert_allclose
 
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.cosmology.jax_cosmology import (

@@ -26,6 +26,7 @@ Every Background implementation must provide:
 - **`h`**: Dimensionless Hubble constant (H0/100)
 - **`Omega_b0`**: Baryon density parameter at z=0
 - **`Omega_cdm0`**: Cold dark matter density parameter at z=0
+- **`Omega_cb0`**: Combined cold baryon + cold dark matter density parameter at z=0
 - **`Omega_k0`**: Curvature density parameter
 - **`mnu`**: Neutrino masses (in eV)
 - **`N_ur`**: Effective number of ultra-relativistic species
@@ -50,6 +51,12 @@ Compute baryon density as a function of redshift.
 #### `Omega_m(zs)`
 
 Compute total matter density as a function of redshift.
+
+#### `Omega_cb(zs)`
+
+Compute combined cold baryon + cold dark matter density as a function of redshift.
+
+This is typically Omega_cb(z) = Omega_b(z) + Omega_cdm(z), which is useful when massive neutrinos are present since they don't count as "cold" matter at late times.
 
 #### `hubble_parameter(zs, units="km/s/Mpc")`
 
@@ -198,6 +205,11 @@ class MySolverBackground:
         """Dimensionless Hubble constant."""
         return self.H0 / 100.0
 
+    @property
+    def Omega_cb0(self) -> float:
+        """Combined cold baryon + cold dark matter density at z=0."""
+        return self._Omega_b0 + self._Omega_cdm0
+
     # Implement ALL other required properties...
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
@@ -214,6 +226,12 @@ class MySolverBackground:
     def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """Calculate comoving distance for given redshifts."""
         return self._solver.get_comoving_distance(zs)
+
+    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
+        """Calculate combined cold baryon + cold dark matter density at redshifts."""
+        # This is Omega_b(z) + Omega_cdm(z)
+        # Useful when you have massive neutrinos
+        return self.Omega_b(zs) + self._solver.get_omega_cdm(zs)
 
     # Implement ALL other required methods...
 ```

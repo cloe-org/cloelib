@@ -981,3 +981,178 @@ def test_str_representation_nonlinear(background_lcdm, z_array):
     assert "Cosmopower-JAX" in info_str
     assert "LCDM" in info_str
     assert "nonlinear" in info_str
+
+
+# ============= NonLinear with Massive Neutrinos Tests =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_w0wa_nonlinear_1mass(background_w0wa_1mass, z_array, k_array):
+    """Test w0waCDM nonlinear with 1 massive neutrino"""
+    linear = w0waCDM.Linear(background=background_w0wa_1mass, redshifts=z_array)
+    nonlinear = w0waCDM.NonLinear(
+        background=background_w0wa_1mass,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert isinstance(pk_nl, np.ndarray)
+    assert np.all(pk_nl > 0)
+    assert np.all(np.isfinite(pk_nl))
+    assert hasattr(nonlinear, "sigma8")
+    assert hasattr(nonlinear, "fsigma8")
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_w0wa_nonlinearcb_1mass(background_w0wa_1mass, z_array, k_array):
+    """Test w0waCDM NonLinearCB with 1 massive neutrino"""
+    linear = w0waCDM.Linear(background=background_w0wa_1mass, redshifts=z_array)
+    nonlinear_cb = w0waCDM.NonLinearCB(
+        background=background_w0wa_1mass,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_cb_nl = nonlinear_cb.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_cb_nl > 0)
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_w0wa_nonlinear_3degen(background_w0wa_3degen, z_array, k_array):
+    """Test w0waCDM nonlinear with 3 degenerate neutrinos"""
+    linear = w0waCDM.Linear(background=background_w0wa_3degen, redshifts=z_array)
+    nonlinear = w0waCDM.NonLinear(
+        background=background_w0wa_3degen,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_nl > 0)
+    assert np.all(np.isfinite(pk_nl))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_w0wa_nonlinearcb_3degen(background_w0wa_3degen, z_array, k_array):
+    """Test w0waCDM NonLinearCB with 3 degenerate neutrinos"""
+    linear = w0waCDM.Linear(background=background_w0wa_3degen, redshifts=z_array)
+    nonlinear_cb = w0waCDM.NonLinearCB(
+        background=background_w0wa_3degen,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_cb_nl = nonlinear_cb.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_cb_nl > 0)
+
+
+# ============= wCDM NonLinear with Massive Neutrinos Tests =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_wcdm_nonlinear_1mass(background_wcdm_1mass, z_array, k_array):
+    """Test wCDM nonlinear with 1 massive neutrino"""
+    linear = wCDM.Linear(background=background_wcdm_1mass, redshifts=z_array)
+    nonlinear = wCDM.NonLinear(
+        background=background_wcdm_1mass,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_nl > 0)
+    assert np.all(np.isfinite(pk_nl))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_wcdm_nonlinear_3degen(background_wcdm_3degen, z_array, k_array):
+    """Test wCDM nonlinear with 3 degenerate neutrinos"""
+    linear = wCDM.Linear(background=background_wcdm_3degen, redshifts=z_array)
+    nonlinear = wCDM.NonLinear(
+        background=background_wcdm_3degen,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_nl > 0)
+
+
+# ============= LCDM NonLinear with Massive Neutrinos Tests =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_lcdm_nonlinear_1mass(background_lcdm_1mass, z_array, k_array):
+    """Test LCDM nonlinear with 1 massive neutrino"""
+    linear = LCDM.Linear(background=background_lcdm_1mass, redshifts=z_array)
+    nonlinear = LCDM.NonLinear(
+        background=background_lcdm_1mass,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_nl > 0)
+    assert np.all(np.isfinite(pk_nl))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_lcdm_nonlinear_3degen(background_lcdm_3degen, z_array, k_array):
+    """Test LCDM nonlinear with 3 degenerate neutrinos"""
+    linear = LCDM.Linear(background=background_lcdm_3degen, redshifts=z_array)
+    nonlinear = LCDM.NonLinear(
+        background=background_lcdm_3degen,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_nl > 0)
+
+
+# ============= log10TAGN Bounds Tests =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_log10TAGN_below_bounds(background_w0wa, z_array):
+    """Test that log10TAGN below bounds raises error"""
+    linear = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
+
+    with pytest.raises(ValueError, match="out of range"):
+        w0waCDM.NonLinear(
+            background=background_w0wa,
+            linearperturbations=linear,
+            redshifts=z_array,
+            log10TAGN=7.0,  # Below 7.6 bound
+        )
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_log10TAGN_above_bounds(background_lcdm, z_array):
+    """Test that log10TAGN above bounds raises error"""
+    linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+
+    with pytest.raises(ValueError, match="out of range"):
+        LCDM.NonLinear(
+            background=background_lcdm,
+            linearperturbations=linear,
+            redshifts=z_array,
+            log10TAGN=9.0,  # Above 8.5 bound
+        )

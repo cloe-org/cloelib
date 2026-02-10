@@ -438,7 +438,7 @@ def compute_multipole(k, mu, P_k_mu, ell):
     return P_ell
 ```
 
-## Performance Tips.
+## Performance Tips
 
 ### Array Size Limits
 

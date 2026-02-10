@@ -17047,7 +17047,7 @@ at specified scale for the redshifts defined in z</p>
 
 
 <a href="#cloelib.observables.photo.PositionsTracer" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(nuisance_params)">nuisance_params</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(nuisance_params)">nuisance_params</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer(include_rsd)">include_rsd</span></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17169,6 +17169,67 @@ It is expected to be normalised.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.PositionsTracer.get_window_rsd" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_window_rsd</span>
+
+
+<a href="#cloelib.observables.photo.PositionsTracer.get_window_rsd" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_window_rsd(ells)">ells</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_window_rsd(H)">H</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_window_rsd(f)">f</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_window_rsd(chi)">chi</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Linear photo-RSD window :math:<code>W^{\rm RSD}_i(\ell,z)</code> tabulated on the internal z-grid.</p>
+<p>We use the shifted-distance (extended Limber) approximation, where the RSD contribution
+is written as a linear combination of the source term evaluated at shifted redshifts:</p>
+<div class="arithmatex">\[
+W^{\rm RSD}_i(\ell,z)
+=
+A_\ell\,S_i(z)
++B_\ell\,S_i\!\left(z_{-2}(\ell,z)\right)
++C_\ell\,S_i\!\left(z_{+2}(\ell,z)\right),
+\]</div>
+<p>with
+$$
+S_i(z)=\frac{H(z)\,f(z)}{c}\,n_i(z),
+$$</p>
+<p>and the shifted redshifts defined implicitly via comoving distance (here :math:<code>\chi \equiv r</code>):
+$$
+\chi!\left(z_m(\ell,z)\right)=
+\frac{\ell+m+\tfrac12}{\ell+\tfrac12}\,\chi(z),
+\qquad m\in{-2,+2}.
+$$</p>
+<p>The coefficients are
+$$
+A_\ell=\frac{2\ell^2+2\ell-1}{(2\ell-1)(2\ell+3)},\quad
+B_\ell=-\frac{\ell(\ell-1)}{(2\ell-1)(2\ell+1)},\quad
+C_\ell=-\frac{(\ell+1)(\ell+2)}{(2\ell+1)(2\ell+3)}.
+$$</p>
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window_rsd--notes">Notes<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window_rsd--notes" title="Permanent link">&para;</a></h6>
+<ul>
+<li><code>chi</code> is used purely as an interpolation coordinate so <code>get_photo_rsd</code> can evaluate
+  the shifted arguments efficiently.</li>
+</ul>
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window_rsd--parameters" title="Permanent link">&para;</a></h6>
+<p>ells : array_like
+    Multipoles ell.
+H, f : array_like
+    H(z) and growth rate f(z), sampled on the same z-grid as <code>self.dndz_shifted</code>.
+chi : array_like
+    Comoving distance χ(z)=r(z), sampled on the same z-grid.</p>
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window_rsd--returns">Returns<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window_rsd--returns" title="Permanent link">&para;</a></h6>
+<p>ndarray
+    The RSD window sampled on the z-grid (shape as returned by <code>get_photo_rsd</code>).</p>
 
           
 
@@ -18206,7 +18267,7 @@ at specified scale for the redshifts defined in z</p>
 
 
 <a href="#cloelib.observables.photo.PositionsTracer" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(nuisance_params)">nuisance_params</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.PositionsTracer(nuisance_params)">nuisance_params</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer(include_rsd)">include_rsd</span></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18328,6 +18389,67 @@ It is expected to be normalised.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.observables.photo.PositionsTracer.get_window_rsd" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_window_rsd</span>
+
+
+<a href="#cloelib.observables.photo.PositionsTracer.get_window_rsd" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_window_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_window_rsd(ells)">ells</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_window_rsd(H)">H</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_window_rsd(f)">f</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.PositionsTracer.get_window_rsd(chi)">chi</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Linear photo-RSD window :math:<code>W^{\rm RSD}_i(\ell,z)</code> tabulated on the internal z-grid.</p>
+<p>We use the shifted-distance (extended Limber) approximation, where the RSD contribution
+is written as a linear combination of the source term evaluated at shifted redshifts:</p>
+<div class="arithmatex">\[
+W^{\rm RSD}_i(\ell,z)
+=
+A_\ell\,S_i(z)
++B_\ell\,S_i\!\left(z_{-2}(\ell,z)\right)
++C_\ell\,S_i\!\left(z_{+2}(\ell,z)\right),
+\]</div>
+<p>with
+$$
+S_i(z)=\frac{H(z)\,f(z)}{c}\,n_i(z),
+$$</p>
+<p>and the shifted redshifts defined implicitly via comoving distance (here :math:<code>\chi \equiv r</code>):
+$$
+\chi!\left(z_m(\ell,z)\right)=
+\frac{\ell+m+\tfrac12}{\ell+\tfrac12}\,\chi(z),
+\qquad m\in{-2,+2}.
+$$</p>
+<p>The coefficients are
+$$
+A_\ell=\frac{2\ell^2+2\ell-1}{(2\ell-1)(2\ell+3)},\quad
+B_\ell=-\frac{\ell(\ell-1)}{(2\ell-1)(2\ell+1)},\quad
+C_\ell=-\frac{(\ell+1)(\ell+2)}{(2\ell+1)(2\ell+3)}.
+$$</p>
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window_rsd--notes">Notes<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window_rsd--notes" title="Permanent link">&para;</a></h6>
+<ul>
+<li><code>chi</code> is used purely as an interpolation coordinate so <code>get_photo_rsd</code> can evaluate
+  the shifted arguments efficiently.</li>
+</ul>
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window_rsd--parameters" title="Permanent link">&para;</a></h6>
+<p>ells : array_like
+    Multipoles ell.
+H, f : array_like
+    H(z) and growth rate f(z), sampled on the same z-grid as <code>self.dndz_shifted</code>.
+chi : array_like
+    Comoving distance χ(z)=r(z), sampled on the same z-grid.</p>
+<h6 id="cloelib.observables.photo.PositionsTracer.get_window_rsd--returns">Returns<a class="headerlink" href="#cloelib.observables.photo.PositionsTracer.get_window_rsd--returns" title="Permanent link">&para;</a></h6>
+<p>ndarray
+    The RSD window sampled on the z-grid (shape as returned by <code>get_photo_rsd</code>).</p>
 
           
 

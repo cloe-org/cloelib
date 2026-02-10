@@ -563,6 +563,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cloelib.cosmology.cosmopower_jax_cosmology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;cosmopower_jax_cosmology
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cloelib.cosmology.derived_cosmology" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1729,6 +1740,17 @@
     <span class="md-ellipsis">
       
         <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;cosmology
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.cosmology.cosmopower_jax_cosmology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;cosmopower_jax_cosmology
       
     </span>
   </a>
@@ -6830,6 +6852,1477 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 
 </div>
 
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="cloelib.cosmology.cosmopower_jax_cosmology" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">cosmopower_jax_cosmology</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology" class="headerlink" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+        <p>This module provides CosmoPower-JAX-based emulators for linear and nonlinear matter power spectra.</p>
+<p>Uses cosmopower_jax instead of tensorflow-based cosmopower for faster JAX-accelerated predictions.</p>
+<p>Supported models include:
+- w0waCDM with mass of the neutrino 0
+- w0waCDM with one massive neutrino
+- w0waCDM with three degenerate massive neutrinos
+- wCDM with mass of the neutrino 0
+- wCDM with one massive neutrino
+- wCDM with three degenerate massive neutrinos
+- LCDM with mass of the neutrinos 0
+- LCDM with one massive neutrino
+- LCDM with three degenerate massive neutrinos</p>
+
+          
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">CosmoPowerJAXw0waCDMPerturbations</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Class for w0waCDM cosmology perturbations using CosmoPower-JAX emulators.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">Linear</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Linear</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the linear matter power spectrum in the w0waCDM cosmology.</p>
+<p>Uses CosmoPower-JAX for fast JAX-accelerated predictions.</p>
+
+        <h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear--parameters" title="Permanent link">&para;</a></h6>
+<p>background : Background
+    Background cosmology object.
+redshifts : np.ndarray
+    Array of redshift values.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.__str__" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">__str__</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.__str__" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__str__</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return emulator description.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.matter_power_spectrum" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.matter_power_spectrum(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.matter_power_spectrum(ks)">ks</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the linear matter power spectrum P(k, z).</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.matter_power_spectrum--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.matter_power_spectrum--parameters" title="Permanent link">&para;</a></h6>
+<p>zs : np.ndarray
+    Redshifts at which to evaluate the power spectrum.
+ks : np.ndarray
+    Wavenumbers in units of Mpc^-1.</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.matter_power_spectrum--returns">Returns<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.matter_power_spectrum--returns" title="Permanent link">&para;</a></h6>
+<p>np.ndarray
+    Linear matter power spectrum in (Mpc/h)^3.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_factor" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_factor" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_factor(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_factor(ks)">ks</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for given redshifts and wavenumbers.</p>
+<p>.. math::
+    D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+    /P_{\rm \delta\delta}(z=0, k)}\</p>
+<p>and normalizes as for :math:<code>D(z)/D(0)</code>.</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_factor--parameters">Parameters:<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_factor--parameters" title="Permanent link">&para;</a></h6>
+<p>zs : array_like
+    Redshifts at which to calculate the growth factor.
+ks : array_like
+    Wavenumbers at which to calculate the growth factor.</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_factor--returns">Returns:<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_factor--returns" title="Permanent link">&para;</a></h6>
+<p>np.ndarray
+    The growth factor as a function of redshift and wavenumber.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_rate" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_rate</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_rate" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth rate f(z) = d ln D / d ln a.</p>
+<p>This is computed as f = fsigma8 / sigma8.</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_rate--returns">Returns<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.growth_rate--returns" title="Permanent link">&para;</a></h6>
+<p>np.ndarray
+    The growth rate as a function of redshift.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma8_0</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the sigma8 value.</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.sigma8_0--returns">Returns:<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.Linear.sigma8_0--returns" title="Permanent link">&para;</a></h6>
+<p>float
+    The sigma8 value.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">LinearCB</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">LinearCB</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the w0waCDM cosmology.</p>
+<p>This class uses a Cosmopower-JAX neural network to emulate the cb linear power spectrum
+for a w0waCDM cosmology. Automatically selects the appropriate emulator based on neutrino configuration.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.__str__" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">__str__</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.__str__" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__str__</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return emulator description.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.matter_power_spectrum" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.matter_power_spectrum(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.matter_power_spectrum(ks)">ks</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the cb linear matter power spectrum P_cb(k, z).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.growth_factor" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.growth_factor" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.growth_factor(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.growth_factor(ks)">ks</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor D(z, k).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.growth_rate" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_rate</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.growth_rate" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth rate f(z) = fsigma8 / sigma8.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.LinearCB.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma8_0</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return sigma8 at z=0.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">NonLinear</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">NonLinear</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the nonlinear matter power spectrum in the w0waCDM cosmology.</p>
+<p>This class uses a Cosmopower-JAX neural network to emulate the nonlinear power spectrum
+for a w0waCDM cosmology. Automatically selects the appropriate emulator based on neutrino configuration.
+Nonlinear corrections are applied using the mead2020 model in CAMB, with baryonic feedback
+regulated using the <code>log10TAGN</code> parameter.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.__str__" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">__str__</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.__str__" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__str__</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return emulator description.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.matter_power_spectrum" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.matter_power_spectrum(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.matter_power_spectrum(ks)">ks</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the nonlinear matter power spectrum P(k, z).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.growth_factor" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.growth_factor" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.growth_factor(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.growth_factor(ks)">ks</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor D(z, k).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.growth_rate" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_rate</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.growth_rate" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth rate f(z) = fsigma8 / sigma8.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinear.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma8_0</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return sigma8 at z=0.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">NonLinearCB</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">NonLinearCB</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the cb [cold dark matter (c) + baryon (b)] nonlinear matter power spectrum in the w0waCDM cosmology.</p>
+<p>This class uses a Cosmopower-JAX neural network to emulate the cb nonlinear power spectrum
+for a w0waCDM cosmology. Automatically selects the appropriate emulator based on neutrino configuration.
+Nonlinear corrections are applied using the mead2020 model in CAMB, with baryonic feedback
+regulated using the <code>log10TAGN</code> parameter.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.__str__" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">__str__</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.__str__" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__str__</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return emulator description.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.matter_power_spectrum" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.matter_power_spectrum(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.matter_power_spectrum(ks)">ks</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the cb nonlinear matter power spectrum P_cb(k, z).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.growth_factor" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.growth_factor" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.growth_factor(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.growth_factor(ks)">ks</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor D(z, k).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.growth_rate" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_rate</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.growth_rate" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth rate f(z) = fsigma8 / sigma8.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXw0waCDMPerturbations.NonLinearCB.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma8_0</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return sigma8 at z=0.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">CosmoPowerJAXwCDMPerturbations</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Class for wCDM cosmology perturbations using CosmoPower-JAX emulators.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">Linear</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Linear</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the linear matter power spectrum in the wCDM cosmology.</p>
+<p>This class uses a Cosmopower-JAX neural network to emulate the linear power spectrum
+for a wCDM cosmology. Automatically selects the appropriate emulator based on neutrino configuration.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.__str__" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">__str__</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.__str__" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__str__</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return emulator description.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.matter_power_spectrum" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.matter_power_spectrum(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.matter_power_spectrum(ks)">ks</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the linear matter power spectrum P(k, z).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.growth_factor" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.growth_factor" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.growth_factor(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.growth_factor(ks)">ks</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor D(z, k).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.growth_rate" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_rate</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.growth_rate" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth rate f(z) = fsigma8 / sigma8.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.Linear.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma8_0</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return sigma8 at z=0.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.LinearCB" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">LinearCB</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.LinearCB" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">LinearCB</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.LinearCB(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.LinearCB(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the wCDM cosmology.</p>
+<p>This class uses a Cosmopower-JAX neural network to emulate the cb linear power spectrum
+for a wCDM cosmology. Automatically selects the appropriate emulator based on neutrino configuration.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.LinearCB.__str__" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">__str__</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.LinearCB.__str__" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__str__</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return emulator description.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.LinearCB.matter_power_spectrum" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.LinearCB.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.LinearCB.matter_power_spectrum(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.LinearCB.matter_power_spectrum(ks)">ks</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the cb linear matter power spectrum P_cb(k, z).</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinear" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">NonLinear</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinear" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">NonLinear</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinear(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinear(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinear(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinear(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the nonlinear matter power spectrum in wCDM cosmology.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinearCB" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">NonLinearCB</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinearCB" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">NonLinearCB</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinearCB(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinearCB(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinearCB(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXwCDMPerturbations.NonLinearCB(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the cb nonlinear matter power spectrum in wCDM cosmology.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">CosmoPowerJAXLCDMPerturbations</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Class for LCDM cosmology perturbations using CosmoPower-JAX emulators.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.Linear" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">Linear</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.Linear" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Linear</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.Linear(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.Linear(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the linear matter power spectrum in LCDM cosmology.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.LinearCB" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">LinearCB</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.LinearCB" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">LinearCB</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.LinearCB(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.LinearCB(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the cb linear matter power spectrum in LCDM cosmology.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinear" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">NonLinear</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinear" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">NonLinear</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinear(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinear(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinear(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinear(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the nonlinear matter power spectrum in LCDM cosmology.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinearCB" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">NonLinearCB</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinearCB" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">NonLinearCB</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinearCB(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinearCB(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinearCB(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.CosmoPowerJAXLCDMPerturbations.NonLinearCB(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Emulator for the cb nonlinear matter power spectrum in LCDM cosmology.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">emulator_data</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.emulator_data" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">emulator_data</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data(filename)">filename</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data(zenodo_url)">zenodo_url</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Download the emulator data file if it does not exist.</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.emulator_data--parameters" title="Permanent link">&para;</a></h6>
+<p>filename : str
+    The name of the file to download.
+zenodo_url : str, optional
+    The base URL from which to download the file. Defaults to ZENODO_URL.</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data--returns">Returns<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.emulator_data--returns" title="Permanent link">&para;</a></h6>
+<p>str
+    The path to the downloaded file.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.cosmopower_jax_cosmology.load_pk_emulator" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">load_pk_emulator</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.load_pk_emulator" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">load_pk_emulator</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.load_pk_emulator(filepath)">filepath</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Load a CosmoPower-JAX P(k) emulator from an .npz file.</p>
+<p>Uses probe='custom_log' since P(k) emulators predict log10(P(k)).</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.load_pk_emulator--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.load_pk_emulator--parameters" title="Permanent link">&para;</a></h6>
+<p>filepath : str
+    Full path to the .npz emulator file.</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.load_pk_emulator--returns">Returns<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.load_pk_emulator--returns" title="Permanent link">&para;</a></h6>
+<p>CosmoPowerJAX
+    The loaded emulator object.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.cosmopower_jax_cosmology.load_sigma_emulator" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">load_sigma_emulator</span>
+
+
+<a href="#cloelib.cosmology.cosmopower_jax_cosmology.load_sigma_emulator" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">load_sigma_emulator</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.load_sigma_emulator(filepath)">filepath</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Load a CosmoPower-JAX sigma8/fsigma8 emulator from an .npz file.</p>
+<p>Uses probe='custom' since sigma8 emulators predict values directly (not log).</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.load_sigma_emulator--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.load_sigma_emulator--parameters" title="Permanent link">&para;</a></h6>
+<p>filepath : str
+    Full path to the .npz emulator file.</p>
+<h6 id="cloelib.cosmology.cosmopower_jax_cosmology.load_sigma_emulator--returns">Returns<a class="headerlink" href="#cloelib.cosmology.cosmopower_jax_cosmology.load_sigma_emulator--returns" title="Permanent link">&para;</a></h6>
+<p>CosmoPowerJAX
+    The loaded emulator object.</p>
+
+          
+
+    </div>
+
+</div>
 
 
 

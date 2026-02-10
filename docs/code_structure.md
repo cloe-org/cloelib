@@ -284,7 +284,8 @@ To add a new type of observable (e.g., a new tracer or spectroscopic observable)
 # cloelib/observables/my_new_tracer.py
 from cloelib.observables.tracer import Tracer
 from cloelib.cosmology.cosmology import Perturbations
-import jax.numpy as np
+import numpy as np
+import jax.numpy as jnp
 
 class MyNewTracer:
     """A new tracer for [describe your observable]."""

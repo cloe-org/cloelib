@@ -1,12 +1,13 @@
-import pytest
 import numpy as np
+import pytest
+from numpy.testing import assert_allclose
 
-from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.cosmology.camb_cosmology import (
     CAMBBackground,
     CAMBLinearPerturbations,
     CAMBNonLinearPerturbations,
 )
+from cloelib.cosmology.cosmology import Background, Perturbations
 
 
 @pytest.fixture
@@ -457,3 +458,38 @@ def test_camb_sigma8_consistency_linear_vs_nonlinear(camb_background_instance):
 
     # Values should be very close (same linear sigma8)
     assert np.abs(linear_pert.sigma8_0() - nonlinear_pert.sigma8_0()) < 1e-3
+
+
+def test_matter_power_spectrum_cb():
+    # Cosmology parameters
+    print("# Cosmology parameters")
+    _cosmo_pars = dict(
+        H0=67.7,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_k0=0.0,
+        w0=-1.0,
+        wa=0.0,
+        ns=0.96,
+        mnu=0.1,
+        As=2e-9,
+        gamma_MG=0.0,
+        N_mnu=1,
+    )
+    background = CAMBBackground(**_cosmo_pars)
+
+    # linear
+    perturbations = CAMBLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
+    assert_allclose(perturbations.matter_power_spectrum(0, 1), 80.534861)
+    assert_allclose(perturbations.matter_power_spectrum_cb(0, 1), 81.748209, rtol=1e-03)
+
+    # non-linear
+    perturbations_nl = CAMBNonLinearPerturbations(
+        background, np.linspace(0.0, 2.0, 100)
+    )
+    assert_allclose(
+        perturbations_nl.matter_power_spectrum(0, 1), 736.010737, rtol=1.0e-03
+    )
+    assert_allclose(
+        perturbations_nl.matter_power_spectrum_cb(0, 1), 747.017036, rtol=1.0e-03
+    )

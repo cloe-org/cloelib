@@ -95,7 +95,7 @@ def _interp_linear_2d_queries(chi, y_bz, xq_lz):
 
 
 @jax.jit
-def photo_rsd_window(ells, chi, S_bin_z):
+def get_photo_rsd(ells, chi, S_bin_z):
     Lm1, L0, Lp1 = _L_coeffs(ells)
     am1, _, ap1 = _alpha_coeffs(ells)
 
@@ -282,7 +282,7 @@ class PositionsTracer:
         z: np.ndarray,
         galaxy_bias_model: str,
         nuisance_params: dict,
-        include_rsd: bool = False,  # NEW
+        include_rsd: bool = False,
     ):
         r"""
         Initialize the class instance.
@@ -454,7 +454,7 @@ class PositionsTracer:
 
         Notes
         -----
-        - `chi` is used purely as an interpolation coordinate so `photo_rsd_window` can evaluate
+        - `chi` is used purely as an interpolation coordinate so `get_photo_rsd` can evaluate
           the shifted arguments efficiently.
 
         Parameters
@@ -469,11 +469,11 @@ class PositionsTracer:
         Returns
         -------
         ndarray
-            The RSD window sampled on the z-grid (shape as returned by `photo_rsd_window`).
+            The RSD window sampled on the z-grid (shape as returned by `get_photo_rsd`).
         """
         # S_i(z) = H(z) f(z) n_i(z) / c
         S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted
-        return photo_rsd_window(ells, chi, S)
+        return get_photo_rsd(ells, chi, S)
 
     def get_magnification_efficiency(self, z):
         r"""

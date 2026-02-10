@@ -200,7 +200,6 @@ class AngularTwoPoint:
         )
         chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
         chi2 = chi**2
-        # f = self.tracer1.perturbations.growth_rate(zs_calc)
         WT1 = self.tracer1.get_window(zs_calc)
         WT2 = self.tracer2.get_window(zs_calc)
 

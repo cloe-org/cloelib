@@ -41,7 +41,7 @@ class HaloClustering:
             raise ValueError(f"value for nonu must be boolean, used {value}")
         self.__nonu = value
         if self.nonu:
-            self._Omega_m = self.background.Omega_m_cb
+            self._Omega_m = self.background.Omega_cb
         else:
             self._Omega_m = self.background.Omega_m
 

@@ -231,7 +231,9 @@ class MySolverBackground:
         """Calculate combined cold baryon + cold dark matter density at redshifts."""
         # This is Omega_b(z) + Omega_cdm(z)
         # Useful when you have massive neutrinos
-        return self.Omega_b(zs) + self._solver.get_omega_cdm(zs)
+        Omega_b_z = self.Omega_b(zs)
+        Omega_cdm_z = self._solver.get_omega_cdm(zs)  # Or implement Omega_cdm(zs) method
+        return Omega_b_z + Omega_cdm_z
 
     # Implement ALL other required methods...
 ```

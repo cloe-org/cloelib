@@ -102,6 +102,7 @@ extra_javascript:
 nav:
   - Home: home.md
   - Installation: installation.md
+  - Code Structure: code_structure.md
   - Contributing: contributing.md
   - API Reference: api.md
 

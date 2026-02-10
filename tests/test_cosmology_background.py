@@ -23,7 +23,7 @@ def test_background_required_methods():
         "angular_diameter_distance",
         "Omega_b",
         "Omega_m",
-        "Omega_m_cb",
+        "Omega_cb",
         "transverse_comoving_distance",
     }
     assert methods_required == methods_found
@@ -90,7 +90,7 @@ def test_derived_cosmology():
             assert_allclose(background.rdrag, 147.50225, rtol=1e-1)
 
 
-def test_Omega_m_cb():
+def test_Omega_cb():
     # Cosmology parameters
     print("# Cosmology parameters")
     _cosmo_pars = dict(
@@ -111,9 +111,9 @@ def test_Omega_m_cb():
     # not implemented for CLASSBackground yet
     for _Background in (CAMBBackground, JAXBackground):
         background = _Background(**_cosmo_pars)
-        assert (background.Omega_m_cb(_z_test) < background.Omega_m(_z_test)).all()
+        assert (background.Omega_cb(_z_test) < background.Omega_m(_z_test)).all()
         assert_allclose(
-            background.Omega_m_cb(_z_test)[0],
+            background.Omega_cb(_z_test)[0],
             _cosmo_pars["Omega_cdm0"] + _cosmo_pars["Omega_b0"],
             rtol=1e-03,
         )

@@ -3,7 +3,8 @@ import numpy as np
 from scipy.integrate import simpson as simps
 
 # cloelib imports
-from cloelib.observables.clusters.clustering import HaloClustering
+from cloelib.observables.clusters.auxiliary import photoz_rsd_correction
+from cloelib.observables.clusters.halo_clustering import HaloClustering
 from cloelib.summary_statistics.clusters.statistics_modeling import (
     ClusterStatisticsModeling,
 )
@@ -33,7 +34,7 @@ class ClusterClustering:
         cluster_statitstics_modeling : ClusterStatisticsModeling
             Cluster summary statistics modeling object, it contains functions
             for cluster statistics and tabled values for integration.
-        clustering : HaloClustering
+        clustering : HaloClusteringCore
             Halo clustering object
         """
         # cluster counts summary statistics, contains tables for integrals
@@ -46,68 +47,6 @@ class ClusterClustering:
         # hardcoded quantities for integration
         self.l_m_tab_sig = [31, 51]
         self.z_tab_sig = 31
-
-    def _compute_RSD_corrected_power_spectrum(
-        self,
-        lambda_obs_mid,
-        window_z_obs,
-        window_lambda_obs_mass_integrated,
-        halo_bias_in_window_lambda_obs_mass_integrated,
-    ):
-        """Computes Pk IR resummation.
-
-        Parameters
-        ----------
-        lambda_obs_edges : numpy.ndarray
-            Edges of richness bins for the integration.
-
-        Returns
-        -------
-        pk_mean_values : numpy.ndarray
-            Power spectrum averaged on redshift and richnesses bins (with IR-resummation),
-            NOT normalized by the number counts.
-            Dimension: (z_obs, lambda_obs, lambda_obs, k)
-        """
-        # correct power specrum for photo-z uncertainties and RSD (eqs. 80-83)
-        # rsd corrections (lambda_obs, ztrue, k)
-        photoz_corr0, photoz_corr1, photoz_corr2 = np.array(
-            [
-                self.clustering.photoz_rsd_correction(
-                    self.cluster_statitstics_modeling.tabulated_integrands["ztrue"],
-                    _lambda_obs,
-                )
-                for _lambda_obs in lambda_obs_mid
-            ]
-        ).transpose(1, 0, 2, 3)
-
-        # compute effective halo bias, with shape (lambda_obs, ztrue, 1)
-        b_eff = (
-            halo_bias_in_window_lambda_obs_mass_integrated
-            / window_lambda_obs_mass_integrated
-        )[:, :, np.newaxis]
-
-        # corrected power specrum (lambda_obs, ztrue, k)
-        pk_halo = (
-            b_eff**2 * photoz_corr0 + b_eff * photoz_corr1 + photoz_corr2
-        ) * self.cluster_statitstics_modeling.halo_statistics.matter_power_spectrum(
-            self.cluster_statitstics_modeling.tabulated_integrands["ztrue"],
-            self.cluster_statitstics_modeling.tabulated_integrands["k"],
-        )
-
-        # average square of power spectrum in redshift and richness bins (z_obs, lambda_obs, k)
-        sqrt_pk_mean_values = (
-            self.cluster_statitstics_modeling.integrate_probe_function_in_redshift(
-                np.sqrt(pk_halo) * window_lambda_obs_mass_integrated[:, :, np.newaxis],
-                window_z_obs,
-            )
-        )
-
-        # Compute output Pk (z_obs, lambda_obs, lambda_obs, k)
-        pk_mean_values = (
-            sqrt_pk_mean_values[:, :, np.newaxis, :]
-            * sqrt_pk_mean_values[:, np.newaxis, :, :]
-        )
-        return pk_mean_values
 
     def get_xi(
         self,
@@ -176,43 +115,69 @@ class ClusterClustering:
         )
 
         ################################################
+        # Computes radial shells for the 3D 2ptcf
+        ################################################
+
+        # radial_shell_window : (z_obs, radius, k)
+        # radial_shell_volume : (z_obs, radius)
+        radial_shell_window, radial_shell_volume = (
+            self.clustering.core.radial_shell_window_and_volume(
+                0.5 * (z_obs_edges[1:] + z_obs_edges[:-1]),
+                self.cluster_statitstics_modeling.tabulated_integrands["k"],
+                radius_edges,
+            )
+        )
+        # * radial_shell_volume is used only by covariance
+
+        ################################################
         # Computes the 3D two-point correlation function
         ################################################
 
-        # matter power spectrum + IR resummation : (z_obs, lambda_obs, lambda_obs, k)
-        _lambda_obs_mid = 0.5 * (lambda_obs_edges[1:] + lambda_obs_edges[:-1])
-        pk_mean_values = self._compute_RSD_corrected_power_spectrum(
-            _lambda_obs_mid,
-            window_z_obs,
-            window_lambda_obs_mass_integrated,
-            halo_bias_in_window_lambda_obs_mass_integrated,
+        # halo matter power spectrum + IR resummation : (lambda_obs, ztrue, k) dimension
+        _pk_halo = self.clustering.power_spectrum_RSD_corrected(
+            z=self.cluster_statitstics_modeling.tabulated_integrands["ztrue"],
+            k=self.cluster_statitstics_modeling.tabulated_integrands["k"],
+            z_obs_scatter=(
+                self.cluster_statitstics_modeling.selectionfunction.scatter_zobs_z(
+                    0.5 * (lambda_obs_edges[1:] + lambda_obs_edges[:-1])[np.newaxis, :],
+                    self.cluster_statitstics_modeling.tabulated_integrands["ztrue"][
+                        :, np.newaxis
+                    ],
+                )
+            ),  # (ztrue, lambda_obs)
+            b_eff=(
+                halo_bias_in_window_lambda_obs_mass_integrated
+                / window_lambda_obs_mass_integrated
+            ).T,  # (ztrue, lambda_obs)
+        ).transpose(2, 0, 1)
+
+        # integrate the square root of power spectrum in redshift bins (z_obs, lambda_obs, k)
+        _sqrt_pk_z_integrated = (
+            self.cluster_statitstics_modeling.integrate_probe_function_in_redshift(
+                np.sqrt(_pk_halo) * window_lambda_obs_mass_integrated[:, :, np.newaxis],
+                window_z_obs,
+            )
+        )
+
+        # Compute Pk convoluted in lambda_obs: (z_obs, lambda_obs, lambda_obs, k)
+        pk_mean_values = (
+            _sqrt_pk_z_integrated[:, :, np.newaxis, :]
+            * _sqrt_pk_z_integrated[:, np.newaxis, :, :]
         ) / (
             cluster_counts[:, np.newaxis, :, np.newaxis]
             * cluster_counts[:, :, np.newaxis, np.newaxis]
         )
 
-        # Spherical shell window : (z_obs, radius, k) and
-        # volume of the shell : (z_obs, radius) in each z_obs_bin
-        # radial_shell_volume is used only by covariance
-        _z_obs_mid = 0.5 * (z_obs_edges[1:] + z_obs_edges[:-1])
-        radial_shell_window, radial_shell_volume = self.clustering.WF_ra(
-            _z_obs_mid, radius_edges
-        )
-
         # compute 2point correlation function : (z_obs, lambda_obs, lambda_obs, radius)
-        _cluster_clustering_buf = (
-            self.cluster_statitstics_modeling.integrate_probe_function_in_dk(
-                radial_shell_window[:, np.newaxis, np.newaxis, :, :]
-                * pk_mean_values[:, :, :, np.newaxis, :]
-            )
+        _2pt_3d_cf = self.cluster_statitstics_modeling.integrate_probe_function_in_dk(
+            radial_shell_window[:, np.newaxis, np.newaxis, :, :]
+            * pk_mean_values[:, :, :, np.newaxis, :]
         )
 
         # xi(lambda_obs_i, lambda_obs_j) = xi(lambda_obs_j, lambda_obs_i) so we reshape
         # and keep only one of them, with a (z_obs, lambda_obs, radius) output
         triangle_indexes = np.triu_indices(len(lambda_obs_edges) - 1)
-        cluster_clustering = _cluster_clustering_buf[
-            :, triangle_indexes[0], triangle_indexes[1], :
-        ]
+        cluster_clustering = _2pt_3d_cf[:, triangle_indexes[0], triangle_indexes[1], :]
 
         if not return_intermediate_products:
             return cluster_clustering

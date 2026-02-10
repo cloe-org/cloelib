@@ -1,22 +1,22 @@
-# 🌌 Background: The Cosmological Foundation
+# Background: The Cosmological Foundation
 
-The **Background** module is where it all begins—the cosmological stage upon which structure formation plays out!
+The **Background** module provides the cosmological foundation for structure formation calculations.
 
-## What is Background?
+## Overview
 
-Think of Background as your cosmological calculator for the smooth, homogeneous universe. It answers questions like:
+the foundational layer that computes quantities for a smooth, homogeneous universe, including:
 
-- "How far away is a galaxy at redshift z=1?"
-- "What's the Hubble parameter at cosmic noon?"
-- "What fraction of the universe is baryonic matter at z=0.5?"
+- Comoving distances to objects at various redshifts
+- Hubble parameter evolution with redshift
+- Matter density fractions as functions of redshift
 
-No structure formation, no galaxies clustering—just pure, smooth cosmology! 🌠
+This module does not include structure formation or clustering calculations.
 
 ## The Background Protocol
 
 **Protocol Definition**: `cloelib.cosmology.cosmology.Background`
 
-The Background protocol defines the interface that all background implementations must satisfy. Think of it as a contract: "If you implement these methods, you're a valid Background!"
+The Background protocol defines the interface that all background implementations must satisfy. This protocol defines the required interface for all background implementations.
 
 ### Required Properties
 
@@ -103,7 +103,7 @@ bg = CAMBBackground(
     N_mnu=1,
 )
 
-# Now use it!
+# Now use it.
 z = np.array([0.5, 1.0, 1.5])
 chi = bg.comoving_distance(z)  # Distances in Mpc
 H_z = bg.hubble_parameter(z)    # H(z) in km/s/Mpc
@@ -150,14 +150,14 @@ bg = JAXBackground(
     # ... parameters
 )
 
-# Compute gradients!
+# Compute gradients.
 grad_fn = jax.grad(lambda h0: bg.comoving_distance(jnp.array([1.0]))[0])
 dchi_dH0 = grad_fn(67.5)
 ```
 
 ## Adding Your Own Background Implementation
 
-Want to interface with a new Boltzmann solver or emulator? Here's how! 🚀
+To The workflow is as follows..
 
 ### Step 1: Create Your Class
 
@@ -247,7 +247,7 @@ from cloelib.cosmology.cosmology import Background
 
 # Python's runtime protocol checking
 bg = MySolverBackground(H0=67.5, ...)
-assert isinstance(bg, Background)  # Should pass!
+assert isinstance(bg, Background)  # Should pass.
 ```
 
 ### Step 3: Add Tests
@@ -357,7 +357,7 @@ class MyBackground:
 
 ### Unit Conversions 📏
 
-Always check units! The protocol specifies:
+Always check units. The protocol specifies:
 
 - Distances: Mpc
 - Hubble parameter: km/s/Mpc (default) or 1/Mpc (if `units="1/Mpc"`)
@@ -391,4 +391,4 @@ Now that you understand Background, you're ready for:
 - 🔭 [Observables](observables.md) - Connect background to survey measurements
 - 📖 [API Reference](../api.md) - Full technical documentation
 
-Happy computing! 🌌
+Happy computing..

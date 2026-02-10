@@ -1,158 +1,148 @@
-# 🏗️ Code Structure: Your Guide to cloelib's Architecture
+# Code Structure: Guide to cloelib's Architecture
 
-Welcome to the **cloelib** architecture guide! 🚀
+This guide explains the modular architecture of **cloelib** and provides instructions for contributors to extend the library by adding new implementations of Perturbations and Observables.
 
-Think of **cloelib** as a cosmic LEGO set—modular, flexible, and designed to let you build amazing things. Whether you're computing gravitational lensing or analyzing galaxy clustering, our protocol-based architecture makes it easy to plug in new components and extend the library.
+## Overview
 
-## 🎯 The Big Picture
-
-**cloelib** follows a layered architecture that mirrors how we actually compute cosmological observables:
+**cloelib** follows a layered architecture that separates cosmological calculations into distinct components:
 
 ```
-🌌 Background → 🌊 Perturbations → 🔭 Observables → 📊 Summary Statistics
+Background → Perturbations → Observables → Summary Statistics
 ```
 
-Each layer builds on the previous one, creating a flexible pipeline from fundamental cosmology to final data products!
+Each layer depends on the previous one, creating a flexible pipeline from fundamental cosmology to final data products.
 
-### Why This Design?
+### Design Principles
 
-**Modularity**: Want to swap CAMB for CLASS? Just plug in a different implementation!
-**Flexibility**: Need a custom tracer? Implement the protocol and you're done!
-**Reproducibility**: Clear interfaces mean everyone knows what's expected.
-**Fun**: Seriously, protocols make extending the library feel like solving a puzzle! 🧩
+**Modularity**: The architecture allows easy swapping of implementations (e.g., CAMB for CLASS).
 
-## 🧱 The Four Building Blocks
+**Flexibility**: New components can be added by implementing the appropriate protocol.
 
-### 1. 🌌 [Background](background.md)
+**Reproducibility**: Clear interfaces ensure consistent behavior across implementations.
 
-The foundation of everything! Background handles the cosmological stage—distances, Hubble parameter, matter densities. Think of it as setting up the universe before anything interesting happens.
+**Extensibility**: Protocol-based design enables contributors to extend the library without modifying existing code.
 
-**What it does**: Compute background quantities as functions of redshift
-**Key question**: "How far away is that galaxy?"
-**Interfaces with**: Nothing (it's the foundation!)
-**You'll love it if**: You're implementing a new Boltzmann solver or emulator
+## Core Components
 
-➡️ [Dive into Background](background.md)
+### 1. [Background](background.md)
 
-### 2. 🌊 [Perturbations](perturbations.md)
+The Background module provides the cosmological foundation, computing distances, Hubble parameters, and matter densities as functions of redshift.
 
-Now things get interesting! Perturbations computes how structure forms and evolves—matter power spectra, growth factors, all the good stuff that makes galaxies cluster.
+**Purpose**: Compute background quantities as functions of redshift
 
-**What it does**: Calculate perturbation theory quantities
-**Key question**: "How lumpy is the universe at this scale and time?"
-**Interfaces with**: Background (it needs those distances!)
-**You'll love it if**: You're adding non-linear models or new structure formation codes
+**Dependencies**: None (foundational layer)
 
-➡️ [Explore Perturbations](perturbations.md)
+**Use case**: Implementing new Boltzmann solvers or emulators
 
-### 3. 🔭 [Observables](observables.md)
+[Learn more about Background](background.md)
 
-This is where we connect theory to what telescopes actually measure! Observables handles survey-specific calculations—selection functions, biases, window functions.
+### 2. [Perturbations](perturbations.md)
 
-**What it does**: Compute survey-specific observables
-**Key question**: "What does my telescope see?"
-**Interfaces with**: Perturbations (for tracers) or Background (for spectro)
-**You'll love it if**: You're adding new types of measurements or survey configurations
+The Perturbations module computes structure formation quantities including matter power spectra, growth factors, and growth rates.
 
-➡️ [Check out Observables](observables.md)
+**Purpose**: Calculate perturbation theory quantities
 
-### 4. 📊 [Summary Statistics](summary_statistics.md)
+**Dependencies**: Background module
 
-The grand finale! Summary Statistics produces the final data products you compare with observations—angular power spectra, correlation functions, multipoles.
+**Use case**: Adding non-linear models or new structure formation codes
 
-**What it does**: Compute final statistical quantities
-**Key question**: "What numbers do I put in my likelihood?"
-**Interfaces with**: Observables (it needs those tracers!)
-**You'll love it if**: You're implementing new statistical estimators
+[Learn more about Perturbations](perturbations.md)
 
-➡️ [Discover Summary Statistics](summary_statistics.md)
+### 3. [Observables](observables.md)
 
-## 🎮 Quick Start: The Workflow
+The Observables module connects theoretical predictions to survey measurements, handling selection functions, biases, and window functions.
 
-Here's how everything flows together:
+**Purpose**: Compute survey-specific observables
+
+**Dependencies**: Perturbations (for tracers) or Background (for spectroscopic)
+
+**Use case**: Adding new measurement types or survey configurations
+
+[Learn more about Observables](observables.md)
+
+### 4. [Summary Statistics](summary_statistics.md)
+
+The Summary Statistics module produces final data products for comparison with observations, including angular power spectra, correlation functions, and multipoles.
+
+**Purpose**: Compute final statistical quantities
+
+**Dependencies**: Observables module
+
+**Use case**: Implementing new statistical estimators
+
+[Learn more about Summary Statistics](summary_statistics.md)
+
+## Typical Workflow
+
+The standard workflow for computing observables follows this pattern:
 
 ```python
-# 1️⃣ Set up your cosmology
+# 1. Initialize background cosmology
 background = CAMBBackground(H0=67.5, Omega_b0=0.049, ...)
 
-# 2️⃣ Add structure formation
+# 2. Initialize perturbations with background
 perturbations = CAMBPerturbations(background=background, ...)
 
-# 3️⃣ Define what you're observing
+# 3. Define observables with perturbations or background
 tracer = ShearTracer(perturbations=perturbations, dndz=..., z=..., ...)
 
-# 4️⃣ Compute the statistics
+# 4. Compute summary statistics
 two_point = AngularTwoPoint(tracer1=tracer, tracer2=tracer)
-C_ell = two_point.compute_Cl(ells=...)  # 🎉 Done!
+C_ell = two_point.compute_Cl(ells=...)
 ```
 
-See? Each piece slots in naturally!
+## For Contributors
 
-## 🛠️ For Contributors
+Each module page includes:
 
-Want to extend **cloelib**? You're in the right place! Each module page includes:
+- Protocol definitions specifying required methods and properties
+- Step-by-step guides for adding new implementations
+- Code examples demonstrating proper usage
+- Interface specifications for connecting with external codes
+- Testing recommendations
 
-- ✅ **Protocol definitions**: What you need to implement
-- ✅ **Step-by-step guides**: How to add your own implementations
-- ✅ **Code examples**: Copy, paste, adapt!
-- ✅ **Interface details**: How to connect with other codes
-- ✅ **Testing tips**: Make sure everything works
+The protocol-based design means contributors only need to implement the required methods without inheriting from base classes or understanding the entire codebase.
 
-The beauty of protocols is that you don't need to inherit from base classes or understand the entire codebase. Just implement the required methods, and you're golden! ✨
+## Design Philosophy
 
-## 🎨 Design Philosophy
+### Protocol-Based Design
 
-### Protocol-Based Design 🎯
+**cloelib** uses Python protocols (PEP 544) instead of traditional inheritance:
 
-We use Python protocols (PEP 544) instead of traditional inheritance. This means:
+- **Type safety**: Static type checkers can verify implementations satisfy the protocol
+- **Flexibility**: Any class implementing required methods is valid
+- **Clear contracts**: Protocols explicitly document requirements
 
-- **Duck typing with safety**: If it quacks like a Background, it is a Background!
-- **Clear contracts**: Protocols explicitly document what's required
-- **Flexibility**: No rigid class hierarchies to wrestle with
+### Separation of Concerns
 
-### Separation of Concerns 🎭
-
-Each module has one job and does it well:
+Each module has a specific responsibility:
 
 - **Background**: Pure cosmology (no structure formation)
 - **Perturbations**: Structure growth (no survey details)
 - **Observables**: Survey specifics (no final statistics)
 - **Summary Statistics**: Final products (no cosmology details)
 
-This separation makes the code easier to understand, test, and extend!
+This separation improves code maintainability, testability, and extensibility.
 
-### JAX-First (But NumPy-Friendly) ⚡
+### JAX Compatibility
 
 Most implementations support both NumPy and JAX arrays:
 
-- 🎓 **Automatic differentiation**: Compute gradients for free!
-- 🚀 **GPU acceleration**: Scale to larger problems
-- ⚡ **JIT compilation**: Blazing fast performance
-- 🤝 **NumPy compatibility**: Use what you're comfortable with
+- **Automatic differentiation**: Enables gradient computation for parameter inference
+- **GPU acceleration**: Allows scaling to larger problems
+- **JIT compilation**: Provides improved performance
+- **NumPy compatibility**: Maintains familiar interface
 
-## 📚 What's Next?
+## Additional Resources
 
-Ready to dive deeper? Pick a module that interests you:
+- [API Reference](../api.md): Detailed technical documentation
+- [Contributing Guide](../contributing.md): General contribution guidelines
+- [Playground Examples](https://github.com/cloe-org/playground): Usage demonstrations
 
-- 🌌 [Background](background.md) - Start at the foundation
-- 🌊 [Perturbations](perturbations.md) - Add structure formation
-- 🔭 [Observables](observables.md) - Connect to surveys
-- 📊 [Summary Statistics](summary_statistics.md) - Compute final products
+## Support
 
-Or jump to:
+For questions about the code structure or implementing new components:
 
-- 📖 [API Reference](../api.md) - Detailed technical documentation
-- 🤝 [Contributing Guide](../contributing.md) - General contribution guidelines
-- 💻 [Playground Examples](https://github.com/cloe-org/playground) - See it in action!
-
-## 💬 Questions?
-
-Stuck? Confused? Just curious? We're here to help!
-
-- 💬 [GitHub Discussions](https://github.com/cloe-org/cloelib/discussions) - Ask questions, share ideas
-- 🐛 [GitHub Issues](https://github.com/cloe-org/cloelib/issues) - Report bugs, request features
-- 👥 Tag `@cloe-maintainers` - Get help from the team
-
-Remember: **cloelib** is meant to be fun (and scientifically robust)! 🎉 We're building tools to help us understand the universe—how cool is that? 🌌
-
-Happy coding! 🚀
+- [GitHub Issues](https://github.com/cloe-org/cloelib/issues): Report bugs or request features
+- [GitHub Discussions](https://github.com/cloe-org/cloelib/discussions): Ask questions and share ideas
+- Tag `@cloe-maintainers` for assistance from the core team

@@ -1,12 +1,12 @@
-# 📊 Summary Statistics: The Final Data Products
+# Summary Statistics: Final Data Products
 
-Welcome to **Summary Statistics**—where theory becomes data! 🎯
+The **Summary Statistics** module produces final data products for likelihood analysis.
 
-This is the grand finale of the cosmological pipeline—converting all those tracers and power spectra into the actual numbers you compare with observations!
+This module completes the cosmological pipeline by converting tracers and power spectra into statistical quantities for comparison with observations.
 
-## What are Summary Statistics?
+## Overview
 
-Summary Statistics compute the final statistical quantities that go into your likelihood:
+This module computes final statistical quantities for likelihood evaluation, including:
 
 - **C_ℓ**: Angular power spectra for photometric surveys
 - **ξ(θ)**: Angular correlation functions
@@ -14,7 +14,7 @@ Summary Statistics compute the final statistical quantities that go into your li
 - **α*∥, α*⊥**: BAO distortion parameters
 - **COSEBIs**: Complete Orthogonal Sets of E/B-Integrals
 
-These are what you actually measure and compare to theory! 📈
+These quantities are directly measurable and form the basis for cosmological parameter inference.
 
 ## Available Summary Statistics
 
@@ -232,7 +232,7 @@ Requires optional dependencies (`pylevin`, `mpmath`).
 
 ## Creating Custom Summary Statistics
 
-Want to implement a new statistic? The pattern is straightforward! 🚀
+To implement a new statistic? The pattern is straightforward..
 
 ### Step 1: Decide What You Need
 
@@ -293,7 +293,7 @@ class MyCustomStatistic:
 
     def _integrate_custom(self, scales, W1, W2, P_k, z, k):
         """Your custom integration kernel."""
-        # Implement your math here!
+        # Implement your math here.
         # This might involve:
         # - Limber approximation
         # - Hankel transforms
@@ -349,7 +349,7 @@ def test_custom_statistic():
     # e.g., positivity, monotonicity, etc.
 ```
 
-### Step 4: Document It!
+### Step 4: Document It.
 
 Add to the summary statistics section of the docs with:
 
@@ -436,7 +436,7 @@ def compute_multipole(k, mu, P_k_mu, ell):
     return P_ell
 ```
 
-## Performance Tips 🚀
+## Performance Tips.
 
 ### Vectorization
 
@@ -446,8 +446,8 @@ Always vectorize over ℓ or k:
 # ❌ Slow: loop over ells
 C_ell = np.array([compute_Cl_single(ell) for ell in ells])
 
-# ✅ Fast: vectorized
-C_ell = compute_Cl_vectorized(ells)  # All at once!
+# Fast: vectorized
+C_ell = compute_Cl_vectorized(ells)  # All at once.
 ```
 
 ### Caching
@@ -479,7 +479,7 @@ def compute_Cl_jax(ell, W1, W2, P_k, chi, H_z):
     # ... rest of calculation
     return C_ell
 
-# First call compiles, subsequent calls are blazing fast!
+# First call compiles, subsequent calls are blazing fast.
 ```
 
 ## Common Patterns
@@ -527,8 +527,7 @@ k = k[k <= k_max_linear]
 
 ## Next Steps
 
-You've reached the end of the pipeline! 🎉
-
+You've reached the end of the pipeline..
 From here:
 
 - 📖 [API Reference](../api.md) - Full technical documentation
@@ -542,4 +541,4 @@ Or dive back into the components:
 - 🌊 [Perturbations](perturbations.md)
 - 🔭 [Observables](observables.md)
 
-Happy analyzing! 📊✨
+Happy analyzing. 📊.

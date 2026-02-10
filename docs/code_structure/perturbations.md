@@ -1,30 +1,30 @@
-# 🌊 Perturbations: Where Structure Forms
+# Perturbations: Structure Formation
 
-Welcome to **Perturbations**—where the universe gets lumpy! 🌌
+The **Perturbations** module computes structure formation in the universe.
 
-If Background is the smooth cosmological stage, Perturbations is where galaxies, clusters, and cosmic web structure emerge. This is where things get exciting!
+Building on the Background module, Perturbations calculates how galaxies, clusters, and cosmic web structures form and evolve.
 
-## What are Perturbations?
+## Overview
 
-Perturbations computes how density fluctuations grow and evolve over cosmic time. It answers questions like:
+This module computes the growth and evolution of density fluctuations over cosmic time, including:
 
-- "What's the matter power spectrum at z=1 and k=0.1 h/Mpc?"
-- "How fast are structures growing at cosmic noon?"
-- "What's σ₈ for my cosmology?"
+- Matter power spectra at various redshifts and scales
+- Growth rates of structures at different epochs
+- Key cosmological parameters like σ₈
 
-This is the bridge between smooth background cosmology and the clustered universe we observe! 🌠
+This module bridges smooth background cosmology and the observed clustered universe.
 
 ## The Perturbations Protocol
 
 **Protocol Definition**: `cloelib.cosmology.cosmology.Perturbations`
 
-The Perturbations protocol defines what every perturbation calculator must provide. It's intimately connected to Background—you can't have structure without a universe to put it in!
+The Perturbations protocol defines what every perturbation calculator must provide. This module requires a Background instance as it depends on cosmological distances and densities.
 
 ### Required Property
 
 - **`background`**: Reference to the associated Background object
 
-This is key! Perturbations _always_ needs a Background to compute distances, densities, etc.
+This is key. Perturbations _always_ needs a Background to compute distances, densities, etc.
 
 ### Required Methods
 
@@ -39,7 +39,7 @@ Compute the matter power spectrum P(k, z).
 
 **Returns**: Power spectrum in (Mpc/h)³
 
-**Note**: Can be linear or non-linear depending on implementation!
+**Note**: Can be linear or non-linear depending on implementation.
 
 #### `growth_factor(zs, ks)`
 
@@ -57,7 +57,7 @@ For scale-independent models, `ks` can be `None`.
 
 Compute σ₈ at redshift z=0.
 
-The RMS matter fluctuation in 8 Mpc/h spheres—a key cosmological parameter!
+The RMS matter fluctuation in 8 Mpc/h spheres—a key cosmological parameter.
 
 ## Existing Implementations
 
@@ -139,7 +139,7 @@ Fast emulator for non-linear power spectra using [HMCode2020Emu](https://github.
 
 **Features**:
 
-- Lightning-fast (emulator!)
+- Lightning-fast (emulator.)
 - Accurate non-linear P(k)
 - Limited parameter range
 
@@ -170,7 +170,7 @@ dsigma8_dOm = grad_fn(0.3)
 
 ## Adding Your Own Perturbations Implementation
 
-Ready to add your own structure formation code? Let's do it! 🚀
+Ready to add your own structure formation code? Proceed..
 
 ### Step 1: Create Your Class
 
@@ -276,7 +276,7 @@ class MySolverPerturbations:
 
 ### Step 2: Connect to Background
 
-The key pattern: your Perturbations wraps around a Background object!
+The key pattern: your Perturbations wraps around a Background object.
 
 ```python
 # Users do this:
@@ -288,11 +288,11 @@ H_z = pert.background.hubble_parameter(z)
 chi = pert.background.comoving_distance(z)
 ```
 
-This means you can mix and match! Want CAMB background with your custom perturbations? Done! ✨
+This means you can mix and match. Want CAMB background with your custom perturbations? Done..
 
 ### Step 3: Handle Array Shapes
 
-Pay attention to array shapes—it's easy to get confused!
+Pay attention to array shapes—it's easy to get confused.
 
 ```python
 def matter_power_spectrum(self, zs, ks):
@@ -410,7 +410,7 @@ class MyPerturbations:
 
 ### Caching Results
 
-Perturbation calculations can be expensive. Cache aggressively!
+Perturbation calculations can be expensive. Cache aggressively.
 
 ```python
 from functools import lru_cache
@@ -461,11 +461,11 @@ class MyPerturbations:
 
 ## Tips & Tricks
 
-### Units Matter! 📏
+### Units Matter. 📏
 
 Standard units in cloelib:
 
-- Wavenumbers: **h/Mpc** (not 1/Mpc!)
+- Wavenumbers: **h/Mpc** (not 1/Mpc.)
 - Power spectrum: **(Mpc/h)³** (not Mpc³!)
 - Always check external code's convention and convert if needed
 
@@ -508,4 +508,4 @@ Now that you've mastered Perturbations, explore:
 - 🌌 [Background](background.md) - Review the foundation
 - 📖 [API Reference](../api.md) - Full technical details
 
-Keep building! 🌊✨
+Keep building. 🌊.

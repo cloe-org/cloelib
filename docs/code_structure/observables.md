@@ -1,32 +1,30 @@
-# 🔭 Observables: Connecting Theory to Telescopes
+# Observables: Connecting Theory to Observations
 
-Welcome to **Observables**—where cosmology meets real surveys! 🌟
+The **Observables** module connects theoretical predictions to observational measurements.
 
-This is where we answer the crucial question: "What does my telescope actually see?" It's the bridge between theoretical predictions and observational data!
+This module handles the transformation from theoretical quantities to observable measurements, accounting for survey-specific effects.
 
-## What are Observables?
+## Overview
 
-Observables handle survey-specific calculations—selection functions, window functions, biases, and all the messy details that make real observations different from pure theory.
+This module computes survey-specific quantities including selection functions, window functions, and bias parameters that distinguish real observations from idealized theoretical predictions.
 
-Key questions Observables answer:
+This module addresses:
 
-- "What's the window function for my weak lensing survey?"
-- "How do I account for galaxy bias?"
-- "What's P(k, μ) in redshift space?"
+- Window functions for weak lensing surveys
+- Galaxy bias modeling and corrections
+- Redshift-space power spectra P(k, μ)
 
 ## Two Flavors of Observables
 
 **cloelib** has two types of observable protocols, each serving different purposes:
 
-### 🌈 **Tracer Protocol**
+### **Tracer Protocol**
 
 For photometric observables (angular correlations, weak lensing)
 
-### 🌌 **SpectroPower Protocol**
+### **SpectroPower Protocol**
 
 For spectroscopic observables (3D clustering, redshift-space distortions)
-
-Let's explore both! 🚀
 
 ---
 
@@ -40,7 +38,7 @@ Tracers define window functions for photometric surveys—how galaxies are distr
 
 - **`perturbations`**: Reference to a Perturbations object
 
-Tracers need perturbations to compute power spectra and growth!
+Tracers need perturbations to compute power spectra and growth.
 
 ### Required Methods
 
@@ -88,7 +86,7 @@ import numpy as np
 bg = CAMBBackground(H0=67.5, Omega_b0=0.0492, ...)
 pert = CAMBPerturbations(background=bg)
 
-# Define redshift distribution (normalized!)
+# Define redshift distribution (normalized.)
 z = np.linspace(0.01, 3.0, 100)
 dndz = np.exp(-((z - 0.7) / 0.3)**2)  # Gaussian n(z)
 dndz = dndz / np.trapz(dndz, z)  # Normalize
@@ -170,7 +168,7 @@ window = tracer.get_window(z)
 
 ### Adding Your Own Tracer
 
-Want to add a new type of photometric observable? Here's how! ✨
+To add a new type of photometric observable? The how..
 
 #### Step 1: Create Your Tracer Class
 
@@ -248,7 +246,7 @@ __all__ = [
 ]
 ```
 
-#### Step 3: Test It!
+#### Step 3: Test It.
 
 ```python
 # tests/test_my_new_tracer.py
@@ -285,13 +283,13 @@ def test_cmb_lensing_tracer():
 
 **Protocol Definition**: `cloelib.observables.spectro.SpectroPower`
 
-SpectroPower handles 3D power spectra with redshift-space distortions—what you measure in spectroscopic galaxy surveys!
+SpectroPower handles 3D power spectra with redshift-space distortions—what you measure in spectroscopic galaxy surveys.
 
 ### Required Property
 
 - **`background`**: Reference to Background object
 
-Note: SpectroPower uses Background directly, not Perturbations! This is because emulators often bypass traditional perturbation calculations.
+Note: SpectroPower uses Background directly, not Perturbations. This is because emulators often bypass traditional perturbation calculations.
 
 ### Required Attribute
 
@@ -362,7 +360,7 @@ Perturbation theory code (not publicly available).
 
 ### Adding Your Own SpectroPower
 
-Want to interface with a new emulator or PT code? Let's go! 🚀
+To interface with a new emulator or PT code? Proceed..
 
 #### Step 1: Create Your Class
 
@@ -398,7 +396,7 @@ class MyEmulatorSpectro:
         # Initialize emulator with cosmological parameters
         self._emulator = MyEmulator(
             Omega_m=background.Omega_m(0.0),
-            sigma8=0.8,  # You might need to compute this!
+            sigma8=0.8,  # You might need to compute this.
             h=background.h,
             # ... other parameters
         )
@@ -488,7 +486,7 @@ def Pk2d_rsd(self, k, mu, **args):
     ...
 ```
 
-#### Step 3: Test It!
+#### Step 3: Test It.
 
 ```python
 # tests/test_my_spectro_power.py
@@ -577,7 +575,7 @@ tracer = MyTracer(perturbations=pert, nuisance_params=nuisance)
 
 This makes it easy to vary parameters in MCMC!
 
-### Performance 🚀
+### Performance.
 
 These calculations get called A LOT in likelihood evaluation:
 
@@ -605,7 +603,7 @@ if z > 1.0:
 else:
     result = compute_low_z(z)
 
-# ✅ Good (JIT-able)
+# Good (JIT-able)
 result = jnp.where(z > 1.0, compute_high_z(z), compute_low_z(z))
 ```
 
@@ -618,4 +616,4 @@ Ready to compute final statistics with your observables?
 - 🌌 [Background](background.md) - Review the foundation
 - 📖 [API Reference](../api.md) - Full technical details
 
-Keep observing! 🔭✨
+Keep observing. 🔭.

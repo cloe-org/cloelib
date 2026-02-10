@@ -100,7 +100,9 @@ extra_javascript:
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
 
 nav:
-  - Home: index.md
+  - Home: home.md
+  - Installation: installation.md
+  - Contributing: contributing.md
   - API Reference: api.md
 
 copyright: Copyright 2025 cloe-org

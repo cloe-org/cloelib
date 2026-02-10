@@ -15,7 +15,7 @@ import jax
 from scipy import integrate
 
 # results imports
-from cosmolib.data import AngularPowerSpectrum
+from cosmolib.data import AngularPowerSpectrum, COSEBI
 
 
 @jax.jit
@@ -133,6 +133,22 @@ class AngularTwoPoint:
         """
         self.tracer1 = tracer1
         self.tracer2 = tracer2
+
+    def _software_tag(self, method):
+        """
+        Standardized software provenance string.
+
+        Parameters
+        ----------
+        method : callable
+            The method generating the data product.
+
+        Returns
+        -------
+        str
+            Software provenance tag.
+        """
+        return f"{self.__class__.__name__} (cloelib), `{method.__name__}` method"
 
     def _matter_power_spectrum_limber_grid(
         self, z_l, ks, zs, ells
@@ -339,19 +355,17 @@ class AngularTwoPoint:
         }
 
         # Use dictionary comprehension for cosmolib_Cls creation
-        cosmolib_Cls = {
+        return {
             key: AngularPowerSpectrum(
                 array=array,
                 axis=None,
                 lower=None,
                 upper=None,
                 ell=ells,
-                software="cloelib, `get_Cl` method",
+                software=self._software_tag(self.get_Cl),
             )
             for key, array in C_ell_out.items()
         }
-        self.C_ell_calc = C_ell_calc
-        return cosmolib_Cls
 
     def get_pseudo_Cl(self, nl, ks, mixing_matrix) -> dict:
         """
@@ -437,18 +451,17 @@ class AngularTwoPoint:
                     C_ell_out[key] = arr
 
         # Wrap results in Map objects
-        cosmolib_Cls = {
+        return {
             key: AngularPowerSpectrum(
                 array=array,
                 axis=None,
                 lower=mixing_matrix[key].lower,
                 upper=mixing_matrix[key].upper,
                 ell=mixing_matrix[key].ell,
-                software="cloelib, `get_pseudo_Cl` method",
+                software=self._software_tag(self.get_pseudo_Cl),
             )
             for key, array in C_ell_out.items()
         }
-        return cosmolib_Cls
 
     def get_cosebis(self, ells, nl, ks, w_ell, ns):
         """
@@ -456,7 +469,7 @@ class AngularTwoPoint:
 
         Parameters:
         - ells (jax.numpy.array):
-        array with the ells
+            array with the ells
         - nl (jax.numpy.ndarray):
             Noise power spectrum (not used yet).
         - ks (jax.numpy.ndarray):
@@ -466,7 +479,6 @@ class AngularTwoPoint:
             get_W_ell in auxiliary functions.
         - ns (jax.numpy.array):
             the indices for the kernel function
-
 
         Returns:
         - dict: COSEBIs obtained from the angular power spectrum
@@ -478,13 +490,20 @@ class AngularTwoPoint:
 
         for tomobin1 in range(1, n_bin + 1):
             for tomobin2 in range(tomobin1, n_bin + 1):
-                key = (tomobin1, tomobin2)
+                key = ("SHE", "SHE", tomobin1, tomobin2)
                 cosebis = np.zeros_like(ns, dtype=np.float64)
+
                 for i, n in enumerate(ns):
                     cl = cells["SHE", "SHE", tomobin1, tomobin2][0, 0]
                     cosebis = cosebis.at[i].set(
                         integrate.simpson(ells * cl * w_ell[n], ells)
                     )
-                tomo_cosebis[key] = cosebis / (2 * np.pi)
+
+                tomo_cosebis[key] = COSEBI(
+                    array=cosebis / (2 * np.pi),
+                    mode=ns,
+                    nmodes=max(ns),
+                    software=self._software_tag(self.get_cosebis),
+                )
 
         return tomo_cosebis

@@ -166,9 +166,7 @@ class ShearTracer:
         """
         Omega_m0 = self.background.Omega_m(0.0)
         Hz = self.perturbations.background.hubble_parameter(z)
-        Dz = self.perturbations.growth_factor(
-            self.perturbations.z, self.perturbations.k
-        )[:, 1]
+        Dz = self.perturbations.growth_factor(z, self.perturbations.k)[:, 1]
         # TODO discuss whether we want growth factor to output a 1D or a 2D array
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]

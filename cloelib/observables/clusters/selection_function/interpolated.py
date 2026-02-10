@@ -480,11 +480,11 @@ class InterpolatedSelectionFunction:
             for each bin of bins_edges.
         """
         # first, find indices at the bin edges
-        ind_edges = np.abs(
-            array[np.newaxis, :] - np.array(bins_edges)[:, np.newaxis]
-        ).argmin(axis=1)
+        ind_edges = (np.array(bins_edges)[:, np.newaxis] > array[np.newaxis, :]).sum(
+            axis=1
+        )
 
-        shift = 1 if endpoint else 0
+        shift = int(endpoint)
 
         return [slice(low, high + shift) for low, high in zip(ind_edges, ind_edges[1:])]
 
@@ -535,14 +535,19 @@ def read_sel_cl_output(sel_cl_filename):
         for i in range(1, 1 + hdul[1].header["NAXIS"])
     }
 
-    sel_cl_data["arrays"] = {
+    sel_cl_data["edges"] = {
         name.lower(): np.linspace(
             hdul[1].header[f"HIERARCH {name}_START"],
             hdul[1].header[f"HIERARCH {name}_END"],
-            num_steps,
+            num_steps + 1,
             endpoint=True,
         )
         for name, num_steps in _arrays_steps.items()
+    }
+
+    sel_cl_data["arrays"] = {
+        key: 0.5 * (value[:-1] + value[1:])
+        for key, value in sel_cl_data["edges"].items()
     }
 
     ############
@@ -612,6 +617,7 @@ if __name__ == "__main__":
         raise ValueError("Missing SEL_CL input file")
     in_file = sys.argv[1]
 
+    sel_cl_data = read_sel_cl_output(in_file)
     sfi = InterpolatedSelectionFunction(
         lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
             A_l=None,
@@ -621,7 +627,7 @@ if __name__ == "__main__":
             sig_B_l=None,
             sig_C_l=None,
         ),
-        sel_cl_data=read_sel_cl_output(in_file),
+        sel_cl_data=sel_cl_data,
         extrapolate=0,
     )
     interps = sfi._build_windows_interpolators(

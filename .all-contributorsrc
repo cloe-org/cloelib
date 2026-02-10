@@ -371,6 +371,46 @@
         "bug",
         "doc"
       ]
+    },
+    {
+      "login": "zsirap",
+      "name": "zsirap",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50758399?v=4",
+      "profile": "https://github.com/zsirap",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ChaitanyaChawak",
+      "name": "Chaitanya",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55046588?v=4",
+      "profile": "https://chaitanyachawak.github.io/",
+      "contributions": [
+        "code",
+        "bug",
+        "review"
+      ]
+    },
+    {
+      "login": "raphkou",
+      "name": "raphkou",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61792335?v=4",
+      "profile": "https://github.com/raphkou",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "ivansladoljev",
+      "name": "Ivan Sladoljev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/144113061?v=4",
+      "profile": "https://github.com/ivansladoljev",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
     }
   ]
 }

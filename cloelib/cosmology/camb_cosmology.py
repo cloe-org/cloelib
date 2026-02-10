@@ -199,7 +199,7 @@ class CAMBBackground:
             units (str): Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').
 
         Returns:
-            np.ndarray: Hubble parameter values at specified redshifts.
+            (np.ndarray): Hubble parameter values at specified redshifts.
         """
         if units == "1/Mpc":
             return self.results.h_of_z(zs)
@@ -217,7 +217,7 @@ class CAMBBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Comoving distance values.
+            (np.ndarray): Comoving distance values.
         """
         return self.results.comoving_radial_distance(zs)
 
@@ -229,7 +229,7 @@ class CAMBBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Transverse comoving distance values.
+            (np.ndarray): Transverse comoving distance values.
         """
         x = self.comoving_distance(zs)
 
@@ -250,13 +250,13 @@ class CAMBBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Angular diameter distance values.
+            (np.ndarray): Angular diameter distance values.
         """
         return self.results.angular_diameter_distance(zs)
 
-    def Omega_m_cb(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
         """
-        Return the matter density (no neutrinos) as a function of redshift.
+        Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -276,9 +276,9 @@ class CAMBBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Matter density values.
+            (np.ndarray): Matter density values.
         """
-        return self.Omega_m_cb(zs) + self.results.get_Omega("nu", z=zs)
+        return self.Omega_cb(zs) + self.results.get_Omega("nu", z=zs)
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -288,7 +288,7 @@ class CAMBBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            np.ndarray: Baryonic density values at specified redshifts.
+            (np.ndarray): Baryonic density values at specified redshifts.
         """
         return self.results.get_Omega("baryon", z=zs)
 
@@ -337,6 +337,31 @@ class CAMBLinearPerturbations:
     ) -> np.ndarray:
         r"""Compute the linear matter power spectrum.
 
+        Args:
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
+            hubble_units (Optional[bool]): Flag to specify if output in h units
+            k_hunit (Optional[bool]): Flag to specify if wavenumber in h units
+
+        Returns:
+            pk (numpy.ndarray): Linear matter power spectrum at the specified scale and redshift
+        """
+        pk_values = camb.get_matter_power_interpolator(
+            self.background.interface_args["CAMBparams"],
+            nonlinear=False,
+            extrap_kmax=self.kmax,
+            hubble_units=hubble_units,
+            k_hunit=k_hunit,
+            var1="delta_tot",
+            var2="delta_tot",
+        ).P(zs, ks)
+        return pk_values
+
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
+        r"""Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).
+
         Parameters
         ----------
         zs: numpy.ndarray
@@ -363,8 +388,8 @@ class CAMBLinearPerturbations:
             extrap_kmax=self.kmax,
             hubble_units=hubble_units,
             k_hunit=k_hunit,
-            var1="delta_tot",
-            var2="delta_tot",
+            var1="delta_nonu",
+            var2="delta_nonu",
         ).P(zs, ks)
         return pk_values
 
@@ -404,7 +429,7 @@ class CAMBLinearPerturbations:
         Calculate growth rate.
 
         Returns:
-            np.ndarray: growth rate.
+            (np.ndarray): growth rate.
         """
         f_z = self.results.get_fsigma8() / self.results.get_sigma8()
         # Reversing array because camb re-sorts redshifts when power spectrum is computed
@@ -414,24 +439,19 @@ class CAMBLinearPerturbations:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        .. math::
+        $$
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
             /P_{\rm \delta\delta}(z=0, k)}\\
+        $$
 
-        and normalizes as for :math:`D(z)/D(0)`.
+        and normalizes as for $D(z)/D(0)$.
 
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
+        Args
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
 
         Returns:
-        --------
-        np.ndarray
-            The growth factor at the specified redshift and wavenumber.
+            (np.ndarray): The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(
             self.matter_power_spectrum(zs, ks)
@@ -460,7 +480,7 @@ class CAMBNonLinearPerturbations:
         Initialize the CAMBNonLinearPerturbations class with linear perturbation data.
 
         Args:
-            linear_perturbations (LinearPerturbations): An instance of the LinearPerturbations class.
+            self (LinearPerturbations): An instance of the LinearPerturbations class.
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
                 Defaults to None, which uses the CAMB default model.
@@ -509,6 +529,30 @@ class CAMBNonLinearPerturbations:
     ) -> np.ndarray:
         r"""Compute the nonlinear matter power spectrum.
 
+        Args:
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
+            hubble_units (Optional[bool]): Flag to specify if output in h units
+            k_hunit (Optional[bool]): Flag to specify if wavenumber in h units
+
+        Returns:
+            pk (numpy.ndarray): Nonlinear matter power spectrum at the specified scale and redshift
+        """
+        pk_values = self.results.get_matter_power_interpolator(
+            nonlinear=True,
+            extrap_kmax=self.kmax,
+            hubble_units=hubble_units,
+            k_hunit=k_hunit,
+            var1="delta_tot",
+            var2="delta_tot",
+        ).P(zs, ks)
+        return pk_values
+
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
+        r"""Compute the nonlinear matter power spectrum of cold dark matter + baryons (no neutrinos).
+
         Parameters
         ----------
         zs: numpy.ndarray
@@ -526,7 +570,7 @@ class CAMBNonLinearPerturbations:
         Returns
         -------
         pk: numpy.ndarray
-            Nonlinear matter power spectrum at the specified scale
+            Linear matter power spectrum at the specified scale
             and redshift
         """
         pk_values = self.results.get_matter_power_interpolator(
@@ -534,8 +578,8 @@ class CAMBNonLinearPerturbations:
             extrap_kmax=self.kmax,
             hubble_units=hubble_units,
             k_hunit=k_hunit,
-            var1="delta_tot",
-            var2="delta_tot",
+            var1="delta_nonu",
+            var2="delta_nonu",
         ).P(zs, ks)
         return pk_values
 
@@ -575,7 +619,7 @@ class CAMBNonLinearPerturbations:
         Calculate growth rate.
 
         Returns:
-            np.ndarray: growth rate.
+            (np.ndarray): growth rate.
         """
         f_z = self.results.get_fsigma8() / self.results.get_sigma8()
         # Reversing array because camb re-sorts redshifts when power spectrum is computed
@@ -585,24 +629,19 @@ class CAMBNonLinearPerturbations:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        .. math::
+        $$
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
             /P_{\rm \delta\delta}(z=0, k)}\\
+        $$
 
-        and normalizes as for :math:`D(z)/D(0)`.
+        and normalizes as for $D(z)/D(0)$.
 
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
+        Args:
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
 
         Returns:
-        --------
-        np.ndarray
-            The growth factor at the specified redshift and wavenumber.
+            (np.ndarray): The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(
             self.matter_power_spectrum(zs, ks)

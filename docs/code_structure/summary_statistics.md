@@ -16,6 +16,8 @@ This module computes final statistical quantities for likelihood evaluation, inc
 
 These quantities are directly measurable and form the basis for cosmological parameter inference.
 
+**Performance Note**: cloelib does not use internal interpolations. Keep redshift and wavenumber arrays to a maximum of 1500 elements for optimal performance. See [Performance Tips](#performance-tips) for details.
+
 ## Available Summary Statistics
 
 **Location**: `cloelib/summary_statistics/`
@@ -437,6 +439,39 @@ def compute_multipole(k, mu, P_k_mu, ell):
 ```
 
 ## Performance Tips.
+
+### Array Size Limits
+
+**Important**: cloelib does not use internal interpolations for n(z), matter power spectra, or other quantities. All calculations are performed on the provided grids directly.
+
+**Recommended array sizes**:
+
+- Redshift arrays (z): **Maximum 1500 elements**
+- Wavenumber arrays (k): **Maximum 1500 elements**
+
+Using arrays larger than 1500 elements will significantly degrade performance without meaningful improvement in accuracy. The lack of internal interpolation means that oversized arrays lead to:
+
+- Excessive memory usage
+- Longer computation times
+- Potential numerical instabilities
+
+**Example of appropriate array sizing**:
+
+```python
+# Good: Reasonable array sizes
+z = np.linspace(0.01, 3.0, 100)  # 100 points is sufficient
+k = np.logspace(-3, 1, 200)  # 200 points for k-space
+
+# Acceptable: Higher resolution when needed
+z = np.linspace(0.01, 3.0, 500)  # Still within limits
+k = np.logspace(-3, 1, 1000)  # Fine-grained k sampling
+
+# ❌ Avoid: Excessively large arrays
+z = np.linspace(0.01, 3.0, 5000)  # Too many points, will be slow
+k = np.logspace(-3, 1, 3000)  # Unnecessarily high resolution
+```
+
+For more details, see [Issue #375](https://github.com/cloe-org/cloelib/issues/375).
 
 ### Vectorization
 

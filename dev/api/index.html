@@ -3791,6 +3791,52 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 <div class="doc doc-object doc-function">
 
 
+<h5 id="cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_cb</span>
+
+
+<a href="#cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_cb(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the cold dark matter + baryons (no neutrinos) as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Matter density values (no neutrinos).</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h5 id="cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_m" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_m</span>
 
@@ -4017,6 +4063,49 @@ N_eff = 3.044 for the standard model of cosmology.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
 
           
 
@@ -4267,6 +4356,49 @@ Defaults to None, which uses the CAMB default model.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the nonlinear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
 
           
 
@@ -4859,6 +4991,52 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 <div class="doc doc-object doc-function">
 
 
+<h5 id="cloelib.cosmology.class_cosmology.CLASSBackground.Omega_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_cb</span>
+
+
+<a href="#cloelib.cosmology.class_cosmology.CLASSBackground.Omega_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSBackground.Omega_cb(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the cold dark matter + baryons (no neutrinos) as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.class_cosmology.CLASSBackground.Omega_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSBackground.Omega_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Matter density values (no neutrinos).</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h5 id="cloelib.cosmology.class_cosmology.CLASSBackground.Omega_m" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_m</span>
 
@@ -5070,6 +5248,49 @@ N_eff = 3.044 for the standard model of cosmology.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
 
           
 
@@ -5315,6 +5536,49 @@ N_eff = 3.044 for the standard model of cosmology.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the CLASS non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
 
           
 
@@ -6006,6 +6270,27 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 <div class="doc doc-object doc-function">
 
 
+<h5 id="cloelib.cosmology.cosmology.Background.Omega_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_cb</span>
+
+
+<a href="#cloelib.cosmology.cosmology.Background.Omega_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmology.Background.Omega_cb(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the cold dark matter + baryons (no neutrinos) as a function of redshift.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h5 id="cloelib.cosmology.cosmology.Background.hubble_parameter" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">hubble_parameter</span>
 
@@ -6237,6 +6522,27 @@ N_eff = 3.044 for the standard model of cosmology.</p>
     <div class="doc doc-contents ">
 
         <p>Retrieve the matter power spectrum.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.cosmology.Perturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.cosmology.Perturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmology.Perturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmology.Perturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieves matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
 
           
 
@@ -7028,6 +7334,52 @@ FIXME: Not implemented, so this will always return None.</p>
 <div class="doc doc-object doc-function">
 
 
+<h5 id="cloelib.cosmology.jax_cosmology.JAXBackground.Omega_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_cb</span>
+
+
+<a href="#cloelib.cosmology.jax_cosmology.JAXBackground.Omega_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXBackground.Omega_cb(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the cold dark matter + baryons (no neutrinos) as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.Omega_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.jax_cosmology.JAXBackground.Omega_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>jnp.ndarray: Matter density values (no neutrinos).</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h5 id="cloelib.cosmology.jax_cosmology.JAXBackground.w_a" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">w_a</span>
 
@@ -7441,6 +7793,49 @@ formulae of :cite:<code>1998:EisensteinHu</code></p>
 
 </div>
 
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: array_like, optional
+    Redshifts</p>
+
+
+<details class="k" open>
+  <summary>array_like</summary>
+  <p>Wave number in h Mpc^{-1}</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: array_like
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
+
+          
+
+    </div>
+
+</div>
+
 
 
   </div>
@@ -7588,6 +7983,49 @@ formulae of :cite:<code>1998:EisensteinHu</code></p>
     <div class="doc doc-contents ">
 
         <p>Write documentation (TODO).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
 
           
 
@@ -8534,6 +8972,27 @@ members: false</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="cloelib.cosmology.cosmology.Background.Omega_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_cb</span>
+
+
+<a href="#cloelib.cosmology.cosmology.Background.Omega_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmology.Background.Omega_cb(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the cold dark matter + baryons (no neutrinos) as a function of redshift.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="cloelib.cosmology.cosmology.Background.hubble_parameter" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">hubble_parameter</span>
 
@@ -8765,6 +9224,27 @@ members: false</p>
     <div class="doc doc-contents ">
 
         <p>Retrieve the matter power spectrum.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.cosmology.Perturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.cosmology.Perturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmology.Perturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmology.Perturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieves matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
 
           
 
@@ -9471,6 +9951,52 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_cb</span>
+
+
+<a href="#cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_cb(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the cold dark matter + baryons (no neutrinos) as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Matter density values (no neutrinos).</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="cloelib.cosmology.camb_cosmology.CAMBBackground.Omega_m" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_m</span>
 
@@ -9697,6 +10223,49 @@ N_eff = 3.044 for the standard model of cosmology.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
 
           
 
@@ -9947,6 +10516,49 @@ Defaults to None, which uses the CAMB default model.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the nonlinear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
 
           
 
@@ -10544,6 +11156,52 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="cloelib.cosmology.class_cosmology.CLASSBackground.Omega_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_cb</span>
+
+
+<a href="#cloelib.cosmology.class_cosmology.CLASSBackground.Omega_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSBackground.Omega_cb(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the cold dark matter + baryons (no neutrinos) as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.class_cosmology.CLASSBackground.Omega_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSBackground.Omega_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Matter density values (no neutrinos).</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="cloelib.cosmology.class_cosmology.CLASSBackground.Omega_m" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_m</span>
 
@@ -10755,6 +11413,49 @@ N_eff = 3.044 for the standard model of cosmology.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.class_cosmology.CLASSLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
 
           
 
@@ -11000,6 +11701,49 @@ N_eff = 3.044 for the standard model of cosmology.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the CLASS non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
 
           
 
@@ -11695,6 +12439,52 @@ FIXME: Not implemented, so this will always return None.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="cloelib.cosmology.jax_cosmology.JAXBackground.Omega_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_cb</span>
+
+
+<a href="#cloelib.cosmology.jax_cosmology.JAXBackground.Omega_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXBackground.Omega_cb(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the cold dark matter + baryons (no neutrinos) as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.jax_cosmology.JAXBackground.Omega_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.jax_cosmology.JAXBackground.Omega_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>jnp.ndarray: Matter density values (no neutrinos).</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="cloelib.cosmology.jax_cosmology.JAXBackground.w_a" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">w_a</span>
 
@@ -12108,6 +12898,49 @@ formulae of :cite:<code>1998:EisensteinHu</code></p>
 
 </div>
 
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: array_like, optional
+    Redshifts</p>
+
+
+<details class="k" open>
+  <summary>array_like</summary>
+  <p>Wave number in h Mpc^{-1}</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: array_like
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
+
+          
+
+    </div>
+
+</div>
+
 
 
   </div>
@@ -12255,6 +13088,49 @@ formulae of :cite:<code>1998:EisensteinHu</code></p>
     <div class="doc doc-contents ">
 
         <p>Write documentation (TODO).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
 
           
 

@@ -8,6 +8,7 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 import numpy as np
 import copy
 from typing import Optional, Union, Sequence
+import warnings
 
 # Cosmology imports
 try:
@@ -355,12 +356,23 @@ class CLASSLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        # FIXME: Class breaks if you ask pk_cb and there's no neutrinos!
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_cb_linear = np.array(
-            [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
-        )
+
+        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+            warnings.warn(
+                "There are no massive neutrinos (N_mnu=0), this function will "
+                "return the usual matter power spectrum instead of _cb!",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.Pk_cb_linear = self.matter_power_spectrum(
+                zs, ks, hubble_units=False, k_hunit=False
+            )
+        else:
+            self.Pk_cb_linear = np.array(
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+            )
         # To match array convention of CAMB
         return self.Pk_cb_linear
 
@@ -492,12 +504,20 @@ class CLASSNonLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        # FIXME: Class breaks if you ask pk_cb and there's no neutrinos!
-        if hubble_units or k_hunit:
-            raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_cb_nonlinear = np.array(
-            [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
-        )  # type: ignore[union-attr]
+        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+            warnings.warn(
+                "There are no massive neutrinos (N_mnu=0), this function will "
+                "return the usual matter power spectrum instead of _cb!",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.Pk_cb_nonlinear = self.matter_power_spectrum(
+                zs, ks, hubble_units=False, k_hunit=False
+            )
+        else:
+            self.Pk_cb_nonlinear = np.array(
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+            )
         # To match array convention of CAMB
         return self.Pk_cb_nonlinear
 

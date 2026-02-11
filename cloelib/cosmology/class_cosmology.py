@@ -248,7 +248,8 @@ class CLASSBackground:
         Returns:
             np.ndarray: Matter density values (no neutrinos).
         """
-        raise NotImplementedError("Not implemented for CLASS.")
+
+        return self.results.Om_b(zs) + self.results.Om_cdm(zs)
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -260,7 +261,7 @@ class CLASSBackground:
         Returns:
             (np.ndarray): Matter density values.
         """
-        return np.array([self.results.Om_m(z) for z in zs])
+        return self.results.Om_m(zs)
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -272,7 +273,7 @@ class CLASSBackground:
         Returns:
             (np.ndarray): Matter density values.
         """
-        return np.array([self.results.Om_b(z) for z in zs])
+        return self.results.Om_b(zs)
 
     @property
     def rdrag(self) -> float:

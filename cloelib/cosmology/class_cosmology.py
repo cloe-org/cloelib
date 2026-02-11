@@ -358,7 +358,9 @@ class CLASSLinearPerturbations:
         # FIXME: Class breaks if you ask pk_cb and there's no neutrinos!
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_cb_linear = np.array([[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        self.Pk_cb_linear = np.array(
+            [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+        )
         # To match array convention of CAMB
         return self.Pk_cb_linear
 
@@ -493,7 +495,9 @@ class CLASSNonLinearPerturbations:
         # FIXME: Class breaks if you ask pk_cb and there's no neutrinos!
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_cb_nonlinear = np.array([[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        self.Pk_cb_nonlinear = np.array(
+            [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
+        )  # type: ignore[union-attr]
         # To match array convention of CAMB
         return self.Pk_cb_nonlinear
 

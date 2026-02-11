@@ -355,7 +355,12 @@ class CLASSLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        raise NotImplementedError("Not implemented for CLASS.")
+        # FIXME: Class breaks if you ask pk_cb and there's no neutrinos!
+        if hubble_units or k_hunit:
+            raise ValueError("This CLASS method does not yet support h-units")
+        self.Pk_cb_linear = np.array([[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        # To match array convention of CAMB
+        return self.Pk_cb_linear
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -485,7 +490,12 @@ class CLASSNonLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        raise NotImplementedError("Not implemented for CLASS.")
+        # FIXME: Class breaks if you ask pk_cb and there's no neutrinos!
+        if hubble_units or k_hunit:
+            raise ValueError("This CLASS method does not yet support h-units")
+        self.Pk_cb_nonlinear = np.array([[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        # To match array convention of CAMB
+        return self.Pk_cb_nonlinear
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""

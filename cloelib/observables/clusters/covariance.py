@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.integrate import simpson as simps
+from scipy.integrate import simpson
 from scipy.special import eval_legendre, spherical_jn
 
 from cloelib.cosmology.cosmology import Perturbations
@@ -87,7 +87,7 @@ class HaloCovariance:
         self.rint[iz] = (
             1
             / Vz
-            * simps(
+            * simpson(
                 rvec**2.0
                 * np.array(
                     [spherical_jn(l, kr, derivative=False) for l in range(self.L + 1)]

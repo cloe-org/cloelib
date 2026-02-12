@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.integrate import simpson as simps
+from scipy.integrate import simpson
 
 from cloelib.cosmology import derived_cosmology
 from cloelib.observables.clusters.auxiliary import (
@@ -159,7 +159,7 @@ class HaloAbundanceCore:
             (
                 1
                 / (2.0 * np.pi**2)
-                * simps(
+                * simpson(
                     (k**2.0).reshape(1, 1, len(k))
                     * self.matter_statistics.matter_power_spectrum(z, k).reshape(
                         len(z), 1, len(k)
@@ -269,7 +269,7 @@ class HaloAbundanceCore:
             dsigma2_dlnR = (
                 R
                 * np.pi**-2
-                * simps(
+                * simpson(
                     k.reshape(1, 1, len(k)) ** 3
                     * self.matter_statistics.matter_power_spectrum(z, k).reshape(
                         len(z), 1, len(k)

@@ -1,7 +1,7 @@
 # General imports
 # import jax.numpy as np
 import numpy as np
-from scipy.integrate import simpson as simps
+from scipy.integrate import simpson
 
 from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
     LambdaTrueDistribution,
@@ -198,7 +198,7 @@ class GaussianSelectionFunction:
             )
         )
         for ind_z in range(z_obs_bins_size):
-            window_z_obs[ind_z] = simps(
+            window_z_obs[ind_z] = simpson(
                 self._prob_z_obs(_z_obs_tabs[ind_z], _lambda_obs, _z_true),
                 x=z_obs_tabs[ind_z],
                 axis=0,
@@ -265,7 +265,7 @@ class GaussianSelectionFunction:
                 lambda_obs_edges[ind_lambda + 1],
                 self.lambda_tab_integ[ind_lambda],
             )
-            windows_lambda_obs_lambda_true[ind_lambda] = simps(
+            windows_lambda_obs_lambda_true[ind_lambda] = simpson(
                 self._prob_lambda_obs(
                     z_true[:, np.newaxis, np.newaxis],
                     lambda_true[np.newaxis, :, np.newaxis],
@@ -282,7 +282,7 @@ class GaussianSelectionFunction:
             z_true, mass, lambda_true
         )
 
-        return simps(
+        return simpson(
             pdf_mass_richness_scaling[np.newaxis, :, :, :]  # (1, z, M, ltr)
             * windows_lambda_obs_lambda_true[:, :, np.newaxis, :],  # (lobs, z, 1, ltr)
             x=lambda_true,
@@ -347,7 +347,7 @@ class GaussianSelectionFunction:
                 mass,
             )[np.newaxis, :, :, :]
         )
-        return simps(
+        return simpson(
             pdf_mass_richness_scaling[np.newaxis, np.newaxis, :, :, :]
             * window_lambda_true[:, :, :, np.newaxis, :],
             x=lambda_true,

@@ -1,6 +1,6 @@
 # General imports
 import numpy as np
-from scipy.integrate import simpson as simps
+from scipy.integrate import simpson
 
 # cloelib imports
 from cloelib.cosmology import derived_cosmology
@@ -209,7 +209,7 @@ class ClusterStatisticsModeling:
             computation, somehow it is faster than using integrate_probe_function_in_k_space,
             to be investigated.
         """
-        return simps(kernel, x=self.tabulated_integrands["k"])
+        return simpson(kernel, x=self.tabulated_integrands["k"])
 
     def integrate_probe_function_in_dk(self, kernel):
         """Integrate the kernel in k space with a k^2/2pi kernel.
@@ -265,7 +265,7 @@ class ClusterStatisticsModeling:
         )
 
         # integral of P(lambda_obs|M, z)*dn/dM on lambda_obs bins and mass : (lambda_obs_edges, z)
-        integrated_probe_function = simps(
+        integrated_probe_function = simpson(
             _probe_function * _hmf * _window_lambda_obs,
             x=self.tabulated_integrands["M"],
             axis=2,
@@ -308,7 +308,7 @@ class ClusterStatisticsModeling:
         )
 
         # output : (z_obs, lambda_obs_edges)
-        integrated_probe_function = simps(
+        integrated_probe_function = simpson(
             _probe_function * _dvdz * _window_z_obs,
             x=self.tabulated_integrands["ztrue"],
             axis=2,

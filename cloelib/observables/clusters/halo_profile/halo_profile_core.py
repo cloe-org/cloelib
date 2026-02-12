@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.integrate import simpson as simps
+from scipy.integrate import simpson
 from scipy.stats import skewnorm
 
 from cloelib.auxiliary import units
@@ -179,7 +179,7 @@ class HaloProfileCore:
         z_s = np.linspace(z + 1.0e-10, self.zs_max, len(self.z), axis=1)
         sig_crit_m1 = self.nzs[zbin] * 1.0 / self.sigma_crit(z, z_s)
 
-        return self.nzsnorM[zbin] * simps(sig_crit_m1, x=z_s)  # pc^2 / Msun / h
+        return self.nzsnorM[zbin] * simpson(sig_crit_m1, x=z_s)  # pc^2 / Msun / h
 
     def surface_mass_density_args(self, R, z, M, radius_units="Mpc/h"):
         r"""

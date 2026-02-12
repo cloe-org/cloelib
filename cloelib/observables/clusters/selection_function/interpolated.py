@@ -2,7 +2,7 @@
 import jax.numpy as np  # type: ignore
 import numpy as np  # type: ignore
 from scipy import integrate, interpolate
-from scipy.integrate import simps
+from scipy.integrate import simpson
 
 from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
     LambdaTrueDistribution,
@@ -351,7 +351,7 @@ class InterpolatedSelectionFunction:
             z_obs_edges, lambda_obs_edges, z_true, lambda_true
         )
 
-        return simps(
+        return simpson(
             pdf_mass_richness_scaling[np.newaxis, np.newaxis, :, :, :]
             * window_lambda_true[:, :, :, np.newaxis, :],
             x=lambda_true,
@@ -383,7 +383,7 @@ class InterpolatedSelectionFunction:
             z_obs_edges, lambda_obs_edges, z_true, lambda_true
         )  # (z_obs, lambda_obs, z, lambda_true)
 
-        return simps(window_lambda_true, x=lambda_true, axis=-1)
+        return simpson(window_lambda_true, x=lambda_true, axis=-1)
 
     def window_richness_observed(
         self,

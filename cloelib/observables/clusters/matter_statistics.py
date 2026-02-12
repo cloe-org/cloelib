@@ -86,7 +86,7 @@ class MatterStatistics:
             raise ValueError(f"value for nonu must be boolean, used {value}")
         self.__nonu = value
         if self.nonu:
-            self._Omega_m = self.background.Omega_m_cb
+            self._Omega_m = self.background.Omega_cb
             self._matter_power_spectrum = self.perturbations.matter_power_spectrum_cb
         else:
             self._Omega_m = self.background.Omega_m

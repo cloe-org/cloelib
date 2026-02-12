@@ -5,6 +5,7 @@
 We welcome feedback from the **Euclid community** and beyond to refine and improve this library!
 
 [![CI](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml)
+[![Docs](https://github.com/cloe-org/cloelib/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/cloe-org/cloelib/actions/workflows/docs.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
 [![Tests: pytest](https://img.shields.io/badge/tests-pytest-blue?logo=pytest)](https://docs.pytest.org/)
 [![Linting: Ruff](https://img.shields.io/badge/linting-ruff-purple?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
@@ -200,8 +201,12 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MariaTsedrik"><img src="https://avatars.githubusercontent.com/u/93711395?v=4?s=100" width="100px;" alt="Maria Tsedrik"/><br /><sub><b>Maria Tsedrik</b></sub></a><br /><a href="#code-MariaTsedrik" title="Code">💻</a> <a href="#ideas-MariaTsedrik" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/arsouki"><img src="https://avatars.githubusercontent.com/u/162714090?v=4?s=100" width="100px;" alt="Arghavan Souki"/><br /><sub><b>Arghavan Souki</b></sub></a><br /><a href="#bug-arsouki" title="Bug reports">🐛</a> <a href="#doc-arsouki" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zsirap"><img src="https://avatars.githubusercontent.com/u/50758399?v=4?s=100" width="100px;" alt="zsirap"/><br /><sub><b>zsirap</b></sub></a><br /><a href="#code-zsirap" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ktanidis"><img src="https://avatars.githubusercontent.com/u/60473500?v=4?s=100" width="100px;" alt="Konstantinos Tanidis"/><br /><sub><b>Konstantinos Tanidis</b></sub></a><br /><a href="#code-ktanidis" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://chaitanyachawak.github.io/"><img src="https://avatars.githubusercontent.com/u/55046588?v=4?s=100" width="100px;" alt="Chaitanya"/><br /><sub><b>Chaitanya</b></sub></a><br /><a href="#code-ChaitanyaChawak" title="Code">💻</a> <a href="#bug-ChaitanyaChawak" title="Bug reports">🐛</a> <a href="#review-ChaitanyaChawak" title="Reviewed Pull Requests">👀</a></td>
+    </tr>
+    <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/raphkou"><img src="https://avatars.githubusercontent.com/u/61792335?v=4?s=100" width="100px;" alt="raphkou"/><br /><sub><b>raphkou</b></sub></a><br /><a href="#bug-raphkou" title="Bug reports">🐛</a> <a href="#code-raphkou" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ivansladoljev"><img src="https://avatars.githubusercontent.com/u/144113061?v=4?s=100" width="100px;" alt="Ivan Sladoljev"/><br /><sub><b>Ivan Sladoljev</b></sub></a><br /><a href="#code-ivansladoljev" title="Code">💻</a> <a href="#ideas-ivansladoljev" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>

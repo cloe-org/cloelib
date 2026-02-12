@@ -11,12 +11,12 @@ from typing import Optional, Union, Sequence
 
 # Cosmology imports
 try:
-    from classy import Class  # type: ignore
-    from classy import __file__ as classyfile
+    from hiclassy import HiClass  # type: ignore
+    from hiclassy import __file__ as hiclassyfile
 
-    print(f"Loaded hi_class from {classyfile}.")
+    print(f"Loaded hi_class from {hiclassyfile}.")
 except ImportError as e:
-    raise ImportError("classy could not be imported.") from e
+    raise ImportError("hiclassy could not be imported.") from e
 
 
 class hi_classBackground:
@@ -131,7 +131,7 @@ class hi_classBackground:
         self.interface_args["hi_classparams"].update(params_smg)
 
         # Initialize hi_class
-        self.results = Class()
+        self.results = HiClass()
         self.results.set(self.interface_args["hi_classparams"])
         self.results.compute()
 
@@ -348,7 +348,7 @@ class hi_classLinearPerturbations:
         self.interface_args["hi_classparams"]["z_max_pk"] = np.max(self.z)
         self.interface_args["hi_classparams"]["non linear"] = "none"
         self.interface_args["hi_classparams"]["z_max_pk"] = np.max(self.z)
-        self.results = Class()
+        self.results = HiClass()
         self.results.set(self.interface_args["hi_classparams"])
         self.results.compute()
 
@@ -474,7 +474,7 @@ class hi_classNonLinearPerturbations:
         self.interface_args["hi_classparams"]["hmcode_tol_sigma"] = 1e-8
         self.interface_args["hi_classparams"]["non linear"] = nonlinear_model
         self.interface_args["hi_classparams"]["z_max_pk"] = np.max(self.z)
-        self.results = Class()
+        self.results = HiClass()
         self.results.set(self.interface_args["hi_classparams"])
         self.results.compute()
 

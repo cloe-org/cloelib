@@ -41,12 +41,11 @@ class mochiCLASSEmuLinearPerturbations:
         ValueError
             If any parameter lies outside the bounds supported by the emulator.
         """
-
+        self.background = background
         self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
-        self.k_emu = np.logspace(-3, 1, 300)  # hard-coded for now
-        h = float(background.h)
-        self.k_emu *= h
+        self.k_emu = self.cp_LIN.modes.copy()
+        self.k_emu *= background.h
 
         self.k_min = self.k_emu[0]
         self.k_max = self.k_emu[-1]
@@ -61,7 +60,7 @@ class mochiCLASSEmuLinearPerturbations:
         # NOT for the standard mochi_class input of c_s^2, Delta_Mpl etc.
         cp_bounds = {
             "s": np.array([-0.3, 0.3]),
-            "a0": np.array([-1, 1]),
+            "a0": np.array([0, 1]),
             "a1": np.array([-1, 0]),
             "w0": np.array([-1.5, -0.5]),
             "wa": np.array([-0.5, 0.5]),
@@ -98,9 +97,10 @@ class mochiCLASSEmuLinearPerturbations:
         k_out, z_out, Pk_out = extend_spectra(
             self.k_emu,
             self.z,
-            Pk_lin * h**-3,
+            Pk_lin * background.h**-3,
             flag_range=True,
-            option_wavenumber="logk2",
+            option_wavenumber_low="linear",
+            option_wavenumber_high="logk2",
             option_redshift="power_law",
             extrap_z=redshifts,
             option_cosmo="const",

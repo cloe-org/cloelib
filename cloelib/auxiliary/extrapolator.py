@@ -267,13 +267,15 @@ def extend_spectra(
                 # Linear extrapolation in log-log space (high-k)
                 nfit = 5
                 logk_plus_fit = np.log(wavenumber_in[-nfit:])
-                logP_plus_fit = np.log(boost_in[:, -nfit:]) 
+                logP_plus_fit = np.log(boost_in[:, -nfit:])
                 p = np.polyfit(logk_plus_fit, logP_plus_fit.T, 1)
-                
+
                 logk_plus = np.log(wavenumber_plus)
                 logP_plus = p[0, :, None] * logk_plus[None, :] + p[1, :, None]
-                
-                boost_out[:, (len(wavenumber_minus) + len(wavenumber_in)):] = np.exp(logP_plus)
+
+                boost_out[:, (len(wavenumber_minus) + len(wavenumber_in)) :] = np.exp(
+                    logP_plus
+                )
 
             else:
                 raise Exception("Wrong wavenumber extrapolation option.")
@@ -291,17 +293,19 @@ def extend_spectra(
                 * ((wavenumber_minus / wavenumber_in[0])[None, :]) ** n_extra_b[:, None]
             )
 
-        elif (wavenumber_base[0] < wavenumber_in[0]) & (option_wavenumber_low == "linear"):
+        elif (wavenumber_base[0] < wavenumber_in[0]) & (
+            option_wavenumber_low == "linear"
+        ):
             # Linear extrapolation in log-log space (low-k)
 
             nfit = 5
             logk_minus_fit = np.log(wavenumber_in[:nfit])
-            logP_minus_fit = np.log(boost_in[:, :nfit]) 
+            logP_minus_fit = np.log(boost_in[:, :nfit])
             p = np.polyfit(logk_minus_fit, logP_minus_fit.T, 1)
-            
+
             logk_minus = np.log(wavenumber_minus)
             logP_minus = p[0, :, None] * logk_minus[None, :] + p[1, :, None]
-            boost_out[:, :len(wavenumber_minus)] = np.exp(logP_minus)
+            boost_out[:, : len(wavenumber_minus)] = np.exp(logP_minus)
 
         if (not flag_range) and option_cosmo == "hm_smooth":
             boost_hmcode = extrap_func(

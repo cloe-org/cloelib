@@ -11,12 +11,6 @@ from scipy import optimize, integrate
 import copy
 from typing import Optional
 
-# Cosmology imports
-try:
-    from classy import Class  # type: ignore
-except ImportError as e:
-    raise ImportError("classy could not be imported.") from e
-
 _log10_GRAVITATIONAL_CONSTANT = np.log10(units.GRAVITATIONAL_CONSTANT)
 
 
@@ -268,8 +262,7 @@ def growth_function_ODE(background, zs: np.ndarray, omega_m=-1) -> np.ndarray:
 
 class SplitLinearPerturbations:
     """Class to output the rescaled linear matter power spectrum for the
-    growth-geometry split, inheriting from the Perturbations parent class
-    and using CLASS."""
+    growth-geometry split"""
 
     def __init__(
         self, background: Background, omega_m_growth: float, redshifts: np.ndarray, perturbations: Perturbations,
@@ -281,19 +274,6 @@ class SplitLinearPerturbations:
         self.kmax = 100
         self.results = None  # Store CLASS results
         self.perturbations = perturbations
-
-        # Ensure CLASS is initialized with necessary parameters
-#        self.interface_args = copy.deepcopy(self.background.interface_args)
-#        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-#        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-#        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-#        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-#        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-#        self.interface_args["CLASSparams"]["non linear"] = "none"
-#        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-#        self.results = Class()
-#        self.results.set(self.interface_args["CLASSparams"])
-#        self.results.compute()
 
     @property
     def _interface_args(self) -> dict:
@@ -351,7 +331,7 @@ class SplitLinearPerturbations:
 
         # Rescale sigma_8
         self.sigma8_0 = g_z_growth[i] / g_z_geo[i] * self.sigma8_0_EBS()
-        return self.pk_linear_EBS, self.pk_linear
+        return self.pk_linear
 
     def sigma8_0_EBS(self) -> float:
         """
@@ -367,46 +347,21 @@ class SplitLinearPerturbations:
 
 class SplitNonLinearPerturbations:
     """Class to output the rescaled non-linear matter power spectrum for the
-    growth-geometry split, inheriting from the Perturbations parent class
-    and using CLASS."""
+    growth-geometry split"""
 
     def __init__(
         self,
-        background: Background,
-        omega_m_growth: float,
         redshifts: np.ndarray,
-        pk_linear_EBS: np.ndarray,
         pk_linear: np.ndarray,
-        perturbations: Perturbations,
-#        nonlinear_model: Optional[str] = None,
+        perturbations_lin: Perturbations,
+        perturbations_NL: Perturbations,
     ):
-        """Initialize the CLASSNonLinearPerturbation instance."""
-        self.background = background
-        self.omega_m_growth = omega_m_growth
+        """Initialize the OmgrowthLinearPerturbation and OmgrowthNonLinearPerturbation instance."""        
         self.z = redshifts
         self.kmax = 100
-        self.pk_linear_EBS = pk_linear_EBS
         self.pk_linear = pk_linear
-        self.perturbations = perturbations
-
-#        if nonlinear_model is None:
-#            nonlinear_model = "none"
-
-        # Ensure CLASS is initialized with necessary parameters
-#        self.interface_args = copy.deepcopy(self.background.interface_args)
-#        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-#        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-#        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-#        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-#        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-#        self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
-#        self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
-#        self.interface_args["CLASSparams"]["non linear"] = nonlinear_model
-#        self.interface_args["CLASSparams"]["hmcode_version"] = 2016
-#        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-#        self.results = Class()
-#        self.results.set(self.interface_args["CLASSparams"])
-#        self.results.compute()
+        self.perturbations_lin = perturbations_lin
+        self.perturbations_NL = perturbations_NL
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -436,14 +391,11 @@ class SplitNonLinearPerturbations:
 
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.pk_nonlinear_EBS = self.perturbations.matter_power_spectrum(zs,ks)  # type:ignore[union-attr]
+        pk_linear_growth = self.perturbations_lin.matter_power_spectrum(zs,ks)  # type:ignore[union-attr]
+        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum(zs,ks)  # type:ignore[union-attr]
 
-        # Compute the boost factor from the standard power spectra
-        boost = self.pk_nonlinear_EBS / self.pk_linear_EBS
-
-        self.pk_nonlinear = self.pk_nonlinear_EBS
+        # Compute the boost factor
+        boost = pk_nonlinear_growth / pk_linear_growth
 
         # Add the boost to the rescaled power spectrum
-        for i in range(len(zs)):
-            self.pk_nonlinear[i, :] = boost[i, :] * self.pk_linear[i, :]
-        return self.pk_nonlinear
+        return boost * self.pk_linear

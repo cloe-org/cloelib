@@ -1,12 +1,12 @@
-import pytest
 import numpy as np
+import pytest
 
-from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.cosmology.class_cosmology import (
     CLASSBackground,
     CLASSLinearPerturbations,
     CLASSNonLinearPerturbations,
 )
+from cloelib.cosmology.cosmology import Background, Perturbations
 
 
 @pytest.fixture
@@ -404,3 +404,41 @@ def test_class_sigma8_consistency_linear_vs_nonlinear(class_background_instance,
         background=class_background_instance, redshifts=zs, nonlinear_model="halofit"
     )
     assert np.abs(class_lin.sigma8_0() - class_non.sigma8_0()) < 1e-3
+
+
+def test_matter_power_spectrum_cb():
+    # not implemented yet
+    """
+    # Cosmology parameters
+    print("# Cosmology parameters")
+    _cosmo_pars = dict(
+        H0=67.7,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_k0=0.0,
+        w0=-1.0,
+        wa=0.0,
+        ns=0.96,
+        mnu=0.1,
+        As=2e-9,
+        gamma_MG=0.0,
+        N_mnu=1,
+    )
+    background = CLASSBackground(**_cosmo_pars)
+
+    # linear
+    perturbations = CLASSLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
+    assert_allclose(perturbations.matter_power_spectrum(0, 1), 80.534861)
+    assert_allclose(perturbations.matter_power_spectrum_cb(0, 1), 81.748209, rtol=1e-03)
+
+    # non-linear
+    perturbations_nl = CLASSNonLinearPerturbations(
+        background, np.linspace(0.0, 2.0, 100)
+    )
+    assert_allclose(
+        perturbations_nl.matter_power_spectrum(0, 1), 736.010737, rtol=1.0e-03
+    )
+    assert_allclose(
+        perturbations_nl.matter_power_spectrum_cb(0, 1), 747.017036, rtol=1.0e-03
+    )
+    """

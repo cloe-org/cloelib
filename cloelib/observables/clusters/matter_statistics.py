@@ -19,7 +19,6 @@ class MatterStatistics:
     def __init__(
         self,
         perturbations: Perturbations,
-        nonu: bool = False,
         interpolate_pk: bool = True,
         interpolate_da: bool = True,
         z=np.linspace(1.0e-5, 2.0 - 1.0e-5, 100),
@@ -36,9 +35,6 @@ class MatterStatistics:
         perturbations : Perturbations
             An object from the `LinearPerturbations` class containing cosmological
             perturbation data (e.g., power spectrum, growth function).
-        nonu : bool, optional
-            If `True`, massive neutrinos are excluded from the density parameter
-            summation.
         interpolate_pk : bool, optional
             If true, the class interpolates the matter power spectrum.
             A default interpolation is set when class is instanciated with
@@ -49,10 +45,15 @@ class MatterStatistics:
             A default interpolation is set when class is instanciated with
             interpolate_da=True. For a more customized interpolation, check
             the set_angular_diameter_distance_interpolation function.
+
+        Notes
+        ----------
+        In the current implementation, the matter power spectrum never includes
+        the contribution of massive neutrinos. Halo mass function, halo bias, and
+        2-halo profile models implemented in this subpackage require
+        cold dark matter + baryons (no neutrinos) power spectra.
         """
         self.perturbations = perturbations
-        self.nonu = nonu
-
         self.k = k
 
         # Interpolators
@@ -75,22 +76,10 @@ class MatterStatistics:
         return self.perturbations.background
 
     @property
-    def nonu(self):
-        r"""Includes or not neutrinos on matter density and matter power spectrum."""
-        return self.__nonu
-
-    @nonu.setter
-    def nonu(self, value):
-        """Set nonu"""
-        if not isinstance(value, bool):
-            raise ValueError(f"value for nonu must be boolean, used {value}")
-        self.__nonu = value
-        if self.nonu:
-            self._Omega_m = self.background.Omega_cb
-            self._matter_power_spectrum = self.perturbations.matter_power_spectrum_cb
-        else:
-            self._Omega_m = self.background.Omega_m
-            self._matter_power_spectrum = self.perturbations.matter_power_spectrum
+    def Omega_m(self):
+        r"""Returns the `Omega_m` value at redshift `z=0`.
+        """
+        return self.background.Omega_m(0.0)
 
     @property
     def interpolate_pk(self):
@@ -123,20 +112,23 @@ class MatterStatistics:
     def _matter_power_spectrum_exact(self, z, k):
         r"""Computes the non interpolated matter power spectrum.
 
+        This function computes the cold dark matter + baryons power spectrum,
+        not including the massive neutrino contribution.
+
         Parameters
         ----------
         z: float or np.ndarray
             Redshift.
         k: float or np.ndarray
-               Wavenumber where W(kR) is evaluated.
-               Units: h Mpc^{-1}
+            Wavenumber where W(kR) is evaluated.
+            Units: h Mpc^{-1}
 
         Returns
         -------
         float or np.ndarray
             Matter power spectrum.
         """
-        return self._matter_power_spectrum(
+        return self.perturbations.matter_power_spectrum_cb(
             z,
             k,
             hubble_units=True,
@@ -146,13 +138,16 @@ class MatterStatistics:
     def set_matter_power_spectrum_interpolation(self, z, k):
         r"""Create internal interpolation of matter power spectrum.
 
+        This function interpolates the cold dark matter + baryons power spectrum,
+        not including the massive neutrino contribution.
+
         Parameters
         ----------
         z: float or np.ndarray
             Redshift.
         k: float or np.ndarray
-               Wavenumber where W(kR) is evaluated.
-               Units: h Mpc^{-1}
+            Wavenumber where W(kR) is evaluated.
+            Units: h Mpc^{-1}
         """
         # Power spectrum interpolation
         self.Pk_interp = interpolate.RectBivariateSpline(

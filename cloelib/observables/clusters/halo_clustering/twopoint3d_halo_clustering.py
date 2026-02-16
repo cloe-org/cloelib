@@ -19,10 +19,9 @@ class TwoPoint3DHaloClustering:
         self,
         matter_statistics: MatterStatistics,
         background_fid: Background,
-        nonu: bool = False,
     ):
 
-        self.core = HaloClusteringCore(matter_statistics, background_fid, nonu)
+        self.core = HaloClusteringCore(matter_statistics, background_fid)
 
     def power_spectrum_RSD_corrected(self, z, k, z_obs_scatter, b_eff):
         """Computes Pk with RSD correction.

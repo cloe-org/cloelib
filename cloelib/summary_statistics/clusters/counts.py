@@ -153,7 +153,6 @@ class ClusterCounts:
             self.cluster_statitstics_modeling.selectionfunction.scatter_zobs_z(
                 0, z_mid
             ),
-            self.cluster_statitstics_modeling.matter_statistics.nonu,
         )[0]
 
         # spherical harmonic expansion coefficients (covariance)

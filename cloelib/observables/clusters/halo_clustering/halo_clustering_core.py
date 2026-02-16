@@ -18,30 +18,25 @@ class HaloClusteringCore:
         self,
         matter_statistics: MatterStatistics,
         background_fid: Background,
-        nonu: bool = False,
     ):
+        r"""Auxiliary class computing quantities used in halo clustering models.
 
+        Initialize the class with given perturbations and overdensity definition.
+
+        Parameters
+        ----------
+        matter_statistics : MatterStatistics
+            An object from the `MatterStatistics` class.
+        background_fid : Background
+            Fiducial `Background` adopted for the measurements.
+
+        Notes
+        ----------
+        In the current implementation, the matter power spectrum never includes
+        the contribution of massive neutrinos.
+        """
         self.matter_statistics = matter_statistics
         self.background_fid = background_fid
-        self.nonu = nonu
-
-    @property
-    def nonu(self):
-        r"""
-        Includes or not neutrinos on matter density and matter power spectrum.
-        """
-        return self.__nonu
-
-    @nonu.setter
-    def nonu(self, value):
-        """Set nonu"""
-        if not isinstance(value, bool):
-            raise ValueError(f"value for nonu must be boolean, used {value}")
-        self.__nonu = value
-        if self.nonu:
-            self._Omega_m = self.matter_statistics.background.Omega_cb
-        else:
-            self._Omega_m = self.matter_statistics.background.Omega_m
 
     def radial_shell_window_and_volume(
         self, z: np.ndarray, k: np.ndarray, r: np.ndarray
@@ -151,7 +146,7 @@ class HaloClusteringCore:
         # correct power specrum for photo-z uncertainties and RSD (eqs. 80-83)
         # rsd corrections (z, k, ...)
         photoz_corr0, photoz_corr1, photoz_corr2 = photoz_rsd_correction(
-            self.matter_statistics.background, z, k, z_obs_scatter, self.nonu
+            self.matter_statistics.background, z, k, z_obs_scatter
         )
 
         # dark matter power spectrum (z, k)
@@ -191,7 +186,7 @@ class HaloClusteringCore:
         ns = self.matter_statistics.background.ns
         h = self.matter_statistics.background.h
         Obh2 = self.matter_statistics.background.Omega_b(0.0) * h**2
-        Omh2 = self._Omega_m(0.0) * h**2
+        Omh2 = self.matter_statistics.Omega_m * h**2
         Tcmb = 2.73
 
         k *= h  #  1/Mpc

@@ -38,7 +38,7 @@ def _test_clustering(CL, perturbations):
     assert_allclose(VF, ref_radial_shell_window_and_volume1, rtol=1e-03)
 
     print("    Pk_IR_func")
-    ref_Pk_IR = np.array([[4.2284186e02, 1.0611498e-01], [1.5616818e02, 3.9339960e-02]])
+    ref_Pk_IR = np.array([[4.228415e+02, 1.061383e-01], [1.561681e+02, 3.934860e-02]])
 
     Pk_test = perturbations.matter_power_spectrum(
         z_test, k_test, hubble_units=True, k_hunit=True
@@ -83,7 +83,7 @@ def test_clustering():
     _cosmo_pars_fid = {**_cosmo_pars}
     _cosmo_pars_fid["H0"] = 73.0
     background_fid = CAMBBackground(**_cosmo_pars_fid)
-    CL = TwoPoint3DHaloClustering(matter_statistics, background_fid, nonu=True)
+    CL = TwoPoint3DHaloClustering(matter_statistics, background_fid)
     _test_clustering(CL, perturbations)
 
 
@@ -116,7 +116,6 @@ def test_cosmo_photoz_rsd_correction():
         z_test,
         k_test,
         zobs_scatter,
-        nonu=True,
     )
 
     # test values
@@ -125,10 +124,10 @@ def test_cosmo_photoz_rsd_correction():
         [[5.7111615e-01, 5.9122967e-06], [8.0073649e-01, 1.0336005e-05]]
     )
     ref_phz_rsd_1 = np.array(
-        [[1.0873061e-01, 1.3813213e-16], [3.8109362e-01, 1.2259151e-15]]
+        [[1.089998e-01, 1.384733e-16], [3.820448e-01, 1.228974e-15]]
     )
     ref_phz_rsd_2 = np.array(
-        [[1.2568793e-02, 2.4204413e-27], [9.1092102e-02, 1.0905091e-25]]
+        [[1.263118e-02, 2.432424e-27], [9.154732e-02, 1.095958e-25]]
     )
 
     assert_allclose(corr0[:, [0, -1]], ref_phz_rsd_0, rtol=1e-04)

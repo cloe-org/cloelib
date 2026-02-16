@@ -22,6 +22,11 @@ class HaloAbundanceCore:
         ----------
         matter_statistics : MatterStatistics
             An object from the `MatterStatistics` class.
+
+        Notes
+        ----------
+        The current implementation follows the cold dark matter prescription by
+        Costanzi+13 (https://arxiv.org/abs/1311.1514).
         """
         self.matter_statistics = matter_statistics
 
@@ -82,7 +87,7 @@ class HaloAbundanceCore:
             dn_dm[i,j], where i is the redshift axis and j the mass axis.
             Units: h^4 Mpc^{-3} Ms^{-1}.
         """
-        rho_mean_0 = self.matter_statistics._Omega_m(0) * derived_cosmology.rho_crit(
+        rho_mean_0 = self.matter_statistics.Omega_m * derived_cosmology.rho_crit(
             self.matter_statistics.background, 0.0
         )
         rho_mean_0 /= self.matter_statistics.background.h**2.0
@@ -116,7 +121,8 @@ class HaloAbundanceCore:
     def radius_M(self, M):
         r"""Radius from a mass.
 
-        Converts a mass into a radius.
+        Converts a mass into a radius. This implementation follows
+        the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).
 
         Parameters
         ----------
@@ -130,7 +136,7 @@ class HaloAbundanceCore:
         """
         rho_m_0 = (
             derived_cosmology.rho_crit(self.matter_statistics.background, 0.0)
-            * self.matter_statistics._Omega_m(0.0)
+            * self.matter_statistics.background.Omega_cb(0.0)
             / self.matter_statistics.background.h**2.0
         )
         return (M / rho_m_0 * (3.0 / (4.0 * np.pi))) ** (1 / 3.0)

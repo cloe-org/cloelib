@@ -81,7 +81,7 @@ def rdrag_fitting_function(background, neff=3.046):
     return r_d
 
 
-def z_star_fitting_function(background, neff=3.046):
+def z_star_fitting_function(background):
     r"""Compute the redshift of photon decoupling.
 
     Assumes a cosmology-independent z_star.
@@ -90,8 +90,6 @@ def z_star_fitting_function(background, neff=3.046):
     ----------
     background: Background
         Background class containing cosmology
-    neff: float
-        Effective number of neutrinos.
 
     Returns
     -------

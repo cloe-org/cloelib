@@ -339,11 +339,13 @@ class AngularTwoPoint:
             return {("CMBL", "CMBL", i, j): C[:, i - 1, j - 1]}
 
         def cmbl_pos_rule(C, i, j):
-            return {("CMBL", "POS", i, j): C[:, i - 1, j - 1]}
+            a, b = sorted((i, j))
+            return {("CMBL", "POS", a, b): C[:, i - 1, j - 1]}
 
         def cmbl_she_rule(C, i, j):
             block = C[:, i - 1, j - 1]
-            return {("CMBL", "SHE", i, j): np.stack([block, np.zeros_like(block)])}
+            a, b = sorted((i, j))
+            return {("CMBL", "SHE", a, b): np.stack([block, np.zeros_like(block)])}
 
         tracer_rules = {
             (PositionsTracer, PositionsTracer): pos_pos_rule,

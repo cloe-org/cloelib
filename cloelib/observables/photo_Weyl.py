@@ -187,13 +187,7 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
     def get_window_positions(self, z) -> np.ndarray:
         """Weyl-modified positions window: multiplies by Jhat and by bhat; removes Omega_m^{-1}(z) factor;
         divides by sigma8_ini^2."""
-        # compute Omega_m(z)
-        Omega_m0 = self.background.Omega_m(0.0)
-        Omega_m = (
-            Omega_m0
-            * (1 + z) ** 3
-            * (self.background.H0 / self.background.hubble_parameter(z)) ** 2
-        )
+        Omega_m = self.background.Omega_m(z)
 
         def per_bin_case():
             window = (

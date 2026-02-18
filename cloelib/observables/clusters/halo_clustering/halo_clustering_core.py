@@ -29,11 +29,6 @@ class HaloClusteringCore:
             An object from the `MatterStatistics` class.
         background_fid : Background
             Fiducial `Background` adopted for the measurements.
-
-        Notes
-        ----------
-        In the current implementation, the matter power spectrum never includes
-        the contribution of massive neutrinos.
         """
         self.matter_statistics = matter_statistics
         self.background_fid = background_fid

@@ -22,11 +22,6 @@ class HaloAbundanceCore:
         ----------
         matter_statistics : MatterStatistics
             An object from the `MatterStatistics` class.
-
-        Notes
-        ----------
-        The current implementation follows the cold dark matter prescription by
-        Costanzi+13 (https://arxiv.org/abs/1311.1514).
         """
         self.matter_statistics = matter_statistics
 

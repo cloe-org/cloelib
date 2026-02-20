@@ -504,6 +504,9 @@ class CLASSNonLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
+        if hubble_units or k_hunit:
+            raise ValueError("This CLASS method does not yet support h-units")
+
         if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
             warnings.warn(
                 "There are no massive neutrinos (N_mnu=0), this function will "

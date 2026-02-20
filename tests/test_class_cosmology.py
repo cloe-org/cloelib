@@ -586,8 +586,7 @@ def class_nonlin_perturb_instance_nu(class_background_instance):
 
 def test_nl_matter_power_spectrum_cb_no_neutrinos(class_nonlin_perturb_instance):
     """
-    Verify that with N_ncdm == 0 the CB power spectrum is identical
-    to the total matter power spectrum.
+    Verify that with N_ncdm == 0 the CB power spectrum raises a warning!
     """
     import warnings
 

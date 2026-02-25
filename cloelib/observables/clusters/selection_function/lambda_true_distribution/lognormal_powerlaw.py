@@ -49,7 +49,7 @@ class LognormalPowerLawLambdaTrueDistribution:
             "lambda_true": None,
         }
 
-    def mean_lnrichness(self, z, M):
+    def _mean_lnrichness(self, z, M):
         r"""
         Mean of the richness-mass relation PDF.
 
@@ -122,7 +122,7 @@ class LognormalPowerLawLambdaTrueDistribution:
             prob_richness[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
-        _mean_lnlambda = self.mean_lnrichness(z, M)[:, :, np.newaxis]
+        _mean_lnlambda = self._mean_lnrichness(z, M)[:, :, np.newaxis]
         _sigma_lnrichness = self.scatter_lnrichness(z, M)[:, :, np.newaxis]
         _lambda_true = lambda_true[np.newaxis, np.newaxis, :]
 

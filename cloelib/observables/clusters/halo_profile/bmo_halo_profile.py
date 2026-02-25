@@ -310,7 +310,7 @@ class BMOHaloProfile:
         )
 
         if self.two_halo != "None":
-            self.core.include_surface_mass_density_2h(
+            Sigma = self.core.include_surface_mass_density_2h(
                 Sigma, self.two_halo, R, z, halo_bias, radius_units
             )
 
@@ -357,7 +357,7 @@ class BMOHaloProfile:
         ) - self._surface_mass_density_1h(R_outshape, RDelta, densityThreshold, c)
 
         if self.two_halo != "None":
-            self.core.include_excess_surface_mass_density_2h(
+            DeltaSigma = self.core.include_excess_surface_mass_density_2h(
                 DeltaSigma, self.two_halo, R, z, halo_bias, radius_units
             )
 

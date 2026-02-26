@@ -444,6 +444,7 @@ class CLASSNonLinearPerturbations:
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
         self.results.compute()
+        self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False

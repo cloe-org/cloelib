@@ -37,16 +37,23 @@ class Weyl_Perturbations:
     def growth_rate(self, zs: T, ks: T) -> T:
         return self.perturbations.growth_rate(zs, ks)
 
-    def boost(self, zs: T, ks: T, k0: float = 0.01) -> T:
+    def boost(self, zs: T, ks: T) -> T:
         """
         boost(zs, ks) = growth_factor(zs, ks) / growth_factor(zs, k0_array)
         where k0_array has the same shape and dtype as ks, filled with k0.
         """
-        gf_num = self.perturbations.growth_factor(zs, ks)
-        # Create k0 array with same shape/type as ks:
+        # Create k0 array with same shape as ks; zini_arr with same shape as zs:
+        k0 = self.k[0]
         k0_arr = ks * 0 + k0
+        zini_arr = zs * 0 + self.z_ini
 
-        gf_den = self.perturbations.growth_factor(zs, k0_arr)
+        gf_num = self.perturbations.growth_factor(
+            zs, ks
+        ) / self.perturbations.growth_factor(zini_arr, ks)
+        gf_den = self.perturbations.growth_factor(
+            zs, k0_arr
+        ) / self.perturbations.growth_factor(zini_arr, k0_arr)
+
         return gf_num / gf_den
 
     def matter_power_spectrum(
@@ -67,7 +74,7 @@ class Weyl_Perturbations:
         )
 
         b = self.boost(zs, ks)
-        return b * P_base
+        return b**2 * P_base
 
     def sigma8_0(self) -> float:
         return self.perturbations.sigma8_0()

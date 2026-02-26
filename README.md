@@ -5,6 +5,7 @@
 We welcome feedback from the **Euclid community** and beyond to refine and improve this library!
 
 [![CI](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/cloe-org/cloelib/actions/workflows/ci.yaml)
+[![Docs](https://github.com/cloe-org/cloelib/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/cloe-org/cloelib/actions/workflows/docs.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
 [![Tests: pytest](https://img.shields.io/badge/tests-pytest-blue?logo=pytest)](https://docs.pytest.org/)
 [![Linting: Ruff](https://img.shields.io/badge/linting-ruff-purple?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
@@ -49,41 +50,56 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | NA                                                            | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git) | NA                                                                 |
 | [mochi_class](https://github.com/mcataneo/mochi_class_public) | [mochi_class](https://github.com/mcataneo/mochi_class_public)      | NA                                                                 |
 
-We do not provide installation support for `PBJ` and `class`.
+We do not provide installation support for `PBJ`.
 
-Furthermore, it requires the installation of `pyinstrument` for the time profiling. It's an optional dependency and is not installed with the main cloelib package.
+### Optional Dependencies
+
+Several optional dependencies enhance **cloelib** capabilities:
+
+- **`pyinstrument`** – Time profiling for performance optimization
+- **`pylevin`**, **`mpmath`** – Required for specific observational probes (i.e: COSEBIs)
+- **`tensorflow`** – Needed for certain emulator backends (i.e: `HMCode2020emu`)
+
+These are not included in the default installation but can be added as shown above.
 
 ---
 
 ## 🚀 Installation
 
-To install `cloelib` source code, clone the repository and install it via `pip`:
+**Quick Start** 🎯
+
+1. **Set up your environment** – Create a fresh conda/mamba environment using the [cloe-org-environments](https://github.com/cloe-org/cloe-org-environments) repository. Then, clone `cloelib`:
+
+```sh
+git clone https://github.com/cloe-org/cloelib.git
+cd cloelib
+```
+
+2. **Check out the latest release** (optional but recommended):
+
+```sh
+git checkout <latest-tag>  # Find tags in "Releases"
+```
+
+3. **Install cloelib** – Get the core library up and running:
 
 ```sh
 pip install .
 ```
 
-You can also install (some) supported dependencies:
+4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,hmcode2020emu,comet-emu,pyinstrument]
+pip install .[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument]
 ```
 
-**Note:** Some shells or terminals may not interpret the brackets correctly. If you encounter an error, try adding quotation marks:
+> **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
+>
+> ```sh
+> pip install ."[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument]"
+> ```
 
-```sh
-pip install ."[camb,hmcode2020emu,comet-emu]"
-```
-
-**Note:** We do not offer installation support for `PBJ` and `CLASS`. For installation instructions, please refer to the official documentation of each package.
-
-To work with the latest stable release of the code, move to the latest tag by typing:
-
-```sh
-git checkout name-latest-release
-```
-
-with name-latest-release the latest name that appears in "Releases".
+You're all set! 🎉 Ready to compute cosmological observables.
 
 ---
 
@@ -104,6 +120,7 @@ git checkout -b feature/your-feature-name
 ```
 
 2️⃣ Implement your changes following project style guidelines.
+
 3️⃣ Commit your modifications:
 
 ```sh
@@ -185,6 +202,12 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MariaTsedrik"><img src="https://avatars.githubusercontent.com/u/93711395?v=4?s=100" width="100px;" alt="Maria Tsedrik"/><br /><sub><b>Maria Tsedrik</b></sub></a><br /><a href="#code-MariaTsedrik" title="Code">💻</a> <a href="#ideas-MariaTsedrik" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/arsouki"><img src="https://avatars.githubusercontent.com/u/162714090?v=4?s=100" width="100px;" alt="Arghavan Souki"/><br /><sub><b>Arghavan Souki</b></sub></a><br /><a href="#bug-arsouki" title="Bug reports">🐛</a> <a href="#doc-arsouki" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zsirap"><img src="https://avatars.githubusercontent.com/u/50758399?v=4?s=100" width="100px;" alt="zsirap"/><br /><sub><b>zsirap</b></sub></a><br /><a href="#code-zsirap" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ktanidis"><img src="https://avatars.githubusercontent.com/u/60473500?v=4?s=100" width="100px;" alt="Konstantinos Tanidis"/><br /><sub><b>Konstantinos Tanidis</b></sub></a><br /><a href="#code-ktanidis" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://chaitanyachawak.github.io/"><img src="https://avatars.githubusercontent.com/u/55046588?v=4?s=100" width="100px;" alt="Chaitanya"/><br /><sub><b>Chaitanya</b></sub></a><br /><a href="#code-ChaitanyaChawak" title="Code">💻</a> <a href="#bug-ChaitanyaChawak" title="Bug reports">🐛</a> <a href="#review-ChaitanyaChawak" title="Reviewed Pull Requests">👀</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/raphkou"><img src="https://avatars.githubusercontent.com/u/61792335?v=4?s=100" width="100px;" alt="raphkou"/><br /><sub><b>raphkou</b></sub></a><br /><a href="#bug-raphkou" title="Bug reports">🐛</a> <a href="#code-raphkou" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ivansladoljev"><img src="https://avatars.githubusercontent.com/u/144113061?v=4?s=100" width="100px;" alt="Ivan Sladoljev"/><br /><sub><b>Ivan Sladoljev</b></sub></a><br /><a href="#code-ivansladoljev" title="Code">💻</a> <a href="#ideas-ivansladoljev" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>

@@ -296,6 +296,26 @@ class JAXBackground:
             ]
         )
 
+    def Omega_cb(self, zs: jnp.ndarray) -> jnp.ndarray:
+        """
+        Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
+
+        Args:
+            zs (jnp.ndarray): Array of redshifts.
+
+        Returns:
+            jnp.ndarray: Matter density values (no neutrinos).
+        """
+        _Omega_m_use = self.Omega_b0 + self.Omega_cdm0
+        return jnp.array(
+            [
+                (_Omega_m_use)
+                * (1 + z) ** 3
+                / (self.hubble_parameter(z) / self.H0) ** 2
+                for z in zs
+            ]
+        )
+
     def w_a(self, a):
         """Write documentation (TODO)."""
         return self.w0 + (1.0 - a) * self.wa  # Equation (6) in Linder (2003)
@@ -655,6 +675,33 @@ class JAXLinearPerturbations:
         pk = pk * pknorm / factor
         return pk.squeeze()
 
+    def matter_power_spectrum_cb(
+        self, zs: jnp.ndarray, ks: jnp.ndarray, hubble_units=False, k_hunit=False
+    ) -> jnp.ndarray:
+        r"""Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).
+
+        Parameters
+        ----------
+        zs: array_like, optional
+            Redshifts
+
+        k: array_like
+            Wave number in h Mpc^{-1}
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: array_like
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for jax.")
+
 
 class JAXNonLinearPerturbations:
     """Class for perturbations cosmology using JAX, inheriting from Cosmology parent class."""
@@ -824,6 +871,33 @@ class JAXNonLinearPerturbations:
         k_lz = jnp.expand_dims((ells + 0.5), 1) / chi
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
         return Pkl
+
+    def matter_power_spectrum_cb(
+        self, zs: jnp.ndarray, ks: jnp.ndarray, hubble_units=False, k_hunit=False
+    ) -> jnp.ndarray:
+        r"""Compute the non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for jax.")
 
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""

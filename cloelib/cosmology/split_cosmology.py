@@ -29,8 +29,7 @@ class SplitLinearPerturbations:
     and using CLASS."""
 
     def __init__(
-        self, background: Background, omega_m_growth: float,
-        redshifts: np.ndarray
+        self, background: Background, omega_m_growth: float, redshifts: np.ndarray
     ):
         """Initialise SplitLinearPerturbations."""
         self.background = background
@@ -139,7 +138,7 @@ class SplitNonLinearPerturbations:
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
         redshift_max = HM2020_emu.emulator["nonlinear"]["bounds"]["z"][1]
-        
+
         self.background = background
         self.omega_m_growth = omega_m_growth
         self.redshifts = redshifts
@@ -171,8 +170,8 @@ class SplitNonLinearPerturbations:
 
         _, Pk_lin_emu = HM2020_emu.get_linear_pk(**self.params_hm_emu)
         _, Pk = HM2020_emu.get_nonlinear_pk(
-            nonu=False, **self.params_hm_emu,
-            baryonic_boost=self.baryonic_boost)
+            nonu=False, **self.params_hm_emu, baryonic_boost=self.baryonic_boost
+        )
 
         k_emu_lin = HM2020_emu.emulator["linear"]["k"] * self.background.h
         k_emu = HM2020_emu.emulator["nonlinear"]["k"] * self.background.h
@@ -185,9 +184,9 @@ class SplitNonLinearPerturbations:
         Pk_lin_mask_z = self.z <= redshift_max
         Pk_lin = Pk_lin_emu[Pk_lin_mask_z][:, Pk_lin_mask_k]
         k_all = np.concatenate((k_emu_lin[Pk_lin_mask_k], k_emu))
-        Pk_all = np.concatenate((self.background.h**-3 * Pk_lin,
-                                 self.background.h**-3 * Pk),
-                                 axis=1)
+        Pk_all = np.concatenate(
+            (self.background.h**-3 * Pk_lin, self.background.h**-3 * Pk), axis=1
+        )
 
         # Warning: a lot of parameters currently hard-coded
         k_out, z_out, Pk_out = extrapolator.extend_spectra(
@@ -206,22 +205,24 @@ class SplitNonLinearPerturbations:
         self.z = z_out
         self.Pk = Pk_out
 
-        pk_lin_rescale = linperturbations.matter_power_spectrum(self.z,
-                                                                k_emu_lin)
+        pk_lin_rescale = linperturbations.matter_power_spectrum(self.z, k_emu_lin)
 
         pk_lin_rescale_interp = interpolate.RectBivariateSpline(
-            self.z, k_emu_lin, pk_lin_rescale, kx=1, ky=1)
+            self.z, k_emu_lin, pk_lin_rescale, kx=1, ky=1
+        )
         pk_lin_emu_interp = interpolate.RectBivariateSpline(
-            self.z, k_emu_lin, Pk_lin_emu * self.background.h**-3, kx=1, ky=1)
-        pk_interp = interpolate.RectBivariateSpline(
-            self.z, self.k, self.Pk, kx=1, ky=1)
+            self.z, k_emu_lin, Pk_lin_emu * self.background.h**-3, kx=1, ky=1
+        )
+        pk_interp = interpolate.RectBivariateSpline(self.z, self.k, self.Pk, kx=1, ky=1)
 
         self.Pk_lin_rescale_interp = pk_lin_rescale_interp
         self.Pk_lin_emu_interp = pk_lin_emu_interp
         self.Pk_interp = pk_interp
 
     def matter_power_spectrum(
-        self, zs, ks,
+        self,
+        zs,
+        ks,
     ) -> np.ndarray:
         """Calculate the split non-linear boost using HMemu2020.
 
@@ -256,6 +257,7 @@ class SplitNonLinearPerturbations:
             self.Pk_nonlinear[i, :] = self.boost[i, :] * Pk_lin_rescale[i, :]
 
         return self.Pk_nonlinear
+
 
 def _set_neutrino_masses(background: Background) -> float:
     r"""Set neutrino masses in the parameters dictionary.

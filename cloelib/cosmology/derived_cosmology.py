@@ -233,11 +233,13 @@ def growth_function_ODE(background, zs: np.ndarray, omega_m=-1) -> np.ndarray:
     h0 = background.H0
 
     e_z_init = (
-        hubble_rate(np.log(1 / (1 + zinit)), h0, omega_m, omega_k, w0, wa
-                    ) / 100 / h0)
+        hubble_rate(np.log(1 / (1 + zinit)), h0, omega_m, omega_k, w0, wa) / 100 / h0
+    )
 
     y01 = (
-        -6 / 5 * (1 - omega_m - omega_k)
+        -6
+        / 5
+        * (1 - omega_m - omega_k)
         * (1 + zinit) ** (3 * (1 + w0 + wa))
         * np.exp(-3 * wa * zinit / (1 + zinit))
         * e_z_init ** (-2)

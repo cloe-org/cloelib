@@ -34,8 +34,15 @@ class Weyl_Perturbations:
     def growth_factor(self, zs: T, ks: T) -> T:
         return self.perturbations.growth_factor(zs, ks)
 
-    def growth_rate(self, zs: T, ks: T) -> T:
-        return self.perturbations.growth_rate(zs, ks)
+    def growth_rate(self) -> T:
+        # We multiply the growth rate by th growth factor (normalized at z_ini).
+        # This is to include the RSD effect in the Weyl measurement (without modifying angular_two_point.py), while properly accounting for the growth at z_ini.
+        zini_arr = self.z * 0 + self.z_ini
+        gf = (
+            self.perturbations.growth_factor(self.z, self.k[:1])[:, 0]
+            / self.perturbations.growth_factor(zini_arr, self.k[:1])[:, 0]
+        )
+        return gf * self.perturbations.growth_rate()
 
     def boost(self, zs: T, ks: T) -> T:
         """

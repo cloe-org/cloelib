@@ -16,6 +16,7 @@ poetry.lock
 build/
 dist/
 *.egg-info/
+_version.py
 
 # Jupyter notebooks
 notebooks/

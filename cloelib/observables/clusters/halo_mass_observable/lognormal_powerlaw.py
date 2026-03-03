@@ -66,12 +66,12 @@ class LognormalPowerLawHaloMassObservable:
         Returns
         -------
         lnrichness : numpy.ndarray
-            lnrichness[i,j], where i is the true redhshift axis and j the mass axis
+            ln(richness)
         """
         return (
             np.log(self.A_l)
             + self.B_l * np.log(M / (self.M_piv))
-            + self.C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
+            + self.C_l * np.log((1.0 + z) / (1.0 + self.z_piv))
         )
 
     def scatter_lnrichness(self, z, M):
@@ -91,13 +91,13 @@ class LognormalPowerLawHaloMassObservable:
         Returns
         -------
         scatter_lnrichness : numpy.ndarray
-            scatter_lnrichness[i,j], where i is the true redhshift axis and j the mass axis
+            Scatter of ln(richness)
         """
 
         return (
             self.sig_A_l
             + self.sig_B_l * np.log(M / (self.M_piv))
-            + self.sig_C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
+            + self.sig_C_l * np.log((1.0 + z) / (1.0 + self.z_piv))
         )
 
     def _pdf_richness(self, z, M, lambda_true):
@@ -119,18 +119,16 @@ class LognormalPowerLawHaloMassObservable:
         Returns
         -------
         pdf_richness: numpy.ndarray
-            pdf_richness[i,j,k], where i is the redshift, j is the mass,
-            and k is the observed richness index
+            PDF of richness.
         """
-        _mean_lnlambda = self._mean_lnrichness(z, M)[:, :, np.newaxis]
-        _sigma_lnrichness = self.scatter_lnrichness(z, M)[:, :, np.newaxis]
-        _lambda_true = lambda_true[np.newaxis, np.newaxis, :]
+        _mean_lnlambda = self._mean_lnrichness(z, M)
+        _sigma_lnrichness = self.scatter_lnrichness(z, M)
 
         return (
             1.0
-            / (_lambda_true * np.sqrt(2.0 * np.pi * _sigma_lnrichness**2.0))
+            / (lambda_true * np.sqrt(2.0 * np.pi * _sigma_lnrichness**2.0))
             * np.exp(
-                -((np.log(_lambda_true) - _mean_lnlambda) ** 2.0)
+                -((np.log(lambda_true) - _mean_lnlambda) ** 2.0)
                 / (2.0 * _sigma_lnrichness**2.0)
             )
         )
@@ -176,6 +174,10 @@ class LognormalPowerLawHaloMassObservable:
             self._tabulated_pdf_richness_args["M"] = M
             self._tabulated_pdf_richness_args["z"] = z
             self._tabulated_pdf_richness_args["lambda_true"] = lambda_true
-            self._tabulated_pdf_richness = self._pdf_richness(z, M, lambda_true)
+            self._tabulated_pdf_richness = self._pdf_richness(
+                np.atleast_1d(z)[:, np.newaxis, np.newaxis],
+                np.atleast_1d(M)[np.newaxis, :, np.newaxis],
+                np.atleast_1d(lambda_true)[np.newaxis, np.newaxis, :],
+            )
 
         return self._tabulated_pdf_richness

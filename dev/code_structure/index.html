@@ -12,13 +12,13 @@
         <meta name="author" content="cloe-org">
       
       
-        <link rel="canonical" href="https://cloe-org.github.io/cloelib/dev/dev/installation/">
+        <link rel="canonical" href="https://cloe-org.github.io/cloelib/dev/dev/code_structure/">
       
       
-        <link rel="prev" href="../home/">
+        <link rel="prev" href="../installation/">
       
       
-        <link rel="next" href="../code_structure/">
+        <link rel="next" href="background/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Installation - cloelib</title>
+        <title>Overview - cloelib</title>
       
     
     
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installation" class="md-skip">
+        <a href="#code-structure-guide-to-cloelibs-architecture" class="md-skip">
           Skip to content
         </a>
       
@@ -122,7 +122,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Installation
+              Overview
             
           </span>
         </div>
@@ -244,11 +244,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../installation/" class="md-tabs__link">
         
   
   
@@ -265,11 +263,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../code_structure/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   
@@ -401,6 +401,88 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code Structure
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Code Structure
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
     
   
   
@@ -420,7 +502,7 @@
   <span class="md-ellipsis">
     
   
-    Installation
+    Overview
   
 
     
@@ -438,7 +520,7 @@
   <span class="md-ellipsis">
     
   
-    Installation
+    Overview
   
 
     
@@ -464,10 +546,99 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Start
+        Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Perturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-observables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Observables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-summary-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Summary Statistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typical-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical Workflow
       
     </span>
   </a>
@@ -475,10 +646,82 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#optional-dependencies" class="md-nav__link">
+  <a href="#for-contributors" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Optional Dependencies
+        For Contributors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Philosophy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design Philosophy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#protocol-based-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protocol-Based Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#separation-of-concerns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Separation of Concerns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jax-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JAX Compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Support
       
     </span>
   </a>
@@ -492,83 +735,6 @@
     </li>
   
 
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Code Structure
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Code Structure
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../code_structure/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
               
             
               
@@ -578,7 +744,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../code_structure/background/" class="md-nav__link">
+      <a href="background/" class="md-nav__link">
         
   
   
@@ -606,7 +772,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../code_structure/perturbations/" class="md-nav__link">
+      <a href="perturbations/" class="md-nav__link">
         
   
   
@@ -634,7 +800,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../code_structure/observables/" class="md-nav__link">
+      <a href="observables/" class="md-nav__link">
         
   
   
@@ -662,7 +828,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../code_structure/summary_statistics/" class="md-nav__link">
+      <a href="summary_statistics/" class="md-nav__link">
         
   
   
@@ -771,10 +937,99 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Start
+        Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Core Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Perturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-observables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Observables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-summary-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Summary Statistics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#typical-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Typical Workflow
       
     </span>
   </a>
@@ -782,10 +1037,82 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#optional-dependencies" class="md-nav__link">
+  <a href="#for-contributors" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Optional Dependencies
+        For Contributors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Philosophy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design Philosophy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#protocol-based-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Protocol-Based Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#separation-of-concerns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Separation of Concerns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jax-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JAX Compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Support
       
     </span>
   </a>
@@ -818,43 +1145,106 @@
   
 
 
-<h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h1>
-<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>Set up your environment</strong> – Create a fresh conda/mamba environment using the <a href="https://github.com/cloe-org/cloe-org-environments">cloe-org-environments</a> repository. Then, clone <code>cloelib</code>:</li>
-</ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/cloe-org/cloelib.git
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>cloelib
+<h1 id="code-structure-guide-to-cloelibs-architecture">Code Structure: Guide to cloelib's Architecture<a class="headerlink" href="#code-structure-guide-to-cloelibs-architecture" title="Permanent link">&para;</a></h1>
+<p>This guide explains the modular architecture of <strong>cloelib</strong> and provides instructions for contributors to extend the library by adding new implementations of Perturbations and Observables.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p><strong>cloelib</strong> follows a layered architecture that separates cosmological calculations into distinct components:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Background → Perturbations → Observables → Summary Statistics
 </code></pre></div>
-<ol>
-<li><strong>Check out the latest release</strong> (optional but recommended):</li>
-</ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>&lt;latest-tag&gt;<span class="w">  </span><span class="c1"># Find tags in &quot;Releases&quot;</span>
+<p>Each layer depends on the previous one, creating a flexible pipeline from fundamental cosmology to final data products.</p>
+<h3 id="design-principles">Design Principles<a class="headerlink" href="#design-principles" title="Permanent link">&para;</a></h3>
+<p><strong>Modularity</strong>: The architecture allows easy swapping of implementations (e.g., CAMB for CLASS).</p>
+<p><strong>Flexibility</strong>: New components can be added by implementing the appropriate protocol.</p>
+<p><strong>Reproducibility</strong>: Clear interfaces ensure consistent behavior across implementations.</p>
+<p><strong>Extensibility</strong>: Protocol-based design enables contributors to extend the library without modifying existing code.</p>
+<h2 id="core-components">Core Components<a class="headerlink" href="#core-components" title="Permanent link">&para;</a></h2>
+<h3 id="1-background">1. <a href="background/">Background</a><a class="headerlink" href="#1-background" title="Permanent link">&para;</a></h3>
+<p>The Background module provides the cosmological foundation, computing distances, Hubble parameters, and matter densities as functions of redshift.</p>
+<p><strong>Purpose</strong>: Compute background quantities as functions of redshift</p>
+<p><strong>Dependencies</strong>: None (foundational layer)</p>
+<p><strong>Use case</strong>: Implementing new Boltzmann solvers or emulators</p>
+<p><a href="background/">Learn more about Background</a></p>
+<h3 id="2-perturbations">2. <a href="perturbations/">Perturbations</a><a class="headerlink" href="#2-perturbations" title="Permanent link">&para;</a></h3>
+<p>The Perturbations module computes structure formation quantities including matter power spectra, growth factors, and growth rates.</p>
+<p><strong>Purpose</strong>: Calculate perturbation theory quantities</p>
+<p><strong>Dependencies</strong>: Background module</p>
+<p><strong>Use case</strong>: Adding non-linear models or new structure formation codes</p>
+<p><a href="perturbations/">Learn more about Perturbations</a></p>
+<h3 id="3-observables">3. <a href="observables/">Observables</a><a class="headerlink" href="#3-observables" title="Permanent link">&para;</a></h3>
+<p>The Observables module connects theoretical predictions to survey measurements, handling selection functions, biases, and window functions.</p>
+<p><strong>Purpose</strong>: Compute survey-specific observables</p>
+<p><strong>Dependencies</strong>: Perturbations (for tracers) or Background (for spectroscopic)</p>
+<p><strong>Use case</strong>: Adding new measurement types or survey configurations</p>
+<p><a href="observables/">Learn more about Observables</a></p>
+<h3 id="4-summary-statistics">4. <a href="summary_statistics/">Summary Statistics</a><a class="headerlink" href="#4-summary-statistics" title="Permanent link">&para;</a></h3>
+<p>The Summary Statistics module produces final data products for comparison with observations, including angular power spectra, correlation functions, and multipoles.</p>
+<p><strong>Purpose</strong>: Compute final statistical quantities</p>
+<p><strong>Dependencies</strong>: Observables module</p>
+<p><strong>Use case</strong>: Implementing new statistical estimators</p>
+<p><a href="summary_statistics/">Learn more about Summary Statistics</a></p>
+<h2 id="typical-workflow">Typical Workflow<a class="headerlink" href="#typical-workflow" title="Permanent link">&para;</a></h2>
+<p>The standard workflow for computing observables follows this pattern:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 1. Initialize background cosmology</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">background</span> <span class="o">=</span> <span class="n">CAMBBackground</span><span class="p">(</span><span class="n">H0</span><span class="o">=</span><span class="mf">67.5</span><span class="p">,</span> <span class="n">Omega_b0</span><span class="o">=</span><span class="mf">0.049</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># 2. Initialize perturbations with background</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">perturbations</span> <span class="o">=</span> <span class="n">CAMBPerturbations</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># 3. Define observables with perturbations or background</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">tracer</span> <span class="o">=</span> <span class="n">ShearTracer</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="n">perturbations</span><span class="p">,</span> <span class="n">dndz</span><span class="o">=...</span><span class="p">,</span> <span class="n">z</span><span class="o">=...</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># 4. Compute summary statistics</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">two_point</span> <span class="o">=</span> <span class="n">AngularTwoPoint</span><span class="p">(</span><span class="n">tracer1</span><span class="o">=</span><span class="n">tracer</span><span class="p">,</span> <span class="n">tracer2</span><span class="o">=</span><span class="n">tracer</span><span class="p">)</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="n">C_ell</span> <span class="o">=</span> <span class="n">two_point</span><span class="o">.</span><span class="n">compute_Cl</span><span class="p">(</span><span class="n">ells</span><span class="o">=...</span><span class="p">)</span>
 </code></pre></div>
-<ol>
-<li><strong>Install cloelib</strong> – Get the core library up and running:</li>
-</ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span>.
-</code></pre></div>
-<ol>
-<li><strong>Add optional dependencies</strong> – Enhance with external codes and tools:</li>
-</ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>install<span class="w"> </span>.<span class="o">[</span>camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument<span class="o">]</span>
-</code></pre></div>
-<blockquote>
-<p><strong>💡 Pro Tip:</strong> Some shells struggle with brackets. Try quotes if needed:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;.[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument]&quot;</span>
-</code></pre></div>
-</blockquote>
-<p>You're all set! 🎉 Ready to compute cosmological observables.</p>
-<h2 id="optional-dependencies">Optional Dependencies<a class="headerlink" href="#optional-dependencies" title="Permanent link">&para;</a></h2>
-<p>Several optional dependencies enhance <strong>cloelib</strong> capabilities:</p>
+<h2 id="for-contributors">For Contributors<a class="headerlink" href="#for-contributors" title="Permanent link">&para;</a></h2>
+<p>Each module page includes:</p>
 <ul>
-<li><strong><code>pyinstrument</code></strong> – Time profiling for performance optimization</li>
-<li><strong><code>pylevin</code></strong>, <strong><code>mpmath</code></strong> – Required for specific observational probes (e.g., COSEBIs)</li>
-<li><strong><code>tensorflow</code></strong> – Needed for certain emulator backends (e.g., <code>HMCode2020emu</code>)</li>
+<li>Protocol definitions specifying required methods and properties</li>
+<li>Step-by-step guides for adding new implementations</li>
+<li>Code examples demonstrating proper usage</li>
+<li>Interface specifications for connecting with external codes</li>
+<li>Testing recommendations</li>
 </ul>
-<p>These are not included in the default installation but can be added as shown above as other external cosmological codes.</p>
+<p>The protocol-based design means contributors only need to implement the required methods without inheriting from base classes or understanding the entire codebase.</p>
+<h2 id="design-philosophy">Design Philosophy<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h2>
+<h3 id="protocol-based-design">Protocol-Based Design<a class="headerlink" href="#protocol-based-design" title="Permanent link">&para;</a></h3>
+<p><strong>cloelib</strong> uses Python protocols (PEP 544) instead of traditional inheritance:</p>
+<ul>
+<li><strong>Type safety</strong>: Static type checkers can verify implementations satisfy the protocol</li>
+<li><strong>Flexibility</strong>: Any class implementing required methods is valid</li>
+<li><strong>Clear contracts</strong>: Protocols explicitly document requirements</li>
+</ul>
+<h3 id="separation-of-concerns">Separation of Concerns<a class="headerlink" href="#separation-of-concerns" title="Permanent link">&para;</a></h3>
+<p>Each module has a specific responsibility:</p>
+<ul>
+<li><strong>Background</strong>: Pure cosmology (no structure formation)</li>
+<li><strong>Perturbations</strong>: Structure growth (no survey details)</li>
+<li><strong>Observables</strong>: Survey specifics (no final statistics)</li>
+<li><strong>Summary Statistics</strong>: Final products (no cosmology details)</li>
+</ul>
+<p>This separation improves code maintainability, testability, and extensibility.</p>
+<h3 id="jax-compatibility">JAX Compatibility<a class="headerlink" href="#jax-compatibility" title="Permanent link">&para;</a></h3>
+<p>Most implementations support both NumPy and JAX arrays:</p>
+<ul>
+<li><strong>Automatic differentiation</strong>: Enables gradient computation for parameter inference</li>
+<li><strong>GPU acceleration</strong>: Allows scaling to larger problems</li>
+<li><strong>JIT compilation</strong>: Provides improved performance</li>
+<li><strong>NumPy compatibility</strong>: Maintains familiar interface</li>
+</ul>
+<h2 id="additional-resources">Additional Resources<a class="headerlink" href="#additional-resources" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../api/">API Reference</a>: Detailed technical documentation</li>
+<li><a href="../contributing/">Contributing Guide</a>: General contribution guidelines</li>
+<li><a href="https://github.com/cloe-org/playground">Playground Examples</a>: Usage demonstrations</li>
+</ul>
+<h2 id="support">Support<a class="headerlink" href="#support" title="Permanent link">&para;</a></h2>
+<p>For questions about the code structure or implementing new components:</p>
+<ul>
+<li><a href="https://github.com/cloe-org/cloelib/issues">GitHub Issues</a>: Report bugs or request features</li>
+<li><a href="https://github.com/cloe-org/cloelib/discussions">GitHub Discussions</a>: Ask questions and share ideas</li>
+<li>Tag <code>@cloe-maintainers</code> for assistance from the core team</li>
+</ul>
 
 
 
@@ -884,7 +1274,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../home/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Home">
+          <a href="../installation/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Installation">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -894,20 +1284,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Home
+                Installation
               </div>
             </div>
           </a>
         
         
           
-          <a href="../code_structure/" class="md-footer__link md-footer__link--next" aria-label="Next: Overview">
+          <a href="background/" class="md-footer__link md-footer__link--next" aria-label="Next: Background">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Overview
+                Background
               </div>
             </div>
             <div class="md-footer__button md-icon">

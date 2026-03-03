@@ -66,7 +66,7 @@ def test_gaussian_selectionfunction():
     )
     print("    prob_true_richness")
     assert_allclose(
-        selection_function.halo_mass_observable.prob_richness(z_test, M_test, l_test),
+        selection_function.halo_mass_observable.pdf_richness(z_test, M_test, l_test),
         0,
         atol=1e-10,
         rtol=1e-05,

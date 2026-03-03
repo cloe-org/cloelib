@@ -42,8 +42,8 @@ class LognormalPowerLawHaloMassObservable:
         self.M_piv = M_piv
         self.z_piv = z_piv
 
-        # to avoid recomputing prob_richness
-        self._tabulated_prob_richness_args = {
+        # to avoid recomputing pdf_richness
+        self._tabulated_pdf_richness_args = {
             "M": None,
             "z": None,
             "lambda_true": None,
@@ -100,7 +100,7 @@ class LognormalPowerLawHaloMassObservable:
             + self.sig_C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
         )
 
-    def _prob_richness(self, z, M, lambda_true):
+    def _pdf_richness(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.
 
@@ -118,8 +118,8 @@ class LognormalPowerLawHaloMassObservable:
 
         Returns
         -------
-        prob_richness: numpy.ndarray
-            prob_richness[i,j,k], where i is the redshift, j is the mass,
+        pdf_richness: numpy.ndarray
+            pdf_richness[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
         _mean_lnlambda = self._mean_lnrichness(z, M)[:, :, np.newaxis]
@@ -138,11 +138,11 @@ class LognormalPowerLawHaloMassObservable:
     def _are_args_tabulated(self, z, M, lambda_true):
         """Check if args are the tabluated values"""
         if any(
-            value is None for key, value in self._tabulated_prob_richness_args.items()
+            value is None for key, value in self._tabulated_pdf_richness_args.items()
         ):
             return False
         _locals = locals()
-        for name, ref_val in self._tabulated_prob_richness_args.items():
+        for name, ref_val in self._tabulated_pdf_richness_args.items():
             test_val = _locals[name]
             if len(ref_val) != len(test_val):
                 return False
@@ -150,7 +150,7 @@ class LognormalPowerLawHaloMassObservable:
                 return False
         return True
 
-    def prob_richness(self, z, M, lambda_true):
+    def pdf_richness(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.
 
@@ -168,14 +168,14 @@ class LognormalPowerLawHaloMassObservable:
 
         Returns
         -------
-        prob_richness: numpy.ndarray
-            prob_richness[i,j,k], where i is the redshift, j is the mass,
+        pdf_richness: numpy.ndarray
+            pdf_richness[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
         if not self._are_args_tabulated(z, M, lambda_true):
-            self._tabulated_prob_richness_args["M"] = M
-            self._tabulated_prob_richness_args["z"] = z
-            self._tabulated_prob_richness_args["lambda_true"] = lambda_true
-            self._tabulated_prob_richness = self._prob_richness(z, M, lambda_true)
+            self._tabulated_pdf_richness_args["M"] = M
+            self._tabulated_pdf_richness_args["z"] = z
+            self._tabulated_pdf_richness_args["lambda_true"] = lambda_true
+            self._tabulated_pdf_richness = self._pdf_richness(z, M, lambda_true)
 
-        return self._tabulated_prob_richness
+        return self._tabulated_pdf_richness

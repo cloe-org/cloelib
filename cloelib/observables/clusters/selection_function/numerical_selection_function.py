@@ -342,7 +342,7 @@ class NumericalSelectionFunction:
             Dimensions: (z_obs_edges, lambda_obs_edges, z_true, mass)
         """
         # Dimensions: (z, M, lambda_true)
-        pdf_mass_richness_scaling = self.halo_mass_observable.prob_richness(
+        pdf_mass_richness_scaling = self.halo_mass_observable.pdf_richness(
             z_true, mass, lambda_true
         )
 

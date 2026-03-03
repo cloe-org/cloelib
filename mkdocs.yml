@@ -102,6 +102,12 @@ extra_javascript:
 nav:
   - Home: home.md
   - Installation: installation.md
+  - Code Structure:
+      - Overview: code_structure/index.md
+      - Background: code_structure/background.md
+      - Perturbations: code_structure/perturbations.md
+      - Observables: code_structure/observables.md
+      - Summary Statistics: code_structure/summary_statistics.md
   - Contributing: contributing.md
   - API Reference: api.md
 

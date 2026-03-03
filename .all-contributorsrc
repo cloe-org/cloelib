@@ -259,7 +259,9 @@
       "contributions": [
         "code",
         "ideas",
-        "doc"
+        "doc",
+        "review",
+        "bug"
       ]
     },
     {

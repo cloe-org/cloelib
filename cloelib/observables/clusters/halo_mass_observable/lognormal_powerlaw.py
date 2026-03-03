@@ -44,8 +44,8 @@ class LognormalPowerLawHaloMassObservable:
         self.M_piv = M_piv
         self.z_piv = z_piv
 
-        # to avoid recomputing prob_richness
-        self._tabulated_prob_richness = {
+        # to avoid recomputing pdf_richness
+        self._tabulated_pdf_richness = {
             "inputs": {
                 "M": None,
                 "z": None,
@@ -105,7 +105,7 @@ class LognormalPowerLawHaloMassObservable:
             + self.sig_C_l * np.log((1.0 + z[:, np.newaxis]) / (1.0 + self.z_piv))
         )
 
-    def _prob_richness(self, z, M, lambda_true):
+    def _pdf_richness(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.
 
@@ -123,8 +123,8 @@ class LognormalPowerLawHaloMassObservable:
 
         Returns
         -------
-        prob_richness: numpy.ndarray
-            prob_richness[i,j,k], where i is the redshift, j is the mass,
+        pdf_richness: numpy.ndarray
+            pdf_richness[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
         _mean_lnlambda = self._mean_lnrichness(z, M)[:, :, np.newaxis]
@@ -140,7 +140,7 @@ class LognormalPowerLawHaloMassObservable:
             )
         )
 
-    def prob_richness(self, z, M, lambda_true):
+    def pdf_richness(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.
 
@@ -158,12 +158,12 @@ class LognormalPowerLawHaloMassObservable:
 
         Returns
         -------
-        prob_richness: numpy.ndarray
-            prob_richness[i,j,k], where i is the redshift, j is the mass,
+        pdf_richness: numpy.ndarray
+            pdf_richness[i,j,k], where i is the redshift, j is the mass,
             and k is the observed richness index
         """
         return tabulated_return(
-            self._tabulated_prob_richness,
-            self._prob_richness,
+            self._tabulated_pdf_richness,
+            self._pdf_richness,
             {"z": z, "M": M, "lambda_true": lambda_true},
         )

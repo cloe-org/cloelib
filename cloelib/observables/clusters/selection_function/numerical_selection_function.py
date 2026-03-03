@@ -9,7 +9,7 @@ from cloelib.observables.clusters.halo_mass_observable import (
 )
 
 
-class InterpolatedSelectionFunction:
+class NumericalSelectionFunction:
 
     def __init__(
         self,
@@ -342,7 +342,7 @@ class InterpolatedSelectionFunction:
             Dimensions: (z_obs_edges, lambda_obs_edges, z_true, mass)
         """
         # Dimensions: (z, M, lambda_true)
-        pdf_mass_richness_scaling = self.halo_mass_observable.prob_richness(
+        pdf_mass_richness_scaling = self.halo_mass_observable.pdf_richness(
             z_true, mass, lambda_true
         )
 
@@ -615,7 +615,7 @@ if __name__ == "__main__":
     in_file = sys.argv[1]
 
     sel_cl_data = read_sel_cl_output(in_file)
-    sfi = InterpolatedSelectionFunction(
+    sfn = NumericalSelectionFunction(
         halo_mass_observable=LognormalPowerLawHaloMassObservable(
             A_l=None,
             B_l=None,
@@ -627,7 +627,7 @@ if __name__ == "__main__":
         sel_cl_data=sel_cl_data,
         extrapolate=0,
     )
-    interps = sfi._build_windows_interpolators(
+    interps = sfn._build_windows_interpolators(
         lambda_obs_edges=np.array([20.0, 30.0, 45.0, 60.0, 220.0]),
         z_obs_edges=np.array([0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6]),
     )

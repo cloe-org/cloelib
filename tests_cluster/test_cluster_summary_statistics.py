@@ -13,7 +13,7 @@ from cloelib.observables.clusters.halo_profile import NFWHaloProfile
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
 from cloelib.observables.clusters.selection_function import (
     GaussianSelectionFunction,
-    InterpolatedSelectionFunction,
+    NumericalSelectionFunction,
 )
 from cloelib.observables.clusters.halo_mass_observable import (
     LognormalPowerLawHaloMassObservable,
@@ -114,19 +114,19 @@ def get_sf_interp(**sel_pars):
 
     sel_cl_data = _gen_gaussian_selcl_data(gaussian_sf, test_arrays)
 
-    sf_counts = InterpolatedSelectionFunction(
+    sf_counts = NumericalSelectionFunction(
         halo_mass_observable=sel_pars["halo_mass_observable"],
         sel_cl_data=sel_cl_data,
         prob_contains_completeness=False,
         extrapolate=0,
     )
-    sf_profiles = InterpolatedSelectionFunction(
+    sf_profiles = NumericalSelectionFunction(
         halo_mass_observable=sel_pars["halo_mass_observable"],
         sel_cl_data=sel_cl_data,
         prob_contains_completeness=False,
         extrapolate=0,
     )
-    sf_clustering = InterpolatedSelectionFunction(
+    sf_clustering = NumericalSelectionFunction(
         halo_mass_observable=sel_pars["halo_mass_observable"],
         sel_cl_data=sel_cl_data,
         prob_contains_completeness=False,

@@ -7,8 +7,8 @@ from cloelib.observables.clusters.selection_function import (
     GaussianSelectionFunction,
     InterpolatedSelectionFunction,
 )
-from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
-    LognormalPowerLawLambdaTrueDistribution,
+from cloelib.observables.clusters.halo_mass_observable import (
+    LognormalPowerLawHaloMassObservable,
 )
 
 
@@ -30,7 +30,7 @@ def _get_test_gaussian_sf():
     )
     return GaussianSelectionFunction(
         **_sel_pars,
-        lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
+        halo_mass_observable=LognormalPowerLawHaloMassObservable(
             **_lambda_true_dist_pars
         ),
         lambda_tab_integ=[31, 31, 31, 51],
@@ -54,7 +54,7 @@ def test_gaussian_selectionfunction():
     print("    lnrichness")
     _lnrichness_ref = [-1.533121, -1.423534, -1.3337, -1.257575, -1.191523]
     assert_allclose(
-        selection_function.lambda_true_distribution._mean_lnrichness(z_test, M_test)[
+        selection_function.halo_mass_observable._mean_lnrichness(z_test, M_test)[
             :, 0
         ],
         _lnrichness_ref,
@@ -62,13 +62,13 @@ def test_gaussian_selectionfunction():
     )
     print("    scatter_lnrichness")
     assert_allclose(
-        selection_function.lambda_true_distribution.scatter_lnrichness(z_test, M_test),
+        selection_function.halo_mass_observable.scatter_lnrichness(z_test, M_test),
         0.1,
         rtol=1e-05,
     )
     print("    prob_true_richness")
     assert_allclose(
-        selection_function.lambda_true_distribution.prob_richness(
+        selection_function.halo_mass_observable.prob_richness(
             z_test, M_test, l_test
         ),
         0,
@@ -182,7 +182,7 @@ def test_interpolated_selectionfunction_unittest():
     sel_cl_data = _gen_gaussian_selcl_data(gaussian_sf, test_arrays)
 
     sfi = InterpolatedSelectionFunction(
-        lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
+        halo_mass_observable=LognormalPowerLawHaloMassObservable(
             A_l=52.0,
             B_l=0.9,
             C_l=0.5,
@@ -227,7 +227,7 @@ def test_interpolated_selectionfunction_compare_with_gauss():
     sel_cl_data = _gen_gaussian_selcl_data(gaussian_sf, test_arrays)
 
     sfi = InterpolatedSelectionFunction(
-        lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
+        halo_mass_observable=LognormalPowerLawHaloMassObservable(
             A_l=52.0,
             B_l=0.9,
             C_l=0.5,

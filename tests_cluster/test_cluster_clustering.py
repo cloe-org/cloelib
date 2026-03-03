@@ -7,8 +7,8 @@ from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbat
 from cloelib.observables.clusters.auxiliary import photoz_rsd_correction
 from cloelib.observables.clusters.halo_clustering import TwoPoint3DHaloClustering
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
-from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
-    LognormalPowerLawLambdaTrueDistribution,
+from cloelib.observables.clusters.halo_mass_observable import (
+    LognormalPowerLawHaloMassObservable,
 )
 
 

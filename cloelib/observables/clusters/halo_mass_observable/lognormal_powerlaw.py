@@ -3,7 +3,7 @@
 import numpy as np
 
 
-class LognormalPowerLawLambdaTrueDistribution:
+class LognormalPowerLawHaloMassObservable:
     def __init__(
         self,
         A_l: float,

@@ -186,7 +186,8 @@
       "profile": "https://github.com/josecolomanadal",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "ideas"
       ]
     },
     {
@@ -287,6 +288,137 @@
       "profile": "https://github.com/GabrieleParimbelli",
       "contributions": [
         "bug"
+      ]
+    },
+    {
+      "login": "zahrabaghkhani",
+      "name": "Zahra Baghkhani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/47903409?v=4",
+      "profile": "https://github.com/zahrabaghkhani",
+      "contributions": [
+        "code",
+        "ideas",
+        "bug"
+      ]
+    },
+    {
+      "login": "fabriceroy",
+      "name": "Fabrice Roy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29073232?v=4",
+      "profile": "https://github.com/fabriceroy",
+      "contributions": [
+        "doc",
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "pltaylor16",
+      "name": "pltaylor16",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22646673?v=4",
+      "profile": "https://github.com/pltaylor16",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "rreischke",
+      "name": "Robert Reischke",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31727230?v=4",
+      "profile": "https://github.com/rreischke",
+      "contributions": [
+        "ideas",
+        "mentoring"
+      ]
+    },
+    {
+      "login": "AngusWright",
+      "name": "Angus H. Wright",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5625880?v=4",
+      "profile": "https://github.com/AngusWright",
+      "contributions": [
+        "ideas",
+        "mentoring"
+      ]
+    },
+    {
+      "login": "matteobaratto",
+      "name": "Matteo Baratto ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/75221958?v=4",
+      "profile": "https://github.com/matteobaratto",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "MariaTsedrik",
+      "name": "Maria Tsedrik",
+      "avatar_url": "https://avatars.githubusercontent.com/u/93711395?v=4",
+      "profile": "https://github.com/MariaTsedrik",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "arsouki",
+      "name": "Arghavan Souki",
+      "avatar_url": "https://avatars.githubusercontent.com/u/162714090?v=4",
+      "profile": "https://github.com/arsouki",
+      "contributions": [
+        "bug",
+        "doc"
+      ]
+    },
+    {
+      "login": "zsirap",
+      "name": "zsirap",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50758399?v=4",
+      "profile": "https://github.com/zsirap",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ktanidis",
+      "name": "Konstantinos Tanidis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/60473500?v=4",
+      "profile": "https://github.com/ktanidis",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ChaitanyaChawak",
+      "name": "Chaitanya",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55046588?v=4",
+      "profile": "https://chaitanyachawak.github.io/",
+      "contributions": [
+        "code",
+        "bug",
+        "review"
+      ]
+    },
+    {
+      "login": "raphkou",
+      "name": "raphkou",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61792335?v=4",
+      "profile": "https://github.com/raphkou",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "ivansladoljev",
+      "name": "Ivan Sladoljev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/144113061?v=4",
+      "profile": "https://github.com/ivansladoljev",
+      "contributions": [
+        "code",
+        "ideas"
       ]
     }
   ]

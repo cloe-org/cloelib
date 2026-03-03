@@ -1,4 +1,4 @@
-"""Implementation of Background and Perturbation cosmology using HMcode2020Emu."""
+"""Implementation of Background and Perturbation cosmology using EuclidEmulator2."""
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, Perturbations
@@ -21,7 +21,7 @@ except ImportError:
 
 
 class EE2NonLinearPerturbations:
-    """Class for non linear perturbations cosmology using EE2, inheriting from Perturbations parent class."""
+    """Class for nonlinear perturbations using EE2, inheriting from Perturbations parent class."""
 
     def __init__(
         self,
@@ -29,7 +29,7 @@ class EE2NonLinearPerturbations:
         linearperturbations: Perturbations,
         redshifts: np.ndarray,
     ):
-        """Initialize the HMemuNonLinearPerturbations intance."""
+        """Initialize the EE2NonLinearPerturbations instance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
         redshift_max = ee2.z_max
@@ -90,7 +90,7 @@ class EE2NonLinearPerturbations:
         self.z = z_out
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-        r"""Compute the linear matter power spectrum.
+        r"""Compute the total matter power spectrum.
 
         Parameters
         ----------
@@ -103,13 +103,35 @@ class EE2NonLinearPerturbations:
         Returns
         -------
         pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
+            Total matter power spectrum at the specified scale
             and redshift
 
         """
         return self.boost_interp(
             zs, np.log(ks)
         ) * self.linearperturbations.matter_power_spectrum(zs, ks)
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        r"""Compute the CDM+baryons power spectrum.
+
+        Parameters
+        ----------
+        ks: numpy.ndarray
+            Wave number in h Mpc^{-1}
+
+        zs: numpy.ndarray
+            redshifts
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            CDM+baryons power spectrum at the specified scale
+            and redshift
+
+        """
+        return self.boost_interp(
+            zs, np.log(ks)
+        ) * self.linearperturbations.matter_power_spectrum_cb(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -170,8 +192,9 @@ def _set_neutrino_masses(background: Background) -> float:
 
     This method adds neutrino masses to the provided dictionary.
     It also ensures consistency with the background cosmology.
-    HMcode2020Emu only supports a single species massive of neutrinos, so this method
-    throws an error if multiple massive neutrino species are provided.
+    EE2 only supports a 3 degenerate massive neutrinos, but no error
+    thrown, it will just assume take the total mass and use that,
+    as this should be a small effect on the boost.
 
     Parameters
     ----------

@@ -3,15 +3,15 @@
 import numpy as np
 from scipy.integrate import simpson
 
-from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
-    LambdaTrueDistribution,
+from cloelib.observables.clusters.halo_mass_observable import (
+    HaloMassObservable,
 )
 
 
 class GaussianSelectionFunction:
     def __init__(
         self,
-        lambda_true_distribution: LambdaTrueDistribution,
+        halo_mass_observable: HaloMassObservable,
         sig_lambda_norm: float,
         sig_lambda_z: float,
         sig_lambda_exponent: float,
@@ -27,7 +27,7 @@ class GaussianSelectionFunction:
 
         Parameters
         ----------
-        lambda_true_distribution: LambdaTrueDistribution,
+        halo_mass_observable: HaloMassObservable,
             Object that contains the distribution of true richness given mass
         sig_lambda_norm: float
             Amplitude of the observed proxy - true proxy relation
@@ -45,7 +45,7 @@ class GaussianSelectionFunction:
             Number of points to be used for the lambda_obs integration
             in each lambda_obs bin. Must be same size of lambda_obs_edges.
         """
-        self.lambda_true_distribution = lambda_true_distribution
+        self.halo_mass_observable = halo_mass_observable
         self.sig_lambda_norm = sig_lambda_norm
         self.sig_lambda_z = sig_lambda_z
         self.sig_lambda_exponent = sig_lambda_exponent
@@ -278,7 +278,7 @@ class GaussianSelectionFunction:
         ################################################
         # Compute P(Delta lobs|mass, ztrue)
         ################################################
-        pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
+        pdf_mass_richness_scaling = self.halo_mass_observable.prob_richness(
             z_true, mass, lambda_true
         )
 
@@ -330,7 +330,7 @@ class GaussianSelectionFunction:
             Dimensions: (z_obs_edges, lambda_obs_edges, z_true, mass)
         """
         # Dimensions: (z, M, lambda_true)
-        pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
+        pdf_mass_richness_scaling = self.halo_mass_observable.prob_richness(
             z_true, mass, lambda_true
         )
         # Dimensions: (z_obs_edges, lambda_obs_edges, z_true, lambda_true)

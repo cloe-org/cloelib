@@ -15,8 +15,8 @@ from cloelib.observables.clusters.selection_function import (
     GaussianSelectionFunction,
     InterpolatedSelectionFunction,
 )
-from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
-    LognormalPowerLawLambdaTrueDistribution,
+from cloelib.observables.clusters.halo_mass_observable import (
+    LognormalPowerLawHaloMassObservable,
 )
 from cloelib.summary_statistics.clusters import (
     ClusterClustering,
@@ -115,19 +115,19 @@ def get_sf_interp(**sel_pars):
     sel_cl_data = _gen_gaussian_selcl_data(gaussian_sf, test_arrays)
 
     sf_counts = InterpolatedSelectionFunction(
-        lambda_true_distribution=sel_pars["lambda_true_distribution"],
+        halo_mass_observable=sel_pars["halo_mass_observable"],
         sel_cl_data=sel_cl_data,
         prob_contains_completeness=False,
         extrapolate=0,
     )
     sf_profiles = InterpolatedSelectionFunction(
-        lambda_true_distribution=sel_pars["lambda_true_distribution"],
+        halo_mass_observable=sel_pars["halo_mass_observable"],
         sel_cl_data=sel_cl_data,
         prob_contains_completeness=False,
         extrapolate=0,
     )
     sf_clustering = InterpolatedSelectionFunction(
-        lambda_true_distribution=sel_pars["lambda_true_distribution"],
+        halo_mass_observable=sel_pars["halo_mass_observable"],
         sel_cl_data=sel_cl_data,
         prob_contains_completeness=False,
         extrapolate=0,
@@ -222,7 +222,7 @@ def get_values(get_sf):
         sig_lambda_exponent=0.4,
         sig_z_z=0.025,
         sig_z_lambda=5.0e-6,
-        lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
+        halo_mass_observable=LognormalPowerLawHaloMassObservable(
             A_l=52.0,
             B_l=0.9,
             C_l=0.5,

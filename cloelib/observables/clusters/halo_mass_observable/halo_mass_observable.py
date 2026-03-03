@@ -8,7 +8,7 @@ T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 
 @runtime_checkable
-class LambdaTrueDistribution(Protocol):
+class HaloMassObservable(Protocol):
     def prob_richness(self, z, M, lambda_true):
         r"""
         Proxy - mass relation PDF.

@@ -5,7 +5,7 @@ import numpy as np
 from cloelib.observables.clusters.auxiliary import tabulated_return
 
 
-class LognormalPowerLawLambdaTrueDistribution:
+class LognormalPowerLawHaloMassObservable:
     def __init__(
         self,
         A_l: float,

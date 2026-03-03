@@ -4,8 +4,8 @@ import numpy as np  # type: ignore
 from scipy import integrate, interpolate
 from scipy.integrate import simpson
 
-from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
-    LambdaTrueDistribution,
+from cloelib.observables.clusters.halo_mass_observable import (
+    HaloMassObservable,
 )
 
 
@@ -13,7 +13,7 @@ class InterpolatedSelectionFunction:
 
     def __init__(
         self,
-        lambda_true_distribution: LambdaTrueDistribution,
+        halo_mass_observable: HaloMassObservable,
         sel_cl_data=None,
         prob_contains_completeness=True,
         extrapolate=None,
@@ -24,7 +24,7 @@ class InterpolatedSelectionFunction:
 
         Parameters
         ----------
-        lambda_true_distribution: LambdaTrueDistribution,
+        halo_mass_observable: HaloMassObservable,
             Object that contains the distribution of true richness given mass
         sel_cl_data: dict
             Object that read the SEL_CL output file and formats its accordingly. It must contain the keys:
@@ -50,7 +50,7 @@ class InterpolatedSelectionFunction:
             If float, sets the float value when out of bounds, if None raises an error.
             Used for computation of Prob(lambda_obs, z_obs)*completeness/purity.
         """
-        self.lambda_true_distribution = lambda_true_distribution
+        self.halo_mass_observable = halo_mass_observable
         self._sel_cl_data = sel_cl_data
         self._prob_contains_completeness = prob_contains_completeness
         self._extrapolate = extrapolate
@@ -342,7 +342,7 @@ class InterpolatedSelectionFunction:
             Dimensions: (z_obs_edges, lambda_obs_edges, z_true, mass)
         """
         # Dimensions: (z, M, lambda_true)
-        pdf_mass_richness_scaling = self.lambda_true_distribution.prob_richness(
+        pdf_mass_richness_scaling = self.halo_mass_observable.prob_richness(
             z_true, mass, lambda_true
         )
 
@@ -605,8 +605,8 @@ if __name__ == "__main__":
     # Read data
     import sys
 
-    from cloelib.observables.clusters.selection_function.lambda_true_distribution import (
-        LognormalPowerLawLambdaTrueDistribution,
+    from cloelib.observables.clusters.halo_mass_observable import (
+        LognormalPowerLawHaloMassObservable,
     )
 
     print("Test with SEL_CL data")
@@ -616,7 +616,7 @@ if __name__ == "__main__":
 
     sel_cl_data = read_sel_cl_output(in_file)
     sfi = InterpolatedSelectionFunction(
-        lambda_true_distribution=LognormalPowerLawLambdaTrueDistribution(
+        halo_mass_observable=LognormalPowerLawHaloMassObservable(
             A_l=None,
             B_l=None,
             C_l=None,

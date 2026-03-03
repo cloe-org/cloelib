@@ -260,7 +260,7 @@ class CLASSBackground:
         Returns:
             (np.ndarray): Matter density values.
         """
-        return np.array([self.results.Om_m(z) for z in zs])
+        return self.results.Om_m(zs)
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -272,7 +272,7 @@ class CLASSBackground:
         Returns:
             (np.ndarray): Matter density values.
         """
-        return np.array([self.results.Om_b(z) for z in zs])
+        return self.results.Om_b(zs)
 
     @property
     def rdrag(self) -> float:
@@ -302,6 +302,7 @@ class CLASSLinearPerturbations:
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
         self.results.compute()
+        self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
     @property
     def _interface_args(self) -> dict:
@@ -435,6 +436,7 @@ class CLASSNonLinearPerturbations:
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
         self.results.compute()
+        self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False

@@ -5,7 +5,7 @@ from numpy.testing import assert_allclose, assert_equal, assert_raises
 
 from cloelib.observables.clusters.selection_function import (
     GaussianSelectionFunction,
-    InterpolatedSelectionFunction,
+    NumericalSelectionFunction,
 )
 from cloelib.observables.clusters.halo_mass_observable import (
     LognormalPowerLawHaloMassObservable,
@@ -181,7 +181,7 @@ def test_interpolated_selectionfunction_unittest():
     gaussian_sf = _get_test_gaussian_sf()
     sel_cl_data = _gen_gaussian_selcl_data(gaussian_sf, test_arrays)
 
-    sfi = InterpolatedSelectionFunction(
+    sfn = NumericalSelectionFunction(
         halo_mass_observable=LognormalPowerLawHaloMassObservable(
             A_l=52.0,
             B_l=0.9,
@@ -196,7 +196,7 @@ def test_interpolated_selectionfunction_unittest():
     )
 
     # Prob functions tests
-    interps = sfi._build_windows_interpolators(
+    interps = sfn._build_windows_interpolators(
         z_obs_edges=test_arrays["z_obs"][::3],
         lambda_obs_edges=test_arrays["lambda_obs"][::2],
     )
@@ -226,7 +226,7 @@ def test_interpolated_selectionfunction_compare_with_gauss():
     gaussian_sf = _get_test_gaussian_sf()
     sel_cl_data = _gen_gaussian_selcl_data(gaussian_sf, test_arrays)
 
-    sfi = InterpolatedSelectionFunction(
+    sfn = NumericalSelectionFunction(
         halo_mass_observable=LognormalPowerLawHaloMassObservable(
             A_l=52.0,
             B_l=0.9,
@@ -253,7 +253,7 @@ def test_interpolated_selectionfunction_compare_with_gauss():
         mass=1e14 * np.ones(2),
         lambda_true=np.linspace(5, 300, 29),
     )
-    wf_i = sfi.window_redshift_richness_observed(
+    wf_n = sfn.window_redshift_richness_observed(
         z_obs_edges=test_arrays["z_obs"][[0, -1]],
         lambda_obs_edges=test_arrays["lambda_obs"][[0, -1]],
         z_true=np.linspace(0, 3, 31),
@@ -263,7 +263,7 @@ def test_interpolated_selectionfunction_compare_with_gauss():
 
     # compare zeros
     _zeros = wf_g == 0
-    assert_allclose(wf_g[_zeros], wf_i[_zeros], atol=2e-2)
+    assert_allclose(wf_g[_zeros], wf_n[_zeros], atol=2e-2)
     # compare non zeros
     print(f"nz: {(~_zeros).sum():}")
-    assert_allclose(wf_g[~_zeros], wf_i[~_zeros], rtol=1e-100)
+    assert_allclose(wf_g[~_zeros], wf_n[~_zeros], rtol=1e-100)

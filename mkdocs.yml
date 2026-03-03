@@ -31,7 +31,7 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
-      navigation.top
+    - navigation.top
     - navigation.tracking
     - content.code.copy
 

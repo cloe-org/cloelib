@@ -300,7 +300,7 @@ def tabulated_return(reference_table, func, func_kwargs):
     else:
         for name, ref_val in reference_table["inputs"].items():
             test_val = func_kwargs[name]
-            if len(ref_val) != len(test_val):
+            if ref_val.shape != test_val.shape:
                 _tabuleted_input = False
                 break
             if (ref_val != test_val).any():

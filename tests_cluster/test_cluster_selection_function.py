@@ -54,7 +54,7 @@ def test_gaussian_selectionfunction():
     print("    lnrichness")
     _lnrichness_ref = [-1.533121, -1.423534, -1.3337, -1.257575, -1.191523]
     assert_allclose(
-        selection_function.halo_mass_observable._mean_lnrichness(z_test, M_test)[:, 0],
+        selection_function.halo_mass_observable._mean_lnrichness(z_test, M_test),
         _lnrichness_ref,
         rtol=1e-05,
     )

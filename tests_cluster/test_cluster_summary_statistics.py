@@ -9,14 +9,14 @@ from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbat
 from cloelib.observables.clusters.covariance import HaloCovariance
 from cloelib.observables.clusters.halo_abundance import CastroHaloAbundance
 from cloelib.observables.clusters.halo_clustering import TwoPoint3DHaloClustering
+from cloelib.observables.clusters.halo_mass_observable import (
+    LognormalPowerLawHaloMassObservable,
+)
 from cloelib.observables.clusters.halo_profile import NFWHaloProfile
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
 from cloelib.observables.clusters.selection_function import (
     GaussianSelectionFunction,
     NumericalSelectionFunction,
-)
-from cloelib.observables.clusters.halo_mass_observable import (
-    LognormalPowerLawHaloMassObservable,
 )
 from cloelib.summary_statistics.clusters import (
     ClusterClustering,

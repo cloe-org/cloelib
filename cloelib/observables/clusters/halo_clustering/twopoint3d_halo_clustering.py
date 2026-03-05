@@ -53,7 +53,7 @@ class TwoPoint3DHaloClustering:
         )
 
         # dark matter power spectrum (z, k)
-        pk = self.core.matter_statistics.matter_power_spectrum(z, k)
+        pk = self.core.matter_statistics.matter_power_spectrum_cb(z, k)
 
         # check if z_obs_scatter has more dimensions
         ndim_z_obs_scatter = len(np.array(z_obs_scatter).shape)

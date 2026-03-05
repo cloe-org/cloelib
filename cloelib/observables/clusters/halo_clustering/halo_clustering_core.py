@@ -145,7 +145,7 @@ class HaloClusteringCore:
         )
 
         # dark matter power spectrum (z, k)
-        pk = self.matter_statistics.matter_power_spectrum(z, k)
+        pk = self.matter_statistics.matter_power_spectrum_cb(z, k)
 
         # halo correction (z, k, ...)
         b_eff_reshaped = b_eff[:, np.newaxis]  # add k axis in position 1

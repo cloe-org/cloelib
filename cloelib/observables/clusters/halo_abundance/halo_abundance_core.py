@@ -162,7 +162,7 @@ class HaloAbundanceCore:
                 / (2.0 * np.pi**2)
                 * simps(
                     (k**2.0).reshape(1, 1, len(k))
-                    * self.matter_statistics.matter_power_spectrum(z, k).reshape(
+                    * self.matter_statistics.matter_power_spectrum_cb(z, k).reshape(
                         len(z), 1, len(k)
                     )
                     * (W**2.0).reshape(1, len(R), len(k)),
@@ -272,7 +272,7 @@ class HaloAbundanceCore:
                 * np.pi**-2
                 * simps(
                     k.reshape(1, 1, len(k)) ** 3
-                    * self.matter_statistics.matter_power_spectrum(z, k).reshape(
+                    * self.matter_statistics.matter_power_spectrum_cb(z, k).reshape(
                         len(z), 1, len(k)
                     )
                     * W.reshape(1, len(R), len(k))

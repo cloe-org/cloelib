@@ -95,9 +95,9 @@ class MatterStatistics:
     def interpolate_pk(self, interpolate_pk):
         """If true, makes class uses interpolation for matter power spectrum computation."""
         if interpolate_pk:
-            self.matter_power_spectrum = self.Pk_interp
+            self.matter_power_spectrum_cb = self.Pk_interp
         else:
-            self.matter_power_spectrum = _matter_power_spectrum_cb_exact
+            self.matter_power_spectrum_cb = _matter_power_spectrum_cb_exact
         self.__interpolate_pk = interpolate_pk
 
     @interpolate_da.setter
@@ -212,7 +212,7 @@ class MatterStatistics:
         ## 2. Integrand function
         def integrand(kl):
             ll = kl * z_plus_1 * D_A
-            Pk_vals = self.matter_power_spectrum(z, kl)
+            Pk_vals = self.matter_power_spectrum_cb(z, kl)
             return bessel_function(ll * theta) * ll * Pk_vals
 
         ## 3. Integration

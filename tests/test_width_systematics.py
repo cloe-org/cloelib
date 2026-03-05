@@ -1,4 +1,4 @@
-from cloelib.auxiliary.width_systematics import stretch_dndz_jax
+from cloelib.auxiliary.systematics import stretch_dndz_jax
 import jax.numpy as jnp
 
 

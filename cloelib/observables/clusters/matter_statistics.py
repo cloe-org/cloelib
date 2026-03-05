@@ -97,7 +97,7 @@ class MatterStatistics:
         if interpolate_pk:
             self.matter_power_spectrum = self.Pk_interp
         else:
-            self.matter_power_spectrum = _matter_power_spectrum_exact
+            self.matter_power_spectrum = _matter_power_spectrum_cb_exact
         self.__interpolate_pk = interpolate_pk
 
     @interpolate_da.setter
@@ -109,7 +109,7 @@ class MatterStatistics:
             self.angular_diameter_distance = self.background.angular_diameter_distance
         self.__interpolate_da = interpolate_da
 
-    def _matter_power_spectrum_exact(self, z, k):
+    def _matter_power_spectrum_cb_exact(self, z, k):
         r"""Computes the non interpolated matter power spectrum.
 
         This function computes the cold dark matter + baryons power spectrum,
@@ -153,7 +153,7 @@ class MatterStatistics:
         self.Pk_interp = interpolate.RectBivariateSpline(
             z,
             k,
-            self._matter_power_spectrum_exact(z, k),
+            self._matter_power_spectrum_cb_exact(z, k),
         )
 
     def set_angular_diameter_distance_interpolation(self, z):

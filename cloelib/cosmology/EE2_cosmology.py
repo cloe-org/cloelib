@@ -129,9 +129,17 @@ class EE2NonLinearPerturbations:
             and redshift
 
         """
-        return self.boost_interp(
-            zs, np.log(ks)
-        ) * self.linearperturbations.matter_power_spectrum_cb(zs, ks)
+
+        # I use the approximation (used e.g. in Bacco) that
+        # neutrinos are linear and P_{m\nu} is replaced by linear calculation.
+        Pcb_L = self.linearperturbations.matter_power_spectrum_cb(zs, ks)
+        Pmm_L = self.linearperturbations.matter_power_spectrum(zs, ks)
+        boost = self.boost_interp(zs, np.log(ks))
+        f_cb = (
+            self.background.Omega_cdm0 + self.background.Omega_b0
+        ) / self.background.Omega_m(0)
+
+        return Pcb_L + (boost - 1) * Pmm_L / f_cb**2
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""

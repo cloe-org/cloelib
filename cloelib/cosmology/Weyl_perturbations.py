@@ -35,22 +35,19 @@ class Weyl_Perturbations:
         return self.perturbations.growth_factor(zs, ks)
 
     def growth_rate(self) -> T:
-        # We multiply the growth rate by th growth factor (normalized at z_ini).
-        # This is to include the RSD effect in the Weyl measurement (without modifying angular_two_point.py), while properly accounting for the growth at z_ini.
-        zini_arr = self.z * 0 + self.z_ini
-        gf = (
-            self.perturbations.growth_factor(self.z, self.k[:1])[:, 0]
-            / self.perturbations.growth_factor(zini_arr, self.k[:1])[:, 0]
-        )
-        return gf * self.perturbations.growth_rate()
+        # Note: Current implementaions of CAMB/CLASS pertrubations classes do not allow to specify a zs argument for growth_rate(), it is always calculated at self.z; This means that this only gives consistent results (for the RSD contribution to Cell) when making sure that self.perturbations.z == redshifts.
+        return self.perturbations.growth_rate()
 
-    def boost(self, zs: T, ks: T) -> T:
+    def boost(
+        self, zs: T, ks: T, k0=None
+    ) -> T:  # Include k0 for (temporary) testing purposes
         """
         boost(zs, ks) = growth_factor(zs, ks) / growth_factor(zs, k0_array)
         where k0_array has the same shape and dtype as ks, filled with k0.
         """
         # Create k0 array with same shape as ks; zini_arr with same shape as zs:
-        k0 = self.k[0]
+        if k0 is None:
+            k0 = self.k[0]
         k0_arr = ks * 0 + k0
         zini_arr = zs * 0 + self.z_ini
 
@@ -64,14 +61,18 @@ class Weyl_Perturbations:
         return gf_num / gf_den
 
     def matter_power_spectrum(
-        self, zs: T, ks: T, hubble_units: bool = False, k_hunit: bool = False
-    ) -> T:
+        self, zs: T, ks: T, hubble_units: bool = False, k_hunit: bool = False, k0=None
+    ) -> T:  # Include k0 for (temporary) testing purposes
         """
         Return boosted matter power spectrum:
           P_boosted(zs, ks) = boost(zs, ks) * P_base(z_ini_array, ks)
 
         Here z_ini_array is an array matching zs (type & shape) where every entry == self.z_ini.
         """
+
+        if k0 is None:
+            k0 = self.k[0]
+
         # create z_ini array matching zs' type & shape
         z_ini_arr = zs * 0 + self.z_ini
 
@@ -80,7 +81,7 @@ class Weyl_Perturbations:
             z_ini_arr, ks, hubble_units=hubble_units, k_hunit=k_hunit
         )
 
-        b = self.boost(zs, ks)
+        b = self.boost(zs, ks, k0=k0)
         return b**2 * P_base
 
     def sigma8_0(self) -> float:

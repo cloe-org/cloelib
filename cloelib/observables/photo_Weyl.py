@@ -7,7 +7,7 @@ Both classes are compatible with the Tracer protocol.
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.observables.photo import PositionsTracer, ShearTracer
+from cloelib.observables.photo import PositionsTracer, get_photo_rsd
 
 # General imports
 import jax.numpy as np  # type: ignore
@@ -17,67 +17,6 @@ import jax.numpy as np  # type: ignore
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 # NOTE WEYL PROJECT: No changes to ShearTracer class --> import from usual photo.py file
-
-
-class ShearTracer_Weyl(ShearTracer):
-    def __init__(
-        self,
-        perturbations: Perturbations,  # Note: We should require this to be an instance of Weyl_perturbations
-        dndz: np.ndarray,
-        z: np.ndarray,
-        nuisance_params: dict,
-    ):
-        # Reuse parent initialization but force per-bin bias model
-        super().__init__(
-            perturbations=perturbations,
-            dndz=dndz,
-            z=z,
-            nuisance_params=nuisance_params,
-        )
-
-        # Defines z_ini
-        if hasattr(
-            self.perturbations, "z_ini"
-        ):  # True if perturbations is an instance of Weyl_Perturbations)
-            self.z_ini = self.perturbations.z_ini
-        else:
-            # Fallback: use the first entry of perturbations.z,
-            # but ensure the array has exactly one element.
-            # Note: This will now lead to an error if perturbations is an instance of CAMB_perturbations (perturbations.z now enforced to contain 0 in recent changes). It still works with CLASS_perturbations. But we should probably remove this soon and enforce the use of the Weyl_perturbations class.
-            if len(self.perturbations.z) != 1:
-                raise ValueError(
-                    f"Cannot infer z_ini from perturbations.z: expected length 1, "
-                    f"got length {len(self.perturbations.z)}. "
-                    "Multi-z arrays would lead to inconsistent C_ell calculations."
-                )
-            self.z_ini = self.perturbations.z[0]
-
-    def get_window(self, z):
-        r"""Compute the Window.
-
-        Computes general window given the selected tracer
-
-        Parameters:
-          z (float): Redshift at which window kernel is being evaluated
-
-        Returns:
-          window (np.ndarray):
-        """
-        # Weyl project: Multiply by the growth factor normalized at z_ini
-
-        growth_factor = (
-            self.perturbations.growth_factor(z, self.perturbations.k[:1])[:, 0]
-            / self.perturbations.growth_factor(
-                np.array([self.z_ini]), self.perturbations.k[:1]
-            )[0, 0]
-        )
-
-        total_window = (
-            self.get_window_lensing(z) + self.get_window_IA(z)
-        ) * growth_factor
-        # Apply multiplicative bias
-        total_window *= 1 + np.array(self.m_bias)[:, None]
-        return total_window
 
 
 class PositionsTracer_Weyl_GC(PositionsTracer):
@@ -138,6 +77,16 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
         )
         self.bias_array = np.pad(bias_vals, (0, self.z.shape[0] - self.n_z_bins))
 
+    def growth_since_zini(self, z) -> np.ndarray:
+        """New function to account for the growth (in GR) since z_ini"""
+        growth = (
+            self.perturbations.growth_factor(z, self.perturbations.k[:1])[:, 0]
+            / self.perturbations.growth_factor(
+                np.array([self.z_ini]), self.perturbations.k[:1]
+            )[0, 0]
+        )
+        return growth
+
     def get_window_positions(self, z) -> np.ndarray:
         """Weyl GC positions window: uses bhat and divides by sigma8_ini (single power)."""
 
@@ -153,14 +102,16 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
 
         return per_bin_case()
 
+    def get_window_rsd(self, ells, H, f, chi) -> np.ndarray:
+        """Weyl GC RSD window: multiply by growth_factor (normalized to z_ini) once."""
+        # S_i(z) = H(z) f(z) n_i(z) / c
+        growth_factor = self.growth_since_zini(self.z)
+        S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted * growth_factor
+        return get_photo_rsd(ells, chi, S)
+
     def get_window_magnification(self, z):
         """Weyl GC magnification: multiply by growth_factor (normalized to z_ini) once."""
-        growth_factor = (
-            self.perturbations.growth_factor(z, self.perturbations.k[:1])[:, 0]
-            / self.perturbations.growth_factor(
-                np.array([self.z_ini]), self.perturbations.k[:1]
-            )[0, 0]
-        )
+        growth_factor = self.growth_since_zini(z)
 
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (
@@ -249,19 +200,21 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         )
         self.Jhat_array = np.pad(jhat_vals, (0, self.z.shape[0] - self.n_z_bins))
 
-    def get_window_positions(self, z) -> np.ndarray:
-        """Weyl-modified positions window: multiplies by Jhat and by bhat; removes Omega_m^{-1}(z) factor;
-        divides by sigma8_ini^2. Divide through growth factor normalized at z_ini."""
-        Omega_m = self.background.Omega_m(z)
-
-        growth_factor = (
+    def growth_since_zini(self, z) -> np.ndarray:
+        """New function to account for the growth (in GR) since z_ini"""
+        growth = (
             self.perturbations.growth_factor(z, self.perturbations.k[:1])[:, 0]
             / self.perturbations.growth_factor(
                 np.array([self.z_ini]), self.perturbations.k[:1]
             )[0, 0]
         )
+        return growth
 
-        # Note: We divide through the growth factor (rather than multiplying by it) as it is already contained twice in Jhat_array*bhat_array/self.sigma8_ini**2
+    def get_window_positions(self, z) -> np.ndarray:
+        """Weyl-modified positions window: multiplies by Jhat and by bhat; removes Omega_m^{-1}(z) factor;
+        divides by sigma8_ini^2."""
+        Omega_m = self.background.Omega_m(z)
+
         def per_bin_case():
             window = (
                 self.bias_array[: self.n_z_bins, None]
@@ -270,27 +223,28 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
                 * self.perturbations.background.hubble_parameter(z)
                 / (c_0 * Omega_m)
                 / self.sigma8_ini**2
-                / growth_factor
             )
             return window
 
         return per_bin_case()
 
+    def get_window_rsd(self, ells, H, f, chi) -> np.ndarray:
+        """Weyl GC RSD window: multiply by growth_factor (normalized to z_ini) once."""
+        # S_i(z) = H(z) f(z) n_i(z) / c
+        growth_factor = self.growth_since_zini(self.z)
+        S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted * growth_factor**2
+        return get_photo_rsd(ells, chi, S)
+
     def get_window_magnification(self, z):
         """Override magnification window: include growth factor squared (Weyl-specific)."""
         # Weyl project: added growth factor normalized to its value at z_ini
-        growth_factor = (
-            self.perturbations.growth_factor(z, self.perturbations.k[:1])[:, 0]
-            / self.perturbations.growth_factor(
-                np.array([self.z_ini]), self.perturbations.k[:1]
-            )[0, 0]
-        )
+        growth_factor = self.growth_since_zini(z)
 
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (
             3
             / 2
-            * growth_factor
+            * growth_factor**2
             * (self.background.H0 / c_0) ** 2
             * Omega_m0
             * (1 + z)

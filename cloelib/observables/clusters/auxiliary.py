@@ -7,9 +7,7 @@ from scipy.special import erf
 from cloelib.auxiliary import units
 
 
-def convert_to_Delta_crit(
-    overdensity_type, overdensity=200, background=None, z=0.0
-):
+def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=0.0):
     r"""Critical overdensity factor.
 
     Converts the input overdensity factor into a critical one.

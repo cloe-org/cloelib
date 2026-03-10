@@ -77,8 +77,7 @@ class MatterStatistics:
 
     @property
     def Omega_m(self):
-        r"""Returns the `Omega_m` value at redshift `z=0`.
-        """
+        r"""Returns the `Omega_m` value at redshift `z=0`."""
         return self.background.Omega_m(0.0)
 
     @property

@@ -10,7 +10,7 @@ from .halo_abundance_core import HaloAbundanceCore
 
 class CastroHaloAbundance:
 
-    def __init__(self, matter_statistics: MatterStatistics):        
+    def __init__(self, matter_statistics: MatterStatistics):
         """
         Class implementing the Castro et al. mass abundance models.
 

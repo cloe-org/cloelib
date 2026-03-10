@@ -65,7 +65,8 @@ class HaloAbundanceCore:
         halo mass function.
 
         Computes the derivative of the number density
-        at the requested redshift and mass points.
+        at the requested redshift and mass points. This implementation follows
+        the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).
 
         Parameters
         ----------
@@ -82,7 +83,7 @@ class HaloAbundanceCore:
             dn_dm[i,j], where i is the redshift axis and j the mass axis.
             Units: h^4 Mpc^{-3} Ms^{-1}.
         """
-        rho_mean_0 = self.matter_statistics.Omega_m * derived_cosmology.rho_crit(
+        rho_mean_0 = self.matter_statistics.Omega_cb * derived_cosmology.rho_crit(
             self.matter_statistics.background, 0.0
         )
         rho_mean_0 /= self.matter_statistics.background.h**2.0

@@ -25,6 +25,8 @@ class Weyl_Perturbations:
         self.perturbations = perturbations
         self.z = redshifts
         self.z_ini = float(z_ini)
+        # TO DO: Code should check if z_ini is included in self.perturbations.z (necessary for calculations of growth rate at z_ini);
+        # Print error otherwise
         self.k = perturbations.k
 
     @property
@@ -36,15 +38,20 @@ class Weyl_Perturbations:
 
     def growth_rate(self) -> T:
         # Note: Current implementaions of CAMB/CLASS pertrubations classes do not allow to specify a zs argument for growth_rate(), it is always calculated at self.z; This means that this only gives consistent results (for the RSD contribution to Cell) when making sure that self.perturbations.z == redshifts.
+        # TO DO: check if self.z is included in self.perturbations.z; Choose respective indices for calculation of growth_rate if yes, otherwise print error
         return self.perturbations.growth_rate()
 
     def boost(
         self, zs: T, ks: T, k0=None
-    ) -> T:  # Include k0 for (temporary) testing purposes
+    ) -> T:  # Include k0 for testing purposes (potentially temporary, might remove this again)
         """
         boost(zs, ks) = growth_factor(zs, ks) / growth_factor(zs, k0_array)
         where k0_array has the same shape and dtype as ks, filled with k0.
         """
+        # To DO: check if self.perturbations is an instance of CAMB perturbations.
+        # If yes, calculate boost directly using ratio of self.perturbations.results.get_nonlinear_matter_power_spectrum and self.perturbations.results.get_nonlinear_matter_power_spectrum
+        # If no, use existing boost implementation
+
         # Create k0 array with same shape as ks; zini_arr with same shape as zs:
         if k0 is None:
             k0 = self.k[0]

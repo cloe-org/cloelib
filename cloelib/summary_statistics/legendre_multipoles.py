@@ -8,8 +8,92 @@ from cloelib.auxiliary.math_utils import legendre
 from cloelib.auxiliary.fftlog import fftlog
 
 # General imports
+import functools
 from typing import Optional
 import numpy as np
+
+# cosmolib imports
+from cosmolib.data import PowerSpectrumMultipoles, TwoPointCorrelationMultipoles
+
+
+def format_output(stat: str):
+    """Decorator to format the output of the main GC observables.
+
+    Parameters
+    ----------
+    stat: str
+        Type of output to format ('PK' or '2PCF').
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            """cosmolib format returns in Mpc/h units, differently from cloelib standards"""
+            format_val = kwargs.get("format_type")
+
+            if format_val != "cosmolib":
+                return func(self, *args, **kwargs)
+
+            h_fid = self.spectro_power.background.h
+
+            if stat == "PK":
+                if "convolved" in func.__name__:
+                    mixing = (
+                        kwargs["mixing_matrix"]
+                        if "mixing_matrix" in kwargs
+                        else args[0]
+                    )
+                    scale_h = mixing.get("kout")
+                else:
+                    scale_h = kwargs["k"] if "k" in kwargs else args[0]
+                scale = scale_h * h_fid
+                if "k" in kwargs:
+                    kwargs["k"] = scale
+                else:
+                    args = (scale, *args[1:])
+            elif stat == "2PCF":
+                scale_h = kwargs["s"] if "s" in kwargs else args[0]
+                scale = scale_h / h_fid
+                if "s" in kwargs:
+                    kwargs["s"] = scale
+                else:
+                    args = (scale, *args[1:])
+
+            result = func(self, *args, **kwargs)
+
+            cosmo = {
+                key: float(val) if isinstance(val, float) else val
+                for key, val in vars(self.spectro_power.background).items()
+                if isinstance(val, (float, int)) and key != "h"
+            }
+            out = np.array(
+                [result.get(f"ell{i}", np.zeros(len(scale_h))) for i in range(5)]
+            )
+
+            if stat == "PK":
+                out *= h_fid**3
+                return PowerSpectrumMultipoles(
+                    k=scale_h,
+                    keff=scale_h,
+                    Nmodes=np.zeros_like(scale_h),
+                    multipoles=out,
+                    fiducial_cosmology=cosmo,
+                    zeff=self.spectro_power.redshift,
+                    nbar=self.nbar,
+                    Psn=1.0 / self.nbar,
+                )
+
+            elif stat == "2PCF":
+                return TwoPointCorrelationMultipoles(
+                    s=scale_h,
+                    multipoles=out,
+                    fiducial_cosmology=cosmo,
+                    zeff=self.spectro_power.redshift,
+                )
+
+        return wrapper
+
+    return decorator
 
 
 class LegendreMultipoles:
@@ -240,11 +324,13 @@ class LegendreMultipoles:
             * (1.0 - self.parameters["fout"]) ** 2
         )
 
+    @format_output("PK")
     def power_multipoles(
         self,
         k: np.ndarray,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
+        format_type: Optional[str] = None,
     ) -> dict:
         r"""Power spectrum Legendre multipoles.
 
@@ -252,6 +338,7 @@ class LegendreMultipoles:
             k (np.ndarray): Wavenumber
             ells (np.ndarray): Legendre multipole order
             use_AP (bool): Flag to switch between with and without AP corrections
+            format_type (str): Type of output format
         Returns:
             multipoles (dict): Power spectrum Legendre multipoles
         """
@@ -273,6 +360,7 @@ class LegendreMultipoles:
                 "ab,b,b->a", Pk2d_tot, leg, self.mu_weights
             )
             multipoles[f"ell{ell}"] *= 2.0 * prefactors[i]
+
         return multipoles
 
     def power_term_multipoles(
@@ -335,11 +423,13 @@ class LegendreMultipoles:
             multipoles[f"ell{ell}"] *= 2.0 * prefactors[i]
         return multipoles
 
+    @format_output("PK")
     def convolved_power_multipoles(
         self,
         mixing_matrix: dict,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
+        format_type: Optional[str] = None,
     ) -> dict:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
 
@@ -347,6 +437,7 @@ class LegendreMultipoles:
             mixing_matrix (dict): Dicitonary containing the mixing matrix
             ells (np.ndarray): Legendre multipole order
             use_AP (bool): Flag to switch between with and without AP corrections
+            format_type (str): Type of output format
 
         Returns:
             multipoles_out (dict): Convolved power spectrum Legendre multipoles
@@ -448,6 +539,7 @@ class LegendreMultipoles:
         """
         return np.exp(-((k / kcut) ** pow))
 
+    @format_output("2PCF")
     def two_point_correlation_multipoles(
         self,
         s: np.ndarray,
@@ -458,6 +550,7 @@ class LegendreMultipoles:
         nk: Optional[int] = 2048,
         kcut: Optional[float] = 0.4,
         pow: Optional[float] = 2,
+        format_type: Optional[str] = None,
     ) -> dict:
         r"""Two-point correlation function Legendre multipoles.
 
@@ -479,6 +572,8 @@ class LegendreMultipoles:
             Cutoff scale for exponential damping
         pow: float
             Power index for exponential damping
+        format_type: str
+            Type of output format
         Returns
         -------
         multipoles: dict
@@ -504,4 +599,5 @@ class LegendreMultipoles:
             transformer = fftlog(x=k_hnkl, fx=y_array, nu=2)
             r_grid, transformed_log = transformer.fftlog(ell=ell)
             xi_multipoles[f"ell{ell}"] = np.interp(s, r_grid, transformed_log)
+
         return xi_multipoles

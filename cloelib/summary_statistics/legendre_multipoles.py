@@ -28,43 +28,68 @@ def format_output(stat: str):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
+            """cosmolib format returns in Mpc/h units, differently from cloelib standards"""
             format_val = kwargs.get("format")
+
+            if format_val != "cosmolib":
+                return func(self, *args, **kwargs)
+
+            h_fid = self.spectro_power.background.h
+
+            if stat == "PK":
+                if "convolved" in func.__name__:
+                    mixing = (
+                        kwargs["mixing_matrix"]
+                        if "mixing_matrix" in kwargs
+                        else args[0]
+                    )
+                    scale_h = mixing.get("kout")
+                else:
+                    scale_h = kwargs["k"] if "k" in kwargs else args[0]
+                scale = scale_h * h_fid
+                if "k" in kwargs:
+                    kwargs["k"] = scale
+                else:
+                    args = (scale, *args[1:])
+            elif stat == "2PCF":
+                scale_h = kwargs["s"] if "s" in kwargs else args[0]
+                scale = scale_h / h_fid
+                if "s" in kwargs:
+                    kwargs["s"] = scale
+                else:
+                    args = (scale, *args[1:])
+
             result = func(self, *args, **kwargs)
-            if format_val == "cosmolib":
-                if stat == "PK":
-                    if "convolved" in func.__name__:
-                        scale = kwargs.get("mixing_matrix", args[0]).get("kout")
-                    else:
-                        scale = kwargs.get("k")
-                elif stat == "2PCF":
-                    scale = kwargs.get("s")
-                cosmo = {
-                    key: val
-                    for key, val in vars(self.spectro_power.background).items()
-                    if isinstance(val, (float, int))
-                }
-                out = np.array(
-                    [result.get(f"ell{i}", np.zeros(len(scale))) for i in range(5)]
+
+            cosmo = {
+                key: val
+                for key, val in vars(self.spectro_power.background).items()
+                if isinstance(val, (float, int)) and key != "h"
+            }
+            out = np.array(
+                [result.get(f"ell{i}", np.zeros(len(scale_h))) for i in range(5)]
+            )
+
+            if stat == "PK":
+                out *= h_fid**3
+                return PowerSpectrumMultipoles(
+                    k=scale_h,
+                    keff=scale_h,
+                    Nmodes=np.zeros_like(scale_h),
+                    multipoles=out,
+                    fiducial_cosmology=cosmo,
+                    zeff=self.spectro_power.redshift,
+                    nbar=self.nbar,
+                    Psn=1.0 / self.nbar,
                 )
-                if stat == "PK":
-                    return PowerSpectrumMultipoles(
-                        k=scale,
-                        keff=scale,
-                        Nmodes=np.zeros_like(scale),
-                        multipoles=out,
-                        fiducial_cosmology=cosmo,
-                        zeff=self.spectro_power.redshift,
-                        nbar=self.nbar,
-                        Psn=1.0 / self.nbar,
-                    )
-                elif stat == "2PCF":
-                    return TwoPointCorrelationMultipoles(
-                        s=scale,
-                        multipoles=out,
-                        fiducial_cosmology=cosmo,
-                        zeff=self.spectro_power.redshift,
-                    )
-            return result
+
+            elif stat == "2PCF":
+                return TwoPointCorrelationMultipoles(
+                    s=scale_h,
+                    multipoles=out,
+                    fiducial_cosmology=cosmo,
+                    zeff=self.spectro_power.redshift,
+                )
 
         return wrapper
 

@@ -29,7 +29,7 @@ def format_output(stat: str):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             """cosmolib format returns in Mpc/h units, differently from cloelib standards"""
-            format_val = kwargs.get("format")
+            format_val = kwargs.get("format_type")
 
             if format_val != "cosmolib":
                 return func(self, *args, **kwargs)
@@ -62,7 +62,7 @@ def format_output(stat: str):
             result = func(self, *args, **kwargs)
 
             cosmo = {
-                key: val
+                key: float(val) if isinstance(val, float) else val
                 for key, val in vars(self.spectro_power.background).items()
                 if isinstance(val, (float, int)) and key != "h"
             }
@@ -330,7 +330,7 @@ class LegendreMultipoles:
         k: np.ndarray,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        format: Optional[str] = None,
+        format_type: Optional[str] = None,
     ) -> dict:
         r"""Power spectrum Legendre multipoles.
 
@@ -338,6 +338,7 @@ class LegendreMultipoles:
             k (np.ndarray): Wavenumber
             ells (np.ndarray): Legendre multipole order
             use_AP (bool): Flag to switch between with and without AP corrections
+            format_type (str): Type of output format
         Returns:
             multipoles (dict): Power spectrum Legendre multipoles
         """
@@ -428,7 +429,7 @@ class LegendreMultipoles:
         mixing_matrix: dict,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        format: Optional[str] = None,
+        format_type: Optional[str] = None,
     ) -> dict:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
 
@@ -436,6 +437,7 @@ class LegendreMultipoles:
             mixing_matrix (dict): Dicitonary containing the mixing matrix
             ells (np.ndarray): Legendre multipole order
             use_AP (bool): Flag to switch between with and without AP corrections
+            format_type (str): Type of output format
 
         Returns:
             multipoles_out (dict): Convolved power spectrum Legendre multipoles
@@ -548,7 +550,7 @@ class LegendreMultipoles:
         nk: Optional[int] = 2048,
         kcut: Optional[float] = 0.4,
         pow: Optional[float] = 2,
-        format: Optional[str] = None,
+        format_type: Optional[str] = None,
     ) -> dict:
         r"""Two-point correlation function Legendre multipoles.
 
@@ -570,6 +572,8 @@ class LegendreMultipoles:
             Cutoff scale for exponential damping
         pow: float
             Power index for exponential damping
+        format_type: str
+            Type of output format
         Returns
         -------
         multipoles: dict

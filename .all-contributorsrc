@@ -259,7 +259,9 @@
       "contributions": [
         "code",
         "ideas",
-        "doc"
+        "doc",
+        "review",
+        "bug"
       ]
     },
     {
@@ -378,7 +380,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/50758399?v=4",
       "profile": "https://github.com/zsirap",
       "contributions": [
-        "code"
+        "code",
+        "ideas",
+        "bug"
       ]
     },
     {
@@ -418,6 +422,17 @@
       "profile": "https://github.com/ivansladoljev",
       "contributions": [
         "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "NastassiaG",
+      "name": "NastassiaG",
+      "avatar_url": "https://avatars.githubusercontent.com/u/107264848?v=4",
+      "profile": "https://github.com/NastassiaG",
+      "contributions": [
+        "code",
+        "bug",
         "ideas"
       ]
     }

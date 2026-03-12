@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
     
     
       
@@ -1831,6 +1831,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cloelib.summary_statistics.legendre_multipoles.format_output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;format_output
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3009,6 +3020,17 @@
     <span class="md-ellipsis">
       
         <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;LegendreMultipoles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.summary_statistics.legendre_multipoles.format_output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;format_output
       
     </span>
   </a>
@@ -22024,7 +22046,7 @@ observational systematics</p>
 
 
 <a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">power_multipoles</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(k)">k</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(ells)">ells</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(use_AP)">use_AP</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">power_multipoles</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(k)">k</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(ells)">ells</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(use_AP)">use_AP</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(format_type)">format_type</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -22060,6 +22082,16 @@ observational systematics</p>
           –
           <div class="doc-md-description">
             <p>Flag to switch between with and without AP corrections</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(format_type)" class="doc doc-heading doc-heading-parameter">              <b><code>format_type</code></b>
+<a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(format_type)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="str">str</span></code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Type of output format</p>
           </div>
         </li>
     </ul>
@@ -22154,7 +22186,7 @@ observational systematics</p>
 
 
 <a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">convolved_power_multipoles</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(mixing_matrix)">mixing_matrix</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(ells)">ells</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(use_AP)">use_AP</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">convolved_power_multipoles</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(mixing_matrix)">mixing_matrix</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(ells)">ells</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(use_AP)">use_AP</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(format_type)">format_type</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -22190,6 +22222,16 @@ observational systematics</p>
           –
           <div class="doc-md-description">
             <p>Flag to switch between with and without AP corrections</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(format_type)" class="doc doc-heading doc-heading-parameter">              <b><code>format_type</code></b>
+<a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(format_type)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="str">str</span></code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Type of output format</p>
           </div>
         </li>
     </ul>
@@ -22294,7 +22336,7 @@ observational systematics</p>
 
 
 <a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">two_point_correlation_multipoles</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(s)">s</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(ells)">ells</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(use_AP)">use_AP</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(logkmin)">logkmin</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(logkmax)">logkmax</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(nk)">nk</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(kcut)">kcut</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(pow)">pow</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">two_point_correlation_multipoles</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(s)">s</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(ells)">ells</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(use_AP)">use_AP</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(logkmin)">logkmin</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(logkmax)">logkmax</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(nk)">nk</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(kcut)">kcut</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(pow)">pow</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(format_type)">format_type</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -22317,6 +22359,8 @@ kcut: float
     Cutoff scale for exponential damping
 pow: float
     Power index for exponential damping
+format_type: str
+    Type of output format
 Returns</p>
 <hr />
 <p>multipoles: dict
@@ -22336,6 +22380,30 @@ Returns</p>
 
 </div>
 
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.summary_statistics.legendre_multipoles.format_output" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">format_output</span>
+
+
+<a href="#cloelib.summary_statistics.legendre_multipoles.format_output" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">format_output</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.format_output(stat)">stat</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Decorator to format the output of the main GC observables.</p>
+<h6 id="cloelib.summary_statistics.legendre_multipoles.format_output--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.legendre_multipoles.format_output--parameters" title="Permanent link">&para;</a></h6>
+<p>stat: str
+    Type of output to format ('PK' or '2PCF').</p>
+
+          
+
+    </div>
+
+</div>
 
 
 
@@ -23670,7 +23738,7 @@ observational systematics</p>
 
 
 <a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">power_multipoles</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(k)">k</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(ells)">ells</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(use_AP)">use_AP</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">power_multipoles</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(k)">k</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(ells)">ells</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(use_AP)">use_AP</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(format_type)">format_type</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -23706,6 +23774,16 @@ observational systematics</p>
           –
           <div class="doc-md-description">
             <p>Flag to switch between with and without AP corrections</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(format_type)" class="doc doc-heading doc-heading-parameter">              <b><code>format_type</code></b>
+<a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.power_multipoles(format_type)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="str">str</span></code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Type of output format</p>
           </div>
         </li>
     </ul>
@@ -23800,7 +23878,7 @@ observational systematics</p>
 
 
 <a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">convolved_power_multipoles</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(mixing_matrix)">mixing_matrix</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(ells)">ells</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(use_AP)">use_AP</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">convolved_power_multipoles</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(mixing_matrix)">mixing_matrix</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(ells)">ells</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(use_AP)">use_AP</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(format_type)">format_type</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -23836,6 +23914,16 @@ observational systematics</p>
           –
           <div class="doc-md-description">
             <p>Flag to switch between with and without AP corrections</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(format_type)" class="doc doc-heading doc-heading-parameter">              <b><code>format_type</code></b>
+<a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.convolved_power_multipoles(format_type)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="str">str</span></code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Type of output format</p>
           </div>
         </li>
     </ul>
@@ -23940,7 +24028,7 @@ observational systematics</p>
 
 
 <a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">two_point_correlation_multipoles</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(s)">s</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(ells)">ells</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(use_AP)">use_AP</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(logkmin)">logkmin</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(logkmax)">logkmax</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(nk)">nk</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(kcut)">kcut</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(pow)">pow</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">two_point_correlation_multipoles</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(s)">s</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(ells)">ells</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(use_AP)">use_AP</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(logkmin)">logkmin</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(logkmax)">logkmax</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(nk)">nk</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(kcut)">kcut</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(pow)">pow</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_multipoles(format_type)">format_type</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -23963,6 +24051,8 @@ kcut: float
     Cutoff scale for exponential damping
 pow: float
     Power index for exponential damping
+format_type: str
+    Type of output format
 Returns</p>
 <hr />
 <p>multipoles: dict
@@ -23982,6 +24072,30 @@ Returns</p>
 
 </div>
 
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="cloelib.summary_statistics.legendre_multipoles.format_output" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">format_output</span>
+
+
+<a href="#cloelib.summary_statistics.legendre_multipoles.format_output" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">format_output</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.format_output(stat)">stat</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Decorator to format the output of the main GC observables.</p>
+<h5 id="cloelib.summary_statistics.legendre_multipoles.format_output--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.legendre_multipoles.format_output--parameters" title="Permanent link">&para;</a></h5>
+<p>stat: str
+    Type of output to format ('PK' or '2PCF').</p>
+
+          
+
+    </div>
+
+</div>
 
 
 

@@ -435,6 +435,17 @@
         "bug",
         "ideas"
       ]
+    },
+    {
+      "login": "martincrocce",
+      "name": "Martin Crocce",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29067049?v=4",
+      "profile": "https://github.com/martincrocce",
+      "contributions": [
+        "projectManagement",
+        "mentoring",
+        "promotion"
+      ]
     }
   ]
 }

@@ -402,6 +402,7 @@ class CAMBLinearPerturbations:
 
         return self.results.get_sigma8().max()
 
+
 class CAMBNonLinearPerturbations:
     """A wrapper for CAMB nonlinear perturbation calculations."""
 
@@ -536,4 +537,4 @@ class CAMBNonLinearPerturbations:
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""
 
-        return self.results.get_sigma8().max()        
+        return self.results.get_sigma8().max()

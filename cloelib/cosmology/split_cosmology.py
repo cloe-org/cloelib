@@ -1,19 +1,20 @@
 # cloelib imports
-from cloelib.auxiliary import extrapolator
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.cosmology.derived_cosmology import growth_function_ODE
 
 import numpy as np
-from scipy import interpolate
-import copy
-from typing import Optional, Sequence
+
 
 class SplitLinearPerturbations:
     """Class to output the rescaled linear matter power spectrum for the
     growth-geometry split"""
 
     def __init__(
-        self, background: Background, omega_m_growth: float, redshifts: np.ndarray, perturbations: Perturbations,
+        self,
+        background: Background,
+        omega_m_growth: float,
+        redshifts: np.ndarray,
+        perturbations: Perturbations,
     ):
         """Initialise SplitLinearPerturbations."""
         self.background = background
@@ -61,7 +62,7 @@ class SplitLinearPerturbations:
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.pk_linear_EBS = self.perturbations.matter_power_spectrum(zs,ks)  # type:ignore[union-attr]
+        self.pk_linear_EBS = self.perturbations.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
 
         omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
 
@@ -103,7 +104,7 @@ class SplitNonLinearPerturbations:
         perturbations_lin: Perturbations,
         perturbations_NL: Perturbations,
     ):
-        """Initialize the OmgrowthLinearPerturbation and OmgrowthNonLinearPerturbation instance."""        
+        """Initialize the OmgrowthLinearPerturbation and OmgrowthNonLinearPerturbation instance."""
         self.z = redshifts
         self.kmax = 100
         self.pk_linear = pk_linear
@@ -138,8 +139,8 @@ class SplitNonLinearPerturbations:
 
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        pk_linear_growth = self.perturbations_lin.matter_power_spectrum(zs,ks)  # type:ignore[union-attr]
-        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum(zs,ks)  # type:ignore[union-attr]
+        pk_linear_growth = self.perturbations_lin.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
+        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
 
         # Compute the boost factor
         boost = pk_nonlinear_growth / pk_linear_growth

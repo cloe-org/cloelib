@@ -2,13 +2,10 @@
 
 # cloelib imports
 from cloelib.auxiliary import units
-from cloelib.cosmology.cosmology import Background
 
 # General imports
 import numpy as np
 from scipy import optimize, integrate
-import copy
-from typing import Optional
 
 _log10_GRAVITATIONAL_CONSTANT = np.log10(units.GRAVITATIONAL_CONSTANT)
 

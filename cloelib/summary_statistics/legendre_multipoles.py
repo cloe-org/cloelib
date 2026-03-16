@@ -13,7 +13,11 @@ from typing import Optional
 import numpy as np
 
 # cosmolib imports
-from cosmolib.data import PowerSpectrumMultipoles, TwoPointCorrelationMultipoles, TwoPointCorrelationPolar
+from cosmolib.data import (
+    PowerSpectrumMultipoles,
+    TwoPointCorrelationMultipoles,
+    TwoPointCorrelationPolar,
+)
 
 
 def format_output(stat: str):
@@ -24,12 +28,14 @@ def format_output(stat: str):
     stat: str
         Type of output to format ('PK' or '2PCF').
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             """cosmolib format is returned in Mpc/h units, differently from
-               cloelib standards
+            cloelib standards
             """
+
             def get_arg(name, idx):
                 return kwargs[name] if name in kwargs else args[idx]
 
@@ -38,7 +44,7 @@ def format_output(stat: str):
                 if name in kwargs:
                     kwargs[name] = value
                 else:
-                    args = (*args[:idx], value, *args[idx+1:])
+                    args = (*args[:idx], value, *args[idx + 1 :])
 
             if kwargs.get("format_type") != "cosmolib":
                 return func(self, *args, **kwargs)
@@ -67,10 +73,15 @@ def format_output(stat: str):
             }
 
             if stat == "PK_multipoles":
-                out = np.array([
-                    result.get(f"ell{i}", np.zeros(len(scale_h)))
-                    for i in range(5)
-                ]) * h_fid**3
+                out = (
+                    np.array(
+                        [
+                            result.get(f"ell{i}", np.zeros(len(scale_h)))
+                            for i in range(5)
+                        ]
+                    )
+                    * h_fid**3
+                )
                 return PowerSpectrumMultipoles(
                     k=scale_h,
                     keff=scale_h,
@@ -82,10 +93,9 @@ def format_output(stat: str):
                     Psn=1.0 / self.nbar,
                 )
             elif stat == "2PCF_multipoles":
-                out = np.array([
-                    result.get(f"ell{i}", np.zeros(len(scale_h)))
-                    for i in range(5)
-                ])
+                out = np.array(
+                    [result.get(f"ell{i}", np.zeros(len(scale_h))) for i in range(5)]
+                )
                 return TwoPointCorrelationMultipoles(
                     s=scale_h,
                     multipoles=out,
@@ -653,16 +663,15 @@ class LegendreMultipoles:
             Polar two-point correlation function
         """
         if self.spectro_power.NLcode != "COMET":
-            raise ValueError(
-                "Polar 2PCF can temporarily be retrieved only with COMET"
-            )
-        ells = [0,2,4]
+            raise ValueError("Polar 2PCF can temporarily be retrieved only with COMET")
+        ells = [0, 2, 4]
 
         xi_multipoles = self.two_point_correlation_multipoles(
-            s=s, ells=ells, use_AP=use_AP)
+            s=s, ells=ells, use_AP=use_AP
+        )
 
         xi_polar = sum(
-            np.outer(xi_multipoles[f"ell{ell}"], legendre(ell, mu))
-            for ell in ells)
+            np.outer(xi_multipoles[f"ell{ell}"], legendre(ell, mu)) for ell in ells
+        )
 
         return xi_polar

@@ -396,7 +396,7 @@ class MyPerturbations:
 Standard units in cloelib:
 
 - Wavenumbers: **1/Mpc** (not h/Mpc)
-- Power spectrum: **(Mpc)³** 
+- Power spectrum: **(Mpc)³**
 - Always check external code's convention and convert if needed
 
 ### Non-linear vs. Linear Power Spectra

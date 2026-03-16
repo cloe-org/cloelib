@@ -2,21 +2,21 @@
 
 The **Summary Statistics** module produces final data products for likelihood analysis.
 
-This module completes the cosmological pipeline by converting tracers and power spectra into statistical quantities for comparison with observations.
+This module completes the cosmological pipeline by converting tracers and power spectra into statistical quantities for comparison with observations. Currently, `cloelib` supports observables for large-scale structure multi-probe experiments.
 
 ## Overview
 
 This module computes final statistical quantities for likelihood evaluation, including:
 
 - **C_ℓ**: Angular power spectra for photometric surveys
-- **ξ(θ)**: Angular correlation functions
+- **ξ(θ)**: Angular two-point photometric correlation functions
+- **COSEBIs**: Complete Orthogonal Sets of E/B-Integrals for photometric surveys
 - **P_ℓ(k)**: Legendre multipoles for spectroscopic surveys
-- **α*∥, α*⊥**: BAO distortion parameters
-- **COSEBIs**: Complete Orthogonal Sets of E/B-Integrals
+- **α*∥, α*⊥**: BAO distortion parameters for spectroscopic surveys
 
 These quantities are directly measurable and form the basis for cosmological parameter inference.
 
-**Performance Note**: cloelib does not use internal interpolations. Keep redshift and wavenumber arrays to a maximum of 1500 elements for optimal performance. See [Performance Tips](#performance-tips) for details.
+**Performance Note**: cloelib does not use internal interpolations. Keep redshift and wavenumber arrays to a maximum of 1500 elements for optimal performance. Otherwise, memory problems might arise. See [Performance Tips](#performance-tips) for details.
 
 ## Available Summary Statistics
 
@@ -60,7 +60,7 @@ tracer2 = ShearTracer(perturbations=pert, dndz=dndz[np.newaxis, :], z=z, nuisanc
 two_point = AngularTwoPoint(tracer1=tracer1, tracer2=tracer2)
 
 ells = np.logspace(1, 3, 20)  # ℓ from 10 to 1000
-C_ell = two_point.compute_Cl(ells=ells)  # Shape: (1, 1, 20) for single bins
+C_ell = two_point.get_Cl(ells=ells)  # Shape: (1, 1, 20) for single bins
 
 print(f"C_ℓ at ℓ=100: {C_ell[0, 0, 10]:.2e}")
 ```
@@ -72,14 +72,14 @@ You can correlate different tracers:
 ```python
 # Shear-shear (cosmic shear)
 shear_tracer = ShearTracer(...)
-C_shear_shear = AngularTwoPoint(shear_tracer, shear_tracer).compute_Cl(ells)
+C_shear_shear = AngularTwoPoint(shear_tracer, shear_tracer).get_Cl(ells)
 
 # Position-position (galaxy clustering)
 pos_tracer = PositionsTracer(...)
-C_gg = AngularTwoPoint(pos_tracer, pos_tracer).compute_Cl(ells)
+C_gg = AngularTwoPoint(pos_tracer, pos_tracer).get_Cl(ells)
 
 # Shear-position (galaxy-galaxy lensing)
-C_g_shear = AngularTwoPoint(pos_tracer, shear_tracer).compute_Cl(ells)
+C_g_shear = AngularTwoPoint(pos_tracer, shear_tracer).get_Cl(ells)
 ```
 
 **Tomographic Bins**:
@@ -91,13 +91,15 @@ dndz_bins = np.array([
     np.exp(-((z - 1.0) / 0.3)**2),
     np.exp(-((z - 1.5) / 0.4)**2),
 ])
+
+# Normalise! cloelib will always expect the n(z) normalised
 dndz_bins = dndz_bins / np.trapz(dndz_bins, z, axis=1)[:, np.newaxis]
 
 tracer = ShearTracer(perturbations=pert, dndz=dndz_bins, z=z, ...)
 
 # Auto and cross-correlations
 two_point = AngularTwoPoint(tracer, tracer)
-C_ell = two_point.compute_Cl(ells)
+C_ell = two_point.get_Cl(ells)
 
 # Shape: (3, 3, len(ells))
 # C_ell[0, 0, :] = bin 1 × bin 1
@@ -234,7 +236,7 @@ Requires optional dependencies (`pylevin`, `mpmath`).
 
 ## Creating Custom Summary Statistics
 
-To implement a new statistic? The pattern is straightforward..
+To implement a new statistic, follow these steps.
 
 ### Step 1: Decide What You Need
 
@@ -351,7 +353,7 @@ def test_custom_statistic():
     # e.g., positivity, monotonicity, etc.
 ```
 
-### Step 4: Document It.
+### Step 4: Document
 
 Add to the summary statistics section of the docs with:
 
@@ -362,12 +364,12 @@ Add to the summary statistics section of the docs with:
 
 ## Integration Techniques
 
-### Limber Approximation 🎯
+### Limber Approximation
 
 Most angular statistics use Limber:
 
 ```python
-def compute_Cl_limber(self, ell, W1, W2, z_grid, k_grid, P_k_z):
+def get_Cl_limber(self, ell, W1, W2, z_grid, k_grid, P_k_z):
     """
     Compute C_ℓ using Limber approximation.
 
@@ -389,7 +391,7 @@ def compute_Cl_limber(self, ell, W1, W2, z_grid, k_grid, P_k_z):
     return C_ell
 ```
 
-### Hankel Transforms 🔄
+### Hankel Transforms
 
 Convert between C_ℓ and ξ(θ):
 
@@ -415,7 +417,7 @@ def compute_xi_from_Cl(theta, ells, C_ell):
     return xi
 ```
 
-### Legendre Integration 📐
+### Legendre Integration
 
 Extract multipoles from P(k, μ):
 
@@ -478,11 +480,11 @@ For more details, see [Issue #375](https://github.com/cloe-org/cloelib/issues/37
 Always vectorize over ℓ or k:
 
 ```python
-# ❌ Slow: loop over ells
-C_ell = np.array([compute_Cl_single(ell) for ell in ells])
+# Slow: loop over ells
+C_ell = np.array([get_Cl_single(ell) for ell in ells])
 
 # Fast: vectorized
-C_ell = compute_Cl_vectorized(ells)  # All at once.
+C_ell = get_Cl_vectorized(ells)  # All ells at once
 ```
 
 ### Caching
@@ -508,7 +510,7 @@ import jax
 import jax.numpy as jnp
 
 @jax.jit
-def compute_Cl_jax(ell, W1, W2, P_k, chi, H_z):
+def get_Cl_jax(ell, W1, W2, P_k, chi, H_z):
     """JIT-compiled C_ℓ calculation."""
     k_limber = (ell + 0.5) / chi
     # ... rest of calculation
@@ -519,7 +521,7 @@ def compute_Cl_jax(ell, W1, W2, P_k, chi, H_z):
 
 ## Common Patterns
 
-### Data Vector Construction 📊
+### Data Vector Construction
 
 Build your likelihood data vector:
 
@@ -528,7 +530,7 @@ Build your likelihood data vector:
 data_vector = []
 
 # Angular power spectra
-C_ell_shear = two_point_shear.compute_Cl(ells)
+C_ell_shear = two_point_shear.get_Cl(ells)
 data_vector.extend(C_ell_shear.flatten())
 
 # Correlation functions
@@ -544,7 +546,7 @@ data_vector.extend(P2)
 data_vector = np.array(data_vector)
 ```
 
-### Scale Cuts ✂️
+### Scale Cuts
 
 Apply physical scale cuts:
 
@@ -562,18 +564,16 @@ k = k[k <= k_max_linear]
 
 ## Next Steps
 
-You've reached the end of the pipeline..
+The pipeline is now complete.
 From here:
 
-- 📖 [API Reference](../api.md) - Full technical documentation
-- 🤝 [Contributing Guide](../contributing.md) - General contribution guidelines
-- 💻 [Playground Examples](https://github.com/cloe-org/playground) - Real usage examples
-- 🌌 [Back to Overview](index.md) - Review the architecture
+- [API Reference](../api.md) – Full technical documentation
+- [Contributing Guide](../contributing.md) – General contribution guidelines
+- [Playground Examples](https://github.com/cloe-org/playground) – Real usage examples
+- [Back to Overview](index.md) – Review the architecture
 
-Or dive back into the components:
+Or return to any component:
 
-- 🌌 [Background](background.md)
-- 🌊 [Perturbations](perturbations.md)
-- 🔭 [Observables](observables.md)
-
-Happy analyzing. 📊.
+- [Background](background.md)
+- [Perturbations](perturbations.md)
+- [Observables](observables.md)

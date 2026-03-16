@@ -168,7 +168,7 @@ window = tracer.get_window(z)
 
 ### Adding Your Own Tracer
 
-To add a new type of photometric observable? The how..
+To add a new type of photometric observable, follow these steps.
 
 #### Step 1: Create Your Tracer Class
 
@@ -246,7 +246,7 @@ __all__ = [
 ]
 ```
 
-#### Step 3: Test It.
+#### Step 3: Write Tests
 
 ```python
 # tests/test_my_new_tracer.py
@@ -360,7 +360,7 @@ Perturbation theory code (not publicly available).
 
 ### Adding Your Own SpectroPower
 
-To interface with a new emulator or PT code? Proceed..
+To add a new SpectroPower implementation, follow these steps.
 
 #### Step 1: Create Your Class
 
@@ -486,7 +486,7 @@ def Pk2d_rsd(self, k, mu, **args):
     ...
 ```
 
-#### Step 3: Test It.
+#### Step 3: Write Tests
 
 ```python
 # tests/test_my_spectro_power.py
@@ -544,7 +544,7 @@ def test_with_different_parameters():
 
 ## Tips & Tricks for Both Protocols
 
-### Protocol Compliance ✅
+### Protocol Compliance
 
 Always verify your implementation:
 
@@ -559,7 +559,7 @@ assert isinstance(my_tracer, Tracer)
 assert isinstance(my_spectro, SpectroPower)
 ```
 
-### Nuisance Parameters 🎛️
+### Nuisance Parameters
 
 Keep nuisance parameters in a dictionary:
 
@@ -575,9 +575,9 @@ tracer = MyTracer(perturbations=pert, nuisance_params=nuisance)
 
 This makes it easy to vary parameters in MCMC!
 
-### Performance.
+### Performance
 
-These calculations get called A LOT in likelihood evaluation:
+These calculations are invoked frequently during likelihood evaluation:
 
 ```python
 from functools import lru_cache
@@ -592,7 +592,7 @@ class MyTracer:
         return self._get_window_cached(tuple(z.flat))
 ```
 
-### JAX Compatibility 🔥
+### JAX Compatibility
 
 If using JAX, avoid Python control flow:
 
@@ -611,9 +611,7 @@ result = jnp.where(z > 1.0, compute_high_z(z), compute_low_z(z))
 
 Ready to compute final statistics with your observables?
 
-- 📊 [Summary Statistics](summary_statistics.md) - Combine tracers into C_ℓ and multipoles
-- 🌊 [Perturbations](perturbations.md) - Review structure formation
-- 🌌 [Background](background.md) - Review the foundation
-- 📖 [API Reference](../api.md) - Full technical details
-
-Keep observing. 🔭.
+- [Summary Statistics](summary_statistics.md) – Combine tracers into C_ℓ and multipoles
+- [Perturbations](perturbations.md) – Review structure formation
+- [Background](background.md) – Review the foundation
+- [API Reference](../api.md) – Full technical details

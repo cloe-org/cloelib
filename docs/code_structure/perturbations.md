@@ -67,7 +67,7 @@ Interfaces with [CAMB](https://camb.readthedocs.io) for perturbation calculation
 
 **Location**: `cloelib/cosmology/camb_cosmology.py`
 
-**When to use**: Fast, accurate, production-ready
+**When to use**: accurate, production-ready, but sometimes slow
 
 **Features**:
 
@@ -94,9 +94,7 @@ bg = CAMBBackground(
 # Then create perturbations
 pert = CAMBPerturbations(
     background=bg,
-    nonlinear_model="halofit",  # or "mead2020", "mead", etc.
-    kmax=10.0,  # Maximum k in h/Mpc
-    zmax=5.0,   # Maximum redshift
+    # other parameters
 )
 
 # Compute power spectrum
@@ -125,7 +123,7 @@ from cloelib.cosmology.class_cosmology import CLASSBackground, CLASSPerturbation
 bg = CLASSBackground(...)
 pert = CLASSPerturbations(
     background=bg,
-    nonlinear="hmcode",  # CLASS's non-linear option
+    # other parameters
 )
 ```
 
@@ -139,7 +137,7 @@ Fast emulator for non-linear power spectra using [HMCode2020Emu](https://github.
 
 **Features**:
 
-- Lightning-fast (emulator.)
+- Lightning-fast emulator
 - Accurate non-linear P(k)
 - Limited parameter range
 
@@ -151,26 +149,9 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
-**Example**:
-
-```python
-import jax
-from cloelib.cosmology.jax_cosmology import JAXBackground, JAXPerturbations
-
-bg = JAXBackground(...)
-pert = JAXPerturbations(background=bg)
-
-# Compute gradient of σ₈ with respect to Omega_m
-grad_fn = jax.grad(lambda Om: JAXPerturbations(
-    background=JAXBackground(Omega_m0=Om, ...)
-).sigma8_0())
-
-dsigma8_dOm = grad_fn(0.3)
-```
-
 ## Adding Your Own Perturbations Implementation
 
-Ready to add your own structure formation code? Proceed..
+To add a new Perturbations implementation, follow these steps.
 
 ### Step 1: Create Your Class
 
@@ -288,11 +269,11 @@ H_z = pert.background.hubble_parameter(z)
 chi = pert.background.comoving_distance(z)
 ```
 
-This means you can mix and match. Want CAMB background with your custom perturbations? Done..
+This means implementations can be mixed and matched — for example, using a CAMB background with a custom perturbations class.
 
 ### Step 3: Handle Array Shapes
 
-Pay attention to array shapes—it's easy to get confused.
+Pay attention to array shapes—it's easy to get confused! `cloelib` will always return arrays!
 
 ```python
 def matter_power_spectrum(self, zs, ks):
@@ -408,84 +389,29 @@ class MyPerturbations:
         self._P_k_z_grid = ...
 ```
 
-### Caching Results
-
-Perturbation calculations can be expensive. Cache aggressively.
-
-```python
-from functools import lru_cache
-
-class MyPerturbations:
-    @lru_cache(maxsize=128)
-    def matter_power_spectrum(self, zs_tuple, ks_tuple):
-        """Cache based on tuple of z and k values."""
-        zs = np.array(zs_tuple)
-        ks = np.array(ks_tuple)
-        # ... compute
-        return result
-
-    # Wrapper to handle arrays
-    def matter_power_spectrum(self, zs, ks):
-        return self._matter_power_spectrum_cached(
-            tuple(zs.flat),
-            tuple(ks.flat)
-        )
-```
-
-### Interpolation
-
-Pre-compute on a grid, then interpolate:
-
-```python
-from scipy.interpolate import RectBivariateSpline
-
-class MyPerturbations:
-    def __init__(self, background, ...):
-        # Pre-compute on grid
-        z_grid = np.linspace(0, 5, 100)
-        k_grid = np.logspace(-3, 2, 200)
-        P_grid = self._compute_on_grid(z_grid, k_grid)
-
-        # Set up interpolator
-        self._interpolator = RectBivariateSpline(
-            z_grid,
-            np.log10(k_grid),
-            P_grid,
-            kx=3, ky=3  # Cubic interpolation
-        )
-
-    def matter_power_spectrum(self, zs, ks):
-        # Interpolate
-        return self._interpolator(zs, np.log10(ks), grid=True)
-```
-
 ## Tips & Tricks
 
-### Units Matter. 📏
+### Units
 
 Standard units in cloelib:
 
-- Wavenumbers: **h/Mpc** (not 1/Mpc.)
-- Power spectrum: **(Mpc/h)³** (not Mpc³!)
+- Wavenumbers: **1/Mpc** (not h/Mpc)
+- Power spectrum: **(Mpc)³** 
 - Always check external code's convention and convert if needed
 
-### Non-Linear vs Linear 🌊
+### Non-linear vs. Linear Power Spectra
 
-Make it clear what you're computing:
+Make it clear what you are computing linear or non-linear power spectra at the level of the protocol. The protocols should always return this method:
 
 ```python
-def matter_power_spectrum(self, zs, ks, nonlinear=True):
+def matter_power_spectrum(self, zs, ks):
     """
     Compute matter power spectrum.
-
-    Args:
-        nonlinear: If True, include non-linear corrections.
-                   If False, return linear theory P(k).
     """
     pass
 ```
 
-### Parameter Validation ✅
+### Parameter Validation
 
 Check inputs early:
 
@@ -501,11 +427,9 @@ def matter_power_spectrum(self, zs, ks):
 
 ## Next Steps
 
-Now that you've mastered Perturbations, explore:
+Now that you have a grounding in Perturbations, explore:
 
-- 🔭 [Observables](observables.md) - Connect structure to survey measurements
-- 📊 [Summary Statistics](summary_statistics.md) - Compute final data products
-- 🌌 [Background](background.md) - Review the foundation
-- 📖 [API Reference](../api.md) - Full technical details
-
-Keep building. 🌊.
+- [Observables](observables.md) – Connect structure to survey measurements
+- [Summary Statistics](summary_statistics.md) – Compute final data products
+- [Background](background.md) – Review the foundation
+- [API Reference](../api.md) – Full technical details

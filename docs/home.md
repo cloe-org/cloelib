@@ -4,36 +4,37 @@
 
 ---
 
-## ✨ Features
+## Features
 
-🔹 **Intuitive & User-Friendly** – Fast generation of **Euclid-like** observables (e.g., power spectra, window functions, and tracer statistics).
+- **Intuitive & User-Friendly** – Fast generation of **Euclid-like** observables (e.g., power spectra, window functions, and tracer statistics).
 
-🔹 **Automatic Differentiation** – Supporting **`JAX`** for gradient-based computations.
+- **Automatic Differentiation** – Supporting **`JAX`** for gradient-based computations.
 
-🔹 **Modular & Extensible** – Easily interface with external **Boltzmann solvers** or **emulators** via **Python `Protocols`** following the [cosmology.API](https://cosmology.readthedocs.io/projects/api/latest/#). Core structure enables defining **Background & Perturbation** models, choosing observables via **Tracer** or **SpectroPower** protocols, and computing final summary statistics like **angular power spectra** or **Legendre multipoles**.
+- **Modular & Extensible** – Easily interface with external **Boltzmann solvers** or **emulators** via **Python `Protocols`** following the [cosmology.API](https://cosmology.readthedocs.io/projects/api/latest/#). The core structure enables defining **Background & Perturbation** models, choosing observables via **Tracer** or **SpectroPower** protocols, and computing final summary statistics such as **angular power spectra** or **Legendre multipoles**.
 
 ---
 
-## 📂 Supported external codes
+## Supported External Codes
 
-`cloelib` interfaces with the following external cosmological codes, each used by a specific internal module for its calculations:
+`cloelib` interfaces with the following external codes, each used by a specific internal module for its calculations:
 
 | Background                                        | Perturbations                                                      | SpectroPower                                                       |
 | ------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
 | [camb](https://camb.readthedocs.io)               | [camb](https://camb.readthedocs.io)                                | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
 | [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                  | `PBJ` (not publicly available)                                     |
-| NA                                                | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git) | NA                                                                 |
+| —                                                 | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git) | —                                                                  |
+| —                                                 | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)     | —                                                                  |
 
-We do not provide installation support for `PBJ`.
+Installation support is not provided for `PBJ`.
 
 ---
 
-## 📜 License
+## License
 
 This project is licensed under the [MIT License](https://github.com/cloe-org/cloelib?tab=MIT-1-ov-file).
 
 ---
 
-## 🙏 Acknowledgements
+## Acknowledgements
 
-For contributions to this project, we follow the [all-contributors](https://allcontributors.org) specification. We appreciate all forms of contributions, including code, documentation, and more.
+Contributions to this project follow the [all-contributors](https://allcontributors.org) specification. All forms of contributions are appreciated, including code, documentation, and more.

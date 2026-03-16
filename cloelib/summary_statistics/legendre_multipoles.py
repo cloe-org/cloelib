@@ -13,7 +13,7 @@ from typing import Optional
 import numpy as np
 
 # cosmolib imports
-from cosmolib.data import PowerSpectrumMultipoles, TwoPointCorrelationMultipoles
+from cosmolib.data import PowerSpectrumMultipoles, TwoPointCorrelationMultipoles, TwoPointCorrelationPolar
 
 
 def format_output(stat: str):
@@ -24,40 +24,39 @@ def format_output(stat: str):
     stat: str
         Type of output to format ('PK' or '2PCF').
     """
-
     def decorator(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
-            """cosmolib format returns in Mpc/h units, differently from cloelib standards"""
-            format_val = kwargs.get("format_type")
+            """cosmolib format is returned in Mpc/h units, differently from
+               cloelib standards
+            """
+            def get_arg(name, idx):
+                return kwargs[name] if name in kwargs else args[idx]
 
-            if format_val != "cosmolib":
+            def set_arg(name, idx, value):
+                nonlocal args, kwargs
+                if name in kwargs:
+                    kwargs[name] = value
+                else:
+                    args = (*args[:idx], value, *args[idx+1:])
+
+            if kwargs.get("format_type") != "cosmolib":
                 return func(self, *args, **kwargs)
 
             h_fid = self.spectro_power.background.h
 
-            if stat == "PK":
-                if "convolved" in func.__name__:
-                    mixing = (
-                        kwargs["mixing_matrix"]
-                        if "mixing_matrix" in kwargs
-                        else args[0]
-                    )
-                    scale_h = mixing.get("kout")
-                else:
-                    scale_h = kwargs["k"] if "k" in kwargs else args[0]
-                scale = scale_h * h_fid
-                if "k" in kwargs:
-                    kwargs["k"] = scale
-                else:
-                    args = (scale, *args[1:])
-            elif stat == "2PCF":
-                scale_h = kwargs["s"] if "s" in kwargs else args[0]
-                scale = scale_h / h_fid
-                if "s" in kwargs:
-                    kwargs["s"] = scale
-                else:
-                    args = (scale, *args[1:])
+            if stat == "PK_multipoles":
+                scale_h = (
+                    kwargs["mixing_matrix"].get("kout")
+                    if "convolved" in func.__name__
+                    else get_arg("k", 0)
+                )
+                set_arg("k", 0, scale_h * h_fid)
+            else:
+                scale_h = get_arg("s", 0)
+                set_arg("s", 0, scale_h / h_fid)
+                if stat == "2PCF_polar":
+                    mu = get_arg("mu", 1)
 
             result = func(self, *args, **kwargs)
 
@@ -66,12 +65,12 @@ def format_output(stat: str):
                 for key, val in vars(self.spectro_power.background).items()
                 if isinstance(val, (float, int)) and key != "h"
             }
-            out = np.array(
-                [result.get(f"ell{i}", np.zeros(len(scale_h))) for i in range(5)]
-            )
 
-            if stat == "PK":
-                out *= h_fid**3
+            if stat == "PK_multipoles":
+                out = np.array([
+                    result.get(f"ell{i}", np.zeros(len(scale_h)))
+                    for i in range(5)
+                ]) * h_fid**3
                 return PowerSpectrumMultipoles(
                     k=scale_h,
                     keff=scale_h,
@@ -82,11 +81,22 @@ def format_output(stat: str):
                     nbar=self.nbar,
                     Psn=1.0 / self.nbar,
                 )
-
-            elif stat == "2PCF":
+            elif stat == "2PCF_multipoles":
+                out = np.array([
+                    result.get(f"ell{i}", np.zeros(len(scale_h)))
+                    for i in range(5)
+                ])
                 return TwoPointCorrelationMultipoles(
                     s=scale_h,
                     multipoles=out,
+                    fiducial_cosmology=cosmo,
+                    zeff=self.spectro_power.redshift,
+                )
+            elif stat == "2PCF_polar":
+                return TwoPointCorrelationPolar(
+                    s=scale_h,
+                    mu=mu,
+                    correlation=result,
                     fiducial_cosmology=cosmo,
                     zeff=self.spectro_power.redshift,
                 )
@@ -324,7 +334,7 @@ class LegendreMultipoles:
             * (1.0 - self.parameters["fout"]) ** 2
         )
 
-    @format_output("PK")
+    @format_output("PK_multipoles")
     def power_multipoles(
         self,
         k: np.ndarray,
@@ -423,7 +433,7 @@ class LegendreMultipoles:
             multipoles[f"ell{ell}"] *= 2.0 * prefactors[i]
         return multipoles
 
-    @format_output("PK")
+    @format_output("PK_multipoles")
     def convolved_power_multipoles(
         self,
         mixing_matrix: dict,
@@ -539,7 +549,7 @@ class LegendreMultipoles:
         """
         return np.exp(-((k / kcut) ** pow))
 
-    @format_output("2PCF")
+    @format_output("2PCF_multipoles")
     def two_point_correlation_multipoles(
         self,
         s: np.ndarray,
@@ -601,3 +611,58 @@ class LegendreMultipoles:
             xi_multipoles[f"ell{ell}"] = np.interp(s, r_grid, transformed_log)
 
         return xi_multipoles
+
+    @format_output("2PCF_polar")
+    def two_point_correlation_polar(
+        self,
+        s: np.ndarray,
+        mu: np.ndarray,
+        use_AP: Optional[bool] = True,
+        logkmin: Optional[float] = -5,
+        logkmax: Optional[float] = 2,
+        nk: Optional[int] = 2048,
+        kcut: Optional[float] = 0.4,
+        pow: Optional[float] = 2,
+        format_type: Optional[str] = None,
+    ) -> dict:
+        r"""Polar two-point correlation function.
+
+        Parameters
+        ----------
+        s: np.ndarray
+            Comoving separations
+        mu: np.ndarray
+            Cosinus of the angle between the pair separation and the line of sight
+        use_AP: bool
+            Flag to switch between with and without AP corrections
+        logkmin: float
+            Left logarithmic edge of input wave mode array
+        logkmax: float
+            Right logarithmic edge of input wave mode array
+        nk: int
+            Number of logarithmic wave mode bins
+        kcut: float
+            Cutoff scale for exponential damping
+        pow: float
+            Power index for exponential damping
+        format_type: str
+            Type of output format
+        Returns
+        -------
+        xi_polar: np.ndarray
+            Polar two-point correlation function
+        """
+        if self.spectro_power.NLcode != "COMET":
+            raise ValueError(
+                "Polar 2PCF can temporarily be retrieved only with COMET"
+            )
+        ells = [0,2,4]
+
+        xi_multipoles = self.two_point_correlation_multipoles(
+            s=s, ells=ells, use_AP=use_AP)
+
+        xi_polar = sum(
+            np.outer(xi_multipoles[f"ell{ell}"], legendre(ell, mu))
+            for ell in ells)
+
+        return xi_polar

@@ -22372,6 +22372,50 @@ Returns</p>
 
 </div>
 
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">two_point_correlation_polar</span>
+
+
+<a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">two_point_correlation_polar</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(s)">s</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(use_AP)">use_AP</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(logkmin)">logkmin</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(logkmax)">logkmax</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(nk)">nk</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(kcut)">kcut</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(pow)">pow</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(format_type)">format_type</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Polar two-point correlation function.</p>
+<h6 id="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar--parameters" title="Permanent link">&para;</a></h6>
+<p>s: np.ndarray
+    Comoving separations
+mu: np.ndarray
+    Cosinus of the angle between the pair separation and the line of sight
+use_AP: bool
+    Flag to switch between with and without AP corrections
+logkmin: float
+    Left logarithmic edge of input wave mode array
+logkmax: float
+    Right logarithmic edge of input wave mode array
+nk: int
+    Number of logarithmic wave mode bins
+kcut: float
+    Cutoff scale for exponential damping
+pow: float
+    Power index for exponential damping
+format_type: str
+    Type of output format
+Returns</p>
+<hr />
+<p>xi_polar: np.ndarray
+    Polar two-point correlation function</p>
+
+          
+
+    </div>
+
+</div>
+
 
 
   </div>
@@ -24057,6 +24101,50 @@ Returns</p>
 <hr />
 <p>multipoles: dict
     Two-point correlation function Legendre multipoles</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">two_point_correlation_polar</span>
+
+
+<a href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">two_point_correlation_polar</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(s)">s</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(mu)">mu</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(use_AP)">use_AP</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(logkmin)">logkmin</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(logkmax)">logkmax</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(nk)">nk</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(kcut)">kcut</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(pow)">pow</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar(format_type)">format_type</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Polar two-point correlation function.</p>
+<h6 id="cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.legendre_multipoles.LegendreMultipoles.two_point_correlation_polar--parameters" title="Permanent link">&para;</a></h6>
+<p>s: np.ndarray
+    Comoving separations
+mu: np.ndarray
+    Cosinus of the angle between the pair separation and the line of sight
+use_AP: bool
+    Flag to switch between with and without AP corrections
+logkmin: float
+    Left logarithmic edge of input wave mode array
+logkmax: float
+    Right logarithmic edge of input wave mode array
+nk: int
+    Number of logarithmic wave mode bins
+kcut: float
+    Cutoff scale for exponential damping
+pow: float
+    Power index for exponential damping
+format_type: str
+    Type of output format
+Returns</p>
+<hr />
+<p>xi_polar: np.ndarray
+    Polar two-point correlation function</p>
 
           
 

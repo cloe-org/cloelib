@@ -282,14 +282,10 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         configuration is inferred from the types of tracers in the provided
         AngularTwoPoint object.
 
-        Parameters
-        ----------
-        angular_two_point : AngularTwoPoint object
-            Object providing Cl evaluation and tracers.
-        ells: jnp.ndarray
-            Multipole moments at which the Cl spectrum is evaluated.
-        ks: jnp.ndarray
-            Wavenumber grid (only needed for computing Cl via angular_two_point).
+        Parameters:
+            angular_two_point (AngularTwoPoint): Object providing Cl evaluation and tracers.
+            ells (jnp.ndarray): Multipole moments at which the Cl spectrum is evaluated.
+            ks (jnp.ndarray): Wavenumber grid (only needed for computing Cl via angular_two_point).
         """
         self.angular_two_point = angular_two_point
         self.ells = ells
@@ -367,13 +363,12 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         WARNING: Currently assumes B-modes are zero, as they are not passed on from AngularTwoPoint
 
         Args:
-            theta (jax.numpy.ndarray): Angles in radians.
+            theta (jax.numpy.ndarray): Angles in radians. Should be JAX (`jax.numpy.ndarray`) ndarray.
 
         Returns:
-            if at least one tracer is spin 0 (clustering or GGL):
-                jax.numpy.ndarray: Computed xi(theta)
-            if both tracers are spin 2 (cosmic shear):
-                (jax.numpy.ndarray, jax.numpy.ndarray): Computed xi_+(theta) and xi_-(theta).
+            (jax.numpy.ndarray|(jax.numpy.ndarray, jax.numpy.ndarray)): Computed xi(theta) if at least one tracer is spin 0 (clustering or GGL)
+                (`jax.numpy.ndarray`) or Computed xi_+(theta) and xi_-(theta) (`jax.numpy.ndarray`, `jax.numpy.ndarray`) if both tracers are spin 2 (cosmic shear)
+
         """
         # Compute Cl using the AngularTwoPoint instance
         self.angular_two_point.get_Cl(self.ells, nl=0, ks=self.ks)

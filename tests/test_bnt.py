@@ -52,7 +52,7 @@ class TestBNTMatrixCalculator(unittest.TestCase):
         dndz_list = []
         for c, w in zip(centers, widths):
             nz = np.exp(-0.5 * ((z - c) / w) ** 2)
-            nz /= np.trapz(nz, z)
+            nz /= np.trapezoid(nz, z)
             dndz_list.append(nz)
 
         bnt = BNTMatrixCalculator(dndz_list=dndz_list, z=z, background=background)
@@ -78,7 +78,7 @@ class TestBNTMatrixCalculator(unittest.TestCase):
         dndz_list = []
         for c, w in zip(centers, widths):
             nz = np.exp(-0.5 * ((z - c) / w) ** 2)
-            nz /= np.trapz(nz, z)
+            nz /= np.trapezoid(nz, z)
             dndz_list.append(nz)
 
         # convert to jax before feeding to BNT
@@ -112,7 +112,7 @@ class TestBNTMatrixCalculator(unittest.TestCase):
         # Helper to build a normalized nz on a given z-grid
         def make_nz(z_grid, center, width):
             nz = np.exp(-0.5 * ((z_grid - center) / width) ** 2)
-            nz /= np.trapz(nz, z_grid)
+            nz /= np.trapezoid(nz, z_grid)
             return nz
 
         # One dndz with matching shape
@@ -147,7 +147,7 @@ class TestBNTMatrixCalculator(unittest.TestCase):
         # Helper to build a normalised Gaussian n(z)
         def make_nz(z_grid, center, width):
             nz = np.exp(-0.5 * ((z_grid - center) / width) ** 2)
-            nz /= np.trapz(nz, z_grid)
+            nz /= np.trapezoid(nz, z_grid)
             return nz
 
         # First two bins identical → leads to singular 2×2 system for i=2

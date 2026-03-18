@@ -27,6 +27,108 @@ authors:
   - name: Andrea Pezzotta
     orcid: 0000-0000-0000-0000
     affiliation: 6
+  - name: Michel Aguena
+    orcid: 0000-0000-0000-0000
+    affiliation: 7
+  - name: Zahra Baghkhani
+    orcid: 0000-0000-0000-0000
+    affiliation: 8
+  - name: Matteo Baratto
+    orcid: 0000-0000-0000-0000
+    affiliation: 9
+  - name: Ben Bose
+    orcid: 0000-0000-0000-0000
+    affiliation: 10
+  - name: Pierre Burger
+    orcid: 0000-0000-0000-0000
+    affiliation: 11
+  - name: Carmelita Carbone
+    orcid: 0000-0000-0000-0000
+    affiliation: 12
+  - name: Chaitanya Chawak
+    orcid: 0000-0000-0000-0000
+    affiliation: 13
+  - name: Jose Coloma Nadal
+    orcid: 0000-0000-0000-0000
+    affiliation: 14
+  - name: Martin Crocce
+    orcid: 0000-0000-0000-0000
+    affiliation: 15
+  - name: Stefano Davini
+    orcid: 0000-0000-0000-0000
+    affiliation: 16
+  - name: Samuel Farrens
+    orcid: 0000-0000-0000-0000
+    affiliation: 17
+  - name: Nastassia Grim
+    orcid: 0000-0000-0000-0000
+    affiliation: 18
+  - name: Alex Hall
+    orcid: 0000-0000-0000-0000
+    affiliation: 19
+  - name: Raphael Kou
+    orcid: 0000-0000-0000-0000
+    affiliation: 20
+  - name: Laila Linke
+    orcid: 0000-0000-0000-0000
+    affiliation: 21
+  - name: Arthur Loureiro
+    orcid: 0000-0000-0000-0000
+    affiliation: 22
+  - name: Dida Markovic
+    orcid: 0000-0000-0000-0000
+    affiliation: 23
+  - name: David Navarro Gironés
+    orcid: 0000-0000-0000-0000
+    affiliation: 24
+  - name: Filippo Oppizzi
+    orcid: 0000-0000-0000-0000
+    affiliation: 25
+  - name: Gabriele Parimbelli
+    orcid: 0000-0000-0000-0000
+    affiliation: 26
+  - name: Robert Reischke
+    orcid: 0000-0000-0000-0000
+    affiliation: 27
+  - name: Fabrice Roy
+    orcid: 0000-0000-0000-0000
+    affiliation: 28
+  - name: Jaime Ruiz Zapatero
+    orcid: 0000-0000-0000-0000
+    affiliation: 29
+  - name: Ziad Sakr
+    orcid: 0000-0000-0000-0000
+    affiliation: 30
+  - name: Davide Sciotti
+    orcid: 0000-0000-0000-0000
+    affiliation: 31
+  - name: Ivan Sladoljev
+    orcid: 0000-0000-0000-0000
+    affiliation: 32
+  - name: Arghavan Souki
+    orcid: 0000-0000-0000-0000
+    affiliation: 33
+  - name: Konstantinos Tanidis
+    orcid: 0000-0000-0000-0000
+    affiliation: 34
+  - name: Peter Taylor
+    orcid: 0000-0000-0000-0000
+    affiliation: 35
+  - name: Nicolas Tessore
+    orcid: 0000-0000-0000-0000
+    affiliation: 36
+  - name: Maria Tsedrik
+    orcid: 0000-0000-0000-0000
+    affiliation: 37
+  - name: Isaac Tutusaus
+    orcid: 0000-0000-0000-0000
+    affiliation: 38
+  - name: Casper Vedder
+    orcid: 0000-0000-0000-0000
+    affiliation: 39
+  - name: Angus H. Wright
+    orcid: 0000-0000-0000-0000
+    affiliation: 40
 affiliations:
   - name: University of Waterloo, Canada
     index: 1
@@ -40,6 +142,74 @@ affiliations:
     index: 5
   - name: INAF, Italy
     index: 6
+  - name: TBD
+    index: 7
+  - name: TBD
+    index: 8
+  - name: TBD
+    index: 9
+  - name: TBD
+    index: 10
+  - name: TBD
+    index: 11
+  - name: TBD
+    index: 12
+  - name: TBD
+    index: 13
+  - name: TBD
+    index: 14
+  - name: TBD
+    index: 15
+  - name: TBD
+    index: 16
+  - name: TBD
+    index: 17
+  - name: TBD
+    index: 18
+  - name: TBD
+    index: 19
+  - name: TBD
+    index: 20
+  - name: TBD
+    index: 21
+  - name: TBD
+    index: 22
+  - name: TBD
+    index: 23
+  - name: TBD
+    index: 24
+  - name: TBD
+    index: 25
+  - name: TBD
+    index: 26
+  - name: TBD
+    index: 27
+  - name: TBD
+    index: 28
+  - name: TBD
+    index: 29
+  - name: TBD
+    index: 30
+  - name: TBD
+    index: 31
+  - name: TBD
+    index: 32
+  - name: TBD
+    index: 33
+  - name: TBD
+    index: 34
+  - name: TBD
+    index: 35
+  - name: TBD
+    index: 36
+  - name: TBD
+    index: 37
+  - name: TBD
+    index: 38
+  - name: TBD
+    index: 39
+  - name: TBD
+    index: 40
 date: 18 March 2026
 bibliography: paper.bib
 ---
@@ -90,11 +260,11 @@ w0, wa = -1.0, 0.0
 # Initialize different backends with the same parameters
 camb_bg = CAMBBackground(H0=H0, Omega_cdm0=Omega_cdm0, Omega_b0=Omega_b0,
                          As=As, ns=ns, w0=w0, wa=wa, Omega_k0=0.0,
-                         mnu=0.06, gamma_MG=0.545)
+                         mnu=0.06, N_mnu=1, gamma_MG=0.545)
 
 jax_bg = JAXBackground(H0=H0, Omega_cdm0=Omega_cdm0, Omega_b0=Omega_b0,
                        As=As, ns=ns, w0=w0, wa=wa, Omega_k0=0.0,
-                       mnu=0.06, gamma_MG=0.545)
+                       mnu=0.06, N_mnu=1, gamma_MG=0.545)
 
 # Compute background quantities at various redshifts
 z = np.linspace(0, 3, 100)
@@ -131,30 +301,103 @@ from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 my_dndz = np.array([...])  # Shape: (n_bins, n_z_points)
 
 # Create tracers with survey-specific nuisance parameters
+# PositionsTracer requires per-bin photo-z shifts and magnification bias
 tracer_pos = PositionsTracer(
     perturbations=nonlinear_perturbations,
     dndz=my_dndz,
     z=z,
     galaxy_bias_model='poly',
-    nuisance_params={'b1_photo_poly0': 1.0, 'magnification_bias_1': 0.0}
+    nuisance_params={
+        'b1_photo_poly0': 1.2, 'b1_photo_poly1': 0.0,
+        'b1_photo_poly2': 0.0, 'b1_photo_poly3': 0.0,
+        'magnification_bias_1': 0.0,
+        'dz_pos_1': 0.0,
+    }
 )
 
+# ShearTracer requires intrinsic alignment (IA) and photo-z shift parameters
 tracer_she = ShearTracer(
     perturbations=nonlinear_perturbations,
     dndz=my_dndz,
     z=z,
-    nuisance_params={'AIA': 1.72, 'CIA': 0.0134, 'multiplicative_bias_1': 0.001}
+    nuisance_params={
+        'AIA': 1.72, 'CIA': 0.0134, 'EtaIA': 0.0,
+        'multiplicative_bias_1': 0.0,
+        'dz_shear_1': 0.0,
+    }
 )
 
-# Compute angular power spectra
+# Compute angular power spectra using the Limber approximation
 twopoint = AngularTwoPoint(tracer_she, tracer_pos)
 ells = np.logspace(1, np.log10(3000), 100)
-Cl_galaxy_shear = twopoint.get_Cl(ells, 0, ks)
+Cl_galaxy_shear = twopoint.get_Cl(ells, nl=0, ks=ks)
 ```
 
 ## Spectroscopic Observables
 
+`cloelib` computes redshift-space power spectrum multipoles for spectroscopic galaxy clustering via the `SpectroPower` protocol. The COMET emulator [@Eggemeier:2022; @Pezzotta:2025] is used here as an example of the two available perturbation-theory models (`EFT` and `VDG`); the PBJ emulator is also supported.
+
+```python
+from cloelib.observables.CometEFT_spectro import CometEFT_SpectroPower
+from cloelib.summary_statistics.legendre_multipoles import LegendreMultipoles
+import numpy as np
+
+# EFT bias and nuisance parameters for a single redshift bin
+RSD_parameters = {
+    'b1': 1.8, 'b2': 0.0, 'bG2': 0.0, 'bGam3': 0.0,
+    'c0': 0.0, 'c2': 0.0, 'c4': 0.0,
+    'b1-b1-cnlo': 0.0, 'b1-cnlo': 0.0, 'cnlo': 0.0,
+}
+
+# Spectroscopic power spectrum at a single effective redshift
+spectro_power = CometEFT_SpectroPower(
+    background=camb_bg,
+    RSD_parameters=RSD_parameters,
+    redshift=1.0,
+)
+
+# Compute Legendre multipoles with Alcock-Paczynski corrections
+nbar = 1e-3  # galaxy number density [h/Mpc]^3
+multipoles = LegendreMultipoles(
+    spectro_power=spectro_power,
+    background_fiducial=camb_bg,
+    parameters={},
+    nbar=nbar,
+)
+
+k = np.logspace(-2, np.log10(0.5), 80)
+Pk_ell = multipoles.power_multipoles(k, ells=np.array([0, 2, 4]))
+# Pk_ell is a dict: {'ell0': array, 'ell2': array, 'ell4': array}
+```
+
+The same interface is used to compute two-point correlation function multipoles via an FFTLog transform, and to apply survey window function convolutions.
+
 ## Protocol Compliance of Interfaces
+
+`cloelib` uses Python structural subtyping (PEP 544 `Protocol`) to define callable interfaces for all cosmological backends. The `Background` and `Perturbations` protocols are declared with `@runtime_checkable`, enabling explicit compliance checks at the start of an analysis:
+
+```python
+from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
+from cloelib.cosmology.class_cosmology import CLASSBackground, CLASSLinearPerturbations
+
+# Protocol compliance is verified at runtime
+assert isinstance(camb_bg, Background)
+assert isinstance(CLASSBackground(
+    H0=70.0, Omega_b0=0.05, Omega_cdm0=0.25, Omega_k0=0.0,
+    As=2e-9, ns=0.96, mnu=0.06, N_mnu=1, w0=-1.0, wa=0.0,
+    gamma_MG=0.545
+), Background)
+
+# Both CAMB and CLASS objects satisfy the same Perturbations protocol
+camb_lin = CAMBLinearPerturbations(background=camb_bg, redshifts=z)
+class_lin = CLASSLinearPerturbations(background=CLASSBackground(...), redshifts=z)
+
+assert isinstance(camb_lin, Perturbations)
+assert isinstance(class_lin, Perturbations)
+```
+
+Because both objects conform to the same protocol, any downstream `cloelib` computation—such as window functions, angular power spectra, or multipoles—can operate on either without requiring modification. This structural approach, rather than relying on inheritance hierarchies, enables the seamless integration of external codes without altering their source. As a result, it provides a straightforward pathway for the community to connect their own tools, provided they adhere to the protocol. In particular, the `Background` and `Perturbations` protocols are compliant with the cosmology.API [CITE].
 
 ## Automatic Differentiation with JAX
 
@@ -163,33 +406,40 @@ One of `cloelib`'s unique features is its support for automatic differentiation:
 ```python
 import jax
 import jax.numpy as jnp
+from cloelib.cosmology.jax_cosmology import JAXBackground
 
 def compute_observable(params):
-    """Function computing an observable from cosmological parameters."""
+    """Compute the angular diameter distance at z=1 from (H0, Omega_m)."""
     H0, Omega_m = params
-    bg = JAXBackground(H0=H0, Omega_cdm0=Omega_m-0.05, Omega_b0=0.05, ...)
+    bg = JAXBackground(
+        H0=H0, Omega_cdm0=Omega_m - 0.05, Omega_b0=0.05,
+        As=2e-9, ns=0.96, w0=-1.0, wa=0.0, Omega_k0=0.0,
+        mnu=0.0, N_mnu=0, gamma_MG=0.545,
+    )
     return bg.angular_diameter_distance(jnp.array([1.0]))[0]
 
-# Compute gradients with respect to cosmological parameters
+# Compute gradients with automatic differentiation
 grad_fn = jax.grad(compute_observable)
 gradients = grad_fn(jnp.array([70.0, 0.3]))
+# gradients[0] = dD_A/dH0,  gradients[1] = dD_A/dOmega_m
 ```
 
-This capability enables efficient parameter estimation using gradient-based methods and facilitates the development of differentiable cosmological pipelines.
+The `JAXBackground` and `JAXLinearPerturbations`/`JAXNonLinearPerturbations` classes are fully JIT-compilable and differentiable through `jax.grad`, `jax.jacobian`, and `jax.hessian`. This enables Hamiltonian Monte Carlo samplers, variational inference, and the training of neural-network emulators whose inputs are cosmological parameters.
 
 ## Scaling tests and time performance
 
-| Backend / Emulator | Observable Type | Configuration | Runtime (s) | Speedup vs. Baseline | Memory Usage (MB) | Notes |
-| ------------------ | --------------- | ------------- | ----------- | -------------------- | ----------------- | ----- |
-| CAMB               | Cell            | Default       |             |                      |                   |       |
-| CLASS              | Cell            | Default       |             |                      |                   |       |
-| HMCode2020Emu      | Cell            | Default       |             |                      |                   |       |
-| COMET              | Pell            | Default       |             |                      |                   |       |
-| CosmoPower         | Cell            | Default       |             |                      |                   |       |
+| Backend / Emulator | Observable Type | Runtime (s) | Memory Usage (MB) |
+| ------------------ | --------------- | ----------- | ----------------- |
+| CAMB               | Cell            |             |                   |
+| CAMB               | $\xi$           |             |                   |
+| CLASS              | Cell            |             |                   |
+| HMCode2020Emu      | Cell            |             |                   |
+| COMET              | Pell            |             |                   |
+| CosmoPower         | Cell            |             |                   |
 
 ## Author Contributions
 
-In accordance with JOSS guidelines, we provide a description of individual contributions. The authors are listed in alphabetical order. Tier 1 corresponds to the core maintainers of the **cloe-org** team, who are responsible for the long-term sustainability of the `cloelib` package, including reviewing pull requests and leading technical discussions.
+In accordance with JOSS guidelines, we describe individual contributions below. Authors are listed in alphabetical order. All Tier 1 authors are core maintainers of the **cloe-org** organisation, responsible for the long-term sustainability of `cloelib`, the review of pull requests, and leadership of technical discussions.
 
 - **M. Bonici**: TBA
 - **G. Cañas-Herrera**: TBA
@@ -198,9 +448,10 @@ In accordance with JOSS guidelines, we provide a description of individual contr
 - **C. Moretti**: TBA
 - **A. Pezzotta**: TBA
 
+The contributions of all remaining authors have been tracked using the [all-contributors](https://github.com/all-contributors/all-contributors) bot, following the specification of the same name. A full, categorised breakdown of each contributor's role—including code, documentation, testing, ideas, project management, and more—is available in the `README` of the `cloelib` repository.
+
 # Acknowledgements
 
-We acknowledge the support of the Euclid Consortium and thank the CLOE software development team for their foundational work. We are grateful to S. Farrens and N. Tessore for technical guidance, and to the broader community for testing and feedback.
-(GCH: every contributor that has modified code should be added to the paper authors, and that should include Sam and Nic)
+We acknowledge the support of the Euclid Consortium. We thank the broader CLOE software development team for foundational work that motivated this library. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997.
 
 # References

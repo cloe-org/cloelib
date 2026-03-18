@@ -10,10 +10,10 @@ tags:
   - observables
 authors:
   - name: Marco Bonici
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-8430-126X
     affiliation: 1
   - name: Guadalupe Cañas-Herrera
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0003-2796-2149
     affiliation: 2
   - name: Pedro Carrilho
     orcid: 0000-0000-0000-0000

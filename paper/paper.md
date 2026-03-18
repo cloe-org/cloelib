@@ -30,7 +30,7 @@ authors:
 affiliations:
   - name: University of Waterloo, Canada
     index: 1
-  - name: University of Edinburgh, United Kingdom
+  - name: Leiden Observatory, the Netherlands
     index: 2
   - name: University of Edinburgh, United Kingdom
     index: 3
@@ -40,7 +40,7 @@ affiliations:
     index: 5
   - name: INAF, Italy
     index: 6
-date: 26 September 2025
+date: 18 March 2026
 bibliography: paper.bib
 ---
 
@@ -64,6 +64,10 @@ Crucially, each module in `cloelib` is defined by a Python protocol, enabling a 
 In addition, `cloelib` serves the practical needs of both the Euclid collaboration and the wider cosmology community by offering implementations of survey-specific systematics, Alcock–Paczynski corrections, and Baryon Acoustic Oscillation (BAO) feature extraction. The library works seamlessly with `cloelike`, its companion likelihood module, which supports the computation of likelihoods for Euclid observables such as 2×2pt and 3×2pt photometric correlations, spectroscopic galaxy clustering and BAO, as well as their combinations. Together, these tools enable end-to-end cosmological analyses, covering the full chain from observable computation to likelihood evaluation and Monte Carlo sampling for parameter inference.
 
 Beyond its scientific scope, `cloelib` is optimized for efficiency, with native source code implementations of theoretical predictions and advanced caching mechanisms that accelerate computation rather than hinder it. It also integrates comprehensive testing infrastructure and performance profiling tools, aligned with state-of-the-art software development practices, to ensure reliability and scalability in production-level applications. By combining theoretical flexibility, computational performance, and modern programming standards with an Open Science ethos, `cloelib` makes a substantial contribution to the computational framework required for precision cosmology and is poised to become a cornerstone for large-scale structure analyses in the decade ahead.
+
+# Design and Implementation
+
+The architecture of `cloelib` leverages Python protocols (PEP 544) to define interfaces for cosmological calculations, ensuring type safety and extensibility. The library is organized into specialized modules: cosmology backends implementing the Background and Perturbations protocols, observables providing window functions and power spectrum interfaces, summary statistics for angular correlations and multipoles, and auxiliary utilities for mathematical operations and caching. Performance-critical sections utilize JAX's just-in-time compilation, while the caching system optimizes repeated calculations. The library seamlessly integrates with the broader Python scientific ecosystem through NumPy and SciPy, while maintaining compatibility with JAX arrays for differentiable computations. This design enables researchers to construct complex analysis pipelines while maintaining computational efficiency and code maintainability.
 
 # Usage Examples
 
@@ -173,10 +177,6 @@ gradients = grad_fn(jnp.array([70.0, 0.3]))
 
 This capability enables efficient parameter estimation using gradient-based methods and facilitates the development of differentiable cosmological pipelines.
 
-# Design and Implementation
-
-The architecture of `cloelib` leverages Python protocols (PEP 544) to define interfaces for cosmological calculations, ensuring type safety and extensibility. The library is organized into specialized modules: cosmology backends implementing the Background and Perturbations protocols, observables providing window functions and power spectrum interfaces, summary statistics for angular correlations and multipoles, and auxiliary utilities for mathematical operations and caching. Performance-critical sections utilize JAX's just-in-time compilation, while the caching system optimizes repeated calculations. The library seamlessly integrates with the broader Python scientific ecosystem through NumPy and SciPy, while maintaining compatibility with JAX arrays for differentiable computations. This design enables researchers to construct complex analysis pipelines while maintaining computational efficiency and code maintainability.
-
 ## Scaling tests and time performance
 
 | Backend / Emulator | Observable Type | Configuration | Runtime (s) | Speedup vs. Baseline | Memory Usage (MB) | Notes |
@@ -186,9 +186,6 @@ The architecture of `cloelib` leverages Python protocols (PEP 544) to define int
 | HMCode2020Emu      | Cell            | Default       |             |                      |                   |       |
 | COMET              | Pell            | Default       |             |                      |                   |       |
 | CosmoPower         | Cell            | Default       |             |                      |                   |       |
-| BACCO              | Cell            | Default       |             |                      |                   |       |
-| Capse.jl           | Cell            | Default       |             |                      |                   |       |
-| Effort.jl          | Pell            | Default       |             |                      |                   |       |
 
 ## Author Contributions
 

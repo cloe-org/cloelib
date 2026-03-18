@@ -1,8 +1,8 @@
 import jax.numpy as np
 import jax
 from jax import jit
-
-from cloelib.observables.photo import ShearTracer  # , PositionsTracer
+from cosmolib.data import TwoPointCorrelationFunction
+from cloelib.observables.photo import ShearTracer, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction
 from cloelib.auxiliary.cache import memoize_jax
 
@@ -282,14 +282,10 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         configuration is inferred from the types of tracers in the provided
         AngularTwoPoint object.
 
-        Parameters
-        ----------
-        angular_two_point : AngularTwoPoint object
-            Object providing Cl evaluation and tracers.
-        ells: jnp.ndarray
-            Multipole moments at which the Cl spectrum is evaluated.
-        ks: jnp.ndarray
-            Wavenumber grid (only needed for computing Cl via angular_two_point).
+        Parameters:
+            angular_two_point (AngularTwoPoint): Object providing Cl evaluation and tracers.
+            ells (jnp.ndarray): Multipole moments at which the Cl spectrum is evaluated.
+            ks (jnp.ndarray): Wavenumber grid (only needed for computing Cl via angular_two_point).
         """
         self.angular_two_point = angular_two_point
         self.ells = ells
@@ -298,6 +294,66 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         # Determine spin values based on tracer type
         self.s1 = 2 if isinstance(angular_two_point.tracer1, ShearTracer) else 0
         self.s2 = 2 if isinstance(angular_two_point.tracer2, ShearTracer) else 0
+        if isinstance(angular_two_point.tracer1, ShearTracer) and isinstance(
+            angular_two_point.tracer2, ShearTracer
+        ):
+            self.keys = ("SHE", "SHE")
+        elif isinstance(angular_two_point.tracer1, PositionsTracer) and isinstance(
+            angular_two_point.tracer2, PositionsTracer
+        ):
+            self.keys = ("POS", "POS")
+        elif isinstance(angular_two_point.tracer1, PositionsTracer) and isinstance(
+            angular_two_point.tracer2, ShearTracer
+        ):
+            self.keys = ("POS", "SHE")
+        elif isinstance(angular_two_point.tracer1, ShearTracer) and isinstance(
+            angular_two_point.tracer2, PositionsTracer
+        ):
+            # the order of this tuple does not matter
+            # cosmolib format only supports ("POS", "SHE")
+            self.keys = ("POS", "SHE")
+        else:
+            raise ValueError("Unsupported tracer combination")
+
+    def build_xi_dict(self, all_xi, theta, Ntomo1, Ntomo2):
+        """Return a dictionary of TwoPointCorrelationFunction objects."""
+        xi_dict = {}
+
+        tracer_info = {
+            (0, 0): dict(
+                label=("POS", "POS"), axis=(0,), slice=lambda i, j: all_xi[:, i, j]
+            ),
+            (2, 0): dict(
+                label=("SHE", "POS"), axis=(1,), slice=lambda i, j: all_xi[:, :, i, j]
+            ),
+            (0, 2): dict(
+                label=("POS", "SHE"), axis=(1,), slice=lambda i, j: all_xi[:, :, i, j]
+            ),
+            (2, 2): dict(
+                label=("SHE", "SHE"),
+                axis=(2,),
+                slice=lambda i, j: all_xi[:, :, :, i, j],
+            ),
+        }
+
+        key = (self.s1, self.s2)
+        if key not in tracer_info:
+            raise ValueError(f"Unsupported (s1, s2) combination: {key}")
+
+        info = tracer_info[key]
+        label, axis, slicer = info["label"], info["axis"], info["slice"]
+
+        def j_range(i):
+            return range(i, Ntomo2) if key in [(0, 0), (2, 2)] else range(Ntomo2)
+
+        for i in range(Ntomo1):
+            for j in j_range(i):
+                xi_dict[label + (i + 1, j + 1)] = TwoPointCorrelationFunction(
+                    array=slicer(i, j),
+                    theta=theta,
+                    axis=axis,
+                )
+        return xi_dict
 
     def get_xi(self, theta):
         """
@@ -307,17 +363,17 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         WARNING: Currently assumes B-modes are zero, as they are not passed on from AngularTwoPoint
 
         Args:
-            theta (jax.numpy.ndarray): Angles in radians.
+            theta (jax.numpy.ndarray): Angles in radians. Should be JAX (`jax.numpy.ndarray`) ndarray.
 
         Returns:
-            if at least one tracer is spin 0 (clustering or GGL):
-                jax.numpy.ndarray: Computed xi(theta)
-            if both tracers are spin 2 (cosmic shear):
-                (jax.numpy.ndarray, jax.numpy.ndarray): Computed xi_+(theta) and xi_-(theta).
+            (jax.numpy.ndarray|(jax.numpy.ndarray, jax.numpy.ndarray)): Computed xi(theta) if at least one tracer is spin 0 (clustering or GGL)
+                (`jax.numpy.ndarray`) or Computed xi_+(theta) and xi_-(theta) (`jax.numpy.ndarray`, `jax.numpy.ndarray`) if both tracers are spin 2 (cosmic shear)
+
         """
         # Compute Cl using the AngularTwoPoint instance
-        Cl_EE = self.angular_two_point.get_Cl(self.ells, nl=0, ks=self.ks)
+        self.angular_two_point.get_Cl(self.ells, nl=0, ks=self.ks)
 
+        Cl_EE = self.angular_two_point.C_ell_calc
         Cl_BB = np.zeros_like(Cl_EE)  # No B-modes included, set to zero for now
         Cl_EB = np.zeros_like(Cl_EE)
         Cl_BE = np.zeros_like(Cl_EE)
@@ -337,6 +393,9 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         elif self.s1 == 2 and self.s2 == 0:
             d_ell_theta_plus = d_2_0_vmap(theta, self.ells)
             d_ell_theta_minus = d_ell_theta_plus
+        elif self.s1 == 0 and self.s2 == 2:
+            d_ell_theta_plus = d_2_0_vmap(theta, self.ells)
+            d_ell_theta_minus = d_ell_theta_plus
         elif self.s1 == 2 and self.s2 == 2:
             d_ell_theta_plus = d_2_2_vmap(theta, self.ells)
             d_ell_theta_minus = d_2_m2_vmap(theta, self.ells)
@@ -348,18 +407,35 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
 
         # Initialize xi arrays
         xi_plus = np.zeros((Ntheta, Ntomo1, Ntomo2))
-        if self.s2 == 2:
+        if self.s1 == 2 and self.s2 == 2:
             xi_minus = np.zeros((Ntheta, Ntomo1, Ntomo2))
 
         # Vectorized computation over (theta, tomo1, tomo2)
         # Compute xi_plus
-        xi_plus = np.einsum("ell,ellij,θell->θij", prefactor, Cl_plus, d_ell_theta_plus)
+
+        xi_plus = np.einsum("L,LIJ,TL->TIJ", prefactor, Cl_plus, d_ell_theta_plus)
 
         # Compute xi_minus if we have a spin2 tracer
-        if self.s2 == 2:
+        if self.s1 == 2 and self.s2 == 2:
             xi_minus = (-1) ** self.s2 * np.einsum(
-                "ell,ellij,θell->θij", prefactor, Cl_minus, d_ell_theta_minus
+                "L,LIJ,TL->TIJ", prefactor, Cl_minus, d_ell_theta_minus
             )
-            return xi_plus, xi_minus
+
+        if self.s1 == 0 and self.s2 == 0:
+            all_xi = np.zeros((Ntheta, Ntomo1, Ntomo2))
+            all_xi = all_xi.at[:, :, :].set(xi_plus)
+
+        elif (self.s1, self.s2) in [(2, 0), (0, 2)]:
+            all_xi = np.zeros((2, Ntheta, Ntomo1, Ntomo2))
+            all_xi = all_xi.at[0, :, :, :].set(xi_plus)
+
+        elif self.s1 == 2 and self.s2 == 2:
+            all_xi = np.zeros((2, 2, Ntheta, Ntomo1, Ntomo2))
+            all_xi = all_xi.at[0, 0, :, :, :].set(xi_plus)
+            all_xi = all_xi.at[1, 1, :, :, :].set(xi_minus)
         else:
-            return xi_plus
+            raise ValueError("Spin values not as expected")
+
+        xi_dict = self.build_xi_dict(all_xi, theta, Ntomo1, Ntomo2)
+
+        return xi_dict

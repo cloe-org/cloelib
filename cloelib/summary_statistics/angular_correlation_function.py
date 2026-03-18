@@ -25,14 +25,10 @@ class AngularCorrelationFunction(Protocol):
         """
         Compute the angular correlation function(s) at angle theta.
 
-        Parameters
-        ----------
-        theta : jnp.ndarray
-            Angular separation(s) in radians.
+        Parameters:
+            theta (jnp.ndarray): Angular separation(s) in radians.
 
-        Returns
-        -------
-        jnp.ndarray or (jnp.ndarray, jnp.ndarray)
-            Correlation function(s) xi(theta) or (xi_+, xi_-).
+        Returns:
+            (jnp.ndarray | (jnp.ndarray, jnp.ndarray)): Correlation function(s) xi(theta) or (xi_+, xi_-).
         """
         ...

@@ -7,6 +7,7 @@ with Boltzmann solvers and JAX-based frameworks, enabling automatic differentiat
 for the next generation of cosmological analyses.
 
 Key Features:
+
 - **Intuitive & User-Friendly**: Generate Euclid-like observables (e.g., power spectra, window functions,
   and tracer statistics) rapidly.
 - **Automatic Differentiation**: Includes a toy example with `JAX` for gradient-based computations.
@@ -20,5 +21,10 @@ Key Features:
 License:
 This project is licensed under the MIT LICENSE.
 """
+
+import jax
+
+# Enable double precision in JAX
+jax.config.update("jax_enable_x64", True)
 
 __all__: list[str] = []

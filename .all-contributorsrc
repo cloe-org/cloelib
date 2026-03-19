@@ -460,6 +460,17 @@
         "mentoring",
         "promotion"
       ]
+    },
+    {
+      "login": "garico92",
+      "name": "Giovanni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78367368?v=4",
+      "profile": "https://garico92.github.io/website/",
+      "contributions": [
+        "code",
+        "ideas",
+        "doc"
+      ]
     }
   ]
 }

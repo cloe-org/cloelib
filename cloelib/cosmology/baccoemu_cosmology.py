@@ -18,12 +18,12 @@ except ImportError:
 
 
 class BACCOemuLinearPerturbations:
-    """Class for perturbations cosmology using BACCOemu, inheriting from Perturbations parent class."""
+    """Class for perturbations cosmology using BACCOemu, compatibly with the Perturbations protocol."""
 
     def __init__(
         self, background: Background, redshifts: np.ndarray, cold: bool = False
     ):
-        """Intialize the HMemuLinearPerturbations instance."""
+        """Intialize the BACCOemuLinearPerturbations instance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
         self.emu = baccoemu.Matter_powerspectrum(
@@ -131,7 +131,7 @@ class BACCOemuLinearPerturbations:
 
 
 class BACCOemuNonLinearPerturbations:
-    """Class for non linear perturbations cosmology using BACCOemu, inheriting from Perturbations parent class."""
+    """Class for non linear perturbations cosmology using BACCOemu, compatibly with the Perturbations protocol."""
 
     def __init__(
         self,
@@ -150,7 +150,7 @@ class BACCOemuNonLinearPerturbations:
         theta_inn: Optional[float] = None,
         M_inn: Optional[float] = None,
     ):
-        """Initialize the HMemuNonLinearPerturbations intance."""
+        """Initialize the BACCOemuNonLinearPerturbations instance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
         self.emu = baccoemu.Matter_powerspectrum(

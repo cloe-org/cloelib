@@ -21,7 +21,7 @@ except ImportError:
 
 
 class EE2NonLinearPerturbations:
-    """Class for nonlinear perturbations using EE2, inheriting from Perturbations parent class."""
+    """Class for nonlinear perturbations using EE2, compatible with the Perturbations protocol."""
 
     def __init__(
         self,

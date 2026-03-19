@@ -30,7 +30,20 @@ This is key. Perturbations _always_ needs a Background to compute distances, den
 
 #### `matter_power_spectrum(zs, ks)`
 
-Compute the matter power spectrum P(k, z).
+Compute the matter power spectrum for total matter Pmm(k, z).
+
+**Inputs**:
+
+- `zs`: Redshifts (can be array)
+- `ks`: Wavenumbers in h/Mpc (can be array)
+
+**Returns**: Power spectrum in (Mpc/h)³
+
+**Note**: Can be linear or non-linear depending on implementation.
+
+#### `matter_power_spectrum_cb(zs, ks)`
+
+Compute the CDM+baryons matter power spectrum Pcb(k, z).
 
 **Inputs**:
 
@@ -142,6 +155,20 @@ Fast emulator for non-linear power spectra using [HMCode2020Emu](https://github.
 - Lightning-fast (emulator.)
 - Accurate non-linear P(k)
 - Limited parameter range
+
+### EE2Perturbations
+
+Simulation-based emulator for non-linear power spectra using [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper).
+
+**Location**: `cloelib/cosmology/EE2_cosmology.py`
+
+**When to use**: Fast non-linear predictions based on simulations, MCMC sampling
+
+**Features**:
+
+- Lightning-fast (emulator.)
+- Accurate DM-only non-linear boost for P_mm
+- More limited parameter range
 
 ### JAXPerturbations
 

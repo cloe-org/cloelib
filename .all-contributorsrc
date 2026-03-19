@@ -2,7 +2,8 @@
   "projectName": "cloelib",
   "projectOwner": "cloe-org",
   "files": [
-    "README.md"
+    "README.md",
+    "docs/contributing.md"
   ],
   "commitType": "docs",
   "commitConvention": "angular",

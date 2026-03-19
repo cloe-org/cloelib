@@ -150,6 +150,7 @@ This project is licensed under the **MIT LICENSE** – see the [LICENSE](LICENSE
 
 🎯 With technical advice from S. Farrens and N. Tessore.
 
+<!-- --8<-- [start:contributors] -->
 ## 🤝 Contributors
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind are welcome!
@@ -218,3 +219,4 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+<!-- --8<-- [end:contributors] -->

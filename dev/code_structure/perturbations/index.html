@@ -699,6 +699,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#ee2perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EE2Perturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#jaxperturbations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1145,6 +1156,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#ee2perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EE2Perturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#jaxperturbations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1390,7 +1412,16 @@
 <p>This is key. Perturbations <em>always</em> needs a Background to compute distances, densities, etc.</p>
 <h3 id="required-methods">Required Methods<a class="headerlink" href="#required-methods" title="Permanent link">&para;</a></h3>
 <h4 id="matter_power_spectrumzs-ks"><code>matter_power_spectrum(zs, ks)</code><a class="headerlink" href="#matter_power_spectrumzs-ks" title="Permanent link">&para;</a></h4>
-<p>Compute the matter power spectrum P(k, z).</p>
+<p>Compute the matter power spectrum for total matter Pmm(k, z).</p>
+<p><strong>Inputs</strong>:</p>
+<ul>
+<li><code>zs</code>: Redshifts (can be array)</li>
+<li><code>ks</code>: Wavenumbers in h/Mpc (can be array)</li>
+</ul>
+<p><strong>Returns</strong>: Power spectrum in (Mpc/h)³</p>
+<p><strong>Note</strong>: Can be linear or non-linear depending on implementation.</p>
+<h4 id="matter_power_spectrum_cbzs-ks"><code>matter_power_spectrum_cb(zs, ks)</code><a class="headerlink" href="#matter_power_spectrum_cbzs-ks" title="Permanent link">&para;</a></h4>
+<p>Compute the CDM+baryons matter power spectrum Pcb(k, z).</p>
 <p><strong>Inputs</strong>:</p>
 <ul>
 <li><code>zs</code>: Redshifts (can be array)</li>
@@ -1471,6 +1502,16 @@
 <li>Lightning-fast (emulator.)</li>
 <li>Accurate non-linear P(k)</li>
 <li>Limited parameter range</li>
+</ul>
+<h3 id="ee2perturbations">EE2Perturbations<a class="headerlink" href="#ee2perturbations" title="Permanent link">&para;</a></h3>
+<p>Simulation-based emulator for non-linear power spectra using <a href="https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper">euclidemu2</a>.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/EE2_cosmology.py</code></p>
+<p><strong>When to use</strong>: Fast non-linear predictions based on simulations, MCMC sampling</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Lightning-fast (emulator.)</li>
+<li>Accurate DM-only non-linear boost for P_mm</li>
+<li>More limited parameter range</li>
 </ul>
 <h3 id="jaxperturbations">JAXPerturbations<a class="headerlink" href="#jaxperturbations" title="Permanent link">&para;</a></h3>
 <p>Pure JAX implementation for automatic differentiation.</p>

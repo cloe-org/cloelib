@@ -22,7 +22,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 4
   - name: Chiara Moretti
-    orcid: 0000-0000-0000-0000
+    orcid:  0000-0003-3314-8936
     affiliation: 5
   - name: Andrea Pezzotta
     orcid: 0000-0003-0726-2268
@@ -138,7 +138,7 @@ affiliations:
     index: 3
   - name: RWTH Aachen University, Germany
     index: 4
-  - name: SISSA, Italy
+  - name: INAF - Osservatorio Astronomico di Trieste, Italy
     index: 5
   - name: INAF - Osservatorio Astronomico di Brera, Italy
     index: 6

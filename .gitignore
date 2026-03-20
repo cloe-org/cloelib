@@ -39,6 +39,9 @@ pytest_cache/
 # MyPy
 .mypy_cache/
 
+# MkDocs build output
+site/
+
 # Caches
 .cache/
 pip-wheel-metadata/

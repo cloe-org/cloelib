@@ -30,7 +30,20 @@ This is key. Perturbations _always_ needs a Background to compute distances, den
 
 #### `matter_power_spectrum(zs, ks)`
 
-Compute the matter power spectrum P(k, z).
+Compute the matter power spectrum for total matter Pmm(k, z).
+
+**Inputs**:
+
+- `zs`: Redshifts (can be array)
+- `ks`: Wavenumbers in h/Mpc (can be array)
+
+**Returns**: Power spectrum in (Mpc/h)³
+
+**Note**: Can be linear or non-linear depending on implementation.
+
+#### `matter_power_spectrum_cb(zs, ks)`
+
+Compute the CDM+baryons matter power spectrum Pcb(k, z).
 
 **Inputs**:
 
@@ -143,6 +156,20 @@ Fast emulator for non-linear power spectra using [HMCode2020Emu](https://github.
 - Accurate non-linear P(k)
 - Limited parameter range
 
+### EE2Perturbations
+
+Simulation-based emulator for non-linear power spectra using [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper).
+
+**Location**: `cloelib/cosmology/EE2_cosmology.py`
+
+**When to use**: Fast non-linear predictions based on simulations, MCMC sampling
+
+**Features**:
+
+- Lightning-fast (emulator.)
+- Accurate DM-only non-linear boost for P_mm
+- More limited parameter range
+
 ### BACCOemuPerturbations
 
 Accurate and fast emulators of the linear, non-linear, and baryonic power spectra using [BACCOemu](https://bitbucket.org/rangulo/baccoemu/src/master/).
@@ -153,11 +180,11 @@ Accurate and fast emulators of the linear, non-linear, and baryonic power spectr
 
 **Features**:
 
-- Fast predictions of linear power spectra, growth factors and amplitude of fluctuations;
-- Accurate non-linear P(k) emulated from high-resolution simulations;
+- Fast predictions of linear power spectra, growth factors, growth rates, and amplitude of fluctuations;
+- Accurate total and cold non-linear matter power spectrum emulated from high-resolution simulations;
+- Inclusion of baryonic effects through baryonification;
 - Large cosmological parameter range;
 - Neural network evaluation with JAX;
-- Inclusion of baryonic effects through baryonification;
 
 ### JAXPerturbations
 

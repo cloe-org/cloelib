@@ -25,7 +25,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 5
   - name: Andrea Pezzotta
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0003-0726-2268
     affiliation: 6
   - name: Michel Aguena
     orcid: 0000-0000-0000-0000
@@ -140,7 +140,7 @@ affiliations:
     index: 4
   - name: SISSA, Italy
     index: 5
-  - name: INAF, Italy
+  - name: INAF - Osservatorio Astronomico di Brera, Italy
     index: 6
   - name: TBD
     index: 7

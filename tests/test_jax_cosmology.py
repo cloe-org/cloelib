@@ -1,5 +1,8 @@
-import pytest
 import jax.numpy as jnp
+import pytest
+
+# To uncomment when test_matter_power_spectrum_cb is set up:
+# from numpy.testing import assert_allclose
 
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.cosmology.jax_cosmology import (
@@ -381,3 +384,41 @@ def test_jax_growth_rate(jax_perturbation_instances, key, zs, ks):
     result = jax_instance.growth_rate(zs)
     assert isinstance(result, jnp.ndarray)
     assert result.ndim == 1
+
+
+def test_matter_power_spectrum_cb():
+    # not implemented yet
+    """
+    # Cosmology parameters
+    print("# Cosmology parameters")
+    _cosmo_pars = dict(
+        H0=67.7,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_k0=0.0,
+        w0=-1.0,
+        wa=0.0,
+        ns=0.96,
+        mnu=0.1,
+        As=2e-9,
+        gamma_MG=0.0,
+        N_mnu=1,
+    )
+    background = JAXBackground(**_cosmo_pars)
+
+    # linear
+    perturbations = JAXLinearPerturbations(background)
+    assert_allclose(perturbations.matter_power_spectrum(0, 1), 80.534861)
+    assert_allclose(perturbations.matter_power_spectrum_cb(0, 1), 81.748209, rtol=1e-03)
+
+    # non-linear
+    perturbations_nl = JAXNonLinearPerturbations(
+        background, jnp.linspace(0.0, 2.0, 100)
+    )
+    assert_allclose(
+        perturbations_nl.matter_power_spectrum(0, 1), 736.010737, rtol=1.0e-03
+    )
+    assert_allclose(
+        perturbations_nl.matter_power_spectrum_cb(0, 1), 747.017036, rtol=1.0e-03
+    )
+    """

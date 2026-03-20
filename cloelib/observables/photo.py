@@ -21,6 +21,96 @@ import jax.lax as lx
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 
+@jax.jit
+def _L_coeffs(ells):
+    ell = ells.astype(np.float64)
+    # Avoid invalid sqrt for ell<2 by using a safe ell in the algebra
+    ell_s = np.maximum(ell, 2.0)
+
+    Lm1 = (
+        -ell_s
+        * (ell_s - 1.0)
+        / ((2.0 * ell_s - 1.0) * np.sqrt((2.0 * ell_s - 3.0) * (2.0 * ell_s + 1.0)))
+    )
+    L0 = (2.0 * ell_s**2 + 2.0 * ell_s - 1.0) / (
+        (2.0 * ell_s - 1.0) * (2.0 * ell_s + 3.0)
+    )
+    Lp1 = (
+        -(ell_s + 1.0)
+        * (ell_s + 2.0)
+        / ((2.0 * ell_s + 3.0) * np.sqrt((2.0 * ell_s + 1.0) * (2.0 * ell_s + 5.0)))
+    )
+
+    mask = ell >= 2.0
+    Lm1 = np.where(mask, Lm1, 0.0)
+    L0 = np.where(mask, L0, 0.0)
+    Lp1 = np.where(mask, Lp1, 0.0)
+    return Lm1, L0, Lp1
+
+
+@jax.jit
+def _alpha_coeffs(ells):
+    ell = ells.astype(np.float64)
+    denom = 2.0 * ell + 1.0
+    am1 = (2.0 * ell - 3.0) / denom
+    a0 = np.ones_like(ell)
+    ap1 = (2.0 * ell + 5.0) / denom
+
+    # For ell<2 the L's are zero anyway; keep alphas harmless.
+    mask = ell >= 2.0
+    am1 = np.where(mask, am1, 1.0)
+    ap1 = np.where(mask, ap1, 1.0)
+    return am1, a0, ap1
+
+
+@jax.jit
+def _interp_linear_2d_queries(chi, y_bz, xq_lz):
+    """
+    Linear 2D interpolator for the RSD window
+
+    """
+    Z = chi.shape[0]
+    idx = np.searchsorted(chi, xq_lz, side="right") - 1
+    idx = np.clip(idx, 0, Z - 2)
+
+    idx0 = idx[None, :, :]
+    idx1 = (idx + 1)[None, :, :]
+
+    y0 = np.take_along_axis(y_bz[:, None, :], idx0, axis=2)
+    y1 = np.take_along_axis(y_bz[:, None, :], idx1, axis=2)
+
+    x0 = np.take_along_axis(chi[None, :], idx, axis=1)
+    x1 = np.take_along_axis(chi[None, :], idx + 1, axis=1)
+
+    t = (xq_lz - x0) / (x1 - x0)
+    t = t[None, :, :]
+
+    out = y0 + t * (y1 - y0)
+
+    # zero outside bounds
+    oob = (xq_lz < chi[0]) | (xq_lz > chi[-1])
+    out = np.where(oob[None, :, :], 0.0, out)
+
+    return np.transpose(out, (1, 0, 2))
+
+
+@jax.jit
+def get_photo_rsd(ells, chi, S_bin_z):
+    Lm1, L0, Lp1 = _L_coeffs(ells)
+    am1, _, ap1 = _alpha_coeffs(ells)
+
+    chi_q_m1 = am1[:, None] * chi[None, :]
+    chi_q_p1 = ap1[:, None] * chi[None, :]
+
+    S_m1 = _interp_linear_2d_queries(chi, S_bin_z, chi_q_m1)
+    S_0 = np.broadcast_to(S_bin_z[None, :, :], S_m1.shape)
+    S_p1 = _interp_linear_2d_queries(chi, S_bin_z, chi_q_p1)
+
+    return (
+        Lm1[:, None, None] * S_m1 + L0[:, None, None] * S_0 + Lp1[:, None, None] * S_p1
+    )
+
+
 class ShearTracer:
     """Class for the kernel for Cosmic Shear."""
 
@@ -76,9 +166,7 @@ class ShearTracer:
         """
         Omega_m0 = self.background.Omega_m(0.0)
         Hz = self.perturbations.background.hubble_parameter(z)
-        Dz = self.perturbations.growth_factor(
-            self.perturbations.z, self.perturbations.k
-        )[:, 1]
+        Dz = self.perturbations.growth_factor(z, self.perturbations.k)[:, 1]
         # TODO discuss whether we want growth factor to output a 1D or a 2D array
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]
@@ -194,6 +282,7 @@ class PositionsTracer:
         z: np.ndarray,
         galaxy_bias_model: str,
         nuisance_params: dict,
+        include_rsd: bool = False,
     ):
         r"""
         Initialize the class instance.
@@ -231,6 +320,7 @@ class PositionsTracer:
             self.nuisance_params[f"magnification_bias_{i + 1}"]
             for i in range(dndz.shape[0])
         ]
+        self.include_rsd = include_rsd
 
         # Using dict.get so I can provide a default since lax has to compile every branch of the conditional
         def per_bin_case():
@@ -327,6 +417,63 @@ class PositionsTracer:
         window_positions = [per_bin_case, z_func_case][index]()
 
         return window_positions
+
+    def get_window_rsd(self, ells, H, f, chi) -> np.ndarray:
+        r"""
+        Linear photo-RSD window :math:`W^{\rm RSD}_i(\ell,z)` tabulated on the internal z-grid.
+
+        We use the shifted-distance (extended Limber) approximation, where the RSD contribution
+        is written as a linear combination of the source term evaluated at shifted redshifts:
+
+        $$
+        W^{\rm RSD}_i(\ell,z)
+        =
+        A_\ell\,S_i(z)
+        +B_\ell\,S_i\!\left(z_{-2}(\ell,z)\right)
+        +C_\ell\,S_i\!\left(z_{+2}(\ell,z)\right),
+        $$
+
+        with
+        $$
+        S_i(z)=\frac{H(z)\,f(z)}{c}\,n_i(z),
+        $$
+
+        and the shifted redshifts defined implicitly via comoving distance (here :math:`\chi \equiv r`):
+        $$
+        \chi\!\left(z_m(\ell,z)\right)=
+        \frac{\ell+m+\tfrac12}{\ell+\tfrac12}\,\chi(z),
+        \qquad m\in\{-2,+2\}.
+        $$
+
+        The coefficients are
+        $$
+        A_\ell=\frac{2\ell^2+2\ell-1}{(2\ell-1)(2\ell+3)},\quad
+        B_\ell=-\frac{\ell(\ell-1)}{(2\ell-1)(2\ell+1)},\quad
+        C_\ell=-\frac{(\ell+1)(\ell+2)}{(2\ell+1)(2\ell+3)}.
+        $$
+
+        Notes
+        -----
+        - `chi` is used purely as an interpolation coordinate so `get_photo_rsd` can evaluate
+          the shifted arguments efficiently.
+
+        Parameters
+        ----------
+        ells : array_like
+            Multipoles ell.
+        H, f : array_like
+            H(z) and growth rate f(z), sampled on the same z-grid as `self.dndz_shifted`.
+        chi : array_like
+            Comoving distance χ(z)=r(z), sampled on the same z-grid.
+
+        Returns
+        -------
+        ndarray
+            The RSD window sampled on the z-grid (shape as returned by `get_photo_rsd`).
+        """
+        # S_i(z) = H(z) f(z) n_i(z) / c
+        S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted
+        return get_photo_rsd(ells, chi, S)
 
     def get_magnification_efficiency(self, z):
         r"""

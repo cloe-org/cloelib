@@ -143,6 +143,22 @@ Fast emulator for non-linear power spectra using [HMCode2020Emu](https://github.
 - Accurate non-linear P(k)
 - Limited parameter range
 
+### BACCOemuPerturbations
+
+Accurate and fast emulators of the linear, non-linear, and baryonic power spectra using [BACCOemu](https://bitbucket.org/rangulo/baccoemu/src/master/).
+
+**Location**: `cloelib/cosmology/baccoemu_cosmology.py`
+
+**When to use**: Predictions for the matter clustering, in the linear and non linear regime. Predictions of baryonic effects.
+
+**Features**:
+
+- Fast predictions of linear power spectra, growth factors and amplitude of fluctuations;
+- Accurate non-linear P(k) emulated from high-resolution simulations;
+- Large cosmological parameter range;
+- Neural network evaluation with JAX;
+- Inclusion of baryonic effects through baryonification;
+
 ### JAXPerturbations
 
 Pure JAX implementation for automatic differentiation.

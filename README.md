@@ -213,7 +213,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/martincrocce"><img src="https://avatars.githubusercontent.com/u/29067049?v=4?s=100" width="100px;" alt="Martin Crocce"/><br /><sub><b>Martin Crocce</b></sub></a><br /><a href="#projectManagement-martincrocce" title="Project Management">📆</a> <a href="#mentoring-martincrocce" title="Mentoring">🧑‍🏫</a> <a href="#promotion-martincrocce" title="Promotion">📣</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/CarmelitaCarbone"><img src="https://avatars.githubusercontent.com/u/17458225?v=4?s=100" width="100px;" alt="CarmelitaCarbone"/><br /><sub><b>CarmelitaCarbone</b></sub></a><br /><a href="#projectManagement-CarmelitaCarbone" title="Project Management">📆</a> <a href="#mentoring-CarmelitaCarbone" title="Mentoring">🧑‍🏫</a> <a href="#promotion-CarmelitaCarbone" title="Promotion">📣</a></td>
     </tr>
-    <tr>    
+    <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://garico92.github.io/website/"><img src="https://avatars.githubusercontent.com/u/78367368?v=4?s=100" width="100px;" alt="Giovanni"/><br /><sub><b>Giovanni</b></sub></a><br /><a href="#code-garico92" title="Code">💻</a> <a href="#ideas-garico92" title="Ideas, Planning, & Feedback">🤔</a> <a href="#doc-garico92" title="Documentation">📖</a></td>
     </tr>
   </tbody>

@@ -7,6 +7,7 @@ with Boltzmann solvers and JAX-based frameworks, enabling automatic differentiat
 for the next generation of cosmological analyses.
 
 Key Features:
+
 - **Intuitive & User-Friendly**: Generate Euclid-like observables (e.g., power spectra, window functions,
   and tracer statistics) rapidly.
 - **Automatic Differentiation**: Includes a toy example with `JAX` for gradient-based computations.

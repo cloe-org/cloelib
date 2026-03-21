@@ -24,7 +24,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/20775836?v=4",
       "profile": "https://github.com/itutusaus",
       "contributions": [
-        "review"
+        "review",
+        "projectManagement",
+        "mentoring",
+        "promotion"
       ]
     },
     {
@@ -259,7 +262,9 @@
       "contributions": [
         "code",
         "ideas",
-        "doc"
+        "doc",
+        "review",
+        "bug"
       ]
     },
     {
@@ -379,6 +384,132 @@
       "profile": "https://github.com/ryusei172525",
       "contributions": [
         "code",
+        "ideas"
+      ]
+    },
+    {      "login": "cosmicLinux",
+      "name": "Linus Thummel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142009018?v=4",
+      "profile": "https://www.ph.ed.ac.uk/people/linus-thummel",
+      "contributions": [
+        "code",
+        "doc",
+        "ideas"
+      ]
+    },
+    {      "login": "cosmicLinux",
+      "name": "Linus Thummel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142009018?v=4",
+      "profile": "https://www.ph.ed.ac.uk/people/linus-thummel",
+      "contributions": [
+        "code",
+        "doc",
+        "ideas"
+      ]
+    },
+    {
+      "login": "LisaGoh",
+      "name": "Lisa Goh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74064921?v=4",
+      "profile": "http://lisagoh.github.io",
+      "contributions": [
+        "code",
+        "doc",
+        "ideas"
+      ]
+    },
+    {
+      "login": "zsirap",
+      "name": "zsirap",
+      "avatar_url": "https://avatars.githubusercontent.com/u/50758399?v=4",
+      "profile": "https://github.com/zsirap",
+      "contributions": [
+        "code",
+        "ideas",
+        "bug"
+      ]
+    },
+    {
+      "login": "ktanidis",
+      "name": "Konstantinos Tanidis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/60473500?v=4",
+      "profile": "https://github.com/ktanidis",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ChaitanyaChawak",
+      "name": "Chaitanya",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55046588?v=4",
+      "profile": "https://chaitanyachawak.github.io/",
+      "contributions": [
+        "code",
+        "bug",
+        "review"
+      ]
+    },
+    {
+      "login": "raphkou",
+      "name": "raphkou",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61792335?v=4",
+      "profile": "https://github.com/raphkou",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "ivansladoljev",
+      "name": "Ivan Sladoljev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/144113061?v=4",
+      "profile": "https://github.com/ivansladoljev",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "NastassiaG",
+      "name": "NastassiaG",
+      "avatar_url": "https://avatars.githubusercontent.com/u/107264848?v=4",
+      "profile": "https://github.com/NastassiaG",
+      "contributions": [
+        "code",
+        "bug",
+        "ideas"
+      ]
+    },
+    {
+      "login": "martincrocce",
+      "name": "Martin Crocce",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29067049?v=4",
+      "profile": "https://github.com/martincrocce",
+      "contributions": [
+        "projectManagement",
+        "mentoring",
+        "promotion"
+      ]
+    },
+    {
+      "login": "CarmelitaCarbone",
+      "name": "CarmelitaCarbone",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17458225?v=4",
+      "profile": "https://github.com/CarmelitaCarbone",
+      "contributions": [
+        "projectManagement",
+        "mentoring",
+        "promotion"
+      ]
+    },
+    {
+      "login": "garico92",
+      "name": "Giovanni",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78367368?v=4",
+      "profile": "https://garico92.github.io/website/",
+      "contributions": [
+        "code",
+        "ideas",
         "doc"
       ]
     }

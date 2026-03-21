@@ -1,6 +1,6 @@
 # Contributing to cloelib
 
-Thank you for your interest in contributing to **cloelib**! We are doing an effor to keep an open science approach
+Thank you for your interest in contributing to **cloelib**! We are committed to an open science approach.
 
 ## Ways to Contribute
 
@@ -12,7 +12,7 @@ If you have suggestions or found a bug, [open an issue](https://github.com/cloe-
 
 Follow these steps to contribute:
 
-### 1️⃣ Create a Feature Branch
+### 1. Create a Feature Branch
 
 ```sh
 git checkout -b feature/your-feature-name
@@ -20,7 +20,7 @@ git checkout -b feature/your-feature-name
 
 Use descriptive branch names (e.g., `feature/add-jax-support`, `fix/convergence-issue`). Link your branch to the issue by including the issue number in the branch name or PR description, and/or leaving the branch in the associated issue in a comment.
 
-### 2️⃣ Make Your Changes
+### 2. Make Your Changes
 
 We recommend to suggest a possible implementation in the issue description of the task and interact with the cloe-maintainers first. This will avoid unnecessary work not to be used.
 
@@ -28,7 +28,7 @@ We recommend to suggest a possible implementation in the issue description of th
 - Add tests for new functionality
 - Update documentation as needed
 
-### 3️⃣ Commit Your Changes
+### 3. Commit Your Changes
 
 ```sh
 git commit -m "Add feature: [brief description]"
@@ -36,13 +36,13 @@ git commit -m "Add feature: [brief description]"
 
 Write concise, descriptive commit messages.
 
-### 4️⃣ Push Your Branch
+### 4. Push Your Branch
 
 ```sh
 git push origin feature/your-feature-name
 ```
 
-### 5️⃣ Open a Pull Request
+### 5. Open a Pull Request
 
 Submit a pull request to the main repository. Please use the PR template and ensure you include:
 
@@ -73,5 +73,3 @@ All checks must pass before merging. We recommend using draft PRs if you need to
 Got questions? Don't hesitate! Open an issue, [join our discussion board](https://github.com/cloe-org/cloelib/discussions), or ping @cloe-maintainers. We're here to help and love collaborating with our community.
 
 ---
-
---8<-- "README.md:contributors"

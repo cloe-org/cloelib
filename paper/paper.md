@@ -22,7 +22,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 4
   - name: Chiara Moretti
-    orcid:  0000-0003-3314-8936
+    orcid: 0000-0003-3314-8936
     affiliation: 5
   - name: Andrea Pezzotta
     orcid: 0000-0003-0726-2268

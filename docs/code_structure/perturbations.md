@@ -170,6 +170,22 @@ Simulation-based emulator for non-linear power spectra using [euclidemu2](https:
 - Accurate DM-only non-linear boost for P_mm
 - More limited parameter range
 
+### BACCOemuPerturbations
+
+Accurate and fast emulators of the linear, non-linear, and baryonic power spectra using [BACCOemu](https://bitbucket.org/rangulo/baccoemu/src/master/).
+
+**Location**: `cloelib/cosmology/baccoemu_cosmology.py`
+
+**When to use**: Predictions for the matter clustering, in the linear and non linear regime. Predictions of baryonic effects.
+
+**Features**:
+
+- Fast predictions of linear power spectra, growth factors, growth rates, and amplitude of fluctuations;
+- Accurate total and cold non-linear matter power spectrum emulated from high-resolution simulations;
+- Inclusion of baryonic effects through baryonification;
+- Large cosmological parameter range;
+- Neural network evaluation with JAX;
+
 ### JAXPerturbations
 
 Pure JAX implementation for automatic differentiation.

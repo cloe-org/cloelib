@@ -47,7 +47,7 @@ jobs:
       - name: Install cloelib and extras from pyproject.toml
         run: |
           mamba run -n $ENV_NAME python -m pip install --upgrade pip
-          mamba run -n $ENV_NAME python -m pip install ".[camb,classy,euclidemu2]"
+          mamba run -n $ENV_NAME python -m pip install ".[camb,classy,euclidemu2,baccoemu]"
       - name: Run tests
         run: mamba run -n $ENV_NAME python -m pytest
   build:

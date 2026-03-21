@@ -49,6 +49,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                             | `PBJ` (not publicly available)                                     |
 | NA                                                | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)            | NA                                                                 |
 | NA                                                | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
+| NA                                                | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
 
 We do not provide installation support for `PBJ`.
 
@@ -90,13 +91,13 @@ pip install .
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument]
+pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument]"
+> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu]"
 > ```
 
 You're all set! 🎉 Ready to compute cosmological observables.
@@ -150,6 +151,8 @@ This project is licensed under the **MIT LICENSE** – see the [LICENSE](LICENSE
 👩‍💻🧑‍💻 Authored by M. Bonici, G. Cañas-Herrera, P. Carrilho, S. Casas, C. Moretti, and A. Pezzotta (listed in alphabetical order).
 
 🎯 With technical advice from S. Farrens and N. Tessore.
+
+<!-- --8<-- [start:contributors] -->
 
 ## 🤝 Contributors
 
@@ -223,3 +226,4 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+<!-- --8<-- [end:contributors] -->

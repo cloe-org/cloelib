@@ -51,7 +51,7 @@ def camb_photo_setup():
     perturbations = CAMBNonLinearPerturbations(background, user_z)
     n_z_bins = 2
     dndz = np.ones((n_z_bins, len(tracer_z)))
-    dndz /= np.trapz(dndz, tracer_z, axis=1)[:, None]
+    dndz /= np.trapezoid(dndz, tracer_z, axis=1)[:, None]
 
     return perturbations, tracer_z, dndz, n_z_bins
 

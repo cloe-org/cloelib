@@ -10,31 +10,22 @@
 
 - **Automatic Differentiation** – Supporting **`JAX`** for gradient-based computations.
 
-- **Modular & Extensible** – Easily interface with external **Boltzmann solvers** or **emulators** via **Python `Protocols`** following the [cosmology.API](https://cosmology.readthedocs.io/projects/api/latest/#). The core structure enables defining **Background & Perturbation** models, choosing observables via **Tracer** or **SpectroPower** protocols, and computing final summary statistics such as **angular power spectra** or **Legendre multipoles**.
+- **Modular & Extensible** – Easily interface with external Boltzmann solvers or emulators via Python `Protocols` following the [cosmology.API](https://cosmology.readthedocs.io/projects/api/latest/#). The core structure enables defining Background & Perturbation models, choosing observables via Tracer or SpectroPower protocols, and computing final summary statistics such as angular power spectra or Legendre multipoles. Check the [guide](code_structure/index.md) to learn more about its architecture.
 
 ---
 
 ## Supported External Codes
 
-`cloelib` interfaces with the following external codes, each used by a specific internal module for its calculations:
-
-| Background                                        | Perturbations                                                      | SpectroPower                                                       |
-| ------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| [camb](https://camb.readthedocs.io)               | [camb](https://camb.readthedocs.io)                                | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
-| [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                  | `PBJ` (not publicly available)                                     |
-| —                                                 | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git) | —                                                                  |
-| —                                                 | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)     | —                                                                  |
-
-Installation support is not provided for `PBJ`.
+--8<-- "README.md:supported-codes"
 
 ---
+
+## Contributors
+
+Contributions to this project follow the [all-contributors](https://allcontributors.org) specification. All forms of contributions are appreciated, including code, documentation, and more.
+
+--8<-- "README.md:contributors"
 
 ## License
 
 This project is licensed under the [MIT License](https://github.com/cloe-org/cloelib?tab=MIT-1-ov-file).
-
----
-
-## Acknowledgements
-
-Contributions to this project follow the [all-contributors](https://allcontributors.org) specification. All forms of contributions are appreciated, including code, documentation, and more.

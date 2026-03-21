@@ -70,4 +70,6 @@ All checks must pass before merging. We recommend using draft PRs if you need to
 
 ## Questions?
 
-Open an issue, [join the discussion board](https://github.com/cloe-org/cloelib/discussions), or tag @cloe-maintainers. We are happy to help and welcome collaboration.
+Got questions? Don't hesitate! Open an issue, [join our discussion board](https://github.com/cloe-org/cloelib/discussions), or ping @cloe-maintainers. We're here to help and love collaborating with our community.
+
+---

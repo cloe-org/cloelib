@@ -20,6 +20,9 @@ This module bridges smooth background cosmology and the observed clustered unive
 
 The Perturbations protocol defines what every perturbation calculator must provide. This module requires a Background instance as it depends on cosmological distances and densities.
 
+!!! warning "Units convention"
+All wavenumbers within `cloelib` are **always in 1/Mpc** (not h/Mpc). Power spectra are therefore in **Mpc³**. Any class implementing the `Perturbations` protocol **must** adopt this convention. If the underlying code uses h/Mpc internally, the implementation wrapper is responsible for converting inputs and outputs.
+
 ### Required Property
 
 - **`background`**: Reference to the associated Background object
@@ -30,14 +33,27 @@ This is key. Perturbations _always_ needs a Background to compute distances, den
 
 #### `matter_power_spectrum(zs, ks)`
 
-Compute the matter power spectrum P(k, z).
+Compute the matter power spectrum for total matter Pmm(k, z).
 
 **Inputs**:
 
 - `zs`: Redshifts (can be array)
-- `ks`: Wavenumbers in h/Mpc (can be array)
+- `ks`: Wavenumbers in **1/Mpc** (can be array)
 
-**Returns**: Power spectrum in (Mpc/h)³
+**Returns**: Power spectrum in **Mpc³**
+
+**Note**: Can be linear or non-linear depending on implementation.
+
+#### `matter_power_spectrum_cb(zs, ks)`
+
+Compute the CDM+baryons matter power spectrum Pcb(k, z).
+
+**Inputs**:
+
+- `zs`: Redshifts (can be array)
+- `ks`: Wavenumbers in **1/Mpc** (can be array)
+
+**Returns**: Power spectrum in **Mpc³**
 
 **Note**: Can be linear or non-linear depending on implementation.
 
@@ -99,7 +115,7 @@ pert = CAMBPerturbations(
 
 # Compute power spectrum
 z = np.array([0.0, 0.5, 1.0])
-k = np.logspace(-3, 1, 100)  # k in h/Mpc
+k = np.logspace(-3, 1, 100)  # k in 1/Mpc
 P_k_z = pert.matter_power_spectrum(z, k)
 
 # Get σ₈
@@ -141,6 +157,51 @@ Fast emulator for non-linear power spectra using [HMCode2020Emu](https://github.
 - Accurate non-linear P(k)
 - Limited parameter range
 
+### EE2Perturbations
+
+Simulation-based emulator for non-linear power spectra using [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper).
+
+**Location**: `cloelib/cosmology/EE2_cosmology.py`
+
+**When to use**: Fast non-linear predictions based on simulations, MCMC sampling
+
+**Features**:
+
+- Lightning-fast (emulator.)
+- Accurate DM-only non-linear boost for P_mm
+- More limited parameter range
+
+### BACCOemuPerturbations
+
+Accurate and fast emulators of the linear, non-linear, and baryonic power spectra using [BACCOemu](https://bitbucket.org/rangulo/baccoemu/src/master/).
+
+**Location**: `cloelib/cosmology/baccoemu_cosmology.py`
+
+**When to use**: Predictions for the matter clustering, in the linear and non linear regime. Predictions of baryonic effects.
+
+**Features**:
+
+- Fast predictions of linear power spectra, growth factors, growth rates, and amplitude of fluctuations;
+- Accurate total and cold non-linear matter power spectrum emulated from high-resolution simulations;
+- Inclusion of baryonic effects through baryonification;
+- Large cosmological parameter range;
+- Neural network evaluation with JAX;
+
+### CosmoPowerJAXPerturbations
+
+Fast JAX-based emulator for linear power spectra using [cosmopower-jax](https://github.com/dpiras/cosmopower-jax).
+
+**Location**: `cloelib/cosmology/cosmopower_jax_cosmology.py`
+
+**When to use**: Fast linear predictions with full JAX compatibility, gradient-based inference, MCMC sampling
+
+**Features**:
+
+- Full JAX compatibility enabling automatic differentiation and JIT compilation
+- Fast emulation of linear power spectra
+- Native support for gradient-based samplers (e.g. HMC/NUTS)
+- Limited to linear regime
+
 ### JAXPerturbations
 
 Pure JAX implementation for automatic differentiation.
@@ -178,7 +239,7 @@ class MySolverPerturbations:
         Args:
             background: Background object (any implementation)
             nonlinear_model: Which non-linear model to use
-            kmax: Maximum wavenumber in h/Mpc
+            kmax: Maximum wavenumber in 1/Mpc
             zmax: Maximum redshift
         """
         self._background = background
@@ -205,14 +266,14 @@ class MySolverPerturbations:
 
     def matter_power_spectrum(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         """
-        Compute matter power spectrum P(k, z).
+        Compute the total matter power spectrum P_mm(k, z).
 
         Args:
             zs: Redshifts (1D array)
-            ks: Wavenumbers in h/Mpc (1D array)
+            ks: Wavenumbers in 1/Mpc (1D array)
 
         Returns:
-            P(k, z) in (Mpc/h)³, shape (len(zs), len(ks))
+            P(k, z) in Mpc³, shape (len(zs), len(ks))
         """
         # Ensure inputs are arrays
         zs = np.atleast_1d(zs)
@@ -222,6 +283,26 @@ class MySolverPerturbations:
         P_k_z = self._solver.get_power_spectrum(zs, ks)
 
         return P_k_z
+
+    def matter_power_spectrum_cb(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+        """
+        Compute the CDM+baryons matter power spectrum P_cb(k, z).
+
+        Args:
+            zs: Redshifts (1D array)
+            ks: Wavenumbers in 1/Mpc (1D array)
+
+        Returns:
+            P_cb(k, z) in Mpc³, shape (len(zs), len(ks))
+        """
+        zs = np.atleast_1d(zs)
+        ks = np.atleast_1d(ks)
+
+        # If the solver distinguishes cb from total matter, use the dedicated method;
+        # otherwise fall back to the total matter power spectrum
+        P_cb_k_z = self._solver.get_cb_power_spectrum(zs, ks)
+
+        return P_cb_k_z
 
     def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         """Calculate linear growth factor D(z, k)."""
@@ -360,7 +441,7 @@ def test_growth_factor(background):
 
 - Add to `docs/api.md`
 - Update supported codes table in `README.md`
-- Add usage examples
+- Add usage examples within the `playrgound` repository
 
 ## Interface Patterns
 
@@ -391,17 +472,9 @@ class MyPerturbations:
 
 ## Tips & Tricks
 
-### Units
-
-Standard units in cloelib:
-
-- Wavenumbers: **1/Mpc** (not h/Mpc)
-- Power spectrum: **(Mpc)³**
-- Always check external code's convention and convert if needed
-
 ### Non-linear vs. Linear Power Spectra
 
-Make it clear what you are computing linear or non-linear power spectra at the level of the protocol. The protocols should always return this method:
+Make it clear what you are computing linear or non-linear power spectra at the level of the protocol. The protocols should always return this method and their corresponding CDM and baryon only matter power spectrum `_cb`.
 
 ```python
 def matter_power_spectrum(self, zs, ks):

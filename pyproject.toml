@@ -42,6 +42,7 @@ mpmath = ["mpmath"]
 tensorflow = ["tensorflow"]
 tf-keras = ["tf-keras"]
 cosmopower-jax=["cosmopower-jax"]
+baccoemu = ["baccoemu"]
 
 [tool.hatch.version]
 source = "vcs"

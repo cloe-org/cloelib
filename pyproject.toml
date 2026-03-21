@@ -41,6 +41,7 @@ pylevin = ["pylevin"]
 mpmath = ["mpmath"]
 tensorflow = ["tensorflow"]
 tf-keras = ["tf-keras"]
+baccoemu = ["baccoemu"]
 
 [tool.hatch.version]
 source = "vcs"

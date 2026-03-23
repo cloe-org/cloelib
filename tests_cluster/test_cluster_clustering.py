@@ -41,7 +41,7 @@ def _test_clustering(CL, perturbations):
     assert_allclose(VF, ref_radial_shell_window_and_volume1, rtol=1e-03)
 
     print("    Pk_IR_func")
-    ref_Pk_IR = np.array([[4.228415e+02, 1.061383e-01], [1.561681e+02, 3.934860e-02]])
+    ref_Pk_IR = np.array([[4.228415e02, 1.061383e-01], [1.561681e02, 3.934860e-02]])
 
     Pk_test = perturbations.matter_power_spectrum(
         z_test, k_test, hubble_units=True, k_hunit=True

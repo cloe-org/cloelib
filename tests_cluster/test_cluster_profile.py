@@ -191,7 +191,7 @@ def test_profiles():
             "rtol": 1e-3,
         },
         "excess_surface_mass_density_2h": {
-            "desired": [1.520876, 2.16498 , 2.853623, 3.655179],
+            "desired": [1.520876, 2.16498, 2.853623, 3.655179],
             "rtol": 1e-3,
         },
     }

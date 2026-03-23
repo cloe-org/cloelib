@@ -1,13 +1,12 @@
 # General imports
 import numpy as np
-from scipy.integrate import simpson as simps
+from scipy.integrate import simpson
 
 # cloelib imports
 from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.observables.clusters.covariance import HaloCovariance
 from cloelib.observables.clusters.halo_abundance import HaloAbundance
-from cloelib.observables.clusters.selection_function import SelectionFunction
 
 # import jax
 
@@ -42,7 +41,6 @@ class ClusterStatisticsModeling:
     def __init__(
         self,
         halo_abundance: HaloAbundance,
-        selectionfunction: SelectionFunction,
         integ_k_arr: np.ndarray,
         integ_mass_arr: np.ndarray,
         integ_lambda_true_arr: np.ndarray,
@@ -56,8 +54,6 @@ class ClusterStatisticsModeling:
         ----------
         HaloAbundance : HaloAbundance
             Halo mass function and bias object
-        selectionfunction : SelectionFunction
-            Selection function object
         integ_k_arr : numpy.ndarray
             Values of k to be used in integrations, stored in tabulated_integrands
         integ_mass_arr : numpy.ndarray
@@ -71,7 +67,6 @@ class ClusterStatisticsModeling:
         """
         # observable objects
         self.halo_abundance = halo_abundance
-        self.selectionfunction = selectionfunction
 
         # check if the integration points lie within the interpolation ranges
         if self.matter_statistics.interpolate_pk:
@@ -104,10 +99,6 @@ class ClusterStatisticsModeling:
             "M": integ_mass_arr,  # mass array in Msun h^-1
             "lambda_true": integ_lambda_true_arr,  # true richness array
             "ztrue": integ_ztrue_arr,  # true redshift array
-            # P(lambda_true|M,z), this quantity is also used by cluster clustering
-            "PDF_mass_richness_scaling": self.selectionfunction.P_lnlbd(
-                integ_ztrue_arr, integ_mass_arr, integ_lambda_true_arr
-            ),
             # volume element at each point of z array
             "dv/dz(ztrue)": derived_cosmology.dV_dzdO(
                 self.matter_statistics.perturbations.background,
@@ -135,115 +126,62 @@ class ClusterStatisticsModeling:
     # cluster statistics functions
     # ----------------------------
 
-    def window_z_observed(self, z_obs_edges, lambda_obs_edges, z_tab_sig):
+    def window_z_observed(self, selection_function, z_obs_edges, lambda_obs_edges):
         r"""Compute the window function of each observed redshift bin, given by:
 
         ..math:
-            W_{\Delta z^{\rm obs}}(\lambda^{\rm obs}, z^{\rm true}) = \int_{\Delta z^{\rm obs}}dz^{\rm obs} P(z^{\rm obs}|\lambda^{\rm obs}, z^{\rm true})
+            W_{\Delta z_{\rm obs}}(\lambda_{\rm obs}, z_{\rm true}) = \int_{\Delta z_{\rm obs}}dz_{\rm obs} P(z_{\rm obs}|\lambda_{\rm obs}, z_{\rm true})
 
         Parameters
-        ----------
+        ---------
+        selection_function : SelectionFunction
+            Selection function object
         z_obs_edges : numpy.ndarray
             Edges of redshift bins for the integration.
         lambda_obs_edges : numpy.ndarray
             Edges of richness bins for the integration.
-        z_tab_sig : int, None
-            Number of points to be used for z_obs integration.
 
         Returns
         -------
         window_z_obs : numpy.ndarray
             Integral of P(z_obs|lambda_obs, ztrue) in z_obs bins,
             where (ztrue) are the values in self.tabulated_integrands.
-            Dimentions: (z_obs_edges, lambda_obs_edges, ztrue).
+            Dimensions: (z_obs_edges, lambda_obs_edges, ztrue).
         """
-
-        z_obs_edges_size = len(z_obs_edges) - 1
-        lambda_obs_edges_size = len(lambda_obs_edges) - 1
-
-        # for z_obs integration
-        z_obs_tabs = np.linspace(z_obs_edges[:-1], z_obs_edges[1:], z_tab_sig)
-
-        # reshape for multiplication
-        _z_obs_tabs = z_obs_tabs[:, :, np.newaxis]
-        _lambda_obs = lambda_obs_edges[np.newaxis, :-1, np.newaxis]
-        _ztrue = self.tabulated_integrands["ztrue"][np.newaxis, np.newaxis, :]
-
-        # Window function
-        window_z_obs = np.zeros(
-            (
-                z_obs_edges_size,
-                lambda_obs_edges_size,
-                self.tabulated_integrands["ztrue"].size,
-            )
+        return selection_function.window_z_observed(
+            z_obs_edges,
+            lambda_obs_edges,
+            self.tabulated_integrands["ztrue"],
+            self.tabulated_integrands["lambda_true"],
         )
-        for ind_z in range(z_obs_edges_size):
-            window_z_obs[ind_z] = simps(
-                self.selectionfunction.P_zobs_z(
-                    _z_obs_tabs[:, ind_z], _lambda_obs, _ztrue
-                ),
-                x=z_obs_tabs[:, ind_z],
-                axis=0,
-            )
-        return window_z_obs
 
-    def window_richness_observed(self, lambda_obs_edges, l_m_tab_sig):
+    def window_richness_observed(self, selection_function, lambda_obs_edges):
         r"""Compute the window function of each observed richness bin, given by:
 
         ..math:
-            W_{\Delta\lambda^{\rm obs}}(M, z^{\rm true}) = \int_{\Delta\lambda^{\rm obs}}d\lambda^{\rm obs} P(\lambda^{\rm obs}|M, z^{\rm true})
+            W_{\Delta\lambda_{\rm obs}}(M, z_{\rm true}) = \int_{\Delta\lambda_{\rm obs}}d\lambda_{\rm obs} P(\lambda_{\rm obs}|M, z_{\rm true})
 
         Parameters
         ----------
+        selection_function : SelectionFunction
+            Selection function object
         lambda_obs_edges : numpy.ndarray
             Edges of richness bins for the integration.
-        l_m_tab_sig : List, None
-            Number of points to be used for the lambda_obs integration
-            in each lambda_obs bin. Must be same size of lambda_obs_edges.
 
         Returns
         -------
         window_lambda_obs : numpy.ndarray
             Integral of P(lambda_obs|M, ztrue) in lambda_obs bins,
             where (M, ztrue) are the values in self.tabulated_integrands.
-            Dimentions: (lambda_obs_edges, ztrue, M).
+            Dimensions: (lambda_obs_edges, ztrue, M).
         """
 
-        # if external_richness_selection_function == 'CG_ESF' :
-        #     window_lambda_obs  = self.int_Plobltr_Dlob[lambda_bin](self.tabulated_integrands["ztrue"], self.tabulated_integrands["lambda_true"]).T
-
-        lambda_obs_edges_size = len(lambda_obs_edges) - 1
-        window_lambda_obs = np.zeros(
-            (
-                lambda_obs_edges_size,
-                self.tabulated_integrands["ztrue"].size,
-                self.tabulated_integrands["M"].size,
-            )
+        return selection_function.window_richness_observed(
+            lambda_obs_edges,
+            self.tabulated_integrands["ztrue"],
+            self.tabulated_integrands["M"],
+            self.tabulated_integrands["lambda_true"],
         )
-        for ind_lambda in range(lambda_obs_edges_size):
-            # integrate P(lambda_obs|lambda_true, z) in lambda_obs
-            l_tab = np.geomspace(
-                lambda_obs_edges[ind_lambda],
-                lambda_obs_edges[ind_lambda + 1],
-                l_m_tab_sig[ind_lambda],
-            )
-            _integration_P_lbdobs_lbd = simps(
-                self.selectionfunction.P_lbdobs_lbd(
-                    self.tabulated_integrands["ztrue"],
-                    self.tabulated_integrands["lambda_true"],
-                    l_tab,
-                ),
-                x=l_tab,
-                axis=-1,
-            )
-            # Window function
-            window_lambda_obs[ind_lambda] = simps(
-                self.tabulated_integrands["PDF_mass_richness_scaling"]
-                * _integration_P_lbdobs_lbd[:, np.newaxis, :],
-                x=self.tabulated_integrands["lambda_true"],
-                axis=-1,
-            )
-        return window_lambda_obs
 
     # ---------------------
     # integration functions
@@ -271,7 +209,7 @@ class ClusterStatisticsModeling:
             computation, somehow it is faster than using integrate_probe_function_in_k_space,
             to be investigated.
         """
-        return simps(kernel, x=self.tabulated_integrands["k"])
+        return simpson(kernel, x=self.tabulated_integrands["k"])
 
     def integrate_probe_function_in_dk(self, kernel):
         """Integrate the kernel in k space with a k^2/2pi kernel.
@@ -303,7 +241,7 @@ class ClusterStatisticsModeling:
         window_lambda_obs : numpy.ndarray
             Integral of P(lambda_obs|M, ztrue) in lambda_obs bins,
             where (M, ztrue) are the values in self.tabulated_integrands.
-            Dimentions: (lambda_obs, ztrue, M)
+            Dimensions: (lambda_obs, ztrue, M)
 
         Returns
         -------
@@ -327,7 +265,7 @@ class ClusterStatisticsModeling:
         )
 
         # integral of P(lambda_obs|M, z)*dn/dM on lambda_obs bins and mass : (lambda_obs_edges, z)
-        integrated_probe_function = simps(
+        integrated_probe_function = simpson(
             _probe_function * _hmf * _window_lambda_obs,
             x=self.tabulated_integrands["M"],
             axis=2,
@@ -347,7 +285,7 @@ class ClusterStatisticsModeling:
         window_z_obs : numpy.ndarray
             Integral of P(z_obs|lambda_obs, ztrue) in z_obs bins,
             where (ztrue) are the values in self.tabulated_integrands.
-            Dimentions: (z_obs, lambda_obs, ztrue, ...) with (ztrue) in tabulated_integrands.
+            Dimensions: (z_obs, lambda_obs, ztrue, ...) with (ztrue) in tabulated_integrands.
 
         Returns
         -------
@@ -370,7 +308,7 @@ class ClusterStatisticsModeling:
         )
 
         # output : (z_obs, lambda_obs_edges)
-        integrated_probe_function = simps(
+        integrated_probe_function = simpson(
             _probe_function * _dvdz * _window_z_obs,
             x=self.tabulated_integrands["ztrue"],
             axis=2,

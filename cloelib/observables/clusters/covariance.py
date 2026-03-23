@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.integrate import simpson as simps
+from scipy.integrate import simpson
 from scipy.special import eval_legendre, spherical_jn
 
 from cloelib.cosmology.cosmology import Perturbations
@@ -7,7 +7,12 @@ from cloelib.cosmology.cosmology import Perturbations
 
 class HaloCovariance:
     def __init__(
-        self, perturbations: Perturbations, k: np.ndarray, area: float, nbins_zob: int
+        self,
+        perturbations: Perturbations,
+        k: np.ndarray,
+        area: float,
+        nbins_zob: int,
+        z_tab_integ: int,
     ):
         self.background = perturbations.background
 
@@ -16,6 +21,8 @@ class HaloCovariance:
         self.L = 20
 
         self.rint = np.zeros((nbins_zob, len(self.k), self.L + 1))
+
+        self.z_tab_integ = z_tab_integ
 
     def Kl_coeff(self):
         """
@@ -49,7 +56,7 @@ class HaloCovariance:
 
         return KL
 
-    def cov_window(self, iz, zarr_iz, KL):
+    def cov_window(self, iz, z_window_edges, KL):
         """
         Computes the window function between redshifts bins
 
@@ -57,8 +64,8 @@ class HaloCovariance:
         ----------
         iz: int
             Index of the redshift bins at which to evaluate the window function
-        zarr_iz: numpy.ndarray
-             Array of redshifts (integration variable) between zbins[iz] and zbins[iz+1]
+        z_window_edges: tuple
+             Redshift boundaries (min, max values) of the window.
         KL: numpy.ndarray
             Spherical harmonic expansion coefficients
 
@@ -67,6 +74,7 @@ class HaloCovariance:
         cluster count covariance window:   numpy.ndarray
                 W[i,j,k] where i and j are two redshift bin and k are the wavenumbers
         """
+        zarr_iz = np.linspace(z_window_edges[0], z_window_edges[1], self.z_tab_integ)
 
         rvec = self.background.comoving_distance(zarr_iz) * (
             self.background.H0 / 100.0
@@ -79,7 +87,7 @@ class HaloCovariance:
         self.rint[iz] = (
             1
             / Vz
-            * simps(
+            * simpson(
                 rvec**2.0
                 * np.array(
                     [spherical_jn(l, kr, derivative=False) for l in range(self.L + 1)]

@@ -1,6 +1,6 @@
 # import jax.numpy as np
 import numpy as np
-from scipy.integrate import simpson as simps
+from scipy.integrate import simpson
 from scipy.special import spherical_jn
 
 from cloelib.auxiliary import units
@@ -242,7 +242,7 @@ class HaloClusteringCore:
         Pnwcut = Pnw[:, icut]
         kosc = 1.0 / lOsc
         norm = 1.0 / (6.0 * np.pi**2)
-        Sigma2 = norm * simps(
+        Sigma2 = norm * simpson(
             Pnwcut
             * (1.0 - spherical_jn(0, kcut / kosc) + 2.0 * spherical_jn(2, kcut / kosc)),
             x=kcut,

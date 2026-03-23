@@ -6,6 +6,9 @@ from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.clusters.auxiliary import photoz_rsd_correction
 from cloelib.observables.clusters.halo_clustering import TwoPoint3DHaloClustering
+from cloelib.observables.clusters.halo_mass_observable import (
+    LognormalPowerLawHaloMassObservable,
+)
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
 
 

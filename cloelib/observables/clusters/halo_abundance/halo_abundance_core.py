@@ -1,8 +1,9 @@
 import numpy as np
-from scipy.integrate import simpson as simps
+from scipy.integrate import simpson
 
 from cloelib.cosmology import derived_cosmology
 from cloelib.observables.clusters.auxiliary import (
+    tabulated_return,
     tophat_window,
     tophat_window_derivative,
 )
@@ -27,29 +28,22 @@ class HaloAbundanceCore:
 
         # to avoid recomputing sigma & dsigmadlnM
         self._tabulated_sigma = {
-            "M": None,
-            "z": None,
+            "inputs": {
+                "M": None,
+                "z": None,
+            },
             "values": None,
         }
         self._tabulated_dlnsigmadlnM = {
-            "M": None,
-            "z": None,
+            "inputs": {
+                "M": None,
+                "z": None,
+            },
             "values": None,
         }
 
         # internal value of sigma8
         self.__sigma8 = None
-
-    def _are_mass_and_z_tabulated(self, z, M, reference_table):
-        """Check if mass and redshift are the tabluated values"""
-        if any(reference_table[key] is None for key in "Mz"):
-            return False
-        for name, test_val in (("M", M), ("z", z)):
-            if len(reference_table[name]) != len(test_val):
-                return False
-            elif (reference_table[name] != test_val).any():
-                return False
-        return True
 
     @property
     def sigma8(self):
@@ -162,7 +156,7 @@ class HaloAbundanceCore:
             (
                 1
                 / (2.0 * np.pi**2)
-                * simps(
+                * simpson(
                     (k**2.0).reshape(1, 1, len(k))
                     * self.matter_statistics.matter_power_spectrum_cb(z, k).reshape(
                         len(z), 1, len(k)
@@ -192,14 +186,11 @@ class HaloAbundanceCore:
         sigma_z_M: numpy.ndarray
             sigma_z_M[i,j], where i is the redshift axis and j the mass axis.
         """
-
-        if not self._are_mass_and_z_tabulated(z, M, self._tabulated_sigma):
-            R = self.radius_M(M)  # Mpc/h
-            self._tabulated_sigma["M"] = M
-            self._tabulated_sigma["z"] = z
-            self._tabulated_sigma["values"] = self.sigma_z_R(z, R)
-
-        return self._tabulated_sigma["values"]
+        return tabulated_return(
+            self._tabulated_sigma,
+            lambda z, M: self.sigma_z_R(z, self.radius_M(M)),
+            {"z": z, "M": M},
+        )
 
     def delta_c(self, z):
         r"""Critical overdensity.
@@ -244,6 +235,32 @@ class HaloAbundanceCore:
         """
         return self.delta_c(z)[:, np.newaxis] / self.sigma_z_M(z, M)
 
+    def _dlns_dlnM(self, z, M):
+        """Core computation for derivative of the logarithmic rms.
+        see dlns_dlnM for complete docstrings.
+        """
+        k = self.matter_statistics.k  # h/Mpc
+        R = self.radius_M(M)  # Mpc/h
+        W, dWdx = self.window(k, R)
+        dsigma2_dlnR = (
+            R
+            * np.pi**-2
+            * simpson(
+                k.reshape(1, 1, len(k)) ** 3
+                * self.matter_statistics.matter_power_spectrum_cb(z, k).reshape(
+                    len(z), 1, len(k)
+                )
+                * W.reshape(1, len(R), len(k))
+                * dWdx.reshape(1, len(R), len(k)),
+                x=k,
+                axis=-1,
+            )
+        )
+        dsigma2_dlnM = dsigma2_dlnR / 3
+        sigma = self.sigma_z_M(z, M)
+
+        return dsigma2_dlnM / (2 * sigma**2)
+
     def dlns_dlnM(self, z, M):
         r"""Derivative of the logarithmic rms.
 
@@ -263,31 +280,8 @@ class HaloAbundanceCore:
         dlns_dlnM: numpy.ndarray
             dlns_dlnM[i,j], where i is the redshift axis and j the mass axis.
         """
-
-        if not self._are_mass_and_z_tabulated(z, M, self._tabulated_dlnsigmadlnM):
-
-            k = self.matter_statistics.k  # h/Mpc
-            R = self.radius_M(M)  # Mpc/h
-            W, dWdx = self.window(k, R)
-            dsigma2_dlnR = (
-                R
-                * np.pi**-2
-                * simps(
-                    k.reshape(1, 1, len(k)) ** 3
-                    * self.matter_statistics.matter_power_spectrum_cb(z, k).reshape(
-                        len(z), 1, len(k)
-                    )
-                    * W.reshape(1, len(R), len(k))
-                    * dWdx.reshape(1, len(R), len(k)),
-                    x=k,
-                    axis=-1,
-                )
-            )
-            dsigma2_dlnM = dsigma2_dlnR / 3
-            sigma = self.sigma_z_M(z, M)
-
-            self._tabulated_dlnsigmadlnM["M"] = M
-            self._tabulated_dlnsigmadlnM["z"] = z
-            self._tabulated_dlnsigmadlnM["values"] = dsigma2_dlnM / (2 * sigma**2)
-
-        return self._tabulated_dlnsigmadlnM["values"]
+        return tabulated_return(
+            self._tabulated_dlnsigmadlnM,
+            self._dlns_dlnM,
+            {"z": z, "M": M},
+        )

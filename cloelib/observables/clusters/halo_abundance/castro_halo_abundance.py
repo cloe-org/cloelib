@@ -132,7 +132,7 @@ class CastroHaloAbundance:
         # Compute main quantities
         dlnsigmadlnR = 3 * dlnsigmadlnM
         fsigmanu = self.f_sigma_nu(z, M)
-        S8 = self.core.sigma8 * np.sqrt(self.core.matter_statistics.Omega_m / 0.3)
+        S8 = self.core.sigma8 * np.sqrt(self.core.matter_statistics.Omega_m_0 / 0.3)
 
         dlnfsigmanu_dlnnu = np.zeros(fsigmanu.shape)
         for i in range(len(Omega_m)):

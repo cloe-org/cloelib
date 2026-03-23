@@ -180,8 +180,8 @@ class HaloClusteringCore:
 
         ns = self.matter_statistics.background.ns
         h = self.matter_statistics.background.h
-        Obh2 = self.matter_statistics.background.Omega_b(0.0) * h**2
-        Omh2 = self.matter_statistics.Omega_m * h**2
+        Obh2 = self.matter_statistics.Omega_b_0 * h**2
+        Omh2 = self.matter_statistics.Omega_m_0 * h**2
         Tcmb = 2.73
 
         k *= h  #  1/Mpc

@@ -70,15 +70,15 @@ class MatterStatistics:
             self.set_angular_diameter_distance_interpolation(z)
         self.interpolate_da = interpolate_da
 
+        # Density parameters at z=0
+        self.Omega_m_0 = self.background.Omega_m(0.0)
+        self.Omega_cb_0 = self.background.Omega_cb(0.0)
+        self.Omega_b_0 = self.background.Omega_b(0.0)
+
     @property
     def background(self):
         r"""Returns the Background class instance"""
         return self.perturbations.background
-
-    @property
-    def Omega_m(self):
-        r"""Returns the `Omega_m` value at redshift `z=0`."""
-        return self.background.Omega_m(0.0)
 
     @property
     def interpolate_pk(self):

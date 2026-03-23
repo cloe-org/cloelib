@@ -77,9 +77,9 @@ class HaloAbundanceCore:
             dn_dm[i,j], where i is the redshift axis and j the mass axis.
             Units: h^4 Mpc^{-3} Ms^{-1}.
         """
-        rho_mean_0 = self.matter_statistics.background.Omega_cb(
-            0.0
-        ) * derived_cosmology.rho_crit(self.matter_statistics.background, 0.0)
+        rho_mean_0 = self.matter_statistics.Omega_cb_0 * derived_cosmology.rho_crit(
+            self.matter_statistics.background, 0.0
+        )
         rho_mean_0 /= self.matter_statistics.background.h**2.0
 
         return -rho_mean_0 / M**2.0 * fsigmanu * self.dlns_dlnM(z, M)
@@ -126,7 +126,7 @@ class HaloAbundanceCore:
         """
         rho_m_0 = (
             derived_cosmology.rho_crit(self.matter_statistics.background, 0.0)
-            * self.matter_statistics.background.Omega_cb(0.0)
+            * self.matter_statistics.Omega_cb_0
             / self.matter_statistics.background.h**2.0
         )
         return (M / rho_m_0 * (3.0 / (4.0 * np.pi))) ** (1 / 3.0)

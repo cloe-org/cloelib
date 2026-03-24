@@ -58,7 +58,7 @@ def test_MatterStatistics():
     _ref = [6.523691, 7.903632, 9.575468, 11.600945, 14.054865]
     assert_allclose(HS_tinker.core.radius_M(M_test), _ref)
     print("    delta_c")
-    _ref = [1.676099, 1.67969 , 1.681921, 1.683324, 1.684226]
+    _ref = [1.676099, 1.67969, 1.681921, 1.683324, 1.684226]
     assert_allclose(HS_tinker.core.delta_c(z_test), _ref, rtol=5e-7)
     print("    convert_to_Delta_crit")
     _ref = [103.349057, 123.372358, 139.008183, 150.092972, 157.673498]

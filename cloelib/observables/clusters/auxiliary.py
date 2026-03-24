@@ -11,6 +11,7 @@ def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=
     r"""Critical overdensity factor.
 
     Converts the input overdensity factor into a critical one.
+    The contribution from massive neutrinos is not included in the matter density parameter.
 
     Parameters
     ----------
@@ -52,10 +53,10 @@ def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=
         return overdensity
 
     elif overdensity_type == "mean":
-        return overdensity * background.Omega_m(z)
+        return overdensity * background.Omega_cb(z)
 
     elif overdensity_type == "vir":
-        x = background.Omega_m(z) - 1.0
+        x = background.Omega_cb(z) - 1.0
         return 18.0 * np.pi**2 + 82.0 * x - 39.0 * x**2
 
 
@@ -150,7 +151,7 @@ def photoz_rsd_correction(
     z_obs_scatter_arr = np.array(z_obs_scatter)
 
     # growth rate and scaled k, shape (z.size, k.size)
-    f_gr = (background.Omega_m(zs) ** 0.55)[:, np.newaxis]
+    f_gr = (background.Omega_cb(zs) ** 0.55)[:, np.newaxis]
     ks_z = (
         ks[np.newaxis, :]
         * (units.SPEED_OF_LIGHT * 1e-3)

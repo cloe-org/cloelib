@@ -23,6 +23,9 @@ class BMOHaloProfile:
         """
         BMO profile class.
 
+        The computation of the mean (background) density does not
+        include the massive neutrino contribution.
+
         Parameters
         ----------
         matter_statistics : MatterStatistics

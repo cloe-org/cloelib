@@ -43,16 +43,18 @@ class HaloAbundanceCore:
         }
 
         # internal value of sigma8
-        self.__sigma8 = None
+        self.__sigma8_0 = None
 
     @property
-    def sigma8(self):
+    def sigma8_0(self):
         r"""Returns the `sigma_8` value at redshift `z=0`. If `sigma_8`
         is not set as a base parameter, it is computed from the power spectrum.
+        The contribution from massive neutrinos is not included in the power
+        spectrum.
         """
-        if self.__sigma8 is None:
-            self.__sigma8 = self.sigma_z_R([0.0], np.array([8.0]))
-        return self.__sigma8
+        if self.__sigma8_0 is None:
+            self.__sigma8_0 = self.sigma_z_R([0.0], np.array([8.0]))
+        return self.__sigma8_0
 
     def dn_dm_fsigmanu(self, z, M, fsigmanu):
         r"""Derivative of the number density with pre-computed
@@ -136,6 +138,8 @@ class HaloAbundanceCore:
 
         Computes the rms at the radii requested from
         the table given by the Boltzman code.
+        The contribution from massive neutrinos is not included in the power
+        spectrum.
 
         Parameters
         ----------
@@ -172,6 +176,8 @@ class HaloAbundanceCore:
 
         Computes the rms at the masses requested from
         the table given by the Boltzman code.
+        The contribution from massive neutrinos is not included in the power
+        spectrum.
 
         Parameters
         ----------
@@ -211,7 +217,7 @@ class HaloAbundanceCore:
             3.0
             / 20.0
             * (12.0 * np.pi) ** (2.0 / 3.0)
-            * (1.0 + 0.012299 * np.log10(self.matter_statistics.background.Omega_m(z)))
+            * (1.0 + 0.012299 * np.log10(self.matter_statistics.background.Omega_cb(z)))
         )
 
     def nu_z_M(self, z, M):

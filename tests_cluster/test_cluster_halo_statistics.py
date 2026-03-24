@@ -58,10 +58,10 @@ def test_MatterStatistics():
     _ref = [6.523691, 7.903632, 9.575468, 11.600945, 14.054865]
     assert_allclose(HS_tinker.core.radius_M(M_test), _ref)
     print("    delta_c")
-    _ref = [1.67614, 1.679731, 1.681962, 1.683365, 1.684267]
+    _ref = [1.676099, 1.67969 , 1.681921, 1.683324, 1.684226]
     assert_allclose(HS_tinker.core.delta_c(z_test), _ref, rtol=5e-7)
     print("    convert_to_Delta_crit")
-    _ref = [103.543328, 123.635875, 139.317406, 150.428862, 158.024219]
+    _ref = [103.349057, 123.372358, 139.008183, 150.092972, 157.673498]
     assert_allclose(
         convert_to_Delta_crit("vir", background=background, z=z_test)[:5], _ref
     )
@@ -83,7 +83,7 @@ def test_MatterStatistics():
     assert_allclose(HS_tinker.bias(z_test, M_test)[0], _ref, rtol=5e-3)
 
     print("    dn_dm Castro")
-    _ref = [3.906826e-19, 9.747818e-20, 2.083461e-20, 3.540690e-21, 4.268997e-22]
+    _ref = [3.887839e-19, 9.699365e-20, 2.072788e-20, 3.521802e-21, 4.244946e-22]
     assert_allclose(HS_castro.dn_dm(z_test, M_test)[0], _ref, rtol=5e-3)
 
     print("    bias Castro")

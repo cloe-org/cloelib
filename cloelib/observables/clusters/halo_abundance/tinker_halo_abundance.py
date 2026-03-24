@@ -22,7 +22,7 @@ class TinkerHaloAbundance:
         prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514) and
         Castorina+13 (https://arxiv.org/pdf/1311.1212), the halo mass function
         and halo bias do not include the massive neutrino contribution in the
-        computation of mass variance and power spectrum.
+        computation of mass variance, power spectrum, and overdensity.
         """
         self.core = HaloAbundanceCore(matter_statistics)
         self.overdensity_type = overdensity_type
@@ -76,7 +76,7 @@ class TinkerHaloAbundance:
             self.overdensity,
             self.core.matter_statistics.background,
             z,
-        ) / self.core.matter_statistics.background.Omega_m(z)
+        ) / self.core.matter_statistics.background.Omega_cb(z)
 
         ###################
         # Bias computations

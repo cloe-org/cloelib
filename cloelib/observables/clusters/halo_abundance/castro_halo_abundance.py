@@ -18,7 +18,7 @@ class CastroHaloAbundance:
         prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514) and
         Castorina+13 (https://arxiv.org/pdf/1311.1212). That is, the halo mass function
         and halo bias do not include the massive neutrino contribution in the
-        computation of mass variance and power spectrum.
+        computation of mass variance, power spectrum, and overdensity.
         """
         self.core = HaloAbundanceCore(matter_statistics)
 
@@ -48,7 +48,7 @@ class CastroHaloAbundance:
             f_sigma_nu[i,j], where i is the redshift axis and j the mass axis
         """
         # compute inputs
-        Omega_m = self.core.matter_statistics.background.Omega_m(z)
+        Omega_m = self.core.matter_statistics.background.Omega_cb(z)
         dlnsigmadlnM = self.core.dlns_dlnM(z, M)
         nu = self.core.nu_z_M(z, M)
 
@@ -120,7 +120,7 @@ class CastroHaloAbundance:
             M = np.append(M, M[-1] * np.arange(2, 6))
 
         # compute inputs
-        Omega_m = self.core.matter_statistics.background.Omega_m(z)
+        Omega_m = self.core.matter_statistics.background.Omega_cb(z)
         delta_c = self.core.delta_c(z)
         dlnsigmadlnM = self.core.dlns_dlnM(z, M)
         nu = self.core.nu_z_M(z, M)
@@ -132,7 +132,7 @@ class CastroHaloAbundance:
         # Compute main quantities
         dlnsigmadlnR = 3 * dlnsigmadlnM
         fsigmanu = self.f_sigma_nu(z, M)
-        S8 = self.core.sigma8 * np.sqrt(self.core.matter_statistics.Omega_m_0 / 0.3)
+        S8 = self.core.sigma8_0 * np.sqrt(self.core.matter_statistics.Omega_cb_0 / 0.3)
 
         dlnfsigmanu_dlnnu = np.zeros(fsigmanu.shape)
         for i in range(len(Omega_m)):

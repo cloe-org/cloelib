@@ -21,7 +21,7 @@ except ImportError:
 
 
 class HMemuLinearPerturbations:
-    """Class for perturbations cosmology using HMemu, inheriting from Perturbations parent class."""
+    """Class for perturbations cosmology using HMemu, compatibly with the Perturbations protocol."""
 
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Intialize the HMemuLinearPerturbations instance."""
@@ -126,7 +126,7 @@ class HMemuLinearPerturbations:
 
 
 class HMemuNonLinearPerturbations:
-    """Class for non linear perturbations cosmology using HMemu, inheriting from Perturbations parent class."""
+    """Class for non linear perturbations cosmology using HMemu,  compatibly with the Perturbations protocol."""
 
     def __init__(
         self,
@@ -135,7 +135,7 @@ class HMemuNonLinearPerturbations:
         redshifts: np.ndarray,
         log10TAGN: Optional[float] = None,
     ):
-        """Initialize the HMemuNonLinearPerturbations intance."""
+        """Initialize the HMemuNonLinearPerturbations instance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
         redshift_max = HM2020_emu.emulator["nonlinear"]["bounds"]["z"][1]

@@ -433,6 +433,7 @@ class CLASSNonLinearPerturbations:
         background: Background,
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
+        hmcode_version: Optional[str] = None,
     ):
         """Initialize the CLASSNonLinearPerturbation instance."""
         self.background = background
@@ -451,7 +452,9 @@ class CLASSNonLinearPerturbations:
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
         self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
-        self.interface_args["CLASSparams"]["non linear"] = nonlinear_model
+        self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
+        if hmcode_version is not None:
+            self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])

@@ -280,13 +280,15 @@ def extend_spectra(
             else:
                 raise Exception("Wrong wavenumber extrapolation option.")
 
-        if (wavenumber_base[0] < wavenumber_in[0]) & (option_wavenumber_low == "logk2"):
-            # Use power law for wavenumber<wavenumber_in
+        if wavenumber_base[0] < wavenumber_in[0]:
             i_first = len(wavenumber_minus)
 
-            n_extra_b = (
-                np.log(boost_out[:, i_first + 1]) - np.log(boost_out[:, i_first])
-            ) / (np.log(wavenumber_in[1]) - np.log(wavenumber_in[0]))
+            if option_wavenumber == "logk2":
+                # Use power law for wavenumber<wavenumber_in
+
+                n_extra_b = (
+                    np.log(boost_out[:, i_first + 1]) - np.log(boost_out[:, i_first])
+                ) / (np.log(wavenumber_in[1]) - np.log(wavenumber_in[0]))
 
             boost_out[:, : len(wavenumber_minus)] = (
                 boost_out[:, i_first][:, None]

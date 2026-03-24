@@ -142,7 +142,7 @@ class ClusterCounts:
             self.cluster_statitstics_modeling.matter_statistics.background,
             z_mid,
             self.cluster_statitstics_modeling.tabulated_integrands["k"],
-            self.cluster_statitstics_modeling.selectionfunction.scatter_zobs_z(
+            self.selection_function.scatter_z_obs(
                 0, z_mid
             ),
         )[0]

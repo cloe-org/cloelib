@@ -12,14 +12,14 @@ theme:
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
+      primary: deep purple
       accent: amber
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
+      primary: deep purple
       accent: amber
       toggle:
         icon: material/brightness-4
@@ -31,7 +31,7 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
-      navigation.top
+    - navigation.top
     - navigation.tracking
     - content.code.copy
 
@@ -79,11 +79,16 @@ plugins:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      base_path: ["."]
   - toc:
       toc_depth: 3
       permalink: true
@@ -98,10 +103,18 @@ extra:
 extra_javascript:
   - javascripts/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - https://unpkg.com/mermaid/dist/mermaid.min.js
+  - javascripts/mermaid.js
 
 nav:
   - Home: home.md
   - Installation: installation.md
+  - Code Structure:
+      - Overview: code_structure/index.md
+      - Background: code_structure/background.md
+      - Perturbations: code_structure/perturbations.md
+      - Observables: code_structure/observables.md
+      - Summary Statistics: code_structure/summary_statistics.md
   - Contributing: contributing.md
   - API Reference: api.md
 

@@ -9,6 +9,7 @@ These tests ensure that:
 
 import pytest
 import numpy as np
+from scipy.integrate import simpson
 
 from cloelib.cosmology.camb_cosmology import (
     CAMBBackground,
@@ -51,7 +52,7 @@ def camb_photo_setup():
     perturbations = CAMBNonLinearPerturbations(background, user_z)
     n_z_bins = 2
     dndz = np.ones((n_z_bins, len(tracer_z)))
-    dndz /= np.trapezoid(dndz, tracer_z, axis=1)[:, None]
+    dndz /= simpson(dndz, x=tracer_z, axis=1)[:, None]
 
     return perturbations, tracer_z, dndz, n_z_bins
 

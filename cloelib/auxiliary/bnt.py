@@ -4,6 +4,7 @@ Module with one class to compute the BNT matrix.
 
 import numpy as np
 import jax.numpy as jnp
+from scipy.integrate import simpson
 from cloelib.cosmology.cosmology import Background
 from typing import List, TypeVar, Union
 
@@ -72,11 +73,9 @@ class BNTMatrixCalculator:
             lower triangular with ones on the diagonal.
         """
 
-        trapz = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
-
         nz_arr = np.stack(self.dndz_list, axis=0)
-        A = trapz(nz_arr, self.z, axis=1)
-        B = trapz(nz_arr / self.chi[None, :], self.z, axis=1)
+        A = simpson(nz_arr, x=self.z, axis=1)
+        B = simpson(nz_arr / self.chi[None, :], x=self.z, axis=1)
 
         BNT_matrix = np.eye(self.nbins)
         BNT_matrix[1, 0] = -1.0

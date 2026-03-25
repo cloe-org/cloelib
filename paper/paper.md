@@ -428,6 +428,8 @@ The `JAXBackground` and `JAXLinearPerturbations`/`JAXNonLinearPerturbations` cla
 
 ## Scaling tests and time performance
 
+Currently running.
+
 | Backend / Emulator | Observable Type | Runtime (s) | Memory Usage (MB) |
 | ------------------ | --------------- | ----------- | ----------------- |
 | CAMB               | Cell            |             |                   |
@@ -452,6 +454,6 @@ The contributions of all remaining authors have been tracked using the [all-cont
 
 # Acknowledgements
 
-We acknowledge the support of the Euclid Consortium. We thank the broader CLOE software development team for foundational work that motivated this library. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997.
+We acknowledge the support of the Euclid Consortium. We thank the broader CLOE software development team for foundational work that motivated this library. GCH acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). We acknowledge the EuroHPC Joint Undertaking for awarding this project access to the EuroHPC supercomputer LEONARDO, hosted by CINECA (Italy) and the LEONARDO consortium through an EuroHPC Extreme Access call.
 
 # References

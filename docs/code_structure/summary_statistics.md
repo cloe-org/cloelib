@@ -107,9 +107,13 @@ C_ell = two_point.get_Cl(ells)
 **COSEBIs**:
 Complete Orthogonal Sets of E/B-Integrals) are specialized statistics for cosmic shear. They are exposed as a method of `AngularTwoPoint`, not as a standalone class.
 
-**Method**: `AngularTwoPoint.get_cosebis(ells, nl, ks, w_ell, ns)`
+**Method**: `AngularTwoPoint.get_cosebis_from_cl(ells, ells, w_ell, ns)`
 
-Requires optional dependencies (`pylevin`, `mpmath`). Requires to compute Fourier filter at `cloelib.auxiliary.cosebi_helpers`.
+Requires optional dependencies (`pylevin`, `mpmath`). Requires to compute Fourier filter from `cloelib.auxiliary.cosebi_helpers`.
+
+**Method**: `AngularTwoPoint.get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns)`
+
+Requires optional dependencies (`pylevin`, `mpmath`). Requires to compute the corresponding two weight functions from `cloelib.auxiliary.cosebi_helpers`.
 
 #### AngularCorrelationFunction
 

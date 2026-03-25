@@ -27,13 +27,13 @@ pip install .
 pip install .[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument]
 ```
 
-> **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
+> **Note:** Some shells require quoting the argument when brackets are present:
 >
 > ```sh
 > pip install ".[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument]"
 > ```
 
-You're all set! 🎉 Ready to compute cosmological observables.
+The installation is now complete.
 
 ## Optional Dependencies
 

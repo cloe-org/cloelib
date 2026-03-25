@@ -1,0 +1,22 @@
+name: PR Title Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  check-pr-title:
+    name: Validate PR title format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title matches gh-# format
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if echo "$PR_TITLE" | grep -qE '^gh-[0-9]+([: ]|$)'; then
+            echo "✅ PR title '$PR_TITLE' matches the required format (gh-#)."
+          else
+            echo "❌ PR title '$PR_TITLE' does not match the required format."
+            echo "PR titles must start with 'gh-<issue_number>', e.g. 'gh-42: Add new feature'."
+            exit 1
+          fi

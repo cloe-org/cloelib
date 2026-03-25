@@ -1,3 +1,12 @@
+## 📋 PR Title Format
+
+**The title of this PR must follow the format: `gh-#: <short description>`**
+**where `#` is the number of the associated GitHub issue.**
+
+> Example: `gh-42: Add support for new feature`
+
+---
+
 ## 🚀 Pull Request Checklist
 
 ### ✅ Summary

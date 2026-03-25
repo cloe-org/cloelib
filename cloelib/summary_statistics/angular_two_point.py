@@ -116,6 +116,53 @@ def _growth_rate_on_grid(perturbations, zs_target):
     return np.interp(zs_target, z_raw, f_raw, left=f_raw[0], right=f_raw[-1])
 
 
+def get_cosebis_from_cl(cells, ells, w_ell, ns):
+    """
+    Compute EE and BB COSEBIs arrays for all SHE-SHE keys in `cells`.
+
+    Parameters
+    ----------
+    cells : dict
+        Angular power spectra in cosmolib format.
+    ells : jax.numpy.ndarray
+        Multipoles at which the integration is performed.
+    w_ell : array-like
+        Harmonic-space COSEBIs kernels.
+    ns : array-like
+        Mode indices selecting kernels from `w_ell`.
+
+    Returns
+    -------
+    dict
+        Dictionary keyed like `cells` with values of shape `(2, 2, n_modes)`.
+    """
+    # Handle 0-D object arrays from np.savez/np.load
+    w_ell = np.asarray(w_ell)
+    ns = np.asarray(ns)
+    weights = simpsons_weights_jit(len(ells))
+    tomo_cosebis = {}
+
+    for key, cl_map in cells.items():
+        if (key[0] != "SHE") or (key[1] != "SHE"):
+            continue
+
+        cl_ee = np.interp(ells, cl_map.ell, cl_map.array[0, 0])
+        cl_bb = np.interp(ells, cl_map.ell, cl_map.array[1, 1])
+
+        def compute_cosebi(w_n):
+            ee = np.sum(ells * cl_ee * w_n * weights) / (2 * np.pi)
+            bb = np.sum(ells * cl_bb * w_n * weights) / (2 * np.pi)
+            return ee, bb
+
+        ee_vals, bb_vals = jax.vmap(compute_cosebi)(w_ell[ns])
+        arr = np.zeros((2, 2, ns.shape[0]), dtype=np.float64)
+        arr = arr.at[0, 0, :].set(ee_vals)
+        arr = arr.at[1, 1, :].set(bb_vals)
+        tomo_cosebis[key] = arr
+
+    return tomo_cosebis
+
+
 class AngularTwoPoint:
     """Two point asbtract class to compute two point functions."""
 
@@ -461,52 +508,38 @@ class AngularTwoPoint:
             for key, array in C_ell_out.items()
         }
 
-    def get_cosebis_from_cl(self, cells, ells, w_ell, ns):
+    def get_cosebis(self, ells, nl, ks, w_ell, ns):
         """
-        Compute EE and BB COSEBIs for all SHE-SHE keys in `cells`.
+        Compute EE and BB COSEBIs from the angular power spectrum.
 
         Parameters:
-        - cells (dict): Angular power spectrum from AngularTwoPoint get_Cl or get_pseudo_Cl, or, alternatively, Cl calculation from other sources, as long as it is in the same cosmolib format. The keys should be tuples like ('SHE', 'SHE', i, j) where i and j are bin indices.
-        - ells (jax.numpy.ndarray): Array with the multipole moments.
-        - w_ell (np.array): The kernel functions, obtained via get_W_ell.
-        - ns (jax.numpy.ndarray): The indices for the kernel function.
+        - ells (jax.numpy.ndarray):
+            Array with the multipole moments.
+        - nl (jax.numpy.ndarray):
+            Noise power spectrum (not used yet).
+        - ks (jax.numpy.ndarray):
+            Wavenumber grid of the matter power spectrum.
+        - w_ell (np.array):
+            Kernel functions, obtained via get_W_ell.
+        - ns (jax.numpy.ndarray):
+            Indices for the kernel function.
 
         Returns:
         - dict: COSEBIs obtained from the angular power spectrum with EE and BB modes.
         """
-        # Handle 0-D object arrays from np.savez/np.load
-        w_ell = np.asarray(w_ell)
+        cells = self.get_Cl(ells, nl, ks)
         ns = np.asarray(ns)
+        cosebis_arrays = get_cosebis_from_cl(cells, ells, w_ell, ns)
 
-        tomo_cosebis = {}
-
-        for key, cl_map in cells.items():
-            # Filter using dictionary structure rather than if-statements
-            (key[0] == "SHE") & (key[1] == "SHE")
-
-            cl_ee = np.interp(ells, cl_map.ell, cl_map.array[0, 0])
-            cl_bb = np.interp(ells, cl_map.ell, cl_map.array[1, 1])
-
-            # Vectorized computation using vmap
-            def compute_cosebi(w_n):
-                weights = simpsons_weights_jit(len(ells))
-                ee = np.sum(ells * cl_ee * w_n * weights) / (2 * np.pi)
-                bb = np.sum(ells * cl_bb * w_n * weights) / (2 * np.pi)
-                return ee, bb
-
-            ee_vals, bb_vals = jax.vmap(compute_cosebi)(w_ell[ns])
-
-            arr = np.zeros((2, 2, ns.shape[0]), dtype=np.float64)
-            arr = arr.at[0, 0, :].set(ee_vals)
-            arr = arr.at[1, 1, :].set(bb_vals)
-            tomo_cosebis[key] = COSEBI(
+        return {
+            key: COSEBI(
                 array=arr,
                 mode=ns,
                 nmodes=int(np.max(ns)),
-                software=self._software_tag(self.get_cosebis_from_cl),
+                software=self._software_tag(self.get_cosebis),
             )
-
-        return tomo_cosebis
+            for key, arr in cosebis_arrays.items()
+        }
 
     def get_cosebis_from_2pcf(self, twopcf, theta, T_plus, T_minus, ns):
         """
@@ -530,7 +563,9 @@ class AngularTwoPoint:
         tomo_cosebis = {}
 
         for key, cf_map in twopcf.items():
-            (key[0] == "SHE") & (key[1] == "SHE")
+            # Same as before, we want to do this in terms of spin
+            if (key[0] == "SHE") & (key[1] == "SHE"):
+                continue
 
             xi_plus = np.interp(theta, cf_map.theta, cf_map.array[0, 0])
             xi_minus = np.interp(theta, cf_map.theta, cf_map.array[1, 1])

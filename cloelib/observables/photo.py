@@ -316,7 +316,7 @@ class PositionsTracer:
         self.dz_pos_i = [
             self.nuisance_params[f"dz_pos_{i + 1}"] for i in range(dndz.shape[0])
         ]
-        self.width_shear_i = [
+        self.width_pos_i = [
             self.nuisance_params[f"width_pos_{i + 1}"] for i in range(dndz.shape[0])
         ]
         self.dndz = dndz

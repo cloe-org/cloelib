@@ -387,7 +387,8 @@
         "ideas"
       ]
     },
-    {      "login": "cosmicLinux",
+    {
+      "login": "cosmicLinux",
       "name": "Linus Thummel",
       "avatar_url": "https://avatars.githubusercontent.com/u/142009018?v=4",
       "profile": "https://www.ph.ed.ac.uk/people/linus-thummel",
@@ -397,7 +398,8 @@
         "ideas"
       ]
     },
-    {      "login": "cosmicLinux",
+    {
+      "login": "cosmicLinux",
       "name": "Linus Thummel",
       "avatar_url": "https://avatars.githubusercontent.com/u/142009018?v=4",
       "profile": "https://www.ph.ed.ac.uk/people/linus-thummel",
@@ -511,6 +513,16 @@
         "code",
         "ideas",
         "doc"
+      ]
+    },
+    {
+      "login": "JegerBroxterman",
+      "name": "Jeger Broxterman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/115992884?v=4",
+      "profile": "https://github.com/JegerBroxterman",
+      "contributions": [
+        "code",
+        "ideas"
       ]
     }
   ]

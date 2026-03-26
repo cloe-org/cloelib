@@ -1,33 +1,102 @@
 """
 Implementation of baryon correction of the matter power spectrum from FlamingoBaryonResponseEmulator on top of CAMB.
-
-
-## Notes:
-
-- Adapted from FlamingoBaryonResponseEmulator/flamingo_response_emulator.py
-- Adapted from cloelib/cloelib/cosmology/camb_cosmology.py
 """
 
-# General imports
 import numpy as np
 from typing import Optional
 
-# Cosmology imports
 from cloelib.cosmology.cosmology import Background
 
 try:
-    import camb  # type: ignore
-    from camb import model  # type: ignore
+    import camb
+    from camb import model
 except ImportError as e:
     raise ImportError("camb could not be imported.") from e
+
 try:
     import FlamingoBaryonResponseEmulator as fre
 except ImportError:
     raise ImportError("FlamingoBaryonResponseEmulator could not be imported.")
 
 
-class CAMBNonLinearFLAMINGOPerturbations:
-    """A wrapper for CAMB nonlinear perturbation calculations with FLAMINGO correction for baryonic feedback."""
+class BaryonBoostMixin:
+    """Mixin to add baryonic feedback corrections to nonlinear perturbation classes."""
+
+    def __init__(
+        self,
+        fgas_sigma: float,
+        Mstar_sigma: float,
+        jet_fraction: float,
+        *args,
+        **kwargs,
+    ):
+        """Initialize baryonic correction parameters.
+
+        Args:
+            fgas_sigma: Offset in sigma for gas fraction.
+            Mstar_sigma: Offset in sigma for stellar mass function.
+            jet_fraction: Fraction of AGN energy in jets (0-1).
+        """
+        super().__init__(*args, **kwargs)
+        self.flamingo_emulator = fre.FlamingoBaryonResponseEmulator()
+        self.fgas = fgas_sigma
+        self.Mstar = Mstar_sigma
+        self.jet = jet_fraction
+
+    def baryonic_suppression(
+        self, zs: np.ndarray, ks: np.ndarray, k_hunit: bool = False
+    ) -> np.ndarray:
+        """Return the predicted baryonic response."""
+        zs = np.atleast_1d(zs)
+        ks = np.atleast_1d(ks)
+        response = np.ones((zs.size, ks.size))
+
+        k_convert = (ks / self.background.H0 * 100) if not k_hunit else ks
+
+        for i in range(len(zs)):
+            if zs[i] <= 3.0:
+                response[i, :] = self.flamingo_emulator.predict(
+                    k_convert, zs[i], self.fgas, self.Mstar, self.jet
+                )
+                response[i, k_convert > 10**1.5] = self.flamingo_emulator.predict(
+                    10**1.5, zs[i], self.fgas, self.Mstar, self.jet
+                )
+            else:
+                response[i, :] = 1.0
+
+        return response
+
+    def baryonic_suppression_with_variance(
+        self, zs: np.ndarray, ks: np.ndarray, k_hunit: bool = False
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Return baryonic response and variance."""
+        zs = np.atleast_1d(zs)
+        ks = np.atleast_1d(ks)
+        response = np.ones((zs.size, ks.size))
+        variance = np.ones((zs.size, ks.size))
+
+        k_convert = (ks / self.background.H0 * 100) if not k_hunit else ks
+
+        for i in range(len(zs)):
+            if zs[i] <= 3.0:
+                response[i, :], variance[i, :] = (
+                    self.flamingo_emulator.predict_with_variance(
+                        k_convert, zs[i], self.fgas, self.Mstar, self.jet
+                    )
+                )
+                response[i, k_convert > 10**1.5], variance[i, k_convert > 10**1.5] = (
+                    self.flamingo_emulator.predict_with_variance(
+                        10**1.5, zs[i], self.fgas, self.Mstar, self.jet
+                    )
+                )
+            else:
+                response[i, :] = 1.0
+
+        return response, variance
+
+
+class CAMBNonLinearFLAMINGOPerturbations(BaryonBoostMixin):
+    """Nonlinear CAMB perturbations with FLAMINGO baryonic feedback correction."""
 
     def __init__(
         self,
@@ -38,48 +107,20 @@ class CAMBNonLinearFLAMINGOPerturbations:
         jet_fraction: float,
         nonlinear_model: Optional[str] = None,
     ) -> None:
-        """
-        Initialize the CAMBNonLinearPerturbations with FlamingoBaryonRespnseEmulator instance.
-
-        Args:
-        fgas_sigma: float
-            The offset in numbers of sigma (of the X-ray data) the gas fraction
-            in groups and clusters should be from the data used in the calibration
-            of the FLAMINGO model. The emulator was trained between -8 and +2
-            for a jet fraction of 0% and between -4 and 0 for a jet fraction of 100%.
-
-        Mstar_sigma: float
-            The offset in numbers of sigma (of the data) the stellar mass function
-            should be from the data used in the calibration of the FLAMINGO model.
-            The emulator was trained between -1 and 0.
-
-        jet_fraction: float
-            The fraction of the AGN energy released in the form of collimated jets
-            (between 0 and 1). The original simulations exist only as purely thermal
-            AGN (i.e. with jet = 0) and with purely collimated jets (i.e. with jet = 1).
-        linear_perturbations (LinearPerturbations): An instance of the LinearPerturbations class.
-            redshifts (np.ndarray): Array of redshifts for the calculations.
-        nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
-                Defaults to None, which uses the CAMB default model.
-        """
-        try:
-            self.flamingo_emulator = fre.FlamingoBaryonResponseEmulator()
-        except ImportError:
-            raise ImportError(
-                "FlamingoBaryonResponseEmulator could not be initialized."
-            )
+        """Initialize with baryonic boost capabilities."""
+        super().__init__(
+            fgas_sigma=fgas_sigma,
+            Mstar_sigma=Mstar_sigma,
+            jet_fraction=jet_fraction,
+            background=background,
+        )
 
         self.background = background
         self.kmax = 500
         self.z = redshifts
-        self.fgas = fgas_sigma
-        self.Mstar = Mstar_sigma
-        self.jet = jet_fraction
 
-        # Configure CAMB parameters for nonlinear calculations
+        # Configure CAMB for nonlinear calculations
         self.background.interface_args["CAMBparams"].NonLinear = model.NonLinear_both
-
-        # Avoid unnecessary computations
         self.background.interface_args["CAMBparams"].WantCls = False
         self.background.interface_args["CAMBparams"].DoLensing = False
         self.background.interface_args["CAMBparams"].Want_CMB = False
@@ -96,38 +137,19 @@ class CAMBNonLinearFLAMINGOPerturbations:
             redshifts=redshifts, kmax=self.kmax
         )
 
-        # Compute nonlinear perturbations
         self.results = camb.get_results(self.background.interface_args["CAMBparams"])
-
         self.k, _, self.Pk = self.results.get_nonlinear_matter_power_spectrum(
             hubble_units=False, k_hunit=False
         )
 
     def matter_power_spectrum(
-        self, zs, ks, hubble_units=False, k_hunit=False
+        self,
+        zs: np.ndarray,
+        ks: np.ndarray,
+        hubble_units: bool = False,
+        k_hunit: bool = False,
     ) -> np.ndarray:
-        r"""Compute the nonlinear matter power spectrum.
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
-
-        hubble_units: (Optional) bool
-            Flag to specify if output in h units, defaults to False
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Nonlinear matter power spectrum at the specified scale
-            and redshift
-        """
+        """Compute nonlinear matter power spectrum with baryonic correction."""
         pk_values = self.results.get_matter_power_interpolator(
             nonlinear=True,
             extrap_kmax=self.kmax,
@@ -140,187 +162,13 @@ class CAMBNonLinearFLAMINGOPerturbations:
         return pk_values * flamingo_correction
 
     def growth_rate(self) -> np.ndarray:
-        """
-        Calculate growth rate.
-
-        Returns:
-            np.ndarray: growth rate.
-        """
+        """Calculate growth rate."""
         f_z = self.results.get_fsigma8() / self.results.get_sigma8()
-        # Reversing array because camb re-sorts redshifts when power spectrum is computed
         return f_z[::-1]
 
-    def growth_factor(self, zs, ks) -> np.ndarray:
-        r"""
-        Calculate the growth factor for given redshifts and wavenumbers.
-
-        .. math::
-            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
-            /P_{\rm \delta\delta}(z=0, k)}\\
-
-        and normalizes as for :math:`D(z)/D(0)`.
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
-
-        Returns:
-        --------
-        np.ndarray
-            The growth factor at the specified redshift and wavenumber.
-        """
+    def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+        """Calculate the growth factor D(z, k)."""
         D_z_k = np.sqrt(
             self.matter_power_spectrum(zs, ks) / self.matter_power_spectrum(0.0, ks)
         )
         return D_z_k
-
-    def baryonic_suppression(
-        self, zs: np.array, ks: np.array, k_hunit=False
-    ) -> np.ndarray:
-        """
-        Return the predicted baryonic response for a set of comoving modes, redshift, and galaxy formation model (three parameters).
-
-        For redshifts z > 3 (outside the training range), the response is fixed to 1.
-        For wavenumbers k > 10^1.5 (outside the training range), the response is set to its value at the maximum trained wavenumber.
-
-        Parameters
-        ----------
-        zs: np.array
-            The redshift at which the baryonic response has to be evaluated.
-            The value has to be between 0 and 3.
-
-
-        ks: np.array
-            The Fourier modes at which the baryonic response has to be evaluated
-            expressed in units of h Mpc^{-1}.
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        baryon_ratio: np.array
-            The baryonic response at the modes k specified in the input.
-        """
-        zs = np.atleast_1d(zs)
-        ks = np.atleast_1d(ks)
-        response = np.ones((zs.size, ks.size))
-        if k_hunit:
-            for i in range(
-                len(zs)
-            ):  # FLAMINGO emulator only takes one redshift per call
-                if zs[i] <= 3.0:
-                    response[i, :] = self.flamingo_emulator.predict(
-                        ks, zs[i], self.fgas, self.Mstar, self.jet
-                    )
-                    # Values at larger k range than on which the emulator was trained are set to the maximal wave number on which it was trained
-                    response[i, ks > 10**1.5] = self.flamingo_emulator.predict(
-                        10**1.5, zs[i], self.fgas, self.Mstar, self.jet
-                    )
-            response[zs > 3, :] = (
-                1.0  # At redshifts beyond which the emulator is trained the response is set to 1.
-            )
-            return response
-        else:
-            for i in range(
-                len(zs)
-            ):  # FLAMINGO emulator only takes one redshift per call
-                if zs[i] <= 3.0:
-                    response[i, :] = self.flamingo_emulator.predict(
-                        ks / self.background.H0 * 100,
-                        zs[i],
-                        self.fgas,
-                        self.Mstar,
-                        self.jet,
-                    )
-                    # Values at larger k range than on which the emulator was trained are set to the maximal wave number on which it was trained
-                    response[i, ks / self.background.H0 * 100 > 10**1.5] = (
-                        self.flamingo_emulator.predict(
-                            10**1.5, zs[i], self.fgas, self.Mstar, self.jet
-                        )
-                    )
-            response[zs > 3, :] = 1.0
-            return response
-
-    def baryonic_suppression_with_variance(
-        self, zs: np.array, ks: np.array, k_hunit=False
-    ) -> tuple[np.array, np.array]:
-        """
-        Return the predicted baryonic response as well as the variance around the prediction for a set of comoving modes, redshift, and galaxy formation model (three parameters).
-
-        For redshifts z > 3 (outside the training range), the response is fixed to 1.
-        For wavenumbers k > 10^1.5 (outside the training range), the response is set to its value at the maximum trained wavenumber.
-
-        Parameters
-        ----------
-        zs: np.array
-            The redshift at which the baryonic response has to be evaluated.
-            The value has to be between 0 and 3.
-
-        ks: np.array
-            The Fourier modes at which the baryonic response has to be evaluated
-            expressed in units of Mpc^{-1}.
-
-        k_hunit: (Optional) bool
-            Flag to specify if wavenumber in h units, defaults to False
-
-        Returns
-        -------
-        baryon_ratio: np.array
-            The baryonic response at the modes k specified in the input.
-
-        baryon_ratio_variance: np.array
-            The estimated variance of the baryonic response from the emulator
-            at the modes k specified in the input.
-        """
-        zs = np.atleast_1d(zs)
-        ks = np.atleast_1d(ks)
-        response = np.ones((zs.size, ks.size))
-        variance = np.ones((zs.size, ks.size))
-        if k_hunit:
-            for i in range(
-                len(zs)
-            ):  # FLAMINGO emulator only takes one redshift per call
-                if zs[i] <= 3.0:
-                    response[i, :], variance[i, :] = (
-                        self.flamingo_emulator.predict_with_variance(
-                            ks, zs[i], self.fgas, self.Mstar, self.jet
-                        )
-                    )
-                    # Values at larger k range than on which the emulator was trained are set to the maximal wave number on which it was trained
-                    response[i, ks > 10**1.5], variance[i, ks > 10**1.5] = (
-                        self.flamingo_emulator.predict_with_variance(
-                            10**1.5, zs[i], self.fgas, self.Mstar, self.jet
-                        )
-                    )
-            response[zs > 3, :] = (
-                1.0  # At redshifts beyond which the emulator is trained the response is set to 1.
-            )
-            return response, variance
-        else:
-            for i in range(
-                len(zs)
-            ):  # FLAMINGO emulator only takes one redshift per call
-                if zs[i] <= 3.0:
-                    response[i, :], variance[i, :] = (
-                        self.flamingo_emulator.predict_with_variance(
-                            ks / self.background.H0 * 100,
-                            zs[i],
-                            self.fgas,
-                            self.Mstar,
-                            self.jet,
-                        )
-                    )
-                    # Values at larger k range than on which the emulator was trained are set to the maximal wave number on which it was trained
-                    (
-                        response[i, ks / self.background.H0 * 100 > 10**1.5],
-                        variance[i, ks / self.background.H0 * 100 > 10**1.5],
-                    ) = self.flamingo_emulator.predict_with_variance(
-                        10**1.5, zs[i], self.fgas, self.Mstar, self.jet
-                    )
-            response[zs > 3, :] = 1.0
-            return response, variance

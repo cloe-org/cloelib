@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using HMcode2020Emu."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, BaryonBoostMixin, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
@@ -328,3 +328,101 @@ def _set_neutrino_masses(background: Background) -> float:
         mnu_arg = float(background.mnu)
     # returns the neutrino mass in eV
     return mnu_arg
+
+
+class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
+    """Mixin providing baryonic suppression via an HMcode2020-computed P_baryon/P_dmo ratio.
+
+    Expects the host class to have set ``self._baryon_ratio_interp``,
+    ``self._baryon_k_nl_min``, and ``self.background``.
+    For scales below the nonlinear emulator k range, the suppression factor is 1.
+    """
+
+    def baryonic_suppression(self, zs, ks, k_hunit: bool = False) -> np.ndarray:
+        """Return B(z, k) = P_baryon(z, k) / P_dmo(z, k).
+
+        Parameters
+        ----------
+        zs : array_like
+            Redshifts.
+        ks : array_like
+            Wavenumbers. By default in 1/Mpc; pass k_hunit=True for h/Mpc.
+        k_hunit : bool
+            If True, convert ks from h/Mpc to 1/Mpc before evaluating.
+
+        Returns
+        -------
+        np.ndarray
+            Baryonic suppression factor, shape (nz, nk).
+            Returns 1.0 for scales below the nonlinear emulator k range.
+        """
+        zs = np.atleast_1d(zs)
+        ks = np.atleast_1d(ks)
+        if k_hunit:
+            ks = ks * self.background.h
+        result = np.ones((len(zs), len(ks)))
+        in_range = ks >= self._baryon_k_nl_min
+        if np.any(in_range):
+            result[:, in_range] = self._baryon_ratio_interp(zs, ks[in_range])
+        return result
+
+
+class HMemuNonLinearBaryonicPerturbations(
+    HMcode2020BaryonBoostMixin, HMemuNonLinearPerturbations
+):
+    """HMcode2020 nonlinear perturbations with baryonic suppression applied.
+
+    Initialises the parent class without log10TAGN (DMO), then runs the
+    emulator a second time with ``log10TAGN`` to pre-compute
+    B(z, k) = P_baryon / P_dmo as a bivariate spline over the nonlinear k range.
+    Scales below the nonlinear k range have suppression factor = 1.
+    """
+
+    def __init__(
+        self,
+        background: Background,
+        linearperturbations: Perturbations,
+        redshifts: np.ndarray,
+        log10TAGN: float,
+    ):
+        """Initialise HMemuNonLinearBaryonicPerturbations."""
+        super().__init__(background, linearperturbations, redshifts, log10TAGN=None)
+
+        # Validate log10TAGN against emulator bounds
+        hm_bounds = HM2020_emu.emulator["nonlinear"]["bounds"]
+        if np.prod(log10TAGN - hm_bounds["log10TAGN"]) > 0:
+            raise ValueError(
+                f"HMcode 2020 NL emulator: log10TAGN={log10TAGN} is out of bounds "
+                f"{hm_bounds['log10TAGN']}."
+            )
+
+        # Emulator z grid is stored in params_hm_emu (not rebound by extend_spectra)
+        z_emu = self.params_hm_emu["z"]
+        nz = len(z_emu)
+
+        # DMO spectrum at the nonlinear k grid
+        _, Pk_dmo = HM2020_emu.get_nonlinear_pk(
+            nonu=False, **self.params_hm_emu, baryonic_boost=False
+        )
+
+        # Baryonic spectrum with log10TAGN
+        params_with_tagn = {
+            **self.params_hm_emu,
+            "log10TAGN": np.tile(log10TAGN, nz),
+        }
+        _, Pk_baryon = HM2020_emu.get_nonlinear_pk(
+            nonu=False, **params_with_tagn, baryonic_boost=True
+        )
+
+        ratio = Pk_baryon / Pk_dmo  # shape (nz, nk_nl)
+        k_nl_phys = (
+            HM2020_emu.emulator["nonlinear"]["k"] * self.background.h
+        )  # h/Mpc -> 1/Mpc
+        self._baryon_k_nl_min = k_nl_phys[0]
+        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
+            z_emu, k_nl_phys, ratio, kx=1, ky=1
+        )
+
+    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+        """Total matter power spectrum with baryonic suppression applied."""
+        return super().matter_power_spectrum(zs, ks) * self.baryonic_suppression(zs, ks)

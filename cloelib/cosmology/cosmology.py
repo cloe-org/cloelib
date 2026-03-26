@@ -159,3 +159,45 @@ class Perturbations(Protocol):
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""
         ...
+
+
+@runtime_checkable
+class BaryonBoostMixin(Protocol):
+    """Protocol for mixins that add a baryonic suppression factor.
+
+    Any class that provides ``baryonic_suppression`` satisfies this protocol,
+    regardless of inheritance.  Used for static type-checking only — never
+    instantiated directly.
+
+    Concrete implementations live in backend-specific files and are composed
+    into ``Perturbations`` subclasses to override ``matter_power_spectrum``::
+
+        class FlamingoBaryonBoostMixin(BaryonBoostMixin):
+            def baryonic_suppression(self, zs, ks, k_hunit=False): ...
+
+        class CAMBNonLinearFLAMINGOPerturbations(
+            FlamingoBaryonBoostMixin, CAMBNonLinearPerturbations
+        ):
+            def matter_power_spectrum(self, zs, ks, ...):
+                return super().matter_power_spectrum(...) * self.baryonic_suppression(...)
+    """
+
+    def baryonic_suppression(
+        self, zs: np.ndarray, ks: np.ndarray, k_hunit: bool = False
+    ) -> np.ndarray:
+        """Return the multiplicative baryonic suppression factor P_hydro/P_DMO.
+
+        Parameters
+        ----------
+        zs:
+            Redshifts, shape (nz,).
+        ks:
+            Wavenumbers, shape (nk,).
+        k_hunit:
+            If ``True`` ks are in h/Mpc; otherwise in 1/Mpc.
+
+        Returns
+        -------
+        np.ndarray, shape (nz, nk)
+        """
+        ...

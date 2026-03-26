@@ -595,7 +595,12 @@ class BACCOemuNonLinearBaryonicPerturbations(
         M_inn: Optional[float] = None,
     ):
         """Initialise BACCOemuNonLinearBaryonicPerturbations."""
-        super().__init__(
+        # NOTE: super().__init__ is intentionally NOT used here.  Protocol's
+        # metaclass injects __init__ into BaryonBoostMixin.__dict__, which sits
+        # before BACCOemuNonLinearPerturbations in the MRO and would swallow
+        # all arguments without forwarding them.
+        BACCOemuNonLinearPerturbations.__init__(
+            self,
             background,
             linearperturbations,
             redshifts,

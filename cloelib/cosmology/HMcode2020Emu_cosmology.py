@@ -386,7 +386,13 @@ class HMemuNonLinearBaryonicPerturbations(
         log10TAGN: float,
     ):
         """Initialise HMemuNonLinearBaryonicPerturbations."""
-        super().__init__(background, linearperturbations, redshifts, log10TAGN=None)
+        # NOTE: super().__init__ is intentionally NOT used here.  Protocol's
+        # metaclass injects __init__ into BaryonBoostMixin.__dict__, which sits
+        # before HMemuNonLinearPerturbations in the MRO and would swallow
+        # all arguments without forwarding them.
+        HMemuNonLinearPerturbations.__init__(
+            self, background, linearperturbations, redshifts, log10TAGN=None
+        )
 
         # Validate log10TAGN against emulator bounds
         hm_bounds = HM2020_emu.emulator["nonlinear"]["bounds"]

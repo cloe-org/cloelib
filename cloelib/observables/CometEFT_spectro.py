@@ -4,6 +4,7 @@
 from cloelib.cosmology.cosmology import Background
 
 # General imports
+from typing import Sequence
 import numpy as np  # type: ignore
 
 # Cosmology imports
@@ -16,26 +17,24 @@ except ImportError:
 
 
 class CometEFT_SpectroPower:
-    r"""Class to retrieve :math:`P(k,\mu)` (including RSD) with the EFT model from COMET."""
+    r"""Class to retrieve $P(k,\mu)$ (including RSD) with the EFT model from COMET."""
+
+    NLcode = "COMET"
 
     def __init__(self, background: Background, RSD_parameters: dict, redshift: float):
         r"""Class constructor.
 
-        Parameters
-        ----------
-        background: Background
-            Background class containing cosmology and background distances
-        RSD_parameters: dict
-            Dictionary containing bias and counterterm parameters
-        redshift: float
-            Redshift at which to evaluate :math:`P(k,\mu)`
+        Args:
+          background (Background): Background class containing cosmology and background distances
+          RSD_parameters (dict): Dictionary containing bias and counterterm parameters
+          redshift (float): Redshift at which to evaluate $P(k,\mu)$
         """
         self.background = background
 
         self.parameters = {}
         self.parameters["wc"] = self.background.Omega_cdm0 * self.background.h**2
         self.parameters["wb"] = self.background.Omega_b0 * self.background.h**2
-        self.parameters["Mnu"] = self.background.mnu
+        self.parameters["Mnu"] = self._set_neutrino_parameters(self.background)
         self.parameters["ns"] = self.background.ns
         self.parameters["h"] = self.background.h
         self.parameters["As"] = self.background.As * 1e9
@@ -68,19 +67,52 @@ class CometEFT_SpectroPower:
             "cnlo": "Pctr_cnlo",
         }
 
-    def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
-        r"""2D power spectrum from couplings of density and velocity fields.
+    def _set_neutrino_parameters(self, background: Background) -> float:
+        r"""Set neutrino parameters in the parameters dictionary.
+
+        This method adds neutrino parameters to the provided dictionary.
+        It also ensures consistency with the background cosmology.
+        Comet only supports a single species of neutrinos, so this method
+        throws an error if multiple neutrino species are provided.
+        Note that Comet supports mnu=0.0 (N_mnu=0).
 
         Parameters
         ----------
-        k: np.ndarray
-            Wavenumber
-        mu: np.ndarray
-            Angle (cosinus) to the line of sight
-        Returns
-        -------
-        Pk2d_rsd: np.ndarray
-            2D power spectrum from couplings of density and velocity fields
+        parameters: dict
+            Dictionary to which neutrino parameters will be added
+        """
+        if background.N_mnu > 1:
+            raise ValueError(
+                "Comet supports max a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
+        if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
+            raise ValueError(
+                "Comet only supports a fixed number of effective"
+                f"relativistic species (N_eff=3.044). Found {background.N_eff} "
+                "Ensure that N_eff=3.044 in the Background class."
+            )
+        if isinstance(background.mnu, Sequence) or isinstance(
+            background.mnu, np.ndarray
+        ):
+            raise ValueError(
+                "Comet only supports a single species of neutrinos. "
+                "Set N_mnu=1 in the Background class."
+            )
+        else:
+            mnu_arg = float(background.mnu)
+        # returns the neutrino mass in eV
+        return mnu_arg
+
+    def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
+        r"""2D power spectrum from couplings of density and velocity fields.
+
+        Args:
+          k (np.ndarray): Wavenumber
+          mu (np.ndarray): Angle (cosinus) to the line of sight
+
+        Returns:
+          Pk2d_rsd (np.ndarray): 2D power spectrum from couplings of density and velocity fields
         """
         return np.squeeze(
             comet_inst.P2d_nostoch(
@@ -96,18 +128,13 @@ class CometEFT_SpectroPower:
     ) -> np.ndarray:
         r"""2D power spectrum for a subset of specific diagrams of the loop expansion.
 
-        Parameters
-        ----------
-        k: np.ndarray
-            Wavenumber
-        mu: np.ndarray
-            Angle (cosinus) to the line of sight
-        term_list: list
-            Identifiers of loop diagrams
-        Returns
-        -------
-        Pk2d_term_rsd: np.ndarray
-            2D power spectrum of specific terms
+        Args:
+          k (np.ndarray): Wavenumber
+          mu (np.ndarray): Angle (cosinus) to the line of sight
+          term_list (list): Identifiers of loop diagrams
+
+        Returns:
+          Pk2d_term_rsd (np.ndarray): 2D power spectrum of specific terms
         """
         term_list_expanded, index_map = [], {}
         for key in term_list:

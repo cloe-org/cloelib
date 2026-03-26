@@ -8,10 +8,10 @@
 
 <!-- List the major changes in this PR. Bullet points preferred. -->
 
-- [ ] Feature 1
-- [ ] Feature 2
-- [ ] Bug fix 1
-- [ ] Other improvements
+- Feature 1
+- Feature 2
+- Bug fix 1
+- Other improvements
 
 ### 🛠 How to Test
 
@@ -28,8 +28,6 @@
 <!-- Link related issues. Use closing keywords if applicable. -->
 
 Resolves #IssueNumber
-Fixes #IssueNumber
-Follow-ups #IssueNumber
 
 ### 📸 Screenshots (if applicable)
 
@@ -44,12 +42,12 @@ Follow-ups #IssueNumber
 ### ✅ PR Checklist for Developers
 
 - [ ] I have titled this PR before merging as "gh-#:", where "#" represents the task it closes
-- [ ] My code follows the repository's coding style
+- [ ] I have run locally pre-commit using `pre-commit run --all-files`
 - [ ] I have tested my changes locally
 - [ ] No new warnings or errors introduced
 - [ ] I have updated documentation (if applicable)
-- [ ] My changes do not introduce breaking changes
-- [ ] I have added tests (if applicable)
+- [ ] My changes do not introduce breaking changes (i.e: the package still gets installed)
+- [ ] I have added unit tests (if applicable)
 - [ ] I have consistently updated the GitHub information for the project, including milestones, task types, and other relevant details.
 
 ### ✅ PR Checklist for Reviewers
@@ -63,8 +61,6 @@ Follow-ups #IssueNumber
 - [ ] Quality of new/changed unit tests is acceptable
 - [ ] No data files have been included in the commits
 - [ ] Implementation follows the agreed task description point by point
-- [ ] Check that there are no `No newline at the end of file` warnings
 - [ ] Check that any added folder/file has been added to the `README.md` file
-- [ ] Check that the implementation follows the contributing guidelines and style choices
 - [ ] Check that the documentation has been updated accordantly
 - [ ] Check that the corresponding branch has been deleted after merging. If not, delete it

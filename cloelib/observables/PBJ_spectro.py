@@ -7,33 +7,31 @@ from cloelib.cosmology.cosmology import Perturbations
 import numpy as np  # type: ignore
 
 try:
-    from pbjcosmo import PBJtheory
+    from pbjcosmo.theory import Theory
 
-    pbj_obj = PBJtheory()
+    pbj_obj = Theory()
 except (ImportError, AttributeError, TypeError) as e:
     raise ImportError(f"PBJ could not be imported or initialised: {e}")
 
 
 class PBJSpectroPower:
-    r"""Class to retrieve :math:`P(k,\mu)` with the EFT model from PBJ."""
+    r"""Class to retrieve $P(k,\mu)$ with the EFT model from PBJ."""
+
+    NLcode = "PBJ"
 
     def __init__(self, linear_perturbations: Perturbations, nuisance_parameters: dict):
         r"""Class constructor.
 
-        Parameters
-        ----------
-        linear_perturbations: Perturbations
-            Perturbations object containing cosmology, linear power spectrum,
+        Args:
+          linear_perturbations (Perturbations): Perturbations object containing cosmology, linear power spectrum,
             redshift and growth functions
-        nuisance_parameters: dict
-            Dictionary containing bias and counterterm parameters
-        redshift: float
-            Redshift at which to evaluate :math:`P(k,\mu)`
+          nuisance_parameters (dict): Dictionary containing bias and counterterm parameters
         """
         self.linear_perturbations = linear_perturbations
         self.background = linear_perturbations.background
         self.parameters = nuisance_parameters
-        self.redshift = linear_perturbations.z
+        self.mask_z0 = linear_perturbations.z != 0.0
+        self.redshift = linear_perturbations.z[self.mask_z0]
 
         self.cosmo = {
             "h": self.background.h,
@@ -50,19 +48,12 @@ class PBJSpectroPower:
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields.
 
-        Parameters
-        ----------
-        k: np.ndarray
-            Wavenumber
-        mu: np.ndarray
-            Angle (cosinus) to the line of sight
-        parameters: dict
-            Ensemble of cosmological and nuisance parameters
+        Args:
+          k (np.ndarray): Wavenumber
+          mu (np.ndarray): Angle (cosinus) to the line of sight
 
-        Returns
-        -------
-        Pk2d_rsd: np.ndarray
-            2D power spectrum from couplings of density and velocity fields
+        Returns:
+          Pk2d_rsd (np.ndarray): 2D power spectrum from couplings of density and velocity fields
         """
         plinear = self.linear_perturbations.matter_power_spectrum(
             0.0, pbj_obj.kL, hubble_units=False, k_hunit=False
@@ -74,7 +65,7 @@ class PBJSpectroPower:
             True,
             kgrid=k,
             mu=mu,
-            f=self.linear_perturbations.growth_rate(),
+            f=self.linear_perturbations.growth_rate()[self.mask_z0],
             D=self.linear_perturbations.growth_factor(self.redshift, 0.05)[0],
             cosmo=self.cosmo,
             IRres=True,
@@ -83,8 +74,11 @@ class PBJSpectroPower:
 
         return pkmu
 
-    def Pk2d_X_rsd(self, k: np.ndarray, mu: np.ndarray, X: str) -> np.ndarray:
-        r"""2D power spectrum for the specific diagram X.
+    def Pk2d_term_rsd(
+        self, k: np.ndarray, mu: np.ndarray, term_list: list
+    ) -> np.ndarray:
+        r"""2D power spectrum for a subset of specific diagrams of the loop expansion,
+        corresponding to linear parameters that can be analytically marginalised over.
 
         Parameters
         ----------
@@ -92,30 +86,31 @@ class PBJSpectroPower:
             Wavenumber
         mu: np.ndarray
             Angle (cosinus) to the line of sight
-        X: str
-            Identifier of loop diagram
+        term_list: list
+            Identifiers of loop diagrams.
+            Available options: 'bG3', 'c0', 'c2', 'c4', 'ck4'
 
         Returns
         -------
-        PX2d_rsd: np.ndarray
-            2D power spectrum of term X
+        Pk2d: np.ndarray
+            2D power spectrum of specific terms
         """
         plinear = self.linear_perturbations.matter_power_spectrum(
             0.0, pbj_obj.kL, hubble_units=False, k_hunit=False
         )
         pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="1/Mpc")
 
-        pkmu_marg_dict = pbj_obj.P_kmu_2D_marg(
+        pkmu_marg_dict = pbj_obj.P_kmu_2D_marg_dict(
             self.redshift[0],
             True,
             kgrid=k,
             mu=mu,
-            f=self.linear_perturbations.growth_rate(),
+            f=self.linear_perturbations.growth_rate()[self.mask_z0],
             D=self.linear_perturbations.growth_factor(self.redshift, 0.05)[0],
             cosmo=self.cosmo,
             IRres=True,
-            **self.parameters,
+            b1=self.parameters["b1"],
         )
-        # note: make this work with X=list/array of strings?
 
-        return pkmu_marg_dict[X]
+        Pk2d = np.array([pkmu_marg_dict[key] for key in term_list])
+        return Pk2d

@@ -8,7 +8,7 @@ from scipy import interpolate
 
 # General imports
 import numpy as np
-from typing import Optional
+from typing import Optional, Sequence
 
 # Cosmology imports
 try:
@@ -21,7 +21,7 @@ except ImportError:
 
 
 class HMemuLinearPerturbations:
-    """Class for perturbations cosmology using HMemu, inheriting from Perturbations parent class."""
+    """Class for perturbations cosmology using HMemu, compatibly with the Perturbations protocol."""
 
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Intialize the HMemuLinearPerturbations instance."""
@@ -36,7 +36,7 @@ class HMemuLinearPerturbations:
             "As": self.background.As,
             "ns": self.background.ns,
             "hubble": self.background.H0 / 100,
-            "neutrino_mass": self.background.mnu,
+            "neutrino_mass": _set_neutrino_masses(self.background),
             "w0": self.background.w0,
             "wa": self.background.wa,
         }
@@ -79,19 +79,12 @@ class HMemuLinearPerturbations:
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         r"""Compute the linear matter power spectrum.
 
-        Parameters
-        ----------
-        ks: numpy.ndarray
-            Wave number in h Mpc^{-1}
+        Args:
+            ks (numpy.ndarray): Wave number in h Mpc^{-1}
+            zs (numpy.ndarray): redshifts
 
-        zs: numpy.ndarray
-            redshifts
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
+        Returns:
+            pk (numpy.ndarray): Linear matter power spectrum at the specified scale and redshift
 
         """
         return self.Pk_interp(zs, ks)
@@ -100,24 +93,19 @@ class HMemuLinearPerturbations:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        .. math::
+        $$
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
-            /P_{\rm \delta\delta}(z=0, k)}\\
+            /P_{\rm \delta\delta}(z=0, k)}
+        $$
 
-        and normalizes as for :math:`D(z)/D(0)`.
+        and normalizes as for $D(z)/D(0)$.
 
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
+        Args:
+            zs (array_like): Redshifts at which to calculate the growth factor.
+            ks (array_like): Wavenumbers at which to calculate the growth factor.
 
         Returns:
-        --------
-        np.ndarray
-            The growth factor as a function of redshift and wavenumber.
+            (np.ndarray): The growth factor as a function of redshift and wavenumber.
         """
         if hasattr(self, "Pk_interp") and self.Pk_interp is not None:
             D_z_k = np.sqrt(self.Pk_interp(zs, ks) / self.Pk_interp(0, ks))
@@ -129,9 +117,7 @@ class HMemuLinearPerturbations:
         Calculate the growth rate for given redshifts and wavenumbers.
 
         Returns:
-        --------
-        np.ndarray
-            The growth rate as a function of redshift and wavenumber.
+            (np.ndarray): The growth rate as a function of redshift and wavenumber.
         """
         self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
 
@@ -139,7 +125,7 @@ class HMemuLinearPerturbations:
 
 
 class HMemuNonLinearPerturbations:
-    """Class for non linear perturbations cosmology using HMemu, inheriting from Perturbations parent class."""
+    """Class for non linear perturbations cosmology using HMemu,  compatibly with the Perturbations protocol."""
 
     def __init__(
         self,
@@ -148,7 +134,7 @@ class HMemuNonLinearPerturbations:
         redshifts: np.ndarray,
         log10TAGN: Optional[float] = None,
     ):
-        """Initialize the HMemuNonLinearPerturbations intance."""
+        """Initialize the HMemuNonLinearPerturbations instance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
         redshift_max = HM2020_emu.emulator["nonlinear"]["bounds"]["z"][1]
@@ -162,7 +148,7 @@ class HMemuNonLinearPerturbations:
             "As": self.background.As,
             "ns": self.background.ns,
             "hubble": self.background.H0 / 100,
-            "neutrino_mass": self.background.mnu,
+            "neutrino_mass": _set_neutrino_masses(self.background),
             "w0": self.background.w0,
             "wa": self.background.wa,
         }
@@ -231,19 +217,12 @@ class HMemuNonLinearPerturbations:
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         r"""Compute the linear matter power spectrum.
 
-        Parameters
-        ----------
-        ks: numpy.ndarray
-            Wave number in h Mpc^{-1}
+        Args:
+            ks (numpy.ndarray): Wave number in h Mpc^{-1}
+            zs (numpy.ndarray): redshifts
 
-        zs: numpy.ndarray
-            redshifts
-
-        Returns
-        -------
-        pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
-            and redshift
+        Returns:
+            pk (numpy.ndarray): Linear matter power spectrum at the specified scale and redshift
 
         """
         return self.Pk_interp(zs, ks)
@@ -252,24 +231,19 @@ class HMemuNonLinearPerturbations:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        .. math::
+        $$
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
             /P_{\rm \delta\delta}(z=0, k)}\\
+        $$
 
-        and normalizes as for :math:`D(z)/D(0)`.
+        and normalizes as for $D(z)/D(0)$.
 
-
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
+        Args:
+            zs (array_like): Redshifts at which to calculate the growth factor.
+            ks (array_like): Wavenumbers at which to calculate the growth factor.
 
         Returns:
-        --------
-        np.ndarray
-            The growth factor as a function of redshift and wavenumber.
+            (np.ndarray): The growth factor as a function of redshift and wavenumber.
         """
         if hasattr(self, "Pk_interp") and self.Pk_interp is not None:
             D_z_k = np.sqrt(self.Pk_interp(zs, ks) / self.Pk_interp(0, ks))
@@ -281,9 +255,7 @@ class HMemuNonLinearPerturbations:
         Calculate the growth rate for given redshifts and wavenumbers.
 
         Returns:
-        --------
-        np.ndarray
-            The growth rate as a function of redshift and wavenumber.
+            (np.ndarray): The growth rate as a function of redshift and wavenumber.
         """
         self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
 
@@ -307,3 +279,52 @@ class HMemuNonLinearPerturbations:
                 self.params_hm_emu[k] = np.pad(v, (0, pad_size), mode="edge")
         self.sigma8_0, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
         return self.sigma8_0[0]
+
+
+def _set_neutrino_masses(background: Background) -> float:
+    r"""Set neutrino masses in the parameters dictionary.
+
+    This method adds neutrino masses to the provided dictionary.
+    It also ensures consistency with the background cosmology.
+    HMcode2020Emu only supports a single species massive of neutrinos, so this method
+    throws an error if multiple massive neutrino species are provided.
+
+    Parameters
+    ----------
+    background: Background
+        Background class containing cosmology and background quantities
+
+    Returns
+    -------
+    float
+        The total neutrino mass in eV.
+    """
+    if background.N_mnu > 1:
+        raise ValueError(
+            "HMcode2020Emu only supports a single species of neutrinos. "
+            "Set N_mnu=1 in the Background class."
+        )
+    if not np.isclose(background.N_ur, 2.0308, rtol=1e-4):
+        raise ValueError(
+            "HMcode2020Emu only supports a fixed number of relativistic species (N_ur=2.0308). "
+            "Set N_ur=2.0308 in the Background class."
+            "[Note that HMcode2020Emu actually sets N_ur=2.0328,"
+            "this will be fixed in a future release.]"
+        )
+    if not np.isclose(background.N_eff, 3.044, rtol=1e-3):
+        raise ValueError(
+            "HMcode2020Emu only supports a fixed number of effective"
+            f"relativistic species (N_eff=3.044). Found {background.N_eff} "
+            "Ensure that N_eff=3.044 in the Background class."
+            "[Note that HMcode2020Emu actually sets N_eff=3.046,"
+            "this will be fixed in a future release.]"
+        )
+    if isinstance(background.mnu, Sequence) or isinstance(background.mnu, np.ndarray):
+        raise ValueError(
+            "HMcode2020Emu only supports a single species of neutrinos. "
+            "Set N_mnu=1 in the Background class."
+        )
+    else:
+        mnu_arg = float(background.mnu)
+    # returns the neutrino mass in eV
+    return mnu_arg

@@ -10,7 +10,7 @@
 """
 
 # General imports
-from typing import Protocol, Union, TypeVar, Optional, runtime_checkable
+from typing import Protocol, Union, Sequence, TypeVar, Optional, runtime_checkable
 
 import numpy as np  # type: ignore
 import jax.numpy as jnp
@@ -43,8 +43,23 @@ class Background(Protocol):
         ...
 
     @property
-    def mnu(self) -> float:
-        """Total neutrino mass in eV."""
+    def mnu(self) -> Union[float, Sequence[float], T]:
+        """Total neutrino mass in eV (float) or an array of individual neutrino masses in eV."""
+        ...
+
+    @property
+    def N_ur(self) -> float:
+        """Effective number of ultra-relativistic species. As defined by CLASS."""
+        ...
+
+    @property
+    def N_eff(self) -> float:
+        """Effective number of relativistic species."""
+        ...
+
+    @property
+    def N_mnu(self) -> int:
+        """Integer number of massive neutrino species."""
         ...
 
     @property
@@ -90,6 +105,10 @@ class Background(Protocol):
         """Compute the matter density as a function of redshift."""
         ...
 
+    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
+        """Computes the cold dark matter + baryons (no neutrinos) as a function of redshift."""
+        ...
+
     def hubble_parameter(self, zs: T, units: str = "km/s/Mpc") -> T:
         """Retrieve the hubble parameter as a function of redshift."""
         ...
@@ -131,4 +150,12 @@ class Perturbations(Protocol):
 
     def matter_power_spectrum(self, zs: T, ks: T) -> T:
         """Retrieve the matter power spectrum."""
+        ...
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        """Retrieves matter power spectrum of cold dark matter + baryons (no neutrinos)."""
+        ...
+
+    def sigma8_0(self) -> float:
+        """Retrieve sigma8 at z=0."""
         ...

@@ -700,10 +700,12 @@ class BACCOemuNonLinearBaryonicPerturbations(
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         """Total matter power spectrum with baryonic suppression applied."""
-        return (super().matter_power_spectrum(zs, ks) * self.baryonic_suppression(zs, ks)).squeeze()
+        return (
+            super().matter_power_spectrum(zs, ks) * self.baryonic_suppression(zs, ks)
+        ).squeeze()
 
     def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
         """Cold matter power spectrum with baryonic suppression applied."""
-        return (super().matter_power_spectrum_cb(zs, ks) * self.baryonic_suppression(
-            zs, ks
-        )).squeeze()
+        return (
+            super().matter_power_spectrum_cb(zs, ks) * self.baryonic_suppression(zs, ks)
+        ).squeeze()

@@ -187,9 +187,89 @@ Accurate and fast emulators of the linear, non-linear, and baryonic power spectr
 - Large cosmological parameter range;
 - Neural network evaluation with JAX;
 
-### CosmoPowerJAXPerturbations
+### FlamingoBaryonResponseEmulatorPerturbations
 
-Fast JAX-based emulator for linear power spectra using [cosmopower-jax](https://github.com/dpiras/cosmopower-jax).
+CAMB nonlinear power spectrum with a baryonic suppression correction from the [FLAMINGO](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator) hydrodynamical simulation suite.
+
+**Location**: `cloelib/cosmology/FlamingoBaryonResponseEmulator_cosmology.py`
+
+**When to use**: Accurate baryonic feedback modelled on FLAMINGO hydrodynamical simulations; can vary AGN jet fraction and ICM gas/stellar parameters.
+
+**Features**:
+
+- CAMB-based nonlinear baseline
+- FLAMINGO emulator response $B(k,z) = P_\text{hydro}/P_\text{DMO}$ applied at evaluation time
+- Three baryonic parameters: `fgas_sigma`, `Mstar_sigma`, `jet_fraction`
+- Valid for $z \leq 3$ and $k \leq 10^{1.5}\,h/\text{Mpc}$; outside these ranges the response is automatically clamped to 1
+- Standalone `FlamingoBaryonBoostMixin` composable with any nonlinear perturbations class
+
+**Example**:
+
+```python
+from cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology import (
+    CAMBNonLinearFLAMINGOPerturbations,
+)
+
+pert = CAMBNonLinearFLAMINGOPerturbations(
+    background=bg,
+    redshifts=zs,
+    fgas_sigma=0.0,    # 0σ from calibrated gas fraction
+    Mstar_sigma=0.0,   # 0σ from stellar mass function
+    jet_fraction=0.0,  # pure thermal AGN feedback
+)
+
+k = np.logspace(-2, 1, 100)  # k in 1/Mpc
+Pk = pert.matter_power_spectrum(np.array([0.5]), k)  # shape (n_k,)
+```
+
+## Baryonic Boost Mixin Framework
+
+`cloelib` provides a composable `BaryonBoostMixin` Protocol that decouples the baryonic suppression from the underlying nonlinear solver. This makes it easy to combine any nonlinear backend with any baryonic model.
+
+**Protocol location**: `cloelib.cosmology.cosmology.BaryonBoostMixin`
+
+### `BaryonBoostMixin` Protocol
+
+Any class implementing this protocol must expose:
+
+```python
+def baryonic_suppression(self, zs, ks, k_hunit=False) -> np.ndarray:
+    """Return B(k,z) = P_hydro / P_DMO, shape (n_z, n_k)."""
+```
+
+Three ready-made mixins are provided:
+
+| Mixin                        | Backend           | Baryonic parameters                                                  |
+| ---------------------------- | ----------------- | -------------------------------------------------------------------- |
+| `FlamingoBaryonBoostMixin`   | FLAMINGO emulator | `fgas_sigma`, `Mstar_sigma`, `jet_fraction`                          |
+| `BACCOemuBaryonBoostMixin`   | BACCOemu          | `M_c`, `eta`, `beta`, `M1_z0_cen`, `theta_out`, `theta_inn`, `M_inn` |
+| `HMcode2020BaryonBoostMixin` | HMcode2020emu     | `log10TAGN`                                                          |
+
+Each mixin `__init__` must be called **after** the base nonlinear `__init__` (it reads `self.background` and emulator internals set by the base).
+
+### `with_baryon_boost` Factory
+
+`cloelib.cosmology.cosmology.with_baryon_boost(NonLinearClass, BaryonMixinClass)` creates a combined class with zero boilerplate:
+
+```python
+from cloelib.cosmology.cosmology import with_baryon_boost
+from cloelib.cosmology.baccoemu_cosmology import BACCOemuNonLinearPerturbations
+from cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology import FlamingoBaryonBoostMixin
+
+BACCOemuFLAMINGO = with_baryon_boost(BACCOemuNonLinearPerturbations, FlamingoBaryonBoostMixin)
+pert = BACCOemuFLAMINGO(
+    background, linear_pert, redshifts,
+    nonlinear_model_name="Arico2023",
+    baryon_kwargs=dict(fgas_sigma=0.0, Mstar_sigma=0.0, jet_fraction=0.0),
+)
+```
+
+The resulting object is fully `Perturbations`-compatible and can be passed directly to any `cloelib` tracer or likelihood.
+
+!!! note "Return shape"
+All `matter_power_spectrum` methods (including baryonic ones) return shape `(n_k,)` for single-redshift inputs and `(n_z, n_k)` for multi-redshift inputs via `.squeeze()`.
+
+### CosmoPowerJAXPerturbations
 
 **Location**: `cloelib/cosmology/cosmopower_jax_cosmology.py`
 

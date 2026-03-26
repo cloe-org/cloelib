@@ -333,10 +333,62 @@ def _set_neutrino_masses(background: Background) -> float:
 class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
     """Mixin providing baryonic suppression via an HMcode2020-computed P_baryon/P_dmo ratio.
 
-    Expects the host class to have set ``self._baryon_ratio_interp``,
-    ``self._baryon_k_nl_min``, and ``self.background``.
-    For scales below the nonlinear emulator k range, the suppression factor is 1.
+    Can be combined with *any* HMcode2020emu nonlinear perturbations class::
+
+        class MyPert(HMcode2020BaryonBoostMixin, HMemuNonLinearPerturbations):
+            def __init__(self, background, linear, redshifts, log10TAGN=7.8):
+                HMemuNonLinearPerturbations.__init__(self, background, linear, redshifts)
+                HMcode2020BaryonBoostMixin.__init__(self, log10TAGN=log10TAGN)
+
+    Or use :func:`~cloelib.cosmology.cosmology.with_baryon_boost`.
+
+    .. note::
+        ``__init__`` must be called **after** the base NonLinear ``__init__``
+        because it reads ``self.params_hm_emu`` and ``self.background``.
+        Scales below the nonlinear emulator k range get suppression = 1.
     """
+
+    def __init__(self, log10TAGN: float) -> None:
+        """Initialise the HMcode2020 baryon-ratio spline.
+
+        Runs the emulator twice (DMO and baryonic) and stores
+        ``B(z, k)`` as a bivariate spline in ``self._baryon_ratio_interp``.
+
+        Call this **after** ``HMemuNonLinearPerturbations.__init__`` so that
+        ``self.params_hm_emu`` and ``self.background`` are already set.
+
+        Parameters
+        ----------
+        log10TAGN:
+            log₁₀ of the AGN heating temperature in Kelvin.
+            Typical range: 7.6 (weak) – 8.3 (strong feedback).
+        """
+        hm_bounds = HM2020_emu.emulator["nonlinear"]["bounds"]
+        if np.prod(log10TAGN - hm_bounds["log10TAGN"]) > 0:
+            raise ValueError(
+                f"HMcode 2020 NL emulator: log10TAGN={log10TAGN} is out of bounds "
+                f"{hm_bounds['log10TAGN']}."
+            )
+        z_emu = self.params_hm_emu["z"]
+        nz = len(z_emu)
+        _, Pk_dmo = HM2020_emu.get_nonlinear_pk(
+            nonu=False, **self.params_hm_emu, baryonic_boost=False
+        )
+        params_with_tagn = {
+            **self.params_hm_emu,
+            "log10TAGN": np.tile(log10TAGN, nz),
+        }
+        _, Pk_baryon = HM2020_emu.get_nonlinear_pk(
+            nonu=False, **params_with_tagn, baryonic_boost=True
+        )
+        ratio = Pk_baryon / Pk_dmo
+        k_nl_phys = (
+            HM2020_emu.emulator["nonlinear"]["k"] * self.background.h
+        )  # h/Mpc -> 1/Mpc
+        self._baryon_k_nl_min = k_nl_phys[0]
+        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
+            z_emu, k_nl_phys, ratio, kx=1, ky=1
+        )
 
     def baryonic_suppression(self, zs, ks, k_hunit: bool = False) -> np.ndarray:
         """Return B(z, k) = P_baryon(z, k) / P_dmo(z, k).
@@ -386,49 +438,13 @@ class HMemuNonLinearBaryonicPerturbations(
         log10TAGN: float,
     ):
         """Initialise HMemuNonLinearBaryonicPerturbations."""
-        # NOTE: super().__init__ is intentionally NOT used here.  Protocol's
-        # metaclass injects __init__ into BaryonBoostMixin.__dict__, which sits
-        # before HMemuNonLinearPerturbations in the MRO and would swallow
-        # all arguments without forwarding them.
+        # Initialise the HMcode2020 base (sets self.params_hm_emu, self.k, …)
         HMemuNonLinearPerturbations.__init__(
             self, background, linearperturbations, redshifts, log10TAGN=None
         )
-
-        # Validate log10TAGN against emulator bounds
-        hm_bounds = HM2020_emu.emulator["nonlinear"]["bounds"]
-        if np.prod(log10TAGN - hm_bounds["log10TAGN"]) > 0:
-            raise ValueError(
-                f"HMcode 2020 NL emulator: log10TAGN={log10TAGN} is out of bounds "
-                f"{hm_bounds['log10TAGN']}."
-            )
-
-        # Emulator z grid is stored in params_hm_emu (not rebound by extend_spectra)
-        z_emu = self.params_hm_emu["z"]
-        nz = len(z_emu)
-
-        # DMO spectrum at the nonlinear k grid
-        _, Pk_dmo = HM2020_emu.get_nonlinear_pk(
-            nonu=False, **self.params_hm_emu, baryonic_boost=False
-        )
-
-        # Baryonic spectrum with log10TAGN
-        params_with_tagn = {
-            **self.params_hm_emu,
-            "log10TAGN": np.tile(log10TAGN, nz),
-        }
-        _, Pk_baryon = HM2020_emu.get_nonlinear_pk(
-            nonu=False, **params_with_tagn, baryonic_boost=True
-        )
-
-        ratio = Pk_baryon / Pk_dmo  # shape (nz, nk_nl)
-        k_nl_phys = (
-            HM2020_emu.emulator["nonlinear"]["k"] * self.background.h
-        )  # h/Mpc -> 1/Mpc
-        self._baryon_k_nl_min = k_nl_phys[0]
-        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
-            z_emu, k_nl_phys, ratio, kx=1, ky=1
-        )
+        # Initialise the mixin (validates log10TAGN, builds baryon ratio spline)
+        HMcode2020BaryonBoostMixin.__init__(self, log10TAGN=log10TAGN)
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         """Total matter power spectrum with baryonic suppression applied."""
-        return super().matter_power_spectrum(zs, ks) * self.baryonic_suppression(zs, ks)
+        return (super().matter_power_spectrum(zs, ks) * self.baryonic_suppression(zs, ks)).squeeze()

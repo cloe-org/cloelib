@@ -52,25 +52,53 @@ _Z_MAX_TRAINED = 3.0
 class FlamingoBaryonBoostMixin(BaryonBoostMixin):
     """Concrete baryonic-boost mixin for the FlamingoBaryonResponseEmulator.
 
-    Implements ``baryonic_suppression`` and adds
-    ``baryonic_suppression_with_variance`` (FLAMINGO-specific; not part of the
-    ``BaryonicPerturbations`` Protocol, but available on any class that uses
-    this mixin).
+    Implements ``baryonic_suppression`` (and the FLAMINGO-specific
+    ``baryonic_suppression_with_variance``).  Can be combined with *any*
+    nonlinear perturbations class::
 
-    Host-class contract (attributes set in ``__init__``)
-    -----------------------------------------------------
-    flamingo_emulator:
-        Initialised ``FlamingoBaryonResponseEmulator`` instance.
-    fgas : float
-        ``fgas_sigma`` — gas fraction offset in sigma. Training range [-8, +2]
-        for ``jet=0``; [-4, 0] for ``jet=1``.
-    Mstar : float
-        ``Mstar_sigma`` — stellar mass function offset in sigma. Range [-1, 0].
-    jet : float
-        ``jet_fraction`` — AGN jet energy fraction (0 = thermal, 1 = jets).
-    background:
-        Background-protocol object; ``background.H0`` used for unit conversion.
+        class MyPert(FlamingoBaryonBoostMixin, SomeNonLinearPerturbations):
+            def __init__(self, background, ..., fgas_sigma=0, Mstar_sigma=0, jet_fraction=0):
+                SomeNonLinearPerturbations.__init__(self, background, ...)
+                FlamingoBaryonBoostMixin.__init__(self, fgas_sigma, Mstar_sigma, jet_fraction)
+
+            def matter_power_spectrum(self, zs, ks, **kwargs):
+                return SomeNonLinearPerturbations.matter_power_spectrum(self, zs, ks, **kwargs)\
+                    * self.baryonic_suppression(zs, ks, k_hunit=kwargs.get("k_hunit", False))
+
+    Or use the :func:`~cloelib.cosmology.cosmology.with_baryon_boost` factory for
+    zero-boilerplate class creation.
     """
+
+    # ------------------------------------------------------------------
+    # Initialiser
+    # ------------------------------------------------------------------
+
+    def __init__(
+        self,
+        fgas_sigma: float = 0.0,
+        Mstar_sigma: float = 0.0,
+        jet_fraction: float = 0.0,
+    ) -> None:
+        """Initialise the FLAMINGO mixin attributes.
+
+        Call this **after** the base NonLinear perturbations ``__init__``
+        so that ``self.background`` is already set.
+
+        Parameters
+        ----------
+        fgas_sigma:
+            Offset from calibration gas fraction, in σ.  Training range
+            [-8, +2] for ``jet_fraction=0``; [-4, 0] for ``jet_fraction=1``.
+        Mstar_sigma:
+            Offset from stellar mass function calibration, in σ.
+            Training range [-1, 0].
+        jet_fraction:
+            AGN jet energy fraction (0 = pure thermal, 1 = pure jets).
+        """
+        self.fgas = fgas_sigma
+        self.Mstar = Mstar_sigma
+        self.jet = jet_fraction
+        self.flamingo_emulator = fre.FlamingoBaryonResponseEmulator()
 
     # ------------------------------------------------------------------
     # internal helpers
@@ -214,11 +242,13 @@ class CAMBNonLinearFLAMINGOPerturbations(
             nonlinear_model=nonlinear_model,
         )
 
-        # Attributes consumed by FlamingoBaryonBoostMixin
-        self.fgas = fgas_sigma
-        self.Mstar = Mstar_sigma
-        self.jet = jet_fraction
-        self.flamingo_emulator = fre.FlamingoBaryonResponseEmulator()
+        # Initialise the FLAMINGO mixin (sets fgas, Mstar, jet, flamingo_emulator)
+        FlamingoBaryonBoostMixin.__init__(
+            self,
+            fgas_sigma=fgas_sigma,
+            Mstar_sigma=Mstar_sigma,
+            jet_fraction=jet_fraction,
+        )
 
     # ------------------------------------------------------------------
     # Override: P_CAMB × B_FLAMINGO
@@ -242,10 +272,10 @@ class CAMBNonLinearFLAMINGOPerturbations(
 
         Returns
         -------
-        pk: numpy.ndarray, shape (len(zs), len(ks))
+        pk: numpy.ndarray, shape (len(ks),) for single z, else (len(zs), len(ks))
             :math:`P_{\rm CAMB}(k,z) \times B_{\rm FLAMINGO}(k,z)`.
         """
         pk_camb = super().matter_power_spectrum(
             zs, ks, hubble_units=hubble_units, k_hunit=k_hunit
         )
-        return pk_camb * self.baryonic_suppression(zs, ks, k_hunit=k_hunit)
+        return (pk_camb * self.baryonic_suppression(zs, ks, k_hunit=k_hunit)).squeeze()

@@ -541,9 +541,89 @@ class BACCOemuNonLinearPerturbations:
 class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
     """Mixin providing baryonic suppression via a BACCOemu-computed P_baryon/P_dmo ratio.
 
-    Expects the host class to have set ``self._baryon_ratio_interp`` and
-    ``self.background``.
+    Can be combined with *any* BACCOemu nonlinear perturbations class::
+
+        class MyPert(BACCOemuBaryonBoostMixin, BACCOemuNonLinearPerturbations):
+            def __init__(self, background, linear, redshifts,
+                         nonlinear_model_name="Arico2023",
+                         baryonic_model_name="Burger2025", **baryon_kwargs):
+                BACCOemuNonLinearPerturbations.__init__(
+                    self, background, linear, redshifts,
+                    nonlinear_model_name=nonlinear_model_name)
+                BACCOemuBaryonBoostMixin.__init__(
+                    self, baryonic_model_name=baryonic_model_name, **baryon_kwargs)
+
+    Or use :func:`~cloelib.cosmology.cosmology.with_baryon_boost`.
+
+    .. note::
+        ``__init__`` must be called **after** the base NonLinear ``__init__``
+        because it reads ``self.emu``, ``self.params_emu``, and
+        ``self.background`` which are set there.
     """
+
+    def __init__(
+        self,
+        baryonic_model_name: str = "Burger2025",
+        M_c: Optional[float] = None,
+        eta: Optional[float] = None,
+        beta: Optional[float] = None,
+        M1_z0_cen: Optional[float] = None,
+        theta_out: Optional[float] = None,
+        theta_inn: Optional[float] = None,
+        M_inn: Optional[float] = None,
+    ) -> None:
+        """Initialise the BACCOemu baryon-ratio spline.
+
+        Runs the emulator twice (DMO and baryonic) and stores
+        ``B(z, k)`` as a bivariate spline in ``self._baryon_ratio_interp``.
+
+        Call this **after** ``BACCOemuNonLinearPerturbations.__init__`` so
+        that ``self.emu``, ``self.params_emu``, and ``self.background`` are set.
+
+        Parameters
+        ----------
+        baryonic_model_name:
+            BACCOemu baryonic model, e.g. ``"Burger2025"`` or ``"Arico2021"``.
+        M_c, eta, beta, M1_z0_cen, theta_out, theta_inn, M_inn:
+            Optional baryonification parameters.  ``None`` uses the model defaults.
+        """
+        low_k_mask = (
+            self.emu.emulator["linear"]["k"] < self.emu.emulator["nonlinear"]["k"][0]
+        )
+        all_k = np.concatenate(
+            (
+                self.emu.emulator["linear"]["k"][low_k_mask],
+                self.emu.emulator["nonlinear"]["k"],
+            )
+        )
+        z_emu = 1.0 / self.params_emu["expfactor"] - 1.0
+        baryonic_params = {
+            k: v
+            for k, v in {
+                "M_c": M_c,
+                "eta": eta,
+                "beta": beta,
+                "M1_z0_cen": M1_z0_cen,
+                "theta_out": theta_out,
+                "theta_inn": theta_inn,
+                "M_inn": M_inn,
+            }.items()
+            if v is not None
+        }
+        _, Pk_dmo = self.emu.get_nonlinear_pk(
+            cold=False, baryonic_boost=None, k=all_k, **self.params_emu
+        )
+        _, Pk_baryon = self.emu.get_nonlinear_pk(
+            cold=False,
+            baryonic_boost=baryonic_model_name,
+            k=all_k,
+            **{**self.params_emu, **baryonic_params},
+        )
+        ratio = Pk_baryon / Pk_dmo
+        k_phys = all_k * self.background.h  # h/Mpc -> 1/Mpc
+        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
+            z_emu, k_phys, ratio, kx=1, ky=1
+        )
 
     def baryonic_suppression(self, zs, ks, k_hunit: bool = False) -> np.ndarray:
         """Return B(z, k) = P_baryon(z, k) / P_dmo(z, k).
@@ -595,10 +675,7 @@ class BACCOemuNonLinearBaryonicPerturbations(
         M_inn: Optional[float] = None,
     ):
         """Initialise BACCOemuNonLinearBaryonicPerturbations."""
-        # NOTE: super().__init__ is intentionally NOT used here.  Protocol's
-        # metaclass injects __init__ into BaryonBoostMixin.__dict__, which sits
-        # before BACCOemuNonLinearPerturbations in the MRO and would swallow
-        # all arguments without forwarding them.
+        # Initialise the BACCOemu base (sets self.emu, self.k, self.params_emu, …)
         BACCOemuNonLinearPerturbations.__init__(
             self,
             background,
@@ -608,60 +685,25 @@ class BACCOemuNonLinearBaryonicPerturbations(
             baryonic_boost=None,
             baryonic_model_name=baryonic_model_name,
         )
-
-        # Reconstruct the emulator k grid (same as in parent __init__)
-        low_k_mask = (
-            self.emu.emulator["linear"]["k"] < self.emu.emulator["nonlinear"]["k"][0]
-        )
-        all_k = np.concatenate(
-            (
-                self.emu.emulator["linear"]["k"][low_k_mask],
-                self.emu.emulator["nonlinear"]["k"],
-            )
-        )
-
-        # Recover the emulator z grid (params_emu["expfactor"] was not rebound by extend_spectra)
-        z_emu = 1.0 / self.params_emu["expfactor"] - 1.0
-
-        # Baryonic model parameters (only include those that were provided)
-        baryonic_params = {
-            k: v
-            for k, v in {
-                "M_c": M_c,
-                "eta": eta,
-                "beta": beta,
-                "M1_z0_cen": M1_z0_cen,
-                "theta_out": theta_out,
-                "theta_inn": theta_inn,
-                "M_inn": M_inn,
-            }.items()
-            if v is not None
-        }
-
-        # Run emulator twice to build the baryonic suppression ratio
-        _, Pk_dmo = self.emu.get_nonlinear_pk(
-            cold=False, baryonic_boost=None, k=all_k, **self.params_emu
-        )
-        _, Pk_baryon = self.emu.get_nonlinear_pk(
-            cold=False,
-            baryonic_boost=baryonic_model_name,
-            k=all_k,
-            **{**self.params_emu, **baryonic_params},
-        )
-
-        ratio = Pk_baryon / Pk_dmo  # shape (nz_emu, nk)
-        k_phys = all_k * background.h  # h/Mpc -> 1/Mpc
-
-        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
-            z_emu, k_phys, ratio, kx=1, ky=1
+        # Initialise the mixin (builds baryon ratio spline from self.emu / self.params_emu)
+        BACCOemuBaryonBoostMixin.__init__(
+            self,
+            baryonic_model_name=baryonic_model_name,
+            M_c=M_c,
+            eta=eta,
+            beta=beta,
+            M1_z0_cen=M1_z0_cen,
+            theta_out=theta_out,
+            theta_inn=theta_inn,
+            M_inn=M_inn,
         )
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         """Total matter power spectrum with baryonic suppression applied."""
-        return super().matter_power_spectrum(zs, ks) * self.baryonic_suppression(zs, ks)
+        return (super().matter_power_spectrum(zs, ks) * self.baryonic_suppression(zs, ks)).squeeze()
 
     def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
         """Cold matter power spectrum with baryonic suppression applied."""
-        return super().matter_power_spectrum_cb(zs, ks) * self.baryonic_suppression(
+        return (super().matter_power_spectrum_cb(zs, ks) * self.baryonic_suppression(
             zs, ks
-        )
+        )).squeeze()

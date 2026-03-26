@@ -248,19 +248,20 @@ class TabulatedBoostedPerturbations:
         ----------
         base_lin_perturbations : object
             An object representing the linear perturbations, which may include methods
-            like `sigma_lensing` for lensing calculations.
+            like `sigma_lensing` for lensing calculations. Must have the same background 
+            as in the modified theory of gravity or dark energy (not ΛCDM for CPL-backgrounds!).
 
         base_perturbations : object
             An object with a `matter_power_spectrum(z, k)` method that provides the
-            nonlinear matter power spectrum for the ΛCDM model.
+            nonlinear matter power spectrum for the ΛCDM model. 
 
         boost_interp : callable
             A function or interpolator B(z, k) that returns the nonlinear boost
-            to be applied to the ΛCDM
+            to be applied to the ΛCDM spectrum. 
 
         """
 
-        self.background = base_perturbations.background
+        self.background = base_lin_perturbations.background
         assert self.background.Omega_k0 == 0, "Non flat geometries not supported"
 
         self.base = base_perturbations

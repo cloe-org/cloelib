@@ -524,6 +524,15 @@
         "code",
         "ideas"
       ]
+    },
+    {
+      "login": "MatthieuSchaller",
+      "name": "Matthieu Schaller",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42518815?v=4",
+      "profile": "http://www.matthieuschaller.com",
+      "contributions": [
+        "ideas"
+      ]
     }
   ]
 }

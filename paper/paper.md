@@ -16,7 +16,7 @@ authors:
     orcid: 0000-0003-2796-2149
     affiliation: 2
   - name: Pedro Carrilho
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0003-1339-0194
     affiliation: 3
   - name: Santiago Casas
     orcid: 0000-0000-0000-0000
@@ -134,7 +134,7 @@ affiliations:
     index: 1
   - name: Leiden Observatory, the Netherlands
     index: 2
-  - name: University of Edinburgh, United Kingdom
+  - name: Centre for Astrophysics Research, University of Hertfordshire, United Kingdom
     index: 3
   - name: RWTH Aachen University, Germany
     index: 4

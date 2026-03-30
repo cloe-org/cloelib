@@ -5,6 +5,7 @@ from scipy.integrate import simpson as simps
 # cloelib imports
 from cloelib.observables.clusters.auxiliary import photoz_rsd_correction
 from cloelib.observables.clusters.covariance import HaloCovariance
+from cloelib.observables.clusters.selection_function import SelectionFunction
 from cloelib.summary_statistics.clusters.statistics_modeling import (
     ClusterStatisticsModeling,
 )
@@ -21,21 +22,13 @@ from cloelib.summary_statistics.clusters.statistics_modeling import (
 
 
 class ClusterCounts:
-    """Object to compute cluster counts
-
-    Attributes
-    ----------
-    l_m_tab_sig : list
-        Number of points to be used for the lambda_obs integration
-        in each lambda_obs bin. Must be same size of lambda_obs_edges.
-    z_tab_sig : int
-        Number of points to be used for z_obs integration.
-    """
+    """Object to compute cluster counts"""
 
     def __init__(
         self,
         cluster_statitstics_modeling: ClusterStatisticsModeling,
         covariance: HaloCovariance,
+        selection_function: SelectionFunction,
     ):
         """
         Initializes the cluster counts
@@ -47,6 +40,8 @@ class ClusterCounts:
             for cluster statistics and tabled values for integration.
         covariance : HaloCovariance
             Halo covariance object
+        selection_function : SelectionFunction
+            Selection function object
         """
         # cluster counts summary statistics, contains tables for integrals
         # and functions to compute binned integrals of counts
@@ -54,10 +49,7 @@ class ClusterCounts:
 
         # observable objects
         self.covariance = covariance
-
-        # hardcoded quantities for integration
-        self.l_m_tab_sig = [31, 31, 31, 51]
-        self.z_tab_sig = 31
+        self.selection_function = selection_function
 
     def get_NC(
         self,
@@ -95,11 +87,11 @@ class ClusterCounts:
         ############################################
         # integral of P(lambda_obs|M, z) on lambda_obs bins : (lambda_obs, M, ztrue)
         window_lambda_obs = self.cluster_statitstics_modeling.window_richness_observed(
-            lambda_obs_edges, self.l_m_tab_sig
+            self.selection_function, lambda_obs_edges
         )
         # integral of P(z_obs|lambda_obs, z) on z_obs bins : (z_obs, lambda_obs, ztrue)
         window_z_obs = self.cluster_statitstics_modeling.window_z_observed(
-            z_obs_edges, lambda_obs_edges, self.z_tab_sig
+            self.selection_function, z_obs_edges, lambda_obs_edges
         )
         # cluster counts : (z_obs, lambda_obs)
         cluster_counts = self.cluster_statitstics_modeling.integrate_probe_function_in_redshift(
@@ -150,9 +142,7 @@ class ClusterCounts:
             self.cluster_statitstics_modeling.matter_statistics.background,
             z_mid,
             self.cluster_statitstics_modeling.tabulated_integrands["k"],
-            self.cluster_statitstics_modeling.selectionfunction.scatter_zobs_z(
-                0, z_mid
-            ),
+            self.selection_function.scatter_z_obs(0, z_mid),
             self.cluster_statitstics_modeling.matter_statistics.nonu,
         )[0]
 
@@ -162,13 +152,17 @@ class ClusterCounts:
         # compute spatial covariance (z_obs, z_obs)
         spatial_cov = np.zeros((z_obs_edges_size, z_obs_edges_size))
         for ind_z in range(z_obs_edges_size):
-            z_tab = np.linspace(
-                z_obs_edges[ind_z], z_obs_edges[ind_z + 1], self.z_tab_sig
-            )
             spatial_cov[ind_z, : (ind_z + 1)] = (
                 self.cluster_statitstics_modeling.integrate_probe_function_in_dk(
                     np.sqrt(pk[ind_z] * pk[: (ind_z + 1)])
-                    * self.covariance.cov_window(ind_z, z_tab, KL),
+                    * self.covariance.cov_window(
+                        ind_z,
+                        (
+                            z_obs_edges[ind_z],
+                            z_obs_edges[ind_z + 1],
+                        ),
+                        KL,
+                    ),
                 )
             )
             # fill 2nd half of symmetrical matrix
@@ -188,11 +182,11 @@ class ClusterCounts:
             Number counts in redshift and richness bins
         window_lambda_obs : numpy.ndarray
             Integral of P(lamda_obs|M, ztrue) in lambda_obs bins.
-            Dimentions: (lambda_obs, ztrue, M) with (ztrue, M) in cluster_statitstics_modeling.tabulated_integrands.
+            Dimensions: (lambda_obs, ztrue, M) with (ztrue, M) in cluster_statitstics_modeling.tabulated_integrands.
             Is in the intermediate_integration_products output of get_NC.
         window_z_obs : numpy.ndarray
             Integral of P(z_obs|lambda_obs, ztrue) in z_obs bins.
-            Dimentions: (z_obs, lambda_obs, ztrue) with (ztrue) in cluster_statitstics_modeling.tabulated_integrands.
+            Dimensions: (z_obs, lambda_obs, ztrue) with (ztrue) in cluster_statitstics_modeling.tabulated_integrands.
             Is in the intermediate_integration_products output of get_NC.
 
         Returns

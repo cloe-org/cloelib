@@ -57,7 +57,7 @@ class MatterStatistics:
         self.k = k
 
         # Interpolators
-        self.Pk_interp = None
+        self.Pk_interp_cb = None
         self.da_interp = None
 
         # set P(k) interpolation usage
@@ -94,7 +94,7 @@ class MatterStatistics:
     def interpolate_pk(self, interpolate_pk):
         """If true, makes class uses interpolation for matter power spectrum computation."""
         if interpolate_pk:
-            self.matter_power_spectrum_cb = self.Pk_interp
+            self.matter_power_spectrum_cb = self.Pk_interp_cb
         else:
             self.matter_power_spectrum_cb = _matter_power_spectrum_cb_exact
         self.__interpolate_pk = interpolate_pk
@@ -149,7 +149,7 @@ class MatterStatistics:
             Units: h Mpc^{-1}
         """
         # Power spectrum interpolation
-        self.Pk_interp = interpolate.RectBivariateSpline(
+        self.Pk_interp_cb = interpolate.RectBivariateSpline(
             z,
             k,
             self._matter_power_spectrum_cb_exact(z, k),

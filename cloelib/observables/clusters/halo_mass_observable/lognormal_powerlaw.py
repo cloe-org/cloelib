@@ -71,7 +71,8 @@ class LognormalPowerLawHaloMassObservable:
         Returns
         -------
         lnrichness : numpy.ndarray
-            ln(richness)
+            ln(richness), with the same dimensions of the
+            operation z x M.
         """
         return (
             np.log(self.A_l)
@@ -96,7 +97,8 @@ class LognormalPowerLawHaloMassObservable:
         Returns
         -------
         scatter_lnrichness : numpy.ndarray
-            Scatter of ln(richness)
+            Scatter of ln(richness), with the same dimensions of the
+            operation z x M.
         """
 
         return (

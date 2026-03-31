@@ -397,6 +397,11 @@ class CAMBLinearPerturbations:
 
         return D_z_k
 
+    def sigma8_0(self) -> float:
+        """Retrieve sigma8 at z=0."""
+
+        return self.results.get_sigma8().max()
+
 
 class CAMBNonLinearPerturbations:
     """A wrapper for CAMB nonlinear perturbation calculations."""
@@ -528,3 +533,8 @@ class CAMBNonLinearPerturbations:
             / self.matter_power_spectrum(np.array([0.0]), ks)[0]
         )
         return D_z_k
+
+    def sigma8_0(self) -> float:
+        """Retrieve sigma8 at z=0."""
+
+        return self.results.get_sigma8().max()

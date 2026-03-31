@@ -19,10 +19,9 @@ class TwoPoint3DHaloClustering:
         self,
         matter_statistics: MatterStatistics,
         background_fid: Background,
-        nonu: bool = False,
     ):
 
-        self.core = HaloClusteringCore(matter_statistics, background_fid, nonu)
+        self.core = HaloClusteringCore(matter_statistics, background_fid)
 
     def power_spectrum_RSD_corrected(self, z, k, z_obs_scatter, b_eff):
         """Computes Pk with RSD correction.
@@ -54,7 +53,7 @@ class TwoPoint3DHaloClustering:
         )
 
         # dark matter power spectrum (z, k)
-        pk = self.core.matter_statistics.matter_power_spectrum(z, k)
+        pk = self.core.matter_statistics.matter_power_spectrum_cb(z, k)
 
         # check if z_obs_scatter has more dimensions
         ndim_z_obs_scatter = len(np.array(z_obs_scatter).shape)

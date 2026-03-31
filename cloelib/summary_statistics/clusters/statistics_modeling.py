@@ -70,7 +70,7 @@ class ClusterStatisticsModeling:
 
         # check if the integration points lie within the interpolation ranges
         if self.matter_statistics.interpolate_pk:
-            z_knots, k_knots = self.matter_statistics.Pk_interp.get_knots()
+            z_knots, k_knots = self.matter_statistics.Pk_interp_cb.get_knots()
             if (
                 integ_ztrue_arr.min() <= z_knots.min()
                 or integ_ztrue_arr.max() >= z_knots.max()

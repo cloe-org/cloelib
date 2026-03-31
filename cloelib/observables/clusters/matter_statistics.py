@@ -19,7 +19,6 @@ class MatterStatistics:
     def __init__(
         self,
         perturbations: Perturbations,
-        nonu: bool = False,
         interpolate_pk: bool = True,
         interpolate_da: bool = True,
         z=np.linspace(1.0e-5, 2.0 - 1.0e-5, 100),
@@ -36,9 +35,6 @@ class MatterStatistics:
         perturbations : Perturbations
             An object from the `LinearPerturbations` class containing cosmological
             perturbation data (e.g., power spectrum, growth function).
-        nonu : bool, optional
-            If `True`, massive neutrinos are excluded from the density parameter
-            summation.
         interpolate_pk : bool, optional
             If true, the class interpolates the matter power spectrum.
             A default interpolation is set when class is instanciated with
@@ -49,14 +45,19 @@ class MatterStatistics:
             A default interpolation is set when class is instanciated with
             interpolate_da=True. For a more customized interpolation, check
             the set_angular_diameter_distance_interpolation function.
+
+        Notes
+        ----------
+        In the current implementation, the matter power spectrum never includes
+        the contribution of massive neutrinos. Halo mass function, halo bias, and
+        2-halo profile models implemented in this subpackage require
+        cold dark matter + baryons (no neutrinos) power spectra.
         """
         self.perturbations = perturbations
-        self.nonu = nonu
-
         self.k = k
 
         # Interpolators
-        self.Pk_interp = None
+        self.Pk_interp_cb = None
         self.da_interp = None
 
         # set P(k) interpolation usage
@@ -69,28 +70,15 @@ class MatterStatistics:
             self.set_angular_diameter_distance_interpolation(z)
         self.interpolate_da = interpolate_da
 
+        # Density parameters at z=0
+        self.Omega_m_0 = self.background.Omega_m(0.0)
+        self.Omega_cb_0 = self.background.Omega_cb(0.0)
+        self.Omega_b_0 = self.background.Omega_b(0.0)
+
     @property
     def background(self):
         r"""Returns the Background class instance"""
         return self.perturbations.background
-
-    @property
-    def nonu(self):
-        r"""Includes or not neutrinos on matter density and matter power spectrum."""
-        return self.__nonu
-
-    @nonu.setter
-    def nonu(self, value):
-        """Set nonu"""
-        if not isinstance(value, bool):
-            raise ValueError(f"value for nonu must be boolean, used {value}")
-        self.__nonu = value
-        if self.nonu:
-            self._Omega_m = self.background.Omega_cb
-            self._matter_power_spectrum = self.perturbations.matter_power_spectrum_cb
-        else:
-            self._Omega_m = self.background.Omega_m
-            self._matter_power_spectrum = self.perturbations.matter_power_spectrum
 
     @property
     def interpolate_pk(self):
@@ -106,9 +94,9 @@ class MatterStatistics:
     def interpolate_pk(self, interpolate_pk):
         """If true, makes class uses interpolation for matter power spectrum computation."""
         if interpolate_pk:
-            self.matter_power_spectrum = self.Pk_interp
+            self.matter_power_spectrum_cb = self.Pk_interp_cb
         else:
-            self.matter_power_spectrum = _matter_power_spectrum_exact
+            self.matter_power_spectrum_cb = _matter_power_spectrum_cb_exact
         self.__interpolate_pk = interpolate_pk
 
     @interpolate_da.setter
@@ -120,23 +108,26 @@ class MatterStatistics:
             self.angular_diameter_distance = self.background.angular_diameter_distance
         self.__interpolate_da = interpolate_da
 
-    def _matter_power_spectrum_exact(self, z, k):
+    def _matter_power_spectrum_cb_exact(self, z, k):
         r"""Computes the non interpolated matter power spectrum.
+
+        This function computes the cold dark matter + baryons power spectrum,
+        not including the massive neutrino contribution.
 
         Parameters
         ----------
         z: float or np.ndarray
             Redshift.
         k: float or np.ndarray
-               Wavenumber where W(kR) is evaluated.
-               Units: h Mpc^{-1}
+            Wavenumber where W(kR) is evaluated.
+            Units: h Mpc^{-1}
 
         Returns
         -------
         float or np.ndarray
             Matter power spectrum.
         """
-        return self._matter_power_spectrum(
+        return self.perturbations.matter_power_spectrum_cb(
             z,
             k,
             hubble_units=True,
@@ -146,19 +137,22 @@ class MatterStatistics:
     def set_matter_power_spectrum_interpolation(self, z, k):
         r"""Create internal interpolation of matter power spectrum.
 
+        This function interpolates the cold dark matter + baryons power spectrum,
+        not including the massive neutrino contribution.
+
         Parameters
         ----------
         z: float or np.ndarray
             Redshift.
         k: float or np.ndarray
-               Wavenumber where W(kR) is evaluated.
-               Units: h Mpc^{-1}
+            Wavenumber where W(kR) is evaluated.
+            Units: h Mpc^{-1}
         """
         # Power spectrum interpolation
-        self.Pk_interp = interpolate.RectBivariateSpline(
+        self.Pk_interp_cb = interpolate.RectBivariateSpline(
             z,
             k,
-            self._matter_power_spectrum_exact(z, k),
+            self._matter_power_spectrum_cb_exact(z, k),
         )
 
     def set_angular_diameter_distance_interpolation(self, z):
@@ -217,7 +211,7 @@ class MatterStatistics:
         ## 2. Integrand function
         def integrand(kl):
             ll = kl * z_plus_1 * D_A
-            Pk_vals = self.matter_power_spectrum(z, kl)
+            Pk_vals = self.matter_power_spectrum_cb(z, kl)
             return bessel_function(ll * theta) * ll * Pk_vals
 
         ## 3. Integration

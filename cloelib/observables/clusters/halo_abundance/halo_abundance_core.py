@@ -202,6 +202,8 @@ class HaloAbundanceCore:
 
         Computes the critical overdensity at a given redshift
         following an approximation from Kitayama & Suto (1999).
+        The contribution from massive neutrinos is not included in the
+        matter density parameter.
 
         Parameters
         ----------
@@ -225,6 +227,8 @@ class HaloAbundanceCore:
 
         Computes the critical overdensity over the rms,
         delta_c/sigma, at a given redshift and mass.
+        The contribution from massive neutrinos is not included in the power
+        spectrum and in the matter density parameter.
 
         Parameters
         ----------

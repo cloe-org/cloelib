@@ -7,12 +7,11 @@ from scipy.special import erf
 from cloelib.auxiliary import units
 
 
-def convert_to_Delta_crit(
-    overdensity_type, overdensity=200, background=None, z=0.0, nonu=False
-):
+def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=0.0):
     r"""Critical overdensity factor.
 
     Converts the input overdensity factor into a critical one.
+    The contribution from massive neutrinos is not included in the matter density parameter.
 
     Parameters
     ----------
@@ -29,9 +28,6 @@ def convert_to_Delta_crit(
         Background object.
     z: float or np.ndarray
         Redshift.
-    nonu : bool, optional
-        If `True`, massive neutrinos are excluded from the density parameter
-        summation.
 
     Returns
     -------
@@ -53,20 +49,14 @@ def convert_to_Delta_crit(
     if overdensity_type not in ["crit", "mean", "vir"]:
         raise ValueError("Invalid overdensity definition, %s." % overdensity_type)
 
-    if overdensity_type in ["mean", "vir"]:
-        if nonu:
-            Omega_m = background.Omega_cb(z)
-        else:
-            Omega_m = background.Omega_m(z)
-
     if overdensity_type == "crit":
         return overdensity
 
     elif overdensity_type == "mean":
-        return overdensity * Omega_m
+        return overdensity * background.Omega_cb(z)
 
     elif overdensity_type == "vir":
-        x = Omega_m - 1.0
+        x = background.Omega_cb(z) - 1.0
         return 18.0 * np.pi**2 + 82.0 * x - 39.0 * x**2
 
 
@@ -134,7 +124,6 @@ def photoz_rsd_correction(
     z: np.ndarray,
     k: np.ndarray,
     z_obs_scatter: np.ndarray,
-    nonu: bool,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Compute the correction that accounts for photo-z uncertainty and RSD (Kaiser effect),
@@ -150,8 +139,6 @@ def photoz_rsd_correction(
         redshift
     z_obs_scatter: float, numpy.ndarray
         Observed redshift scatter. If array, first dimension must be z.
-    nonu: bool
-        Consider neutrinos to compute the growth rate
 
     Returns
     -------
@@ -159,16 +146,12 @@ def photoz_rsd_correction(
         Correction terms to the power spectrum monopole
         Shape (z.size, k.size, other dimensions of z_obs_scatter)
     """
-    if nonu:
-        _Omega_m_func = background.Omega_cb
-    else:
-        _Omega_m_func = background.Omega_m
     ks = np.atleast_1d(k)
     zs = np.atleast_1d(z)
     z_obs_scatter_arr = np.array(z_obs_scatter)
 
     # growth rate and scaled k, shape (z.size, k.size)
-    f_gr = (_Omega_m_func(zs) ** 0.55)[:, np.newaxis]
+    f_gr = (background.Omega_cb(zs) ** 0.55)[:, np.newaxis]
     ks_z = (
         ks[np.newaxis, :]
         * (units.SPEED_OF_LIGHT * 1e-3)

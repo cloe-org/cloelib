@@ -132,7 +132,7 @@ class ClusterCounts:
         z_mid = 0.5 * (z_obs_edges[1:] + z_obs_edges[:-1])
 
         # power spectrum at the center of observed redshift bins (z_obs, k)
-        pk = self.cluster_statitstics_modeling.matter_statistics.matter_power_spectrum(
+        pk = self.cluster_statitstics_modeling.matter_statistics.matter_power_spectrum_cb(
             z_mid, self.cluster_statitstics_modeling.tabulated_integrands["k"]
         )
 
@@ -143,7 +143,6 @@ class ClusterCounts:
             z_mid,
             self.cluster_statitstics_modeling.tabulated_integrands["k"],
             self.selection_function.scatter_z_obs(0, z_mid),
-            self.cluster_statitstics_modeling.matter_statistics.nonu,
         )[0]
 
         # spherical harmonic expansion coefficients (covariance)

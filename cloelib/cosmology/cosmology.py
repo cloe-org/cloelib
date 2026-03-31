@@ -147,4 +147,3 @@ class Perturbations(Protocol):
     def matter_power_spectrum(self, zs: T, ks: T) -> T:
         """Retrieve the matter power spectrum."""
         ...
-

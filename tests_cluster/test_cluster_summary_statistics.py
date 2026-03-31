@@ -9,9 +9,15 @@ from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbat
 from cloelib.observables.clusters.covariance import HaloCovariance
 from cloelib.observables.clusters.halo_abundance import CastroHaloAbundance
 from cloelib.observables.clusters.halo_clustering import TwoPoint3DHaloClustering
+from cloelib.observables.clusters.halo_mass_observable import (
+    LognormalPowerLawHaloMassObservable,
+)
 from cloelib.observables.clusters.halo_profile import NFWHaloProfile
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
-from cloelib.observables.clusters.selection_function import SelectionFunction
+from cloelib.observables.clusters.selection_function import (
+    GaussianSelectionFunction,
+    NumericalSelectionFunction,
+)
 from cloelib.summary_statistics.clusters import (
     ClusterClustering,
     ClusterCounts,
@@ -20,39 +26,150 @@ from cloelib.summary_statistics.clusters import (
 )
 
 
-def get_values():
+def get_sf_gaussian(**sel_pars):
+    sf_counts = GaussianSelectionFunction(
+        **sel_pars,
+        lambda_tab_integ=[31, 31, 31, 51],
+        z_tab_integ=31,
+    )
+    sf_profiles = GaussianSelectionFunction(
+        **sel_pars,
+        lambda_tab_integ=[31, 31, 31, 51],
+        z_tab_integ=31,
+    )
+    sf_clustering = GaussianSelectionFunction(
+        **sel_pars,
+        lambda_tab_integ=[31, 51],
+        z_tab_integ=31,
+    )
+    return sf_counts, sf_profiles, sf_clustering
 
-    ###########
-    # Cosmology
-    ###########
 
-    print("# Cosmology parameters")
-    t0 = time.time()
-    _H0 = 67.0
-    _h = _H0 / 100.0
-    _omch2 = 0.12
-    _ombh2 = 0.022
-    _cosmo_pars = dict(
-        H0=_H0,
-        Omega_cdm0=_omch2 / _h**2,
-        Omega_b0=_ombh2 / _h**2,
-        Omega_k0=0.0,
-        w0=-1.0,
-        wa=0.0,
-        ns=0.96,
-        mnu=0.06,
-        As=2e-9,
-        gamma_MG=0.0,
-        N_mnu=1,
+def _gen_gaussian_selcl_data(gaussian_sf, arrays):
+    sel_cl_data = {"arrays": arrays}
+
+    sel_cl_data["step_size"] = {
+        "z_obs": (
+            sel_cl_data["arrays"]["z_obs"][1:] - sel_cl_data["arrays"]["z_obs"][:-1]
+        ).mean(),
+        "lambda_obs": (
+            sel_cl_data["arrays"]["lambda_obs"][1:]
+            - sel_cl_data["arrays"]["lambda_obs"][:-1]
+        ).mean(),
+    }
+    sel_cl_data["area_tile"] = np.ones(3)
+
+    # tables
+    _prob_func = lambda zob, lob, ztr, ltr, alpha: (
+        gaussian_sf._prob_lambda_obs(ztr, ltr, lob).transpose(2, 0, 1)[
+            None, None, :, :, :
+        ]
+        * gaussian_sf._prob_zobs(
+            zob[:, None, None], lob[None, :, None], ztr[None, None, :]
+        )[None, :, :, :, None]
+        * alpha[:, None, None, None, None]
     )
 
-    background = CAMBBackground(**_cosmo_pars)
-    perturbations = CAMBLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
+    sel_cl_data["tables"] = {
+        "prob_lambda_z_obs": _prob_func(
+            sel_cl_data["arrays"]["z_obs"],
+            sel_cl_data["arrays"]["lambda_obs"],
+            sel_cl_data["arrays"]["z_true"],
+            sel_cl_data["arrays"]["lambda_true"],
+            sel_cl_data["area_tile"],
+        ),
+        "completeness": np.ones(
+            (
+                sel_cl_data["area_tile"].size,
+                sel_cl_data["arrays"]["z_true"].size,
+                sel_cl_data["arrays"]["lambda_true"].size,
+            )
+        ),
+        "purity": np.ones(
+            (
+                sel_cl_data["area_tile"].size,
+                sel_cl_data["arrays"]["z_obs"].size,
+                sel_cl_data["arrays"]["lambda_obs"].size,
+            )
+        ),
+    }
 
-    _cosmo_pars_fid = {**_cosmo_pars}
-    _cosmo_pars_fid["H0"] = 73.0
-    background_fid = CAMBBackground(**_cosmo_pars_fid)
-    print(f"cosmo     :  {time.time()-t0:.4f} seconds")
+    return sel_cl_data
+
+
+def get_sf_interp(**sel_pars):
+
+    test_arrays = {
+        "z_true": np.linspace(0, 3, 31),
+        "lambda_true": np.linspace(1, 600, 30),
+        "z_obs": np.linspace(0, 3, 31),
+        "lambda_obs": np.linspace(1, 600, 300),
+    }
+    print("Test with gaussian input data")
+    gaussian_sf = GaussianSelectionFunction(
+        **sel_pars,
+        lambda_tab_integ=[31, 31, 31, 51],
+        z_tab_integ=31,
+    )
+
+    sel_cl_data = _gen_gaussian_selcl_data(gaussian_sf, test_arrays)
+
+    sf_counts = NumericalSelectionFunction(
+        halo_mass_observable=sel_pars["halo_mass_observable"],
+        sel_cl_data=sel_cl_data,
+        prob_contains_completeness=False,
+        extrapolate=0,
+    )
+    sf_profiles = NumericalSelectionFunction(
+        halo_mass_observable=sel_pars["halo_mass_observable"],
+        sel_cl_data=sel_cl_data,
+        prob_contains_completeness=False,
+        extrapolate=0,
+    )
+    sf_clustering = NumericalSelectionFunction(
+        halo_mass_observable=sel_pars["halo_mass_observable"],
+        sel_cl_data=sel_cl_data,
+        prob_contains_completeness=False,
+        extrapolate=0,
+    )
+    sf_counts.scatter_z_obs = gaussian_sf.scatter_z_obs
+    sf_profiles.scatter_z_obs = gaussian_sf.scatter_z_obs
+    sf_clustering.scatter_z_obs = gaussian_sf.scatter_z_obs
+
+    return sf_counts, sf_profiles, sf_clustering
+
+
+###########
+# Cosmology
+###########
+
+print("# Cosmology parameters")
+t0 = time.time()
+_cosmo_pars = dict(
+    H0=67.0,
+    Omega_cdm0=0.12 / 0.67**2,
+    Omega_b0=0.022 / 0.67**2,
+    Omega_k0=0.0,
+    w0=-1.0,
+    wa=0.0,
+    ns=0.96,
+    mnu=0.06,
+    As=2e-9,
+    gamma_MG=0.0,
+    N_mnu=1,
+)
+
+background = CAMBBackground(**_cosmo_pars)
+perturbations = CAMBLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
+
+_cosmo_pars_fid = {**_cosmo_pars}
+_cosmo_pars_fid["H0"] = 73.0
+background_fid = CAMBBackground(**_cosmo_pars_fid)
+print(f"cosmo     :  {time.time()-t0:.4f} seconds")
+
+
+def get_values(get_sf):
+
     t0 = time.time()
 
     #############
@@ -60,20 +177,6 @@ def get_values():
     #############
 
     # Parameters
-
-    _sel_pars = dict(
-        A_l=52.0,
-        B_l=0.9,
-        C_l=0.5,
-        sig_A_l=0.2,
-        sig_B_l=-0.05,
-        sig_C_l=0.001,
-        sig_lambda_norm=0.9,
-        sig_lambda_z=0.1,
-        sig_lambda_exponent=0.4,
-        sig_z_z=0.025,
-        sig_z_lambda=5.0e-6,
-    )
 
     integ_k_arr = np.geomspace(1e-4, 10, 500)
     integ_mass_arr = np.logspace(12.0, 16.0, 51)
@@ -96,7 +199,6 @@ def get_values():
 
     # Istanciate objects
 
-    selectionFunction = SelectionFunction(**_sel_pars)
     matter_stat = MatterStatistics(
         perturbations,
         z=integ_ztrue_arr,
@@ -104,10 +206,31 @@ def get_values():
     )
     HSCastro = CastroHaloAbundance(matter_statistics=matter_stat)
     covariance = HaloCovariance(
-        perturbations, area=area, nbins_zob=len(z_obs_nc_edges), k=integ_k_arr
+        perturbations,
+        area=area,
+        nbins_zob=len(z_obs_nc_edges),
+        k=integ_k_arr,
+        z_tab_integ=31,
     )
     profileNFW = NFWHaloProfile(matter_stat, two_halo="None")
     haloClustering = TwoPoint3DHaloClustering(matter_stat, background_fid)
+
+    # set a selection function per probe
+    sf_counts, sf_profiles, sf_clustering = get_sf(
+        sig_lambda_norm=0.9,
+        sig_lambda_z=0.1,
+        sig_lambda_exponent=0.4,
+        sig_z_z=0.025,
+        sig_z_lambda=5.0e-6,
+        halo_mass_observable=LognormalPowerLawHaloMassObservable(
+            A_l=52.0,
+            B_l=0.9,
+            C_l=0.5,
+            sig_A_l=0.2,
+            sig_B_l=-0.05,
+            sig_C_l=0.001,
+        ),
+    )
 
     print(f"init obs  :  {time.time()-t0:.4f} seconds")
     t0 = time.time()
@@ -130,7 +253,6 @@ def get_values():
 
     cluster_statitstics_modeling = ClusterStatisticsModeling(
         HSCastro,
-        selectionFunction,
         integ_k_arr=integ_k_arr_new,
         integ_mass_arr=integ_mass_arr,
         integ_lambda_true_arr=integ_lambda_true_arr,
@@ -140,15 +262,18 @@ def get_values():
     cluster_counts_statistics = ClusterCounts(
         cluster_statitstics_modeling,
         covariance,
+        selection_function=sf_counts,
     )
     cluster_wl_statistics = ClusterWeakLensing(
         cluster_statitstics_modeling,
         profileNFW,
         halo_concentration=halo_concentration,
+        selection_function=sf_profiles,
     )
     cluster_clustering_statistics = ClusterClustering(
         cluster_statitstics_modeling,
         haloClustering,
+        selection_function=sf_clustering,
     )
 
     print(f"init stat :  {time.time()-t0:.4f} seconds")
@@ -249,7 +374,7 @@ def test_clustersummmarystatitistics():
         cluster_clustering,
         cov_cluster_counts,
         cov_cluster_clustering,
-    ) = get_values()
+    ) = get_values(get_sf_gaussian)
 
     assert_allclose(cluster_counts, benchmark_values.cluster_counts, rtol=1e-2)
 
@@ -270,5 +395,40 @@ def test_clustersummmarystatitistics():
     )
 
 
+def test_clustersummmarystatitistics_interp():
+    # results to be evaluated
+    """
+    (
+        cluster_counts,
+        gt_mean_values,
+        cluster_clustering,
+        cov_cluster_counts,
+        cov_cluster_clustering,
+    ) = get_values(get_sf_interp)
+
+    assert_allclose(cluster_counts, benchmark_values.cluster_counts, rtol=1e-2)
+
+    assert_allclose(gt_mean_values[0:2], benchmark_values.deltasigma, rtol=1e-2)
+
+    assert_allclose(
+        cluster_clustering[0:2], benchmark_values.cluster_clustering, rtol=1e-2
+    )
+
+    assert_allclose(
+        cov_cluster_counts[1:2], benchmark_values.cov_cluster_counts, rtol=5e-2
+    )
+
+    assert_allclose(
+        cov_cluster_clustering[1, 1, 1:3, 1:3, 10:20, 10:20],
+        benchmark_values.cov_cluster_clustering,
+        rtol=5e-2,
+    )
+    """
+
+
 if __name__ == "__main__":
-    get_values()
+    print("Gaussian")
+    get_values(get_sf_gaussian)
+
+    print("\nInterp")
+    get_values(get_sf_interp)

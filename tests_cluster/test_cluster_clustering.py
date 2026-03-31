@@ -6,6 +6,9 @@ from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.clusters.auxiliary import photoz_rsd_correction
 from cloelib.observables.clusters.halo_clustering import TwoPoint3DHaloClustering
+from cloelib.observables.clusters.halo_mass_observable import (
+    LognormalPowerLawHaloMassObservable,
+)
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
 
 
@@ -83,6 +86,28 @@ def test_clustering():
     _cosmo_pars_fid = {**_cosmo_pars}
     _cosmo_pars_fid["H0"] = 73.0
     background_fid = CAMBBackground(**_cosmo_pars_fid)
+    perturbations_fid = CAMBLinearPerturbations(
+        background_fid, np.linspace(0.0, 2.0, 100)
+    )
+    k_min = 1e-3
+    k_max = 1e0
+    k_div = 2
+    nonu = True
+    _lambda_true_dist_pars = dict(
+        A_l=0.5,
+        B_l=0.6,
+        C_l=0.5,
+        sig_A_l=0.1,
+        sig_B_l=0.0,
+        sig_C_l=0.0,
+    )
+    _sel_pars = dict(
+        sig_lambda_norm=0.1,
+        sig_lambda_z=0.1,
+        sig_lambda_exponent=0.1,
+        sig_z_z=0.1,
+        sig_z_lambda=0.1,
+    )
     CL = TwoPoint3DHaloClustering(matter_statistics, background_fid, nonu=True)
     _test_clustering(CL, perturbations)
 

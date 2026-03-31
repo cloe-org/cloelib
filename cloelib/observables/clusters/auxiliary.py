@@ -262,3 +262,53 @@ def isotropic_volume_distance(z, da, hz):
         Isotropic volume distance
     """
     return ((1 + z) ** 2 * da**2 * units.SPEED_OF_LIGHT * z / hz) ** (1 / 3.0)
+
+
+def tabulated_return(reference_table, func, func_kwargs):
+    """Check if arguments given are the same from the reference table.
+    If true, returns the tabulated value. Otherwise, recomputes the output
+    value and stores it (and inputs) back in reference table.
+
+    Parameters
+    ----------
+    reference_table: dict
+        Dictionary with the tabulated function. It must contain a `inputs`
+        key with the dictionary of arguments or `function` and a `values`
+        key with the computed value of said function with those arguments.
+    func: function
+        Function to be tabulated
+    func_kwargs: dict
+        Dictionary with named arguments for the function.
+
+    Returns
+    -------
+    Output of `func(**func_kwargs)`
+    """
+
+    # Check if names of parameters given are the same as in reference_table
+    _set_tab = set(reference_table["inputs"].keys())
+    _set_inp = set(func_kwargs.keys())
+    if _set_tab != _set_inp:
+        raise ValueError(
+            f"Bad parameters were passed. Expected {_set_tab}, got {_set_inp}."
+        )
+
+    # Check if func_kwargs are the tabluated values
+    _tabuleted_input = True
+    if any(value is None for value in reference_table["inputs"].values()):
+        _tabuleted_input = False
+    else:
+        for name, ref_val in reference_table["inputs"].items():
+            test_val = func_kwargs[name]
+            if ref_val.shape != test_val.shape:
+                _tabuleted_input = False
+                break
+            if (ref_val != test_val).any():
+                _tabuleted_input = False
+                break
+
+    if not _tabuleted_input:
+        reference_table["inputs"].update(func_kwargs)
+        reference_table["values"] = func(**func_kwargs)
+
+    return reference_table["values"]

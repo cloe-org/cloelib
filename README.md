@@ -231,6 +231,9 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/joezuntz"><img src="https://avatars.githubusercontent.com/u/220537?v=4?s=100" width="100px;" alt="joezuntz"/><br /><sub><b>joezuntz</b></sub></a><br /><a href="#mentoring-joezuntz" title="Mentoring">🧑‍🏫</a> <a href="#ideas-joezuntz" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/KlaraBertmann"><img src="https://avatars.githubusercontent.com/u/153739278?v=4?s=100" width="100px;" alt="KlaraBertmann"/><br /><sub><b>KlaraBertmann</b></sub></a><br /><a href="#code-KlaraBertmann" title="Code">💻</a> <a href="#ideas-KlaraBertmann" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/annmapo"><img src="https://avatars.githubusercontent.com/u/18014895?v=4?s=100" width="100px;" alt="Anna Porredon"/><br /><sub><b>Anna Porredon</b></sub></a><br /><a href="#ideas-annmapo" title="Ideas, Planning, & Feedback">🤔</a> <a href="#mentoring-annmapo" title="Mentoring">🧑‍🏫</a></td>
+    </tr>
   </tbody>
 </table>
 

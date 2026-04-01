@@ -44,7 +44,7 @@ def camb_cmb_setup():
     perturbations = CAMBNonLinearPerturbations(background, z_auto)
     n_z_bins = 1
     dndz = np.ones((n_z_bins, len(z_cross)))
-    dndz /= np.trapz(dndz, z_cross, axis=1)[:, None]
+    dndz /= np.trapezoid(dndz, z_cross, axis=1)[:, None]
     return perturbations, z_auto, z_cross, dndz
 
 

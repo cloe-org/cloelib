@@ -183,7 +183,7 @@ class BaryonBoostMixin(Protocol):
     """
 
     def baryonic_suppression(
-        self, zs: np.ndarray, ks: np.ndarray, k_hunit: bool = False
+        self, zs: np.ndarray, ks: np.ndarray
     ) -> np.ndarray:
         """Return the multiplicative baryonic suppression factor P_hydro/P_DMO.
 
@@ -193,8 +193,6 @@ class BaryonBoostMixin(Protocol):
             Redshifts, shape (nz,).
         ks:
             Wavenumbers, shape (nk,).
-        k_hunit:
-            If ``True`` ks are in h/Mpc; otherwise in 1/Mpc.
 
         Returns
         -------

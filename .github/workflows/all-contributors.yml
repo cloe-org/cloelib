@@ -1,0 +1,93 @@
+name: All Contributors
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-contributors:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install all-contributors-cli
+        run: npm install -g all-contributors-cli
+
+      - name: Detect and add contributors
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          REPO="${{ github.repository }}"
+
+          is_bot() {
+            local user="$1"
+            [[ "$user" == *"[bot]"* ]] || \
+              [[ "$user" == "dependabot" ]] || \
+              [[ "$user" == "github-actions" ]]
+          }
+
+          # Track PR author as code contributor
+          if ! is_bot "$PR_AUTHOR"; then
+            echo "Adding PR author '$PR_AUTHOR' for code contribution"
+            all-contributors add "$PR_AUTHOR" code || true
+          fi
+
+          # Track reviewers
+          REVIEWERS=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/reviews" \
+            --jq '[.[].user.login] | unique | .[]' 2>/dev/null || echo "")
+          for reviewer in $REVIEWERS; do
+            if ! is_bot "$reviewer"; then
+              echo "Adding reviewer '$reviewer' for review contribution"
+              all-contributors add "$reviewer" review || true
+            fi
+          done
+
+          # Track commenters as idea contributors (exclude PR author and reviewers)
+          COMMENTERS=$(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --jq '[.[].user.login] | unique | .[]' 2>/dev/null || echo "")
+          for commenter in $COMMENTERS; do
+            if ! is_bot "$commenter" && [ "$commenter" != "$PR_AUTHOR" ]; then
+              if ! echo "$REVIEWERS" | grep -qx "$commenter"; then
+                echo "Adding commenter '$commenter' for ideas contribution"
+                all-contributors add "$commenter" ideas || true
+              fi
+            fi
+          done
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "docs: update all-contributors for PR #${{ github.event.pull_request.number }}"
+          title: "docs: update all-contributors for PR #${{ github.event.pull_request.number }}"
+          body: |
+            Automated update of the all-contributors list based on contributions
+            detected in PR #${{ github.event.pull_request.number }}.
+          branch: all-contributors/pr-${{ github.event.pull_request.number }}
+          delete-branch: true

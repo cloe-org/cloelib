@@ -50,9 +50,10 @@ jobs:
           fi
 
           # Track reviewers
-          REVIEWERS=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/reviews" \
-            --jq '[.[].user.login] | unique | .[]' 2>/dev/null || echo "")
-          for reviewer in $REVIEWERS; do
+          readarray -t REVIEWERS < <(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/reviews" \
+            --jq '[.[].user.login] | unique | .[]' 2>/dev/null || true)
+          for reviewer in "${REVIEWERS[@]}"; do
+            [ -z "$reviewer" ] && continue
             if ! is_bot "$reviewer"; then
               echo "Adding reviewer '$reviewer' for review contribution"
               all-contributors add "$reviewer" review || true
@@ -60,11 +61,13 @@ jobs:
           done
 
           # Track commenters as idea contributors (exclude PR author and reviewers)
-          COMMENTERS=$(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" \
-            --jq '[.[].user.login] | unique | .[]' 2>/dev/null || echo "")
-          for commenter in $COMMENTERS; do
+          readarray -t COMMENTERS < <(gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --jq '[.[].user.login] | unique | .[]' 2>/dev/null || true)
+          for commenter in "${COMMENTERS[@]}"; do
+            [ -z "$commenter" ] && continue
             if ! is_bot "$commenter" && [ "$commenter" != "$PR_AUTHOR" ]; then
-              if ! echo "$REVIEWERS" | grep -qx "$commenter"; then
+              # Only add if not already tracked as a reviewer
+              if ! printf '%s\n' "${REVIEWERS[@]}" | grep -qx "$commenter"; then
                 echo "Adding commenter '$commenter' for ideas contribution"
                 all-contributors add "$commenter" ideas || true
               fi

@@ -446,6 +446,7 @@ class CAMBNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations,
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         log10TAGN: Optional[float] = None,
@@ -455,6 +456,9 @@ class CAMBNonLinearPerturbations:
 
         Args:
             self (LinearPerturbations): An instance of the LinearPerturbations class.
+            linearperturbations: Linear perturbations object (unused by CAMB, which computes
+                nonlinear corrections internally; accepted for interface compatibility with
+                emulator-based NonLinPerturbations classes).
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
                 Defaults to None, which uses the CAMB default model.

@@ -417,36 +417,3 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
         if np.any(in_range):
             result[:, in_range] = self._baryon_ratio_interp(zs, ks[in_range])
         return result
-
-
-class HMemuNonLinearBaryonicPerturbations(
-    HMcode2020BaryonBoostMixin, HMemuNonLinearPerturbations
-):
-    """HMcode2020 nonlinear perturbations with baryonic suppression applied.
-
-    Initialises the parent class without log10TAGN (DMO), then runs the
-    emulator a second time with ``log10TAGN`` to pre-compute
-    B(z, k) = P_baryon / P_dmo as a bivariate spline over the nonlinear k range.
-    Scales below the nonlinear k range have suppression factor = 1.
-    """
-
-    def __init__(
-        self,
-        background: Background,
-        linearperturbations: Perturbations,
-        redshifts: np.ndarray,
-        log10TAGN: float,
-    ):
-        """Initialise HMemuNonLinearBaryonicPerturbations."""
-        # Initialise the HMcode2020 base (sets self.params_hm_emu, self.k, …)
-        HMemuNonLinearPerturbations.__init__(
-            self, background, linearperturbations, redshifts, log10TAGN=None
-        )
-        # Initialise the mixin (validates log10TAGN, builds baryon ratio spline)
-        HMcode2020BaryonBoostMixin.__init__(self, log10TAGN=log10TAGN)
-
-    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-        """Total matter power spectrum with baryonic suppression applied."""
-        return (
-            super().matter_power_spectrum(zs, ks) * self.baryonic_suppression(zs, ks)
-        ).squeeze()

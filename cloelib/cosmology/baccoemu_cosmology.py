@@ -566,13 +566,13 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         self,
         nonlinear_model_name: str = "Arico2023",
         baryonic_model_name: str = "Burger2025",
-        M_c: Optional[float] = None,
-        eta: Optional[float] = None,
-        beta: Optional[float] = None,
-        M1_z0_cen: Optional[float] = None,
+        M_c: float = 0.0,
+        eta: float = 0.0,
+        beta: float = 0.0,
+        M1_z0_cen: float = 0.0,
         theta_out: Optional[float] = None,
-        theta_inn: Optional[float] = None,
         M_inn: Optional[float] = None,
+        theta_inn: float = 0.0,
     ) -> None:
         """Initialise the BACCOemu baryon-ratio spline.
 
@@ -607,9 +607,8 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
             }.items()
             if v is not None
         }
-        k_baryon = baryon_emu.emulator["nonlinear"]["k"]
-        _, boost = baryon_emu.get_baryonic_boost(
-            k=k_baryon, **{**self.params_emu, **baryonic_params}
+        k_baryon, boost = baryon_emu.get_baryonic_boost(
+            **{**self.params_emu, **baryonic_params}
         )
         k_phys = k_baryon * self.background.h  # h/Mpc -> 1/Mpc
         self._baryon_ratio_interp = interpolate.RectBivariateSpline(

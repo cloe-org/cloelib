@@ -563,6 +563,16 @@
         "ideas",
         "mentoring"
       ]
+    },
+    {
+      "login": "emiliobellini",
+      "name": "emiliobellini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6113149?v=4",
+      "profile": "https://github.com/emiliobellini",
+      "contributions": [
+        "maintenance",
+        "ideas"
+      ]
     }
   ]
 }

@@ -27,6 +27,7 @@ class CAMBBackground:
         Omega_k0: float,
         As: float,
         ns: float,
+        alpha_s: float,
         mnu: Union[float, Sequence[float], np.ndarray],
         w0: float,
         wa: float,
@@ -44,7 +45,8 @@ class CAMBBackground:
             Omega_k0(float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
-            mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
+            alpha_s (float): Running of the scalar spectral index (d ns / d ln k).
+            mnu (Union[float, Sequence[float]], np.ndarray]): Total neutrino mass in eV.
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the dark energy equation of state.
@@ -60,6 +62,7 @@ class CAMBBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
+        self.alpha_s = alpha_s
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = gamma_MG
@@ -100,7 +103,9 @@ class CAMBBackground:
         self.interface_args["CAMBparams"].set_dark_energy(
             w=self.w0, wa=self.wa, dark_energy_model="ppf"
         )
-        self.interface_args["CAMBparams"].InitPower.set_params(As=self.As, ns=self.ns)
+        self.interface_args["CAMBparams"].InitPower.set_params(
+            As=self.As, ns=self.ns, nrun=self.alpha_s
+        )
 
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args["CAMBparams"])

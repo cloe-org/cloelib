@@ -13,6 +13,8 @@ Supported models include:
 - LCDM with mass of the neutrinos 0
 - LCDM with one massive neutrino
 - LCDM with three degenerate massive neutrinos
+- LCDM+curvature with fixed neutrino mass mnu=0.06 eV
+- LCDM+running spectral index with fixed neutrino mass mnu=0.06 eV
 """
 
 from cloelib.cosmology.cosmology import Background, Perturbations
@@ -107,6 +109,7 @@ def load_sigma_emulator(filepath: str):
 
 # Download k-modes file at module load time
 k_modes_path = emulator_data("k-modes.txt", ZENODO_URL)
+k_modes_curvature_path = emulator_data("curvature-kmodes.txt")
 
 
 class CosmoPowerJAXw0waCDMPerturbations:
@@ -1632,6 +1635,626 @@ class CosmoPowerJAXLCDMPerturbations:
                     f"Cosmopower-JAX nonlinear P_cb(k) module for LCDM cosmology.\n"
                     f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
                 )
+
+        def matter_power_spectrum(self, zs, ks):
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks):
+            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+        def growth_rate(self):
+            return self.fsigma8 / self.sigma8
+
+        def sigma8_0(self):
+            return self.sigma8[0]
+
+
+class CosmoPowerJAXCurvaturePerturbations:
+    """Class for LCDM+curvature cosmology perturbations using CosmoPower-JAX emulators.
+
+    Supports non-zero spatial curvature (Omega_k0 != 0). Neutrino mass is fixed at
+    mnu=0.06 eV during training and is not a free parameter of these emulators.
+    Uses a dedicated k-mode grid (curvature-kmodes.txt) and emulator files:
+    - lcdm-curvature-linear.npz
+    - lcdm-curvature-nonlinear.npz
+    - lcdm-curvature-s8-fs8.npz
+
+    Emulator parameter ranges:
+        ombh2    in [0.019, 0.025]
+        omch2    in [0.09,  0.15]
+        H0       in [60,    80]
+        ns       in [0.8,   1.2]
+        lnAs     in [1.6,   4.0]
+        z        in [0,     5]
+        logT_AGN in [7.6,   8.2]  (nonlinear and sigma8/fsigma8 emulators only)
+        omk      in [-0.1,  0.1]
+    """
+
+    class Linear:
+        """Emulator for the linear matter power spectrum in LCDM+curvature cosmology."""
+
+        def __init__(self, background: Background, redshifts: np.ndarray):
+            cp_file = emulator_data("lcdm-curvature-linear.npz")
+            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
+
+            self.cp_LIN = load_pk_emulator(cp_file)
+            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
+            self.k_emu = np.loadtxt(k_modes_curvature_path)
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
+            self.background = background
+
+            self.z = redshifts[redshifts <= 5]
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "omk": self.background.Omega_k0,
+            }
+
+            for key in self.params.keys():
+                self.params[key] = np.tile(self.params[key], len(redshifts))
+            self.params["z"] = redshifts
+
+            self.sigma_params = self.params.copy()
+            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
+
+            Pk_lin = np.array(self.cp_LIN.predict(self.params))
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_lin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
+            self.k, self.z, self.Pk = k_out, z_out, Pk_out
+            self.Pk_int = interpolate.RectBivariateSpline(
+                self.z, self.k, Pk_out, kx=1, ky=1
+            )
+
+            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
+            self.sigma8 = sigma_predictions[:, 0]
+            self.fsigma8 = sigma_predictions[:, 1]
+
+        def __str__(self):
+            return (
+                "Cosmopower-JAX linear P(k) module for LCDM+curvature cosmology.\n"
+                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks):
+            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+        def growth_rate(self):
+            return self.fsigma8 / self.sigma8
+
+        def sigma8_0(self):
+            return self.sigma8[0]
+
+    class NonLinear:
+        """Emulator for the nonlinear matter power spectrum in LCDM+curvature cosmology."""
+
+        def __init__(
+            self,
+            background: Background,
+            linearperturbations: Perturbations,
+            redshifts: np.ndarray,
+            log10TAGN: Optional[float] = None,
+        ):
+            cp_file = emulator_data("lcdm-curvature-nonlinear.npz")
+            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
+
+            self.cp_NONLIN = load_pk_emulator(cp_file)
+            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
+            self.k_emu = np.loadtxt(k_modes_curvature_path)
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
+            self.background = background
+
+            self.z = redshifts[redshifts <= 5]
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "logT_AGN": log10TAGN if log10TAGN is not None else 7.8,
+                "omk": self.background.Omega_k0,
+            }
+
+            for key in self.params.keys():
+                self.params[key] = np.tile(self.params[key], len(redshifts))
+            self.params["z"] = redshifts
+
+            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_nonlin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
+            self.k, self.z, self.Pk = k_out, z_out, Pk_out
+            self.Pk_int = interpolate.RectBivariateSpline(
+                self.z, self.k, Pk_out, kx=1, ky=1
+            )
+
+            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
+            self.sigma8 = sigma_predictions[:, 0]
+            self.fsigma8 = sigma_predictions[:, 1]
+
+        def __str__(self):
+            return (
+                "Cosmopower-JAX nonlinear P(k) module for LCDM+curvature cosmology.\n"
+                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks):
+            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+        def growth_rate(self):
+            return self.fsigma8 / self.sigma8
+
+        def sigma8_0(self):
+            return self.sigma8[0]
+
+    class LinearCB:
+        """Emulator for the cb linear matter power spectrum in LCDM+curvature cosmology."""
+
+        def __init__(self, background: Background, redshifts: np.ndarray):
+            cp_file = emulator_data("lcdm-curvature-pcb-linear.npz")
+            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
+
+            self.cp_LIN = load_pk_emulator(cp_file)
+            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
+            self.k_emu = np.loadtxt(k_modes_curvature_path)
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
+            self.background = background
+
+            self.z = redshifts[redshifts <= 5]
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "omk": self.background.Omega_k0,
+            }
+
+            for key in self.params.keys():
+                self.params[key] = np.tile(self.params[key], len(redshifts))
+            self.params["z"] = redshifts
+
+            self.sigma_params = self.params.copy()
+            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
+
+            Pk_lin = np.array(self.cp_LIN.predict(self.params))
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_lin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
+            self.k, self.z, self.Pk = k_out, z_out, Pk_out
+            self.Pk_int = interpolate.RectBivariateSpline(
+                self.z, self.k, Pk_out, kx=1, ky=1
+            )
+
+            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
+            self.sigma8 = sigma_predictions[:, 0]
+            self.fsigma8 = sigma_predictions[:, 1]
+
+        def __str__(self):
+            return (
+                "Cosmopower-JAX linear P_cb(k) module for LCDM+curvature cosmology.\n"
+                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks):
+            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+        def growth_rate(self):
+            return self.fsigma8 / self.sigma8
+
+        def sigma8_0(self):
+            return self.sigma8[0]
+
+    class NonLinearCB:
+        """Emulator for the cb nonlinear matter power spectrum in LCDM+curvature cosmology."""
+
+        def __init__(
+            self,
+            background: Background,
+            linearperturbations: Perturbations,
+            redshifts: np.ndarray,
+            log10TAGN: Optional[float] = None,
+        ):
+            cp_file = emulator_data("lcdm-curvature-pcb-nonlinear.npz")
+            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
+
+            self.cp_NONLIN = load_pk_emulator(cp_file)
+            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
+            self.k_emu = np.loadtxt(k_modes_curvature_path)
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
+            self.background = background
+
+            self.z = redshifts[redshifts <= 5]
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "omk": self.background.Omega_k0,
+                "logT_AGN": log10TAGN if log10TAGN is not None else 7.8,
+            }
+
+            for key in self.params.keys():
+                self.params[key] = np.tile(self.params[key], len(redshifts))
+            self.params["z"] = redshifts
+
+            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_nonlin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
+            self.k, self.z, self.Pk = k_out, z_out, Pk_out
+            self.Pk_int = interpolate.RectBivariateSpline(
+                self.z, self.k, Pk_out, kx=1, ky=1
+            )
+
+            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
+            self.sigma8 = sigma_predictions[:, 0]
+            self.fsigma8 = sigma_predictions[:, 1]
+
+        def __str__(self):
+            return (
+                "Cosmopower-JAX nonlinear P_cb(k) module for LCDM+curvature cosmology.\n"
+                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks):
+            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+        def growth_rate(self):
+            return self.fsigma8 / self.sigma8
+
+        def sigma8_0(self):
+            return self.sigma8[0]
+
+
+class CosmoPowerJAXRunningIndexPerturbations:
+    """Class for LCDM+running spectral index cosmology perturbations using CosmoPower-JAX emulators.
+
+    Supports a running spectral index alpha_s = d ns / d ln k. Neutrino mass is fixed at
+    mnu=0.06 eV during training and is not a free parameter of these emulators.
+    Uses the standard k-mode grid (k-modes.txt) and emulator files:
+    - lcdm-running-linear.npz
+    - lcdm-running-nonlinear.npz
+    - lcdm-running-s8-fs8.npz
+
+    Emulator parameter ranges:
+        ombh2    in [0.019, 0.025]
+        omch2    in [0.09,  0.15]
+        H0       in [60,    80]
+        ns       in [0.8,   1.2]
+        lnAs     in [1.6,   4.0]
+        z        in [0,     5]
+        alpha_s  in [-0.1,  0.1]
+        logT_AGN in [7.6,   8.2]  (nonlinear and sigma8/fsigma8 emulators only)
+    """
+
+    class Linear:
+        """Emulator for the linear matter power spectrum in LCDM+running spectral index cosmology."""
+
+        def __init__(self, background: Background, redshifts: np.ndarray):
+            cp_file = emulator_data("lcdm-nrun-linear.npz")
+            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
+
+            self.cp_LIN = load_pk_emulator(cp_file)
+            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
+            self.k_emu = np.loadtxt(k_modes_path)
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
+            self.background = background
+
+            self.z = redshifts[redshifts <= 5]
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "alpha_s": self.background.alpha_s,
+            }
+
+            for key in self.params.keys():
+                self.params[key] = np.tile(self.params[key], len(redshifts))
+            self.params["z"] = redshifts
+
+            self.sigma_params = self.params.copy()
+            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
+
+            Pk_lin = np.array(self.cp_LIN.predict(self.params))
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_lin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
+            self.k, self.z, self.Pk = k_out, z_out, Pk_out
+            self.Pk_int = interpolate.RectBivariateSpline(
+                self.z, self.k, Pk_out, kx=1, ky=1
+            )
+
+            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
+            self.sigma8 = sigma_predictions[:, 0]
+            self.fsigma8 = sigma_predictions[:, 1]
+
+        def __str__(self):
+            return (
+                "Cosmopower-JAX linear P(k) module for LCDM+running spectral index cosmology.\n"
+                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks):
+            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+        def growth_rate(self):
+            return self.fsigma8 / self.sigma8
+
+        def sigma8_0(self):
+            return self.sigma8[0]
+
+    class NonLinear:
+        """Emulator for the nonlinear matter power spectrum in LCDM+running spectral index cosmology."""
+
+        def __init__(
+            self,
+            background: Background,
+            linearperturbations: Perturbations,
+            redshifts: np.ndarray,
+            log10TAGN: Optional[float] = None,
+        ):
+            cp_file = emulator_data("lcdm-nrun-nonlinear.npz")
+            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
+
+            self.cp_NONLIN = load_pk_emulator(cp_file)
+            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
+            self.k_emu = np.loadtxt(k_modes_path)
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
+            self.background = background
+
+            self.z = redshifts[redshifts <= 5]
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "alpha_s": self.background.alpha_s,
+                "logT_AGN": log10TAGN if log10TAGN is not None else 7.8,
+            }
+
+            for key in self.params.keys():
+                self.params[key] = np.tile(self.params[key], len(redshifts))
+            self.params["z"] = redshifts
+
+            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_nonlin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
+            self.k, self.z, self.Pk = k_out, z_out, Pk_out
+            self.Pk_int = interpolate.RectBivariateSpline(
+                self.z, self.k, Pk_out, kx=1, ky=1
+            )
+
+            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
+            self.sigma8 = sigma_predictions[:, 0]
+            self.fsigma8 = sigma_predictions[:, 1]
+
+        def __str__(self):
+            return (
+                "Cosmopower-JAX nonlinear P(k) module for LCDM+running spectral index cosmology.\n"
+                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks):
+            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+        def growth_rate(self):
+            return self.fsigma8 / self.sigma8
+
+        def sigma8_0(self):
+            return self.sigma8[0]
+
+    class LinearCB:
+        """Emulator for the cb linear matter power spectrum in LCDM+running spectral index cosmology."""
+
+        def __init__(self, background: Background, redshifts: np.ndarray):
+            cp_file = emulator_data("lcdm-running-pcb-linear.npz")
+            cp_file_sigma = emulator_data("lcdm-running-s8-fs8.npz")
+
+            self.cp_LIN = load_pk_emulator(cp_file)
+            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
+            self.k_emu = np.loadtxt(k_modes_path)
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
+            self.background = background
+
+            self.z = redshifts[redshifts <= 5]
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "alpha_s": self.background.alpha_s,
+            }
+
+            for key in self.params.keys():
+                self.params[key] = np.tile(self.params[key], len(redshifts))
+            self.params["z"] = redshifts
+
+            self.sigma_params = self.params.copy()
+            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
+
+            Pk_lin = np.array(self.cp_LIN.predict(self.params))
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_lin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
+            self.k, self.z, self.Pk = k_out, z_out, Pk_out
+            self.Pk_int = interpolate.RectBivariateSpline(
+                self.z, self.k, Pk_out, kx=1, ky=1
+            )
+
+            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
+            self.sigma8 = sigma_predictions[:, 0]
+            self.fsigma8 = sigma_predictions[:, 1]
+
+        def __str__(self):
+            return (
+                "Cosmopower-JAX linear P_cb(k) module for LCDM+running spectral index cosmology.\n"
+                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
+            )
+
+        def matter_power_spectrum(self, zs, ks):
+            return self.Pk_int(zs, ks)
+
+        def growth_factor(self, zs, ks):
+            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+
+        def growth_rate(self):
+            return self.fsigma8 / self.sigma8
+
+        def sigma8_0(self):
+            return self.sigma8[0]
+
+    class NonLinearCB:
+        """Emulator for the cb nonlinear matter power spectrum in LCDM+running spectral index cosmology."""
+
+        def __init__(
+            self,
+            background: Background,
+            linearperturbations: Perturbations,
+            redshifts: np.ndarray,
+            log10TAGN: Optional[float] = None,
+        ):
+            cp_file = emulator_data("lcdm-running-pcb-nonlinear.npz")
+            cp_file_sigma = emulator_data("lcdm-running-s8-fs8.npz")
+
+            self.cp_NONLIN = load_pk_emulator(cp_file)
+            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
+            self.k_emu = np.loadtxt(k_modes_path)
+            self.k_min = self.k_emu[0]
+            self.k_max = self.k_emu[-1]
+            self.background = background
+
+            self.z = redshifts[redshifts <= 5]
+            self.params = {
+                "ombh2": self.background.Omega_b0 * self.background.h**2,
+                "omch2": self.background.Omega_cdm0 * self.background.h**2,
+                "H0": self.background.H0,
+                "ns": self.background.ns,
+                "lnAs": np.log(self.background.As * 1e10),
+                "alpha_s": self.background.alpha_s,
+                "logT_AGN": log10TAGN if log10TAGN is not None else 7.8,
+            }
+
+            for key in self.params.keys():
+                self.params[key] = np.tile(self.params[key], len(redshifts))
+            self.params["z"] = redshifts
+
+            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k_emu,
+                self.z,
+                Pk_nonlin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=redshifts,
+                option_cosmo="const",
+                ns=self.background.ns,
+            )
+            self.k, self.z, self.Pk = k_out, z_out, Pk_out
+            self.Pk_int = interpolate.RectBivariateSpline(
+                self.z, self.k, Pk_out, kx=1, ky=1
+            )
+
+            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
+            self.sigma8 = sigma_predictions[:, 0]
+            self.fsigma8 = sigma_predictions[:, 1]
+
+        def __str__(self):
+            return (
+                "Cosmopower-JAX nonlinear P_cb(k) module for LCDM+running spectral index cosmology.\n"
+                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
+            )
 
         def matter_power_spectrum(self, zs, ks):
             return self.Pk_int(zs, ks)

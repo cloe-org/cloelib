@@ -234,6 +234,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/annmapo"><img src="https://avatars.githubusercontent.com/u/18014895?v=4?s=100" width="100px;" alt="Anna Porredon"/><br /><sub><b>Anna Porredon</b></sub></a><br /><a href="#ideas-annmapo" title="Ideas, Planning, & Feedback">🤔</a> <a href="#mentoring-annmapo" title="Mentoring">🧑‍🏫</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/emiliobellini"><img src="https://avatars.githubusercontent.com/u/6113149?v=4?s=100" width="100px;" alt="emiliobellini"/><br /><sub><b>emiliobellini</b></sub></a><br /><a href="#maintenance-emiliobellini" title="Maintenance">🚧</a> <a href="#ideas-emiliobellini" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://miguelzuma.github.io/"><img src="https://avatars.githubusercontent.com/u/5014027?v=4?s=100" width="100px;" alt="Miguel Zumalacarregui"/><br /><sub><b>Miguel Zumalacarregui</b></sub></a><br /><a href="#maintenance-miguelzuma" title="Maintenance">🚧</a> <a href="#ideas-miguelzuma" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>

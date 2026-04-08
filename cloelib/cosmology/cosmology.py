@@ -182,9 +182,7 @@ class BaryonBoostMixin(Protocol):
                 return super().matter_power_spectrum(...) * self.baryonic_suppression(...)
     """
 
-    def baryonic_suppression(
-        self, zs: np.ndarray, ks: np.ndarray
-    ) -> np.ndarray:
+    def baryonic_suppression(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         """Return the multiplicative baryonic suppression factor P_hydro/P_DMO.
 
         Parameters

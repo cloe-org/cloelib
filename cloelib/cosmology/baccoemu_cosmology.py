@@ -1,7 +1,12 @@
 """Implementation of Background and Perturbation cosmology using BACCOemu (similarly to what done with HMcode2020emu)."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, BaryonBoostMixin, Perturbations, with_baryon_boost
+from cloelib.cosmology.cosmology import (
+    Background,
+    BaryonBoostMixin,
+    Perturbations,
+    with_baryon_boost,
+)
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
@@ -602,7 +607,7 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
             }.items()
             if v is not None
         }
-        k_baryon = baryon_emu.emulator["baryonic"]["k"]
+        k_baryon = baryon_emu.emulator["nonlinear"]["k"]
         _, boost = baryon_emu.get_baryonic_boost(
             k=k_baryon, **{**self.params_emu, **baryonic_params}
         )

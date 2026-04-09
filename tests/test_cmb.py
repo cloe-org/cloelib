@@ -59,7 +59,12 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
     perturbations, z_auto, z_cross, dndz = camb_cmb_setup
 
     # Create nuisance parameters
-    nuisance_pos = {"b1_photo_bin1": 1.0, "dz_pos_1": 0.0, "magnification_bias_1": 0.0}
+    nuisance_pos = {
+        "b1_photo_bin1": 1.0,
+        "dz_pos_1": 0.0,
+        "width_pos_1": 1.0,
+        "magnification_bias_1": 0.0,
+    }
     nuisance_shear = {
         "AIA": 0.0,
         "CIA": 0.0,

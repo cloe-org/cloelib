@@ -66,6 +66,7 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
         "EtaIA": 0.0,
         "multiplicative_bias_1": 0.0,
         "dz_shear_1": 0.0,
+        "width_shear_1": 1.0
     }
 
     # Create CMB lensing tracers

@@ -597,5 +597,5 @@ class AngularTwoPoint:
             ells,
             w_ell,
             ns,
-            software=self._software_tag(self.get_cosebis_from_cl),
+            software=self._software_tag(self.get_cosebis),
         )

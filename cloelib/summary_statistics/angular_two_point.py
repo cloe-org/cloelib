@@ -584,31 +584,18 @@ class AngularTwoPoint:
             for key, array in C_ell_out.items()
         }
 
-    def get_cosebis_from_cl(self, cells, ells, w_ell, ns):
+    def get_cosebis(self, ells, nl, ks, w_ell, ns):
         """Compute EE and BB COSEBIs from angular power spectra.
 
         Delegates to the module-level :func:`get_cosebis_from_cl`. See that
         function for full parameter documentation.
         """
+        cells = self.get_Cl(ells, nl, ks)
+
         return get_cosebis_from_cl(
             cells,
             ells,
             w_ell,
             ns,
             software=self._software_tag(self.get_cosebis_from_cl),
-        )
-
-    def get_cosebis_from_2pcf(self, twopcf, theta, T_plus, T_minus, ns):
-        """Compute EE and BB COSEBIs from two-point correlation functions.
-
-        Delegates to the module-level :func:`get_cosebis_from_2pcf`. See that
-        function for full parameter documentation.
-        """
-        return get_cosebis_from_2pcf(
-            twopcf,
-            theta,
-            T_plus,
-            T_minus,
-            ns,
-            software=self._software_tag(self.get_cosebis_from_2pcf),
         )

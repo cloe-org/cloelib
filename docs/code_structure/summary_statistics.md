@@ -123,13 +123,15 @@ cosebis = get_cosebis_from_cl(cells, ells, w_ell, ns)
 cosebis = get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns)
 ```
 
-**Class methods** (software provenance tag included automatically):
+**Class method** (`get_cosebis` — computes $C_\ell$ internally, software provenance tag included automatically):
 
 ```python
 two_point = AngularTwoPoint(tracer1, tracer2)
-cells = two_point.get_Cl(ells, nl, ks)
-cosebis = two_point.get_cosebis_from_cl(cells, ells, w_ell, ns)
+cosebis = two_point.get_cosebis(ells, nl, ks, w_ell, ns)
 ```
+
+!!! note
+Only `get_cosebis` is available as a class method. `get_cosebis_from_2pcf` is standalone only — use it directly when $\xi_\pm(\theta)$ are already available.
 
 Both interfaces require optional dependencies (`pylevin`, `mpmath`). The COSEBIs kernels (`w_ell`, `T_plus`, `T_minus`) must be precomputed using helpers from `cloelib.auxiliary.cosebi_helpers`.
 

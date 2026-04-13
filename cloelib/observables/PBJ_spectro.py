@@ -19,7 +19,12 @@ class PBJSpectroPower:
 
     NLcode = "PBJ"
 
-    def __init__(self, linear_perturbations: Perturbations, nuisance_parameters: dict):
+    def __init__(
+        self,
+        linear_perturbations: Perturbations,
+        nuisance_parameters: dict,
+        redshift: float,
+    ):
         r"""Class constructor.
 
         Args:
@@ -30,8 +35,7 @@ class PBJSpectroPower:
         self.linear_perturbations = linear_perturbations
         self.background = linear_perturbations.background
         self.parameters = nuisance_parameters
-        self.mask_z0 = linear_perturbations.z != 0.0
-        self.redshift = linear_perturbations.z[self.mask_z0]
+        self.redshift = redshift
 
         self.cosmo = {
             "h": self.background.h,
@@ -61,12 +65,14 @@ class PBJSpectroPower:
         pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="1/Mpc")
 
         pkmu = pbj_obj.P_kmu_2D(
-            self.redshift[0],
+            self.redshift,
             True,
             kgrid=k,
             mu=mu,
-            f=self.linear_perturbations.growth_rate()[self.mask_z0],
-            D=self.linear_perturbations.growth_factor(self.redshift, 0.05)[0],
+            f=self.linear_perturbations.growth_rate()[
+                self.linear_perturbations.z == self.redshift
+            ],
+            D=self.linear_perturbations.growth_factor(self.redshift, 0.05),
             cosmo=self.cosmo,
             IRres=True,
             **self.parameters,
@@ -101,12 +107,14 @@ class PBJSpectroPower:
         pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="1/Mpc")
 
         pkmu_marg_dict = pbj_obj.P_kmu_2D_marg_dict(
-            self.redshift[0],
+            self.redshift,
             True,
             kgrid=k,
             mu=mu,
-            f=self.linear_perturbations.growth_rate()[self.mask_z0],
-            D=self.linear_perturbations.growth_factor(self.redshift, 0.05)[0],
+            f=self.linear_perturbations.growth_rate()[
+                self.linear_perturbations.z == self.redshift
+            ],
+            D=self.linear_perturbations.growth_factor(self.redshift, 0.05),
             cosmo=self.cosmo,
             IRres=True,
             b1=self.parameters["b1"],

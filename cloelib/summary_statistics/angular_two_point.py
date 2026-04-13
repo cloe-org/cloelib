@@ -4,6 +4,7 @@
 from cloelib.observables.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
+from cloelib.observables.cmb import CMBLensingTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import simpsons_weights_jit
 from cloelib.profiling import profile_function
@@ -15,7 +16,7 @@ import jax
 from scipy import integrate
 
 # results imports
-from cosmolib.data import AngularPowerSpectrum
+from cosmolib.data import AngularPowerSpectrum, COSEBI
 
 
 @jax.jit
@@ -28,15 +29,15 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray:
     and comoving distance squared.
 
     Parameters:
-    - WT1 (jax.numpy.ndarray): Window function for the first tracer.
-    - WT2 (jax.numpy.ndarray): Window function for the second tracer.
-    - Pkl (jax.numpy.ndarray): Matter power spectrum interpolated on Limber grid.
-    - H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
-    - chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
-    - weights (jax.numpy.ndarray): Array of weights used for the fixed nodes integration.
+        WT1 (jax.numpy.ndarray): Window function for the first tracer.
+        WT2 (jax.numpy.ndarray): Window function for the second tracer.
+        Pkl (jax.numpy.ndarray): Matter power spectrum interpolated on Limber grid.
+        H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
+        chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
+        weights (jax.numpy.ndarray): Array of weights used for the fixed nodes integration.
 
     Returns:
-    - jax.numpy.ndarray: Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
+        (jax.numpy.ndarray): Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
     """
     return np.einsum("iz,jz,lz,z,z,z->lij", WT1, WT2, Pkl, 1 / H, 1 / chi2, weights)
 
@@ -51,14 +52,14 @@ def Pkl_interp(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
     for values outside the given grid.
 
     Parameters:
-    - k_l (jax.numpy.ndarray): Wavenumbers corresponding to (ells + 0.5) / chi.
-    - z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
-    - ks (jax.numpy.ndarray): Original wavenumber grid of the matter power spectrum.
-    - zs (jax.numpy.ndarray): Original redshift grid of the matter power spectrum.
-    - Pk (jax.numpy.ndarray): Matter power spectrum values on (ks, zs) grid.
+        k_l (jax.numpy.ndarray): Wavenumbers corresponding to (ells + 0.5) / chi.
+        z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
+        ks (jax.numpy.ndarray): Original wavenumber grid of the matter power spectrum.
+        zs (jax.numpy.ndarray): Original redshift grid of the matter power spectrum.
+        Pk (jax.numpy.ndarray): Matter power spectrum values on (ks, zs) grid.
 
     Returns:
-    - jax.numpy.ndarray: Interpolated power spectrum on the Limber grid.
+        (jax.numpy.ndarray): Interpolated power spectrum on the Limber grid.
     """
     return 10 ** interpax.interp2d(
         jax.numpy.log10(k_l),
@@ -74,6 +75,49 @@ def Pkl_interp(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
 Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))
 
 
+@jax.jit
+def Cl_int_liz_jz(WT1l, WT2, Pkl, invH, invchi2, weights):
+    # for window w/ RSD X window w/o RSD
+    return np.einsum("liz,jz,lz,z,z,z->lij", WT1l, WT2, Pkl, invH, invchi2, weights)
+
+
+@jax.jit
+def Cl_int_iz_ljz(WT1, WT2l, Pkl, invH, invchi2, weights):
+    # for window w/o RSD X window w/ RSD
+    return np.einsum("iz,ljz,lz,z,z,z->lij", WT1, WT2l, Pkl, invH, invchi2, weights)
+
+
+@jax.jit
+def Cl_int_liz_ljz(WT1l, WT2l, Pkl, invH, invchi2, weights):
+    # for window w/ RSD X window w/ RSD
+    return np.einsum("liz,ljz,lz,z,z,z->lij", WT1l, WT2l, Pkl, invH, invchi2, weights)
+
+
+def _growth_rate_on_grid(perturbations, zs_target):
+    # JAX-style backends; to be used for RSD calculation
+    try:
+        return perturbations.growth_rate(zs_target)
+    except TypeError:
+        pass
+
+    cache = getattr(perturbations, "_cloelib_growth_rate_cache", None)
+    if cache is None:
+        f_raw = perturbations.growth_rate()
+        z_raw = getattr(perturbations, "z", zs_target)
+        perturbations._cloelib_growth_rate_cache = (z_raw, f_raw)
+    else:
+        z_raw, f_raw = cache
+
+    # If grids match, return directly
+    try:
+        if (len(z_raw) == len(zs_target)) and (z_raw == zs_target).all():
+            return f_raw
+    except Exception:
+        pass
+
+    return np.interp(zs_target, z_raw, f_raw, left=f_raw[0], right=f_raw[-1])
+
+
 class AngularTwoPoint:
     """Two point asbtract class to compute two point functions."""
 
@@ -85,11 +129,27 @@ class AngularTwoPoint:
         as instance attributes.
 
         Parameters:
-        - tracer1 (Tracer): The first tracer for the two-point function.
-        - tracer2 (Tracer): The second tracer for the two-point function.
+            tracer1 (Tracer): The first tracer for the two-point function.
+            tracer2 (Tracer): The second tracer for the two-point function.
         """
         self.tracer1 = tracer1
         self.tracer2 = tracer2
+
+    def _software_tag(self, method):
+        """
+        Standardized software provenance string.
+
+        Parameters
+        ----------
+        method : callable
+            The method generating the data product.
+
+        Returns
+        -------
+        str
+            Software provenance tag.
+        """
+        return f"{self.__class__.__name__} (cloelib), `{method.__name__}` method"
 
     def _matter_power_spectrum_limber_grid(
         self, z_l, ks, zs, ells
@@ -102,13 +162,13 @@ class AngularTwoPoint:
         spectrum accordingly.
 
         Parameters:
-        - z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
-        - ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
-        - zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
-        - ells (jax.numpy.ndarray): Multipole moments for angular power spectrum.
+            z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
+            ells (jax.numpy.ndarray): Multipole moments for angular power spectrum.
 
         Returns:
-        - jax.numpy.ndarray: Interpolated matter power spectrum on the Limber grid.
+            (jax.numpy.ndarray): Interpolated matter power spectrum on the Limber grid.
         """
         chi = self.tracer1.perturbations.background.comoving_distance(z_l)
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
@@ -126,12 +186,12 @@ class AngularTwoPoint:
         two-point angular statistics.
 
         Parameters:
-        - ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
-        - nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
-        - ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
+            nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
 
         Returns:
-        - jax.numpy.ndarray: Angular power spectrum Cl for the given multipoles.
+            (jax.numpy.ndarray): Angular power spectrum Cl for the given multipoles.
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
@@ -143,6 +203,38 @@ class AngularTwoPoint:
         chi2 = chi**2
         WT1 = self.tracer1.get_window(zs_calc)
         WT2 = self.tracer2.get_window(zs_calc)
+
+        # If the two tracers are literally the same object, reuse windows
+        same_tracer = self.tracer1 is self.tracer2
+        if same_tracer:
+            WT2 = WT1
+
+        need_rsd = (
+            isinstance(self.tracer1, PositionsTracer)
+            and getattr(self.tracer1, "include_rsd", False)
+        ) or (
+            isinstance(self.tracer2, PositionsTracer)
+            and getattr(self.tracer2, "include_rsd", False)
+        )
+
+        WT1_rsd = None
+        WT2_rsd = None
+
+        if need_rsd:
+            f = _growth_rate_on_grid(self.tracer1.perturbations, zs_calc)
+
+            if isinstance(self.tracer1, PositionsTracer) and self.tracer1.include_rsd:
+                WT1_rsd = self.tracer1.get_window_rsd(ells, H, f, chi)
+
+            if same_tracer:
+                WT2_rsd = WT1_rsd
+            else:
+                if (
+                    isinstance(self.tracer2, PositionsTracer)
+                    and self.tracer2.include_rsd
+                ):
+                    WT2_rsd = self.tracer2.get_window_rsd(ells, H, f, chi)
+
         Pkl = self._matter_power_spectrum_limber_grid(
             zs_calc, ks, self.tracer1.perturbations.z, ells
         )
@@ -158,15 +250,50 @@ class AngularTwoPoint:
         ) * (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle)
         weights = simpsons_weights_jit(len(H))
 
-        C_ell_calc = (
-            c_0
-            * Cl_integration(WT1, WT2, Pkl, H, chi2, weights)
-            * dz
-            * prefactor_cell[:, None, None]
-        )
+        # C_ell_calc = (
+        #    c_0
+        #    * Cl_integration(WT1, WT2, Pkl, H, chi2, weights)
+        #    * dz
+        #    * prefactor_cell[:, None, None]
+        # )
+        # self.C_ell_calc = C_ell_calc
+
+        invH = 1.0 / H
+        invchi2 = 1.0 / chi2
+
+        # --- Base term (no RSD): uses the FAST path always
+        C_ell_calc = c_0 * Cl_integration(WT1, WT2, Pkl, H, chi2, weights) * dz
+
+        # --- Add RSD corrections only if needed
+        if WT1_rsd is not None:
+            # (RSD_1 × dens_2)
+            C_ell_calc = (
+                C_ell_calc
+                + c_0 * Cl_int_liz_jz(WT1_rsd, WT2, Pkl, invH, invchi2, weights) * dz
+            )
+
+        if WT2_rsd is not None:
+            # (dens_1 × RSD_2)
+            C_ell_calc = (
+                C_ell_calc
+                + c_0 * Cl_int_iz_ljz(WT1, WT2_rsd, Pkl, invH, invchi2, weights) * dz
+            )
+
+        if (WT1_rsd is not None) and (WT2_rsd is not None):
+            # (RSD_1 × RSD_2)
+            C_ell_calc = (
+                C_ell_calc
+                + c_0
+                * Cl_int_liz_ljz(WT1_rsd, WT2_rsd, Pkl, invH, invchi2, weights)
+                * dz
+            )
+
+        # Apply prefactor as before
+        C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
         self.C_ell_calc = C_ell_calc
 
-        n_bin = self.tracer1.n_z_bins
+        n_bin1 = self.tracer1.n_z_bins
+        n_bin2 = self.tracer2.n_z_bins
         C_ell_out = {}
 
         # Prepare dictionary with tuples as keys for the output
@@ -184,6 +311,11 @@ class AngularTwoPoint:
         # Why? Because it expects the cross-correlation between positions and shear.
         # so the second dimension is filled with zeros.
         # POS - POS returns an array of shape (len(ells))
+        # CMBL - SHE returns an array of shape (2, len(ells))
+        # Why? Because it expects the cross-correlation between CMB lensing and shear.
+        # so the second dimension is filled with zeros.
+        # CMBL - POS returns an array of shape (len(ells))
+        # CMBL - CMBL returns an array of shape (len(ells))
 
         def pos_pos_rule(C, i, j):
             return {("POS", "POS", i, j): C[:, i - 1, j - 1]}
@@ -203,10 +335,25 @@ class AngularTwoPoint:
             arr = arr.at[0, 0, :].set(block)
             return {("SHE", "SHE", i, j): arr}
 
+        def cmbl_cmbl_rule(C, i, j):
+            return {("CMBL", "CMBL", i, j): C[:, i - 1, j - 1]}
+
+        def cmbl_pos_rule(C, i, j):
+            a, b = sorted((i, j))
+            return {("CMBL", "POS", a, b): C[:, i - 1, j - 1]}
+
+        def cmbl_she_rule(C, i, j):
+            block = C[:, i - 1, j - 1]
+            a, b = sorted((i, j))
+            return {("CMBL", "SHE", a, b): np.stack([block, np.zeros_like(block)])}
+
         tracer_rules = {
             (PositionsTracer, PositionsTracer): pos_pos_rule,
             (PositionsTracer, ShearTracer): pos_she_rule,
             (ShearTracer, ShearTracer): she_she_rule,
+            (CMBLensingTracer, PositionsTracer): cmbl_pos_rule,
+            (CMBLensingTracer, ShearTracer): cmbl_she_rule,
+            (CMBLensingTracer, CMBLensingTracer): cmbl_cmbl_rule,
         }
 
         # normalize the key so (A, B) and (B, A) are both supported
@@ -221,27 +368,30 @@ class AngularTwoPoint:
             )
 
         # Vectorized update of C_ell_out using dictionary comprehensions
+        a, b = sorted((n_bin1, n_bin2))
         C_ell_out = {
             k: v
-            for i in range(1, n_bin + 1)
-            for j in range(i, n_bin + 1)
-            for k, v in rule_fn(C_ell_calc, i, j).items()
+            for i in range(1, a + 1)
+            for j in range(i, b + 1)
+            for k, v in (
+                rule_fn(C_ell_calc, i, j)
+                if n_bin1 <= n_bin2
+                else rule_fn(C_ell_calc, j, i)
+            ).items()
         }
 
         # Use dictionary comprehension for cosmolib_Cls creation
-        cosmolib_Cls = {
+        return {
             key: AngularPowerSpectrum(
                 array=array,
                 axis=None,
                 lower=None,
                 upper=None,
                 ell=ells,
-                software="cloelib, `get_Cl` method",
+                software=self._software_tag(self.get_Cl),
             )
             for key, array in C_ell_out.items()
         }
-        self.C_ell_calc = C_ell_calc
-        return cosmolib_Cls
 
     def get_pseudo_Cl(self, nl, ks, mixing_matrix) -> dict:
         """
@@ -327,18 +477,17 @@ class AngularTwoPoint:
                     C_ell_out[key] = arr
 
         # Wrap results in Map objects
-        cosmolib_Cls = {
+        return {
             key: AngularPowerSpectrum(
                 array=array,
                 axis=None,
                 lower=mixing_matrix[key].lower,
                 upper=mixing_matrix[key].upper,
                 ell=mixing_matrix[key].ell,
-                software="cloelib, `get_pseudo_Cl` method",
+                software=self._software_tag(self.get_pseudo_Cl),
             )
             for key, array in C_ell_out.items()
         }
-        return cosmolib_Cls
 
     def get_cosebis(self, ells, nl, ks, w_ell, ns):
         """
@@ -346,7 +495,7 @@ class AngularTwoPoint:
 
         Parameters:
         - ells (jax.numpy.array):
-        array with the ells
+            array with the ells
         - nl (jax.numpy.ndarray):
             Noise power spectrum (not used yet).
         - ks (jax.numpy.ndarray):
@@ -356,7 +505,6 @@ class AngularTwoPoint:
             get_W_ell in auxiliary functions.
         - ns (jax.numpy.array):
             the indices for the kernel function
-
 
         Returns:
         - dict: COSEBIs obtained from the angular power spectrum
@@ -368,13 +516,20 @@ class AngularTwoPoint:
 
         for tomobin1 in range(1, n_bin + 1):
             for tomobin2 in range(tomobin1, n_bin + 1):
-                key = (tomobin1, tomobin2)
+                key = ("SHE", "SHE", tomobin1, tomobin2)
                 cosebis = np.zeros_like(ns, dtype=np.float64)
+
                 for i, n in enumerate(ns):
                     cl = cells["SHE", "SHE", tomobin1, tomobin2][0, 0]
                     cosebis = cosebis.at[i].set(
                         integrate.simpson(ells * cl * w_ell[n], ells)
                     )
-                tomo_cosebis[key] = cosebis / (2 * np.pi)
+
+                tomo_cosebis[key] = COSEBI(
+                    array=cosebis / (2 * np.pi),
+                    mode=ns,
+                    nmodes=max(ns),
+                    software=self._software_tag(self.get_cosebis),
+                )
 
         return tomo_cosebis

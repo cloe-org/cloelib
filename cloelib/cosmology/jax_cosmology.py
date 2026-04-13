@@ -8,7 +8,10 @@ All of the functions are completely differentiable.
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
-from cloelib.cosmology.derived_cosmology import rdrag_fitting_function
+from cloelib.cosmology.derived_cosmology import (
+    rdrag_fitting_function,
+    z_star_fitting_function,
+)
 
 # General imports
 import jax.numpy as jnp
@@ -167,7 +170,7 @@ class JAXBackground:
         Return the Hubble parameter as a function of redshift.
 
         Args:
-            zs : Redshifts.
+            zs (np.ndarray): Redshifts.
             units (str): Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').
 
         Returns:
@@ -201,15 +204,11 @@ class JAXBackground:
         """
         Calculate the comoving distance for given redshifts.
 
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the comoving distance.
+        Args:
+          zs (array_like): Redshifts at which to calculate the comoving distance.
 
         Returns:
-        --------
-        jnp.ndarray
-            The comoving distance as a function of redshift.
+          (np.ndarray): The comoving distance as a function of redshift.
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
@@ -231,7 +230,7 @@ class JAXBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            jnp.ndarray: Transverse comoving distance values.
+            (np.ndarray): Transverse comoving distance values.
         """
         delta_z = self.comoving_distance(zs)
         p = jnp.concatenate([jnp.array([self.Omega_k0]), delta_z], axis=0)
@@ -256,15 +255,11 @@ class JAXBackground:
         """
         Calculate the angular diameter distance for given redshifts.
 
-        Parameters:
-        -----------
-        zs : array_like
-            Redshifts at which to calculate the angular diameter distance.
+        Args:
+          zs (array_like): Redshifts at which to calculate the angular diameter distance.
 
         Returns:
-        --------
-        jnp.ndarray
-            The angular diameter distance as a function of redshift.
+          (np.ndarray): The angular diameter distance as a function of redshift.
         """
         return self.transverse_comoving_distance(zs) / (1 + zs)
 
@@ -276,7 +271,7 @@ class JAXBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            jnp.ndarray: Matter density values.
+            (np.ndarray): Matter density values.
         """
         return jnp.array(
             [
@@ -293,11 +288,31 @@ class JAXBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            jnp.ndarray: Matter density values.
+            (np.ndarray): Matter density values.
         """
         return jnp.array(
             [
                 (self.Omega_m0)
+                * (1 + z) ** 3
+                / (self.hubble_parameter(z) / self.H0) ** 2
+                for z in zs
+            ]
+        )
+
+    def Omega_cb(self, zs: jnp.ndarray) -> jnp.ndarray:
+        """
+        Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
+
+        Args:
+            zs (jnp.ndarray): Array of redshifts.
+
+        Returns:
+            jnp.ndarray: Matter density values (no neutrinos).
+        """
+        _Omega_m_use = self.Omega_b0 + self.Omega_cdm0
+        return jnp.array(
+            [
+                (_Omega_m_use)
                 * (1 + z) ** 3
                 / (self.hubble_parameter(z) / self.H0) ** 2
                 for z in zs
@@ -334,6 +349,11 @@ class JAXBackground:
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering."""
         return rdrag_fitting_function(self)
+
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
+        return z_star_fitting_function(self)
 
 
 class JAXLinearPerturbations:
@@ -408,28 +428,15 @@ class JAXLinearPerturbations:
     def transfer_Eisenstein_Hu(self, ks):
         """Compute the Eisenstein & Hu matter transfer function.
 
-        Parameters
-        ----------
-        cosmo: Background
-        Background cosmology
+        Args:
+          ks (array_like): Wave number in h Mpc^{-1}
 
-        k: array_like
-        Wave number in h Mpc^{-1}
+        Returns:
+          T (array_like): Value of the transfer function at the requested wave number
 
-        type: str, optional
-        Type of transfer function. Either 'eisenhu' or 'eisenhu_osc'
-        (def: 'eisenhu_osc')
-
-        Returns
-        -------
-        T: array_like
-        Value of the transfer function at the requested wave number
-
-        Notes
-        -----
-        The Eisenstein & Hu transfer functions are computed using the fitting
-        formulae of :cite:`1998:EisensteinHu`
-
+        Notes:
+          The Eisenstein & Hu transfer functions are computed using the fitting
+          formulae of :cite:`1998:EisensteinHu`
         """
         #############################################
         # Quantities computed from 1998:EisensteinHu
@@ -558,22 +565,25 @@ class JAXLinearPerturbations:
     def primordial_matter_power(self, ks):
         """Primordial power spectrum.
 
-        Pk = k^n
+        $$
+          Pk = k^n
+        $$
+
         """
         return ks**self.background.ns
 
     def sigmasqr(self, R, kmin=0.0001, kmax=1000.0, ksteps=5):
         r"""Compute the energy of the fluctuations within a sphere of R h^{-1} Mpc.
 
-        .. math::
-
-        \\sigma^2(R)= \\frac{1}{2 \\pi^2} \\int_0^\\infty \\frac{dk}{k} k^3 P(k,z) W^2(kR)
+        $$
+          \sigma^2(R)= \frac{1}{2\pi^{2}} \int_0^{\infty} \frac{dk}{k} k^3 P(k,z) W^2(kR)
+        $$
 
         where
 
-        .. math::
-
-        W(kR) = \\frac{3j_1(kR)}{kR}
+        $$
+          W(kR) = \frac{3j_1(kR)}{kR}
+        $$
         """
 
         def int_sigma(logk):
@@ -590,15 +600,15 @@ class JAXLinearPerturbations:
     def sigma8sqr(self, kmin=0.0001, kmax=100.0):
         r"""Compute the energy of the fluctuations within a sphere of R h^{-1} Mpc.
 
-        .. math::
-
-        \\sigma^2(R)= \\frac{1}{2 \\pi^2} \\int_0^\\infty \\frac{dk}{k} k^3 P(k,z) W^2(kR)
+        $$
+          \sigma^2(R)= \frac{1}{2 \pi^2} \int_0^\infty \frac{dk}{k} k^3 P(k,z) W^2(kR)
+        $$
 
         where
 
-        .. math::
-
-        W(kR) = \\frac{3j_1(kR)}{kR}
+        $$
+          W(kR) = \frac{3j_1(kR)}{kR}
+        $$
         """
         R = 8
 
@@ -617,8 +627,9 @@ class JAXLinearPerturbations:
     ):
         r"""Compute the linear matter power spectrum.
 
-        Parameters
-        ----------
+        ### This docstring does not correspond to the function ###
+
+        Args:
         zs: array_like, optional
             Redshifts
 
@@ -671,6 +682,33 @@ class JAXLinearPerturbations:
         # Apply normalisation
         pk = pk * pknorm / factor
         return pk.squeeze()
+
+    def matter_power_spectrum_cb(
+        self, zs: jnp.ndarray, ks: jnp.ndarray, hubble_units=False, k_hunit=False
+    ) -> jnp.ndarray:
+        r"""Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).
+
+        Parameters
+        ----------
+        zs: array_like, optional
+            Redshifts
+
+        k: array_like
+            Wave number in h Mpc^{-1}
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: array_like
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for jax.")
 
 
 class JAXNonLinearPerturbations:
@@ -842,6 +880,33 @@ class JAXNonLinearPerturbations:
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
         return Pkl
 
+    def matter_power_spectrum_cb(
+        self, zs: jnp.ndarray, ks: jnp.ndarray, hubble_units=False, k_hunit=False
+    ) -> jnp.ndarray:
+        r"""Compute the non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        raise NotImplementedError("Not implemented for jax.")
+
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""
 
@@ -934,26 +999,19 @@ def romb(function, a, b, args=(), divmax=6, return_error=False):
     If `show` is 1, the triangular array of the intermediate results
     will be printed.  If `vec_func` is True (default is False), then
     `function` is assumed to support vector arguments.
-    Parameters
-    ----------
-    function : callable
-        Function to be integrated.
-    a : float
-        Lower limit of integration.
-    b : float
-        Upper limit of integration.
-    Returns
-    -------
-    results  : float
-        Result of the integration.
-    Other Parameters
-    ----------------
-    args : tuple, optional
-        Extra arguments to pass to function. Each element of `args` will
+
+    Args:
+      function (callable): Function to be integrated.
+      a (float): Lower limit of integration.
+      b (float): Upper limit of integration.
+      args (optional[tuple]): Extra arguments to pass to function. Each element of `args` will
         be passed as a single argument to `func`. Default is to pass no
         extra arguments.
-    divmax : int, optional
-        Maximum order of extrapolation. Default is 10.
+      divmax (optional[int]): Maximum order of extrapolation. Default is 10.
+
+    Returns:
+      results (float): Result of the integration.
+
     See Also
     --------
     fixed_quad : Fixed-order Gaussian quadrature.
@@ -1077,18 +1135,18 @@ def As_to_sigma8_max_precision(As, Om, Ob, h, ns, mnu, w0, wa):
     Compute the emulated conversion As -> sigma8, using the most accurate expression.
 
     Args:
-        :As (float): 10^9 times the amplitude of the primordial P(k)
-        :Om (float): The z=0 total matter density parameter, Om
-        :Ob (float): The z=0 baryonic density parameter, Ob
-        :h (float): Hubble constant, H0, divided by 100 km/s/Mpc
-        :ns (float): Spectral tilt of primordial power spectrum
-        :mnu (float): Sum of neutrino masses [eV / c^2]
-        :w0 (float): Time independent part of the dark energy EoS
-        :wa (float): Time dependent part of the dark energy EoS
+      As (float): 10^9 times the amplitude of the primordial P(k)
+      Om (float): The z=0 total matter density parameter, Om
+      Ob (float): The z=0 baryonic density parameter, Ob
+      h (float): Hubble constant, H0, divided by 100 km/s/Mpc
+      ns (float): Spectral tilt of primordial power spectrum
+      mnu (float): Sum of neutrino masses [eV / c^2]
+      w0 (float): Time independent part of the dark energy EoS
+      wa (float): Time dependent part of the dark energy EoS
 
     Returns:
-        :sigma8 (float): Root-mean-square density fluctuation when the linearly
-            evolved field is smoothed with a top-hat filter of radius 8 Mpc/h
+      sigma8 (float): Root-mean-square density fluctuation when the linearly
+          evolved field is smoothed with a top-hat filter of radius 8 Mpc/h
     """
     b = jnp.array(
         [

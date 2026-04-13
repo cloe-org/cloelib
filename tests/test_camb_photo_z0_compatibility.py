@@ -51,7 +51,7 @@ def camb_photo_setup():
     perturbations = CAMBNonLinearPerturbations(background, user_z)
     n_z_bins = 2
     dndz = np.ones((n_z_bins, len(tracer_z)))
-    dndz /= np.trapz(dndz, tracer_z, axis=1)[:, None]
+    dndz /= np.trapezoid(dndz, tracer_z, axis=1)[:, None]
 
     return perturbations, tracer_z, dndz, n_z_bins
 
@@ -72,6 +72,7 @@ def test_no_collision_and_power_spectrum_at_all_z(camb_photo_setup):
     nuisance_params = {
         **{f"multiplicative_bias_{i + 1}": 0.0 for i in range(n_z_bins)},
         **{f"dz_shear_{i + 1}": 0.0 for i in range(n_z_bins)},
+        **{f"width_shear_{i + 1}": 1.0 for i in range(n_z_bins)},
         "AIA": 1.0,
         "CIA": 0.0164,
         "EtaIA": -0.41,

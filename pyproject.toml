@@ -10,35 +10,40 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
     { name = "M. Bonici", email = "marco.bonici@uwaterloo.ca" },
-    { name = "G. Cañas-Herrera", email = "guadalupe.canasherrera@esa.int" },
-    { name = "P. Carrilho", email = "pedro.carrilho@ed.ac.uk" },
-    { name = "S. Casas", email = "casas@physik.rwth-aachen.de" },
+    { name = "G. Cañas-Herrera", email = "canasherrera@strw.leidenuniv.nl" },
+    { name = "P. Carrilho", email = "p.carrilho@herts.ac.uk" },
+    { name = "S. Casas", email = "s.casas@protonmail.com" },
     { name = "C. Moretti", email = "cmoretti@sissa.it" },
     { name = "A. Pezzotta", email = "andrea.pezzotta@inaf.it" }
 ]
 
 dependencies = [
-    "interpax==0.3.3",
-    "jax==0.4.38",
-    "numpy<2.0",
-    "quadax==0.2.7",
-    "scipy<1.14",
-    "pytest==8.3.5",
-    "pytest-cov==6.1.1",
-    "mypy==1.17",
-    "pyinstrument>=4.6.2",
+    "interpax",
+    "jax",
+    "numpy>2.0",
+    "quadax",
+    "scipy>1.14",
+    "pytest",
+    "pytest-cov",
+    "mypy",
+    "pyinstrument",
     "cosmolib"
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-camb = ["camb"]
+camb = ["camb==1.6.5"]
+classy = ["classy==3.3.1"]
 comet-emu = ["comet-emu"]
-pylevin = ["pylevin"]
-mpmath = ["mpmath"]
-tensorflow = ["tensorflow==2.13"]
 hmcode2020emu = ["HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"]
 mgclass = ["mgclassy==2.9.4.5"]
+euclidemu2 = ["euclidemu2==1.4.3"]
+pylevin = ["pylevin"]
+mpmath = ["mpmath"]
+tensorflow = ["tensorflow"]
+tf-keras = ["tf-keras"]
+cosmopower-jax=["cosmopower-jax"]
+baccoemu = ["baccoemu"]
 
 [tool.hatch.version]
 source = "vcs"

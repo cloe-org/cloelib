@@ -1,11 +1,12 @@
 name: CI
-
 on:
   push:
   pull_request:
     branches:
       - main
-
+env:
+  ENV_NAME: cloe-org-env
+  ENV_FILE: cloe-org-environments/environments/cloe-org-env-linux-v2026.1.yaml
 jobs:
   style:
     name: Style (pre-commit)
@@ -13,56 +14,55 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-
       - name: Install pre-commit
-        run: pip install pre-commit
-
+        run: python -m pip install pre-commit
       - name: Run pre-commit checks
         run: pre-commit run --all-files --show-diff-on-failure
-
   tests:
     name: Tests
     runs-on: ubuntu-latest
-    needs: style # only run if style job passes
+    needs: style
     strategy:
       fail-fast: false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Checkout cloe-org-environments
+        uses: actions/checkout@v4
         with:
-          python-version: "3.10"
-
-      - name: Install external prereq using pip
+          repository: cloe-org/cloe-org-environments
+          path: cloe-org-environments
+      - name: Setup Mambaforge
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-variant: Miniforge3
+          miniforge-version: latest
+          activate-environment: ${{ env.ENV_NAME }}
+          environment-file: ${{ env.ENV_FILE }}
+          use-mamba: true
+      - name: Install cloelib and extras from pyproject.toml
         run: |
-          pip install camb jax classy==3.3.1 mgclassy==2.9.4.5
-
-      - name: Install dependencies
-        run: |
-          python -m pip install .
-          pip install pyinstrument
-
+          mamba run -n $ENV_NAME python -m pip install --upgrade pip
+          mamba run -n $ENV_NAME python -m pip install ".[camb,classy,mgclassy,euclidemu2,baccoemu]"
       - name: Run tests
-        run: pytest
-
+        run: mamba run -n $ENV_NAME python -m pytest
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: tests # build only if tests pass
+    needs: tests
     steps:
-      - uses: actions/checkout@v4
-
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Install build tools
-        run: pipx run build
+      - name: Build package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build

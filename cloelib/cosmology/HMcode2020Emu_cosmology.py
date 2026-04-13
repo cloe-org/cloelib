@@ -76,18 +76,29 @@ class HMemuLinearPerturbations:
 
         self.Pk_interp = pk_interp
 
-    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+    def matter_power_spectrum(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
         r"""Compute the linear matter power spectrum.
 
         Args:
             ks (numpy.ndarray): Wave number in h Mpc^{-1}
             zs (numpy.ndarray): redshifts
+            hubble_units (Optional[bool]): Flag to specify if output in h units
+            k_hunit (Optional[bool]): Flag to specify if wavenumber in h units
 
         Returns:
             pk (numpy.ndarray): Linear matter power spectrum at the specified scale and redshift
 
         """
-        return self.Pk_interp(zs, ks)
+        if k_hunit:
+            k_in = ks * self.background.h
+        else:
+            k_in = ks
+        if hubble_units:
+            return self.Pk_interp(zs, k_in).squeeze() * self.background.h**3
+        else:
+            return self.Pk_interp(zs, k_in).squeeze()
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -107,8 +118,10 @@ class HMemuLinearPerturbations:
         Returns:
             (np.ndarray): The growth factor as a function of redshift and wavenumber.
         """
-        if hasattr(self, "Pk_interp") and self.Pk_interp is not None:
-            D_z_k = np.sqrt(self.Pk_interp(zs, ks) / self.Pk_interp(0, ks))
+        D_z_k = np.sqrt(
+            self.matter_power_spectrum(zs, ks)
+            / self.matter_power_spectrum(np.array([0.0]), ks)
+        )
 
         return D_z_k
 
@@ -245,8 +258,10 @@ class HMemuNonLinearPerturbations:
         Returns:
             (np.ndarray): The growth factor as a function of redshift and wavenumber.
         """
-        if hasattr(self, "Pk_interp") and self.Pk_interp is not None:
-            D_z_k = np.sqrt(self.Pk_interp(zs, ks) / self.Pk_interp(0, ks))
+        D_z_k = np.sqrt(
+            self.matter_power_spectrum(zs, ks)
+            / self.matter_power_spectrum(np.array([0.0]), ks)
+        )
 
         return D_z_k
 

@@ -58,6 +58,7 @@ class PBJSpectroPower:
         linear_perturbations: Perturbations,
         nuisance_parameters: dict,
         growth_perturbations: Optional[Perturbations] = None,
+        redshift: Optional[float] = None,
     ):
         r"""Class constructor.
 
@@ -67,6 +68,8 @@ class PBJSpectroPower:
           nuisance_parameters (dict): Dictionary containing bias and counterterm parameters
           growth_perturbations (Perturbations | None): Optional MGrowth
             Perturbations object used only for modified-growth f and D
+          redshift (float | None): Optional prediction redshift. If omitted,
+            the first nonzero redshift in the perturbation object is used.
         """
         self.linear_perturbations = linear_perturbations
         self.growth_perturbations = growth_perturbations
@@ -74,10 +77,14 @@ class PBJSpectroPower:
         self.parameters = nuisance_parameters
         redshift_source = growth_perturbations or linear_perturbations
         self.z = np.asarray(redshift_source.z, dtype=float)
-        self.mask_z0 = self.z != 0.0
-        self.redshift = self.z[self.mask_z0]
-        if self.redshift.size == 0:
-            raise ValueError("PBJSpectroPower needs at least one nonzero prediction redshift")
+        if redshift is None:
+            redshift_arr = self.z[self.z != 0.0]
+            if redshift_arr.size == 0:
+                raise ValueError("PBJSpectroPower needs at least one nonzero prediction redshift")
+            self.redshift = float(redshift_arr[0])
+        else:
+            self.redshift = float(redshift)
+        self.redshift_mask = np.isclose(self.z, self.redshift)
         self.growth_model = self._infer_growth_model()
 
         self.cosmo = {
@@ -204,7 +211,7 @@ class PBJSpectroPower:
             if self.growth_model == "fr":
                 growth_rate, growth_factor = cosmology.eval_growth_functions(
                     self.growth_model,
-                    self.redshift[0],
+                    self.redshift,
                     karr=karr_growth / self.background.h,
                     **self.cosmo,
                 )
@@ -218,7 +225,7 @@ class PBJSpectroPower:
             ) and hasattr(
                 self.growth_perturbations, "dz_norm_lcdm_interp"
             ):
-                z_eval = np.asarray([self.redshift[0]])
+                z_eval = np.asarray([self.redshift])
                 growth_rate = self.growth_perturbations.fz_interp(z_eval, karr_growth)
                 growth_factor = self.growth_perturbations.dz_norm_lcdm_interp(
                     z_eval, karr_growth
@@ -230,10 +237,12 @@ class PBJSpectroPower:
 
             return None, None
 
-        growth_rate = np.asarray(self.linear_perturbations.growth_rate())[self.mask_z0]
+        growth_rate = np.asarray(self.linear_perturbations.growth_rate())
+        if growth_rate.ndim > 0 and growth_rate.size == self.z.size:
+            growth_rate = growth_rate[self.redshift_mask]
         growth_factor = np.asarray(
             self.linear_perturbations.growth_factor(self.redshift, 0.05)
-        )[0]
+        )
 
         return self._format_growth_input(growth_rate), self._format_growth_input(growth_factor)
 
@@ -275,7 +284,7 @@ class PBJSpectroPower:
         growth_rate, growth_factor = self._pbj_growth_inputs(k)
 
         pkmu = pbj_obj.P_kmu_2D(
-            self.redshift[0],
+            self.redshift,
             True,
             kgrid=k,
             mu=mu,
@@ -314,7 +323,7 @@ class PBJSpectroPower:
         growth_rate, growth_factor = self._pbj_growth_inputs(k)
 
         pkmu_marg_dict = pbj_obj.P_kmu_2D_marg_dict(
-            self.redshift[0],
+            self.redshift,
             True,
             kgrid=k,
             mu=mu,

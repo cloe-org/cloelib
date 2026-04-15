@@ -77,3 +77,21 @@ def rdrag_fitting_function(background, neff=3.046):
         / (omega_cb**0.2436 * omega_b**0.128876 * (1 + (neff - 3.046) / 30.6))
     )
     return r_d
+
+
+def z_star_fitting_function(background):
+    r"""Compute the redshift of photon decoupling.
+
+    Assumes a cosmology-independent z_star.
+
+    Parameters
+    ----------
+    background: Background
+        Background class containing cosmology
+
+    Returns
+    -------
+    z_star: float
+        redshift of photon decoupling.
+    """
+    return 1090.0

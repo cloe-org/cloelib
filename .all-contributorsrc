@@ -395,18 +395,8 @@
       "contributions": [
         "code",
         "doc",
-        "ideas"
-      ]
-    },
-    {
-      "login": "cosmicLinux",
-      "name": "Linus Thummel",
-      "avatar_url": "https://avatars.githubusercontent.com/u/142009018?v=4",
-      "profile": "https://www.ph.ed.ac.uk/people/linus-thummel",
-      "contributions": [
-        "code",
-        "doc",
-        "ideas"
+        "ideas",
+        "review"
       ]
     },
     {
@@ -458,7 +448,9 @@
       "profile": "https://github.com/raphkou",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "ideas",
+        "doc"
       ]
     },
     {
@@ -531,6 +523,56 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/42518815?v=4",
       "profile": "http://www.matthieuschaller.com",
       "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "joezuntz",
+      "name": "joezuntz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/220537?v=4",
+      "profile": "https://github.com/joezuntz",
+      "contributions": [
+        "mentoring",
+        "ideas"
+      ]
+    },
+    {
+      "login": "KlaraBertmann",
+      "name": "KlaraBertmann",
+      "avatar_url": "https://avatars.githubusercontent.com/u/153739278?v=4",
+      "profile": "https://github.com/KlaraBertmann",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "annmapo",
+      "name": "Anna Porredon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18014895?v=4",
+      "profile": "https://github.com/annmapo",
+      "contributions": [
+        "ideas",
+        "mentoring"
+      ]
+    },
+    {
+      "login": "emiliobellini",
+      "name": "emiliobellini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6113149?v=4",
+      "profile": "https://github.com/emiliobellini",
+      "contributions": [
+        "maintenance",
+        "ideas"
+      ]
+    },
+    {
+      "login": "miguelzuma",
+      "name": "Miguel Zumalacarregui",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5014027?v=4",
+      "profile": "http://miguelzuma.github.io/",
+      "contributions": [
+        "maintenance",
         "ideas"
       ]
     }

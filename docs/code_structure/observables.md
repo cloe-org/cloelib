@@ -10,7 +10,7 @@ This module computes survey-specific quantities including selection functions, w
 
 This module addresses:
 
-- Window functions for weak lensing surveys
+- Window functions for weak lensing surveys and CMB lensing
 - Galaxy bias modeling and corrections
 - Redshift-space power spectra P(k, μ)
 
@@ -161,6 +161,30 @@ tracer = PositionsTracer(
     dndz=dndz_bins,
     z=z,
     nuisance_params=nuisance,
+)
+
+window = tracer.get_window(z)
+```
+
+#### CMBLensingTracer
+
+For CMB weak gravitational lensing (convergence) measurements.
+
+**Location**: `cloelib/observables/cmb.py`
+
+**What it does**:
+
+- Computes lensing window function W^κ(z)
+
+**Example**:
+
+```python
+from cloelib.observables.cmb import CMBLensingTracer
+
+z = np.arange(1e-3,pert.background.z_star,0.01)
+tracer = CMBLensingTracer(
+    perturbations=pert,
+    z=z,
 )
 
 window = tracer.get_window(z)

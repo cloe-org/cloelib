@@ -272,7 +272,13 @@ class MGCLASSBackground:
             np.ndarray: Matter density values (no neutrinos).
         """
 
-        return self.results.Om_b(zs) + self.results.Om_cdm(zs)
+        try:
+            Omegacb = np.array([(self.results.Omega_b(z)+self.results.Omega_cdm(z))
+                                 *(1+z)**3.0/self.hubble_parameter(z)**0.5 for z in zs])
+        except TypeError:
+            Omegcb = (self.results.Omega_b(zs)+self.results.Omega_cdm(z))*(1+zs)**3.0
+                      /self.hubble_parameter(zs)**0.5
+        return Omegacb
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -284,7 +290,11 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return self.results.Om_m(zs)
+        try:
+            Omegam = np.array([self.results.Om_m(z) for z in zs])
+        except TypeError:
+            Omegam = self.results.Om_m(zs)
+        return Omegam
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -296,7 +306,13 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return self.results.Om_b(zs)
+        try:
+            Omegab = np.array([self.results.Omega_b(z)*(1+z)**3.0
+                               /self.hubble_parameter(z)**0.5 for z in zs])
+        except TypeError:
+            Omegab = self.results.Omega_b(z)*(1+zs)**3.0
+                         /self.hubble_parameter(zs)**0.5
+        return Omegab
 
     @property
     def rdrag(self) -> float:

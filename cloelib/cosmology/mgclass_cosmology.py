@@ -275,8 +275,7 @@ class MGCLASSBackground:
         try:
             Omegacb = np.array([(self.results.Omega_b(z)+self.results.Omega_cdm(z))*(1+z)**3.0/self.hubble_parameter(z)**0.5 for z in zs])
         except TypeError:
-            Omegcb = (self.results.Omega_b(zs)+self.results.Omega_cdm(z))*(1+zs)**3.0
-                      /self.hubble_parameter(zs)**0.5
+            Omegcb = (self.results.Omega_b(zs)+self.results.Omega_cdm(z))*(1+zs)**3.0/self.hubble_parameter(zs)**0.5
         return Omegacb
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:

@@ -381,21 +381,42 @@ The same interface is used to compute two-point correlation function multipoles 
 \texttt{cloelib} natively supports Python structural subtyping (PEP 544); the `Background` and `Perturbations` protocols are marked with `@runtime_checkable`, allowing explicit compliance checks at the beginning of an analysis.
 
 ```python
-from cloelib.cosmology.cosmology import Background, Perturbations
-from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
-from cloelib.cosmology.class_cosmology import CLASSBackground, CLASSLinearPerturbations
+from cloelib.cosmology.cosmology import (
+  Background, Perturbations,
+)
+from cloelib.cosmology.camb_cosmology import (
+  CAMBBackground, CAMBLinearPerturbations,
+)
+from cloelib.cosmology.class_cosmology import (
+  CLASSBackground, CLASSLinearPerturbations,
+)
 
 # Protocol compliance is verified at runtime
 assert isinstance(camb_bg, Background)
-assert isinstance(CLASSBackground(
-    H0=70.0, Omega_b0=0.05, Omega_cdm0=0.25, Omega_k0=0.0,
-    As=2e-9, ns=0.96, mnu=0.06, N_mnu=1, w0=-1.0, wa=0.0,
-    gamma_MG=0.545
-), Background)
+assert isinstance(
+  CLASSBackground(
+    H0=70.0,
+    Omega_b0=0.05,
+    Omega_cdm0=0.25,
+    Omega_k0=0.0,
+    As=2e-9,
+    ns=0.96,
+    mnu=0.06,
+    N_mnu=1,
+    w0=-1.0,
+    wa=0.0,
+    gamma_MG=0.545,
+  ),
+  Background,
+)
 
 # Both CAMB and CLASS objects satisfy the same Perturbations protocol
-camb_lin = CAMBLinearPerturbations(background=camb_bg, redshifts=z)
-class_lin = CLASSLinearPerturbations(background=CLASSBackground(...), redshifts=z)
+camb_lin = CAMBLinearPerturbations(
+  background=camb_bg, redshifts=z,
+)
+class_lin = CLASSLinearPerturbations(
+  background=CLASSBackground(...), redshifts=z,
+)
 
 assert isinstance(camb_lin, Perturbations)
 assert isinstance(class_lin, Perturbations)

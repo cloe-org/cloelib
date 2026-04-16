@@ -150,6 +150,19 @@ def test_mgclass_omega_m(mgclass_background_instance, zs):
     assert result.ndim == 1
     assert len(result) == len(zs)
 
+def test_class_omega_b(mgclass_background_instance, zs):
+    """Test Omega_b.
+
+    Check the method returns a np.ndarray of correct size,
+    and at redshift zero the value is almost equal to Omega_b0.
+    """
+    assert hasattr(mgclass_background_instance, "Omega_b")
+    assert callable(mgclass_background_instance.Omega_b)
+    result = mgclass_background_instance.Omega_b(zs)
+    assert isinstance(result, np.ndarray)
+    assert result.ndim == 1
+    assert len(result) == len(zs)
+    assert np.abs(result[0] - mgclass_background_instance.Omega_b0) < 1e-4
 
 @pytest.mark.parametrize("units", ["1/Mpc", "km/s/Mpc"])
 def test_mgclass_hubble_parameter(mgclass_background_instance, zs, units):
@@ -269,3 +282,237 @@ def test_mgclass_sigma8_consistency_linear_vs_nonlinear(
         background=mgclass_background_instance, redshifts=zs, nonlinear_model="halofit"
     )
     assert np.abs(mgclass_lin.sigma8_0() - mgclass_non.sigma8_0()) < 1e-3
+
+def test_Omega_cb_returns_Om_b_plus_Om_cdm(mgclass_background_instance):
+    """
+    Ensure that `Omega_cb(zs)` correctly returns the sum
+    of the baryon and CDM density parameters for an array of redshifts.
+    """
+    import numpy as np
+
+    # A set of redshifts (including z=0) to test the vectorised path
+    zs = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
+
+    # Reference values directly from CLASS
+    Om_b = mgclass_background_instance.results.Om_b(zs)
+    Om_cdm = mgclass_background_instance.results.Om_cdm(zs)
+    expected = Om_b + Om_cdm
+
+    # Call the wrapper under test
+    omega_cb = mgclass_background_instance.Omega_cb(zs)
+
+    # Basic shape / type checks
+    assert isinstance(omega_cb, np.ndarray)
+    assert omega_cb.shape == zs.shape
+
+    # Verify element‑wise equality to CLASS precision
+    assert np.allclose(omega_cb, expected, rtol=1e-12, atol=1e-15)
+
+###########################
+# PERTURBATIONS UNIT TESTS
+###########################
+
+
+@pytest.fixture
+def mgclass_lin_perturb_instance(mgclass_background_instance):
+    """
+    Fixture that builds a fully‑initialised MGCLASSLinearPerturbations instance.
+    It re‑uses the existing `mgclass_cosmo` background fixture (if you already have
+    one) or creates a fresh MGCLASSCosmology object with default parameters.
+    """
+    # ----- redshift & k grid -----------------------------------------
+    zs = np.array([0.0, 0.5, 1.0])  # a few test redshifts
+    # The perturbations mgclass itself will set its own k‑grid, so we just
+    # pass the redshifts here.
+
+    # ----- instantiate perturbations ---------------------------------
+    pert = MGCLASSLinearPerturbations(background=mgclass_background_instance, redshifts=zs)
+
+    return pert
+
+
+@pytest.fixture
+def mgclass_lin_perturb_instance_nu(mgclass_background_instance):
+    """
+    Fixture that builds a fully‑initialised MGCLASSLinearPerturbations instance.
+    It re‑uses the existing `mgclass_cosmo` background fixture (if you already have
+    one) or creates a fresh MGCLASSCosmology object with default parameters.
+    """
+    # ----- redshift & k grid -----------------------------------------
+    zs = np.array([0.0, 0.5, 1.0])  # a few test redshifts
+    # The perturbations mgclass itself will set its own k‑grid, so we just
+    # pass the redshifts here.
+
+    # add neutrinos:
+    mgclass_background_instance.interface_args["MGCLASSparams"]["N_ncdm"] = 1
+    mgclass_background_instance.interface_args["MGCLASSparams"]["m_ncdm"] = 0.2
+    # ----- instantiate perturbations ---------------------------------
+    pert = MGCLASSLinearPerturbations(background=mgclass_background_instance, redshifts=zs)
+
+    return pert
+
+
+def test_matter_power_spectrum_cb_no_neutrinos(mgclass_lin_perturb_instance):
+    """
+    Verify that with N_ncdm == 0 the CB power spectrum is identical
+    to the total matter power spectrum.
+    """
+    import warnings
+
+    # Ensure the perturbation object is in the “no‑neutrino” configuration.
+    # (The fixture may already provide this; otherwise we explicitly set it.)
+    mgclass_lin_perturb_instance.interface_args["MGCLASSparams"]["N_ncdm"] = 0
+
+    zs = np.array([0.0, 0.5, 1.0])
+    ks = np.logspace(-3, 1, 15)  # 15 k‑values spanning 10⁻³–10¹ Mpc⁻¹
+
+    # Expected: ordinary matter power spectrum
+    pk_total = mgclass_lin_perturb_instance.matter_power_spectrum(zs, ks)
+
+    # CB spectrum – should trigger the warning and fall back to pk_total
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        pk_cb = mgclass_lin_perturb_instance.matter_power_spectrum_cb(zs, ks)
+
+        # Verify the warning was emitted
+        assert any("no massive neutrinos" in str(warn.message) for warn in w), (
+            "Expected warning about N_ncdm == 0 not raised"
+        )
+
+    # Shape and value checks
+    assert pk_cb.shape == pk_total.shape, "Shape mismatch between cb and total spectra"
+    assert np.allclose(pk_cb, pk_total, rtol=1e-12, atol=1e-15), (
+        "CB spectrum should equal total matter spectrum when N_ncdm == 0"
+    )
+
+
+def test_matter_power_spectrum_cb_with_neutrinos(mgclass_lin_perturb_instance_nu):
+    """
+    With massive neutrinos present, check that the CB spectrum:
+      * has the correct (nz, nk) shape,
+      * matches the low‑level MGCLASS `pk_cb` values for a few random points.
+    """
+
+    zs = np.array([0.0, 0.5, 1.0])
+    ks = np.logspace(-3, 1, 20)
+
+    pk_cb = mgclass_lin_perturb_instance_nu.matter_power_spectrum_cb(zs, ks)
+
+    # Basic shape check
+    assert pk_cb.shape == (len(zs), len(ks)), "Unexpected shape for CB power spectrum"
+
+    # Spot‑check a few random (z, k) entries against the direct MGCLASS call
+    rng = np.random.default_rng(seed=42)
+    for _ in range(5):
+        i = rng.integers(0, len(zs))
+        j = rng.integers(0, len(ks))
+        z_test = zs[i]
+        k_test = ks[j]
+
+        # Direct MGCLASS low‑level call
+        pk_direct = mgclass_lin_perturb_instance_nu.results.pk_cb(k_test, z_test)  # type: ignore[union-attr]
+
+        assert np.isclose(pk_cb[i, j], pk_direct, rtol=1e-12, atol=1e-15), (
+            f"Mismatch at z={z_test}, k={k_test}"
+        )
+
+
+@pytest.fixture
+def mgclass_nonlin_perturb_instance(mgclass_background_instance):
+    """
+    Fixture that builds a fully‑initialised MGCLASSLinearPerturbations instance.
+    It re‑uses the existing `mgclass_cosmo` background fixture (if you already have
+    one) or creates a fresh MGCLASSCosmology object with default parameters.
+    """
+    # ----- redshift & k grid -----------------------------------------
+    zs = np.array([0.0, 0.5, 1.0])  # a few test redshifts
+    # The perturbations mgclass itself will set its own k‑grid, so we just
+    # pass the redshifts here.
+
+    # ----- instantiate perturbations ---------------------------------
+    pert = MGCLASSNonLinearPerturbations(
+        background=mgclass_background_instance, redshifts=zs
+    )
+
+    return pert
+
+
+@pytest.fixture
+def mgclass_nonlin_perturb_instance_nu(mgclass_background_instance):
+    """
+    Fixture that builds a fully‑initialised MGCLASSLinearPerturbations instance.
+    It re‑uses the existing `mgclass_cosmo` background fixture (if you already have
+    one) or creates a fresh MGCLASSCosmology object with default parameters.
+    """
+    # ----- redshift & k grid -----------------------------------------
+    zs = np.array([0.0, 0.5, 1.0])  # a few test redshifts
+    # The perturbations mgclass itself will set its own k‑grid, so we just
+    # pass the redshifts here.
+
+    # add neutrinos:
+    mgclass_background_instance.interface_args["MGCLASSparams"]["N_ncdm"] = 1
+    mgclass_background_instance.interface_args["MGCLASSparams"]["m_ncdm"] = 0.2
+    # ----- instantiate perturbations ---------------------------------
+    pert = MGCLASSNonLinearPerturbations(
+        background=mgclass_background_instance, redshifts=zs
+    )
+
+    return pert
+
+
+def test_nl_matter_power_spectrum_cb_no_neutrinos(mgclass_nonlin_perturb_instance):
+    """
+    Verify that with N_ncdm == 0 the CB power spectrum raises a warning!
+    """
+    import warnings
+
+    # Ensure the perturbation object is in the “no‑neutrino” configuration.
+    # (The fixture may already provide this; otherwise we explicitly set it.)
+    mgclass_nonlin_perturb_instance.interface_args["MGCLASSparams"]["N_ncdm"] = 0
+
+    zs = np.array([0.0, 0.5, 1.0])
+    ks = np.logspace(-3, 1, 15)  # 15 k‑values spanning 10⁻³–10¹ Mpc⁻¹
+
+    # Expected: ordinary matter power spectrum
+    mgclass_nonlin_perturb_instance.matter_power_spectrum(zs, ks)
+
+    # CB spectrum – should trigger the warning and fall back to pk_total
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        mgclass_nonlin_perturb_instance.matter_power_spectrum_cb(zs, ks)
+
+        # Verify the warning was emitted
+        assert any("no massive neutrinos" in str(warn.message) for warn in w), (
+            "Expected warning about N_ncdm == 0 not raised"
+        )
+
+
+def test_nl_matter_power_spectrum_cb_with_neutrinos(mgclass_nonlin_perturb_instance_nu):
+    """
+    With massive neutrinos present, check that the CB spectrum:
+      * has the correct (nz, nk) shape,
+      * matches the low‑level MGCLASS `pk_cb` values for a few random points.
+    """
+
+    zs = np.array([0.0, 0.5, 1.0])
+    ks = np.logspace(-3, 1, 20)
+
+    pk_cb = mgclass_nonlin_perturb_instance_nu.matter_power_spectrum_cb(zs, ks)
+
+    # Basic shape check
+    assert pk_cb.shape == (len(zs), len(ks)), "Unexpected shape for CB power spectrum"
+
+    # Spot‑check a few random (z, k) entries against the direct MGCLASS call
+    rng = np.random.default_rng(seed=42)
+    for _ in range(5):
+        i = rng.integers(0, len(zs))
+        j = rng.integers(0, len(ks))
+        z_test = zs[i]
+        k_test = ks[j]
+
+        # Direct MGCLASS low‑level call
+        pk_direct = mgclass_nonlin_perturb_instance_nu.results.pk_cb(k_test, z_test)  # type: ignore[union-attr]
+
+        assert np.isclose(pk_cb[i, j], pk_direct, rtol=1e-12, atol=1e-15), (
+            f"Mismatch at z={z_test}, k={k_test}"
+        )

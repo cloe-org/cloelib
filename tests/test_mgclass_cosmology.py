@@ -326,7 +326,9 @@ def mgclass_lin_perturb_instance(mgclass_background_instance):
     # pass the redshifts here.
 
     # ----- instantiate perturbations ---------------------------------
-    pert = MGCLASSLinearPerturbations(background=mgclass_background_instance, redshifts=zs)
+    pert = MGCLASSLinearPerturbations(
+        background=mgclass_background_instance, redshifts=zs
+    )
 
     return pert
 
@@ -347,7 +349,9 @@ def mgclass_lin_perturb_instance_nu(mgclass_background_instance):
     mgclass_background_instance.interface_args["MGCLASSparams"]["N_ncdm"] = 1
     mgclass_background_instance.interface_args["MGCLASSparams"]["m_ncdm"] = 0.2
     # ----- instantiate perturbations ---------------------------------
-    pert = MGCLASSLinearPerturbations(background=mgclass_background_instance, redshifts=zs)
+    pert = MGCLASSLinearPerturbations(
+        background=mgclass_background_instance, redshifts=zs
+    )
 
     return pert
 

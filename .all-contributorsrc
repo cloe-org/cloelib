@@ -575,6 +575,16 @@
         "maintenance",
         "ideas"
       ]
+    },
+    {
+      "login": "inigosaezcasares",
+      "name": "Iñigo Sáez Casares",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56702840?v=4",
+      "profile": "https://github.com/inigosaezcasares",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
     }
   ]
 }

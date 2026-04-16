@@ -1,29 +1,7 @@
-"""Implementation of nonlinear perturbations using EuclidEmulator2.
-
-## Design
-
-**``EE2NonLinearBoostMixin``** — concrete subclass of the abstract
-``NonLinearBoostMixin`` (defined in ``cosmology.py``).  Provides
-``nonlinear_boost`` by calling EuclidEmulator2 and building a 2-D
-spline interpolator over the extended (z, log k) grid.  Also provides a
-custom ``matter_power_spectrum_cb`` that applies the EE2 boost with the
-approximation that neutrinos remain linear.
-
-**``EE2NonLinearPerturbations``** — pre-composed class produced by
-:func:`~cloelib.cosmology.cosmology.with_nonlinear_boost`.  Equivalent to::
-
-    EE2NonLinearPerturbations = with_nonlinear_boost(
-        CAMBLinearPerturbations, EE2NonLinearBoostMixin
-    )
-"""
+"""Implementation of Background and Perturbation cosmology using EuclidEmulator2."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import (
-    Background,
-    NonLinearBoostMixin,
-    with_nonlinear_boost,
-)
-from cloelib.cosmology.camb_cosmology import CAMBLinearPerturbations
+from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
@@ -42,34 +20,27 @@ except ImportError:
     raise ImportError("EuclidEmulator2 could not be imported or initialised.")
 
 
-class EE2NonLinearBoostMixin(NonLinearBoostMixin):
-    """Mixin that provides the EuclidEmulator2 nonlinear boost B(k; z).
+class EE2NonLinearPerturbations:
+    """Class for nonlinear perturbations using EE2, compatible with the Perturbations protocol."""
 
-    Designed to be composed with a linear perturbations class via
-    :func:`~cloelib.cosmology.cosmology.with_nonlinear_boost`::
+    def __init__(
+        self,
+        background: Background,
+        linearperturbations: Perturbations,
+        redshifts: np.ndarray,
+    ):
+        """Initialize the EE2NonLinearPerturbations instance."""
+        assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
-        from cloelib.cosmology.cosmology import with_nonlinear_boost
-        from cloelib.cosmology.camb_cosmology import CAMBLinearPerturbations
+        redshift_max = ee2.z_max
+        self.z = redshifts[redshifts <= redshift_max]
 
-        MyEE2Perturbations = with_nonlinear_boost(
-            CAMBLinearPerturbations, EE2NonLinearBoostMixin
-        )
-        pert = MyEE2Perturbations(background, redshifts)
+        self.background = background
+        self.linearperturbations = linearperturbations
 
-    ``__init__`` reads ``self.background``, ``self.k``, and ``self.z`` from
-    the already-initialised linear base class, so it must be called **after**
-    the linear class ``__init__``.  The factory :func:`with_nonlinear_boost`
-    guarantees this ordering automatically.
-
-    Also provides a custom ``matter_power_spectrum_cb`` implementing the
-    approximation that neutrinos remain linear (P_mnν replaced by the linear
-    spectrum).
-    """
-
-    def __init__(self):
         hubble = self.background.H0 / 100
 
-        params_ee2 = {
+        self.params_ee2 = {
             "Omega_b": self.background.Omega_b0,
             "Omega_m": self.background.Omega_m(0),
             "h": hubble,
@@ -83,27 +54,27 @@ class EE2NonLinearBoostMixin(NonLinearBoostMixin):
         ee2_bounds = ee2.bounds
 
         # At the moment we raise an error when out of range. May decide to extrapolate later
-        for key in params_ee2:
-            if np.prod(params_ee2[key] - np.array(ee2_bounds[key])) > 0:
+        for key in self.params_ee2.keys():
+            if np.prod(self.params_ee2[key] - np.array(ee2_bounds[key])) > 0:
                 raise ValueError("EE2 out of range.")
+            else:
+                continue
 
-        redshift_max = ee2.z_max
-        zvals = self.z[self.z <= redshift_max]
+        k_emu, boost = ee2.get_boost(self.params_ee2, self.z)
 
-        k_emu, boost = ee2.get_boost(params_ee2, zvals)
         k_emu = k_emu * hubble
 
-        boost_arr = np.array([boost[i] for i in range(len(zvals))])
+        boost_arr = np.array([boost[i] for i in range(len(self.z))])
 
         # Here only the method using interpolators will work in general
         k_out, z_out, boost_out = extend_spectra(
             k_emu,
-            zvals,
+            self.z,
             boost_arr,
             flag_range=True,
             option_wavenumber="power_law",
             option_redshift="power_law",
-            extrap_z=self.z,
+            extrap_z=redshifts,
             option_cosmo="const",
             ns=self.background.ns,
         )
@@ -111,62 +82,117 @@ class EE2NonLinearBoostMixin(NonLinearBoostMixin):
         self.boost_interp = interpolate.RectBivariateSpline(
             z_out, np.log(k_out), boost_out, kx=1, ky=1
         )
-        # Update z to the extended grid used for the boost interpolator
+
+        # outputed k is different from k_out above to improve k sampling when
+        # later using the interpolator above for the C_ell calculation.
+        # This may be changed if C_ell calculation is modified.
+        self.k = linearperturbations.k
         self.z = z_out
 
-    def nonlinear_boost(self, zs, ks) -> np.ndarray:
-        r"""Return the EE2 nonlinear boost B(k, z) = P_NL / P_lin.
+    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+        r"""Compute the total matter power spectrum.
 
         Parameters
         ----------
-        zs : np.ndarray
-            Redshifts.
-        ks : np.ndarray
-            Wavenumbers in Mpc\ :sup:`-1`.
+        ks: numpy.ndarray
+            Wave number in h Mpc^{-1}
+
+        zs: numpy.ndarray
+            redshifts
 
         Returns
         -------
-        np.ndarray
-            Boost array of shape (nz, nk).
+        pk: numpy.ndarray
+            Total matter power spectrum at the specified scale
+            and redshift
+
         """
-        return self.boost_interp(zs, np.log(ks))
+        return self.boost_interp(
+            zs, np.log(ks)
+        ) * self.linearperturbations.matter_power_spectrum(zs, ks)
 
     def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
-        r"""Compute the CDM+baryons power spectrum with the EE2 boost.
-
-        Uses the approximation that neutrinos remain linear and
-        :math:`P_{m\nu}` is replaced by the linear calculation.
+        r"""Compute the CDM+baryons power spectrum.
 
         Parameters
         ----------
-        zs : np.ndarray
-            Redshifts.
-        ks : np.ndarray
-            Wavenumbers in Mpc\ :sup:`-1`.
+        ks: numpy.ndarray
+            Wave number in h Mpc^{-1}
+
+        zs: numpy.ndarray
+            redshifts
 
         Returns
         -------
-        np.ndarray
-            CDM+baryons power spectrum at the specified scale and redshift.
+        pk: numpy.ndarray
+            CDM+baryons power spectrum at the specified scale
+            and redshift
+
         """
-        Pcb_L = self._linear_pk_cb(zs, ks)
-        Pmm_L = self._linear_pk(zs, ks)
+
+        # I use the approximation (used e.g. in Bacco) that
+        # neutrinos are linear and P_{m\nu} is replaced by linear calculation.
+        Pcb_L = self.linearperturbations.matter_power_spectrum_cb(zs, ks)
+        Pmm_L = self.linearperturbations.matter_power_spectrum(zs, ks)
         boost = self.boost_interp(zs, np.log(ks))
         f_cb = (
             self.background.Omega_cdm0 + self.background.Omega_b0
         ) / self.background.Omega_m(0)
+
         return Pcb_L + (boost - 1) * Pmm_L / f_cb**2
 
+    def growth_factor(self, zs, ks) -> np.ndarray:
+        r"""
+        Calculate the growth factor for given redshifts and wavenumbers.
 
-#: EE2 nonlinear perturbations pre-composed via
-#: :func:`~cloelib.cosmology.cosmology.with_nonlinear_boost`.
-#: Equivalent to
-#: ``with_nonlinear_boost(CAMBLinearPerturbations, EE2NonLinearBoostMixin)``.
-#: Growth factor, growth rate, and sigma8 are inherited from
-#: ``CAMBLinearPerturbations``.
-EE2NonLinearPerturbations = with_nonlinear_boost(
-    CAMBLinearPerturbations, EE2NonLinearBoostMixin
-)
+        .. math::
+            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+            /P_{\rm \delta\delta}(z=0, k)}\\
+
+        and normalizes as for :math:`D(z)/D(0)`.
+
+        We use here the growth from the fluctuations without baryons.
+
+        Parameters:
+        -----------
+        zs : array_like
+            Redshifts at which to calculate the growth factor.
+        ks : array_like
+            Wavenumbers at which to calculate the growth factor.
+
+        Returns:
+        --------
+        np.ndarray
+            The growth factor as a function of redshift and wavenumber.
+        """
+
+        return self.linearperturbations.growth_factor(zs, ks)
+
+    def growth_rate(self) -> np.ndarray:
+        """
+        Calculate the growth rate for given redshifts and wavenumbers.
+
+        We use here the growth from the fluctuations without baryons.
+
+        Returns:
+        --------
+        np.ndarray
+            The growth rate as a function of redshift and wavenumber.
+        """
+
+        return self.linearperturbations.growth_rate()
+
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+
+        return self.linearperturbations.sigma8_0()
 
 
 def _set_neutrino_masses(background: Background) -> float:

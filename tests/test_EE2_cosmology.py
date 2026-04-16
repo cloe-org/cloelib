@@ -2,7 +2,10 @@ import pytest
 import numpy as np
 
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.cosmology.camb_cosmology import CAMBBackground
+from cloelib.cosmology.camb_cosmology import (
+    CAMBBackground,
+    CAMBLinearPerturbations,
+)
 from cloelib.cosmology.EE2_cosmology import EE2NonLinearPerturbations
 
 
@@ -38,10 +41,14 @@ def zs(scope="module"):
 
 @pytest.fixture
 def EE2_perturbation_instance(camb_background_instance, zs, scope="module"):
-    """Fixture to create an EE2NonLinearPerturbations instance."""
-    return EE2NonLinearPerturbations(
+    """Fixture to create the Linear instances of CAMBPerturbations."""
+    camb_lin = CAMBLinearPerturbations(
         background=camb_background_instance, redshifts=zs
     )
+    EE2_non = EE2NonLinearPerturbations(
+        background=camb_background_instance, linearperturbations=camb_lin, redshifts=zs
+    )
+    return EE2_non
 
 
 def test_EE2_perturbation_implements_protocol(EE2_perturbation_instance):

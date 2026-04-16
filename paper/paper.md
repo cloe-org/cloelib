@@ -126,10 +126,9 @@ authors:
   - name: Casper Vedder
     orcid: 0000-0000-0000-0000
     affiliation: 39
-  - name: Angus H. Wright
+  - name: Angus H. Wright, on behalf of the Euclid Consortium
     orcid: 0000-0000-0000-0000
     affiliation: 40
-  - name: on behalf of the Euclid Consortium
 affiliations:
   - name: University of Waterloo, Canada
     index: 1
@@ -295,7 +294,7 @@ nonlinear_pk = jax_nonlinear.matter_power_spectrum(z, ks)
 
 ## Photometric Observables
 
-\texttt{cloelib} excels at computing observables for photometric surveys, including galaxy clustering and cosmic shear including state-of-the art modelling of systematics:
+\texttt{cloelib} excels at computing observables for photometric surveys, such as galaxy clustering and cosmic shear, and features state-of-the-art modelling of systematics:
 
 ```python
 from cloelib.observables.photo import ShearTracer, PositionsTracer
@@ -486,6 +485,12 @@ disable_profiling()
 ```
 
 This lightweight profiling infrastructure allows users to optimize their analysis pipelines by understanding where computational time is spent across different backends and observable calculations.
+
+# Documentation
+
+Comprehensive documentation for \texttt{cloelib} is available at [cloe-org.github.io/cloelib/dev/home/](https://cloe-org.github.io/cloelib/dev/home/). The documentation includes detailed API references, installation instructions, explanations about the software structure, and guides for integrating cloelib into your analysis pipelines.
+
+For practical demonstrations, example scripts, and interactive tutorials, visit the [cloe-org/playgroud](https://github.com/cloe-org/playgroud) repository, which hosts a collection of Jupyter notebooks showcasing typical use cases and advanced features.
 
 # Author Contributions
 

@@ -296,10 +296,11 @@ def test_Omega_cb_returns_Om_b_plus_Om_cdm(mgclass_background_instance):
     # A set of redshifts (including z=0) to test the vectorised path
     zs = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
 
-    # Reference values directly from CLASS
-    Om_b = mgclass_background_instance.results.Om_b(zs)
-    Om_cdm = mgclass_background_instance.results.Om_cdm(zs)
-    expected = Om_b + Om_cdm
+    # Reference values from MGCLASS
+    Om_b = mgclass_background_instance.results.Omega_b()
+    Om_cdm = mgclass_background_instance.results.Omega_cdm()
+    H = mgclass_background_instance.hubble_parameter(zs)
+    expected = (Om_b + Om_cdm)*(1.0+zs)**3.0/H**0.5
 
     # Call the wrapper under test
     omega_cb = mgclass_background_instance.Omega_cb(zs)
@@ -308,7 +309,7 @@ def test_Omega_cb_returns_Om_b_plus_Om_cdm(mgclass_background_instance):
     assert isinstance(omega_cb, np.ndarray)
     assert omega_cb.shape == zs.shape
 
-    # Verify element‑wise equality to CLASS precision
+    # Verify element‑wise equality to MGCLASS precision
     assert np.allclose(omega_cb, expected, rtol=1e-12, atol=1e-15)
 
 

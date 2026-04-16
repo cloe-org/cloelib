@@ -275,14 +275,14 @@ class MGCLASSBackground:
         try:
             Omegacb = np.array(
                 [
-                    (self.results.Omega_b(z) + self.results.Omega_cdm(z))
+                    (self.results.Omega_b() + self.results.Omega_cdm())
                     * (1 + z) ** 3.0
                     / self.hubble_parameter(z) ** 0.5
                     for z in zs
                 ]
             )
         except TypeError:
-            (self.results.Omega_b(zs) + self.results.Omega_cdm(zs)) * (
+            (self.results.Omega_b() + self.results.Omega_cdm()) * (
                 1 + zs
             ) ** 3.0 / self.hubble_parameter(zs) ** 0.5
         return Omegacb
@@ -316,7 +316,7 @@ class MGCLASSBackground:
         try:
             Omegab = np.array(
                 [
-                    self.results.Omega_b(z)
+                    self.results.Omega_b()
                     * (1 + z) ** 3.0
                     / self.hubble_parameter(z) ** 0.5
                     for z in zs
@@ -324,7 +324,7 @@ class MGCLASSBackground:
             )
         except TypeError:
             Omegab = (
-                self.results.Omega_b(zs)
+                self.results.Omega_b()
                 * (1 + zs) ** 3.0
                 / self.hubble_parameter(zs) ** 0.5
             )

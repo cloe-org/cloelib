@@ -55,7 +55,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 11
   - name: Carmelita Carbone
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0003-0125-3563
     affiliation: 12
   - name: Chaitanya Chawak
     orcid: 0000-0000-0000-0000
@@ -64,8 +64,8 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 14
   - name: Martin Crocce
-    orcid: 0000-0000-0000-0000
-    affiliation: 15
+    orcid: 0000-0002-9745-6228
+    affiliation: 14
   - name: Stefano Davini
     orcid: 0000-0000-0000-0000
     affiliation: 16
@@ -168,7 +168,10 @@ authors:
   - name: Angus H. Wright
     orcid: 0000-0000-0000-0000
     affiliation: 40
-  - name: Miguel Zumalacarregui, on behalf of the Euclid Consortium
+  - name: Miguel Zumalacarregui
+    orcid: 0000-0000-0000-0000
+    affiliation:
+  - name: Joe Zuntz, on behalf of the Euclid Consortium
     orcid: 0000-0000-0000-0000
     affiliation:
 affiliations:
@@ -194,11 +197,11 @@ affiliations:
     index: 10
   - name: TBD
     index: 11
-  - name: TBD
+  - name: INAF - Institute of Space Astrophysics and Cosmic Physics (IASF Milano), Via Corti 12, I-20133 Milano (MI), Italy
     index: 12
   - name: TBD
     index: 13
-  - name: TBD
+  - name: Institute of Space Sciences (ICE, CSIC), Campus UAB, Carrer de Can Magrans, s/n, 08193 Barcelona, Spain
     index: 14
   - name: TBD
     index: 15
@@ -496,16 +499,9 @@ The `JAXBackground` and `JAXLinearPerturbations`/`JAXNonLinearPerturbations` cla
 
 ## Computational times
 
-We provide below
+\texttt{cloelib} exhibits performance comparable to other tools available in the community, despite being implemented exclusively in Python. The computational cost of the `Background`-compatible classes is negligible (effectively instantaneous), whereas the runtime of the `Perturbation`-compatible classes depends on the choice of backend, namely whether a Boltzmann solver or an emulator is employed.
 
-| Backend / Emulator | Observable Type | Runtime (s) | Memory Usage (MB) |
-| ------------------ | --------------- | ----------- | ----------------- |
-| CAMB               | Cell            |             |                   |
-| CAMB               | $\xi$           |             |                   |
-| CLASS              | Cell            |             |                   |
-| HMCode2020Emu      | Cell            |             |                   |
-| COMET              | Pell            |             |                   |
-| CosmoPower         | Cell            |             |                   |
+Below, we provide representative estimates of the computational time required to evaluate key cosmological observables. These comprise photometric probes—cosmic shear, photometric galaxy clustering, and galaxy–galaxy lensing—calculated in both harmonic space (angular power spectra) and real space (two-point correlation functions). We also present corresponding estimates for full-shape analyses of spectroscopic galaxy clustering, in both Fourier space (Legendre multipoles) and configuration space (two-point correlation functions), utilising `comet-emu` as the backend. For all cases, \texttt{CAMB} is employed to compute `Background` quantities, while for photometric probes, `HMCode2020emu` is used as the `Perturbations` backend.
 
 ## Performance Profiling
 

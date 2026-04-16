@@ -10,9 +10,9 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
     { name = "M. Bonici", email = "marco.bonici@uwaterloo.ca" },
-    { name = "G. Cañas-Herrera", email = "guadalupe.canasherrera@esa.int" },
-    { name = "P. Carrilho", email = "pedro.carrilho@ed.ac.uk" },
-    { name = "S. Casas", email = "casas@physik.rwth-aachen.de" },
+    { name = "G. Cañas-Herrera", email = "canasherrera@strw.leidenuniv.nl" },
+    { name = "P. Carrilho", email = "p.carrilho@herts.ac.uk" },
+    { name = "S. Casas", email = "s.casas@protonmail.com" },
     { name = "C. Moretti", email = "cmoretti@sissa.it" },
     { name = "A. Pezzotta", email = "andrea.pezzotta@inaf.it" }
 ]
@@ -41,6 +41,8 @@ pylevin = ["pylevin"]
 mpmath = ["mpmath"]
 tensorflow = ["tensorflow"]
 tf-keras = ["tf-keras"]
+cosmopower-jax=["cosmopower-jax"]
+baccoemu = ["baccoemu"]
 
 [tool.hatch.version]
 source = "vcs"

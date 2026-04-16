@@ -8,6 +8,7 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 import numpy as np
 import copy
 from typing import Optional, Union, Sequence
+import warnings
 
 # Cosmology imports
 try:

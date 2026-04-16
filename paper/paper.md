@@ -94,10 +94,10 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 20
   - name: Laila Linke
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-2622-8113
     affiliation: 21
   - name: Arthur Loureiro
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-4371-0876
     affiliation: 22
   - name: Dida Markovic
     orcid: 0000-0000-0000-0000
@@ -215,9 +215,9 @@ affiliations:
     index: 19
   - name: TBD
     index: 20
-  - name: TBD
+  - name: Universität Innsbruck, Institut für Astro- und Teilchenphysik, Technikerstr. 25/8, 6020 Innsbruck, Austria
     index: 21
-  - name: TBD
+  - name: OskarKlein Centre for Cosmoparticle Physics, Department of Physics, Stockholm University, Stockholm, SE-106 91, Sweden
     index: 22
   - name: TBD
     index: 23

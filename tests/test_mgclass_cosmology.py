@@ -150,6 +150,7 @@ def test_mgclass_omega_m(mgclass_background_instance, zs):
     assert result.ndim == 1
     assert len(result) == len(zs)
 
+
 def test_class_omega_b(mgclass_background_instance, zs):
     """Test Omega_b.
 
@@ -163,6 +164,7 @@ def test_class_omega_b(mgclass_background_instance, zs):
     assert result.ndim == 1
     assert len(result) == len(zs)
     assert np.abs(result[0] - mgclass_background_instance.Omega_b0) < 1e-4
+
 
 @pytest.mark.parametrize("units", ["1/Mpc", "km/s/Mpc"])
 def test_mgclass_hubble_parameter(mgclass_background_instance, zs, units):
@@ -283,6 +285,7 @@ def test_mgclass_sigma8_consistency_linear_vs_nonlinear(
     )
     assert np.abs(mgclass_lin.sigma8_0() - mgclass_non.sigma8_0()) < 1e-3
 
+
 def test_Omega_cb_returns_Om_b_plus_Om_cdm(mgclass_background_instance):
     """
     Ensure that `Omega_cb(zs)` correctly returns the sum
@@ -307,6 +310,7 @@ def test_Omega_cb_returns_Om_b_plus_Om_cdm(mgclass_background_instance):
 
     # Verify element‑wise equality to CLASS precision
     assert np.allclose(omega_cb, expected, rtol=1e-12, atol=1e-15)
+
 
 ###########################
 # PERTURBATIONS UNIT TESTS

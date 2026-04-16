@@ -326,7 +326,7 @@ class MGCLASSBackground:
             Omegab = (
                 self.results.Omega_b()
                 * (1 + zs) ** 3.0
-                / (self.hubble_parameter(z) / self.results.H0) ** 0.5
+                / (self.hubble_parameter(zs) / self.results.H0) ** 0.5
             )
         return Omegab
 

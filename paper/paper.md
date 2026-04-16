@@ -87,6 +87,9 @@ authors:
   - name: Ryusei Kano
     orcid: 0000-0000-0000-0000
     affiliation: 10
+  - name: Felicitas Keil
+    orcid: 0000-0000-0000-0000
+    affiliation: 10
   - name: Raphael Kou
     orcid: 0000-0000-0000-0000
     affiliation: 20
@@ -255,7 +258,7 @@ bibliography: paper.bib
 
 # Summary
 
-    exttt{cloelib}, [cloe-org/cloelib](https://github.com/cloe-org/cloelib), is a Python library developed to compute cosmological observables within the Cosmology Likelihood for Observables in Euclid (\texttt{CLOE}) project\footnote{\href{https://github.com/cloe-org}{https://github.com/cloe-org}}. As cosmology enters a precision era driven by galaxy survey missions such as _Euclid_, there is a growing need for flexible, efficient, and differentiable software capable of supporting next-generation inference pipelines. \texttt{cloelib} addresses these demands through a modular architecture that interfaces seamlessly with established Boltzmann solvers whilst incorporating JAX-based automatic differentiation to enable gradient-based methods. The library defines consistent protocols for background evolution, perturbations, and non-linear structure formation, and supports a wide range of observables, including photometric and spectroscopic large-scale structure probes, as well as cross-correlations with the Cosmic Microwave Background and galaxy clusters. In its finalised form, \texttt{cloelib} is intended to serve as the reference theory computation infrastructure for Euclid's first cosmological release, bridging traditional numerical cosmology with modern optimisation techniques and emerging machine learning approaches to inference.
+\texttt{cloelib}, [cloe-org/cloelib](https://github.com/cloe-org/cloelib), is a Python library developed to compute cosmological observables within the Cosmology Likelihood for Observables in Euclid (\texttt{CLOE}) project\footnote{\href{https://github.com/cloe-org}{https://github.com/cloe-org}}. As cosmology enters a precision era driven by galaxy survey missions such as _Euclid_, there is a growing need for flexible, efficient, and differentiable software capable of supporting next-generation inference pipelines. \texttt{cloelib} addresses these demands through a modular architecture that interfaces seamlessly with established Boltzmann solvers whilst incorporating JAX-based automatic differentiation to enable gradient-based methods. The library defines consistent protocols for background evolution, perturbations, and non-linear structure formation, and supports a wide range of observables, including photometric and spectroscopic large-scale structure probes, as well as cross-correlations with the Cosmic Microwave Background and galaxy clusters. In its finalised form, \texttt{cloelib} is intended to serve as the reference theory computation infrastructure for Euclid's first cosmological release, bridging traditional numerical cosmology with modern optimisation techniques and emerging machine learning approaches to inference.
 
 # Statement of need
 
@@ -263,7 +266,7 @@ The field of observational cosmology is undergoing a rapid transformation, drive
 
 In this context, \texttt{cloelib} represents a natural evolution of the structural formalism originally developed in the Cosmology Likelihood for Observables in Euclid (\texttt{CLOE}) software, extending it towards more advanced use cases and significantly enhanced capabilities beyond those presented in [@EP-CLOE2]. The original \texttt{CLOE}\footnote{\href{https://github.com/cloe-org/CLOE}{https://github.com/cloe-org/CLOE}} has played a central role in numerous Euclid analyses—see @Euclid:2024, @EP-CLOE3, @EP-CLOE4, @EP-CLOE5, @EP-CLOE6—demonstrating its robustness and scientific impact. However, the increasing complexity, scale, and methodological demands of next-generation cosmological analyses, as well as the possible combination of all these datasets, have exposed structural limitations in its original design. Notably, \texttt{CLOE} was not conceived with the level of modularity, extensibility, and interoperability now required to efficiently address the broader landscape of theoretical models and systematic effects demanded by the incoming datasets. As a result, a substantial restructuring became necessary to meet these new challenges. \texttt{cloelib} builds directly on the conceptual and practical foundations laid by \texttt{CLOE}, whilst introducing a redesigned architecture that enables greater flexibility, scalability, and integration of heterogeneous components. In doing so, it provides a forward-looking framework tailored to the demands of next-generation precision cosmology.
 
-Similarly to \texttt{CCL} [@pyccl], \texttt{CosmoSIS} [@CosmoSIS], \texttt{CAMB} [@Lewis:2000], \texttt{CLASS} [@Blas:2011], CosmoLike [@CosmoLike], and \texttt{CoCoA}\footnote{\href{https://github.com/CosmoLike/cocoa}{https://github.com/CosmoLike/cocoa}}, it supports the computation of large-scale structure probes, including cosmic shear and galaxy clustering, using both photometric and spectroscopic redshifts. Yet, \texttt{cloelib} is the first and only large-scale structure code in the cosmology community to implement a unified interface to multiple cosmological backends using Python protocols. This design enables researchers to seamlessly switch between different theoretical implementations—such as Boltzmann solvers or emulators—without modifying their analysis pipelines or the internal workings of \texttt{cloelib} for computing theoretical predictions. This level of modularity and interoperability is unprecedented, significantly lowering the barrier to the inclusion of other pipelines for rapid experimentation in cosmological analyses.
+Similarly to \texttt{CCL} [@pyccl], \texttt{CosmoSIS} [@CosmoSIS], \texttt{CAMB} [@Lewis:2000], \texttt{CLASS} [@Blas:2011], CosmoLike [@CosmoLike], and \texttt{CoCoA}\footnote{\href{https://github.com/CosmoLike/cocoa}{https://github.com/CosmoLike/cocoa}}, it supports the computation of large-scale structure probes in the form of angular or spatial two-point correlations, such as cosmic shear or spectroscopic power spectrum multipoles. Yet, \texttt{cloelib} is the first and only large-scale structure code in the cosmology community to implement a unified interface to multiple cosmological backends using Python protocols. This design enables researchers to seamlessly switch between different theoretical implementations—such as Boltzmann solvers or emulators—without modifying their analysis pipelines or the internal workings of \texttt{cloelib} for computing theoretical predictions. This level of modularity and interoperability is unprecedented, significantly lowering the barrier to the inclusion of other pipelines for rapid experimentation in cosmological analyses.
 
 Within this protocol-based framework, the library interfaces with several well-established Boltzmann solvers, including CAMB, CLASS, their extensions [e.g., \texttt{hi\\\_class} [@hi_class_1] [@hi_class_2], \texttt{mgclass} II [@Sakr_2022], \texttt{mochi\\\_class} [@mochi_class]], and other non-linear model extensions emulators (i.e: \texttt{ReACT} [@ReACT]). Moreover, it interfaces with \texttt{PBJ} and \texttt{comet-emu} (@Eggemeier:2022, @Pezzotta:2025) for nonlinear spectroscopic galaxy clustering. It also supports state-of-the-art emulators, such as \texttt{CosmoPower} (@SpurioMancini:2021 @Piras23), \texttt{BACCOemu} (@Angulo:2020, @bacco-original, @bacco-full-power, @bacco-emu-baryons, @bacco-euclid), \href{https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper}{\texttt{EuclidEmulator2}} [@EE2], and \texttt{HMCode2020Emu} (@Mead:2021, @Tsedrik2024). These emulators offer orders-of-magnitude speed-ups in cosmological computations whilst maintaining per cent-level accuracy, making them essential tools for modern inference pipelines. This modularity and performance make \texttt{cloelib} particularly well-suited for systematic studies, model comparison, and robust cross-validation of cosmological results.
 
@@ -335,7 +338,7 @@ nonlinear_pk = jax_nonlinear.matter_power_spectrum(z, ks)
 
 ## Photometric Observables
 
-    exttt{cloelib} excels at computing observables for photometric surveys, such as galaxy clustering and cosmic shear, and features state-of-the-art modelling of systematics:
+\texttt{cloelib} excels at computing observables for photometric surveys, such as galaxy clustering and cosmic shear, and features state-of-the-art modelling of systematics:
 
 ```python
 from cloelib.observables.photo import ShearTracer, PositionsTracer
@@ -511,16 +514,16 @@ We provide below
 **Usage example:**
 
 ```python
-from cloelib.profiling import enable_profiling, disable_profiling, profile_function
+from cloelib.profiling import (
+  enable_profiling, disable_profiling, profile_function
+)
 
 enable_profiling()
 set_output("./my_profiles")
-
 @profile_function
 def compute_observables(cosmology):
     # Your computation here
     pass
-
 compute_observables(cosmo)  # Generates profiling_results/cloelib_compute_observables_YYYYMMDD_HHMMSS.html
 disable_profiling()
 ```
@@ -531,7 +534,7 @@ This lightweight profiling infrastructure allows users to optimize their analysi
 
 Comprehensive documentation for \texttt{cloelib} is available at [cloe-org.github.io/cloelib/dev/home/](https://cloe-org.github.io/cloelib/dev/home/). The documentation includes detailed API references, installation instructions, explanations about the software structure, and guides for integrating cloelib into your analysis workflows.
 
-For practical examples, example scripts, and interactive tutorials, visit the [cloe-org/playgroud](https://github.com/cloe-org/playgroud) repository, which hosts a collection of Jupyter notebooks showcasing typical use cases and advanced features.
+For practical examples, example scripts, and interactive tutorials, visit the [cloe-org/playground](https://github.com/cloe-org/playground) repository, which hosts a collection of Jupyter notebooks showcasing typical use cases and advanced features.
 
 # Author Contributions
 

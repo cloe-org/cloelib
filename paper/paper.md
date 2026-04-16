@@ -19,7 +19,7 @@ authors:
     orcid: 0000-0003-1339-0194
     affiliation: 3
   - name: Santiago Casas
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-4751-5138
     affiliation: 4
   - name: Chiara Moretti
     orcid: 0000-0003-3314-8936
@@ -181,7 +181,7 @@ affiliations:
     index: 2
   - name: Centre for Astrophysics Research, University of Hertfordshire, United Kingdom
     index: 3
-  - name: RWTH Aachen University, Germany
+  - name: German Aerospace Center (DLR), Scientific Information, Linder H¨ohe, D-51147 K¨oln, Germany
     index: 4
   - name: INAF - Osservatorio Astronomico di Trieste, Italy
     index: 5

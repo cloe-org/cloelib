@@ -171,10 +171,9 @@ authors:
   - name: Miguel Zumalacarregui
     orcid: 0000-0000-0000-0000
     affiliation:
-  - name: Joe Zuntz
+  - name: Joe Zuntz, on behalf of the Euclid Consortium
     orcid: 0000-0000-0000-0000
     affiliation:
-  - collaboration: on behalf of the Euclid Consortium
 affiliations:
   - name: Waterloo Centre for Astrophysics, University of Waterloo, Waterloo, ON N2L 3G1, Canada
     index: 1
@@ -274,7 +273,7 @@ Similarly to \texttt{CCL} [@pyccl], \texttt{CosmoSIS} [@CosmoSIS], \texttt{CAMB}
 
 Within this protocol-based framework, the library interfaces with several well-established Boltzmann solvers, including \texttt{CAMB}, \texttt{CLASS}, and their extensions [e.g. \texttt{hi\_class} [@hi_class_1; @hi_class_2], \texttt{mgclass} II [@Sakr_2022], \texttt{mochi\_class} [@mochi_class]], as well as other non-linear model extensions and emulators [i.e. \texttt{ReACT} [@ReACT]].
 
-Moreover, it interfaces with \texttt{PBJ} and \texttt{comet-emu} [@Eggemeier:2022; @Pezzotta:2025] for nonlinear spectroscopic galaxy clustering. It also supports state-of-the-art emulators, such as \texttt{CosmoPower} [@SpurioMancini:2021; @Piras23], \texttt{BACCOemu} [@Angulo:2020; @bacco-original; @bacco-full-power; @bacco-emu-baryons; @bacco-euclid; \href{https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper}{\texttt{EuclidEmulator2}} @EE2], and \texttt{HMCode2020Emu} [@Mead:2021; @Tsedrik2024]. These emulators offer orders-of-magnitude speed-ups in cosmological computations whilst maintaining per cent-level accuracy, making them essential tools for modern inference pipelines. This modularity and performance make \texttt{cloelib} particularly well-suited for systematic studies, model comparison, and robust cross-validation of cosmological results.
+Moreover, it interfaces with \texttt{PBJ} and \texttt{comet-emu} [@Eggemeier:2022; @Pezzotta:2025] for nonlinear spectroscopic galaxy clustering. It also supports state-of-the-art emulators, such as \texttt{CosmoPower} [@SpurioMancini:2021; @Piras23], \texttt{BACCOemu} [@Angulo:2020; @bacco-original; @bacco-full-power; @bacco-emu-baryons; @bacco-euclid], \href{https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper}{\texttt{EuclidEmulator2}} [@EE2], and \texttt{HMCode2020Emu} [@Mead:2021; @Tsedrik2024]. These emulators offer orders-of-magnitude speed-ups in cosmological computations whilst maintaining per cent-level accuracy, making them essential tools for modern inference pipelines. This modularity and performance make \texttt{cloelib} particularly well-suited for systematic studies, model comparison, and robust cross-validation of cosmological results.
 
 A key feature of \texttt{cloelib} is its native integration with JAX [@jax2018github], enabling automatic differentiation for cosmological observables, efficient gradient-based computation, and advanced just-in-time (`jit`) compilation. This transforms conventional cosmological pipelines into fully differentiable programmes, making advanced inference techniques—such as Hamiltonian Monte Carlo and neural network-based modelling—readily accessible. Whilst such methods are often difficult to implement efficiently in traditional frameworks, \texttt{cloelib} is designed to facilitate these workflows, offering a robust and flexible platform for developing neural network emulators and exploring new inference methodologies.
 

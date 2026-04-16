@@ -30,15 +30,27 @@ authors:
   - name: Michel Aguena
     orcid: 0000-0000-0000-0000
     affiliation: 7
+  - name: Giovanni Arico
+    orcid: 0000-0000-0000-0000
+    affiliation: 7
   - name: Zahra Baghkhani
     orcid: 0000-0000-0000-0000
     affiliation: 8
   - name: Matteo Baratto
     orcid: 0000-0000-0000-0000
     affiliation: 9
+  - name: Emilio Bellini
+    orcid: 0000-0000-0000-0000
+    affiliation:
+  - name: Klara Bertmann
+    orcid: 0000-0000-0000-0000
+    affiliation:
   - name: Ben Bose
     orcid: 0000-0000-0000-0000
     affiliation: 10
+  - name: Jeger Broxterman
+    orcid: 0000-0000-0000-0000
+    affiliation: 2
   - name: Pierre Burger
     orcid: 0000-0000-0000-0000
     affiliation: 11
@@ -57,15 +69,24 @@ authors:
   - name: Stefano Davini
     orcid: 0000-0000-0000-0000
     affiliation: 16
+  - name: Christopher A. J. Duncan
+    orcid: 0000-0000-0000-0000
+    affiliation: 10
   - name: Samuel Farrens
     orcid: 0000-0000-0000-0000
     affiliation: 17
+  - name: Lisa Goh
+    orcid: 0000-0000-0000-0000
+    affiliation: 10
   - name: Nastassia Grim
     orcid: 0000-0000-0000-0000
     affiliation: 18
   - name: Alex Hall
     orcid: 0000-0000-0000-0000
-    affiliation: 19
+    affiliation: 10
+  - name: Ryusei Kano
+    orcid: 0000-0000-0000-0000
+    affiliation: 10
   - name: Raphael Kou
     orcid: 0000-0000-0000-0000
     affiliation: 20
@@ -87,6 +108,9 @@ authors:
   - name: Gabriele Parimbelli
     orcid: 0000-0000-0000-0000
     affiliation: 26
+  - name: Anna Porredon
+    orcid: 0000-0000-0000-0000
+    affiliation:
   - name: Robert Reischke
     orcid: 0000-0000-0000-0000
     affiliation: 27
@@ -96,12 +120,21 @@ authors:
   - name: Jaime Ruiz Zapatero
     orcid: 0000-0000-0000-0000
     affiliation: 29
+  - name: Iñigo Sáez Casares
+    orcid: 0000-0000-0000-0000
+    affiliation:
   - name: Ziad Sakr
     orcid: 0000-0000-0000-0000
     affiliation: 30
+  - name: Neel Shah
+    orcid: 0000-0000-0000-0000
+    affiliation:
   - name: Davide Sciotti
     orcid: 0000-0000-0000-0000
     affiliation: 31
+  - name: Matthieu Schaller
+    orcid: 0000-0000-0000-0000
+    affiliation: 2
   - name: Ivan Sladoljev
     orcid: 0000-0000-0000-0000
     affiliation: 32
@@ -117,6 +150,9 @@ authors:
   - name: Nicolas Tessore
     orcid: 0000-0000-0000-0000
     affiliation: 36
+  - name: Linus Thummel
+    orcid: 0000-0000-0000-0000
+    affiliation: 10
   - name: Maria Tsedrik
     orcid: 0000-0000-0000-0000
     affiliation: 37
@@ -126,9 +162,12 @@ authors:
   - name: Casper Vedder
     orcid: 0000-0000-0000-0000
     affiliation: 39
-  - name: Angus H. Wright, on behalf of the Euclid Consortium
+  - name: Angus H. Wright
     orcid: 0000-0000-0000-0000
     affiliation: 40
+  - name: Miguel Zumalacarregui, on behalf of the Euclid Consortium
+    orcid: 0000-0000-0000-0000
+    affiliation:
 affiliations:
   - name: University of Waterloo, Canada
     index: 1
@@ -216,7 +255,7 @@ bibliography: paper.bib
 
 # Summary
 
-\texttt{cloelib} is a Python library developed to compute cosmological observables within the Cosmology Likelihood for Observables in Euclid (\texttt{CLOE}) project\footnote{\href{https://github.com/cloe-org}{https://github.com/cloe-org}}. As cosmology enters a precision era driven by galaxy survey missions such as _Euclid_, there is a growing need for flexible, efficient, and differentiable software capable of supporting next-generation inference pipelines. \texttt{cloelib} addresses these demands through a modular architecture that interfaces seamlessly with established Boltzmann solvers whilst incorporating JAX-based automatic differentiation to enable gradient-based methods. The library defines consistent protocols for background evolution, perturbations, and non-linear structure formation, and supports a wide range of observables, including photometric and spectroscopic large-scale structure probes, as well as cross-correlations with the Cosmic Microwave Background and galaxy clusters. In its finalised form, \texttt{cloelib} is intended to serve as the reference theory computation infrastructure for Euclid's first cosmological release, bridging traditional numerical cosmology with modern optimisation techniques and emerging machine learning approaches to inference.
+    exttt{cloelib}, [cloe-org/cloelib](https://github.com/cloe-org/cloelib), is a Python library developed to compute cosmological observables within the Cosmology Likelihood for Observables in Euclid (\texttt{CLOE}) project\footnote{\href{https://github.com/cloe-org}{https://github.com/cloe-org}}. As cosmology enters a precision era driven by galaxy survey missions such as _Euclid_, there is a growing need for flexible, efficient, and differentiable software capable of supporting next-generation inference pipelines. \texttt{cloelib} addresses these demands through a modular architecture that interfaces seamlessly with established Boltzmann solvers whilst incorporating JAX-based automatic differentiation to enable gradient-based methods. The library defines consistent protocols for background evolution, perturbations, and non-linear structure formation, and supports a wide range of observables, including photometric and spectroscopic large-scale structure probes, as well as cross-correlations with the Cosmic Microwave Background and galaxy clusters. In its finalised form, \texttt{cloelib} is intended to serve as the reference theory computation infrastructure for Euclid's first cosmological release, bridging traditional numerical cosmology with modern optimisation techniques and emerging machine learning approaches to inference.
 
 # Statement of need
 
@@ -226,19 +265,21 @@ In this context, \texttt{cloelib} represents a natural evolution of the structur
 
 Similarly to \texttt{CCL} [@pyccl], \texttt{CosmoSIS} [@CosmoSIS], \texttt{CAMB} [@Lewis:2000], \texttt{CLASS} [@Blas:2011], CosmoLike [@CosmoLike], and \texttt{CoCoA}\footnote{\href{https://github.com/CosmoLike/cocoa}{https://github.com/CosmoLike/cocoa}}, it supports the computation of large-scale structure probes, including cosmic shear and galaxy clustering, using both photometric and spectroscopic redshifts. Yet, \texttt{cloelib} is the first and only large-scale structure code in the cosmology community to implement a unified interface to multiple cosmological backends using Python protocols. This design enables researchers to seamlessly switch between different theoretical implementations—such as Boltzmann solvers or emulators—without modifying their analysis pipelines or the internal workings of \texttt{cloelib} for computing theoretical predictions. This level of modularity and interoperability is unprecedented, significantly lowering the barrier to the inclusion of other pipelines for rapid experimentation in cosmological analyses.
 
-Within this protocol-based framework, the library interfaces with several well-established Boltzmann solvers, including CAMB, CLASS, their extensions [e.g., \texttt{hi\\\_class} [@hi_class_1] [@hi_class_2], \texttt{mgclass} II [@Sakr_2022], \texttt{mochi\\\_class} [@mochi_class]], and other non-linear model extensions emulators (i.e: \texttt{ReACT} [@ReACT]). Moreover, it interfaces with \texttt{PBJ} and \texttt{comet-emu} (@Eggemeier:2022, @Pezzotta:2025) for nonlinear spectroscopic galaxy clustering. It also supports state-of-the-art emulators, such as \texttt{CosmoPower} (@SpurioMancini:2021 @Piras23), \texttt{BACCOemu} (@Angulo:2020, @bacco-original, @bacco-full-power, @bacco-emu-baryons, @bacco-euclid), \href{https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper}{\texttt{EuclidEmulator2}} [@EE2], and \texttt{HMCode2020Emu} (@Mead:2021, @Tsedrik2024). These emulators offer orders-of-magnitude speed-ups in cosmological computations whilst maintaining percent-level accuracy, making them essential tools for modern inference pipelines. This modularity and performance make \texttt{cloelib} particularly well-suited for systematic studies, model comparison, and robust cross-validation of cosmological results.
+Within this protocol-based framework, the library interfaces with several well-established Boltzmann solvers, including CAMB, CLASS, their extensions [e.g., \texttt{hi\\\_class} [@hi_class_1] [@hi_class_2], \texttt{mgclass} II [@Sakr_2022], \texttt{mochi\\\_class} [@mochi_class]], and other non-linear model extensions emulators (i.e: \texttt{ReACT} [@ReACT]). Moreover, it interfaces with \texttt{PBJ} and \texttt{comet-emu} (@Eggemeier:2022, @Pezzotta:2025) for nonlinear spectroscopic galaxy clustering. It also supports state-of-the-art emulators, such as \texttt{CosmoPower} (@SpurioMancini:2021 @Piras23), \texttt{BACCOemu} (@Angulo:2020, @bacco-original, @bacco-full-power, @bacco-emu-baryons, @bacco-euclid), \href{https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper}{\texttt{EuclidEmulator2}} [@EE2], and \texttt{HMCode2020Emu} (@Mead:2021, @Tsedrik2024). These emulators offer orders-of-magnitude speed-ups in cosmological computations whilst maintaining per cent-level accuracy, making them essential tools for modern inference pipelines. This modularity and performance make \texttt{cloelib} particularly well-suited for systematic studies, model comparison, and robust cross-validation of cosmological results.
 
 A key innovation of \texttt{cloelib} is its native integration with JAX [@jax2018github], which provides automatic differentiation for cosmological observables and supports efficient, gradient-based computation. This transforms conventional cosmological pipelines into fully differentiable programmes, making advanced inference techniques—such as Hamiltonian Monte Carlo and neural network-based modelling—readily accessible. Whilst such methods are often difficult to implement efficiently in traditional frameworks, \texttt{cloelib} is designed to facilitate these workflows, offering a robust and flexible platform for developing neural network emulators and exploring new inference methodologies.
 
-In addition, \texttt{cloelib} serves the practical needs of both the Euclid collaboration and the wider cosmology community by offering implementations of survey-specific systematics, Alcock–Paczynski corrections, and Baryon Acoustic Oscillation (BAO) feature extraction. The library works seamlessly with `cloelike`, its companion likelihood module, which supports the computation of likelihoods for Euclid observables such as cosmic shear, 2×2pt, and 3×2pt photometric correlations, spectroscopic galaxy clustering and BAO, as well as their combinations [TBD]. Together, these tools enable end-to-end cosmological analyses, covering the full chain from observable computation to likelihood evaluation and posterior sampling for parameter inference.
+In addition, \texttt{cloelib} serves the practical needs of both the Euclid collaboration and the wider cosmology community by offering implementations of survey-specific systematics, such as Alcock–Paczynski corrections, shear and photometric redshift calibration parameters, and spectroscopic purity in surveys. The library works seamlessly with `cloelike`, its companion likelihood module, which supports the computation of likelihoods for Euclid observables such as cosmic shear, 2×2pt, and 3×2pt photometric correlations, spectroscopic galaxy clustering and BAO, as well as their combinations [TBD]. Together, these tools enable end-to-end cosmological analyses, covering the full chain from observable computation to likelihood evaluation and posterior sampling for parameter inference.
 
 Beyond its scientific scope, \texttt{cloelib} is optimised for efficiency, with native source code implementations of theoretical predictions and advanced just-in-time (`jit`) caching mechanisms that accelerate computation rather than hinder it. It also integrates comprehensive testing infrastructure and performance profiling tools, aligned with state-of-the-art software development practices, to ensure reliability and scalability in production-level applications. By combining theoretical flexibility, computational performance, and modern programming standards with an Open Science ethos, \texttt{cloelib} makes a substantial contribution to the computational framework required for precision cosmology and is poised to become a cornerstone for large-scale structure analyses in the decade ahead.
 
 # Design style, architecture and implementation
 
-The architecture of \texttt{cloelib} is built around a clear separation of concerns, organizing functionality into four distinct layers: cosmological backgrounds (e.g., expansion history and distances), perturbation theory (e.g., linear and non-linear matter power spectra), observables (e.g., cosmic shear and galaxy clustering window functions), and summary statistics (e.g., angular power spectra and correlation functions). This layered design allows researchers to flexibly mix and match different theoretical models and numerical approximations, supporting both standard analyses and experimental workflows. For example, users can compute angular power spectra using the Limber approximation with any combination of supported Boltzmann solvers and non-linear models, or define custom window functions for specific survey geometries.
+The architecture of \texttt{cloelib} is built around a clear separation of concerns, organising functionality into four distinct layers: cosmological backgrounds (e.g., expansion history and distances), perturbation theory (e.g., linear and non-linear matter power spectra), observables (e.g., cosmic shear and photometric galaxy clustering window functions, spectroscopic power spectra and BAO), and summary statistics (e.g., angular power spectra and correlation functions). This layered design allows researchers to flexibly mix and match different theoretical models and numerical approximations, supporting both standard analyses and experimental workflows. For example, users can compute angular power spectra using the Limber approximation with any combination of supported Boltzmann solvers and non-linear models, or define custom window functions for specific survey geometries.
 
-Each layer is defined by a Python protocol (PEP 544), enforcing a "plug-and-play" approach to modularity. Concretely, the library is organized into specialized modules: cosmology backends implementing the `Background` and `Perturbations` protocols, observable modules providing window functions and power spectrum interfaces through the `Tracer` and `SpectroPower` protocols, summary statistics for angular correlations and Legendre multipoles, and auxiliary utilities for mathematical operations and caching. Performance-critical sections utilize JAX's just-in-time compilation, while the caching system avoids redundant evaluations across repeated calculations. In this sense, `Background`, `Perturbations`, `Tracer`, and `SpectroPower` are structural interfaces that guarantee type safety and extensibility without relying on inheritance hierarchies. Users can include only the components they need, choose among interchangeable backends, and combine them freely—all without altering the core logic of their pipeline. This architecture ensures robustness, reusability, and ease of experimentation by design.
+Each layer is defined by a Python protocol (PEP 544), enforcing a "plug-and-play" approach to modularity. Concretely, the library is organised into specialised modules: cosmology backends implementing the `Background` and `Perturbations` protocols, observable modules providing window functions and power spectrum interfaces through the `Tracer` and `SpectroPower` protocols, summary statistics for angular correlations and Legendre multipoles, and auxiliary utilities for mathematical operations and caching. The `Perturbations` protocol support Python mixins to enable modular class composition, allowing users to extend or modify matter power spectrum functionality—such as adding Baryonic Boosts—without altering the underlying implementation.
+
+Performance-critical sections utilise JAX's just-in-time compilation, while the caching system avoids redundant evaluations across repeated calculations. In this sense, `Background`, `Perturbations`, `Tracer`, and `SpectroPower` are structural interfaces that guarantee type safety and extensibility without relying on inheritance hierarchies. Users can include only the components they need, choose among interchangeable backends, and combine them freely—all without altering the core logic of their pipeline. This architecture ensures robustness, reusability, and ease of experimentation by design.
 
 The library integrates with the broader Python scientific ecosystem through NumPy and SciPy, while maintaining full compatibility with JAX arrays for differentiable computations. This enables researchers to construct complex, end-to-end analysis pipelines that are simultaneously computationally efficient, maintainable, and—where needed—fully differentiable.
 
@@ -275,7 +316,7 @@ H_z_camb = camb_bg.hubble_parameter(z)
 chi_z_jax = jax_bg.comoving_distance(z)
 ```
 
-This demonstrates how different backends can be used interchangeably, allowing for easy cross-validation of results.
+This demonstrates how different backends can be used interchangeably, allowing for straightforward cross-validation of results.
 
 ## Computing Power Spectra
 
@@ -294,7 +335,7 @@ nonlinear_pk = jax_nonlinear.matter_power_spectrum(z, ks)
 
 ## Photometric Observables
 
-\texttt{cloelib} excels at computing observables for photometric surveys, such as galaxy clustering and cosmic shear, and features state-of-the-art modelling of systematics:
+    exttt{cloelib} excels at computing observables for photometric surveys, such as galaxy clustering and cosmic shear, and features state-of-the-art modelling of systematics:
 
 ```python
 from cloelib.observables.photo import ShearTracer, PositionsTracer
@@ -338,7 +379,7 @@ Cl_galaxy_shear = twopoint.get_Cl(ells, nl=0, ks=ks)
 
 ## Spectroscopic Observables
 
-\texttt{cloelib} computes redshift-space power spectrum multipoles for spectroscopic galaxy clustering via the `SpectroPower` protocol. In this example, we use `comet-emu` for producting perturbation-theory models (`EFT` and `VDG`):
+\texttt{cloelib} computes redshift-space power spectrum multipoles for spectroscopic galaxy clustering via the `SpectroPower` protocol. In this example, we use `comet-emu` for producing perturbation-theory models (`EFT` and `VDG`):
 
 ```python
 from cloelib.observables.CometEFT_spectro import CometEFT_SpectroPower
@@ -373,7 +414,7 @@ Pk_ell = multipoles.power_multipoles(k, ells=np.array([0, 2, 4]))
 # Pk_ell is a dict: {'ell0': array, 'ell2': array, 'ell4': array}
 ```
 
-The same interface is used to compute two-point correlation function multipoles via an FFTLog transform, and to apply survey window function convolutions.
+The same interface is used to compute two-point correlation function multipoles via an FFTLog transform, and to apply convolutions with survey window functions.
 
 ## Protocol Compliance of Interfaces
 
@@ -421,7 +462,7 @@ assert isinstance(camb_lin, Perturbations)
 assert isinstance(class_lin, Perturbations)
 ```
 
-Because both objects conform to the same protocol, any downstream \texttt{cloelib} computation—such as window functions, angular power spectra, or multipoles—can operate on either without requiring modification. This structural approach, rather than relying on inheritance hierarchies, enables the seamless integration of external codes without altering their source. As a result, it provides a straightforward pathway for the community to connect their own tools, provided they adhere to the protocol. In particular, the `Background` and `Perturbations` protocols are compliant with the cosmology.API\footnote{\href{https://cosmology.readthedocs.io/projects/api/latest/}{https://cosmology.readthedocs.io/projects/api/latest/}}.
+Because both objects conform to the same protocol, any downstream \texttt{cloelib} computation—such as window functions, angular power spectra, or multipoles—can operate on either without requiring modification. This structural approach, rather than relying on inheritance hierarchies, enables the seamless integration of external codes without altering their source. As a result, it provides a clear pathway for the community to connect their own tools, provided they comply with the protocol.
 
 ## Automatic Differentiation with JAX
 
@@ -488,25 +529,25 @@ This lightweight profiling infrastructure allows users to optimize their analysi
 
 # Documentation
 
-Comprehensive documentation for \texttt{cloelib} is available at [cloe-org.github.io/cloelib/dev/home/](https://cloe-org.github.io/cloelib/dev/home/). The documentation includes detailed API references, installation instructions, explanations about the software structure, and guides for integrating cloelib into your analysis pipelines.
+Comprehensive documentation for \texttt{cloelib} is available at [cloe-org.github.io/cloelib/dev/home/](https://cloe-org.github.io/cloelib/dev/home/). The documentation includes detailed API references, installation instructions, explanations about the software structure, and guides for integrating cloelib into your analysis workflows.
 
-For practical demonstrations, example scripts, and interactive tutorials, visit the [cloe-org/playgroud](https://github.com/cloe-org/playgroud) repository, which hosts a collection of Jupyter notebooks showcasing typical use cases and advanced features.
+For practical examples, example scripts, and interactive tutorials, visit the [cloe-org/playgroud](https://github.com/cloe-org/playgroud) repository, which hosts a collection of Jupyter notebooks showcasing typical use cases and advanced features.
 
 # Author Contributions
 
 In accordance with JOSS guidelines, we describe individual contributions below. Authors are listed in alphabetical order. All Tier 1 authors are core maintainers of the **cloe-org** organisation, responsible for the long-term sustainability of \texttt{cloelib}, the review of pull requests, and leadership of technical discussions.
 
-- **M. Bonici**: Core architecture and protocol design; implementation of the JAX cosmology backends; lensing tracer kernels (including massive neutrino contributions); correlation function module and performance optimisation; caching system with JAX `lax` conditional compatibility; license and project governance.
+- **M. Bonici**: Core architecture and protocol design; implementation of the JAX cosmology backends; lensing tracer kernels (including massive neutrino contributions); correlation function module and performance optimisation; caching system with JAX `lax` conditional compatibility; licence and project governance.
 - **G. Cañas-Herrera**: Project overview and release management; Core architecture of the software and protocol design; CI pipeline configuration; pre-commit and code-quality tooling; issue and pull-request templates; README, documentation, and community contribution tracking (`all-contributors`); pyproject.toml versioning and release workflows.
 - **P. Carrilho**: Photometric observable module linear galaxy bias models with JAX-compatible conditional logic; HMCode2020Emu baryonic feedback support and further extrapolation support; CAMB dark-energy model configuration (PPF); mixing-matrix and pseudo-$C_\ell$ corrections; `interpax`-based interpolation in the extrapolator; growth-rate and matter power spectrum redshift/scale interfaces, implementation of EuclidEmulator2.
 - **S. Casas**: Implementation of the CLASS cosmology backend and its integration with the `Background` and `Perturbations` protocols; fixes to transverse-distance computations across CAMB, CLASS, and JAX backends; cosmology protocol refinements; CI pipeline and dependency updates.
 - **C. Moretti**: Spectroscopic analysis infrastructure: PBJ interface and RSD power spectrum fixes; BAO $\alpha$-parameter module and Alcock–Paczynski distortion utilities; extraction of $r_\mathrm{drag}$ from the background for BAO analyses; Legendre multipole summary statistics; version management and repository clean-up of deprecated directories.
 - **A. Pezzotta**: Spectroscopic analysis infrastructure: \texttt{comet-emu} interface and EFT and VDG spectroscopic power spectrum implementations; survey window-function convolution of power spectrum building blocks; Legendre multipole computation optimisation (`np.einsum`); documentation of the spectroscopic observable interface.
 
-The contributions of all remaining authors have been tracked using the [all-contributors](https://github.com/all-contributors/all-contributors) bot, following the specification of the same name. A full, categorised breakdown of each contributor's role—including code, documentation, testing, ideas, project management, and more—is available in the `README` of the \texttt{cloelib} repository, full portraited within the \texttt{cloelib} docs.
+The contributions of all remaining authors have been tracked using the [all-contributors](https://github.com/all-contributors/all-contributors) bot, following the specification of the same name. A full, categorised breakdown of each contributor's role—including code, documentation, testing, ideas, project management, and more—is available in the `README` of the \texttt{cloelib} repository, fully detailed within the \texttt{cloelib} docs.
 
 # Acknowledgements
 
-We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. GCH acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy.
+We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy. We acknowledge the use of Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) in MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, 2025-3-0036.
 
 # References

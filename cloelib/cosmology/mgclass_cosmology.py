@@ -307,6 +307,7 @@ class MGCLASSBackground:
         """Redshift of photon decoupling."""
         return self.results.get_current_derived_parameters(["z_star"])["z_star"]
 
+
 class MGCLASSLinearPerturbations:
     """Class for perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
 
@@ -395,7 +396,7 @@ class MGCLASSLinearPerturbations:
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
 
-        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+        if self.interface_args["MGCLASSparams"]["N_ncdm"] == 0:
             warnings.warn(
                 "There are no massive neutrinos (N_mnu=0), this function will "
                 "return the usual matter power spectrum instead of _cb!",
@@ -566,7 +567,7 @@ class MGCLASSNonLinearPerturbations:
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
 
-        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+        if self.interface_args["MGCLASSparams"]["N_ncdm"] == 0:
             warnings.warn(
                 "There are no massive neutrinos (N_mnu=0), this function will "
                 "return the usual matter power spectrum instead of _cb!",

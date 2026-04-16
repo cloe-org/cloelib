@@ -300,7 +300,7 @@ def test_Omega_cb_returns_Om_b_plus_Om_cdm(mgclass_background_instance):
     Om_b = mgclass_background_instance.results.Omega_b()
     Om_cdm = mgclass_background_instance.results.Omega_cdm()
     H = mgclass_background_instance.hubble_parameter(zs)
-    expected = (Om_b + Om_cdm)*(1.0+zs)**3.0/H**0.5
+    expected = (Om_b + Om_cdm) * (1.0 + zs) ** 3.0 / H**0.5
 
     # Call the wrapper under test
     omega_cb = mgclass_background_instance.Omega_cb(zs)

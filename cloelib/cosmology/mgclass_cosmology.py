@@ -282,7 +282,7 @@ class MGCLASSBackground:
                 ]
             )
         except TypeError:
-            (self.results.Omega_b(zs) + self.results.Omega_cdm(z)) * (
+            (self.results.Omega_b(zs) + self.results.Omega_cdm(zs)) * (
                 1 + zs
             ) ** 3.0 / self.hubble_parameter(zs) ** 0.5
         return Omegacb
@@ -324,7 +324,7 @@ class MGCLASSBackground:
             )
         except TypeError:
             Omegab = (
-                self.results.Omega_b(z)
+                self.results.Omega_b(zs)
                 * (1 + zs) ** 3.0
                 / self.hubble_parameter(zs) ** 0.5
             )

@@ -273,9 +273,18 @@ class MGCLASSBackground:
         """
 
         try:
-            Omegacb = np.array([(self.results.Omega_b(z)+self.results.Omega_cdm(z))*(1+z)**3.0/self.hubble_parameter(z)**0.5 for z in zs])
+            Omegacb = np.array(
+                [
+                    (self.results.Omega_b(z) + self.results.Omega_cdm(z))
+                    * (1 + z) ** 3.0
+                    / self.hubble_parameter(z) ** 0.5
+                    for z in zs
+                ]
+            )
         except TypeError:
-            Omegcb = (self.results.Omega_b(zs)+self.results.Omega_cdm(z))*(1+zs)**3.0/self.hubble_parameter(zs)**0.5
+            (self.results.Omega_b(zs) + self.results.Omega_cdm(z)) * (
+                1 + zs
+            ) ** 3.0 / self.hubble_parameter(zs) ** 0.5
         return Omegacb
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
@@ -305,9 +314,20 @@ class MGCLASSBackground:
             np.ndarray: Matter density values.
         """
         try:
-            Omegab = np.array([self.results.Omega_b(z)*(1+z)**3.0/self.hubble_parameter(z)**0.5 for z in zs])
+            Omegab = np.array(
+                [
+                    self.results.Omega_b(z)
+                    * (1 + z) ** 3.0
+                    / self.hubble_parameter(z) ** 0.5
+                    for z in zs
+                ]
+            )
         except TypeError:
-            Omegab = self.results.Omega_b(z)*(1+zs)**3.0/self.hubble_parameter(zs)**0.5
+            Omegab = (
+                self.results.Omega_b(z)
+                * (1 + zs) ** 3.0
+                / self.hubble_parameter(zs) ** 0.5
+            )
         return Omegab
 
     @property

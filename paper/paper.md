@@ -171,13 +171,14 @@ authors:
   - name: Miguel Zumalacarregui
     orcid: 0000-0000-0000-0000
     affiliation:
-  - name: Joe Zuntz, on behalf of the Euclid Consortium
+  - name: Joe Zuntz
     orcid: 0000-0000-0000-0000
     affiliation:
+  - collaboration: on behalf of the Euclid Consortium
 affiliations:
   - name: University of Waterloo, Canada
     index: 1
-  - name: Leiden Observatory, the Netherlands
+  - name: Leiden Observatory, Leiden University, PO Box 9513, 2300 RA, Leiden, the Netherlands
     index: 2
   - name: Centre for Astrophysics Research, University of Hertfordshire, United Kingdom
     index: 3

@@ -160,8 +160,8 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 10
   - name: Maria Tsedrik
-    orcid: 0000-0000-0000-0000
-    affiliation: 37
+    orcid: 0000-0002-0020-5343
+    affiliation: 44, 45
   - name: Isaac Tutusaus
     orcid: 0000-0002-3199-0399
     affiliation: 14,19,38

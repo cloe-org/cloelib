@@ -48,24 +48,24 @@ authors:
   - name: Ben Bose
     orcid: 0000-0000-0000-0000
     affiliation: 10
-  - name: Jeger Broxterman
-    orcid: 0000-0000-0000-0000
-    affiliation: 2
+  - name: Jeger C. Broxterman
+    orcid: 0000-0002-8155-5977
+    affiliation: 11, 2
   - name: Pierre Burger
     orcid: 0000-0000-0000-0000
-    affiliation: 11
+    affiliation: 12
   - name: Carmelita Carbone
     orcid: 0000-0003-0125-3563
-    affiliation: 12
+    affiliation: 13
   - name: Chaitanya Chawak
     orcid: 0000-0000-0000-0000
-    affiliation: 13
+    affiliation: 14
   - name: Jose Coloma Nadal
     orcid: 0000-0000-0000-0000
-    affiliation: 14
+    affiliation: 15
   - name: Martin Crocce
     orcid: 0000-0002-9745-6228
-    affiliation: 14
+    affiliation: 15
   - name: Stefano Davini
     orcid: 0000-0000-0000-0000
     affiliation: 16
@@ -137,7 +137,7 @@ authors:
     affiliation: 31
   - name: Matthieu Schaller
     orcid: 0000-0000-0000-0000
-    affiliation: 2
+    affiliation: 11, 2
   - name: Ivan Sladoljev
     orcid: 0000-0000-0000-0000
     affiliation: 32
@@ -195,15 +195,13 @@ affiliations:
     index: 9
   - name: TBD
     index: 10
-  - name: TBD
+  - name: Lorentz Institute for Theoretical Physics, Leiden University, PO Box 9506, NL-2300 RA Leiden, The Netherlands
     index: 11
   - name: INAF - Institute of Space Astrophysics and Cosmic Physics (IASF Milano), Via Corti 12, I-20133 Milano (MI), Italy
-    index: 12
-  - name: TBD
     index: 13
-  - name: Institute of Space Sciences (ICE, CSIC), Campus UAB, Carrer de Can Magrans, s/n, 08193 Barcelona, Spain
-    index: 14
   - name: TBD
+    index: 14
+  - name: Institute of Space Sciences (ICE, CSIC), Campus UAB, Carrer de Can Magrans, s/n, 08193 Barcelona, Spain
     index: 15
   - name: TBD
     index: 16

@@ -28,7 +28,7 @@ authors:
     orcid: 0000-0003-0726-2268
     affiliation: 6
   - name: Michel Aguena
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0001-5679-6747
     affiliation: 5
   - name: Giovanni Arico
     orcid: 0000-0000-0000-0000

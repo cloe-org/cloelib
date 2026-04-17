@@ -46,8 +46,8 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation:
   - name: Ben Bose
-    orcid: 0000-0000-0000-0000
-    affiliation: 10
+    orcid: 0000-0003-1965-8614
+    affiliation: 44, 45
   - name: Jeger C. Broxterman
     orcid: 0000-0002-8155-5977
     affiliation: 11, 2
@@ -261,6 +261,10 @@ affiliations:
     index: 42
   - name: TBD
     index: 43
+  - name: Institute for Astronomy, University of Edinburgh, Royal Observatory, Blackford Hill, Edinburgh, EH9 3HJ, UK
+    index: 44
+  - name: Higgs Centre for Theoretical Physics, School of Physics and Astronomy, Edinburgh, EH9 3FD, UK
+    index: 45
     
 date: 9 April 2026
 bibliography: paper.bib
@@ -566,6 +570,6 @@ The contributions of all remaining authors have been tracked using the [all-cont
 
 # Acknowledgements
 
-We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy. We acknowledge the use of Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) in MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, 2025-3-0036.
+We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). BB is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy. We acknowledge the use of Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) in MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, 2025-3-0036.
 
 # References

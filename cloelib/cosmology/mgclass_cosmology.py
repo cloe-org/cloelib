@@ -283,9 +283,10 @@ class MGCLASSBackground:
             )
         except TypeError:
             Omegacb = (
-                self.results.Omega_b() + self.results.Omega0_cdm()) * (1 + zs) ** 3.0 / (
-                self.hubble_parameter(zs) / self.H0
-            ) ** 0.5
+                (self.results.Omega_b() + self.results.Omega0_cdm())
+                * (1 + zs) ** 3.0
+                / (self.hubble_parameter(zs) / self.H0) ** 0.5
+            )
         return Omegacb
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:

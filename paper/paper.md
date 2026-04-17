@@ -259,8 +259,7 @@ affiliations:
     index: 41
   - name: TBD
     index: 42
-  - name: Max Planck Institute for Gravitational Physics (Albert Einstein Institute),
-Am Mühlenberg 1, D-14476 Potsdam-Golm, Germany
+  - name: Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am Mühlenberg 1, D-14476 Potsdam-Golm, Germany
     index: 43
   - name: Institute for Astronomy, University of Edinburgh, Royal Observatory, Blackford Hill, Edinburgh, EH9 3HJ, UK
     index: 44

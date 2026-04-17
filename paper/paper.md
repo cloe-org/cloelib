@@ -121,7 +121,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 28
   - name: Jaime Ruiz Zapatero
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-7951-4391
     affiliation: 29
   - name: Iñigo Sáez Casares
     orcid: 0000-0000-0000-0000
@@ -231,7 +231,7 @@ affiliations:
     index: 27
   - name: TBD
     index: 28
-  - name: TBD
+  - name: Advanced Research Computing Centre, University College London, 90 High Holborn, London WC1V 6LJ, UK
     index: 29
   - name: TBD
     index: 30

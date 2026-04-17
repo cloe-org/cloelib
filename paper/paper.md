@@ -61,7 +61,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 14
   - name: Jose Coloma Nadal
-    orcid: 0000-0000-0000-0000
+    orcid: 0009-0003-0538-4349
     affiliation: 15
   - name: Martin Crocce
     orcid: 0000-0002-9745-6228

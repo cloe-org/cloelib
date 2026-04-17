@@ -150,8 +150,8 @@ authors:
   - name: Konstantinos Tanidis
     orcid: 0000-0001-9843-5130
     affiliation: 34
-  - name: Peter Taylor
-    orcid: 0000-0000-0000-0000
+  - name: Peter L. Taylor
+    orcid: 0000-0001-6999-4718
     affiliation: 35
   - name: Nicolas Tessore
     orcid: 0000-0000-0000-0000
@@ -246,7 +246,7 @@ affiliations:
     index: 33
   - name: Center for Astrophysics and Cosmology, University of Nova Gorica, 1280 Nova Gorica, Slovenia
     index: 34
-  - name: TBD
+  - name: Center for Cosmology and AstroParticle Physics (CCAPP),The Ohio State University, Columbus, OH 43210, USA
     index: 35
   - name: TBD
     index: 36

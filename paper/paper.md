@@ -239,7 +239,7 @@ affiliations:
     index: 31
   - name: TBD
     index: 32
-  - name: Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT), Avenida Complutense 40, 28040 Madrid, Spain 
+  - name: Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT), Avenida Complutense 40, 28040 Madrid, Spain
     index: 33
   - name: TBD
     index: 34
@@ -265,7 +265,7 @@ affiliations:
     index: 44
   - name: Higgs Centre for Theoretical Physics, School of Physics and Astronomy, Edinburgh, EH9 3FD, UK
     index: 45
-    
+
 date: 9 April 2026
 bibliography: paper.bib
 ---

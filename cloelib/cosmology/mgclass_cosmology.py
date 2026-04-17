@@ -277,13 +277,14 @@ class MGCLASSBackground:
                 [
                     (self.results.Omega_b() + self.results.Omega0_cdm())
                     * (1 + z) ** 3.0
-                    / (self.hubble_parameter(z) / self.results.H0) ** 0.5
+                    / (self.hubble_parameter(z) / self.H0) ** 0.5
                     for z in zs
                 ]
             )
         except TypeError:
-            (self.results.Omega_b() + self.results.Omega0_cdm()) * (1 + zs) ** 3.0 / (
-                self.hubble_parameter(zs) / self.results.H0
+            Omegacb = (
+                self.results.Omega_b() + self.results.Omega0_cdm()) * (1 + zs) ** 3.0 / (
+                self.hubble_parameter(zs) / self.H0
             ) ** 0.5
         return Omegacb
 
@@ -318,7 +319,7 @@ class MGCLASSBackground:
                 [
                     self.results.Omega_b()
                     * (1 + z) ** 3.0
-                    / (self.hubble_parameter(z) / self.results.H0) ** 0.5
+                    / (self.hubble_parameter(z) / self.H0) ** 0.5
                     for z in zs
                 ]
             )
@@ -326,7 +327,7 @@ class MGCLASSBackground:
             Omegab = (
                 self.results.Omega_b()
                 * (1 + zs) ** 3.0
-                / (self.hubble_parameter(zs) / self.results.H0) ** 0.5
+                / (self.hubble_parameter(zs) / self.H0) ** 0.5
             )
         return Omegab
 

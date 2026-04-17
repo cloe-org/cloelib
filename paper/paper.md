@@ -34,8 +34,8 @@ authors:
     orcid: 0000-0002-2802-2928
     affiliation: 7
   - name: Zahra Baghkhani
-    orcid: 0000-0000-0000-0000
-    affiliation: 8
+    orcid: 0000-0002-6632-2614
+    affiliation: 15
   - name: Matteo Baratto
     orcid: 0009-0000-8702-9591
     affiliation: 9, 13

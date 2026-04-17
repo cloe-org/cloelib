@@ -102,9 +102,9 @@ authors:
   - name: Dida Markovic
     orcid: 0000-0000-0000-0000
     affiliation: 23
-  - name: David Navarro Gironés
-    orcid: 0000-0000-0000-0000
-    affiliation: 24
+  - name: David Navarro-Gironés
+    orcid: 0000-0003-0507-372X
+    affiliation: 2
   - name: Filippo Oppizzi
     orcid: 0000-0000-0000-0000
     affiliation: 25

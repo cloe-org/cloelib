@@ -106,7 +106,7 @@ authors:
     orcid: 0000-0003-0507-372X
     affiliation: 2
   - name: Filippo Oppizzi
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0003-3904-8370
     affiliation: 25
   - name: Gabriele Parimbelli
     orcid: 0000-0000-0000-0000
@@ -223,7 +223,7 @@ affiliations:
     index: 23
   - name: TBD
     index: 24
-  - name: TBD
+  - name: INFN, Sezione di Genova, Via Dodecaneso 33, 16146, Genova, Italy
     index: 25
   - name: TBD
     index: 26

@@ -605,6 +605,15 @@
         "code",
         "ideas"
       ]
+    },
+    {
+      "login": "jipdebuck",
+      "name": "Jip de Buck",
+      "avatar_url": "https://avatars.githubusercontent.com/u/236796982?v=4",
+      "profile": "https://github.com/jipdebuck",
+      "contributions": [
+        "userTesting"
+      ]
     }
   ]
 }

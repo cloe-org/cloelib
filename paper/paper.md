@@ -76,8 +76,8 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 17
   - name: Lisa Goh
-    orcid: 0000-0000-0000-0000
-    affiliation: 10
+    orcid: 0000-0002-0104-8132
+    affiliation: 44, 45
   - name: Nastassia Grim
     orcid: 0000-0000-0000-0000
     affiliation: 18

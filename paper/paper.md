@@ -34,8 +34,8 @@ authors:
     orcid: 0000-0002-2802-2928
     affiliation: 7
   - name: Zahra Baghkhani
-    orcid: 0000-0000-0000-0000
-    affiliation: 8
+    orcid: 0000-0002-6632-2614
+    affiliation: 15
   - name: Matteo Baratto
     orcid: 0009-0000-8702-9591
     affiliation: 9, 13
@@ -85,8 +85,8 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 18
   - name: Alex Hall
-    orcid: 0000-0000-0000-0000
-    affiliation: 10
+    orcid: 0000-0002-3139-8651
+    affiliation: 44
   - name: Ryusei Kano
     orcid: 0000-0000-0000-0000
     affiliation: 10
@@ -150,8 +150,8 @@ authors:
   - name: Konstantinos Tanidis
     orcid: 0000-0001-9843-5130
     affiliation: 34
-  - name: Peter Taylor
-    orcid: 0000-0000-0000-0000
+  - name: Peter L. Taylor
+    orcid: 0000-0001-6999-4718
     affiliation: 35
   - name: Nicolas Tessore
     orcid: 0000-0000-0000-0000
@@ -246,7 +246,7 @@ affiliations:
     index: 33
   - name: Center for Astrophysics and Cosmology, University of Nova Gorica, 1280 Nova Gorica, Slovenia
     index: 34
-  - name: TBD
+  - name: Center for Cosmology and AstroParticle Physics (CCAPP),The Ohio State University, Columbus, OH 43210, USA
     index: 35
   - name: TBD
     index: 36
@@ -579,6 +579,6 @@ The contributions of all remaining authors have been tracked using the [all-cont
 
 # Acknowledgements
 
-We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). C.M. is supported by the Agenzia Spaziale Italiana project "Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0". B.B. is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). E.B. and K.T. acknowledge support by the European Union’s Horizon Europe research and innovation program under the Marie Sklodowska-Curie COFUND Postdoctoral Programme grant agreement No.101081355- SMASH and from the Republic of Slovenia and the European Union from the European Regional Development Fund. We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy. We acknowledge the use of Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) in MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, 2025-3-0036. We acknowledge support from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program with Grant agreement No. 101053992. The data production, processing and analysis tools for this paper have been developed, implemented and operated in collaboration with the Port d’Informació Científica (PIC) data center. PIC is maintained through a collaboration agreement between the Institut de Física d’Altes Energies (IFAE) and the Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT).
+We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). C.M. is supported by the Agenzia Spaziale Italiana project "Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0". B.B. is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). E.B. and K.T. acknowledge support by the European Union’s Horizon Europe research and innovation program under the Marie Sklodowska-Curie COFUND Postdoctoral Programme grant agreement No.101081355- SMASH and from the Republic of Slovenia and the European Union from the European Regional Development Fund. We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy. We acknowledge the use of Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) in MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, 2025-3-0036. We acknowledge support from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program with Grant agreement No. 101053992. A.H. acknowledges the support of a Royal Society University Research Fellowship. The data production, processing and analysis tools for this paper have been developed, implemented and operated in collaboration with the Port d’Informació Científica (PIC) data center. PIC is maintained through a collaboration agreement between the Institut de Física d’Altes Energies (IFAE) and the Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT).
 
 # References

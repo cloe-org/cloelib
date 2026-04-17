@@ -161,19 +161,19 @@ authors:
     affiliation: 37
   - name: Isaac Tutusaus
     orcid: 0000-0002-3199-0399
-    affiliation: 14
+    affiliation: 14,38,39
   - name: Casper Vedder
     orcid: 0000-0000-0000-0000
-    affiliation: 38
+    affiliation: 40
   - name: Angus H. Wright
     orcid: 0000-0000-0000-0000
-    affiliation: 39
+    affiliation: 41
   - name: Miguel Zumalacarregui
     orcid: 0000-0000-0000-0000
-    affiliation:
+    affiliation: 42
   - name: Joe Zuntz, on behalf of the Euclid Consortium
     orcid: 0000-0000-0000-0000
-    affiliation:
+    affiliation: 43
 affiliations:
   - name: Waterloo Centre for Astrophysics, University of Waterloo, Waterloo, ON N2L 3G1, Canada
     index: 1
@@ -249,10 +249,18 @@ affiliations:
     index: 36
   - name: TBD
     index: 37
-  - name: TBD
+  - name: Institut d'Estudis Espacials de Catalunya (IEEC),  Edifici RDIT, Campus UPC, 08860 Castelldefels, Barcelona, Spain
     index: 38
-  - name: TBD
+  - name: Institut de Recherche en Astrophysique et Planétologie (IRAP), Université de Toulouse, CNRS, UPS, CNES, 14 Av. Edouard Belin, 31400 Toulouse, France
     index: 39
+  - name: TBD
+    index: 40
+  - name: TBD
+    index: 41
+  - name: TBD
+    index: 42
+  - name: TBD
+    index: 43
     
 date: 9 April 2026
 bibliography: paper.bib

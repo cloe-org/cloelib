@@ -29,7 +29,7 @@ authors:
     affiliation: 6
   - name: Michel Aguena
     orcid: 0000-0000-0000-0000
-    affiliation: 7
+    affiliation: 5
   - name: Giovanni Arico
     orcid: 0000-0000-0000-0000
     affiliation: 7

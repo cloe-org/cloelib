@@ -402,7 +402,7 @@ Cl_galaxy_shear = twopoint.get_Cl(ells, nl=0, ks=ks)
 
 ## Spectroscopic Observables
 
-\texttt{cloelib} computes redshift-space power spectrum multipoles for spectroscopic galaxy clustering via the `SpectroPower` protocol. In this example, we use `comet-emu` for producing perturbation-theory models (`EFT` and `VDG`):
+Calculation of the Legendre multipoles (both in Fourier and configuration space) is handled by the `LegendreMultipoles` module, which interfaces with objects that comply with the `SpectroPower` protocol. This module implements shared modelling layers that are handled coherently by cloelib, rather than relying on individual implementations of external pipelines. Modelled effects include shot-noise corrections, Alcock-Paczynski distortions, and the convolution with the survey window function, as well as a number of observational systematic effects, such as spectroscopic redshift errors and the presence of contaminants. In addition, this module can compute the two-point correlation function and projects it – or  $P(k,\mu)$ – to Legendre multipoles. As an example, we show below how to obtain a prediction for the power spectrum multipoles using the `comet-emu` package.
 
 ```python
 from cloelib.observables.CometEFT_spectro import CometEFT_SpectroPower
@@ -410,10 +410,9 @@ from cloelib.summary_statistics.legendre_multipoles import LegendreMultipoles
 import numpy as np
 
 # EFT bias and nuisance parameters for a single redshift bin
-RSD_parameters = {
+RSD_parameters = { # Bias and EFT counterterms
     'b1': 1.8, 'b2': 0.0, 'bG2': 0.0, 'bGam3': 0.0,
-    'c0': 0.0, 'c2': 0.0, 'c4': 0.0,
-    'b1-b1-cnlo': 0.0, 'b1-cnlo': 0.0, 'cnlo': 0.0,
+    'c0': 0.0, 'c2': 0.0, 'c4': 0.0
 }
 
 # Spectroscopic power spectrum at a single effective redshift
@@ -424,11 +423,14 @@ spectro_power = CometEFT_SpectroPower(
 )
 
 # Compute Legendre multipoles with Alcock-Paczynski corrections
+noise_systematics_parameters = {
+    'NP0': 1.0, 'NP20': 0.0, 'NP22': 0.0 # Shot-noise parameters
+}
 nbar = 1e-3  # galaxy number density [h/Mpc]^3
 multipoles = LegendreMultipoles(
     spectro_power=spectro_power,
     background_fiducial=camb_bg,
-    parameters={},
+    parameters=noise_systematics_parameters,
     nbar=nbar,
 )
 
@@ -570,6 +572,6 @@ The contributions of all remaining authors have been tracked using the [all-cont
 
 # Acknowledgements
 
-We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). BB is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy. We acknowledge the use of Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) in MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, 2025-3-0036.
+We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). CM is supported by the Agenzia Spaziale Italiana project "Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0". BB is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy. We acknowledge the use of Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) in MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, 2025-3-0036.
 
 # References

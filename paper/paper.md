@@ -163,8 +163,8 @@ authors:
     orcid: 0000-0002-3199-0399
     affiliation: 14,38,39
   - name: Casper Vedder
-    orcid: 0000-0000-0000-0000
-    affiliation: 40
+    orcid: 0009-0007-6341-4648
+    affiliation: 2
   - name: Angus H. Wright
     orcid: 0000-0000-0000-0000
     affiliation: 41

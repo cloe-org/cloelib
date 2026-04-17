@@ -1969,6 +1969,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_cosebis_from_cl
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_cosebis_from_2pcf
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3352,6 +3374,28 @@
     <span class="md-ellipsis">
       
         <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;Pkl_interp
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_cosebis_from_cl
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_cosebis_from_2pcf
       
     </span>
   </a>
@@ -26032,7 +26076,7 @@ WARNING: Currently assumes B-modes are zero, as they are not passed on from Angu
 
 
 <a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">AngularTwoPoint</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)">tracer1</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)">tracer2</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">AngularTwoPoint</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)">tracer1</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)">tracer2</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -26049,18 +26093,22 @@ as instance attributes.</p>
     <ul>
         <li class="doc-section-item field-body">
 <h5 id="cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)" class="doc doc-heading doc-heading-parameter">              <b><code>tracer1</code></b>
-<a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></code>)
+<a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></code>, default:
+                  <code>None</code>
+)
           –
           <div class="doc-md-description">
-            <p>The first tracer for the two-point function.</p>
+            <p>The first tracer for the two-point function. Defaults to None.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
 <h5 id="cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)" class="doc doc-heading doc-heading-parameter">              <b><code>tracer2</code></b>
-<a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></code>)
+<a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></code>, default:
+                  <code>None</code>
+)
           –
           <div class="doc-md-description">
-            <p>The second tracer for the two-point function.</p>
+            <p>The second tracer for the two-point function. Defaults to None.</p>
           </div>
         </li>
     </ul>
@@ -26192,22 +26240,9 @@ two-point angular statistics.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Compute the cosebis from the angular power spectrum</p>
-        <ul>
-<li>ells (jax.numpy.array):
-    array with the ells</li>
-<li>nl (jax.numpy.ndarray):
-    Noise power spectrum (not used yet).</li>
-<li>ks (jax.numpy.ndarray):
-    Wavenumber grid of the matter power spectrum.</li>
-<li>w_ell (np.array):
-    the kernel functions, the can be obtained via the function
-    get_W_ell in auxiliary functions.</li>
-<li>ns (jax.numpy.array):
-    the indices for the kernel function</li>
-</ul>
-<p>Returns:
-- dict: COSEBIs obtained from the angular power spectrum</p>
+        <p>Compute EE and BB COSEBIs from angular power spectra.</p>
+<p>Delegates to the module-level :func:<code>get_cosebis_from_cl</code>. See that
+function for full parameter documentation.</p>
 
           
 
@@ -26387,6 +26422,85 @@ for values outside the given grid.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">get_cosebis_from_cl</span>
+
+
+<a href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_cosebis_from_cl</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl(cells)">cells</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl(ells)">ells</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl(w_ell)">w_ell</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl(ns)">ns</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl(software)">software</span></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute EE and BB COSEBIs for all SHE-SHE keys in <code>cells</code>.</p>
+<p>Can be used as a standalone function without instantiating <code>AngularTwoPoint</code>
+if angular power spectra are already available.</p>
+<h6 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--parameters" title="Permanent link">&para;</a></h6>
+<p>cells : dict
+    Angular power spectra in cosmolib format.
+ells : jax.numpy.ndarray
+    Multipoles at which the integration is performed.
+w_ell : array-like
+    Harmonic-space COSEBIs kernels.
+ns : array-like
+    Mode indices selecting kernels from <code>w_ell</code>.
+software : str, optional
+    Software provenance tag stored in the output <code>COSEBI</code> objects.
+    Defaults to <code>'get_cosebis_from_cl (cloelib)'</code>.</p>
+<h6 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns" title="Permanent link">&para;</a></h6>
+<p>dict
+    Dictionary keyed like <code>cells</code> with <code>COSEBI</code> values of shape <code>(2, 2, n_modes)</code>.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">get_cosebis_from_2pcf</span>
+
+
+<a href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_cosebis_from_2pcf</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(twopcf)">twopcf</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(theta)">theta</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(T_plus)">T_plus</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(T_minus)">T_minus</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(ns)">ns</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(software)">software</span></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute EE and BB COSEBIs for all SHE-SHE keys in <code>twopcf</code>.</p>
+<p>Can be used as a standalone function without instantiating <code>AngularTwoPoint</code>
+if two-point correlation functions are already available.</p>
+<h6 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--parameters" title="Permanent link">&para;</a></h6>
+<p>twopcf : dict
+    Two-point correlation functions in cosmolib format.
+    Keys should be tuples like <code>('SHE', 'SHE', i, j)</code>.
+theta : jax.numpy.ndarray
+    Angular scales in radians.
+T_plus : array-like
+    Real-space T_+ kernel functions.
+T_minus : array-like
+    Real-space T_- kernel functions.
+ns : jax.numpy.ndarray
+    Mode indices selecting kernels from <code>T_plus</code>/<code>T_minus</code>.
+software : str, optional
+    Software provenance tag stored in the output <code>COSEBI</code> objects.
+    Defaults to <code>'get_cosebis_from_2pcf (cloelib)'</code>.</p>
+<h6 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--returns" title="Permanent link">&para;</a></h6>
+<p>dict
+    COSEBIs with EE and BB modes, keyed like <code>twopcf</code>.</p>
 
           
 
@@ -27758,7 +27872,7 @@ heading_level: 3</p>
 
 
 <a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">AngularTwoPoint</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)">tracer1</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)">tracer2</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">AngularTwoPoint</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)">tracer1</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)">tracer2</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -27775,18 +27889,22 @@ as instance attributes.</p>
     <ul>
         <li class="doc-section-item field-body">
 <h4 id="cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)" class="doc doc-heading doc-heading-parameter">              <b><code>tracer1</code></b>
-<a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></code>)
+<a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></code>, default:
+                  <code>None</code>
+)
           –
           <div class="doc-md-description">
-            <p>The first tracer for the two-point function.</p>
+            <p>The first tracer for the two-point function. Defaults to None.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
 <h4 id="cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)" class="doc doc-heading doc-heading-parameter">              <b><code>tracer2</code></b>
-<a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></code>)
+<a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><a class="autorefs autorefs-internal" href="#cloelib.observables.tracer.Tracer">Tracer</a></code>, default:
+                  <code>None</code>
+)
           –
           <div class="doc-md-description">
-            <p>The second tracer for the two-point function.</p>
+            <p>The second tracer for the two-point function. Defaults to None.</p>
           </div>
         </li>
     </ul>
@@ -27918,22 +28036,9 @@ two-point angular statistics.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Compute the cosebis from the angular power spectrum</p>
-        <ul>
-<li>ells (jax.numpy.array):
-    array with the ells</li>
-<li>nl (jax.numpy.ndarray):
-    Noise power spectrum (not used yet).</li>
-<li>ks (jax.numpy.ndarray):
-    Wavenumber grid of the matter power spectrum.</li>
-<li>w_ell (np.array):
-    the kernel functions, the can be obtained via the function
-    get_W_ell in auxiliary functions.</li>
-<li>ns (jax.numpy.array):
-    the indices for the kernel function</li>
-</ul>
-<p>Returns:
-- dict: COSEBIs obtained from the angular power spectrum</p>
+        <p>Compute EE and BB COSEBIs from angular power spectra.</p>
+<p>Delegates to the module-level :func:<code>get_cosebis_from_cl</code>. See that
+function for full parameter documentation.</p>
 
           
 
@@ -28113,6 +28218,85 @@ for values outside the given grid.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">get_cosebis_from_cl</span>
+
+
+<a href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_cosebis_from_cl</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl(cells)">cells</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl(ells)">ells</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl(w_ell)">w_ell</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl(ns)">ns</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl(software)">software</span></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute EE and BB COSEBIs for all SHE-SHE keys in <code>cells</code>.</p>
+<p>Can be used as a standalone function without instantiating <code>AngularTwoPoint</code>
+if angular power spectra are already available.</p>
+<h5 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--parameters" title="Permanent link">&para;</a></h5>
+<p>cells : dict
+    Angular power spectra in cosmolib format.
+ells : jax.numpy.ndarray
+    Multipoles at which the integration is performed.
+w_ell : array-like
+    Harmonic-space COSEBIs kernels.
+ns : array-like
+    Mode indices selecting kernels from <code>w_ell</code>.
+software : str, optional
+    Software provenance tag stored in the output <code>COSEBI</code> objects.
+    Defaults to <code>'get_cosebis_from_cl (cloelib)'</code>.</p>
+<h5 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns" title="Permanent link">&para;</a></h5>
+<p>dict
+    Dictionary keyed like <code>cells</code> with <code>COSEBI</code> values of shape <code>(2, 2, n_modes)</code>.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">get_cosebis_from_2pcf</span>
+
+
+<a href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_cosebis_from_2pcf</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(twopcf)">twopcf</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(theta)">theta</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(T_plus)">T_plus</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(T_minus)">T_minus</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(ns)">ns</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf(software)">software</span></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute EE and BB COSEBIs for all SHE-SHE keys in <code>twopcf</code>.</p>
+<p>Can be used as a standalone function without instantiating <code>AngularTwoPoint</code>
+if two-point correlation functions are already available.</p>
+<h5 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--parameters" title="Permanent link">&para;</a></h5>
+<p>twopcf : dict
+    Two-point correlation functions in cosmolib format.
+    Keys should be tuples like <code>('SHE', 'SHE', i, j)</code>.
+theta : jax.numpy.ndarray
+    Angular scales in radians.
+T_plus : array-like
+    Real-space T_+ kernel functions.
+T_minus : array-like
+    Real-space T_- kernel functions.
+ns : jax.numpy.ndarray
+    Mode indices selecting kernels from <code>T_plus</code>/<code>T_minus</code>.
+software : str, optional
+    Software provenance tag stored in the output <code>COSEBI</code> objects.
+    Defaults to <code>'get_cosebis_from_2pcf (cloelib)'</code>.</p>
+<h5 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--returns" title="Permanent link">&para;</a></h5>
+<p>dict
+    COSEBIs with EE and BB modes, keyed like <code>twopcf</code>.</p>
 
           
 

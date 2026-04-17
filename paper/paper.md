@@ -145,7 +145,7 @@ authors:
     orcid: 0009-0000-4771-7728
     affiliation: 33
   - name: Konstantinos Tanidis
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0001-9843-5130
     affiliation: 34
   - name: Peter Taylor
     orcid: 0000-0000-0000-0000
@@ -169,7 +169,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 41
   - name: Miguel Zumalacarregui
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-9943-6490
     affiliation: 42
   - name: Joe Zuntz, on behalf of the Euclid Consortium
     orcid: 0000-0000-0000-0000
@@ -241,7 +241,7 @@ affiliations:
     index: 32
   - name: Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT), Avenida Complutense 40, 28040 Madrid, Spain
     index: 33
-  - name: TBD
+  - name: Center for Astrophysics and Cosmology, University of Nova Gorica, 1280 Nova Gorica, Slovenia
     index: 34
   - name: TBD
     index: 35
@@ -259,7 +259,7 @@ affiliations:
     index: 41
   - name: TBD
     index: 42
-  - name: TBD
+  - name: Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am Mühlenberg 1, D-14476 Potsdam-Golm, Germany
     index: 43
   - name: Institute for Astronomy, University of Edinburgh, Royal Observatory, Blackford Hill, Edinburgh, EH9 3HJ, UK
     index: 44
@@ -572,6 +572,6 @@ The contributions of all remaining authors have been tracked using the [all-cont
 
 # Acknowledgements
 
-We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). CM is supported by the Agenzia Spaziale Italiana project "Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0". BB is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy. We acknowledge the use of Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) in MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, 2025-3-0036.
+We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). CM is supported by the Agenzia Spaziale Italiana project "Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0". BB is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). KT acknowledges support by the European Union’s Horizon Europe research and innovation program under the Marie Sklodowska-Curie COFUND Postdoctoral Programme grant agreement No.101081355- SMASH and from the Republic of Slovenia and the European Union from the European Regional Development Fund. We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy. We acknowledge the use of Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) in MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, 2025-3-0036.
 
 # References

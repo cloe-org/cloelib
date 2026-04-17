@@ -139,7 +139,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 11, 2
   - name: Ivan Sladoljev
-    orcid: 0000-0000-0000-0000
+    orcid: 0009-0002-9702-2101
     affiliation: 32
   - name: Arghavan Souki
     orcid: 0009-0000-4771-7728
@@ -237,7 +237,7 @@ affiliations:
     index: 30
   - name: TBD
     index: 31
-  - name: TBD
+  - name: Department of Physics, Royal Holloway, University of London, Egham Hill, Egham, UK
     index: 32
   - name: Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT), Avenida Complutense 40, 28040 Madrid, Spain
     index: 33

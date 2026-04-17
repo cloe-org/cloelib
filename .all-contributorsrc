@@ -575,6 +575,36 @@
         "maintenance",
         "ideas"
       ]
+    },
+    {
+      "login": "inigosaezcasares",
+      "name": "Iñigo Sáez Casares",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56702840?v=4",
+      "profile": "https://github.com/inigosaezcasares",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "neelcosmo",
+      "name": "Neel Shah",
+      "avatar_url": "https://avatars.githubusercontent.com/u/151792852?v=4",
+      "profile": "https://github.com/neelcosmo",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "FelicitasKeil",
+      "name": "Felicitas Keil",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70713596?v=4",
+      "profile": "https://github.com/FelicitasKeil",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
     }
   ]
 }

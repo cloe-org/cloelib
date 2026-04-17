@@ -169,7 +169,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 41
   - name: Miguel Zumalacarregui
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-9943-6490
     affiliation: 42
   - name: Joe Zuntz, on behalf of the Euclid Consortium
     orcid: 0000-0000-0000-0000
@@ -259,7 +259,8 @@ affiliations:
     index: 41
   - name: TBD
     index: 42
-  - name: TBD
+  - name: Max Planck Institute for Gravitational Physics (Albert Einstein Institute),
+Am Mühlenberg 1, D-14476 Potsdam-Golm, Germany
     index: 43
   - name: Institute for Astronomy, University of Edinburgh, Royal Observatory, Blackford Hill, Edinburgh, EH9 3HJ, UK
     index: 44

@@ -31,7 +31,7 @@ authors:
     orcid: 0000-0001-5679-6747
     affiliation: 5
   - name: Giovanni Arico
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-2802-2928
     affiliation: 7
   - name: Zahra Baghkhani
     orcid: 0000-0000-0000-0000
@@ -187,7 +187,7 @@ affiliations:
     index: 5
   - name: INAF - Osservatorio Astronomico di Brera, Italy
     index: 6
-  - name: TBD
+  - name: INFN - Sezione di Bologna, Viale C. Berti Pichat, 6/2 – 40127 Bologna, Italy
     index: 7
   - name: TBD
     index: 8

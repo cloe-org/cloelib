@@ -115,7 +115,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation:
   - name: Robert Reischke
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0001-5404-8753
     affiliation: 27
   - name: Fabrice Roy
     orcid: 0000-0000-0000-0000
@@ -217,7 +217,7 @@ affiliations:
     index: 20
   - name: Universität Innsbruck, Institut für Astro- und Teilchenphysik, Technikerstr. 25/8, 6020 Innsbruck, Austria
     index: 21
-  - name: OskarKlein Centre for Cosmoparticle Physics, Department of Physics, Stockholm University, Stockholm, SE-106 91, Sweden
+  - name: Oskar Klein Centre for Cosmoparticle Physics, Department of Physics, Stockholm University, Stockholm, SE-106 91, Sweden
     index: 22
   - name: TBD
     index: 23
@@ -227,7 +227,7 @@ affiliations:
     index: 25
   - name: TBD
     index: 26
-  - name: TBD
+  - name: Argelander-Institut für Astronomie, Universität Bonn, Auf dem Hügel 71, D-53121 Bonn, Germany
     index: 27
   - name: TBD
     index: 28

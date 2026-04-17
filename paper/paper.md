@@ -88,8 +88,8 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 10
   - name: Felicitas Keil
-    orcid: 0000-0000-0000-0000
-    affiliation: 10
+    orcid: 0000-0002-8108-1679
+    affiliation: 19
   - name: Raphael Kou
     orcid: 0000-0000-0000-0000
     affiliation: 20
@@ -161,7 +161,7 @@ authors:
     affiliation: 37
   - name: Isaac Tutusaus
     orcid: 0000-0002-3199-0399
-    affiliation: 14,38,39
+    affiliation: 14,19,38
   - name: Casper Vedder
     orcid: 0009-0007-6341-4648
     affiliation: 2
@@ -211,7 +211,7 @@ affiliations:
     index: 17
   - name: TBD
     index: 18
-  - name: TBD
+  - name: Institut de Recherche en Astrophysique et Planétologie (IRAP), Université de Toulouse, CNRS, UPS, CNES, 14 Av. Edouard Belin, 31400 Toulouse, France
     index: 19
   - name: TBD
     index: 20
@@ -251,7 +251,7 @@ affiliations:
     index: 37
   - name: Institut d'Estudis Espacials de Catalunya (IEEC),  Edifici RDIT, Campus UPC, 08860 Castelldefels, Barcelona, Spain
     index: 38
-  - name: Institut de Recherche en Astrophysique et Planétologie (IRAP), Université de Toulouse, CNRS, UPS, CNES, 14 Av. Edouard Belin, 31400 Toulouse, France
+  - name: TBD
     index: 39
   - name: TBD
     index: 40

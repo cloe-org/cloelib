@@ -37,8 +37,8 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 8
   - name: Matteo Baratto
-    orcid: 0000-0000-0000-0000
-    affiliation: 9
+    orcid: 0009-0000-8702-9591
+    affiliation: 9, 13
   - name: Emilio Bellini
     orcid: 0000-0000-0000-0000
     affiliation:
@@ -191,7 +191,7 @@ affiliations:
     index: 7
   - name: TBD
     index: 8
-  - name: TBD
+  - name: Departement of Physics “Aldo Pontremoli”, Università degli Studi di Milano, Via G. Celoria 16, 20133, Milano, Italy
     index: 9
   - name: TBD
     index: 10

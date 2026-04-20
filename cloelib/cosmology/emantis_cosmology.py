@@ -137,7 +137,7 @@ class EmantisFofrNonLinearPerturbations:
         return self._background
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-        r"""Compute the nonlinear total matter power spectrum.
+        """Compute the nonlinear total matter power spectrum.
 
         Parameters
         ----------
@@ -157,7 +157,7 @@ class EmantisFofrNonLinearPerturbations:
         ) * self.nonlinearpertubations_lcdm.matter_power_spectrum(zs, ks)
 
     def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
-        r"""Compute the nonlinear CDM+baryons power spectrum.
+        """Compute the nonlinear CDM+baryons power spectrum.
 
         Parameters
         ----------
@@ -182,36 +182,44 @@ class EmantisFofrNonLinearPerturbations:
         ) * self.nonlinearpertubations_lcdm.matter_power_spectrum(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
-        r"""
-        Compute the growth factor for some input redshift and wavenumber values.
-
-        .. math::
-            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
-            /P_{\rm \delta\delta}(z=0, k)}\\
-
-        and normalizes as for :math:`D(z)/D(0)`.
+        """Compute the growth factor D(z, k) normalized to D(0).
 
         Parameters:
         -----------
         zs : array_like
-            Redshift values at which to compute the growth factor.
+            Redshifts at which to calculate the growth factor.
         ks : array_like
-            Wavenumber values at which to compute the growth factor.
+            Wavenumbers at which to calculate the growth factor.
 
         Returns:
         --------
         np.ndarray
-            The growth factor for the input redshift and wavenumber values.
+            The growth factor as a function of redshift and wavenumber.
         """
-        D_z_k = np.sqrt(
-            self.matter_power_spectrum(zs, ks) / self.matter_power_spectrum(0, ks)
-        )
 
-        return D_z_k
+        return self.linearperturbations.growth_factor(zs, ks)
+
+    def growth_rate(self, zs, ks) -> np.ndarray:
+        """Compute the growth rate f(z, k) for given redshifts and wavenumbers.
+
+        Parameters:
+        -----------
+        zs : array_like
+            Redshifts at which to calculate the growth factor.
+        ks : array_like
+            Wavenumbers at which to calculate the growth factor.
+
+        Returns:
+        --------
+        np.ndarray
+            The growth rate as a function of redshift and wavenumber.
+        """
+
+        return self.linearperturbations.growth_rate(zs, ks)
 
     def sigma8_0(self) -> float:
         """
-        Calculate the sigma8 value for the current cosmology.
+        Compute the sigma8 value for the current cosmology at z=0.
 
         Returns:
         --------

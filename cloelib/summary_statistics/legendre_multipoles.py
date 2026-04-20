@@ -55,7 +55,7 @@ def format_output(stat: str):
             if stat == "PK_multipoles":
                 if "convolved" in func.__name__:
                     mixing_matrix = get_arg("mixing_matrix", 0)
-                    scale_h = mixing_matrix.kout
+                    scale_h = mixing_matrix.kout * h_fid
                 else:
                     scale_h = get_arg("k", 0)
                     set_arg("k", 0, scale_h * h_fid)
@@ -77,7 +77,7 @@ def format_output(stat: str):
                 out = (
                     np.array(
                         [
-                            result.get(f"ell{i}", np.zeros(len(scale_h)))
+                            result.get(f"ell{i}", np.zeros(len(scale_h))).reshape(-1)
                             for i in range(5)
                         ]
                     )

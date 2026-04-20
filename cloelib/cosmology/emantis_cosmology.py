@@ -106,6 +106,7 @@ class EmantisFofrNonLinearPerturbations:
             self.params_emu,
             aexp_emu,
             k=k_emu / self.params_emu["h"],
+            extrapolate_k_low=True,
             extrapolate_cosmo=extrapolate_cosmo,
         )
 
@@ -125,31 +126,55 @@ class EmantisFofrNonLinearPerturbations:
         self.k = k_extended
         self.z = z_extended
 
-        # Get LCDM matter power spectrum.
-        pk_lcdm = self.nonlinearpertubations_lcdm.matter_power_spectrum(self.z, self.k)
-
-        # Build interpolation for full power spectrum.
-        self.pk_interp = interpolate.RectBivariateSpline(
-            self.z, self.k, pk_lcdm * pk_boost_extended
+        # Build interpolation for power spectrum boost.
+        self.boost_interp = interpolate.RectBivariateSpline(
+            self.z, np.log(self.k), pk_boost_extended
         )
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-        r"""Compute the nonlinear matter power spectrum.
+        r"""Compute the nonlinear total matter power spectrum.
 
         Parameters
         ----------
         zs: numpy.ndarray
-            Redshift values at which to compute the matter power spectrum.
+            Redshift values.
 
         ks: numpy.ndarray
-            Wavenumber values at which to compute the matter power spectrum, in units of h/Mpc.
+            Wavenumber values in units of h/Mpc.
 
         Returns
         -------
         pk: numpy.ndarray
-            Nonlinear matter power spectrum at the input redshift and wavenumber values.
+            Nonlinear total matter power spectrum at the input redshift and wavenumber values.
         """
-        return self.pk_interp(zs, ks)
+        return self.boost_interp(
+            zs, np.log(ks)
+        ) * self.nonlinearpertubations_lcdm.matter_power_spectrum(zs, ks)
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        r"""Compute the nonlinear CDM+baryons power spectrum.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            Redshift values.
+
+        ks: numpy.ndarray
+            Wavenumber values in units of h/Mpc.
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Nonlinear CDM+baryons power spectrum at the input redshift and wavenumber values.
+        """
+
+        # We are assuming that we can apply the same MG boost to the total matter
+        # and to the CDM+baryons matter power spectra.
+        # In any case, emantis has been calibrated without neutrinos, so any use of neutrinos
+        # (or other non-cold matter) with this perturbation class will require some testing.
+        return self.boost_interp(
+            zs, np.log(ks)
+        ) * self.nonlinearpertubations_lcdm.matter_power_spectrum(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""

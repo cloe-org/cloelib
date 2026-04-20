@@ -15,6 +15,7 @@ import numpy as np
 # cosmolib imports
 from cosmolib.data import (
     PowerSpectrumMultipoles,
+    PowerSpectrumMultipolesMixingMatrix,
     TwoPointCorrelationMultipoles,
     TwoPointCorrelationPolar,
 )
@@ -52,12 +53,12 @@ def format_output(stat: str):
             h_fid = self.spectro_power.background.h
 
             if stat == "PK_multipoles":
-                scale_h = (
-                    kwargs["mixing_matrix"].get("kout")
-                    if "convolved" in func.__name__
-                    else get_arg("k", 0)
-                )
-                set_arg("k", 0, scale_h * h_fid)
+                if "convolved" in func.__name__:
+                    mixing_matrix = get_arg("mixing_matrix", 0)
+                    scale_h = mixing_matrix.kout
+                else:
+                    scale_h = get_arg("k", 0)
+                    set_arg("k", 0, scale_h * h_fid)
             else:
                 scale_h = get_arg("s", 0)
                 set_arg("s", 0, scale_h / h_fid)
@@ -446,7 +447,7 @@ class LegendreMultipoles:
     @format_output("PK_multipoles")
     def convolved_power_multipoles(
         self,
-        mixing_matrix: dict,
+        mixing_matrix: PowerSpectrumMultipolesMixingMatrix,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
         format_type: Optional[str] = None,
@@ -465,7 +466,7 @@ class LegendreMultipoles:
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
 
-        kin_arrays = [mixing_matrix[f"kin{ell}"] for ell in ells_tot]
+        kin_arrays = [mixing_matrix.kin[ell] for ell in ells_tot]
 
         if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
             multipoles_in = self.power_multipoles(
@@ -480,11 +481,11 @@ class LegendreMultipoles:
             }
 
         multipoles_out = {}
-        multipoles_out["k"] = mixing_matrix["kout"]
+        multipoles_out["k"] = mixing_matrix.kout
         for ell in ells:
             multipoles_out[f"ell{ell}"] = sum(
                 np.dot(
-                    mixing_matrix[f"W{ell}{ell_prime}"],
+                    mixing_matrix.mixing[f"ELL_{ell}-{ell_prime}"],
                     multipoles_in[f"ell{ell_prime}"],
                 )
                 for ell_prime in ells_tot

@@ -18,6 +18,7 @@ class EmantisFofrNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations: Perturbations,
         nonlinearperturbations_lcdm: Perturbations,
         fR0: float,
         redshifts: np.ndarray,
@@ -30,7 +31,9 @@ class EmantisFofrNonLinearPerturbations:
         Parameters
         ----------
         background : Background
-            Background cosmology object, providing all the standard cosmological parameters.
+            A background cosmology object, providing all the standard cosmological parameters.
+        linearperturbations : Perturbations
+            A linear perturbations object, providing linear perturbations in f(R) gravity.
         nonlinearperturbations_lcdm : Perturbations
             A nonlinear perturbations object, providing the nonlinear matter power spectrum in LCDM.
         fR0 : float
@@ -48,6 +51,7 @@ class EmantisFofrNonLinearPerturbations:
             There is no extrapolation for fR0.
         """
         self.background = background
+        self.linearperturbations = linearperturbations
         self.nonlinearpertubations_lcdm = nonlinearperturbations_lcdm
 
         # Check and process emulator version.
@@ -176,3 +180,15 @@ class EmantisFofrNonLinearPerturbations:
         )
 
         return D_z_k
+
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+
+        return self.linearperturbations.sigma8_0()

@@ -157,8 +157,8 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 36
   - name: Linus Thummel
-    orcid: 0000-0000-0000-0000
-    affiliation: 10
+    orcid: 0000-0002-9807-5494
+    affiliation: 44, 45
   - name: Maria Tsedrik
     orcid: 0000-0002-0020-5343
     affiliation: 44, 45

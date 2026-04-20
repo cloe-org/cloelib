@@ -70,9 +70,7 @@ class EmantisFofrNonLinearPerturbations:
         # Build parameter dict. for the emulator.
         # These are the parameters common to the v1 and v2 of the emulator.
         self.params_emu = {
-            "Omega_m": self.background.Omega_cdm0
-            + self.background.Omega_b0
-            + self.background.mnu / 93.14 / self.background.h**2,
+            "Omega_m": self.background.Omega_m(0),
             "sigma8_lcdm": self.nonlinearpertubations_lcdm.sigma8_0(),
             "logfR0": -np.log10(np.abs(fR0)),
         }

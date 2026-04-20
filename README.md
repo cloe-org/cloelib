@@ -53,7 +53,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | NA                                                | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                | NA                                                                 |
 | NA                                                | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
 | NA                                                | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
-| NA                                                | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                         | NA                                                               |
+| NA                                                | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                         | NA                                                                 |
 
 We do not provide installation support for `PBJ`.
 

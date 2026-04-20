@@ -495,7 +495,7 @@ class LegendreMultipoles:
 
     def convolved_power_term_multipoles(
         self,
-        mixing_matrix: dict,
+        mixing_matrix: PowerSpectrumMultipolesMixingMatrix,
         term_list: list,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
@@ -514,7 +514,7 @@ class LegendreMultipoles:
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
 
-        kin_arrays = [mixing_matrix[f"kin{ell}"] for ell in ells_tot]
+        kin_arrays = [mixing_matrix.kin[ell] for ell in ells_tot]
 
         if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
             multipoles_in = self.power_term_multipoles(
@@ -529,11 +529,11 @@ class LegendreMultipoles:
             }
 
         multipoles_out = {}
-        multipoles_out["k"] = mixing_matrix["kout"]
+        multipoles_out["k"] = mixing_matrix.kout
         for ell in ells:
             multipoles_out[f"ell{ell}"] = sum(
                 np.dot(
-                    mixing_matrix[f"W{ell}{ell_prime}"],
+                    mixing_matrix.mixing[f"ELL_{ell}-{ell_prime}"],
                     multipoles_in[f"ell{ell_prime}"].T,
                 ).T
                 for ell_prime in ells_tot

@@ -50,7 +50,7 @@ class EmantisFofrNonLinearPerturbations:
             The extrapolation is done only for the LCDM cosmological parameters.
             There is no extrapolation for fR0.
         """
-        self.background = background
+        self._background = background
         self.linearperturbations = linearperturbations
         self.nonlinearpertubations_lcdm = nonlinearperturbations_lcdm
 
@@ -130,6 +130,11 @@ class EmantisFofrNonLinearPerturbations:
         self.boost_interp = interpolate.RectBivariateSpline(
             self.z, np.log(self.k), pk_boost_extended
         )
+
+    @property
+    def background(self) -> Background:
+        """Return the background object."""
+        return self._background
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         r"""Compute the nonlinear total matter power spectrum.

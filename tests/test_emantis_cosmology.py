@@ -1,6 +1,12 @@
 import numpy as np
 import pytest
 
+from cloelib.cosmology.camb_cosmology import (
+    CAMBBackground,
+    CAMBLinearPerturbations,
+    CAMBNonLinearPerturbations,
+)
+
 
 try:
     from emantis.matter_power_spectrum import NonLinearMGBoostEmulator
@@ -13,51 +19,82 @@ else:
     _EMANTIS_INSTALLED = True
 
 
-class LCDMBackground:
-    def __init__(self) -> None:
-        self.h = 0.7
-        self.Omega_b0 = 0.05
-        self.Omega_cdm0 = 0.27
-        self.mnu = 0
-        self.As = 2e-9
-        self.ns = 0.96
+@pytest.fixture(scope="module")
+def zs():
+    return np.linspace(0, 3, 30)
 
 
-class LCDMNonLinearPerturbations:
-    def __init__(self) -> None:
-        pass
+@pytest.fixture(scope="module")
+def ks():
+    return np.linspace(1e-4, 6, 100)
 
-    def matter_power_spectrum(self, zs, ks):
-        return np.ones((zs.shape[0], ks.shape[0]))
+
+@pytest.fixture(scope="module")
+def camb_background_instance():
+    """Fixture to create an instance of CAMBBackground."""
+    H0 = 67.7
+    h = H0 / 100.0
+    omch2 = 0.12
+    Omega_cdm0 = omch2 / h**2
+    ombh2 = 0.022
+    Omega_b0 = ombh2 / h**2
+    camb_instance = CAMBBackground(
+        H0=H0,
+        Omega_b0=Omega_b0,
+        Omega_cdm0=Omega_cdm0,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=0.0,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+        N_mnu=0,
+    )
+    return camb_instance
+
+
+@pytest.fixture(scope="module")
+def camb_linearperturbations_instance(camb_background_instance, zs):
+    """Fixture to create an instance of CAMBLinearPerturbations."""
+    camb_instance = CAMBLinearPerturbations(camb_background_instance, zs)
+    return camb_instance
+
+
+@pytest.fixture(scope="module")
+def camb_nonlinearperturbations_instance(camb_background_instance, zs):
+    """Fixture to create an instance of CAMBNonLinearPerturbations."""
+    camb_instance = CAMBNonLinearPerturbations(camb_background_instance, zs)
+    return camb_instance
 
 
 @pytest.mark.skipif(
     not _EMANTIS_INSTALLED,
     reason="emantis is not installed",
 )
-def test_mg_boost_cloelib_vs_external():
+def test_mg_boost_cloelib_vs_external(
+    zs,
+    ks,
+    camb_background_instance,
+    camb_linearperturbations_instance,
+    camb_nonlinearperturbations_instance,
+):
     """Validate the nonlinear matter power spectrum boost.
 
     The boost obtained with the cloelib interface of emantis is compared to the boost
     obtained directly from emantis.
     """
 
-    # Redshift and wavenumber arrays.
-    zs = np.linspace(0, 3, 100)
-    ks = np.geomspace(1e-4, 5, 100)
-
+    # Extended parameter value.
     fR0 = -1e-5
 
-    # Init. background.
-    background = LCDMBackground()
-
-    # Init. LCDM nonlinear perturbations.
-    lcdm_nonlinear = LCDMNonLinearPerturbations()
-
     # Init. f(R) nonlinear perturbations.
+    # Note: we use a LCDM linear instance, instead of an f(R) one.
+    # This makes no difference for this test, but a linear f(R) instance should be used in all generality.
     emantis_cloe = EmantisFofrNonLinearPerturbations(
-        background=background,
-        nonlinearperturbations_lcdm=lcdm_nonlinear,
+        background=camb_background_instance,
+        linearperturbations=camb_linearperturbations_instance,
+        nonlinearperturbations_lcdm=camb_nonlinearperturbations_instance,
         redshifts=zs,
         fR0=fR0,
     )
@@ -66,26 +103,24 @@ def test_mg_boost_cloelib_vs_external():
     emantis_ext = NonLinearMGBoostEmulator(model="fR")
 
     emantis_ext_params = {
-        "Omega_m": background.Omega_cdm0
-        + background.Omega_b0
-        + background.mnu / 93.14 / background.h**2,
-        "Omega_b": background.Omega_b0,
-        "A_s": background.As,
-        "n_s": background.ns,
-        "h": background.h,
+        "Omega_m": camb_background_instance.Omega_m(0),
+        "Omega_b": camb_background_instance.Omega_b0,
+        "A_s": camb_background_instance.As,
+        "n_s": camb_background_instance.ns,
+        "h": camb_background_instance.h,
         "logfR0": -np.log10(np.abs(fR0)),
     }
 
     # Compute e-MANTIS boost by calling emantis directly (k in units of h/Mpc).
     boost_ext = emantis_ext.predict_boost(
-        emantis_ext_params, aexp=1 / (1 + zs), k=ks / background.h
+        emantis_ext_params, aexp=1 / (1 + zs), k=ks / camb_background_instance.h
     )
 
     # Compute f(R) power spectrum.
     pk_fr = emantis_cloe.matter_power_spectrum(zs, ks)
 
     # Compute LCDM power spectrum.
-    pk_lcdm = lcdm_nonlinear.matter_power_spectrum(zs, ks)
+    pk_lcdm = camb_nonlinearperturbations_instance.matter_power_spectrum(zs, ks)
 
     # Compute power spectrum boost.
     boost_cloe = pk_fr / pk_lcdm
@@ -93,8 +128,8 @@ def test_mg_boost_cloelib_vs_external():
     # Compute absolute relative difference.
     abs_rel_diff = np.abs(boost_cloe - boost_ext) / boost_ext
 
-    # Maximum absolute relative difference is smaller than 0.2%.
-    assert np.max(abs_rel_diff) < 2e-3
+    # Maximum absolute relative difference is smaller than 0.1%.
+    assert np.max(abs_rel_diff) < 1e-3
 
-    # Mean absolute relative difference is smaller than 0.02%.
-    assert np.mean(abs_rel_diff) < 2e-4
+    # Mean absolute relative difference is smaller than 0.01%.
+    assert np.mean(abs_rel_diff) < 1e-4

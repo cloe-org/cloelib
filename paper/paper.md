@@ -136,7 +136,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation:
   - name: Davide Sciotti
-    orcid: 0000-0000-0000-0000
+    orcid: 0009-0008-4519-2620
     affiliation: 31
   - name: Matthieu Schaller
     orcid: 0000-0000-0000-0000

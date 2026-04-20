@@ -115,8 +115,8 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 26
   - name: Anna Porredon
-    orcid: 0000-0000-0000-0000
-    affiliation:
+    orcid: 0000-0002-2762-2024
+    affiliation: 33
   - name: Robert Reischke
     orcid: 0000-0001-5404-8753
     affiliation: 27

@@ -210,6 +210,20 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
+### EmantisPerturbations
+
+Accurate and fast emulator of the nonlinear matter power spectrum in modified gravity using [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis).
+
+**Location**: `cloelib/cosmology/emantis_cosmology.py`
+
+**When to use**: Predictions for the nonlinear matter clustering in f(R) gravity.
+
+**Features**:
+
+- Fast predictions of the nonlinear matter power spectrum in f(R) gravity;
+- Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;
+- Limited to the Hu & Sawicki model (n=1) with fR0 as free parameter;
+
 ## Adding Your Own Perturbations Implementation
 
 To add a new Perturbations implementation, follow these steps.

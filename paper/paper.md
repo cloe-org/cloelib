@@ -93,8 +93,8 @@ authors:
   - name: Felicitas Keil
     orcid: 0000-0002-8108-1679
     affiliation: 19
-  - name: Raphael Kou
-    orcid: 0000-0000-0000-0000
+  - name: Raphaël Kou
+    orcid: 0000-0003-3408-3062
     affiliation: 20
   - name: Laila Linke
     orcid: 0000-0002-2622-8113
@@ -216,7 +216,7 @@ affiliations:
     index: 18
   - name: Institut de Recherche en Astrophysique et Planétologie (IRAP), Université de Toulouse, CNRS, UPS, CNES, 14 Av. Edouard Belin, 31400 Toulouse, France
     index: 19
-  - name: TBD
+  - name: Department of Physics & Astronomy, University of Sussex, Brighton BN1 9QH, UK
     index: 20
   - name: Universität Innsbruck, Institut für Astro- und Teilchenphysik, Technikerstr. 25/8, 6020 Innsbruck, Austria
     index: 21
@@ -579,7 +579,7 @@ The contributions of all remaining authors have been tracked using the [all-cont
 
 # Acknowledgements
 
-We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). C.M. is supported by the Agenzia Spaziale Italiana project "Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0". B.B. is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). E.B. and K.T. acknowledge support by the European Union’s Horizon Europe research and innovation program under the Marie Sklodowska-Curie COFUND Postdoctoral Programme grant agreement No.101081355- SMASH and from the Republic of Slovenia and the European Union from the European Regional Development Fund. A.H. acknowledges the support of a Royal Society University Research Fellowship. A.H.W. is supported by the Deutsches Zentrum für Luft- und Raumfahrt (DLR), under project 50QE2305, made possible by the Bundesministerium für Wirtschaft und Klimaschutz, and acknowledges funding from the German Science Foundation DFG, via the Collaborative Research Center SFB1491 "Cosmic Interacting Matters - From Source to Signal".
+We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). C.M. is supported by the Agenzia Spaziale Italiana project "Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0". B.B. is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). E.B. and K.T. acknowledge support by the European Union’s Horizon Europe research and innovation program under the Marie Sklodowska-Curie COFUND Postdoctoral Programme grant agreement No.101081355- SMASH and from the Republic of Slovenia and the European Union from the European Regional Development Fund. A.H. acknowledges the support of a Royal Society University Research Fellowship. A.H.W. is supported by the Deutsches Zentrum für Luft- und Raumfahrt (DLR), under project 50QE2305, made possible by the Bundesministerium für Wirtschaft und Klimaschutz, and acknowledges funding from the German Science Foundation DFG, via the Collaborative Research Center SFB1491 "Cosmic Interacting Matters - From Source to Signal". R.K. is supported by UK STFC grant ST/X001040/1.
 
 We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy. We acknowledge the use of Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) in MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, 2025-3-0036. We acknowledge support from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program with Grant agreement No. 101053992. The data production, processing and analysis tools for this paper have been developed, implemented and operated in collaboration with the Port d’Informació Científica (PIC) data center. PIC is maintained through a collaboration agreement between the Institut de Física d’Altes Energies (IFAE) and the Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT).
 

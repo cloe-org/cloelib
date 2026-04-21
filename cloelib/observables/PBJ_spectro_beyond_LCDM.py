@@ -80,7 +80,9 @@ class PBJSpectroPower:
         if redshift is None:
             redshift_arr = self.z[self.z != 0.0]
             if redshift_arr.size == 0:
-                raise ValueError("PBJSpectroPower needs at least one nonzero prediction redshift")
+                raise ValueError(
+                    "PBJSpectroPower needs at least one nonzero prediction redshift"
+                )
             self.redshift = float(redshift_arr[0])
         else:
             self.redshift = float(redshift)
@@ -156,15 +158,32 @@ class PBJSpectroPower:
             if model is not None:
                 return self._normalise_growth_model(model)
 
-        if self._get_first_from_sources(candidates, self.COSMO_PARAM_ALIASES["fR0"]) is not None:
+        if (
+            self._get_first_from_sources(candidates, self.COSMO_PARAM_ALIASES["fR0"])
+            is not None
+        ):
             return "fr"
-        if self._get_first_from_sources(candidates, self.COSMO_PARAM_ALIASES["omegarc"]) is not None:
+        if (
+            self._get_first_from_sources(
+                candidates, self.COSMO_PARAM_ALIASES["omegarc"]
+            )
+            is not None
+        ):
             return "dgp"
-        if self._get_first_from_sources(candidates, self.COSMO_PARAM_ALIASES["Omrc"]) is not None:
+        if (
+            self._get_first_from_sources(candidates, self.COSMO_PARAM_ALIASES["Omrc"])
+            is not None
+        ):
             return "ndgp"
-        if self._get_first_from_sources(candidates, self.COSMO_PARAM_ALIASES["xi"]) is not None:
+        if (
+            self._get_first_from_sources(candidates, self.COSMO_PARAM_ALIASES["xi"])
+            is not None
+        ):
             return "darkscattering"
-        if self._get_first_from_sources(candidates, self.COSMO_PARAM_ALIASES["gamma"]) is not None:
+        if (
+            self._get_first_from_sources(candidates, self.COSMO_PARAM_ALIASES["gamma"])
+            is not None
+        ):
             return "growthindex"
         return "lcdm"
 
@@ -208,27 +227,16 @@ class PBJSpectroPower:
         karr_growth = kgrid[:, 0] if np.asarray(kgrid).ndim > 1 else kgrid
 
         if self.growth_model != "lcdm":
-            if self.growth_model == "fr":
-                growth_rate, growth_factor = cosmology.eval_growth_functions(
-                    self.growth_model,
-                    self.redshift,
-                    karr=karr_growth / self.background.h,
-                    **self.cosmo,
-                )
-                return (
-                    self._format_growth_input(growth_rate),
-                    self._format_growth_input(growth_factor),
-                )
-
-            if self.growth_perturbations is not None and hasattr(
-                self.growth_perturbations, "fz_interp"
-            ) and hasattr(
-                self.growth_perturbations, "dz_norm_lcdm_interp"
+            if (
+                self.growth_perturbations is not None
+                and hasattr(self.growth_perturbations, "fz_interp")
+                and hasattr(self.growth_perturbations, "dz_norm_lcdm_interp")
             ):
                 z_eval = np.asarray([self.redshift])
-                growth_rate = self.growth_perturbations.fz_interp(z_eval, karr_growth)
+                k_eval = karr_growth / self.background.h / self.background.h
+                growth_rate = self.growth_perturbations.fz_interp(z_eval, k_eval)
                 growth_factor = self.growth_perturbations.dz_norm_lcdm_interp(
-                    z_eval, karr_growth
+                    z_eval, k_eval
                 )
                 return (
                     self._format_growth_input(growth_rate),
@@ -244,7 +252,9 @@ class PBJSpectroPower:
             self.linear_perturbations.growth_factor(self.redshift, 0.05)
         )
 
-        return self._format_growth_input(growth_rate), self._format_growth_input(growth_factor)
+        return self._format_growth_input(growth_rate), self._format_growth_input(
+            growth_factor
+        )
 
     def _linear_power_at_z0(self) -> np.ndarray:
         """Return a 1D z=0 linear spectrum on PBJ's internal k grid."""
@@ -268,6 +278,16 @@ class PBJSpectroPower:
                 f"got {plinear.size}, expected {pbj_obj.kL.size}"
             )
         return plinear
+
+    def _pbj_nuisance_parameters(self) -> dict:
+        """Return parameters safe to forward to PBJ theory calls."""
+        excluded = set(self.GROWTH_MODEL_ALIASES)
+        excluded.update({"f", "D", "cosmo", "IRres"})
+        return {
+            key: value
+            for key, value in self.parameters.items()
+            if key not in excluded
+        }
 
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields.
@@ -293,7 +313,7 @@ class PBJSpectroPower:
             D=growth_factor,
             cosmo=self.cosmo,
             IRres=True,
-            **self.parameters,
+            **self._pbj_nuisance_parameters(),
         )
 
         return pkmu

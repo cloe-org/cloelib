@@ -451,7 +451,7 @@ class CAMBNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Optional[object],
+        linearperturbations: Optional["CAMBLinearPerturbations"],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         log10TAGN: Optional[float] = None,

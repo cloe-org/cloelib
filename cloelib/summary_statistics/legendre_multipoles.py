@@ -461,7 +461,7 @@ class LegendreMultipoles:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
 
         Parameters:
-            mixing_matrix (dict): Dicitonary containing the mixing matrix
+            mixing_matrix (PowerSpectrumMultipolesMixingMatrix): Dicitonary containing the mixing matrix
             ells (np.ndarray): Legendre multipole order
             use_AP (bool): Flag to switch between with and without AP corrections
             format_type (str): Type of output format
@@ -509,7 +509,7 @@ class LegendreMultipoles:
         r"""Convolved power spectrum multipoles of specified terms.
 
         Parameters:
-            mixing_matrix (dict): Dicitonary containing the mixing matrix
+            mixing_matrix (PowerSpectrumMultipolesMixingMatrix): Dicitonary containing the mixing matrix
             term_list (list): List of terms to compute
             ells (np.ndarray): Legendre multipole order
             use_AP (bool): Flag to switch between with and without AP corrections

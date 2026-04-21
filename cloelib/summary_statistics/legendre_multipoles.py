@@ -58,9 +58,11 @@ def format_output(stat: str):
                     mixing_matrix = get_arg("mixing_matrix", 0)
                     rescaled_mixing_matrix = deepcopy(mixing_matrix)
                     scale_h = mixing_matrix.kout
-                    for key in [0,2,4]:
+                    for key in [0, 2, 4]:
                         rescaled_mixing_matrix.kin[key] = mixing_matrix.kin[key] * h_fid
-                        rescaled_mixing_matrix.kout[key] = mixing_matrix.kout[key] * h_fid
+                        rescaled_mixing_matrix.kout[key] = (
+                            mixing_matrix.kout[key] * h_fid
+                        )
                         set_arg("mixing_matrix", 0, rescaled_mixing_matrix)
                 else:
                     scale_h = get_arg("k", 0)

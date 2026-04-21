@@ -46,6 +46,7 @@ class JAXBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        **kwargs,
     ):
         """
         Initialize the JAXBackground class.

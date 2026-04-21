@@ -27,13 +27,13 @@ class CAMBBackground:
         Omega_k0: float,
         As: float,
         ns: float,
-        alpha_s: float,
         mnu: Union[float, Sequence[float], np.ndarray],
         w0: float,
         wa: float,
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        alpha_s: float = 0.0,
     ) -> None:
         """
         Initialize the CAMBBackground instance with cosmological parameters.

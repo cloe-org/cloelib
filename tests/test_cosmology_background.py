@@ -73,6 +73,7 @@ def test_derived_cosmology():
         As=2e-9,
         gamma_MG=0.0,
         N_mnu=1,
+        alpha_s=0.0,
     )
 
     _z_test = np.zeros(1)

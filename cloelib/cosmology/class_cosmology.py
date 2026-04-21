@@ -36,6 +36,7 @@ class CLASSBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        **kwargs,
     ) -> None:
         """
         Initialize the CLASSBackground instance with cosmological parameters.

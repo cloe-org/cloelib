@@ -10,7 +10,6 @@ import numpy as np  # type: ignore
 
 try:
     from pbjcosmo.theory import Theory
-    from pbjcosmo.tools import cosmology
 
     pbj_obj = Theory()
 except (ImportError, AttributeError, TypeError) as e:
@@ -284,9 +283,7 @@ class PBJSpectroPower:
         excluded = set(self.GROWTH_MODEL_ALIASES)
         excluded.update({"f", "D", "cosmo", "IRres"})
         return {
-            key: value
-            for key, value in self.parameters.items()
-            if key not in excluded
+            key: value for key, value in self.parameters.items() if key not in excluded
         }
 
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:

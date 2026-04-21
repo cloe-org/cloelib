@@ -140,19 +140,19 @@ class CosmoPowerJAXw0waCDMPerturbations:
                 Array of redshift values.
             """
             if background.N_mnu == 0:
-                cp_file = emulator_data("w0wa-linear-spectra.npz")
+                cp_file = emulator_data("w0wa-linear.npz")
                 cp_file_sigma = emulator_data("w0wa-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file = emulator_data("w0wa-1mass-linear-spectra.npz")
+                cp_file = emulator_data("w0wa-1mass-linear.npz")
                 cp_file_sigma = emulator_data("w0wa-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("w0wa-2mass-linear-spectra.npz")
-                cp_file_sigma = emulator_data("w0wa-2mass-s8-fs8.npz")
+                cp_file = emulator_data("w0wa-2degen-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("w0wa-3degen-linear-spectra.npz")
+                cp_file = emulator_data("w0wa-3degen-linear.npz")
                 cp_file_sigma = emulator_data("w0wa-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -353,19 +353,19 @@ class CosmoPowerJAXw0waCDMPerturbations:
 
         def __init__(self, background: Background, redshifts: np.ndarray):
             if background.N_mnu == 0:
-                cp_file = emulator_data("w0wa-pcb-linear-spectra.npz")
+                cp_file = emulator_data("w0wa-cb-linear.npz")
                 cp_file_sigma = emulator_data("w0wa-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file = emulator_data("w0wa-1mass-pcb-linear-spectra.npz")
+                cp_file = emulator_data("w0wa-1mass-cb-linear.npz")
                 cp_file_sigma = emulator_data("w0wa-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("w0wa-2mass-pcb-linear-spectra.npz")
-                cp_file_sigma = emulator_data("w0wa-2mass-s8-fs8.npz")
+                cp_file = emulator_data("w0wa-2degen-cb-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("w0wa-3degen-pcb-linear-spectra.npz")
+                cp_file = emulator_data("w0wa-3degen-cb-linear.npz")
                 cp_file_sigma = emulator_data("w0wa-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -525,19 +525,19 @@ class CosmoPowerJAXw0waCDMPerturbations:
             log10TAGN: Optional[float] = None,
         ):
             if background.N_mnu == 0:
-                cp_file_pk = emulator_data("w0wa-nonlinear-spectra.npz")
+                cp_file_pk = emulator_data("w0wa-nonlinear.npz")
                 cp_file_sigma = emulator_data("w0wa-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file_pk = emulator_data("w0wa-1mass-nonlinear-spectra.npz")
+                cp_file_pk = emulator_data("w0wa-1mass-nonlinear.npz")
                 cp_file_sigma = emulator_data("w0wa-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file_pk = emulator_data("w0wa-2mass-nonlinear-spectra.npz")
-                cp_file_sigma = emulator_data("w0wa-2mass-s8-fs8.npz")
+                cp_file_pk = emulator_data("w0wa-2degen-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file_pk = emulator_data("w0wa-3degen-nonlinear-spectra.npz")
+                cp_file_pk = emulator_data("w0wa-3degen-nonlinear.npz")
                 cp_file_sigma = emulator_data("w0wa-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -704,19 +704,19 @@ class CosmoPowerJAXw0waCDMPerturbations:
             log10TAGN: Optional[float] = None,
         ):
             if background.N_mnu == 0:
-                cp_file = emulator_data("w0wa-pcb-nonlinear-spectra.npz")
+                cp_file = emulator_data("w0wa-cb-nonlinear.npz")
                 cp_file_sigma = emulator_data("w0wa-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file = emulator_data("w0wa-1mass-pcb-nonlinear-spectra.npz")
+                cp_file = emulator_data("w0wa-1mass-cb-nonlinear.npz")
                 cp_file_sigma = emulator_data("w0wa-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("w0wa-2mass-pcb-nonlinear-spectra.npz")
-                cp_file_sigma = emulator_data("w0wa-2mass-s8-fs8.npz")
+                cp_file = emulator_data("w0wa-2degen-cb-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("w0wa-3degen-pcb-nonlinear-spectra.npz")
+                cp_file = emulator_data("w0wa-3degen-cb-nonlinear.npz")
                 cp_file_sigma = emulator_data("w0wa-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -853,19 +853,19 @@ class CosmoPowerJAXwCDMPerturbations:
 
         def __init__(self, background: Background, redshifts: np.ndarray):
             if background.N_mnu == 0:
-                cp_file = emulator_data("wcdm-linear-spectra.npz")
+                cp_file = emulator_data("wcdm-linear.npz")
                 cp_file_sigma = emulator_data("wcdm-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file = emulator_data("wcdm-1mass-linear-spectra.npz")
+                cp_file = emulator_data("wcdm-1mass-linear.npz")
                 cp_file_sigma = emulator_data("wcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("wcdm-2mass-linear-spectra.npz")
-                cp_file_sigma = emulator_data("wcdm-2mass-s8-fs8.npz")
+                cp_file = emulator_data("wcdm-2degen-linear.npz")
+                cp_file_sigma = emulator_data("wcdm-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("wcdm-3degen-linear-spectra.npz")
+                cp_file = emulator_data("wcdm-3degen-linear.npz")
                 cp_file_sigma = emulator_data("wcdm-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -989,19 +989,19 @@ class CosmoPowerJAXwCDMPerturbations:
 
         def __init__(self, background: Background, redshifts: np.ndarray):
             if background.N_mnu == 0:
-                cp_file = emulator_data("wcdm-pcb-linear-spectra.npz")
+                cp_file = emulator_data("wcdm-cb-linear.npz")
                 cp_file_sigma = emulator_data("wcdm-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file = emulator_data("wcdm-1mass-pcb-linear-spectra.npz")
+                cp_file = emulator_data("wcdm-1mass-cb-linear.npz")
                 cp_file_sigma = emulator_data("wcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("wcdm-2mass-pcb-linear-spectra.npz")
-                cp_file_sigma = emulator_data("wcdm-2mass-s8-fs8.npz")
+                cp_file = emulator_data("wcdm-2degen-cb-linear.npz")
+                cp_file_sigma = emulator_data("wcdm-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("wcdm-3degen-pcb-linear-spectra.npz")
+                cp_file = emulator_data("wcdm-3degen-cb-linear.npz")
                 cp_file_sigma = emulator_data("wcdm-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -1123,19 +1123,19 @@ class CosmoPowerJAXwCDMPerturbations:
             log10TAGN: Optional[float] = None,
         ):
             if background.N_mnu == 0:
-                cp_file = emulator_data("wcdm-nonlinear-spectra.npz")
+                cp_file = emulator_data("wcdm-nonlinear.npz")
                 cp_file_sigma = emulator_data("wcdm-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file = emulator_data("wcdm-1mass-nonlinear-spectra.npz")
+                cp_file = emulator_data("wcdm-1mass-nolinear.npz")
                 cp_file_sigma = emulator_data("wcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("wcdm-2mass-nonlinear-spectra.npz")
-                cp_file_sigma = emulator_data("wcdm-2mass-s8-fs8.npz")
+                cp_file = emulator_data("wcdm-2degen-nonlinear.npz")
+                cp_file_sigma = emulator_data("wcdm-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("wcdm-3degen-nonlinear-spectra.npz")
+                cp_file = emulator_data("wcdm-3degen-nonlinear.npz")
                 cp_file_sigma = emulator_data("wcdm-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -1239,19 +1239,19 @@ class CosmoPowerJAXwCDMPerturbations:
             log10TAGN: Optional[float] = None,
         ):
             if background.N_mnu == 0:
-                cp_file = emulator_data("wcdm-pcb-nonlinear-spectra.npz")
+                cp_file = emulator_data("wcdm-cb-nonlinear.npz")
                 cp_file_sigma = emulator_data("wcdm-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file = emulator_data("wcdm-1mass-pcb-nonlinear-spectra.npz")
+                cp_file = emulator_data("wcdm-1mass-cb-nolinear.npz")
                 cp_file_sigma = emulator_data("wcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("wcdm-2mass-pcb-nonlinear-spectra.npz")
-                cp_file_sigma = emulator_data("wcdm-2mass-s8-fs8.npz")
+                cp_file = emulator_data("wcdm-2degen-cb-nonlinear.npz")
+                cp_file_sigma = emulator_data("wcdm-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("wcdm-3degen-pcb-nonlinear-spectra.npz")
+                cp_file = emulator_data("wcdm-3degen-cb-nonlinear.npz")
                 cp_file_sigma = emulator_data("wcdm-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -1353,19 +1353,19 @@ class CosmoPowerJAXLCDMPerturbations:
 
         def __init__(self, background: Background, redshifts: np.ndarray):
             if background.N_mnu == 0:
-                cp_file = emulator_data("lcdm-linear-spectra.npz")
+                cp_file = emulator_data("lcdm-linear.npz")
                 cp_file_sigma = emulator_data("lcdm-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file = emulator_data("lcdm-1mass-linear-spectra.npz")
+                cp_file = emulator_data("lcdm-1mass-linear.npz")
                 cp_file_sigma = emulator_data("lcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("lcdm-2mass-linear-spectra.npz")
-                cp_file_sigma = emulator_data("lcdm-2mass-s8-fs8.npz")
+                cp_file = emulator_data("lcdm-2degen-linear.npz")
+                cp_file_sigma = emulator_data("lcdm-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("lcdm-3degen-linear-spectra.npz")
+                cp_file = emulator_data("lcdm-3degen-linear.npz")
                 cp_file_sigma = emulator_data("lcdm-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -1464,19 +1464,19 @@ class CosmoPowerJAXLCDMPerturbations:
 
         def __init__(self, background: Background, redshifts: np.ndarray):
             if background.N_mnu == 0:
-                cp_file = emulator_data("lcdm-pcb-linear-spectra.npz")
+                cp_file = emulator_data("lcdm-cb-linear.npz")
                 cp_file_sigma = emulator_data("lcdm-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file = emulator_data("lcdm-1mass-pcb-linear-spectra.npz")
+                cp_file = emulator_data("lcdm-1mass-cb-linear.npz")
                 cp_file_sigma = emulator_data("lcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("lcdm-2mass-pcb-linear-spectra.npz")
-                cp_file_sigma = emulator_data("lcdm-2mass-s8-fs8.npz")
+                cp_file = emulator_data("lcdm-2degen-cb-linear.npz")
+                cp_file_sigma = emulator_data("lcdm-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("lcdm-3degen-pcb-linear-spectra.npz")
+                cp_file = emulator_data("lcdm-3degen-cb-linear.npz")
                 cp_file_sigma = emulator_data("lcdm-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -1581,19 +1581,19 @@ class CosmoPowerJAXLCDMPerturbations:
             log10TAGN: Optional[float] = None,
         ):
             if background.N_mnu == 0:
-                cp_file = emulator_data("lcdm-nonlinear-spectra.npz")
+                cp_file = emulator_data("lcdm-nonlinear.npz")
                 cp_file_sigma = emulator_data("lcdm-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file = emulator_data("lcdm-1mass-nonlinear-spectra.npz")
+                cp_file = emulator_data("lcdm-1mass-nonlinear.npz")
                 cp_file_sigma = emulator_data("lcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("lcdm-2mass-nonlinear-spectra.npz")
-                cp_file_sigma = emulator_data("lcdm-2mass-s8-fs8.npz")
+                cp_file = emulator_data("lcdm-2degen-nonlinear.npz")
+                cp_file_sigma = emulator_data("lcdm-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("lcdm-3degen-nonlinear-spectra.npz")
+                cp_file = emulator_data("lcdm-3degen-nonlinear.npz")
                 cp_file_sigma = emulator_data("lcdm-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -1696,19 +1696,19 @@ class CosmoPowerJAXLCDMPerturbations:
             log10TAGN: Optional[float] = None,
         ):
             if background.N_mnu == 0:
-                cp_file = emulator_data("lcdm-pcb-nonlinear-spectra.npz")
+                cp_file = emulator_data("lcdm-cb-nonlinear.npz")
                 cp_file_sigma = emulator_data("lcdm-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
-                cp_file = emulator_data("lcdm-1mass-pcb-nonlinear-spectra.npz")
+                cp_file = emulator_data("lcdm-1mass-cb-nonlinear.npz")
                 cp_file_sigma = emulator_data("lcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("lcdm-2mass-pcb-nonlinear-spectra.npz")
-                cp_file_sigma = emulator_data("lcdm-2mass-s8-fs8.npz")
+                cp_file = emulator_data("lcdm-2degen-cb-nonlinear.npz")
+                cp_file_sigma = emulator_data("lcdm-2degen-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("lcdm-3degen-pcb-nonlinear-spectra.npz")
+                cp_file = emulator_data("lcdm-3degen-cb-nonlinear.npz")
                 cp_file_sigma = emulator_data("lcdm-3degen-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
@@ -1970,7 +1970,7 @@ class CosmoPowerJAXCurvaturePerturbations:
         """Emulator for the cb linear matter power spectrum in LCDM+curvature cosmology."""
 
         def __init__(self, background: Background, redshifts: np.ndarray):
-            cp_file = emulator_data("lcdm-curvature-pcb-linear.npz")
+            cp_file = emulator_data("lcdm-curvature-cb-linear.npz")
             cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
 
             self.cp_LIN = load_pk_emulator(cp_file)
@@ -2046,7 +2046,7 @@ class CosmoPowerJAXCurvaturePerturbations:
             redshifts: np.ndarray,
             log10TAGN: Optional[float] = None,
         ):
-            cp_file = emulator_data("lcdm-curvature-pcb-nonlinear.npz")
+            cp_file = emulator_data("lcdm-curvature-cb-nonlinear.npz")
             cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
 
             self.cp_NONLIN = load_pk_emulator(cp_file)
@@ -2280,8 +2280,8 @@ class CosmoPowerJAXRunningIndexPerturbations:
         """Emulator for the cb linear matter power spectrum in LCDM+running spectral index cosmology."""
 
         def __init__(self, background: Background, redshifts: np.ndarray):
-            cp_file = emulator_data("lcdm-running-pcb-linear.npz")
-            cp_file_sigma = emulator_data("lcdm-running-s8-fs8.npz")
+            cp_file = emulator_data("lcdm-nrun-cb-linear.npz")
+            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
 
             self.cp_LIN = load_pk_emulator(cp_file)
             self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
@@ -2356,8 +2356,8 @@ class CosmoPowerJAXRunningIndexPerturbations:
             redshifts: np.ndarray,
             log10TAGN: Optional[float] = None,
         ):
-            cp_file = emulator_data("lcdm-running-pcb-nonlinear.npz")
-            cp_file_sigma = emulator_data("lcdm-running-s8-fs8.npz")
+            cp_file = emulator_data("lcdm-nrun-cb-nonlinear.npz")
+            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
 
             self.cp_NONLIN = load_pk_emulator(cp_file)
             self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)

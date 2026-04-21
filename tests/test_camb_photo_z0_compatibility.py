@@ -35,6 +35,7 @@ def camb_photo_setup():
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        alpha_s=0.0,
         mnu=0.06,
         w0=-1.0,
         wa=0.0,

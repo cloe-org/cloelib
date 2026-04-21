@@ -104,6 +104,7 @@ bg = CAMBBackground(
     Omega_cdm0=0.2650,
     As=2.1e-9,
     ns=0.965,
+    alpha_s=0.0,   # running of the spectral index
     # ... other parameters
 )
 

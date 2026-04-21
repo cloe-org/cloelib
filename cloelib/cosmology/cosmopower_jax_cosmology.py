@@ -18,7 +18,7 @@ Supported models include:
 - LCDM with three massive neutrinos
 
 - LCDM with curvature
-- wCDM with running of the spectral index
+- LCDM with running of the spectral index
 """
 
 from cloelib.cosmology.cosmology import Background, Perturbations
@@ -33,7 +33,7 @@ from typing import Optional
 
 
 # Zenodo URL for emulator files
-ZENODO_URL = "https://zenodo.org/records/18392621/files"
+ZENODO_URL = "https://zenodo.org/records/19678842/files"
 
 
 def emulator_data(filename: str, zenodo_url: str = None) -> str:

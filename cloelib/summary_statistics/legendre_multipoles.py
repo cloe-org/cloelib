@@ -11,6 +11,7 @@ from cloelib.auxiliary.fftlog import fftlog
 import functools
 from typing import Optional
 import numpy as np
+from copy import deepcopy
 
 # cosmolib imports
 from cosmolib.data import (
@@ -55,7 +56,12 @@ def format_output(stat: str):
             if stat == "PK_multipoles":
                 if "convolved" in func.__name__:
                     mixing_matrix = get_arg("mixing_matrix", 0)
-                    scale_h = mixing_matrix.kout * h_fid
+                    rescaled_mixing_matrix = deepcopy(mixing_matrix)
+                    scale_h = mixing_matrix.kout
+                    for key in [0,2,4]:
+                        rescaled_mixing_matrix.kin[key] = mixing_matrix.kin[key] * h_fid
+                        rescaled_mixing_matrix.kout[key] = mixing_matrix.kout[key] * h_fid
+                        set_arg("mixing_matrix", 0, rescaled_mixing_matrix)
                 else:
                     scale_h = get_arg("k", 0)
                     set_arg("k", 0, scale_h * h_fid)

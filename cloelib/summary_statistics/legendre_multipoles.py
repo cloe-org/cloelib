@@ -35,7 +35,7 @@ def format_output(stat: str):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             """cosmolib format is returned in Mpc/h units, differently from
-            cloelib standards
+            cloelib standards which is in Mpc units
             """
 
             def get_arg(name, idx):

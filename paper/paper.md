@@ -87,9 +87,9 @@ authors:
   - name: Alex Hall
     orcid: 0000-0002-3139-8651
     affiliation: 44
-  - name: Ryusei Kano
-    orcid: 0000-0000-0000-0000
-    affiliation: 10
+  - name: Ryusei R. Kano
+    orcid: 0009-0002-9108-8396
+    affiliation: 10, 44
   - name: Felicitas Keil
     orcid: 0000-0002-8108-1679
     affiliation: 19
@@ -196,7 +196,7 @@ affiliations:
     index: 8
   - name: Departement of Physics “Aldo Pontremoli”, Università degli Studi di Milano, Via G. Celoria 16, 20133, Milano, Italy
     index: 9
-  - name: TBD
+  - name: Division of Particle and Astrophysical Science, Nagoya University, Furo-cho, Chikusa-ku, Nagoya, 464–8602, Japan
     index: 10
   - name: Lorentz Institute for Theoretical Physics, Leiden University, PO Box 9506, NL-2300 RA Leiden, The Netherlands
     index: 11

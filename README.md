@@ -238,6 +238,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/neelcosmo"><img src="https://avatars.githubusercontent.com/u/151792852?v=4?s=100" width="100px;" alt="Neel Shah"/><br /><sub><b>Neel Shah</b></sub></a><br /><a href="#code-neelcosmo" title="Code">💻</a> <a href="#ideas-neelcosmo" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/FelicitasKeil"><img src="https://avatars.githubusercontent.com/u/70713596?v=4?s=100" width="100px;" alt="Felicitas Keil"/><br /><sub><b>Felicitas Keil</b></sub></a><br /><a href="#code-FelicitasKeil" title="Code">💻</a> <a href="#ideas-FelicitasKeil" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jipdebuck"><img src="https://avatars.githubusercontent.com/u/236796982?v=4?s=100" width="100px;" alt="Jip de Buck"/><br /><sub><b>Jip de Buck</b></sub></a><br /><a href="#userTesting-jipdebuck" title="User Testing">📓</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/HironaoMiyatake"><img src="https://avatars.githubusercontent.com/u/1507529?v=4?s=100" width="100px;" alt="Hironao Miyatake"/><br /><sub><b>Hironao Miyatake</b></sub></a><br /><a href="#ideas-HironaoMiyatake" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>

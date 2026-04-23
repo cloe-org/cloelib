@@ -4,8 +4,8 @@ from .halo_abundance_core import HaloAbundanceCore
 from .tinker_halo_abundance import TinkerHaloAbundance
 
 __all__ = [
-    'CastroHaloAbundance',
-    'HaloAbundance',
-    'HaloAbundanceCore',
-    'TinkerHaloAbundance'
+    "CastroHaloAbundance",
+    "HaloAbundance",
+    "HaloAbundanceCore",
+    "TinkerHaloAbundance",
 ]

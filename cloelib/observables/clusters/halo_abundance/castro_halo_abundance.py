@@ -2,14 +2,12 @@ import numpy as np
 from scipy import interpolate
 from scipy.special import gamma
 
-from cloelib.cosmology import derived_cosmology
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
 
 from .halo_abundance_core import HaloAbundanceCore
 
 
 class CastroHaloAbundance:
-
     def __init__(self, matter_statistics: MatterStatistics):
         """
         Class implementing the Castro et al. mass abundance models.

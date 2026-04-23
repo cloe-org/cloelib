@@ -1,6 +1,5 @@
 import numpy as np
 
-from cloelib.cosmology import derived_cosmology
 from cloelib.observables.clusters.auxiliary import convert_to_Delta_crit
 from cloelib.observables.clusters.matter_statistics import MatterStatistics
 
@@ -8,7 +7,6 @@ from .halo_abundance_core import HaloAbundanceCore
 
 
 class TinkerHaloAbundance:
-
     def __init__(
         self,
         matter_statistics: MatterStatistics,

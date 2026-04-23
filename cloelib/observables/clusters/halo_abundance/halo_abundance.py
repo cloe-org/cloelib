@@ -1,12 +1,12 @@
+"""
+- Introducing a protocol for the halo statistics part that we might have many versions of it.
+"""
+
 # General imports
 from typing import Protocol, TypeVar, Union, runtime_checkable
 
 import jax.numpy as jnp
 import numpy as np  # type: ignore
-
-"""
-- Introducing a protocol for the halo statistics part that we might have many versions of it.
-"""
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 

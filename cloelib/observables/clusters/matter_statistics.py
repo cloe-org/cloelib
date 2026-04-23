@@ -3,7 +3,6 @@ from scipy import interpolate
 from scipy.integrate import quad_vec
 from scipy.special import j0, j1
 
-from cloelib.auxiliary import units
 from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.cosmology import Perturbations
 
@@ -96,7 +95,7 @@ class MatterStatistics:
         if interpolate_pk:
             self.matter_power_spectrum_cb = self.Pk_interp_cb
         else:
-            self.matter_power_spectrum_cb = _matter_power_spectrum_cb_exact
+            self.matter_power_spectrum_cb = self._matter_power_spectrum_cb_exact
         self.__interpolate_pk = interpolate_pk
 
     @interpolate_da.setter

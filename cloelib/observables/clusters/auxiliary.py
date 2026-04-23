@@ -1,7 +1,6 @@
 """Module implementing auxiliary functions"""
 
 import numpy as np
-from astropy import units as ap_units
 from scipy.special import erf
 
 from cloelib.auxiliary import units
@@ -85,10 +84,10 @@ def convert_distance(distance, units_in, units_out, angular_diameter_distance=No
         angular conversion used, output shape is (z.size, distance.size).
     """
     angular_units_dict = {
-        "radians": ap_units.rad,
-        "degrees": ap_units.deg,
-        "arcmin": ap_units.arcmin,
-        "arcsec": ap_units.arcsec,
+        "radians": units.rad_to_rad,
+        "degrees": units.deg_to_rad,
+        "arcmin": units.arcmin_to_rad,
+        "arcsec": units.arcsec_to_rad,
     }
     _valid_units = ["mpc/h", *angular_units_dict.keys()]
     if units_in.lower() not in _valid_units:
@@ -101,20 +100,14 @@ def convert_distance(distance, units_in, units_out, angular_diameter_distance=No
 
     if units_out.lower() not in angular_units_dict:
         # converting to mpc/h
-        theta = (
-            (distance * angular_units_dict[units_in]).to(ap_units.rad).value
-        )  # distance in radians
+        theta = distance * angular_units_dict[units_in]  # distance in radians
         out = theta * angular_diameter_distance
     elif units_in.lower() not in angular_units_dict:
         # converting to angular units
         theta = distance / angular_diameter_distance  # distance in radians
-        out = (theta * ap_units.rad).to(angular_units_dict[units_out]).value
+        out = theta / angular_units_dict[units_out]
     else:
-        out = (
-            (distance * angular_units_dict[units_in])
-            .to(angular_units_dict[units_out])
-            .value
-        )
+        out = distance * angular_units_dict[units_in] / angular_units_dict[units_out]
 
     return out
 

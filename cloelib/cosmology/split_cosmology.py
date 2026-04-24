@@ -14,14 +14,14 @@ class SplitLinearPerturbations:
         background: Background,
         omega_m_growth: float,
         redshifts: np.ndarray,
-        perturbations: Perturbations,
+        lin_perturbations: Perturbations,
     ):
         """Initialise SplitLinearPerturbations."""
         self.background = background
         self.omega_m_growth = omega_m_growth
         self.z = redshifts
         self.kmax = 100
-        self.perturbations = perturbations
+        self.lin_perturbations = lin_perturbations
 
     @property
     def _interface_args(self) -> dict:
@@ -62,7 +62,7 @@ class SplitLinearPerturbations:
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.pk_linear_EBS = self.perturbations.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
+        self.pk_linear_EBS = self.lin_perturbations.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
 
         omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
 
@@ -81,6 +81,57 @@ class SplitLinearPerturbations:
         self.sigma8_0 = g_z_growth[i] / g_z_geo[i] * self.sigma8_0_EBS()
         return self.pk_linear
 
+    def growth_factor(
+        self, zs, ks=np.logspace(np.log10(1e-5), np.log10(1e0), 200)
+    ) -> np.ndarray:
+        r"""
+        Calculate the growth factor for given redshifts and wavenumbers.
+
+        .. math::
+            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+            /P_{\rm \delta\delta}(z=0, k)}\\
+
+        and normalizes as for :math:`D(z)/D(0)`.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        Returns:
+        --------
+        np.ndarray
+            The growth factor at the specified redshift and wavenumber.
+        """
+        mps_lin = self.matter_power_spectrum(zs, ks)
+
+        D_z_k = np.sqrt(mps_lin[:, :] / mps_lin[0, :])
+
+        return D_z_k
+
+    def growth_rate(self, zs) -> np.ndarray:
+        """
+        Calculate the growth rate f(z).
+
+        Returns
+        -------
+        np.ndarray
+            Scale-independent growth rate f(z)
+        """
+        growth_factor_D = self.growth_factor(zs)[:, 0]
+
+        # growth_rate_f = differentiate.derivative(
+        #     self.growth_factor, zs, args=(zs, 0))
+
+        derivative_growth_factor_D = np.gradient(growth_factor_D, zs)
+
+        growth_rate_f = -(1 + zs) / growth_factor_D * derivative_growth_factor_D
+
+        return growth_rate_f
+
     def sigma8_0_EBS(self) -> float:
         """
         Calculate the sigma8 value for the current cosmology from the EBS.
@@ -90,7 +141,7 @@ class SplitLinearPerturbations:
         float
             The sigma8 value.
         """
-        return self.perturbations.sigma8_0()
+        return self.lin_perturbations.sigma8_0()
 
 
 class SplitNonLinearPerturbations:
@@ -108,6 +159,7 @@ class SplitNonLinearPerturbations:
         self.z = redshifts
         self.kmax = 100
         self.pk_linear = pk_linear
+        self.background = perturbations_lin.background
         self.perturbations_lin = perturbations_lin
         self.perturbations_NL = perturbations_NL
 
@@ -147,3 +199,52 @@ class SplitNonLinearPerturbations:
 
         # Add the boost to the rescaled power spectrum
         return boost * self.pk_linear
+
+    def growth_factor(self, zs, ks) -> np.ndarray:
+        r"""
+        Calculate the growth factor for given redshifts and wavenumbers.
+
+        .. math::
+            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+            /P_{\rm \delta\delta}(z=0, k)}\\
+
+        and normalizes as for :math:`D(z)/D(0)`.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        Returns:
+        --------
+        np.ndarray
+            The growth factor at the specified redshift and wavenumber.
+        """
+        mps_lin = self.matter_power_spectrum(zs, ks)
+
+        D_z_k = np.sqrt(mps_lin[:, :] / mps_lin[0, :])
+
+        return D_z_k
+
+    def growth_rate(self, zs) -> np.ndarray:
+        """
+        Calculate the growth rate f(z).
+
+        Returns
+        -------
+        np.ndarray
+            Scale-independent growth rate f(z)
+        """
+        growth_factor_D = self.growth_factor(zs)[:, 0]
+
+        # growth_rate_f = differentiate.derivative(
+        #     self.growth_factor, zs, args=(zs, 0))
+
+        derivative_growth_factor_D = np.gradient(growth_factor_D, zs)
+
+        growth_rate_f = -(1 + zs) / growth_factor_D * derivative_growth_factor_D
+
+        return growth_rate_f

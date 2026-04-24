@@ -3,14 +3,15 @@ import numpy as np
 
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.cosmology.class_cosmology import (
-    CLASSBackground, 
+    CLASSBackground,
     CLASSLinearPerturbations,
-    CLASSNonLinearPerturbations
+    CLASSNonLinearPerturbations,
 )
 from cloelib.cosmology.split_cosmology import (
     SplitLinearPerturbations,
-    SplitNonLinearPerturbations
+    SplitNonLinearPerturbations,
 )
+
 
 @pytest.fixture
 def zs(scope="module"):
@@ -73,29 +74,31 @@ def class_background_instance_growth(scope="module"):
 
 
 @pytest.fixture
-def class_perturbation_instances_geo(class_background_instance_geo, zs,
-                                     scope="module"):
+def class_perturbation_instances_geo(class_background_instance_geo, zs, scope="module"):
     """Fixture to create the Linear and NonLinear instances of CLASSPerturbations."""
     class_lin = CLASSLinearPerturbations(
         background=class_background_instance_geo, redshifts=zs
     )
     class_non = CLASSNonLinearPerturbations(
-        background=class_background_instance_geo, redshifts=zs,
-        nonlinear_model="halofit"
+        background=class_background_instance_geo,
+        redshifts=zs,
+        nonlinear_model="halofit",
     )
     return {"Linear": class_lin, "NonLinear": class_non}
 
 
 @pytest.fixture
-def class_perturbation_instances_growth(class_background_instance_growth, zs,
-                                        scope="module"):
+def class_perturbation_instances_growth(
+    class_background_instance_growth, zs, scope="module"
+):
     """Fixture to create the Linear and NonLinear instances of CLASSPerturbations."""
     class_lin = CLASSLinearPerturbations(
         background=class_background_instance_growth, redshifts=zs
     )
     class_non = CLASSNonLinearPerturbations(
-        background=class_background_instance_growth, redshifts=zs,
-        nonlinear_model="halofit"
+        background=class_background_instance_growth,
+        redshifts=zs,
+        nonlinear_model="halofit",
     )
     return {"Linear": class_lin, "NonLinear": class_non}
 
@@ -107,30 +110,36 @@ def omega_m_growth(scope="module"):
 
 @pytest.fixture
 def split_perturbation_instances(
-    class_background_instance_geo, class_perturbation_instances_geo,
-    class_perturbation_instances_growth, zs, ks, omega_m_growth,
-    scope="module"):
+    class_background_instance_geo,
+    class_perturbation_instances_geo,
+    class_perturbation_instances_growth,
+    zs,
+    ks,
+    omega_m_growth,
+    scope="module",
+):
     """Fixture to create the Linear and NonLinear instances of CLASSPerturbations."""
     class_lin_geo = class_perturbation_instances_geo["Linear"]
     class_lin_growth = class_perturbation_instances_growth["Linear"]
     class_nl_growth = class_perturbation_instances_growth["NonLinear"]
     split_lin = SplitLinearPerturbations(
-        background=class_background_instance_geo, omega_m_growth=omega_m_growth,
-        redshifts=zs, lin_perturbations=class_lin_geo
+        background=class_background_instance_geo,
+        omega_m_growth=omega_m_growth,
+        redshifts=zs,
+        lin_perturbations=class_lin_geo,
     )
-    split_pk_linear = split_lin.matter_power_spectrum(zs, ks),
+    split_pk_linear = (split_lin.matter_power_spectrum(zs, ks),)
     split_non = SplitNonLinearPerturbations(
-        redshifts=zs, pk_linear=split_pk_linear,
+        redshifts=zs,
+        pk_linear=split_pk_linear,
         perturbations_lin=class_lin_growth,
-        perturbations_NL=class_nl_growth
+        perturbations_NL=class_nl_growth,
     )
     return {"Linear": split_lin, "NonLinear": split_non}
 
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
-def test_split_perturbation_implements_protocol(split_perturbation_instances,
-                                                key):
+def test_split_perturbation_implements_protocol(split_perturbation_instances, key):
     """Test that the SplitPerturbation instances adhere to the protocol."""
     split_instance = split_perturbation_instances[key]
     assert isinstance(split_instance, Perturbations)
-

@@ -184,7 +184,7 @@ affiliations:
     index: 2
   - name: Centre for Astrophysics Research, University of Hertfordshire, United Kingdom
     index: 3
-  - name: German Aerospace Center (DLR), Scientific Information, Linder H¨ohe, D-51147 K¨oln, Germany
+  - name: German Aerospace Center (DLR), Scientific Information, Linder Höhe, D-51147 Köln, Germany
     index: 4
   - name: INAF - Osservatorio Astronomico di Trieste, Italy
     index: 5

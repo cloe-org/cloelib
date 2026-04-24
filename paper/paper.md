@@ -87,14 +87,14 @@ authors:
   - name: Alex Hall
     orcid: 0000-0002-3139-8651
     affiliation: 44
-  - name: Ryusei Kano
-    orcid: 0000-0000-0000-0000
-    affiliation: 10
+  - name: Ryusei R. Kano
+    orcid: 0009-0002-9108-8396
+    affiliation: 10, 44
   - name: Felicitas Keil
     orcid: 0000-0002-8108-1679
     affiliation: 19
-  - name: Raphael Kou
-    orcid: 0000-0000-0000-0000
+  - name: Raphaël Kou
+    orcid: 0000-0003-3408-3062
     affiliation: 20
   - name: Laila Linke
     orcid: 0000-0002-2622-8113
@@ -115,8 +115,8 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 26
   - name: Anna Porredon
-    orcid: 0000-0000-0000-0000
-    affiliation:
+    orcid: 0000-0002-2762-2024
+    affiliation: 33
   - name: Robert Reischke
     orcid: 0000-0001-5404-8753
     affiliation: 27
@@ -136,7 +136,7 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation:
   - name: Davide Sciotti
-    orcid: 0000-0000-0000-0000
+    orcid: 0009-0008-4519-2620
     affiliation: 31
   - name: Matthieu Schaller
     orcid: 0000-0000-0000-0000
@@ -157,8 +157,8 @@ authors:
     orcid: 0000-0000-0000-0000
     affiliation: 36
   - name: Linus Thummel
-    orcid: 0000-0000-0000-0000
-    affiliation: 10
+    orcid: 0000-0002-9807-5494
+    affiliation: 44, 45
   - name: Maria Tsedrik
     orcid: 0000-0002-0020-5343
     affiliation: 44, 45
@@ -169,7 +169,7 @@ authors:
     orcid: 0009-0007-6341-4648
     affiliation: 2
   - name: Angus H. Wright
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0001-7363-7932
     affiliation: 41
   - name: Miguel Zumalacarregui
     orcid: 0000-0002-9943-6490
@@ -196,7 +196,7 @@ affiliations:
     index: 8
   - name: Departement of Physics “Aldo Pontremoli”, Università degli Studi di Milano, Via G. Celoria 16, 20133, Milano, Italy
     index: 9
-  - name: TBD
+  - name: Division of Particle and Astrophysical Science, Nagoya University, Furo-cho, Chikusa-ku, Nagoya, 464–8602, Japan
     index: 10
   - name: Lorentz Institute for Theoretical Physics, Leiden University, PO Box 9506, NL-2300 RA Leiden, The Netherlands
     index: 11
@@ -216,7 +216,7 @@ affiliations:
     index: 18
   - name: Institut de Recherche en Astrophysique et Planétologie (IRAP), Université de Toulouse, CNRS, UPS, CNES, 14 Av. Edouard Belin, 31400 Toulouse, France
     index: 19
-  - name: TBD
+  - name: Department of Physics & Astronomy, University of Sussex, Brighton BN1 9QH, UK
     index: 20
   - name: Universität Innsbruck, Institut für Astro- und Teilchenphysik, Technikerstr. 25/8, 6020 Innsbruck, Austria
     index: 21
@@ -260,7 +260,7 @@ affiliations:
     index: 40
   - name: TBD
     index: 41
-  - name: TBD
+  - name: Ruhr University Bochum, Faculty of Physics and Astronomy, Astronomical Institute (AIRUB), German Centre for Cosmological Lensing, 44780 Bochum, Germany
     index: 42
   - name: Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am Mühlenberg 1, D-14476 Potsdam-Golm, Germany
     index: 43
@@ -579,7 +579,7 @@ The contributions of all remaining authors have been tracked using the [all-cont
 
 # Acknowledgements
 
-We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). C.M. is supported by the Agenzia Spaziale Italiana project "Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0". B.B. is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). E.B. and K.T. acknowledge support by the European Union’s Horizon Europe research and innovation program under the Marie Sklodowska-Curie COFUND Postdoctoral Programme grant agreement No.101081355- SMASH and from the Republic of Slovenia and the European Union from the European Regional Development Fund. A.H. acknowledges the support of a Royal Society University Research Fellowship.
+We acknowledge the support of the Euclid Consortium, including its provision of scientific coordination, data access, and computational infrastructure essential for this work. We thank the broader CLOE software development team for foundational work that motivated this library. G.C.H. acknowledges that this project is part of the project UNICORN with file number VI.Veni.242.110 of the research programme Talent Programme Veni Science domain 2024 which is (partly) financed by the Dutch Research Council (NWO) under the grant https://doi.org/10.61686/ZCPQI32997. M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). C.M. is supported by the Agenzia Spaziale Italiana project "Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0". B.B. is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). E.B. and K.T. acknowledge support by the European Union’s Horizon Europe research and innovation program under the Marie Sklodowska-Curie COFUND Postdoctoral Programme grant agreement No.101081355- SMASH and from the Republic of Slovenia and the European Union from the European Regional Development Fund. A.H. acknowledges the support of a Royal Society University Research Fellowship. A.H.W. is supported by the Deutsches Zentrum für Luft- und Raumfahrt (DLR), under project 50QE2305, made possible by the Bundesministerium für Wirtschaft und Klimaschutz, and acknowledges funding from the German Science Foundation DFG, via the Collaborative Research Center SFB1491 "Cosmic Interacting Matters - From Source to Signal". R.K. is supported by UK STFC grant ST/X001040/1.
 
 We acknowledge EuroHPC Joint Undertaking for awarding the project ID EHPC-EXT-2024E02-083 access to Leonardo hosted by CINECA, Italy. We acknowledge the use of Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) in MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, 2025-3-0036. We acknowledge support from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation program with Grant agreement No. 101053992. The data production, processing and analysis tools for this paper have been developed, implemented and operated in collaboration with the Port d’Informació Científica (PIC) data center. PIC is maintained through a collaboration agreement between the Institut de Física d’Altes Energies (IFAE) and the Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT).
 

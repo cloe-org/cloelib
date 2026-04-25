@@ -101,10 +101,10 @@ authors:
     affiliation: 21
   - name: Arthur Loureiro
     orcid: 0000-0002-4371-0876
-    affiliation: 22
+    affiliation: 22, 23
   - name: Dida Markovic
     orcid: 0000-0000-0000-0000
-    affiliation: 23
+    affiliation: 24
   - name: David Navarro-Gironés
     orcid: 0000-0003-0507-372X
     affiliation: 2
@@ -222,7 +222,7 @@ affiliations:
     index: 21
   - name: Oskar Klein Centre for Cosmoparticle Physics, Department of Physics, Stockholm University, Stockholm, SE-106 91, Sweden
     index: 22
-  - name: TBD
+  - name: Astrophysics Group, Blackett Laboratory, Imperial College London, London SW7 2AZ, UK
     index: 23
   - name: TBD
     index: 24

@@ -132,7 +132,7 @@ class ShearTracer:
             It is expected to be normalised.
           z (np.ndarray): A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
           Omega_m_IA: Omega matter used as input to intrinsic alignement window. It has to be Omega matter growth.
-          Omega_m_lens: Omega matter used as input to the lensing window. It can be either Omega matter growth or geometry.      
+          Omega_m_lens: Omega matter used as input to the lensing window. It can be either Omega matter growth or geometry.
         """
         if 0.0 in z:
             raise ValueError(

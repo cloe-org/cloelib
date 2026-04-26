@@ -129,12 +129,10 @@ authors:
 
   - name: Arthur Loureiro
     orcid: 0000-0002-4371-0876
-    affiliation: [23, 24]
-
-  - name: Katarina Markovic
-    orcid: 0000-0001-6764-073X
-    affiliation: 25
-
+    affiliation: 22, 23
+  - name: Dida Markovic
+    orcid: 0000-0000-0000-0000
+    affiliation: 24
   - name: David Navarro-Gironés
     orcid: 0000-0003-0507-372X
     affiliation: 2
@@ -229,116 +227,96 @@ authors:
     note: on behalf of the Euclid Consortium
 
 affiliations:
-  - index: 1
-    name: Waterloo Centre for Astrophysics, University of Waterloo, Canada
-
-  - index: 2
-    name: Leiden Observatory, Leiden University, Netherlands
-
-  - index: 3
-    name: Centre for Astrophysics Research, University of Hertfordshire, United Kingdom
-
-  - index: 4
-    name: German Aerospace Center (DLR), Germany
-
-  - index: 5
-    name: INAF - Osservatorio Astronomico di Trieste, Italy
-
-  - index: 6
-    name: INAF - Osservatorio Astronomico di Brera, Italy
-
-  - index: 7
-    name: INFN - Sezione di Bologna, Italy
-
-  - index: 8
-    name: Institute of Space Sciences (ICE, CSIC), Spain
-
-  - index: 9
-    name: Department of Physics, Università degli Studi di Milano, Italy
-
-  - index: 10
-    name: INAF - IASF Milano, Italy
-
-  - index: 11
-    name: INFN - Sezione di Trieste, Italy
-
-  - index: 12
-    name: Astronomical Institute (AIRUB), Ruhr University Bochum, Germany
-
-  - index: 13
-    name: Institute for Astronomy, University of Edinburgh, United Kingdom
-
-  - index: 14
-    name: Higgs Centre for Theoretical Physics, University of Edinburgh, United Kingdom
-
-  - index: 15
-    name: Lorentz Institute for Theoretical Physics, Leiden University, Netherlands
-
-  - index: 16
-    name: CEA Paris-Saclay, France
-
-  - index: 17
-    name: INFN - Sezione di Genova, Italy
-
-  - index: 18
-    name: Department of Physics, University of Oxford, United Kingdom
-
-  - index: 19
-    name: Division of Particle and Astrophysical Science, Nagoya University, Japan
-
-  - index: 20
-    name: IRAP, Université de Toulouse, France
-
-  - index: 21
-    name: Department of Physics & Astronomy, University of Sussex, United Kingdom
-
-  - index: 22
-    name: Institut für Astro- und Teilchenphysik, Universität Innsbruck, Austria
-
-  - index: 23
-    name: Oskar Klein Centre, Stockholm University, Sweden
-
-  - index: 24
-    name: Imperial College London, United Kingdom
-
-  - index: 25
-    name: Jet Propulsion Laboratory, USA
-
-  - index: 26
-    name: CIEMAT, Spain
-
-  - index: 27
-    name: Universität Bonn, Germany
-
-  - index: 28
-    name: University College London, United Kingdom
-
-  - index: 29
-    name: IFT, Spain
-
-  - index: 30
-    name: University of Portsmouth, United Kingdom
-
-  - index: 31
-    name: Osservatorio Astronomico di Roma, Italy
-
-  - index: 32
-    name: Royal Holloway, University of London, United Kingdom
-
-  - index: 33
-    name: University of Nova Gorica, Slovenia
-
-  - index: 34
-    name: Ohio State University, USA
-
-  - index: 35
-    name: Mullard Space Science Laboratory, UCL, United Kingdom
-
-  - index: 36
-    name: IEEC, Spain
-
-  - index: 37
-    name: Max Planck Institute for Gravitational Physics, Germany
+  - name: Waterloo Centre for Astrophysics, University of Waterloo, Waterloo, ON N2L 3G1, Canada
+    index: 1
+  - name: Leiden Observatory, Leiden University, PO Box 9513, 2300 RA, Leiden, the Netherlands
+    index: 2
+  - name: Centre for Astrophysics Research, University of Hertfordshire, United Kingdom
+    index: 3
+  - name: German Aerospace Center (DLR), Scientific Information, Linder Höhe, D-51147 Köln, Germany
+    index: 4
+  - name: INAF - Osservatorio Astronomico di Trieste, Italy
+    index: 5
+  - name: INAF - Osservatorio Astronomico di Brera, Italy
+    index: 6
+  - name: INFN - Sezione di Bologna, Viale C. Berti Pichat, 6/2 – 40127 Bologna, Italy
+    index: 7
+  - name: TBD
+    index: 8
+  - name: Departement of Physics “Aldo Pontremoli”, Università degli Studi di Milano, Via G. Celoria 16, 20133, Milano, Italy
+    index: 9
+  - name: Division of Particle and Astrophysical Science, Nagoya University, Furo-cho, Chikusa-ku, Nagoya, 464–8602, Japan
+    index: 10
+  - name: Lorentz Institute for Theoretical Physics, Leiden University, PO Box 9506, NL-2300 RA Leiden, The Netherlands
+    index: 11
+  - name: TBD
+    index: 12
+  - name: INAF - Institute of Space Astrophysics and Cosmic Physics (IASF Milano), Via Corti 12, I-20133 Milano (MI), Italy
+    index: 13
+  - name: TBD
+    index: 14
+  - name: Institute of Space Sciences (ICE, CSIC), Campus UAB, Carrer de Can Magrans, s/n, 08193 Barcelona, Spain
+    index: 15
+  - name: TBD
+    index: 16
+  - name: TBD
+    index: 17
+  - name: TBD
+    index: 18
+  - name: Institut de Recherche en Astrophysique et Planétologie (IRAP), Université de Toulouse, CNRS, UPS, CNES, 14 Av. Edouard Belin, 31400 Toulouse, France
+    index: 19
+  - name: Department of Physics & Astronomy, University of Sussex, Brighton BN1 9QH, UK
+    index: 20
+  - name: Universität Innsbruck, Institut für Astro- und Teilchenphysik, Technikerstr. 25/8, 6020 Innsbruck, Austria
+    index: 21
+  - name: Oskar Klein Centre for Cosmoparticle Physics, Department of Physics, Stockholm University, Stockholm, SE-106 91, Sweden
+    index: 22
+  - name: Astrophysics Group, Blackett Laboratory, Imperial College London, London SW7 2AZ, UK
+    index: 23
+  - name: TBD
+    index: 24
+  - name: INFN, Sezione di Genova, Via Dodecaneso 33, 16146, Genova, Italy
+    index: 25
+  - name: TBD
+    index: 26
+  - name: Argelander-Institut für Astronomie, Universität Bonn, Auf dem Hügel 71, D-53121 Bonn, Germany
+    index: 27
+  - name: TBD
+    index: 28
+  - name: Advanced Research Computing Centre, University College London, 90 High Holborn, London WC1V 6LJ, UK
+    index: 29
+  - name: TBD
+    index: 30
+  - name: TBD
+    index: 31
+  - name: Department of Physics, Royal Holloway, University of London, Egham Hill, Egham, UK
+    index: 32
+  - name: Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT), Avenida Complutense 40, 28040 Madrid, Spain
+    index: 33
+  - name: Center for Astrophysics and Cosmology, University of Nova Gorica, 1280 Nova Gorica, Slovenia
+    index: 34
+  - name: Center for Cosmology and AstroParticle Physics (CCAPP),The Ohio State University, Columbus, OH 43210, USA
+    index: 35
+  - name: TBD
+    index: 36
+  - name: TBD
+    index: 37
+  - name: Institut d'Estudis Espacials de Catalunya (IEEC),  Edifici RDIT, Campus UPC, 08860 Castelldefels, Barcelona, Spain
+    index: 38
+  - name: TBD
+    index: 39
+  - name: TBD
+    index: 40
+  - name: TBD
+    index: 41
+  - name: Ruhr University Bochum, Faculty of Physics and Astronomy, Astronomical Institute (AIRUB), German Centre for Cosmological Lensing, 44780 Bochum, Germany
+    index: 42
+  - name: Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am Mühlenberg 1, D-14476 Potsdam-Golm, Germany
+    index: 43
+  - name: Institute for Astronomy, University of Edinburgh, Royal Observatory, Blackford Hill, Edinburgh, EH9 3HJ, UK
+    index: 44
+  - name: Higgs Centre for Theoretical Physics, School of Physics and Astronomy, Edinburgh, EH9 3FD, UK
+    index: 45
 
 date: 9 April 2026
 bibliography: paper.bib

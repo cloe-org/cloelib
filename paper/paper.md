@@ -12,262 +12,333 @@ authors:
   - name: Marco Bonici
     orcid: 0000-0002-8430-126X
     affiliation: 1
+
   - name: Guadalupe Cañas-Herrera
     orcid: 0000-0003-2796-2149
     affiliation: 2
+
   - name: Pedro Carrilho
     orcid: 0000-0003-1339-0194
     affiliation: 3
+
   - name: Santiago Casas
     orcid: 0000-0002-4751-5138
     affiliation: 4
+
   - name: Chiara Moretti
     orcid: 0000-0003-3314-8936
     affiliation: 5
+
   - name: Andrea Pezzotta
     orcid: 0000-0003-0726-2268
     affiliation: 6
+
   - name: Michel Aguena
     orcid: 0000-0001-5679-6747
     affiliation: 5
+
   - name: Giovanni Arico
     orcid: 0000-0002-2802-2928
     affiliation: 7
+
   - name: Zahra Baghkhani
     orcid: 0000-0002-6632-2614
-    affiliation: 15
+    affiliation: 8
+
   - name: Matteo Baratto
     orcid: 0009-0000-8702-9591
-    affiliation: 9, 13
+    affiliation: [9, 10]
+
   - name: Emilio Bellini
     orcid: 0000-0003-4762-0795
-    affiliation: 34
+    affiliation: 11
+
   - name: Jip de Buck
     orcid: 0000-0000-0000-0000
     affiliation: 2
+
   - name: Klara Bertmann
-    orcid: 0000-0000-0000-0000
-    affiliation:
+    orcid: 0009-0004-6700-2470
+    affiliation: 12
+
   - name: Ben Bose
     orcid: 0000-0003-1965-8614
-    affiliation: 44, 45
+    affiliation: [13, 14]
+
   - name: Jeger C. Broxterman
     orcid: 0000-0002-8155-5977
-    affiliation: 11, 2
+    affiliation: [2, 15]
+
   - name: Pierre Burger
-    orcid: 0000-0000-0000-0000
-    affiliation: 12
+    orcid: 0000-0002-6374-5208
+    affiliation: 1
+
   - name: Carmelita Carbone
     orcid: 0000-0003-0125-3563
-    affiliation: 13
+    affiliation: 10
+
   - name: Chaitanya Chawak
-    orcid: 0000-0000-0000-0000
-    affiliation: 14
-  - name: Jose Coloma Nadal
+    affiliation: 16
+
+  - name: Jose Coloma-Nadal
     orcid: 0009-0003-0538-4349
-    affiliation: 15
+    affiliation: 8
+
   - name: Martin Crocce
     orcid: 0000-0002-9745-6228
-    affiliation: 15
+    affiliation: 8
+
   - name: Stefano Davini
-    orcid: 0000-0000-0000-0000
-    affiliation: 16
-  - name: Christopher A. J. Duncan
-    orcid: 0000-0000-0000-0000
-    affiliation: 10
-  - name: Samuel Farrens
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0003-3269-1718
     affiliation: 17
+
+  - name: Christopher A. J. Duncan
+    affiliation: 13
+
+  - name: Samuel Farrens
+    orcid: 0000-0002-9594-9387
+    affiliation: 10
+
   - name: Lisa Goh
     orcid: 0000-0002-0104-8132
-    affiliation: 44, 45
+    affiliation: [13, 14]
+
   - name: Nastassia Grim
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0001-9602-0599
     affiliation: 18
+
   - name: Alex Hall
     orcid: 0000-0002-3139-8651
-    affiliation: 44
+    affiliation: 13
+
   - name: Ryusei R. Kano
     orcid: 0009-0002-9108-8396
-    affiliation: 10, 44
+    affiliation: [10, 19]
+
   - name: Felicitas Keil
     orcid: 0000-0002-8108-1679
-    affiliation: 19
+    affiliation: 20
+
   - name: Raphaël Kou
     orcid: 0000-0003-3408-3062
-    affiliation: 20
+    affiliation: 21
+
   - name: Laila Linke
     orcid: 0000-0002-2622-8113
-    affiliation: 21
+    affiliation: 22
+
   - name: Arthur Loureiro
     orcid: 0000-0002-4371-0876
-    affiliation: 22
-  - name: Dida Markovic
-    orcid: 0000-0000-0000-0000
-    affiliation: 23
+    affiliation: [23, 24]
+
+  - name: Katarina Markovic
+    orcid: 0000-0001-6764-073X
+    affiliation: 25
+
   - name: David Navarro-Gironés
     orcid: 0000-0003-0507-372X
     affiliation: 2
+
   - name: Filippo Oppizzi
     orcid: 0000-0003-3904-8370
-    affiliation: 25
+    affiliation: 17
+
   - name: Gabriele Parimbelli
-    orcid: 0000-0000-0000-0000
-    affiliation: 26
+    orcid: 0000-0002-2539-2472
+    affiliation: 8
+
   - name: Anna Porredon
     orcid: 0000-0002-2762-2024
-    affiliation: 33
+    affiliation: 26
+
   - name: Robert Reischke
     orcid: 0000-0001-5404-8753
     affiliation: 27
-  - name: Fabrice Roy
-    orcid: 0000-0000-0000-0000
-    affiliation: 28
+
   - name: Jaime Ruiz Zapatero
     orcid: 0000-0002-7951-4391
-    affiliation: 29
-  - name: Iñigo Sáez Casares
-    orcid: 0000-0000-0000-0000
-    affiliation:
+    affiliation: 28
+
+  - name: Iñigo Sáez-Casares
+    orcid: 0000-0003-0013-5266
+    affiliation: 6
+
   - name: Ziad Sakr
-    orcid: 0000-0000-0000-0000
-    affiliation: 30
+    orcid: 0000-0002-4823-3757
+    affiliation: 29
+
   - name: Neel Shah
-    orcid: 0000-0000-0000-0000
-    affiliation:
+    orcid: 0009-0001-4424-6489
+    affiliation: 30
+
   - name: Davide Sciotti
     orcid: 0009-0008-4519-2620
     affiliation: 31
+
   - name: Matthieu Schaller
-    orcid: 0000-0000-0000-0000
-    affiliation: 11, 2
+    orcid: 0000-0002-2395-4902
+    affiliation: [15, 2]
+
   - name: Ivan Sladoljev
     orcid: 0009-0002-9702-2101
     affiliation: 32
+
   - name: Arghavan Souki
     orcid: 0009-0000-4771-7728
-    affiliation: 33
+    affiliation: 26
+
   - name: Konstantinos Tanidis
     orcid: 0000-0001-9843-5130
-    affiliation: 34
+    affiliation: 33
+
   - name: Peter L. Taylor
     orcid: 0000-0001-6999-4718
-    affiliation: 35
+    affiliation: 34
+
   - name: Nicolas Tessore
-    orcid: 0000-0000-0000-0000
-    affiliation: 36
+    orcid: 0000-0002-9696-7931
+    affiliation: 35
+
   - name: Linus Thummel
     orcid: 0000-0002-9807-5494
-    affiliation: 44, 45
+    affiliation: [13, 14]
+
   - name: Maria Tsedrik
     orcid: 0000-0002-0020-5343
-    affiliation: 44, 45
+    affiliation: [13, 14]
+
   - name: Isaac Tutusaus
     orcid: 0000-0002-3199-0399
-    affiliation: 14,19,38
+    affiliation: [8, 20, 35]
+
   - name: Casper Vedder
     orcid: 0009-0007-6341-4648
     affiliation: 2
+
   - name: Angus H. Wright
     orcid: 0000-0001-7363-7932
-    affiliation: 41
+    affiliation: 12
+
   - name: Miguel Zumalacarregui
     orcid: 0000-0002-9943-6490
-    affiliation: 42
-  - name: Joe Zuntz, on behalf of the Euclid Consortium
-    orcid: 0000-0000-0000-0000
-    affiliation: 43
+    affiliation: 37
+
+  - name: Joe Zuntz
+    orcid: 0000-0001-9789-9646
+    affiliation: 13
+    note: on behalf of the Euclid Consortium
+
 affiliations:
-  - name: Waterloo Centre for Astrophysics, University of Waterloo, Waterloo, ON N2L 3G1, Canada
-    index: 1
-  - name: Leiden Observatory, Leiden University, PO Box 9513, 2300 RA, Leiden, the Netherlands
-    index: 2
-  - name: Centre for Astrophysics Research, University of Hertfordshire, United Kingdom
-    index: 3
-  - name: German Aerospace Center (DLR), Scientific Information, Linder Höhe, D-51147 Köln, Germany
-    index: 4
-  - name: INAF - Osservatorio Astronomico di Trieste, Italy
-    index: 5
-  - name: INAF - Osservatorio Astronomico di Brera, Italy
-    index: 6
-  - name: INFN - Sezione di Bologna, Viale C. Berti Pichat, 6/2 – 40127 Bologna, Italy
-    index: 7
-  - name: TBD
-    index: 8
-  - name: Departement of Physics “Aldo Pontremoli”, Università degli Studi di Milano, Via G. Celoria 16, 20133, Milano, Italy
-    index: 9
-  - name: Division of Particle and Astrophysical Science, Nagoya University, Furo-cho, Chikusa-ku, Nagoya, 464–8602, Japan
-    index: 10
-  - name: Lorentz Institute for Theoretical Physics, Leiden University, PO Box 9506, NL-2300 RA Leiden, The Netherlands
-    index: 11
-  - name: TBD
-    index: 12
-  - name: INAF - Institute of Space Astrophysics and Cosmic Physics (IASF Milano), Via Corti 12, I-20133 Milano (MI), Italy
-    index: 13
-  - name: TBD
-    index: 14
-  - name: Institute of Space Sciences (ICE, CSIC), Campus UAB, Carrer de Can Magrans, s/n, 08193 Barcelona, Spain
-    index: 15
-  - name: TBD
-    index: 16
-  - name: TBD
-    index: 17
-  - name: TBD
-    index: 18
-  - name: Institut de Recherche en Astrophysique et Planétologie (IRAP), Université de Toulouse, CNRS, UPS, CNES, 14 Av. Edouard Belin, 31400 Toulouse, France
-    index: 19
-  - name: Department of Physics & Astronomy, University of Sussex, Brighton BN1 9QH, UK
-    index: 20
-  - name: Universität Innsbruck, Institut für Astro- und Teilchenphysik, Technikerstr. 25/8, 6020 Innsbruck, Austria
-    index: 21
-  - name: Oskar Klein Centre for Cosmoparticle Physics, Department of Physics, Stockholm University, Stockholm, SE-106 91, Sweden
-    index: 22
-  - name: TBD
-    index: 23
-  - name: TBD
-    index: 24
-  - name: INFN, Sezione di Genova, Via Dodecaneso 33, 16146, Genova, Italy
-    index: 25
-  - name: TBD
-    index: 26
-  - name: Argelander-Institut für Astronomie, Universität Bonn, Auf dem Hügel 71, D-53121 Bonn, Germany
-    index: 27
-  - name: TBD
-    index: 28
-  - name: Advanced Research Computing Centre, University College London, 90 High Holborn, London WC1V 6LJ, UK
-    index: 29
-  - name: TBD
-    index: 30
-  - name: TBD
-    index: 31
-  - name: Department of Physics, Royal Holloway, University of London, Egham Hill, Egham, UK
-    index: 32
-  - name: Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT), Avenida Complutense 40, 28040 Madrid, Spain
-    index: 33
-  - name: Center for Astrophysics and Cosmology, University of Nova Gorica, 1280 Nova Gorica, Slovenia
-    index: 34
-  - name: Center for Cosmology and AstroParticle Physics (CCAPP),The Ohio State University, Columbus, OH 43210, USA
-    index: 35
-  - name: TBD
-    index: 36
-  - name: TBD
-    index: 37
-  - name: Institut d'Estudis Espacials de Catalunya (IEEC),  Edifici RDIT, Campus UPC, 08860 Castelldefels, Barcelona, Spain
-    index: 38
-  - name: TBD
-    index: 39
-  - name: TBD
-    index: 40
-  - name: TBD
-    index: 41
-  - name: Ruhr University Bochum, Faculty of Physics and Astronomy, Astronomical Institute (AIRUB), German Centre for Cosmological Lensing, 44780 Bochum, Germany
-    index: 42
-  - name: Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am Mühlenberg 1, D-14476 Potsdam-Golm, Germany
-    index: 43
-  - name: Institute for Astronomy, University of Edinburgh, Royal Observatory, Blackford Hill, Edinburgh, EH9 3HJ, UK
-    index: 44
-  - name: Higgs Centre for Theoretical Physics, School of Physics and Astronomy, Edinburgh, EH9 3FD, UK
-    index: 45
+  - index: 1
+    name: Waterloo Centre for Astrophysics, University of Waterloo, Canada
+
+  - index: 2
+    name: Leiden Observatory, Leiden University, Netherlands
+
+  - index: 3
+    name: Centre for Astrophysics Research, University of Hertfordshire, United Kingdom
+
+  - index: 4
+    name: German Aerospace Center (DLR), Germany
+
+  - index: 5
+    name: INAF - Osservatorio Astronomico di Trieste, Italy
+
+  - index: 6
+    name: INAF - Osservatorio Astronomico di Brera, Italy
+
+  - index: 7
+    name: INFN - Sezione di Bologna, Italy
+
+  - index: 8
+    name: Institute of Space Sciences (ICE, CSIC), Spain
+
+  - index: 9
+    name: Department of Physics, Università degli Studi di Milano, Italy
+
+  - index: 10
+    name: INAF - IASF Milano, Italy
+
+  - index: 11
+    name: INFN - Sezione di Trieste, Italy
+
+  - index: 12
+    name: Astronomical Institute (AIRUB), Ruhr University Bochum, Germany
+
+  - index: 13
+    name: Institute for Astronomy, University of Edinburgh, United Kingdom
+
+  - index: 14
+    name: Higgs Centre for Theoretical Physics, University of Edinburgh, United Kingdom
+
+  - index: 15
+    name: Lorentz Institute for Theoretical Physics, Leiden University, Netherlands
+
+  - index: 16
+    name: CEA Paris-Saclay, France
+
+  - index: 17
+    name: INFN - Sezione di Genova, Italy
+
+  - index: 18
+    name: Department of Physics, University of Oxford, United Kingdom
+
+  - index: 19
+    name: Division of Particle and Astrophysical Science, Nagoya University, Japan
+
+  - index: 20
+    name: IRAP, Université de Toulouse, France
+
+  - index: 21
+    name: Department of Physics & Astronomy, University of Sussex, United Kingdom
+
+  - index: 22
+    name: Institut für Astro- und Teilchenphysik, Universität Innsbruck, Austria
+
+  - index: 23
+    name: Oskar Klein Centre, Stockholm University, Sweden
+
+  - index: 24
+    name: Imperial College London, United Kingdom
+
+  - index: 25
+    name: Jet Propulsion Laboratory, USA
+
+  - index: 26
+    name: CIEMAT, Spain
+
+  - index: 27
+    name: Universität Bonn, Germany
+
+  - index: 28
+    name: University College London, United Kingdom
+
+  - index: 29
+    name: IFT, Spain
+
+  - index: 30
+    name: University of Portsmouth, United Kingdom
+
+  - index: 31
+    name: Osservatorio Astronomico di Roma, Italy
+
+  - index: 32
+    name: Royal Holloway, University of London, United Kingdom
+
+  - index: 33
+    name: University of Nova Gorica, Slovenia
+
+  - index: 34
+    name: Ohio State University, USA
+
+  - index: 35
+    name: Mullard Space Science Laboratory, UCL, United Kingdom
+
+  - index: 36
+    name: IEEC, Spain
+
+  - index: 37
+    name: Max Planck Institute for Gravitational Physics, Germany
 
 date: 9 April 2026
 bibliography: paper.bib
@@ -275,13 +346,58 @@ bibliography: paper.bib
 
 # Summary
 
-\texttt{cloelib}, [cloe-org/cloelib](https://github.com/cloe-org/cloelib), is a Python library developed to compute cosmological observables within the Cosmology Likelihood for Observables in Euclid (\texttt{CLOE}) project **cloe-org**\footnote{\href{https://github.com/cloe-org}{https://github.com/cloe-org}}. As cosmology enters a precision era driven by galaxy survey missions such as _Euclid_, there is a growing need for flexible, efficient, and differentiable software capable of supporting next-generation inference pipelines. \texttt{cloelib} addresses these demands through a modular architecture that interfaces seamlessly with established Boltzmann solvers whilst incorporating JAX-based automatic differentiation to enable gradient-based methods. The library defines consistent protocols for background evolution, perturbations, and non-linear structure formation, and supports a wide range of observables, including photometric and spectroscopic large-scale structure probes, as well as cross-correlations with the Cosmic Microwave Background and galaxy clusters. In its finalised form, \texttt{cloelib} is intended to serve as the reference theory computation infrastructure for Euclid's first cosmological release, bridging traditional numerical cosmology with modern optimisation techniques and emerging machine learning approaches to inference.
+\texttt{cloelib}, available at \href{https://github.com/cloe-org/cloelib}{cloe-org/cloelib}, is a Python library developed to compute cosmological observables within the Cosmology Likelihood for Observables in Euclid (\texttt{CLOE}) project, hosted by \href{https://github.com/cloe-org}{\textbf{cloe-org}}\footnote{\url{https://github.com/cloe-org}}. As cosmology enters a precision era driven by galaxy survey missions such as \emph{Euclid}, there is a growing need for flexible, efficient, and differentiable software capable of supporting next-generation inference pipelines. \texttt{cloelib} addresses these demands through a modular architecture that interfaces seamlessly with established Boltzmann solvers while incorporating JAX-based automatic differentiation to enable gradient-based methods. The library defines consistent protocols for background evolution, perturbations, and non-linear structure formation, and supports a wide range of observables, including photometric and spectroscopic large-scale structure probes, as well as cross-correlations with the Cosmic Microwave Background and galaxy clusters. In its finalised form, \texttt{cloelib} is intended to serve as the reference theory computation infrastructure for Euclid's first cosmological release, bridging traditional numerical cosmology with modern optimisation techniques and emerging machine learning approaches to inference.
 
 # Statement of need
 
-The field of observational cosmology is undergoing a rapid transformation, driven by the advent of next-generation galaxy surveys such as the European Space Agency’s _Euclid_ mission [@Euclid:2024], the Dark Energy Spectroscopic Instrument (DESI) [@DESI_review], the \textit{Vera C. Rubin} Observatory’s Large Synoptic Survey Telescope [@LSST], and NASA’s \textit{Nancy Grace Roman} Space Telescope\footnote{\href{https://roman.gsfc.nasa.gov/science/ccs/ROTAC-Report-20250424-v1.pdf}{https://roman.gsfc.nasa.gov/science/ccs/ROTAC-Report-20250424-v1.pdf}}. These projects are generating vast volumes of high-quality data, mapping the large-scale structure of the Universe with unprecedented precision. Extracting scientific results from these data requires efficient computation of theoretical predictions that can be robustly compared with observations to constrain cosmological models. Meeting this challenge places stringent demands on computational tools, which must accurately model complex theoretical scenarios whilst remaining computationally efficient. Despite their strengths, existing cosmological software frameworks often lack the flexibility needed to seamlessly integrate diverse, pre-existing components and to explore a wide range of theoretical models alongside comprehensive treatments of systematic effects. This is the limitation that \texttt{cloelib} addresses by offering a highly flexible and extensible platform for cosmological inference, designed to meet the challenges posed by the next generation of precision cosmology experiments.
+The field of observational cosmology is undergoing a rapid
+transformation, driven by the advent of next-generation galaxy surveys
+such as the European Space Agency's \emph{Euclid} mission \citep{Euclid:2024}, the Dark Energy Spectroscopic
+Instrument (DESI; \citealt{DESI_review}), the
+\textit{Vera C. Rubin} Observatory's Large Synoptic Survey Telescope
+\citep{LSST}, and NASA's \textit{Nancy Grace Roman} Space
+Telescope\footnote{\href{https://roman.gsfc.nasa.gov/science/ccs/ROTAC-Report-20250424-v1.pdf}{https://roman.gsfc.nasa.gov/science/ccs/ROTAC-Report-20250424-v1.pdf}}.
+These projects are generating vast volumes of high-quality data, mapping
+the large-scale structure of the Universe with unprecedented precision.
+Extracting scientific results from these data requires efficient
+computation of theoretical predictions that can be robustly compared
+with observations to constrain cosmological models. Meeting this
+challenge places stringent demands on computational tools, which must
+accurately model complex theoretical scenarios whilst remaining
+computationally efficient. Despite their strengths, existing
+cosmological software frameworks often lack the flexibility needed to
+seamlessly integrate diverse, pre-existing components and to explore a
+wide range of theoretical models alongside comprehensive treatments of
+systematic effects. \texttt{cloelib}
+addresses this limitation by offering a highly flexible and extensible platform for
+cosmological inference, designed to meet the challenges posed by the
+next generation of precision cosmology experiments.
 
-In this context, \texttt{cloelib} represents a natural evolution of the structural formalism originally developed in the Cosmology Likelihood for Observables in Euclid (\texttt{CLOE}) software, extending it towards more advanced use cases and significantly enhanced capabilities beyond those presented in @EP-CLOE2. The original \texttt{CLOE}\footnote{\href{https://github.com/cloe-org/CLOE}{https://github.com/cloe-org/CLOE}} software has played a central role in numerous Euclid analyses—see @Euclid:2024, @EP-CLOE3, @EP-CLOE4, @EP-CLOE5, @EP-CLOE6—demonstrating its robustness and scientific impact to forecast and validate _Euclid_ scientific performance. However, the increasing complexity, scale, and methodological demands of next-generation cosmological analyses, as well as the possible combination of all these datasets, have exposed structural limitations in its original design. Notably, \texttt{CLOE} was not conceived with the level of modularity, extensibility, and interoperability now required to efficiently address the broader landscape of theoretical models and systematic effects demanded by the incoming datasets. As a result, a substantial restructuring became necessary to meet these new challenges. \texttt{cloelib} builds directly on the conceptual and practical foundations laid by \texttt{CLOE}, whilst introducing a redesigned novel architecture that enables greater flexibility, scalability, and integration of heterogeneous components. In doing so, it offers a framework designed to address the requirements of upcoming precision cosmology analyses.
+In this context, \texttt{cloelib} represents a natural evolution of the
+structural formalism originally developed in the Cosmology Likelihood
+for Observables in Euclid (\texttt{CLOE}) software, extending it towards
+more advanced use cases and significantly enhanced capabilities beyond
+those presented in Euclid Collaboration: \citet{EP-CLOE2}. The
+original \texttt{CLOE}\footnote{\href{https://github.com/cloe-org/CLOE}{https://github.com/cloe-org/CLOE}}
+software has played a central role in numerous Euclid analyses---see \citet{Euclid:2024}, \citet{EP-CLOE3}, \citet{EP-CLOE4}, \citet{EP-CLOE5} and \citet{EP-CLOE6}---demonstrating its robustness and scientific impact
+to forecast and validate \emph{Euclid} scientific performance. However,
+the increasing complexity, scale, and methodological demands of
+next-generation cosmological analyses, as well as the possible
+combination of all these datasets, have exposed structural limitations
+in its original design. Notably, \texttt{CLOE} was not conceived with
+the level of modularity, extensibility, and interoperability now
+required to efficiently address the broader landscape of theoretical
+models and systematic effects demanded by the incoming datasets. As a
+result, a substantial restructuring became necessary to meet these new
+challenges. \texttt{cloelib} builds directly on the conceptual and
+practical foundations laid by \texttt{CLOE}, whilst introducing a
+redesigned novel architecture that enables greater flexibility,
+scalability, and integration of heterogeneous components. In doing so,
+it offers a framework designed to address the requirements of upcoming
+precision cosmology analyses.
+
+
+# State of the Field
 
 Similarly to \texttt{CCL} [@pyccl], \texttt{CosmoSIS} [@CosmoSIS], \texttt{CAMB} [@Lewis:2000], \texttt{CLASS} [@Blas:2011], CosmoLike [@CosmoLike], and \texttt{CoCoA}\footnote{\href{https://github.com/CosmoLike/cocoa}{https://github.com/CosmoLike/cocoa}}, it supports the computation of large-scale structure probes in the form of angular or spatial two-point correlations, and associated observables such as cosmic shear or spectroscopic power spectrum multipoles. Yet, \texttt{cloelib} is the first and only large-scale structure code in the cosmology community to implement a unified interface to multiple cosmological codes using Python protocols. This design enables researchers to seamlessly switch between different theoretical implementations (backends)—such as Boltzmann solvers or emulators—without modifying their analysis pipelines or the internal workings of \texttt{cloelib} for computing theoretical predictions. This modularity and interoperability facilitate the inclusion of additional pipelines, supporting rapid experimentation in cosmological analyses. In fact, following this protocol-based framework, \texttt{cloelib} already interfaces with several well-established cosmological codes in the community.
 

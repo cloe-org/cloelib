@@ -142,8 +142,8 @@ class ShearTracer:
         self.background = self.perturbations.background
         self.z = z
         self.nuisance_params = nuisance_params
-        self.omega_m_IA = omega_m_IA
-        self.omega_m_lens = omega_m_lens
+        self.Omega_m_IA = Omega_m_IA
+        self.Omega_m_lens = Omega_m_lens
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 1
         # Set multiplicative bias (m_bias)
@@ -175,7 +175,7 @@ class ShearTracer:
         Returns:
           window_IA (np.ndarray):
         """
-        Omega_m0 = self.omega_m_IA
+        Omega_m0 = self.Omega_m_IA
         Hz = self.perturbations.background.hubble_parameter(z)
         Dz = self.perturbations.growth_factor(z, self.perturbations.k)[:, 1]
         # TODO discuss whether we want growth factor to output a 1D or a 2D array

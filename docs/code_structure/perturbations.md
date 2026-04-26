@@ -228,6 +228,8 @@ class MySolverPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations: Optional[object] = None,
+        redshifts: np.ndarray = None,
         nonlinear_model: str = "halofit",
         kmax: float = 10.0,
         zmax: float = 5.0,
@@ -238,6 +240,11 @@ class MySolverPerturbations:
 
         Args:
             background: Background object (any implementation)
+            linearperturbations: Linear perturbations object. Accepted for interface
+                compatibility with cloelike, which always passes this as the second
+                positional argument when constructing NonLinPerturbations. Unused by
+                codes that compute nonlinear corrections internally (e.g. CAMB, CLASS).
+            redshifts: Array of redshifts for the calculations.
             nonlinear_model: Which non-linear model to use
             kmax: Maximum wavenumber in 1/Mpc
             zmax: Maximum redshift

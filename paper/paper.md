@@ -207,7 +207,7 @@ authors:
 
   - name: Isaac Tutusaus
     orcid: 0000-0002-3199-0399
-    affiliation: [8, 20, 35]
+    affiliation: [15, 38, 19]
 
   - name: Casper Vedder
     orcid: 0009-0007-6341-4648

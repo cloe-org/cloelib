@@ -614,7 +614,7 @@ class LegendreMultipoles:
             )
 
         ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
-        k_hnkl = np.logspace(logkmin, logkmax, nk) * self.spectro_power.background.h
+        k_hnkl = np.logspace(logkmin, logkmax, nk)
         pk_multipoles = self.power_multipoles(k=k_hnkl, ells=ells, use_AP=use_AP)
         volume_factor = (k_hnkl**3) / (2 * (np.pi**2))
         xi_multipoles = {}
@@ -623,7 +623,7 @@ class LegendreMultipoles:
                 volume_factor
                 * pk_multipoles[f"ell{ell}"]
                 * self._UVcutoff(
-                    k=k_hnkl, kcut=kcut * self.spectro_power.background.h, pow=pow
+                    k=k_hnkl, kcut=kcut, pow=pow
                 )
                 * np.real(1j**ell)
             )

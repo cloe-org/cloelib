@@ -622,7 +622,9 @@ class LegendreMultipoles:
             y_array = (
                 volume_factor
                 * pk_multipoles[f"ell{ell}"]
-                * self._UVcutoff(k=k_hnkl, kcut=kcut*self.spectro_power.background.h, pow=pow)
+                * self._UVcutoff(
+                    k=k_hnkl, kcut=kcut * self.spectro_power.background.h, pow=pow
+                )
                 * np.real(1j**ell)
             )
             transformer = fftlog(x=k_hnkl, fx=y_array, nu=2)
@@ -697,7 +699,6 @@ class LegendreMultipoles:
         kcut: Optional[float] = 0.4,
         pow: Optional[float] = 2,
     ) -> dict:
-
         r"""Two-point correlation function Legendre multipoles of specified terms.
 
         Parameters
@@ -733,7 +734,9 @@ class LegendreMultipoles:
 
         ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
         k_hnkl = np.logspace(logkmin, logkmax, nk)
-        pk_multipoles = self.power_term_multipoles(k=k_hnkl, term_list=term_list, ells=ells, use_AP=use_AP)
+        pk_multipoles = self.power_term_multipoles(
+            k=k_hnkl, term_list=term_list, ells=ells, use_AP=use_AP
+        )
         volume_factor = (k_hnkl**3) / (2 * (np.pi**2))
         xi_multipoles = {}
         for ell in ells:
@@ -747,6 +750,6 @@ class LegendreMultipoles:
                 )
                 transformer = fftlog(x=k_hnkl, fx=y_array, nu=2)
                 r_grid, transformed_log = transformer.fftlog(ell=ell)
-                xi_temp[term_id,:] = np.interp(s, r_grid, transformed_log)
+                xi_temp[term_id, :] = np.interp(s, r_grid, transformed_log)
             xi_multipoles[f"ell{ell}"] = xi_temp
         return xi_multipoles

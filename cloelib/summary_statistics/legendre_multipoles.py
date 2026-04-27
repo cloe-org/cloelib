@@ -11,10 +11,12 @@ from cloelib.auxiliary.fftlog import fftlog
 import functools
 from typing import Optional
 import numpy as np
+from copy import deepcopy
 
 # cosmolib imports
 from cosmolib.data import (
     PowerSpectrumMultipoles,
+    PowerSpectrumMultipolesMixingMatrix,
     TwoPointCorrelationMultipoles,
     TwoPointCorrelationPolar,
 )
@@ -33,7 +35,7 @@ def format_output(stat: str):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             """cosmolib format is returned in Mpc/h units, differently from
-            cloelib standards
+            cloelib standards which is in Mpc units
             """
 
             def get_arg(name, idx):
@@ -52,12 +54,19 @@ def format_output(stat: str):
             h_fid = self.spectro_power.background.h
 
             if stat == "PK_multipoles":
-                scale_h = (
-                    kwargs["mixing_matrix"].get("kout")
-                    if "convolved" in func.__name__
-                    else get_arg("k", 0)
-                )
-                set_arg("k", 0, scale_h * h_fid)
+                if "convolved" in func.__name__:
+                    mixing_matrix = get_arg("mixing_matrix", 0)
+                    rescaled_mixing_matrix = deepcopy(mixing_matrix)
+                    scale_h = mixing_matrix.kout
+                    for key in [0, 2, 4]:
+                        rescaled_mixing_matrix.kin[key] = mixing_matrix.kin[key] * h_fid
+                        rescaled_mixing_matrix.kout[key] = (
+                            mixing_matrix.kout[key] * h_fid
+                        )
+                        set_arg("mixing_matrix", 0, rescaled_mixing_matrix)
+                else:
+                    scale_h = get_arg("k", 0)
+                    set_arg("k", 0, scale_h * h_fid)
             else:
                 scale_h = get_arg("s", 0)
                 set_arg("s", 0, scale_h / h_fid)
@@ -76,7 +85,7 @@ def format_output(stat: str):
                 out = (
                     np.array(
                         [
-                            result.get(f"ell{i}", np.zeros(len(scale_h)))
+                            result.get(f"ell{i}", np.zeros(len(scale_h))).reshape(-1)
                             for i in range(5)
                         ]
                     )
@@ -446,7 +455,7 @@ class LegendreMultipoles:
     @format_output("PK_multipoles")
     def convolved_power_multipoles(
         self,
-        mixing_matrix: dict,
+        mixing_matrix: PowerSpectrumMultipolesMixingMatrix,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
         format_type: Optional[str] = None,
@@ -454,7 +463,7 @@ class LegendreMultipoles:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
 
         Parameters:
-            mixing_matrix (dict): Dicitonary containing the mixing matrix
+            mixing_matrix (PowerSpectrumMultipolesMixingMatrix): Dicitonary containing the mixing matrix
             ells (np.ndarray): Legendre multipole order
             use_AP (bool): Flag to switch between with and without AP corrections
             format_type (str): Type of output format
@@ -465,7 +474,7 @@ class LegendreMultipoles:
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
 
-        kin_arrays = [mixing_matrix[f"kin{ell}"] for ell in ells_tot]
+        kin_arrays = [mixing_matrix.kin[ell] for ell in ells_tot]
 
         if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
             multipoles_in = self.power_multipoles(
@@ -480,11 +489,11 @@ class LegendreMultipoles:
             }
 
         multipoles_out = {}
-        multipoles_out["k"] = mixing_matrix["kout"]
+        multipoles_out["k"] = mixing_matrix.kout
         for ell in ells:
             multipoles_out[f"ell{ell}"] = sum(
                 np.dot(
-                    mixing_matrix[f"W{ell}{ell_prime}"],
+                    mixing_matrix.mixing[f"ELL_{ell}-{ell_prime}"],
                     multipoles_in[f"ell{ell_prime}"],
                 )
                 for ell_prime in ells_tot
@@ -494,7 +503,7 @@ class LegendreMultipoles:
 
     def convolved_power_term_multipoles(
         self,
-        mixing_matrix: dict,
+        mixing_matrix: PowerSpectrumMultipolesMixingMatrix,
         term_list: list,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
@@ -502,7 +511,7 @@ class LegendreMultipoles:
         r"""Convolved power spectrum multipoles of specified terms.
 
         Parameters:
-            mixing_matrix (dict): Dicitonary containing the mixing matrix
+            mixing_matrix (PowerSpectrumMultipolesMixingMatrix): Dicitonary containing the mixing matrix
             term_list (list): List of terms to compute
             ells (np.ndarray): Legendre multipole order
             use_AP (bool): Flag to switch between with and without AP corrections
@@ -513,7 +522,7 @@ class LegendreMultipoles:
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
 
-        kin_arrays = [mixing_matrix[f"kin{ell}"] for ell in ells_tot]
+        kin_arrays = [mixing_matrix.kin[ell] for ell in ells_tot]
 
         if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
             multipoles_in = self.power_term_multipoles(
@@ -528,11 +537,11 @@ class LegendreMultipoles:
             }
 
         multipoles_out = {}
-        multipoles_out["k"] = mixing_matrix["kout"]
+        multipoles_out["k"] = mixing_matrix.kout
         for ell in ells:
             multipoles_out[f"ell{ell}"] = sum(
                 np.dot(
-                    mixing_matrix[f"W{ell}{ell_prime}"],
+                    mixing_matrix.mixing[f"ELL_{ell}-{ell_prime}"],
                     multipoles_in[f"ell{ell_prime}"].T,
                 ).T
                 for ell_prime in ells_tot

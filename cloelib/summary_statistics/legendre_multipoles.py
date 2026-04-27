@@ -622,9 +622,7 @@ class LegendreMultipoles:
             y_array = (
                 volume_factor
                 * pk_multipoles[f"ell{ell}"]
-                * self._UVcutoff(
-                    k=k_hnkl, kcut=kcut, pow=pow
-                )
+                * self._UVcutoff(k=k_hnkl, kcut=kcut, pow=pow)
                 * np.real(1j**ell)
             )
             transformer = fftlog(x=k_hnkl, fx=y_array, nu=2)

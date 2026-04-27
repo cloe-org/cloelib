@@ -130,9 +130,11 @@ authors:
   - name: Arthur Loureiro
     orcid: 0000-0002-4371-0876
     affiliation: 22, 23
-  - name: Dida Markovic
-    orcid: 0000-0000-0000-0000
+
+  - name: Katarina Markovic
+    orcid: 0000-0001-6764-073X
     affiliation: 24
+
   - name: David Navarro-Gironés
     orcid: 0000-0003-0507-372X
     affiliation: 2
@@ -273,7 +275,7 @@ affiliations:
     index: 22
   - name: Astrophysics Group, Blackett Laboratory, Imperial College London, London SW7 2AZ, UK
     index: 23
-  - name: TBD
+  - name: Jet Propulsion Laboratory, California Institute of Technology, 4800 Oak Grove Drive, Pasadena, CA, 91109, USA
     index: 24
   - name: INFN, Sezione di Genova, Via Dodecaneso 33, 16146, Genova, Italy
     index: 25

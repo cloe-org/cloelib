@@ -103,7 +103,7 @@ authors:
     orcid: 0000-0002-0104-8132
     affiliation: [13, 14]
 
-  - name: Nastassia Grim
+  - name: Nastassia Grimm
     orcid: 0000-0001-9602-0599
     affiliation: [18, 46]
 

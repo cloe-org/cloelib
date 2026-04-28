@@ -210,6 +210,26 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
+### hi_classPerturbations
+
+Interfaces with [hi_class](https://github.com/emiliobellini/hi_class_public).
+
+**Location**: `cloelib/cosmology/hi_class_cosmology.py`
+
+**When to use**: hi_class-specific features, comparison studies
+
+**Example**:
+
+```python
+from cloelib.cosmology.hi_class_cosmology import hi_classBackground, hi_classPerturbations
+
+bg = hi_classBackground(...)
+pert = hi_classPerturbations(
+    background=bg,
+    # other parameters
+)
+```
+
 ## Adding Your Own Perturbations Implementation
 
 To add a new Perturbations implementation, follow these steps.

@@ -8,7 +8,10 @@ All of the functions are completely differentiable.
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
-from cloelib.cosmology.derived_cosmology import rdrag_fitting_function
+from cloelib.cosmology.derived_cosmology import (
+    rdrag_fitting_function,
+    z_star_fitting_function,
+)
 
 # General imports
 import jax.numpy as jnp
@@ -346,6 +349,11 @@ class JAXBackground:
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering."""
         return rdrag_fitting_function(self)
+
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
+        return z_star_fitting_function(self)
 
 
 class JAXLinearPerturbations:

@@ -105,11 +105,35 @@ C_ell = two_point.get_Cl(ells)
 ```
 
 **COSEBIs**:
-Complete Orthogonal Sets of E/B-Integrals) are specialized statistics for cosmic shear. They are exposed as a method of `AngularTwoPoint`, not as a standalone class.
+Complete Orthogonal Sets of E/B-Integrals are specialized statistics for cosmic shear.
+They are available both as methods of `AngularTwoPoint` (which injects a software provenance tag automatically) and as **standalone module-level functions** that can be used without instantiating the class, useful when $C_\ell$ or $\xi(\pm)$ are already computed, even from real or simulated measurements.
 
-**Method**: `AngularTwoPoint.get_cosebis(ells, nl, ks, w_ell, ns)`
+**Standalone functions** (no tracers required):
 
-Requires optional dependencies (`pylevin`, `mpmath`). Requires to compute Fourier filter at `cloelib.auxiliary.cosebi_helpers`.
+```python
+from cloelib.summary_statistics.angular_two_point import (
+    get_cosebis_from_cl,
+    get_cosebis_from_2pcf,
+)
+
+# From angular power spectra
+cosebis = get_cosebis_from_cl(cells, ells, w_ell, ns)
+
+# From two-point correlation functions
+cosebis = get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns)
+```
+
+**Class method** (`get_cosebis` — computes $C_\ell$ internally, software provenance tag included automatically):
+
+```python
+two_point = AngularTwoPoint(tracer1, tracer2)
+cosebis = two_point.get_cosebis(ells, nl, ks, w_ell, ns)
+```
+
+!!! note
+Only `get_cosebis` is available as a class method. `get_cosebis_from_2pcf` is standalone only — use it directly when $\xi_\pm(\theta)$ are already available.
+
+Both interfaces require optional dependencies (`pylevin`, `mpmath`). The COSEBIs kernels (`w_ell`, `T_plus`, `T_minus`) must be precomputed using helpers from `cloelib.auxiliary.cosebi_helpers`.
 
 #### AngularCorrelationFunction
 

@@ -53,6 +53,7 @@ def test_background_required_attributes():
         "N_eff",
         "interface_args",
         "rdrag",
+        "z_star",
     }
     assert attributes_required == attributes_found
 

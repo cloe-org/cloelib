@@ -39,6 +39,7 @@ Every Background implementation must provide:
 - **`gamma_MG`**: Modified gravity parameter
 - **`rdrag`**: Sound horizon radius at last scattering (Mpc)
 - **`interface_args`**: Dictionary storing interface-specific parameters
+- **`z_star`**: Redshift of photon decoupling.
 
 ### Required Methods
 

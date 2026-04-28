@@ -345,7 +345,9 @@ def hi_class_perturbation_instances(hi_class_background_instance, zs, scope="mod
 
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
-def test_hi_class_perturbation_implements_protocol(hi_class_perturbation_instances, key):
+def test_hi_class_perturbation_implements_protocol(
+    hi_class_perturbation_instances, key
+):
     """Test that the hi_classPerturbation instances adhere to the protocol."""
     hi_class_instance = hi_class_perturbation_instances[key]
     hi_class_instance = hi_class_perturbation_instances["Linear"]
@@ -395,7 +397,9 @@ def test_hi_class_growth_rate(hi_class_perturbation_instances, key, zs, ks):
     assert result.ndim == 1
 
 
-def test_hi_class_sigma8_consistency_linear_vs_nonlinear(hi_class_background_instance, zs):
+def test_hi_class_sigma8_consistency_linear_vs_nonlinear(
+    hi_class_background_instance, zs
+):
     """Test that Linear and NonLinear give consistent sigma8(z=0) values."""
     hi_class_lin = hi_classLinearPerturbations(
         background=hi_class_background_instance, redshifts=zs
@@ -450,7 +454,9 @@ def hi_class_lin_perturb_instance(hi_class_background_instance):
     # pass the redshifts here.
 
     # ----- instantiate perturbations ---------------------------------
-    pert = hi_classLinearPerturbations(background=hi_class_background_instance, redshifts=zs)
+    pert = hi_classLinearPerturbations(
+        background=hi_class_background_instance, redshifts=zs
+    )
 
     return pert
 
@@ -471,7 +477,9 @@ def hi_class_lin_perturb_instance_nu(hi_class_background_instance):
     hi_class_background_instance.interface_args["hi_classparams"]["N_ncdm"] = 1
     hi_class_background_instance.interface_args["hi_classparams"]["m_ncdm"] = 0.2
     # ----- instantiate perturbations ---------------------------------
-    pert = hi_classLinearPerturbations(background=hi_class_background_instance, redshifts=zs)
+    pert = hi_classLinearPerturbations(
+        background=hi_class_background_instance, redshifts=zs
+    )
 
     return pert
 
@@ -611,7 +619,9 @@ def test_nl_matter_power_spectrum_cb_no_neutrinos(hi_class_nonlin_perturb_instan
         )
 
 
-def test_nl_matter_power_spectrum_cb_with_neutrinos(hi_class_nonlin_perturb_instance_nu):
+def test_nl_matter_power_spectrum_cb_with_neutrinos(
+    hi_class_nonlin_perturb_instance_nu,
+):
     """
     With massive neutrinos present, check that the CB spectrum:
       * has the correct (nz, nk) shape,
@@ -640,4 +650,3 @@ def test_nl_matter_power_spectrum_cb_with_neutrinos(hi_class_nonlin_perturb_inst
         assert np.isclose(pk_cb[i, j], pk_direct, rtol=1e-12, atol=1e-15), (
             f"Mismatch at z={z_test}, k={k_test}"
         )
-

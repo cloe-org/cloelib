@@ -43,6 +43,7 @@ tensorflow = ["tensorflow"]
 tf-keras = ["tf-keras"]
 cosmopower-jax=["cosmopower-jax"]
 baccoemu = ["baccoemu"]
+hiclassy = ["hiclassy==3.3.4"]
 
 [tool.hatch.version]
 source = "vcs"

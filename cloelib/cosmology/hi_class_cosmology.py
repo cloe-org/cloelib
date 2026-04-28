@@ -8,6 +8,7 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 import numpy as np
 import copy
 from typing import Optional, Union, Sequence
+import warnings
 
 # Cosmology imports
 try:
@@ -270,6 +271,19 @@ class hi_classBackground:
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
+    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values (no neutrinos).
+        """
+
+        return self.results.Om_b(zs) + self.results.Om_cdm(zs)
+
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the matter density as a function of redshift.
@@ -388,6 +402,51 @@ class hi_classLinearPerturbations:
         self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
         # To match array convention of CAMB
         return self.Pk_linear
+
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
+        r"""Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        if hubble_units or k_hunit:
+            raise ValueError("This hi_class method does not yet support h-units")
+
+        if self.interface_args["hi_classparams"]["N_ncdm"] == 0:
+            warnings.warn(
+                "There are no massive neutrinos (N_mnu=0), this function will "
+                "return the usual matter power spectrum instead of _cb!",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.Pk_cb_linear = self.matter_power_spectrum(
+                zs, ks, hubble_units=False, k_hunit=False
+            )
+        else:
+            self.Pk_cb_linear = np.array(
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+            )
+        # To match array convention of CAMB
+        return self.Pk_cb_linear
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -512,6 +571,51 @@ class hi_classNonLinearPerturbations:
         )
         # To match array convention of CAMB
         return self.Pk_nonlinear
+
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
+        """Calculate the hi_class non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        if hubble_units or k_hunit:
+            raise ValueError("This hi_class method does not yet support h-units")
+
+        if self.interface_args["hi_classparams"]["N_ncdm"] == 0:
+            warnings.warn(
+                "There are no massive neutrinos (N_mnu=0), this function will "
+                "return the usual matter power spectrum instead of _cb!",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.Pk_cb_nonlinear = self.matter_power_spectrum(
+                zs, ks, hubble_units=False, k_hunit=False
+            )
+        else:
+            self.Pk_cb_nonlinear = np.array(
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+            )
+        # To match array convention of CAMB
+        return self.Pk_cb_nonlinear
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""

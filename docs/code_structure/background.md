@@ -178,7 +178,6 @@ bg = hi_classBackground(
 )
 ```
 
-
 ## Adding Your Own Background Implementation
 
 To add a new Background implementation, follow these steps.

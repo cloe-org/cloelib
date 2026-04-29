@@ -405,10 +405,10 @@ jax_bg = JAXBackground(
 # --- Compute background quantities ---
 z = np.linspace(0, 3, 256)
 H_z_camb = camb_bg.hubble_parameter(z)
-H_z__jax = jax_bg.hubble_parameter(z)
+H_z_jax = jax_bg.hubble_parameter(z)
 ```
 
-hiThis demonstrates how different backends can be used interchangeably, allowing for straightforward cross-validation of results.
+This demonstrates how different backends can be used interchangeably, allowing for straightforward cross-validation of results.
 
 ## Computing Power Spectra
 
@@ -531,7 +531,7 @@ cls = {**cls_sheshe, **cls_posshe, **cls_pospos}
 
 ## Spectroscopic Observables
 
-Calculation of the Legendre multipoles (both in Fourier and configuration space) is handled by the `LegendreMultipoles` module, which interfaces with objects that comply with the `SpectroPower` protocol. This module implements shared modelling layers that are handled coherently by cloelib, rather than relying on individual implementations of external pipelines. Modelled effects include shot-noise corrections, Alcock-Paczynski distortions, and the convolution with the survey window function, as well as a number of observational systematic effects, such as spectroscopic redshift errors and the presence of contaminants. In addition, this module can compute the two-point correlation function and projects it – or  $P(k,\mu)$ – to Legendre multipoles. As an example, we show below how to obtain a prediction for the power spectrum multipoles using the \texttt{comet-emu} package.
+Calculation of the Legendre multipoles (both in Fourier and configuration space) is handled by the `LegendreMultipoles` module, which interfaces with objects that comply with the `SpectroPower` protocol. This module implements shared modelling layers that are handled coherently by \texttt{cloelib}, rather than relying on individual implementations of external pipelines. Modelled effects include shot-noise corrections, Alcock-Paczynski distortions, and the convolution with the survey window function, as well as a number of observational systematic effects, such as spectroscopic redshift errors and the presence of contaminants. In addition, this module can compute the two-point correlation function and projects it—or $P(k,\mu)$—to Legendre multipoles. As an example, we show below how to obtain a prediction for the power spectrum multipoles using the \texttt{comet-emu} package.
 
 ```python
 from cloelib.observables.CometEFT_spectro import CometEFT_SpectroPower
@@ -667,7 +667,7 @@ This lightweight profiling infrastructure allows users to optimize their analysi
 
 # Documentation
 
-Comprehensive documentation for \texttt{cloelib} is available at [cloe-org.github.io/cloelib/dev/home/](https://cloe-org.github.io/cloelib/dev/home/). The documentation includes detailed API references, installation instructions, explanations about the software structure, and guides for integrating cloelib into your analysis workflows.
+Comprehensive documentation for \texttt{cloelib} is available at [cloe-org.github.io/cloelib/dev/home/](https://cloe-org.github.io/cloelib/dev/home/). The documentation includes detailed API references, installation instructions, explanations about the software structure, and guides for integrating \texttt{cloelib} into your analysis workflows.
 
 For practical examples, example scripts, and interactive tutorials, visit the [cloe-org/playground](https://github.com/cloe-org/playground) repository, which hosts a collection of Jupyter notebooks showcasing typical use cases and advanced features.
 
@@ -697,7 +697,7 @@ The contributions of all remaining authors have been tracked using the [all-cont
 
 # Acknowledgements
 
-We thank the broader CLOE software development team for the foundational work that motivated this library. We thank Fabrice Roy for helping deploy the documentation. G.C.H. acknowledges that this project is part of the UNICORN project (file number VI.Veni.242.110) within the Talent Programme Veni Science domain 2024, which is partly financed by the Dutch Research Council (NWO) under grant [https://doi.org/10.61686/ZCPQI32997](https://doi.org/10.61686/ZCPQI32997). M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). C.M. is supported by the Agenzia Spaziale Italiana project “Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0.” B.B. is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). E.B. and K.T. acknowledge support from the European Union’s Horizon Europe research and innovation programme under the Marie Skłodowska-Curie COFUND Postdoctoral Programme (grant agreement No. 101081355 – SMASH), as well as from the Republic of Slovenia and the European Regional Development Fund. A.H. acknowledges the support of a Royal Society University Research Fellowship. A.H.W. is supported by the Deutsches Zentrum für Luft- und Raumfahrt (DLR) under project 50QE2305, funded by the Bundesministerium für Wirtschaft und Klimaschutz, and also acknowledges funding from the German Science Foundation (DFG) via the Collaborative Research Center SFB1491 “Cosmic Interacting Matters – From Source to Signal.” R.K. is supported by UK STFC grant ST/X001040/1. N.G. acknowledges the support of the Royal Society as a Newton International Fellow (NIF\textbackslash R1\textbackslash 252792) and by the STFC (ST/B001175/1).  
+We thank the broader \texttt{CLOE} software development team for the foundational work that motivated this library. We thank Fabrice Roy for helping deploy the documentation. G.C.H. acknowledges that this project is part of the UNICORN project (file number VI.Veni.242.110) within the Talent Programme Veni Science domain 2024, which is partly financed by the Dutch Research Council (NWO) under grant [https://doi.org/10.61686/ZCPQI32997](https://doi.org/10.61686/ZCPQI32997). M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). C.M. is supported by the Agenzia Spaziale Italiana project “Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0.” B.B. is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). E.B. and K.T. acknowledge support from the European Union’s Horizon Europe research and innovation programme under the Marie Skłodowska-Curie COFUND Postdoctoral Programme (grant agreement No. 101081355 – SMASH), as well as from the Republic of Slovenia and the European Regional Development Fund. A.H. acknowledges the support of a Royal Society University Research Fellowship. A.H.W. is supported by the Deutsches Zentrum für Luft- und Raumfahrt (DLR) under project 50QE2305, funded by the Bundesministerium für Wirtschaft und Klimaschutz, and also acknowledges funding from the German Science Foundation (DFG) via the Collaborative Research Center SFB1491 “Cosmic Interacting Matters – From Source to Signal.” R.K. is supported by UK STFC grant ST/X001040/1. N.G. acknowledges the support of the Royal Society as a Newton International Fellow (NIF\textbackslash R1\textbackslash 252792) and by the STFC (ST/B001175/1).  
 
 We acknowledge the EuroHPC Joint Undertaking for awarding project ID EHPC-EXT-2024E02-083 access to Leonardo, hosted by CINECA (Italy). We acknowledge the use of the Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) on MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, and 2025-3-0036. We also acknowledge support from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme (grant agreement No. 101053992) for computational resources.
 

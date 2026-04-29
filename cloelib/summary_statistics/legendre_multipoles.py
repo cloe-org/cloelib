@@ -637,11 +637,11 @@ class LegendreMultipoles:
         s: np.ndarray,
         mu: np.ndarray,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5,
-        logkmax: Optional[float] = 2,
+        logkmin: Optional[float] = -5.0,
+        logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
         kcut: Optional[float] = 0.4,
-        pow: Optional[float] = 2,
+        pow: Optional[float] = 2.0,
         format_type: Optional[str] = None,
     ) -> dict:
         r"""Polar two-point correlation function.
@@ -691,11 +691,11 @@ class LegendreMultipoles:
         term_list: list,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5,
-        logkmax: Optional[float] = 2,
+        logkmin: Optional[float] = -5.0,
+        logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
         kcut: Optional[float] = 0.4,
-        pow: Optional[float] = 2,
+        pow: Optional[float] = 2.0,
     ) -> dict:
         r"""Two-point correlation function Legendre multipoles of specified terms.
 

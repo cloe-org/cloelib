@@ -382,6 +382,20 @@ Perturbation theory code (not publicly available).
 
 **Location**: `cloelib/observables/PBJ_spectro.py`
 
+#### PBJ_spectro_beyond_LCDM
+
+Beyond-LCDM PBJ interface for use with externally supplied modified-growth perturbations.
+
+**Location**: `cloelib/observables/PBJ_spectro_beyond_LCDM.py`
+
+**When to use**: You want to evaluate PBJ spectroscopic power spectra in models where the linear growth history differs from LCDM.
+
+**Usage notes**:
+
+- Supply a standard linear perturbation object through `linear_perturbations` for the baseline z=0 linear power spectrum.
+- Supply a `growth_perturbations` object such as `MGrowthLinearPerturbations` to provide modified `f(z, k)` and `D(z, k)`.
+- The class infers PBJ growth-model tags from CLOE-style model names such as `ide`, `gamma`, `fr`, and `dgp`.
+
 ### Adding Your Own SpectroPower
 
 To add a new SpectroPower implementation, follow these steps.

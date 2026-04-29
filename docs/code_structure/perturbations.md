@@ -157,6 +157,52 @@ Fast emulator for non-linear power spectra using [HMCode2020Emu](https://github.
 - Accurate non-linear P(k)
 - Limited parameter range
 
+### MGrowthLinearPerturbations
+
+Beyond-LCDM linear growth wrapper using [MGrowth](https://github.com/MariaTsedrik/MGrowth.git).
+
+**Location**: `cloelib/cosmology/mgrowth_cosmology.py`
+
+**When to use**: You want modified-growth linear growth factors and rates on top of an existing baseline linear perturbation pipeline.
+
+**Features**:
+
+- Reuses a baseline linear perturbation object for the z=0 matter spectrum
+- Builds MGrowth-based interpolators for `D(z, k)` and `f(z, k)`
+- Supports `w0wacdm`, `fr`, `dgp`, `ide`, `gamma`, `gammaz`, `musigma-de`, and `mu`
+- Exposes a matter-power-spectrum wrapper consistent with the `Perturbations` protocol
+
+**Installation**:
+
+```sh
+pip install ".[mgrowth]"
+```
+
+**Example**:
+
+```python
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
+from cloelib.cosmology.HMcode2020Emu_cosmology import HMemuLinearPerturbations
+from cloelib.cosmology.mgrowth_cosmology import MGrowthLinearPerturbations
+
+background = CAMBBackground(...)
+zs = np.linspace(1e-4, 3.0, 100)
+linear_perturbations_emu = HMemuLinearPerturbations(background, zs)
+
+mgrowth_perturbations = MGrowthLinearPerturbations(
+    background,
+    linear_perturbations_emu,
+    "ide",
+    {"xi": 20.0, "w0": background.w0, "wa": background.wa},
+)
+```
+
+**Usage notes**:
+
+- The baseline perturbation object should already match the intended beyond-LCDM background.
+- `MGrowthLinearPerturbations` is primarily used to supply modified `growth_factor` and `growth_rate` to downstream modules such as the PBJ beyond-LCDM spectroscopic interface.
+- The implementation currently assumes a flat background and uses an internal reduced `k` grid for MGGrowth evaluations before interpolating back to the requested scales.
+
 ### EE2Perturbations
 
 Simulation-based emulator for non-linear power spectra using [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper).

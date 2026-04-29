@@ -3,6 +3,8 @@
 import numpy as np
 from scipy.special import erf
 
+from cloelib.auxiliary import units
+
 
 def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=0.0):
     r"""Critical overdensity factor.
@@ -83,9 +85,9 @@ def convert_distance(distance, units_in, units_out, angular_diameter_distance=No
     """
     ang_to_rad = {
         "radians": 1,
-        "degrees": np.pi/180.0,
-        "arcmin": np.pi/180.0/60.0,
-        "arcsec": np.pi/180.0/3600.0,
+        "degrees": np.pi / 180.0,
+        "arcmin": np.pi / 180.0 / 60.0,
+        "arcsec": np.pi / 180.0 / 3600.0,
     }
     _valid_units = ["mpc/h", *ang_to_rad.keys()]
     if units_in.lower() not in _valid_units:

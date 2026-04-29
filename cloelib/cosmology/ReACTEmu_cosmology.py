@@ -432,22 +432,21 @@ class BoostedPerturbations:
         self.z = getattr(base_perturbations, "z", None)
 
     def matter_power_spectrum(self, z, k):
-        """
-        Returns boosted nonlinear matter power spectrum P(k, z)
+        """Return the boosted nonlinear matter power spectrum.
 
-        Parameters:
-            z : float or np.ndarray
-            k : float or np.ndarray
+        Parameters
+        ----------
+        z : float or np.ndarray
+            Redshift value or array of redshifts.
+        k : float or np.ndarray
+            Wavenumber value or array of wavenumbers in 1/Mpc.
 
-        Returns:
-            If z and k are arrays:
-                ndarray with shape (len(z), len(k))
-            If z is scalar and k is array:
-                ndarray with shape (len(k),)
-            If z is array and k is scalar:
-                ndarray with shape (len(z),)
-            If both are scalars:
-                float
+        Returns
+        -------
+        float or np.ndarray
+            Boosted matter power spectrum. The output is squeezed so scalar
+            inputs return a scalar, while array inputs return the corresponding
+            one- or two-dimensional array.
         """
         z = np.atleast_1d(z)
         k = np.atleast_1d(k)

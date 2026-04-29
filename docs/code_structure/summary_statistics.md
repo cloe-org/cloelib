@@ -23,6 +23,10 @@ These quantities are directly measurable and form the basis for cosmological par
 
 !!! warning cloelib does not use internal interpolations. Keep redshift and wavenumber arrays to a maximum of 1500 elements for optimal performance. Otherwise, memory problems may arise. See [Performance Tips](#performance-tips) for details.
 
+## Performance Tips
+
+For expensive summary-statistic evaluations, prefer moderate redshift and wavenumber grids, especially when scanning parameter space repeatedly. In practice, keeping these arrays at or below roughly 1500 elements avoids unnecessary memory pressure in the current implementation.
+
 ## Available Summary Statistics
 
 ### For Photometric Surveys (Using Tracers)

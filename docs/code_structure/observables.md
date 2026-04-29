@@ -392,6 +392,7 @@ Beyond-LCDM PBJ interface for use with externally supplied modified-growth pertu
 
 **Usage notes**:
 
+- This interface requires a recent local PBJ installation. PBJ is not public yet, so this workflow is intended only for collaborators who already have access to the latest PBJ version.
 - Supply a standard linear perturbation object through `linear_perturbations` for the baseline z=0 linear power spectrum.
 - Supply a `growth_perturbations` object such as `MGrowthLinearPerturbations` to provide modified `f(z, k)` and `D(z, k)`.
 - The class infers PBJ growth-model tags from CLOE-style model names such as `ide`, `gamma`, `fr`, and `dgp`.

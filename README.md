@@ -55,7 +55,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | NA                                                | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
 | NA                                                | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
 
-We do not provide installation support for `PBJ`.
+We do not provide installation support for `PBJ`. The beyond-LCDM PBJ workflow also assumes you already have a recent local PBJ version installed; PBJ is not public yet.
 
 <!-- --8<-- [end:supported-codes] -->
 

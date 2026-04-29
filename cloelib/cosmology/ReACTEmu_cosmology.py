@@ -194,9 +194,11 @@ class MGemuNonlinearBoost:
         # common cosmology block
         Omega_nu_real = self.background.mnu / 93.14 / (self.background.H0 / 100.0) ** 2
         Omega_m = self.background.Omega_cdm0 + self.background.Omega_b0 + Omega_nu_real
-    
+
         # Fixing massive neutrinos to 0 for the boost as decided in TH1-4 telecon, 23.03.2026 but keep same total Om
-        Omega_nu = 1e-10 #self.background.mnu / 93.14 / (self.background.H0 / 100.0) ** 2
+        Omega_nu = (
+            1e-10  # self.background.mnu / 93.14 / (self.background.H0 / 100.0) ** 2
+        )
 
         # defaults for MG/DE parameters (overridden below per model)
         w0 = self.background.w0

@@ -240,24 +240,22 @@ class TabulatedNonlinearBoost:
 class TabulatedBoostedPerturbations:
     def __init__(self, base_lin_perturbations, base_perturbations, boost_interp):
         """
-        Applies the nonlinear boost to the LCDM nonlinear spectrum given in base_perturbations
+        Applies the nonlinear boost to the LCDM nonlinear spectrum given in base_perturbations.
 
-        Parameters
-        ----------
         Parameters
         ----------
         base_lin_perturbations : object
             An object representing the linear perturbations, which may include methods
-            like `sigma_lensing` for lensing calculations. Must have the same background 
+            like `sigma_lensing` for lensing calculations. Must have the same background
             as in the modified theory of gravity or dark energy (not ΛCDM for CPL-backgrounds!).
 
         base_perturbations : object
             An object with a `matter_power_spectrum(z, k)` method that provides the
-            nonlinear matter power spectrum for the ΛCDM model. 
+            nonlinear matter power spectrum for the ΛCDM model.
 
         boost_interp : callable
             A function or interpolator B(z, k) that returns the nonlinear boost
-            to be applied to the ΛCDM spectrum. 
+            to be applied to the ΛCDM spectrum.
 
         """
 
@@ -278,22 +276,21 @@ class TabulatedBoostedPerturbations:
         self.z = getattr(base_perturbations, "z", None)
 
     def matter_power_spectrum(self, z, k):
-        """
-        Returns boosted nonlinear matter power spectrum P(k, z)
+        """Return the boosted nonlinear matter power spectrum.
 
-        Parameters:
-            z : float or np.ndarray
-            k : float or np.ndarray
+        Parameters
+        ----------
+        z : float or np.ndarray
+            Redshift value or array of redshifts.
+        k : float or np.ndarray
+            Wavenumber value or array of wavenumbers in 1/Mpc.
 
-        Returns:
-            If z and k are arrays:
-                ndarray with shape (len(z), len(k))
-            If z is scalar and k is array:
-                ndarray with shape (len(k),)
-            If z is array and k is scalar:
-                ndarray with shape (len(z),)
-            If both are scalars:
-                float
+        Returns
+        -------
+        float or np.ndarray
+            Boosted matter power spectrum. The output is squeezed so scalar
+            inputs return a scalar, while array inputs return the corresponding
+            one- or two-dimensional array.
         """
         z = np.atleast_1d(z)
         k = np.atleast_1d(k)
@@ -367,14 +364,7 @@ class TabulatedBoostedPerturbations:
         return np.squeeze(D_lin)
 
     def sigma8_0(self) -> float:
-        """
-        Calculate the sigma8 value for the current cosmology.
-
-        Returns:
-        --------
-        float
-            The sigma8 value.
-        """
+        """Calculate the sigma8 value for the current cosmology."""
         B0 = self.boost_interp(np.array([0.0]), np.array([2e-2]))  # shape (nz, 1)
         B0 = np.sqrt(B0[:, 0])
         return self.base.sigma8_0() * B0

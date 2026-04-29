@@ -342,6 +342,11 @@ class hi_classBackground:
         """Sound horizon radius at last scattering in Mpc."""
         return self.results.rs_drag()
 
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
+        return self.results.get_current_derived_parameters(["z_star"])["z_star"]
+
 
 class hi_classLinearPerturbations:
     """Class for perturbations cosmology using hi_class, inheriting from Perturbations parent class."""

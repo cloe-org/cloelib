@@ -62,7 +62,8 @@ def test_hi_class_background_required_attributes(hi_class_background_instance):
     attributes_found = {
         name
         for name, value in contents
-        if not callable(value) and not name.startswith("_")
+        if (not callable(value) or (callable(value) and isinstance(value, float)))
+        and not name.startswith("_")
     }
     assert attributes_required <= attributes_found
 

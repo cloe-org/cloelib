@@ -44,7 +44,7 @@ tf-keras = ["tf-keras"]
 cosmopower-jax=["cosmopower-jax"]
 baccoemu = ["baccoemu"]
 
-mgclass = ["mgclassy==2.9.4.5"]
+mgclassy = ["mgclassy==2.9.4.5"]
 
 [tool.hatch.version]
 source = "vcs"

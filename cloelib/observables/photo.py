@@ -8,7 +8,7 @@ Both classes are compatible with the Tracer protocol.
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import cached_stacked_simpson, simps
-from cloelib.auxiliary.systematics import shift_dndz_jax
+from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 
 # General imports
 import jax.numpy as np  # type: ignore
@@ -148,10 +148,15 @@ class ShearTracer:
         self.dz_shear_i = [
             self.nuisance_params[f"dz_shear_{i + 1}"] for i in range(dndz.shape[0])
         ]
+        self.width_shear_i = [
+            self.nuisance_params[f"width_shear_{i + 1}"] for i in range(dndz.shape[0])
+        ]
         self.n_z_bins = dndz.shape[0]
         self.dndz = dndz
-        # Correct dndz for dz_shear
-        self.dndz_shifted = shift_dndz_jax(dndz, z, self.dz_shear_i)
+        # Correct dndz for width_shear
+        self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_shear_i)
+        # Correct dndz_stretched for dz_shear
+        self.dndz_shifted = shift_dndz_jax(self.dndz_stretched, z, self.dz_shear_i)
 
     def get_window_IA(self, z):
         r"""Window integrand.
@@ -321,9 +326,14 @@ class PositionsTracer:
         self.dz_pos_i = [
             self.nuisance_params[f"dz_pos_{i + 1}"] for i in range(dndz.shape[0])
         ]
+        self.width_pos_i = [
+            self.nuisance_params[f"width_pos_{i + 1}"] for i in range(dndz.shape[0])
+        ]
         self.dndz = dndz
+        # Correct dndz for width_pos
+        self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_pos_i)
         # Correct dndz for dz_pos
-        self.dndz_shifted = shift_dndz_jax(dndz, z, self.dz_pos_i)
+        self.dndz_shifted = shift_dndz_jax(self.dndz_stretched, z, self.dz_pos_i)
         self.flags = {"galaxy_bias_model": galaxy_bias_model}
         self.n_z_bins = dndz.shape[0]
         self.magnification_bias = [

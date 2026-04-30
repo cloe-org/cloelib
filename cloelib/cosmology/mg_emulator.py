@@ -2,7 +2,7 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, Perturbations
-#from cloelib.emulator_MG_binned.mg_emulator import MGPerturbations
+# from cloelib.emulator_MG_binned.mg_emulator import MGPerturbations
 
 # General imports
 import numpy as np
@@ -55,10 +55,7 @@ class MGPerturbations:
         # ----------------------------------
 
         self.cosmo = {
-            "Omega_m": (
-                self.background.Omega_cdm0
-                + self.background.Omega_b0
-            ),
+            "Omega_m": (self.background.Omega_cdm0 + self.background.Omega_b0),
             "Omega_b": self.background.Omega_b0,
             "h": self.background.H0 / 100.0,
             "n_s": self.background.ns,
@@ -77,9 +74,7 @@ class MGPerturbations:
         if MGPerturbations._shared_mg_emu is None:
             print("Loading MGEmulator into shared memory...")
 
-            MGPerturbations._shared_mg_emu = MGEmulator(
-                model_dir=model_dir
-            )
+            MGPerturbations._shared_mg_emu = MGEmulator(model_dir=model_dir)
 
             print("MGEmulator loaded once and cached.")
 
@@ -101,14 +96,12 @@ class MGPerturbations:
         # Linear boost only (NN branch)
         # ----------------------------------
 
-        self.k_linear, boost_linear = (
-            self.mg_emu.emulator.linear.predict_boost(
-                self.cosmo,
-                mu=self.mu,
-                eta=self.eta,
-                bin_index=self.bin_index,
-                zs=self.z,
-            )
+        self.k_linear, boost_linear = self.mg_emu.emulator.linear.predict_boost(
+            self.cosmo,
+            mu=self.mu,
+            eta=self.eta,
+            bin_index=self.bin_index,
+            zs=self.z,
         )
 
         # ----------------------------------
@@ -178,11 +171,8 @@ class MGPerturbations:
         D(z, k) = sqrt(P_lin(z, k) / P_lin(z=0, k))
         """
 
-        return np.sqrt(
-            self.Pk_linear_interp(zs, ks) /
-            self.Pk_linear_interp(0.0, ks)
-        )
-    
+        return np.sqrt(self.Pk_linear_interp(zs, ks) / self.Pk_linear_interp(0.0, ks))
+
     # ----------------------------------
     # CHANGE 4:
     # add growth_rate()
@@ -213,8 +203,7 @@ class MGPerturbations:
         f = -(1.0 + zs[:, None]) * dlnD_dz
 
         return f
-        
-    
+
     # ----------------------------------
     # CHANGE 5:
     # add sigma8_0()
@@ -243,10 +232,7 @@ class MGPerturbations:
         k = self.k_linear  # (Nk,)
 
         # linear MG P(k, z=0)
-        pk0 = self.Pk_linear_interp(
-            np.array([0.0]),
-            k
-        ).flatten()
+        pk0 = self.Pk_linear_interp(np.array([0.0]), k).flatten()
 
         # ----------------------------------
         # Top-hat window
@@ -262,11 +248,7 @@ class MGPerturbations:
 
         xm = x[mask]
 
-        W[mask] = (
-            3.0
-            * (np.sin(xm) - xm * np.cos(xm))
-            / xm**3
-        )
+        W[mask] = 3.0 * (np.sin(xm) - xm * np.cos(xm)) / xm**3
 
         # ----------------------------------
         # sigma8 integral
@@ -274,15 +256,10 @@ class MGPerturbations:
 
         integrand = k**2 * pk0 * W**2
 
-        sigma8_sq = (
-            1.0
-            / (2.0 * np.pi**2)
-            * np.trapezoid(integrand, k)
-        )
+        sigma8_sq = 1.0 / (2.0 * np.pi**2) * np.trapezoid(integrand, k)
 
         return np.sqrt(sigma8_sq)
-    
-        
+
     def _get_active_bin_mask(self, zs):
         """Return boolean mask for the active MG redshift bin.
 
@@ -313,12 +290,11 @@ class MGPerturbations:
         zmin, zmax = bin_edges[self.bin_index]
 
         return (zs > zmin) & (zs <= zmax)
-        
+
     def matter_power_spectrum_cb(self, zs, ks):
         raise NotImplementedError(
             "matter_power_spectrum_cb is not yet implemented for MGPerturbations"
         )
-
 
     def Sigma(self, zs):
         r"""Return the modified lensing parameter Sigma(z).

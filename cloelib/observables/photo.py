@@ -253,16 +253,16 @@ class ShearTracer:
             * self.background.comoving_distance(z)
         )
         efficiency = self.get_lensing_efficiency(z)
-        
+
         # -------------------------
         # MG modification
         # -------------------------
         if hasattr(self.perturbations, "Sigma"):
-            Sigma = self.perturbations.Sigma(z)   # shape (nz,)
-            
+            Sigma = self.perturbations.Sigma(z)  # shape (nz,)
+
         else:
             Sigma = np.ones_like(z)
-        
+
         return np.einsum("ij, j->ij", efficiency, factor) * Sigma[np.newaxis, :]
 
     def get_window(self, z):

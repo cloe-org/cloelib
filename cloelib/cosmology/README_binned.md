@@ -4,26 +4,22 @@ This module implements modified gravity (MG) perturbations for Euclid-like analy
 
 The core component is the `MGPerturbations` class, which wraps an emulator-based boost model and applies it to standard ΛCDM linear and nonlinear matter power spectra.
 
-
-
 ---
-
 
 ## Installation
 
-
-You need to clone the parent repo that contains the emulator files and down the models from Zenodo. 
-
+You need to clone the parent repo that contains the emulator files and down the models from Zenodo.
 
 ```python
 https://github.com/sankarshana16/mg_binned_boost_emulator.git
 ```
 
-You can find the models in 
+You can find the models in
 
 ```
 [Zenodo Dataset](https://zenodo.org/records/19625918)
 ```
+
 After downloading, place all files in:
 
 ```bash
@@ -72,28 +68,28 @@ Main wrapper class implementing MG perturbations.
 
 #### Inputs
 
-| Parameter | Description |
-|----------|-------------|
-| `background` | `cloelib` background cosmology |
-| `linearperturbations` | Linear ΛCDM perturbations |
-| `nonlinearperturbations` | Nonlinear ΛCDM (e.g. HMCode) |
-| `redshifts` | Array of redshifts |
-| `mu`, `eta` | Modified gravity parameters |
-| `bin_index` | Active MG redshift bin |
-| `model_dir` | Path to emulator models |
+| Parameter                | Description                    |
+| ------------------------ | ------------------------------ |
+| `background`             | `cloelib` background cosmology |
+| `linearperturbations`    | Linear ΛCDM perturbations      |
+| `nonlinearperturbations` | Nonlinear ΛCDM (e.g. HMCode)   |
+| `redshifts`              | Array of redshifts             |
+| `mu`, `eta`              | Modified gravity parameters    |
+| `bin_index`              | Active MG redshift bin         |
+| `model_dir`              | Path to emulator models        |
 
 ---
 
 ## ⚙️ How It Works
 
-1. Convert `cloelib` cosmology → emulator format  
-2. Load MG emulator (cached globally)  
+1. Convert `cloelib` cosmology → emulator format
+2. Load MG emulator (cached globally)
 3. Predict:
    - Nonlinear boost
-   - Linear boost  
-4. Apply boosts to ΛCDM spectra:  
-   \( P_{\rm MG} = \text{boost} \times P_{\Lambda\rm CDM} \)  
-5. Build spline interpolators for fast evaluation  
+   - Linear boost
+4. Apply boosts to ΛCDM spectra:
+   \( P*{\rm MG} = \text{boost} \times P*{\Lambda\rm CDM} \)
+5. Build spline interpolators for fast evaluation
 
 ---
 
@@ -114,7 +110,7 @@ Returns:
     growth_factor(zs, ks)
 
 \[
-D(z, k) = \sqrt{\frac{P_{\rm lin}(z, k)}{P_{\rm lin}(0, k)}}
+D(z, k) = \sqrt{\frac{P*{\rm lin}(z, k)}{P*{\rm lin}(0, k)}}
 \]
 
 ---
@@ -140,7 +136,7 @@ f = -(1+z)\frac{d\ln D}{dz}
     sigma8_0()
 
 \[
-\sigma_8^2 = \frac{1}{2\pi^2} \int dk\, k^2 P_{\rm lin}(k, z=0) W^2(kR)
+\sigma*8^2 = \frac{1}{2\pi^2} \int dk\, k^2 P*{\rm lin}(k, z=0) W^2(kR)
 \]
 
 with:
@@ -171,12 +167,12 @@ Outside the bin:
 ## 📦 Redshift Binning
 
 | bin_index | Redshift range |
-|----------|----------------|
-| 0 | 0.00 – 0.43 |
-| 1 | 0.43 – 0.91 |
-| 2 | 0.91 – 1.47 |
-| 3 | 1.47 – 2.15 |
-| 4 | 2.15 – 3.00 |
+| --------- | -------------- |
+| 0         | 0.00 – 0.43    |
+| 1         | 0.43 – 0.91    |
+| 2         | 0.91 – 1.47    |
+| 3         | 1.47 – 2.15    |
+| 4         | 2.15 – 3.00    |
 
 ---
 

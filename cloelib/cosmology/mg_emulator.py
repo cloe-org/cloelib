@@ -38,7 +38,6 @@ class MGPerturbations:
         bin_index: int,
         model_dir: str = "./models",
     ):
-
         assert background.Omega_k0 == 0, "Non-flat geometries not supported"
         self.background = background
         self.linearperturbations = linearperturbations

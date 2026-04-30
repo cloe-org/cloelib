@@ -4,6 +4,32 @@ This module implements modified gravity (MG) perturbations for Euclid-like analy
 
 The core component is the `MGPerturbations` class, which wraps an emulator-based boost model and applies it to standard ΛCDM linear and nonlinear matter power spectra.
 
+
+
+---
+
+
+## Installation
+
+
+You need to clone the parent repo that contains the emulator files and down the models from Zenodo. 
+
+
+```python
+https://github.com/sankarshana16/mg_binned_boost_emulator.git
+```
+
+You can find the models in 
+
+```
+[Zenodo Dataset](https://zenodo.org/records/19625918)
+```
+After downloading, place all files in:
+
+```bash
+mg_binned_boost_emulator/models/
+```
+
 ---
 
 ## 🚀 Features

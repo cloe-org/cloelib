@@ -228,4 +228,3 @@ Sankarshana Srinivasan
 
 - Add baryon/CDM split (`P_cb`)
 - Validate \( \sigma_8 \) normalization (h-consistency)
-

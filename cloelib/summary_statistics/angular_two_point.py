@@ -145,8 +145,9 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     """
     if software is None:
         software = "get_cosebis_from_cl (cloelib)"
-    w_ell = np.asarray(w_ell)
-    ns = np.asarray(ns)
+    print("ok")
+    w_ell = np.array(list(w_ell.values()))
+    ns = np.asarray(ns - 1)
     weights = simpsons_weights_jit(len(ells))
     tomo_cosebis = {}
 

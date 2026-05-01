@@ -12,10 +12,12 @@ authors:
   - name: Marco Bonici
     orcid: 0000-0002-8430-126X
     affiliation: 1
+    note: cloe-org maintainers
 
   - name: Guadalupe Cañas-Herrera
     orcid: 0000-0003-2796-2149
     affiliation: 2
+    note: corresponding author (canasherrera@strw.leidenuniv.nl)
 
   - name: Pedro Carrilho
     orcid: 0000-0003-1339-0194
@@ -36,6 +38,7 @@ authors:
   - name: Michel Aguena
     orcid: 0000-0001-5679-6747
     affiliation: 5
+    note: cloelib contributors
 
   - name: Giovanni Arico
     orcid: 0000-0002-2802-2928
@@ -54,7 +57,7 @@ authors:
     affiliation: 11
 
   - name: Jip de Buck
-    orcid: 0000-0000-0000-0000
+    orcid: 0009-0001-5175-9282
     affiliation: 2
 
   - name: Klara Bertmann
@@ -105,7 +108,7 @@ authors:
 
   - name: Nastassia Grimm
     orcid: 0000-0001-9602-0599
-    affiliation: [18, 46]
+    affiliation: 18
 
   - name: Alex Hall
     orcid: 0000-0002-3139-8651
@@ -129,11 +132,11 @@ authors:
 
   - name: Arthur Loureiro
     orcid: 0000-0002-4371-0876
-    affiliation: 22, 23
+    affiliation: [23, 24]
 
   - name: Katarina Markovic
     orcid: 0000-0001-6764-073X
-    affiliation: 24
+    affiliation: 25
 
   - name: David Navarro-Gironés
     orcid: 0000-0003-0507-372X
@@ -187,17 +190,21 @@ authors:
     orcid: 0009-0000-4771-7728
     affiliation: 26
 
+  - name: Sankarshana Srinivasan
+    orcid: 0000-0003-1539-3276
+    affiliation: 33
+
   - name: Konstantinos Tanidis
     orcid: 0000-0001-9843-5130
-    affiliation: 33
+    affiliation: 34
 
   - name: Peter L. Taylor
     orcid: 0000-0001-6999-4718
-    affiliation: 34
+    affiliation: 35
 
   - name: Nicolas Tessore
     orcid: 0000-0002-9696-7931
-    affiliation: 35
+    affiliation: 36
 
   - name: Linus Thummel
     orcid: 0000-0002-9807-5494
@@ -209,7 +216,7 @@ authors:
 
   - name: Isaac Tutusaus
     orcid: 0000-0002-3199-0399
-    affiliation: [15, 38, 19]
+    affiliation: [8, 37, 20]
 
   - name: Casper Vedder
     orcid: 0009-0007-6341-4648
@@ -221,108 +228,92 @@ authors:
 
   - name: Miguel Zumalacarregui
     orcid: 0000-0002-9943-6490
-    affiliation: 37
+    affiliation: 38
 
   - name: Joe Zuntz
     orcid: 0000-0001-9789-9646
     affiliation: 13
     note: on behalf of the Euclid Consortium
 
-affiliations:
-  - name: Waterloo Centre for Astrophysics, University of Waterloo, Waterloo, ON N2L 3G1, Canada
-    index: 1
-  - name: Leiden Observatory, Leiden University, PO Box 9513, 2300 RA, Leiden, the Netherlands
-    index: 2
-  - name: Centre for Astrophysics Research, University of Hertfordshire, United Kingdom
-    index: 3
-  - name: German Aerospace Center (DLR), Scientific Information, Linder Höhe, D-51147 Köln, Germany
-    index: 4
-  - name: INAF - Osservatorio Astronomico di Trieste, Italy
-    index: 5
-  - name: INAF - Osservatorio Astronomico di Brera, Italy
-    index: 6
-  - name: INFN - Sezione di Bologna, Viale C. Berti Pichat, 6/2 – 40127 Bologna, Italy
-    index: 7
-  - name: TBD
-    index: 8
-  - name: Departement of Physics “Aldo Pontremoli”, Università degli Studi di Milano, Via G. Celoria 16, 20133, Milano, Italy
-    index: 9
-  - name: Division of Particle and Astrophysical Science, Nagoya University, Furo-cho, Chikusa-ku, Nagoya, 464–8602, Japan
-    index: 10
-  - name: Lorentz Institute for Theoretical Physics, Leiden University, PO Box 9506, NL-2300 RA Leiden, The Netherlands
-    index: 11
-  - name: TBD
-    index: 12
-  - name: INAF - Institute of Space Astrophysics and Cosmic Physics (IASF Milano), Via Corti 12, I-20133 Milano (MI), Italy
-    index: 13
-  - name: TBD
-    index: 14
-  - name: Institute of Space Sciences (ICE, CSIC), Campus UAB, Carrer de Can Magrans, s/n, 08193 Barcelona, Spain
-    index: 15
-  - name: CEA, AIM, 91191, Gif-sur-Yvette, France
-    index: 16
-  - name: INFN-Sezione di Genova, Via Dodecaneso 33, 16146, Genova, Italy
-    index: 17
-  - name: Department of Physics, University of Oxford, Denys Wilkinson Building, Keble Road, Oxford OX1 3RH, United Kingdom
-    index: 18
-  - name: Institut de Recherche en Astrophysique et Planétologie (IRAP), Université de Toulouse, CNRS, UPS, CNES, 14 Av. Edouard Belin, 31400 Toulouse, France
-    index: 19
-  - name: Department of Physics & Astronomy, University of Sussex, Brighton BN1 9QH, UK
-    index: 20
-  - name: Universität Innsbruck, Institut für Astro- und Teilchenphysik, Technikerstr. 25/8, 6020 Innsbruck, Austria
-    index: 21
-  - name: Oskar Klein Centre for Cosmoparticle Physics, Department of Physics, Stockholm University, Stockholm, SE-106 91, Sweden
-    index: 22
-  - name: Astrophysics Group, Blackett Laboratory, Imperial College London, London SW7 2AZ, UK
-    index: 23
-  - name: Jet Propulsion Laboratory, California Institute of Technology, 4800 Oak Grove Drive, Pasadena, CA, 91109, USA
-    index: 24
-  - name: INFN, Sezione di Genova, Via Dodecaneso 33, 16146, Genova, Italy
-    index: 25
-  - name: TBD
-    index: 26
-  - name: Argelander-Institut für Astronomie, Universität Bonn, Auf dem Hügel 71, D-53121 Bonn, Germany
-    index: 27
-  - name: TBD
-    index: 28
-  - name: Advanced Research Computing Centre, University College London, 90 High Holborn, London WC1V 6LJ, UK
-    index: 29
-  - name: TBD
-    index: 30
-  - name: TBD
-    index: 31
-  - name: Department of Physics, Royal Holloway, University of London, Egham Hill, Egham, UK
-    index: 32
-  - name: Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas (CIEMAT), Avenida Complutense 40, 28040 Madrid, Spain
-    index: 33
-  - name: Center for Astrophysics and Cosmology, University of Nova Gorica, 1280 Nova Gorica, Slovenia
-    index: 34
-  - name: Center for Cosmology and AstroParticle Physics (CCAPP),The Ohio State University, Columbus, OH 43210, USA
-    index: 35
-  - name: TBD
-    index: 36
-  - name: TBD
-    index: 37
-  - name: Institut d'Estudis Espacials de Catalunya (IEEC),  Edifici RDIT, Campus UPC, 08860 Castelldefels, Barcelona, Spain
-    index: 38
-  - name: TBD
-    index: 39
-  - name: TBD
-    index: 40
-  - name: TBD
-    index: 41
-  - name: Ruhr University Bochum, Faculty of Physics and Astronomy, Astronomical Institute (AIRUB), German Centre for Cosmological Lensing, 44780 Bochum, Germany
-    index: 42
-  - name: Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am Mühlenberg 1, D-14476 Potsdam-Golm, Germany
-    index: 43
-  - name: Institute for Astronomy, University of Edinburgh, Royal Observatory, Blackford Hill, Edinburgh, EH9 3HJ, UK
-    index: 44
-  - name: Higgs Centre for Theoretical Physics, School of Physics and Astronomy, Edinburgh, EH9 3FD, UK
-    index: 45
-  - name: Institute of Cosmology \& Gravitation, University of Portsmouth, Portsmouth, PO1 3FX, United Kingdom
-    index: 46
 
-date: 9 April 2026
+affiliations:
+  - index: 1
+    name: Waterloo Centre for Astrophysics, University of Waterloo, Canada
+  - index: 2
+    name: Leiden Observatory, Leiden University, Netherlands
+  - index: 3
+    name: Centre for Astrophysics Research, University of Hertfordshire, United Kingdom
+  - index: 4
+    name: German Aerospace Center (DLR), Germany
+  - index: 5
+    name: INAF - Osservatorio Astronomico di Trieste, Italy
+  - index: 6
+    name: INAF - Osservatorio Astronomico di Brera, Italy
+  - index: 7
+    name: INFN - Sezione di Bologna, Italy
+  - index: 8
+    name: Institute of Space Sciences (ICE, CSIC), Spain
+  - index: 9
+    name: Department of Physics, Università degli Studi di Milano, Italy
+  - index: 10
+    name: INAF - IASF Milano, Italy
+  - index: 11
+    name: INFN - Sezione di Trieste, Italy
+  - index: 12
+    name: Astronomical Institute (AIRUB), Ruhr University Bochum, Germany
+  - index: 13
+    name: Institute for Astronomy, University of Edinburgh, United Kingdom
+  - index: 14
+    name: Higgs Centre for Theoretical Physics, University of Edinburgh, United Kingdom
+  - index: 15
+    name: Lorentz Institute for Theoretical Physics, Leiden University, Netherlands
+  - index: 16
+    name: CEA Paris-Saclay, France
+  - index: 17
+    name: INFN - Sezione di Genova, Italy
+  - index: 18
+    name: Department of Physics, University of Oxford, United Kingdom
+  - index: 19
+    name: Division of Particle and Astrophysical Science, Nagoya University, Japan
+  - index: 20
+    name: IRAP, Université de Toulouse, France
+  - index: 21
+    name: Department of Physics & Astronomy, University of Sussex, United Kingdom
+  - index: 22
+    name: Institut für Astro- und Teilchenphysik, Universität Innsbruck, Austria
+  - index: 23
+    name: Oskar Klein Centre for Cosmoparticle Physics, Stockholm University, Sweden
+  - index: 24
+    name: Astrophysics Group, Imperial College London, United Kingdom
+  - index: 25
+    name: Jet Propulsion Laboratory, USA
+  - index: 26
+    name: CIEMAT, Spain
+  - index: 27
+    name: Argelander-Institut für Astronomie, Universität Bonn, Germany
+  - index: 28
+    name: Advanced Research Computing Centre, University College London, United Kingdom
+  - index: 29
+    name: IFT, Spain
+  - index: 30
+    name: University of Portsmouth, United Kingdom
+  - index: 31
+    name: Osservatorio Astronomico di Roma, Italy
+  - index: 32
+    name: Department of Physics, Royal Holloway, University of London, United Kingdom
+  - index: 33
+    name: Ludwig-Maximilians-Universität München, Germany
+  - index: 34
+    name: Center for Astrophysics and Cosmology, University of Nova Gorica, Slovenia
+  - index: 35
+    name: The Ohio State University, USA
+  - index: 36
+    name: Mullard Space Science Laboratory, University College London, United Kingdom
+  - index: 37
+    name: Institut d'Estudis Espacials de Catalunya (IEEC), Spain
+  - index: 38
+    name: Max Planck Institute for Gravitational Physics, Germany
+date: 1 May 2026
 bibliography: paper.bib
 ---
 
@@ -697,7 +688,7 @@ The contributions of all remaining authors have been tracked using the [all-cont
 
 # Acknowledgements
 
-We thank the broader \texttt{CLOE} software development team for the foundational work that motivated this library. We thank Fabrice Roy for helping deploy the documentation. G.C.H. acknowledges that this project is part of the UNICORN project (file number VI.Veni.242.110) within the Talent Programme Veni Science domain 2024, which is partly financed by the Dutch Research Council (NWO) under grant [https://doi.org/10.61686/ZCPQI32997](https://doi.org/10.61686/ZCPQI32997). M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). C.M. is supported by the Agenzia Spaziale Italiana project “Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0.” B.B. is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). E.B. and K.T. acknowledge support from the European Union’s Horizon Europe research and innovation programme under the Marie Skłodowska-Curie COFUND Postdoctoral Programme (grant agreement No. 101081355 – SMASH), as well as from the Republic of Slovenia and the European Regional Development Fund. A.H. acknowledges the support of a Royal Society University Research Fellowship. A.H.W. is supported by the Deutsches Zentrum für Luft- und Raumfahrt (DLR) under project 50QE2305, funded by the Bundesministerium für Wirtschaft und Klimaschutz, and also acknowledges funding from the German Science Foundation (DFG) via the Collaborative Research Center SFB1491 “Cosmic Interacting Matters – From Source to Signal.” R.K. is supported by UK STFC grant ST/X001040/1. N.G. acknowledges the support of the Royal Society as a Newton International Fellow (NIF\textbackslash R1\textbackslash 252792) and by the STFC (ST/B001175/1).  
+We thank the broader \texttt{CLOE} software development team for the foundational work that motivated this library. We thank Fabrice Roy for helping deploy the documentation. G.C.H. acknowledges that this project is part of the UNICORN project (file number VI.Veni.242.110) within the Talent Programme Veni Science domain 2024, which is partly financed by the Dutch Research Council (NWO) under grant [https://doi.org/10.61686/ZCPQI32997](https://doi.org/10.61686/ZCPQI32997). M.B. acknowledges support from the Natural Sciences and Engineering Research Council of Canada (NSERC). C.M. is supported by the Agenzia Spaziale Italiana project “Attività scientifica per la missione Euclid – fase E ACCORDO ATTUATIVO n. 2024-10-HH.0.” B.B. is supported by a UK Research and Innovation Stephen Hawking Fellowship (EP/W005654/2). E.B. and K.T. acknowledge support from the European Union’s Horizon Europe research and innovation programme under the Marie Skłodowska-Curie COFUND Postdoctoral Programme (grant agreement No. 101081355 – SMASH), as well as from the Republic of Slovenia and the European Regional Development Fund. A.H. acknowledges the support of a Royal Society University Research Fellowship. A.H.W. is supported by the Deutsches Zentrum für Luft- und Raumfahrt (DLR) under project 50QE2305, funded by the Bundesministerium für Wirtschaft und Klimaschutz, and also acknowledges funding from the German Science Foundation (DFG) via the Collaborative Research Center SFB1491 “Cosmic Interacting Matters – From Source to Signal.” R.K. is supported by UK STFC grant ST/X001040/1. N.G. acknowledges the support of the Royal Society as a Newton International Fellow (NIF\textbackslash R1\textbackslash 252792) and by the STFC (ST/B001175/1).
 
 We acknowledge the EuroHPC Joint Undertaking for awarding project ID EHPC-EXT-2024E02-083 access to Leonardo, hosted by CINECA (Italy). We acknowledge the use of the Spanish Supercomputing Network (RES) resources provided by the Barcelona Supercomputing Center (BSC) on MareNostrum 5 under allocations AECT-2024-3-0020, 2025-1-0045, 2025-2-0046, and 2025-3-0036. We also acknowledge support from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme (grant agreement No. 101053992) for computational resources.
 

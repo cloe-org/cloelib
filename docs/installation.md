@@ -24,13 +24,13 @@ pip install .
 4. **Add optional dependencies** – Enhance with external codes and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument]
+pip install .[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument,mgclassy]
 ```
 
 > **Note:** Some shells require quoting the argument when brackets are present:
 >
 > ```sh
-> pip install ".[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument]"
+> pip install ".[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument,mgclassy]"
 > ```
 
 The installation is now complete.

@@ -210,6 +210,26 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
+### MGCLASSPerturbations
+
+Interfaces with [MGCLASS](https://gitlab.com/zizgitlab/mgclass--ii).
+
+**Location**: `cloelib/cosmology/mgclass_cosmology.py`
+
+**When to use**: MGCLASS-specific features, comparison studies
+
+**Example**:
+
+```python
+from cloelib.cosmology.mgclass_cosmology import MGCLASSBackground, MGCLASSPerturbations
+
+bg = MGCLASSBackground(...)
+pert = MGCLASSPerturbations(
+    background=bg,
+    # other parameters
+)
+```
+
 ## Adding Your Own Perturbations Implementation
 
 To add a new Perturbations implementation, follow these steps.

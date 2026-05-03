@@ -146,8 +146,14 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     if software is None:
         software = "get_cosebis_from_cl (cloelib)"
 
-    w_ell = np.array(list(w_ell.values()))
-    ns = np.asarray(ns - 1)
+    if not set(ns).issubset(w_ell.keys()):
+        raise ValueError(
+            f"w_ell must contain all ns. Missing: {set(ns) - set(w_ell.keys())}"
+        )
+
+    ns = np.asarray(sorted(ns))
+    w_ell = np.asarray([w_ell[int(n)] for n in ns])
+
     weights = simpsons_weights_jit(len(ells))
     tomo_cosebis = {}
 
@@ -163,7 +169,7 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
             bb = np.sum(ells * cl_bb * w_n * weights) / (2 * np.pi)
             return ee, bb
 
-        ee_vals, bb_vals = jax.vmap(compute_cosebi)(w_ell[ns])
+        ee_vals, bb_vals = jax.vmap(compute_cosebi)(w_ell)
         arr = np.zeros((2, 2, ns.shape[0]), dtype=np.float64)
         arr = arr.at[0, 0, :].set(ee_vals)
         arr = arr.at[1, 1, :].set(bb_vals)

@@ -6184,7 +6184,7 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 
 
 <a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CAMBNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(redshifts)">redshifts</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(nonlinear_model)">nonlinear_model</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CAMBNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(linearperturbations)">linearperturbations</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="object">object</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(redshifts)">redshifts</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(nonlinear_model)">nonlinear_model</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6203,6 +6203,16 @@ N_eff = 3.044 for the standard model of cosmology.</p>
           –
           <div class="doc-md-description">
             <p>An instance of the LinearPerturbations class.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(linearperturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>linearperturbations</code></b>
+<a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(linearperturbations)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="object">object</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Linear perturbations object (unused by CAMB, which computes
+nonlinear corrections internally; accepted for interface compatibility with
+emulator-based NonLinPerturbations classes).</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -7415,7 +7425,7 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 
 
 <a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CLASSNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(nonlinear_model)">nonlinear_model</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(hmcode_version)">hmcode_version</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CLASSNonLinearPerturbations</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(linearperturbations)">linearperturbations</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="object">object</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(redshifts)">redshifts</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(nonlinear_model)">nonlinear_model</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(hmcode_version)">hmcode_version</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -7423,6 +7433,58 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 
 
         <p>Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class.</p>
+
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(background)" class="doc doc-heading doc-heading-parameter">              <b><code>background</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(background)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Background cosmology object.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(linearperturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>linearperturbations</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(linearperturbations)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="object">object</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Linear perturbations object (unused by CLASS, which computes
+nonlinear corrections internally; accepted for interface compatibility with
+emulator-based NonLinPerturbations classes).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(redshifts)" class="doc doc-heading doc-heading-parameter">              <b><code>redshifts</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(redshifts)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts for the calculations.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(nonlinear_model)" class="doc doc-heading doc-heading-parameter">              <b><code>nonlinear_model</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(nonlinear_model)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The nonlinear model to use. Defaults to None (no nonlinear).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(hmcode_version)" class="doc doc-heading doc-heading-parameter">              <b><code>hmcode_version</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(hmcode_version)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The HMcode version to use. Defaults to None.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -14610,7 +14672,7 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 
 
 <a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CAMBNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(redshifts)">redshifts</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(nonlinear_model)">nonlinear_model</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CAMBNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(linearperturbations)">linearperturbations</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="object">object</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(redshifts)">redshifts</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(nonlinear_model)">nonlinear_model</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14629,6 +14691,16 @@ N_eff = 3.044 for the standard model of cosmology.</p>
           –
           <div class="doc-md-description">
             <p>An instance of the LinearPerturbations class.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(linearperturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>linearperturbations</code></b>
+<a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(linearperturbations)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="object">object</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Linear perturbations object (unused by CAMB, which computes
+nonlinear corrections internally; accepted for interface compatibility with
+emulator-based NonLinPerturbations classes).</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -15846,7 +15918,7 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 
 
 <a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CLASSNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(nonlinear_model)">nonlinear_model</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(hmcode_version)">hmcode_version</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CLASSNonLinearPerturbations</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(linearperturbations)">linearperturbations</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="object">object</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(redshifts)">redshifts</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(nonlinear_model)">nonlinear_model</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(hmcode_version)">hmcode_version</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15854,6 +15926,58 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 
 
         <p>Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class.</p>
+
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(background)" class="doc doc-heading doc-heading-parameter">              <b><code>background</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(background)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Background cosmology object.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(linearperturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>linearperturbations</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(linearperturbations)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="object">object</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Linear perturbations object (unused by CLASS, which computes
+nonlinear corrections internally; accepted for interface compatibility with
+emulator-based NonLinPerturbations classes).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(redshifts)" class="doc doc-heading doc-heading-parameter">              <b><code>redshifts</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(redshifts)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts for the calculations.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(nonlinear_model)" class="doc doc-heading doc-heading-parameter">              <b><code>nonlinear_model</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(nonlinear_model)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The nonlinear model to use. Defaults to None (no nonlinear).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(hmcode_version)" class="doc doc-heading doc-heading-parameter">              <b><code>hmcode_version</code></b>
+<a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(hmcode_version)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The HMcode version to use. Defaults to None.</p>
+          </div>
+        </li>
+    </ul>
 
           
 

@@ -130,8 +130,10 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
         Angular power spectra in cosmolib format.
     ells : jax.numpy.ndarray
         Multipoles at which the integration is performed.
-    w_ell : array-like
-        Harmonic-space COSEBIs kernels.
+    w_ell : dict
+        Harmonic-space COSEBI kernels, keyed by COSEBI mode number.
+        Expected format is ``{n: w_n(ell)}``, where each value is an array
+        evaluated on the input multipole grid `ells`.
     ns : array-like
         Mode indices selecting kernels from `w_ell`.
     software : str, optional

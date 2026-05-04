@@ -339,7 +339,10 @@ def camb_perturbation_instances(camb_background_instance, zs, scope="module"):
         background=camb_background_instance, redshifts=zs
     )
     camb_non = CAMBNonLinearPerturbations(
-        background=camb_background_instance, redshifts=zs, nonlinear_model="mead2016"
+        background=camb_background_instance,
+        linearperturbations=None,
+        redshifts=zs,
+        nonlinear_model="mead2016",
     )
     return {"Linear": camb_lin, "NonLinear": camb_non}
 
@@ -416,7 +419,7 @@ def test_camb_nonlinear_perturbations_z_zero_automatic_inclusion(
     user_redshifts = np.array([0.5, 1.0, 1.5, 2.0])
 
     nonlinear_pert = CAMBNonLinearPerturbations(
-        camb_background_instance, user_redshifts, nonlinear_model="mead2016"
+        camb_background_instance, None, user_redshifts, nonlinear_model="mead2016"
     )
 
     # Check that z=0 was automatically added to internal array
@@ -449,7 +452,7 @@ def test_camb_sigma8_consistency_linear_vs_nonlinear(camb_background_instance):
 
     linear_pert = CAMBLinearPerturbations(camb_background_instance, user_redshifts)
     nonlinear_pert = CAMBNonLinearPerturbations(
-        camb_background_instance, user_redshifts, nonlinear_model="mead2016"
+        camb_background_instance, None, user_redshifts, nonlinear_model="mead2016"
     )
 
     # Both should compute sigma8_0
@@ -485,7 +488,7 @@ def test_matter_power_spectrum_cb():
 
     # non-linear
     perturbations_nl = CAMBNonLinearPerturbations(
-        background, np.linspace(0.0, 2.0, 100)
+        background, None, np.linspace(0.0, 2.0, 100)
     )
     assert_allclose(
         perturbations_nl.matter_power_spectrum(0, 1), 736.010737, rtol=1.0e-03

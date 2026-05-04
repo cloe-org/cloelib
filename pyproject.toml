@@ -43,6 +43,7 @@ tensorflow = ["tensorflow"]
 tf-keras = ["tf-keras"]
 cosmopower-jax=["cosmopower-jax"]
 baccoemu = ["baccoemu"]
+FlamingoBaryonResponseEmulator = ["FlamingoBaryonResponseEmulator"]
 
 [tool.hatch.version]
 source = "vcs"

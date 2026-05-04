@@ -45,14 +45,15 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 
 `cloelib` interfaces with the following external codes, each used by a specific internal module for its calculations:
 
-| Background                                        | Perturbations                                                                 | SpectroPower                                                       |
-| ------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [camb](https://camb.readthedocs.io)               | [camb](https://camb.readthedocs.io)                                           | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
-| [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                             | `PBJ` (not publicly available)                                     |
-| NA                                                | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)            | NA                                                                 |
-| NA                                                | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                | NA                                                                 |
-| NA                                                | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
-| NA                                                | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
+| Background                                        | Perturbations                                                                                   | SpectroPower                                                       |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [camb](https://camb.readthedocs.io)               | [camb](https://camb.readthedocs.io)                                                             | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
+| [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                                               | `PBJ` (not publicly available)                                     |
+| NA                                                | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)                              | NA                                                                 |
+| NA                                                | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                                  | NA                                                                 |
+| NA                                                | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper)                   | NA                                                                 |
+| NA                                                | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                                             | NA                                                                 |
+| NA                                                | [FlamingoBaryonResponseEmulator](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator) | NA                                                                 |
 
 We do not provide installation support for `PBJ`.
 
@@ -65,6 +66,8 @@ Several optional dependencies enhance **cloelib** capabilities:
 - **`pyinstrument`** – Time profiling for performance optimization
 - **`pylevin`**, **`mpmath`** – Required for specific observational probes (i.e: COSEBIs)
 - **`tensorflow`** – Needed for certain emulator backends (i.e: `HMCode2020emu`)
+- **`baccoemu`** – Required for BACCOemu nonlinear and baryonic perturbations
+- **`FlamingoBaryonResponseEmulator`** – Required for FLAMINGO baryonic suppression
 
 These are not included in the default installation but can be installed as shown below.
 
@@ -96,13 +99,13 @@ pip install .
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu]
+pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,FlamingoBaryonResponseEmulator]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu]"
+> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,FlamingoBaryonResponseEmulator]"
 > ```
 
 You're all set! 🎉 Ready to compute cosmological observables.

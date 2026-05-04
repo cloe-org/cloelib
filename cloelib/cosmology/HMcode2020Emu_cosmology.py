@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using HMcode2020Emu."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, BaryonBoostMixin, Perturbations
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
@@ -328,3 +328,92 @@ def _set_neutrino_masses(background: Background) -> float:
         mnu_arg = float(background.mnu)
     # returns the neutrino mass in eV
     return mnu_arg
+
+
+class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
+    """Mixin providing baryonic suppression via an HMcode2020-computed P_baryon/P_dmo ratio.
+
+    Can be combined with *any* HMcode2020emu nonlinear perturbations class::
+
+        class MyPert(HMcode2020BaryonBoostMixin, HMemuNonLinearPerturbations):
+            def __init__(self, background, linear, redshifts, log10TAGN=7.8):
+                HMemuNonLinearPerturbations.__init__(self, background, linear, redshifts)
+                HMcode2020BaryonBoostMixin.__init__(self, log10TAGN=log10TAGN)
+
+    Or use :func:`~cloelib.cosmology.cosmology.with_baryon_boost`.
+
+    .. note::
+        ``__init__`` must be called **after** the base NonLinear ``__init__``
+        because it reads ``self.params_hm_emu`` and ``self.background``.
+        Scales below the nonlinear emulator k range get suppression = 1.
+    """
+
+    def __init__(self, log10TAGN: float) -> None:
+        """Initialise the HMcode2020 baryon-ratio spline.
+
+        Runs the emulator twice (DMO and baryonic) and stores
+        ``B(z, k)`` as a bivariate spline in ``self._baryon_ratio_interp``.
+
+        Call this **after** ``HMemuNonLinearPerturbations.__init__`` so that
+        ``self.params_hm_emu`` and ``self.background`` are already set.
+
+        Parameters
+        ----------
+        log10TAGN:
+            log₁₀ of the AGN heating temperature in Kelvin.
+            Typical range: 7.6 (weak) – 8.3 (strong feedback).
+        """
+        hm_bounds = HM2020_emu.emulator["nonlinear"]["bounds"]
+        if np.prod(log10TAGN - hm_bounds["log10TAGN"]) > 0:
+            raise ValueError(
+                f"HMcode 2020 NL emulator: log10TAGN={log10TAGN} is out of bounds "
+                f"{hm_bounds['log10TAGN']}."
+            )
+        z_emu = self.params_hm_emu["z"]
+        nz = len(z_emu)
+        _, Pk_dmo = HM2020_emu.get_nonlinear_pk(
+            nonu=False, **self.params_hm_emu, baryonic_boost=False
+        )
+        params_with_tagn = {
+            **self.params_hm_emu,
+            "log10TAGN": np.tile(log10TAGN, nz),
+        }
+        _, Pk_baryon = HM2020_emu.get_nonlinear_pk(
+            nonu=False, **params_with_tagn, baryonic_boost=True
+        )
+        ratio = Pk_baryon / Pk_dmo
+        k_nl_phys = (
+            HM2020_emu.emulator["nonlinear"]["k"] * self.background.h
+        )  # h/Mpc -> 1/Mpc
+        self._baryon_k_nl_min = k_nl_phys[0]
+        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
+            z_emu, k_nl_phys, ratio, kx=1, ky=1
+        )
+
+    def baryonic_suppression(self, zs, ks, k_hunit: bool = False) -> np.ndarray:
+        """Return B(z, k) = P_baryon(z, k) / P_dmo(z, k).
+
+        Parameters
+        ----------
+        zs : array_like
+            Redshifts.
+        ks : array_like
+            Wavenumbers. By default in 1/Mpc; pass k_hunit=True for h/Mpc.
+        k_hunit : bool
+            If True, convert ks from h/Mpc to 1/Mpc before evaluating.
+
+        Returns
+        -------
+        np.ndarray
+            Baryonic suppression factor, shape (nz, nk).
+            Returns 1.0 for scales below the nonlinear emulator k range.
+        """
+        zs = np.atleast_1d(zs)
+        ks = np.atleast_1d(ks)
+        if k_hunit:
+            ks = ks * self.background.h
+        result = np.ones((len(zs), len(ks)))
+        in_range = ks >= self._baryon_k_nl_min
+        if np.any(in_range):
+            result[:, in_range] = self._baryon_ratio_interp(zs, ks[in_range])
+        return result

@@ -1,7 +1,12 @@
 """Implementation of Background and Perturbation cosmology using BACCOemu (similarly to what done with HMcode2020emu)."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import (
+    Background,
+    BaryonBoostMixin,
+    Perturbations,
+    with_baryon_boost,
+)
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
@@ -536,3 +541,109 @@ class BACCOemuNonLinearPerturbations:
             The sigma8 value.
         """
         return np.asarray(self.emu.get_sigma12(cold=True, **self.params_emu))[0]
+
+
+class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
+    """Mixin providing baryonic suppression via a BACCOemu-computed baryonic boost.
+
+    Can be combined with *any* nonlinear perturbations class (not just BACCOemu)
+    via :func:`~cloelib.cosmology.cosmology.with_baryon_boost`::
+
+        MyPert = with_baryon_boost(SomeNonLinearPerturbations, BACCOemuBaryonBoostMixin)
+        pert = MyPert(
+            background, linear_pert, redshifts,
+            baryon_kwargs=dict(nonlinear_model_name="Arico2023",
+                               baryonic_model_name="Burger2025"),
+        )
+
+    .. note::
+        ``__init__`` must be called **after** the base NonLinear ``__init__``
+        because it reads ``self.params_emu`` and ``self.background`` which are
+        set there.
+    """
+
+    def __init__(
+        self,
+        nonlinear_model_name: str = "Arico2023",
+        baryonic_model_name: str = "Burger2025",
+        M_c: float = 0.0,
+        eta: float = 0.0,
+        beta: float = 0.0,
+        M1_z0_cen: float = 0.0,
+        theta_out: Optional[float] = None,
+        M_inn: Optional[float] = None,
+        theta_inn: float = 0.0,
+    ) -> None:
+        """Initialise the BACCOemu baryon-ratio spline.
+
+        Calls ``get_baryonic_boost`` and stores
+        ``B(z, k)`` as a bivariate spline in ``self._baryon_ratio_interp``.
+
+        Call this **after** ``NonLinearPerturbations.__init__`` so
+        that ``self.params_emu`` and ``self.background`` are set.
+
+        Parameters
+        ----------
+        nonlinear_model_name:
+            BACCOemu nonlinear model used to select the emulator instance,
+            e.g. ``"Arico2023"`` or ``"Angulo2021"``.
+        baryonic_model_name:
+            BACCOemu baryonic model, e.g. ``"Burger2025"`` or ``"Arico2021"``.
+        M_c, eta, beta, M1_z0_cen, theta_out, theta_inn, M_inn:
+            Optional baryonification parameters.  ``None`` uses the model defaults.
+        """
+        baryon_emu = emu[nonlinear_model_name][baryonic_model_name]
+        z_emu = 1.0 / self.params_emu["expfactor"] - 1.0
+        baryonic_params = {
+            k: v
+            for k, v in {
+                "M_c": M_c,
+                "eta": eta,
+                "beta": beta,
+                "M1_z0_cen": M1_z0_cen,
+                "theta_out": theta_out,
+                "theta_inn": theta_inn,
+                "M_inn": M_inn,
+            }.items()
+            if v is not None
+        }
+        k_baryon, boost = baryon_emu.get_baryonic_boost(
+            **{**self.params_emu, **baryonic_params}
+        )
+        k_phys = k_baryon * self.background.h  # h/Mpc -> 1/Mpc
+        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
+            z_emu, k_phys, boost, kx=1, ky=1
+        )
+
+    def baryonic_suppression(self, zs, ks, k_hunit: bool = False) -> np.ndarray:
+        """Return B(z, k) = P_baryon(z, k) / P_dmo(z, k).
+
+        Parameters
+        ----------
+        zs : array_like
+            Redshifts.
+        ks : array_like
+            Wavenumbers. By default in 1/Mpc; pass k_hunit=True for h/Mpc.
+        k_hunit : bool
+            If True, convert ks from h/Mpc to 1/Mpc before evaluating.
+
+        Returns
+        -------
+        np.ndarray
+            Baryonic suppression factor, shape (nz, nk).
+        """
+        zs = np.atleast_1d(zs)
+        ks = np.atleast_1d(ks)
+        if k_hunit:
+            ks = ks * self.background.h
+        return self._baryon_ratio_interp(zs, ks)
+
+
+#: Convenience alias: BACCOemu nonlinear perturbations with the BACCOemu baryonic-boost
+#: mixin pre-composed via :func:`~cloelib.cosmology.cosmology.with_baryon_boost`.
+#: Equivalent to calling ``with_baryon_boost(BACCOemuNonLinearPerturbations,
+#: BACCOemuBaryonBoostMixin)`` directly.  Baryonic parameters are passed through
+#: ``baryon_kwargs`` at construction time.
+BACCOemuNonLinearBaryonicPerturbations = with_baryon_boost(
+    BACCOemuNonLinearPerturbations, BACCOemuBaryonBoostMixin
+)

@@ -340,7 +340,10 @@ def hi_class_perturbation_instances(hi_class_background_instance, zs, scope="mod
         background=hi_class_background_instance, redshifts=zs
     )
     hi_class_non = hi_classNonLinearPerturbations(
-        background=hi_class_background_instance, redshifts=zs, nonlinear_model="halofit"
+        background=hi_class_background_instance,
+        linearperturbations=None,
+        redshifts=zs,
+        nonlinear_model="halofit",
     )
     return {"Linear": hi_class_lin, "NonLinear": hi_class_non}
 
@@ -406,7 +409,10 @@ def test_hi_class_sigma8_consistency_linear_vs_nonlinear(
         background=hi_class_background_instance, redshifts=zs
     )
     hi_class_non = hi_classNonLinearPerturbations(
-        background=hi_class_background_instance, redshifts=zs, nonlinear_model="halofit"
+        background=hi_class_background_instance,
+        linearperturbations=None,
+        redshifts=zs,
+        nonlinear_model="halofit",
     )
     assert np.abs(hi_class_lin.sigma8_0() - hi_class_non.sigma8_0()) < 1e-3
 
@@ -564,7 +570,7 @@ def hi_class_nonlin_perturb_instance(hi_class_background_instance):
 
     # ----- instantiate perturbations ---------------------------------
     pert = hi_classNonLinearPerturbations(
-        background=hi_class_background_instance, redshifts=zs
+        background=hi_class_background_instance, linearperturbations=None, redshifts=zs
     )
 
     return pert
@@ -587,7 +593,7 @@ def hi_class_nonlin_perturb_instance_nu(hi_class_background_instance):
     hi_class_background_instance.interface_args["hi_classparams"]["m_ncdm"] = 0.2
     # ----- instantiate perturbations ---------------------------------
     pert = hi_classNonLinearPerturbations(
-        background=hi_class_background_instance, redshifts=zs
+        background=hi_class_background_instance, linearperturbations=None, redshifts=zs
     )
 
     return pert

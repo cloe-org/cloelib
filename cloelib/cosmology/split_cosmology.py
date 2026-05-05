@@ -77,8 +77,8 @@ class SplitLinearPerturbations:
             rescale_fac = g_z_growth[i] ** 2 / g_z_geo[i] ** 2
             self.pk_linear[i, :] = rescale_fac * self.pk_linear_EBS[i, :]
 
-        # Rescale sigma_8
-        self.sigma8_0 = g_z_growth[i] / g_z_geo[i] * self.sigma8_0_EBS()
+        # Rescale sigma_8 here to avoid repeatedly calling the ODE
+        self.sigma8 = g_z_growth[0] / g_z_geo[0] * self.lin_perturbations.sigma8_0()
         return self.pk_linear
 
     def growth_factor(
@@ -106,13 +106,14 @@ class SplitLinearPerturbations:
         np.ndarray
             The growth factor at the specified redshift and wavenumber.
         """
-        mps_lin = self.matter_power_spectrum(zs, ks)
+        d_z_k = np.zeros([len(zs), len(ks)])
+        g_ode = growth_function_ODE(self.background, zs, self.omega_m_growth)
+        for i in range(len(ks)):
+            d_z_k[:, i] = g_ode / (g_ode[0] * (1 + zs))
 
-        D_z_k = np.sqrt(mps_lin[:, :] / mps_lin[0, :])
+        return d_z_k
 
-        return D_z_k
-
-    def growth_rate(self, zs) -> np.ndarray:
+    def growth_rate(self) -> np.ndarray:
         """
         Calculate the growth rate f(z).
 
@@ -121,27 +122,27 @@ class SplitLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        growth_factor_D = self.growth_factor(zs)[:, 0]
+        growth_factor_D = self.growth_factor(self.z)[:, 0]
 
-        # growth_rate_f = differentiate.derivative(
-        #     self.growth_factor, zs, args=(zs, 0))
+        derivative_growth_factor_D = np.gradient(growth_factor_D, self.z)
 
-        derivative_growth_factor_D = np.gradient(growth_factor_D, zs)
-
-        growth_rate_f = -(1 + zs) / growth_factor_D * derivative_growth_factor_D
+        growth_rate_f = -(1 + self.z) / growth_factor_D * derivative_growth_factor_D
 
         return growth_rate_f
 
-    def sigma8_0_EBS(self) -> float:
+    def sigma8_0(self) -> float:
         """
-        Calculate the sigma8 value for the current cosmology from the EBS.
+        Calculate the split sigma8 value. This is taken from the EBS and then
+        rescaled with the growth as in 2301.03694, Equation (8).
+        Only works if the matter_power_spectrum function has been called.
+        This is to avoid repeatedly calling the ODE which takes time.
 
         Returns:
         --------
         float
             The sigma8 value.
         """
-        return self.lin_perturbations.sigma8_0()
+        return self.sigma8
 
 
 class SplitNonLinearPerturbations:
@@ -166,7 +167,7 @@ class SplitNonLinearPerturbations:
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        """Calculate the split CLASS non-linear matter power spectrum.
+        """Calculate the split non-linear matter power spectrum.
 
         Parameters
         ----------
@@ -197,10 +198,17 @@ class SplitNonLinearPerturbations:
         # Compute the boost factor
         boost = pk_nonlinear_growth / pk_linear_growth
 
-        # Add the boost to the rescaled power spectrum
-        return boost * self.pk_linear
+        # Multiply the boost to the rescaled power spectrum
+        pk_nonlinear = boost * self.pk_linear
 
-    def growth_factor(self, zs, ks) -> np.ndarray:
+        if pk_nonlinear.ndim == 3:
+            pk_nonlinear = pk_nonlinear[0]
+
+        return pk_nonlinear
+
+    def growth_factor(
+        self, zs, ks=np.logspace(np.log10(1e-5), np.log10(1e0), 200)
+    ) -> np.ndarray:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
@@ -223,13 +231,20 @@ class SplitNonLinearPerturbations:
         np.ndarray
             The growth factor at the specified redshift and wavenumber.
         """
-        mps_lin = self.matter_power_spectrum(zs, ks)
+        d_z_k = np.zeros([len(zs), len(ks)])
 
-        D_z_k = np.sqrt(mps_lin[:, :] / mps_lin[0, :])
+        # background Omega_m is growth since this is how the class is initialised
 
-        return D_z_k
+        g_ode = growth_function_ODE(
+            self.background, zs, (self.background.Omega_cdm0 + self.background.Omega_b0)
+        )
 
-    def growth_rate(self, zs) -> np.ndarray:
+        for i in range(len(ks)):
+            d_z_k[:, i] = g_ode / (g_ode[0] * (1 + zs))
+
+        return d_z_k
+
+    def growth_rate(self) -> np.ndarray:
         """
         Calculate the growth rate f(z).
 
@@ -238,13 +253,10 @@ class SplitNonLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        growth_factor_D = self.growth_factor(zs)[:, 0]
+        growth_factor_D = self.growth_factor(self.z)[:, 0]
 
-        # growth_rate_f = differentiate.derivative(
-        #     self.growth_factor, zs, args=(zs, 0))
+        derivative_growth_factor_D = np.gradient(growth_factor_D, self.z)
 
-        derivative_growth_factor_D = np.gradient(growth_factor_D, zs)
-
-        growth_rate_f = -(1 + zs) / growth_factor_D * derivative_growth_factor_D
+        growth_rate_f = -(1 + self.z) / growth_factor_D * derivative_growth_factor_D
 
         return growth_rate_f

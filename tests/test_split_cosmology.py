@@ -75,7 +75,9 @@ def class_background_instance_growth(scope="module"):
 
 @pytest.fixture
 def class_perturbation_instances_geo(class_background_instance_geo, zs, scope="module"):
-    """Fixture to create the Linear and NonLinear instances of CLASSPerturbations."""
+    """Fixture to create the Linear and NonLinear instances of
+    CLASSPerturbations which will stand in for the geometric regime in this
+    test with a test value of Omega_m = 0.3."""
     class_lin = CLASSLinearPerturbations(
         background=class_background_instance_geo, redshifts=zs
     )
@@ -91,7 +93,9 @@ def class_perturbation_instances_geo(class_background_instance_geo, zs, scope="m
 def class_perturbation_instances_growth(
     class_background_instance_growth, zs, scope="module"
 ):
-    """Fixture to create the Linear and NonLinear instances of CLASSPerturbations."""
+    """Fixture to create the Linear and NonLinear instances of
+    CLASSPerturbations which will stand in for the growth regime in this test
+    with a test value of Omega_m = 0.35."""
     class_lin = CLASSLinearPerturbations(
         background=class_background_instance_growth, redshifts=zs
     )
@@ -118,7 +122,8 @@ def split_perturbation_instances(
     omega_m_growth,
     scope="module",
 ):
-    """Fixture to create the Linear and NonLinear instances of CLASSPerturbations."""
+    """Fixture to create the Linear and NonLinear instances of
+    SplitPerturbations."""
     class_lin_geo = class_perturbation_instances_geo["Linear"]
     class_lin_growth = class_perturbation_instances_growth["Linear"]
     class_nl_growth = class_perturbation_instances_growth["NonLinear"]
@@ -143,3 +148,38 @@ def test_split_perturbation_implements_protocol(split_perturbation_instances, ke
     """Test that the SplitPerturbation instances adhere to the protocol."""
     split_instance = split_perturbation_instances[key]
     assert isinstance(split_instance, Perturbations)
+
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_split_matter_power_spectrum(split_perturbation_instances, key, zs, ks):
+    """Test split matter power spectrum."""
+    split_instance = split_perturbation_instances[key]
+    assert hasattr(split_instance, "matter_power_spectrum")
+    assert callable(split_instance.matter_power_spectrum)
+    result = split_instance.matter_power_spectrum(zs, ks)
+    assert isinstance(result, np.ndarray)
+    assert result.ndim == 2
+    assert result.shape == (len(zs), len(ks))
+
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_split_growth_factor(split_perturbation_instances, key, zs, ks):
+    """Test split growth_factor."""
+    split_instance = split_perturbation_instances[key]
+    assert hasattr(split_instance, "growth_factor")
+    assert callable(split_instance.growth_factor)
+    result = split_instance.growth_factor(zs, ks)
+    assert isinstance(result, np.ndarray)
+    assert result.ndim == 2
+    assert result.shape == (len(zs), len(ks))
+
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_split_growth_rate(split_perturbation_instances, key):
+    """Test split growth_rate."""
+    split_instance = split_perturbation_instances[key]
+    assert hasattr(split_instance, "growth_rate")
+    assert callable(split_instance.growth_rate)
+    result = split_instance.growth_rate()
+    assert isinstance(result, np.ndarray)
+    assert result.ndim == 1

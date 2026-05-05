@@ -135,7 +135,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
         Expected format is ``{n: w_n(ell)}``, where each value is an array
         evaluated on the input multipole grid `ells`.
     ns : array-like
-        Mode indices selecting kernels from `w_ell`.
+        COSEBI mode numbers to compute. Each entry must be present as a key in
+        `w_ell`. The output modes follow the same order as `ns`.
     software : str, optional
         Software provenance tag stored in the output `COSEBI` objects.
         Defaults to ``'get_cosebis_from_cl (cloelib)'``.
@@ -143,7 +144,9 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     Returns
     -------
     dict
-        Dictionary keyed like `cells` with `COSEBI` values of shape ``(2, 2, n_modes)``.
+        Dictionary keyed like `cells` with `COSEBI` values of shape
+        ``(2, 2, n_modes)``, where the mode axis follows the same order as `ns`,
+        i.e. the first mode corresponds to ``ns[0]``.
     """
     if software is None:
         software = "get_cosebis_from_cl (cloelib)"
@@ -153,7 +156,7 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
             f"w_ell must contain all ns. Missing: {set(ns) - set(w_ell.keys())}"
         )
 
-    ns = np.asarray(sorted(ns))
+    ns = np.asarray(ns)
     w_ell = np.asarray([w_ell[int(n)] for n in ns])
 
     weights = simpsons_weights_jit(len(ells))

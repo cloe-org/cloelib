@@ -86,6 +86,7 @@ class HMemuLinearPerturbations:
         self.k = k_out
         self.z = z_out
         self.Pk = Pk_out
+        self.Pk_cb = Pk_cb_out
 
         pk_interp = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
 
@@ -254,6 +255,10 @@ class HMemuNonLinearPerturbations:
             nonu=False, **self.params_hm_emu, baryonic_boost=baryonic_boost
         )
 
+        _, Pk_cb = HM2020_emu.get_nonlinear_pk(
+            nonu=True, **self.params_hm_emu, baryonic_boost=baryonic_boost
+        )
+
         k_emu = HM2020_emu.emulator["nonlinear"]["k"] * self.background.h
 
         # Low-k extrapolation.
@@ -263,8 +268,10 @@ class HMemuNonLinearPerturbations:
         Pk_lin_mask_k = linearperturbations.k < k_emu[0]
         Pk_lin_mask_z = linearperturbations.z <= redshift_max
         Pk_lin = linearperturbations.Pk[Pk_lin_mask_z][:, Pk_lin_mask_k]
+        Pk_cb_lin = linearperturbations.Pk_cb[Pk_lin_mask_z][:, Pk_lin_mask_k]
         k_all = np.concatenate((linearperturbations.k[Pk_lin_mask_k], k_emu))
         Pk_all = np.concatenate((Pk_lin, self.background.h**-3 * Pk), axis=1)
+        Pk_cb_all = np.concatenate((Pk_cb_lin, self.background.h**-3 * Pk_cb), axis=1)
 
         # Warning: a lot of parameters currently hard-coded
         k_out, z_out, Pk_out = extend_spectra(
@@ -279,7 +286,19 @@ class HMemuNonLinearPerturbations:
             ns=self.background.ns,
         )
 
-        # Aleternative method using interpolators
+        k_out, z_out, Pk_cb_out = extend_spectra(
+            k_all,
+            self.z,
+            Pk_cb_all,
+            flag_range=True,
+            option_wavenumber="power_law",
+            option_redshift="power_law",
+            extrap_z=redshifts,
+            option_cosmo="const",
+            ns=self.background.ns,
+        )
+
+        # Alternative method using interpolators
         # Pk_lin = linearperturbations.Pk_interp(self.z, k_emu)
         # k_out, z_out, boost_out = \
         #     extend_spectra(k_emu, self.z, self.background.h ** -3 * Pk / Pk_lin,
@@ -292,13 +311,20 @@ class HMemuNonLinearPerturbations:
         self.k = k_out
         self.z = z_out
         self.Pk = Pk_out
+        self.Pk_cb = Pk_cb_out
 
         pk_interp = interpolate.RectBivariateSpline(self.z, self.k, self.Pk, kx=1, ky=1)
 
         self.Pk_interp = pk_interp
 
+        pk_cb_interp = interpolate.RectBivariateSpline(
+            self.z, self.k, self.Pk_cb, kx=1, ky=1
+        )
+
+        self.Pk_cb_interp = pk_cb_interp
+
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-        r"""Compute the linear matter power spectrum.
+        r"""Compute the nonlinear matter power spectrum.
 
         Args:
             ks (numpy.ndarray): Wave number in h Mpc^{-1}
@@ -309,6 +335,19 @@ class HMemuNonLinearPerturbations:
 
         """
         return self.Pk_interp(zs, ks)
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        r"""Compute the nonlinear matter power spectrum.
+
+        Args:
+            ks (numpy.ndarray): Wave number in h Mpc^{-1}
+            zs (numpy.ndarray): redshifts
+
+        Returns:
+            pk (numpy.ndarray): Linear matter power spectrum at the specified scale and redshift
+
+        """
+        return self.Pk_cb_interp(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""

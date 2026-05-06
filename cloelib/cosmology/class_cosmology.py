@@ -281,6 +281,11 @@ class CLASSBackground:
         """Sound horizon radius at last scattering in Mpc."""
         return self.results.rs_drag()
 
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
+        return self.results.get_current_derived_parameters(["z_star"])["z_star"]
+
 
 class CLASSLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
@@ -431,11 +436,22 @@ class CLASSNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations: Optional[object],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         hmcode_version: Optional[str] = None,
     ):
-        """Initialize the CLASSNonLinearPerturbation instance."""
+        """Initialize the CLASSNonLinearPerturbation instance.
+
+        Args:
+            background: Background cosmology object.
+            linearperturbations: Linear perturbations object (unused by CLASS, which computes
+                nonlinear corrections internally; accepted for interface compatibility with
+                emulator-based NonLinPerturbations classes).
+            redshifts (np.ndarray): Array of redshifts for the calculations.
+            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
+            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
+        """
         self.background = background
         self.z = redshifts
         self.kmax = 100

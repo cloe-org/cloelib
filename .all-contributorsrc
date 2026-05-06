@@ -15,7 +15,8 @@
       "profile": "http://alexhall.space",
       "contributions": [
         "bug",
-        "ideas"
+        "ideas",
+        "mentoring"
       ]
     },
     {
@@ -395,18 +396,8 @@
       "contributions": [
         "code",
         "doc",
-        "ideas"
-      ]
-    },
-    {
-      "login": "cosmicLinux",
-      "name": "Linus Thummel",
-      "avatar_url": "https://avatars.githubusercontent.com/u/142009018?v=4",
-      "profile": "https://www.ph.ed.ac.uk/people/linus-thummel",
-      "contributions": [
-        "code",
-        "doc",
-        "ideas"
+        "ideas",
+        "review"
       ]
     },
     {
@@ -458,7 +449,9 @@
       "profile": "https://github.com/raphkou",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "ideas",
+        "doc"
       ]
     },
     {
@@ -562,6 +555,74 @@
       "contributions": [
         "ideas",
         "mentoring"
+      ]
+    },
+    {
+      "login": "emiliobellini",
+      "name": "emiliobellini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6113149?v=4",
+      "profile": "https://github.com/emiliobellini",
+      "contributions": [
+        "maintenance",
+        "ideas"
+      ]
+    },
+    {
+      "login": "miguelzuma",
+      "name": "Miguel Zumalacarregui",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5014027?v=4",
+      "profile": "http://miguelzuma.github.io/",
+      "contributions": [
+        "maintenance",
+        "ideas"
+      ]
+    },
+    {
+      "login": "inigosaezcasares",
+      "name": "Iñigo Sáez Casares",
+      "avatar_url": "https://avatars.githubusercontent.com/u/56702840?v=4",
+      "profile": "https://github.com/inigosaezcasares",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "neelcosmo",
+      "name": "Neel Shah",
+      "avatar_url": "https://avatars.githubusercontent.com/u/151792852?v=4",
+      "profile": "https://github.com/neelcosmo",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "FelicitasKeil",
+      "name": "Felicitas Keil",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70713596?v=4",
+      "profile": "https://github.com/FelicitasKeil",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "jipdebuck",
+      "name": "Jip de Buck",
+      "avatar_url": "https://avatars.githubusercontent.com/u/236796982?v=4",
+      "profile": "https://github.com/jipdebuck",
+      "contributions": [
+        "userTesting"
+      ]
+    },
+    {
+      "login": "HironaoMiyatake",
+      "name": "Hironao Miyatake",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1507529?v=4",
+      "profile": "https://github.com/HironaoMiyatake",
+      "contributions": [
+        "ideas"
       ]
     }
   ]

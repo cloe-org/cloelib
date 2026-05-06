@@ -189,18 +189,81 @@ Accurate and fast emulators of the linear, non-linear, and baryonic power spectr
 
 ### CosmoPowerJAXPerturbations
 
-Fast JAX-based emulator for linear power spectra using [cosmopower-jax](https://github.com/dpiras/cosmopower-jax).
+Fast JAX-based emulator for linear and nonlinear power spectra using [cosmopower-jax](https://github.com/dpiras/cosmopower-jax).
 
 **Location**: `cloelib/cosmology/cosmopower_jax_cosmology.py`
 
-**When to use**: Fast linear predictions with full JAX compatibility, gradient-based inference, MCMC sampling
+**When to use**: Fast predictions with full JAX compatibility, gradient-based inference, MCMC sampling
 
 **Features**:
 
-- Full JAX compatibility enabling automatic differentiation and JIT compilation
-- Fast emulation of linear power spectra
-- Native support for gradient-based samplers (e.g. HMC/NUTS)
-- Limited to linear regime
+- Full JAX compatibility — automatic differentiation and JIT compilation
+- Linear and nonlinear P(k) and P_cb(k)
+- σ₈(z), fσ₈(z), growth factor D(z,k), growth rate f(z)
+- Emulator files downloaded automatically from Zenodo on first use
+
+#### Available classes
+
+| Class                                           | Cosmology | Spectrum                    |
+| ----------------------------------------------- | --------- | --------------------------- |
+| `CosmoPowerJAXLCDMPerturbations.Linear`         | ΛCDM      | P(k) linear                 |
+| `CosmoPowerJAXLCDMPerturbations.LinearCB`       | ΛCDM      | P_cb(k) linear              |
+| `CosmoPowerJAXLCDMPerturbations.NonLinear`      | ΛCDM      | P(k) nonlinear (HMcode2020) |
+| `CosmoPowerJAXLCDMPerturbations.NonLinearCB`    | ΛCDM      | P_cb(k) nonlinear           |
+| `CosmoPowerJAXwCDMPerturbations.Linear`         | wCDM      | P(k) linear                 |
+| `CosmoPowerJAXwCDMPerturbations.LinearCB`       | wCDM      | P_cb(k) linear              |
+| `CosmoPowerJAXwCDMPerturbations.NonLinear`      | wCDM      | P(k) nonlinear              |
+| `CosmoPowerJAXwCDMPerturbations.NonLinearCB`    | wCDM      | P_cb(k) nonlinear           |
+| `CosmoPowerJAXw0waCDMPerturbations.Linear`      | w0waCDM   | P(k) linear                 |
+| `CosmoPowerJAXw0waCDMPerturbations.LinearCB`    | w0waCDM   | P_cb(k) linear              |
+| `CosmoPowerJAXw0waCDMPerturbations.NonLinear`   | w0waCDM   | P(k) nonlinear              |
+| `CosmoPowerJAXw0waCDMPerturbations.NonLinearCB` | w0waCDM   | P_cb(k) nonlinear           |
+
+All classes support **N_mnu = 0, 1, 3** massive neutrinos.
+
+#### Parameter ranges
+
+| Parameter | ΛCDM         | wCDM         | w0waCDM      |
+| --------- | ------------ | ------------ | ------------ |
+| ombh2     | [0.001, 0.1] | [0.001, 0.1] | [0.001, 0.1] |
+| omch2     | [0.05, 0.9]  | [0.05, 0.9]  | [0.05, 0.9]  |
+| H0        | [20, 100]    | [20, 100]    | [20, 100]    |
+| ns        | [0.6, 1.3]   | [0.6, 1.3]   | [0.6, 1.3]   |
+| lnAs      | [1.61, 5]    | [1.61, 5]    | [1.61, 5]    |
+| z         | [0, 5]       | [0, 5]       | [0, 5]       |
+| w0        | —            | [-3, -0.33]  | [-3, -0.33]  |
+| wa        | —            | —            | [-3, 3]      |
+| mnu       | [0, 1] eV    | [0, 1] eV    | [0, 1] eV    |
+| log10TAGN | [7.6, 8.5]   | [7.6, 8.5]   | [7.6, 8.5]   |
+
+#### Example
+
+```python
+import numpy as np
+from cloelib.cosmology.camb_cosmology import CAMBBackground
+from cloelib.cosmology.cosmopower_jax_cosmology import CosmoPowerJAXLCDMPerturbations
+
+zs = np.array([0.0, 0.5, 1.0, 2.0])
+ks = np.logspace(-4, 1, 200)
+
+bg = CAMBBackground(
+    H0=67.0, Omega_b0=0.049, Omega_cdm0=0.270,
+    As=2.1e-9, ns=0.96, mnu=0.06, N_mnu=1,
+    w0=-1.0, wa=0.0, Omega_k0=0.0, gamma_MG=0.0,
+)
+
+# Linear P(k)
+lin = CosmoPowerJAXLCDMPerturbations.Linear(background=bg, redshifts=zs)
+Pk = lin.matter_power_spectrum(0.0, ks)   # shape (1, len(ks))
+
+# Nonlinear P(k) with baryonic feedback
+nl = CosmoPowerJAXLCDMPerturbations.NonLinear(background=bg, redshifts=zs, log10TAGN=7.6)
+Pk_nl = nl.matter_power_spectrum(0.0, ks)
+
+# sigma8 and fsigma8 as a function of redshift
+print(f"sigma8(z=0) = {lin.sigma8[0]:.4f}")
+print(f"fsigma8(z=0) = {lin.fsigma8[0]:.4f}")
+```
 
 ### JAXPerturbations
 
@@ -228,6 +291,8 @@ class MySolverPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations: Optional[object] = None,
+        redshifts: np.ndarray = None,
         nonlinear_model: str = "halofit",
         kmax: float = 10.0,
         zmax: float = 5.0,
@@ -238,6 +303,11 @@ class MySolverPerturbations:
 
         Args:
             background: Background object (any implementation)
+            linearperturbations: Linear perturbations object. Accepted for interface
+                compatibility with cloelike, which always passes this as the second
+                positional argument when constructing NonLinPerturbations. Unused by
+                codes that compute nonlinear corrections internally (e.g. CAMB, CLASS).
+            redshifts: Array of redshifts for the calculations.
             nonlinear_model: Which non-linear model to use
             kmax: Maximum wavenumber in 1/Mpc
             zmax: Maximum redshift

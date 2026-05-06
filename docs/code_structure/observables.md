@@ -376,12 +376,12 @@ Comet emulator with VDG (velocity divergence - galaxy) model.
 
 **When to use**: Alternative RSD modeling
 
-#### PBJ_spectro
+#### PBJSpectroPower
 
 Perturbation theory code interfaced with `Background` and
 `LinearPerturbation` objects, its speed depends on the computation of
 linear quantities (i.e. on which `LinearPerturbation` backend is
-selected.
+selected).
 
 **Location**: `cloelib/observables/PBJ_spectro.py`
 
@@ -393,30 +393,22 @@ spectroscopic observables, beyond $\Lambda$CDM models, MCMC sampling.
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.PBJ_spectro import PBJSpectroPower
-from cloelib.summary_statistics.legendre_multipoles import LegendreMultipoles
 
 zs = np.asarray([1.])
 bg = CAMBBackground(H0=67.5, ...)
-bg_fid = CAMBBackground(H0=67.0, ...)
+bg_fid = CAMBBackground(H0=67.0, ...) # Different from background
 linear_perturbations = CAMBLinearPerturbations(bg, zs)
 
-RSD_parameters = {'b1': 1.412, ...}
+RSD_parameters = {'b1': 1.412, ...} # Biases and counterterms
 spectro = PBJSpectroPower(
     linear_perturbations,
 	RSD_parameters
 	)
 
-k = np.logspace(-2, 0, 50)  # k in h/Mpc
+k = np.logspace(-2, 0, 50)  # k in 1/Mpc
+mu = np.linspace(0, 1, 20)  # μ from 0 (perpendicular) to 1 (parallel)
 
-noise_syst_parameters = {'NP0': 1.056, ...}
-multipoles = LegendreMultipoles(
-    spectro,
-	bg_fid,
-	noise_syst_parameters,
-	nbar=1e-4)
-
-pell_pbj = multipoles.power_multipoles(
-    k=k, ells=[0,2,4])
+P_k_mu = spectro.Pk2d_rsd(k, mu)
 ```
 
 ### Adding Your Own SpectroPower

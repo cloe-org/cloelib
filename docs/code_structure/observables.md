@@ -313,7 +313,7 @@ SpectroPower handles 3D power spectra with redshift-space distortions—what you
 
 - **`background`**: Reference to Background object
 
-Note: SpectroPower uses Background directly, not Perturbations. This is because emulators often bypass traditional perturbation calculations.
+Note: SpectroPower can use Background directly in some cases, since emulators often bypass traditional perturbation calculations, so these are not always necessary (e.g. COMET), while the Background object is always needed for the parameters.
 
 ### Required Attribute
 
@@ -370,7 +370,7 @@ P_k_mu = spectro.Pk2d_rsd(k, mu, z=1.0)  # Shape: (50, 20)
 
 #### CometVDG_spectro
 
-Comet emulator with VDG (velocity divergence - galaxy) model.
+Comet emulator with VDG (velocity difference generator) model.
 
 **Location**: `cloelib/observables/CometVDG_spectro.py`
 

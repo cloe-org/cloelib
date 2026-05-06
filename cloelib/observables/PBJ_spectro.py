@@ -29,12 +29,16 @@ class PBJSpectroPower:
 
         Args:
           linear_perturbations (Perturbations): Perturbations object containing cosmology, linear power spectrum,
-            redshift and growth functions
+            and growth functions
           nuisance_parameters (dict): Dictionary containing bias and counterterm parameters
+          redshift (float): single redshift in which to evaluate PBJ
         """
         self.linear_perturbations = linear_perturbations
         self.background = linear_perturbations.background
         self.parameters = nuisance_parameters
+
+        assert np.asarray(redshift).size == 1, "Only a single redshift can be passed."
+
         self.redshift = redshift
 
         self.cosmo = {
@@ -59,7 +63,7 @@ class PBJSpectroPower:
         Returns:
           Pk2d_rsd (np.ndarray): 2D power spectrum from couplings of density and velocity fields
         """
-        plinear = self.linear_perturbations.matter_power_spectrum(
+        plinear = self.linear_perturbations.matter_power_spectrum_cb(
             0.0, pbj_obj.kL, hubble_units=False, k_hunit=False
         )
         pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="1/Mpc")
@@ -72,7 +76,7 @@ class PBJSpectroPower:
             f=self.linear_perturbations.growth_rate()[
                 self.linear_perturbations.z == self.redshift
             ],
-            D=self.linear_perturbations.growth_factor(self.redshift, 0.05),
+            D=self.linear_perturbations.growth_factor_cb(self.redshift, 0.05),
             cosmo=self.cosmo,
             IRres=True,
             **self.parameters,

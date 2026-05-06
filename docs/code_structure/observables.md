@@ -378,9 +378,46 @@ Comet emulator with VDG (velocity divergence - galaxy) model.
 
 #### PBJ_spectro
 
-Perturbation theory code (not publicly available).
+Perturbation theory code interfaced with `Background` and
+`LinearPerturbation` objects, its speed depends on the computation of
+linear quantities (i.e. on which `LinearPerturbation` backend is
+selected.
 
 **Location**: `cloelib/observables/PBJ_spectro.py`
+
+**When to use**: Predictions of nonlinear galaxy power spectrum for
+spectroscopic observables, beyond $\Lambda$CDM models, MCMC sampling.
+
+**Example**:
+
+```python
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
+from cloelib.observables.PBJ_spectro import PBJSpectroPower
+from cloelib.summary_statistics.legendre_multipoles import LegendreMultipoles
+
+zs = np.asarray([1.])
+bg = CAMBBackground(H0=67.5, ...)
+bg_fid = CAMBBackground(H0=67.0, ...)
+linear_perturbations = CAMBLinearPerturbations(bg, zs)
+
+RSD_parameters = {'b1': 1.412, ...}
+spectro = PBJSpectroPower(
+    linear_perturbations,
+	RSD_parameters
+	)
+
+k = np.logspace(-2, 0, 50)  # k in h/Mpc
+
+noise_syst_parameters = {'NP0': 1.056, ...}
+multipoles = LegendreMultipoles(
+    spectro,
+	bg_fid,
+	noise_syst_parameters,
+	nbar=1e-4)
+
+pell_pbj = multipoles.power_multipoles(
+    k=k, ells=[0,2,4])
+```
 
 ### Adding Your Own SpectroPower
 

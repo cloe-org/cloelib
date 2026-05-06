@@ -201,10 +201,7 @@ class SplitNonLinearPerturbations:
         # Multiply the boost to the rescaled power spectrum
         pk_nonlinear = boost * self.pk_linear
 
-        if pk_nonlinear.ndim == 3:
-            pk_nonlinear = pk_nonlinear[0]
-
-        return pk_nonlinear
+        return pk_nonlinear.squeeze()
 
     def growth_factor(
         self, zs, ks=np.logspace(np.log10(1e-5), np.log10(1e0), 200)

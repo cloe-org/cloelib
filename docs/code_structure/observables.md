@@ -396,7 +396,6 @@ from cloelib.observables.PBJ_spectro import PBJSpectroPower
 
 zs = np.asarray([1.])
 bg = CAMBBackground(H0=67.5, ...)
-bg_fid = CAMBBackground(H0=67.0, ...) # Different from background
 linear_perturbations = CAMBLinearPerturbations(bg, zs)
 
 RSD_parameters = {'b1': 1.412, ...} # Biases and counterterms

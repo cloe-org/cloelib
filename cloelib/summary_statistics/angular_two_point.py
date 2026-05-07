@@ -211,8 +211,11 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     # Pre-compute the ell weighting factor once: shape (n_ell,)
     ell_weight = ells * simpsons_weights_jit(len(ells)) / (2 * np.pi)
 
-    she_she = [(key, cl_map) for key, cl_map in cells.items()
-               if key[0] == "SHE" and key[1] == "SHE"]
+    she_she = [
+        (key, cl_map)
+        for key, cl_map in cells.items()
+        if key[0] == "SHE" and key[1] == "SHE"
+    ]
 
     if not she_she:
         return {}
@@ -229,13 +232,17 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
         kernel_array, thmin, thmax = _resolve_w_ell(w_ell, she_she[0][0], ns)
 
         # Stack EE and BB for all pairs: (n_pairs, 2, n_ell)
-        cl_stack = np.stack([
-            np.stack([
-                np.interp(ells, cl_map.ell, cl_map.array[0, 0]),
-                np.interp(ells, cl_map.ell, cl_map.array[1, 1]),
-            ])
-            for _, cl_map in she_she
-        ])
+        cl_stack = np.stack(
+            [
+                np.stack(
+                    [
+                        np.interp(ells, cl_map.ell, cl_map.array[0, 0]),
+                        np.interp(ells, cl_map.ell, cl_map.array[1, 1]),
+                    ]
+                )
+                for _, cl_map in she_she
+            ]
+        )
 
         # kernel[m,l] * ell_weight[l] * cl[p,q,l] -> (n_pairs, 2, n_modes)
         vals_all = np.einsum("ml,l,pql->pqm", kernel_array, ell_weight, cl_stack)
@@ -258,10 +265,12 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
             kernel_array, thmin, thmax = _resolve_w_ell(w_ell, key, ns)
 
             # Stack EE and BB: (2, n_ell)
-            cl_eb = np.stack([
-                np.interp(ells, cl_map.ell, cl_map.array[0, 0]),
-                np.interp(ells, cl_map.ell, cl_map.array[1, 1]),
-            ])
+            cl_eb = np.stack(
+                [
+                    np.interp(ells, cl_map.ell, cl_map.array[0, 0]),
+                    np.interp(ells, cl_map.ell, cl_map.array[1, 1]),
+                ]
+            )
 
             # kernel[m,l] * ell_weight[l] * cl[q,l] -> (2, n_modes)
             vals = np.einsum("ml,l,ql->qm", kernel_array, ell_weight, cl_eb)

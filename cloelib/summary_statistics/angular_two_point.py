@@ -225,27 +225,25 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     n_modes = ns.shape[0]
 
     if is_global:
-        # All pairs share the same kernel: one batched matmul for all pairs.
+        # All pairs share the same kernel: one batched einsum for all pairs.
         kernel_array, thmin, thmax = _resolve_w_ell(w_ell, she_she[0][0], ns)
 
-        # Stack interpolated Cls for all pairs: (n_pairs, n_ell)
-        cl_ee_stack = np.stack([
-            np.interp(ells, cl_map.ell, cl_map.array[0, 0])
-            for _, cl_map in she_she
-        ])
-        cl_bb_stack = np.stack([
-            np.interp(ells, cl_map.ell, cl_map.array[1, 1])
+        # Stack EE and BB for all pairs: (n_pairs, 2, n_ell)
+        cl_stack = np.stack([
+            np.stack([
+                np.interp(ells, cl_map.ell, cl_map.array[0, 0]),
+                np.interp(ells, cl_map.ell, cl_map.array[1, 1]),
+            ])
             for _, cl_map in she_she
         ])
 
-        # (n_pairs, n_ell) * (n_ell,) @ (n_ell, n_modes) -> (n_pairs, n_modes)
-        ee_all = (cl_ee_stack * ell_weight) @ kernel_array.T
-        bb_all = (cl_bb_stack * ell_weight) @ kernel_array.T
+        # kernel[m,l] * ell_weight[l] * cl[p,q,l] -> (n_pairs, 2, n_modes)
+        vals_all = np.einsum("ml,l,pql->pqm", kernel_array, ell_weight, cl_stack)
 
         for idx, (key, _) in enumerate(she_she):
             arr = np.zeros((2, 2, n_modes), dtype=np.float64)
-            arr = arr.at[0, 0, :].set(ee_all[idx])
-            arr = arr.at[1, 1, :].set(bb_all[idx])
+            arr = arr.at[0, 0, :].set(vals_all[idx, 0])
+            arr = arr.at[1, 1, :].set(vals_all[idx, 1])
             tomo_cosebis[key] = COSEBI(
                 array=arr,
                 mode=ns,
@@ -255,20 +253,22 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
                 software=software,
             )
     else:
-        # Per-bin kernels: one matmul per pair (still faster than vmap over modes)
+        # Per-bin kernels: one einsum per pair over both EE and BB simultaneously
         for key, cl_map in she_she:
             kernel_array, thmin, thmax = _resolve_w_ell(w_ell, key, ns)
 
-            cl_ee = np.interp(ells, cl_map.ell, cl_map.array[0, 0])
-            cl_bb = np.interp(ells, cl_map.ell, cl_map.array[1, 1])
+            # Stack EE and BB: (2, n_ell)
+            cl_eb = np.stack([
+                np.interp(ells, cl_map.ell, cl_map.array[0, 0]),
+                np.interp(ells, cl_map.ell, cl_map.array[1, 1]),
+            ])
 
-            # (n_modes, n_ell) @ (n_ell,) -> (n_modes,)
-            ee_vals = kernel_array @ (ell_weight * cl_ee)
-            bb_vals = kernel_array @ (ell_weight * cl_bb)
+            # kernel[m,l] * ell_weight[l] * cl[q,l] -> (2, n_modes)
+            vals = np.einsum("ml,l,ql->qm", kernel_array, ell_weight, cl_eb)
 
             arr = np.zeros((2, 2, n_modes), dtype=np.float64)
-            arr = arr.at[0, 0, :].set(ee_vals)
-            arr = arr.at[1, 1, :].set(bb_vals)
+            arr = arr.at[0, 0, :].set(vals[0])
+            arr = arr.at[1, 1, :].set(vals[1])
             tomo_cosebis[key] = COSEBI(
                 array=arr,
                 mode=ns,

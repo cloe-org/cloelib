@@ -117,6 +117,57 @@ def _growth_rate_on_grid(perturbations, zs_target):
     return np.interp(zs_target, z_raw, f_raw, left=f_raw[0], right=f_raw[-1])
 
 
+def _resolve_w_ell(w_ell, bin_key, ns):
+    """
+    Return ``(kernel_array, thmin, thmax)`` for a given bin pair.
+
+    Supports two calling conventions for ``w_ell``:
+
+    * **Global kernels** — a single dict keyed by integer mode index (and
+      ``"metadata"``).  The same kernels are used for every bin pair.
+    * **Per-bin kernels** — a dict keyed by bin-pair tuples ``(i, j)``,
+      where each value is itself a dict keyed by integer mode index (and
+      ``"metadata"``).  The kernel for ``bin_key`` is looked up first; if
+      the pair is absent the ``(j, i)`` transpose is tried; if still absent
+      the global fallback (key ``None``) is used.
+
+    Parameters
+    ----------
+    w_ell : dict
+        Either a global kernel dict or a per-bin dict of kernel dicts.
+    bin_key : tuple
+        Full cells key ``('SHE', 'SHE', i, j)``; only the bin indices
+        ``(i, j)`` are used for lookup.
+    ns : np.ndarray
+        Integer mode indices already cast to a numpy array.
+
+    Returns
+    -------
+    kernel_array : np.ndarray, shape ``(len(ns), n_ell)``
+    thmin : float
+    thmax : float
+    """
+    i, j = bin_key[2], bin_key[3]
+    # Detect per-bin layout: values are dicts (not arrays)
+    first_val = next(v for k, v in w_ell.items() if k != "metadata")
+    if isinstance(first_val, dict):
+        # Per-bin: try (i,j), then (j,i), then global fallback None
+        kernel_dict = w_ell.get((i, j)) or w_ell.get((j, i)) or w_ell.get(None)
+        if kernel_dict is None:
+            raise KeyError(
+                f"No w_ell kernel found for bin pair ({i}, {j}). "
+                "Provide either a (i,j)-keyed entry or a None fallback."
+            )
+    else:
+        # Global: the dict itself is the kernel dict
+        kernel_dict = w_ell
+
+    kernel_array = np.stack([np.asarray(kernel_dict[int(n)]) for n in ns], axis=0)
+    thmin = kernel_dict["metadata"]["THMIN"]
+    thmax = kernel_dict["metadata"]["THMAX"]
+    return kernel_array, thmin, thmax
+
+
 def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     """
     Compute EE and BB COSEBIs for all SHE-SHE keys in `cells`.
@@ -127,16 +178,22 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     Parameters
     ----------
     cells : dict
-        Angular power spectra in cosmolib format.
+        Angular power spectra in cosmolib format.  All SHE-SHE bin pairs
+        present in the dict are processed automatically.
     ells : jax.numpy.ndarray
         Multipoles at which the integration is performed.
     w_ell : dict
-        Harmonic-space COSEBI kernels, keyed by COSEBI mode number.
-        Expected format is ``{n: w_n(ell)}``, where each value is an array
-        evaluated on the input multipole grid `ells`.
+        Harmonic-space COSEBIs kernels.  Two layouts are accepted:
+
+        * **Global** — a single dict ``{n: array, ..., "metadata": {...}}``
+          (as returned by ``get_W_ell``).  The same kernels are used for
+          every bin pair.
+        * **Per-bin** — a dict ``{(i, j): {n: array, ..., "metadata": {...}},
+          ...}`` supplying independent kernels per bin pair.  A ``None`` key
+          may be included as a global fallback for pairs without an explicit
+          entry.
     ns : array-like
-        COSEBI mode numbers to compute. Each entry must be present as a key in
-        `w_ell`. The output modes follow the same order as `ns`.
+        Mode indices selecting kernels from `w_ell`.
     software : str, optional
         Software provenance tag stored in the output `COSEBI` objects.
         Defaults to ``'get_cosebis_from_cl (cloelib)'``.
@@ -144,46 +201,82 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     Returns
     -------
     dict
-        Dictionary keyed like `cells` with `COSEBI` values of shape
-        ``(2, 2, n_modes)``, where the mode axis follows the same order as `ns`,
-        i.e. the first mode corresponds to ``ns[0]``.
+        Dictionary keyed like the SHE-SHE entries of `cells` with `COSEBI`
+        values of shape ``(2, 2, n_modes)``.
     """
     if software is None:
         software = "get_cosebis_from_cl (cloelib)"
 
-    if not set(ns).issubset(w_ell.keys()):
-        raise ValueError(
-            f"w_ell must contain all ns. Missing: {set(ns) - set(w_ell.keys())}"
-        )
-
     ns = np.asarray(ns)
-    w_ell = np.asarray([w_ell[int(n)] for n in ns])
+    # Pre-compute the ell weighting factor once: shape (n_ell,)
+    ell_weight = ells * simpsons_weights_jit(len(ells)) / (2 * np.pi)
 
-    weights = simpsons_weights_jit(len(ells))
+    she_she = [(key, cl_map) for key, cl_map in cells.items()
+               if key[0] == "SHE" and key[1] == "SHE"]
+
+    if not she_she:
+        return {}
+
+    # Detect global vs per-bin kernel layout (mirrors _resolve_w_ell logic)
+    first_val = next(v for k, v in w_ell.items() if k != "metadata")
+    is_global = not isinstance(first_val, dict)
+
     tomo_cosebis = {}
+    n_modes = ns.shape[0]
 
-    for key, cl_map in cells.items():
-        if (key[0] != "SHE") or (key[1] != "SHE"):
-            continue
+    if is_global:
+        # All pairs share the same kernel: one batched matmul for all pairs.
+        kernel_array, thmin, thmax = _resolve_w_ell(w_ell, she_she[0][0], ns)
 
-        cl_ee = np.interp(ells, cl_map.ell, cl_map.array[0, 0])
-        cl_bb = np.interp(ells, cl_map.ell, cl_map.array[1, 1])
+        # Stack interpolated Cls for all pairs: (n_pairs, n_ell)
+        cl_ee_stack = np.stack([
+            np.interp(ells, cl_map.ell, cl_map.array[0, 0])
+            for _, cl_map in she_she
+        ])
+        cl_bb_stack = np.stack([
+            np.interp(ells, cl_map.ell, cl_map.array[1, 1])
+            for _, cl_map in she_she
+        ])
 
-        def compute_cosebi(w_n):
-            ee = np.sum(ells * cl_ee * w_n * weights) / (2 * np.pi)
-            bb = np.sum(ells * cl_bb * w_n * weights) / (2 * np.pi)
-            return ee, bb
+        # (n_pairs, n_ell) * (n_ell,) @ (n_ell, n_modes) -> (n_pairs, n_modes)
+        ee_all = (cl_ee_stack * ell_weight) @ kernel_array.T
+        bb_all = (cl_bb_stack * ell_weight) @ kernel_array.T
 
-        ee_vals, bb_vals = jax.vmap(compute_cosebi)(w_ell)
-        arr = np.zeros((2, 2, ns.shape[0]), dtype=np.float64)
-        arr = arr.at[0, 0, :].set(ee_vals)
-        arr = arr.at[1, 1, :].set(bb_vals)
-        tomo_cosebis[key] = COSEBI(
-            array=arr,
-            mode=ns,
-            nmodes=int(np.max(ns)),
-            software=software,
-        )
+        for idx, (key, _) in enumerate(she_she):
+            arr = np.zeros((2, 2, n_modes), dtype=np.float64)
+            arr = arr.at[0, 0, :].set(ee_all[idx])
+            arr = arr.at[1, 1, :].set(bb_all[idx])
+            tomo_cosebis[key] = COSEBI(
+                array=arr,
+                mode=ns,
+                nmodes=int(np.max(ns)),
+                thmin=thmin,
+                thmax=thmax,
+                software=software,
+            )
+    else:
+        # Per-bin kernels: one matmul per pair (still faster than vmap over modes)
+        for key, cl_map in she_she:
+            kernel_array, thmin, thmax = _resolve_w_ell(w_ell, key, ns)
+
+            cl_ee = np.interp(ells, cl_map.ell, cl_map.array[0, 0])
+            cl_bb = np.interp(ells, cl_map.ell, cl_map.array[1, 1])
+
+            # (n_modes, n_ell) @ (n_ell,) -> (n_modes,)
+            ee_vals = kernel_array @ (ell_weight * cl_ee)
+            bb_vals = kernel_array @ (ell_weight * cl_bb)
+
+            arr = np.zeros((2, 2, n_modes), dtype=np.float64)
+            arr = arr.at[0, 0, :].set(ee_vals)
+            arr = arr.at[1, 1, :].set(bb_vals)
+            tomo_cosebis[key] = COSEBI(
+                array=arr,
+                mode=ns,
+                nmodes=int(np.max(ns)),
+                thmin=thmin,
+                thmax=thmax,
+                software=software,
+            )
 
     return tomo_cosebis
 
@@ -246,6 +339,8 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
             array=arr,
             mode=ns,
             nmodes=int(np.max(ns)),
+            thmin=np.min(theta),
+            thmax=np.max(theta),
             software=software,
         )
 

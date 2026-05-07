@@ -71,6 +71,13 @@ show_root_heading: true
 show_submodules: false
 heading_level: 3
 
+::: cloelib.cosmology.mg_emulator
+options:
+show_root_toc_entry: true
+show_root_heading: true
+show_submodules: false
+heading_level: 3
+
 ::: cloelib.observables
 options:
 show_root_toc_entry: true

@@ -210,6 +210,24 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
+### MGPerturbations
+
+Accurate and fast emulator of modified gravity matter power spectra using the binned MGEmulator framework.
+
+**Location**: `cloelib/cosmology/mg_emulator.py`
+
+**When to use**: Predictions for the linear and nonlinear matter clustering in phenomenological modified gravity models parameterized by the functions \(\mu\) and \(\eta\) binned in redshift.
+
+**Features**:
+
+- Fast predictions of the nonlinear modified gravity matter power spectrum;
+- Emulator-based modified gravity boost applied to external LCDM perturbation solvers;
+- Supports scale-dependent linear growth quantities;
+- Computes modified gravity lensing parameter \(\Sigma(z)\);
+- Supports redshift-binned modified gravity parameterizations;
+- Compatible with Euclid-like large-scale structure analyses;
+- Designed for efficient MCMC and nested sampling analyses through lazy emulator loading;
+
 ## Adding Your Own Perturbations Implementation
 
 To add a new Perturbations implementation, follow these steps.

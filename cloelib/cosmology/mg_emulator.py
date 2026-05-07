@@ -1,4 +1,19 @@
-"""Implementation of modified gravity boost perturbations using MGEmulator."""
+"""Implementation of modified gravity perturbations using the binned MGEmulator.
+
+This module implements nonlinear matter power spectrum perturbations in modified
+gravity using an emulator-based boost approach. The emulator predicts the ratio
+
+    P_MG(k, z) / P_LCDM(k, z)
+
+which is then combined with external LCDM nonlinear matter power spectrum predictions
+to obtain the full modified gravity matter power spectrum.
+
+The implementation is compatible with the ``cloelib`` perturbation interface
+and is designed for use in Euclid-like large-scale structure analyses.
+
+The emulator supports binned modifications of gravity parameterized by the
+parameters ``mu`` and ``eta`` within predefined redshift bins.
+"""
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, Perturbations
@@ -16,8 +31,26 @@ except ImportError:
 
 
 class MGPerturbations:
-    """
-    Modified gravity perturbations wrapper compatible with the Perturbations protocol.
+    """Modified gravity perturbations using the MGEmulator boost model.
+
+    The nonlinear matter power spectrum boost predicted by the MGEmulator,
+
+    .. math::
+
+        B(k, z) = \\frac{P_{\\rm MG}(k, z)}{P_{\\Lambda\\rm CDM}(k, z)}
+
+    is combined with external LCDM linear and nonlinear matter power spectrum
+    predictions in order to construct the full modified gravity matter power
+    spectrum.
+
+    The implementation supports scale-dependent growth quantities and
+    redshift-binned modified gravity parameters.
+
+    Notes
+    -----
+    The emulator is loaded lazily and cached globally such that repeated
+    likelihood evaluations reuse the same emulator instance. This significantly
+    reduces initialization overhead during MCMC or nested sampling analyses.
     """
 
     # -------------------------------------------------
@@ -37,7 +70,55 @@ class MGPerturbations:
         eta: float,
         bin_index: int,
         model_dir: str = "./models",
-    ):
+    ) -> None:
+        """Initialize the modified gravity perturbation instance.
+
+        Parameters
+        ----------
+        background : Background
+            Background cosmology object providing cosmological parameters.
+
+        linearperturbations : Perturbations
+            Linear LCDM perturbation object used as the baseline linear matter
+            power spectrum.
+
+        nonlinearperturbations : Perturbations
+            Nonlinear LCDM perturbation object used as the baseline nonlinear
+            matter power spectrum.
+
+        redshifts : np.ndarray
+            Redshift values used for emulator evaluation and interpolation.
+
+        mu : float
+            Modified gravity parameter controlling the effective modification
+            to the Poisson equation.
+
+        eta : float
+            Modified gravity parameter controlling the gravitational slip.
+
+        bin_index : int
+            Index of the active modified gravity redshift bin.
+
+        model_dir : str, optional
+            Path to the directory containing the emulator model files.
+
+        Notes
+        -----
+        The emulator predicts a multiplicative boost relative to LCDM:
+
+        .. math::
+
+            P_{\\rm MG}(k, z)
+            =
+            B(k, z)
+            \\times
+            P_{\\Lambda\\rm CDM}(k, z)
+
+        Linear and nonlinear boosts are treated separately using dedicated
+        emulator branches.
+
+        All calculations currently assume a spatially flat cosmology.
+        """
         assert background.Omega_k0 == 0, "Non-flat geometries not supported"
         self.background = background
         self.linearperturbations = linearperturbations
@@ -154,27 +235,57 @@ class MGPerturbations:
         )
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-        """Return matter power spectrum P(k, z)."""
+        """Compute the nonlinear matter power spectrum.
+
+        Parameters
+        ----------
+        zs : array_like
+        Redshift values.
+
+        ks : array_like
+        Wavenumber values in units of h/Mpc.
+
+        Returns
+        -------
+        np.ndarray
+        Nonlinear matter power spectrum evaluated at the input
+        redshift and wavenumber values.
+        """
         return self.Pk_interp(zs, ks)
 
-    # ----------------------------------
-    # CHANGE 3:
-    # growth_factor should use LINEAR P(k)
-    # not nonlinear P(k)
-    # ----------------------------------
-
     def growth_factor(self, zs, ks) -> np.ndarray:
-        r"""Return scale-dependent linear growth factor.
+        r"""Compute the scale-dependent linear growth factor.
 
-        D(z, k) = sqrt(P_lin(z, k) / P_lin(z=0, k))
+        The growth factor is computed from the linear modified gravity
+        matter power spectrum according to
+
+        .. math::
+
+        D(z, k)
+        =
+        \sqrt{
+            \frac{
+                P_{\rm lin}(z, k)
+            }{
+                P_{\rm lin}(0, k)
+            }
+        }
+
+        Parameters
+        ----------
+            zs : array_like
+            Redshift values.
+
+            ks : array_like
+        Wavenumber values in units of h/Mpc.
+
+        Returns
+        -------
+        np.ndarray
+        Scale-dependent linear growth factor.
         """
 
         return np.sqrt(self.Pk_linear_interp(zs, ks) / self.Pk_linear_interp(0.0, ks))
-
-    # ----------------------------------
-    # CHANGE 4:
-    # add growth_rate()
-    # ----------------------------------
 
     def growth_rate(self, zs=None, ks=None) -> np.ndarray:
         r"""Return scale-dependent linear growth rate.
@@ -201,11 +312,6 @@ class MGPerturbations:
         f = -(1.0 + zs[:, None]) * dlnD_dz
 
         return f
-
-    # ----------------------------------
-    # CHANGE 5:
-    # add sigma8_0()
-    # ----------------------------------
 
     def sigma8_0(self) -> float:
         r"""Return modified gravity sigma8 at z = 0.
@@ -295,19 +401,34 @@ class MGPerturbations:
         )
 
     def Sigma(self, zs):
-        r"""Return the modified lensing parameter Sigma(z).
+        r"""Return the modified lensing parameter :math:`\Sigma(z)`.
 
-        Defined as:
+        The lensing modification parameter is defined as
 
-        :contentReference[oaicite:0]{index=0}
+        .. math::
 
-        but only inside the active MG redshift bin.
+        \Sigma = \frac{\mu(1 + \eta)}{2}
 
-        Outside the active bin:
+        within the active modified gravity redshift bin.
 
-        :contentReference[oaicite:1]{index=1}
+        Outside the active bin,
+
+        .. math::
+
+        \Sigma = 1
 
         corresponding to standard LCDM.
+
+        Parameters
+        ----------
+        zs : array_like
+        Redshift values.
+
+        Returns
+        -------
+        np.ndarray
+        Lensing modification parameter evaluated at the
+        input redshift values.
         """
 
         zs = np.atleast_1d(zs)

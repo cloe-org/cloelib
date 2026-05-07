@@ -1564,28 +1564,31 @@
 <p>Compute individual terms of the perturbation theory expansion.</p>
 <p>Useful for checking contributions of different terms.</p>
 <h3 id="existing-spectropower-implementations">Existing SpectroPower Implementations<a class="headerlink" href="#existing-spectropower-implementations" title="Permanent link">&para;</a></h3>
-<h4 id="cometeft_spectro">CometEFT_spectro<a class="headerlink" href="#cometeft_spectro" title="Permanent link">&para;</a></h4>
+<h4 id="cometeft_spectropower">CometEFT_SpectroPower<a class="headerlink" href="#cometeft_spectropower" title="Permanent link">&para;</a></h4>
 <p>Fast emulator using <a href="https://comet-emu.readthedocs.io">comet-emu</a> with EFT model.</p>
 <p><strong>Location</strong>: <code>cloelib/observables/CometEFT_spectro.py</code></p>
 <p><strong>When to use</strong>: Fast predictions for clustering, MCMC sampling</p>
 <p><strong>Example</strong>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.camb_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">CAMBBackground</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.observables.CometEFT_spectro</span><span class="w"> </span><span class="kn">import</span> <span class="n">CometEFT_spectro</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.observables.CometEFT_spectro</span><span class="w"> </span><span class="kn">import</span> <span class="n">CometEFT_SpectroPower</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">bg</span> <span class="o">=</span> <span class="n">CAMBBackground</span><span class="p">(</span><span class="n">H0</span><span class="o">=</span><span class="mf">67.5</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">spectro</span> <span class="o">=</span> <span class="n">CometEFT_spectro</span><span class="p">(</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">z_pk</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># Redshift for power spectrum</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="p">)</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>  <span class="c1"># k in h/Mpc</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>  <span class="c1"># μ from 0 (perpendicular) to 1 (parallel)</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">RSD_parameters</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;b1&#39;</span><span class="p">:</span> <span class="mf">1.412</span><span class="p">,</span> <span class="o">...</span><span class="p">}</span> <span class="c1"># Biases and counterterms</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">redshift</span> <span class="o">=</span> <span class="mf">1.0</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">spectro</span> <span class="o">=</span> <span class="n">CometEFT_spectro</span><span class="p">(</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">bg</span><span class="p">,</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">RSD_parameters</span><span class="p">,</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">redshift</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="p">)</span>
 <a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="n">P_k_mu</span> <span class="o">=</span> <span class="n">spectro</span><span class="o">.</span><span class="n">Pk2d_rsd</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Shape: (50, 20)</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>  <span class="c1"># k in 1/Mpc</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>  <span class="c1"># μ from 0 (perpendicular) to 1 (parallel)</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="n">P_k_mu</span> <span class="o">=</span> <span class="n">spectro</span><span class="o">.</span><span class="n">Pk2d_rsd</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">mu</span><span class="p">)</span>  <span class="c1"># Shape: (50, 20)</span>
 </code></pre></div>
-<h4 id="cometvdg_spectro">CometVDG_spectro<a class="headerlink" href="#cometvdg_spectro" title="Permanent link">&para;</a></h4>
-<p>Comet emulator with VDG (velocity divergence - galaxy) model.</p>
+<h4 id="cometvdg_spectropower">CometVDG_SpectroPower<a class="headerlink" href="#cometvdg_spectropower" title="Permanent link">&para;</a></h4>
+<p>Comet emulator with VDG_infty model.</p>
 <p><strong>Location</strong>: <code>cloelib/observables/CometVDG_spectro.py</code></p>
 <p><strong>When to use</strong>: Alternative RSD modeling</p>
 <h4 id="pbjspectropower">PBJSpectroPower<a class="headerlink" href="#pbjspectropower" title="Permanent link">&para;</a></h4>

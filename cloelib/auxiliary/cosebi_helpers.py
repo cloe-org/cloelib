@@ -221,6 +221,35 @@ def tm(n, t, tmin, nn, coeff_j):
     )
 
 
+def _tm_fast(n, thetagrid, tmin, nn, coeff_j):
+    """
+    Fast evaluation of T_n^-(theta) over the full thetagrid.
+
+    The scalar coefficients (an2, an4, dnm) are computed once with mpmath at
+    150-digit precision. The power-law terms (an2, an4) are small and cast
+    safely to float64. The log-polynomial sum is evaluated in mpmath using
+    vectorised operations to avoid the catastrophic cancellation that occurs
+    when large z^m terms (z ~ 6.4 for th_max/th_min = 600) are summed in
+    float64, then the final array is converted to float64 in one pass.
+    """
+    z_np = np.log(thetagrid / tmin)  # float64, shape (N_theta,)
+
+    # Scalar boundary coefficients — small values, safe to cast
+    an2_f = float(an2(n, nn, coeff_j))
+    an4_f = float(an4(n, nn, coeff_j))
+
+    # Power-law terms evaluated in float64 (no cancellation risk)
+    result = an2_f * np.exp(-2.0 * z_np) - an4_f * np.exp(-4.0 * z_np)
+
+    # Log-polynomial: evaluate in mpmath via Horner's method (mp.polyval) to
+    # preserve precision against cancellation, then cast to float64 in one pass.
+    # mp.polyval expects coefficients highest-degree first.
+    dnm_coeffs_highfirst = [dnm(n, m, nn, coeff_j) for m in range(n, -1, -1)]
+    result += np.array([float(mp.polyval(dnm_coeffs_highfirst, zi)) for zi in z_np])
+
+    return result
+
+
 def get_W_ell(thetagrid, Nmax, ells, N_thread):
     """
     kernel function Tm-
@@ -255,9 +284,8 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
     print("start performing the bessel integrals")
     for n in ns:
         print(n, "/", Nmax)
-        Tm = tm(n, thetagrid, thetagrid[0], nn, coeff_j)
-        # convert the mp.math object to normal floats
-        Tm = np.array([float(x) for x in Tm])
+        # Vectorized float64 kernel evaluation (replaces mpmath-based tm() loop)
+        Tm = _tm_fast(n, thetagrid, thetagrid[0], nn, coeff_j)
         f_of_x = (thetagrid * Tm).reshape([len(thetagrid), 1])
 
         integral_type = 1
@@ -285,4 +313,9 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
         )
 
         w_ells[n] = result_levin.flatten()
+
+    w_ells["metadata"] = {
+        "THMIN": tmin,
+        "THMAX": tmax,
+    }
     return w_ells

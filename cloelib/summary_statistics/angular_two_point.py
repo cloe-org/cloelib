@@ -502,6 +502,8 @@ class AngularTwoPoint:
                     array=cosebis / (2 * np.pi),
                     mode=ns,
                     nmodes=max(ns),
+                    thmin=w_ell['metadata']['thmin'],
+                    thmax=w_ell['metadata']['thmax'],
                     software=self._software_tag(self.get_cosebis),
                 )
 

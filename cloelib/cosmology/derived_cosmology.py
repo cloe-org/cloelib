@@ -193,7 +193,7 @@ def growth_function_ODE_derivative(
     c2 = 3 + hPrime_geo / h_geo - 3 / 2 * omega_m * (1 + z) ** 3 * (h0 / h_rate) ** 2
 
     deriv[0] = y[1]
-    deriv[1] = -c1 * y[1] - c2 * y[0]
+    deriv[1] = -c1[0] * y[1] - c2[0] * y[0]
     return deriv
 
 
@@ -236,7 +236,9 @@ def growth_function_ODE(background, zs: np.ndarray, omega_m=-1) -> np.ndarray:
         hubble_rate(np.log(1 / (1 + zinit)), h0, omega_m, omega_k, w0, wa) / 100 / h0
     )
 
-    y01 = (
+    y0 = np.ones(2)
+
+    y0[1] = (
         -6
         / 5
         * (1 - omega_m - omega_k)
@@ -244,7 +246,6 @@ def growth_function_ODE(background, zs: np.ndarray, omega_m=-1) -> np.ndarray:
         * np.exp(-3 * wa * zinit / (1 + zinit))
         * e_z_init ** (-2)
     )
-    y0 = np.array([1.0, y01])
 
     growth = integrate.solve_ivp(
         growth_function_ODE_derivative,

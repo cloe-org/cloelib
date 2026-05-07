@@ -48,13 +48,11 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | Background                                        | Perturbations                                                                 | SpectroPower                                                       |
 | ------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | [camb](https://camb.readthedocs.io)               | [camb](https://camb.readthedocs.io)                                           | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
-| [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                             | `PBJ` (not publicly available)                                     |
+| [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                             | [pbjcosmo](https://chiaramoretti.gitlab.io/pbj/)                   |
 | NA                                                | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)            | NA                                                                 |
 | NA                                                | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                | NA                                                                 |
 | NA                                                | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
 | NA                                                | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
-
-We do not provide installation support for `PBJ`.
 
 <!-- --8<-- [end:supported-codes] -->
 
@@ -96,13 +94,13 @@ pip install .
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu]
+pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pbjcosmo,pyinstrument,baccoemu]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu]"
+> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pbjcosmo,pyinstrument,baccoemu]"
 > ```
 
 You're all set! 🎉 Ready to compute cosmological observables.

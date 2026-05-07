@@ -341,7 +341,7 @@ Useful for checking contributions of different terms.
 
 ### Existing SpectroPower Implementations
 
-#### CometEFT_spectro
+#### CometEFT_SpectroPower
 
 Fast emulator using [comet-emu](https://comet-emu.readthedocs.io) with EFT model.
 
@@ -371,9 +371,9 @@ mu = np.linspace(0, 1, 20)  # μ from 0 (perpendicular) to 1 (parallel)
 P_k_mu = spectro.Pk2d_rsd(k, mu)  # Shape: (50, 20)
 ```
 
-#### CometVDG_spectro
+#### CometVDG_SpectroPower
 
-Comet emulator with VDG (velocity divergence - galaxy) model.
+Comet emulator with VDG_infty model.
 
 **Location**: `cloelib/observables/CometVDG_spectro.py`
 

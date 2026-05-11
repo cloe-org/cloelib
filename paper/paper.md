@@ -244,7 +244,7 @@ affiliations:
   - index: 3
     name: Centre for Astrophysics Research, University of Hertfordshire, United Kingdom
   - index: 4
-    name: German Aerospace Center (DLR), Germany
+    name: Scientific Information, German Aerospace Center (DLR), Germany
   - index: 5
     name: INAF - Osservatorio Astronomico di Trieste, Italy
   - index: 6
@@ -282,9 +282,9 @@ affiliations:
   - index: 22
     name: Institut für Astro- und Teilchenphysik, Universität Innsbruck, Austria
   - index: 23
-    name: Oskar Klein Centre for Cosmoparticle Physics, Stockholm University, Sweden
+    name: Oskar Klein Centre for Cosmoparticle Physics, Department of Physics, Stockholm University, Stockholm, SE-106 91, Sweden
   - index: 24
-    name: Astrophysics Group, Imperial College London, United Kingdom
+    name: Astrophysics Group, Blackett Laboratory, Imperial College London, London SW7 2AZ, UK
   - index: 25
     name: Jet Propulsion Laboratory, USA
   - index: 26
@@ -302,11 +302,11 @@ affiliations:
   - index: 32
     name: Department of Physics, Royal Holloway, University of London, United Kingdom
   - index: 33
-    name: Ludwig-Maximilians-Universität München, Germany
+    name: Universitat Sternwarte, Ludwig Maximilian Universitat, Germany
   - index: 34
     name: Center for Astrophysics and Cosmology, University of Nova Gorica, Slovenia
   - index: 35
-    name: The Ohio State University, USA
+    name: CCAPP, The Ohio State University, USA
   - index: 36
     name: Mullard Space Science Laboratory, University College London, United Kingdom
   - index: 37
@@ -319,11 +319,11 @@ bibliography: paper.bib
 
 # Summary
 
-\texttt{cloelib}, available at \href{https://github.com/cloe-org/cloelib}{cloe-org/cloelib}, is a Python library developed to compute cosmological observables within the Cosmology Likelihood for Observables in Euclid (\texttt{CLOE}) project, hosted by \href{https://github.com/cloe-org}{\textbf{cloe-org}}\footnote{\url{https://github.com/cloe-org}}. As cosmology enters a precision era driven by galaxy survey missions such as \emph{Euclid}, there is a growing need for flexible, efficient, and differentiable software capable of supporting next-generation inference pipelines. \texttt{cloelib} addresses these demands through a modular architecture that interfaces seamlessly with established Boltzmann solvers while incorporating JAX-based automatic differentiation to enable gradient-based methods. The library defines consistent protocols for background evolution, perturbations, and non-linear structure formation, and supports a wide range of observables, including photometric and spectroscopic large-scale structure probes, as well as cross-correlations with the Cosmic Microwave Background and galaxy clusters. In its finalised form, \texttt{cloelib} is intended to serve as the reference theory computation infrastructure for Euclid's first cosmological release, bridging traditional numerical cosmology with modern optimisation techniques and emerging machine learning approaches to inference.
+\texttt{cloelib}, \href{https://github.com/cloe-org/cloelib}{cloe-org/cloelib}, is a Python library developed to compute cosmological observables within the Cosmology Likelihood for Observables in Euclid (\texttt{CLOE}) project, hosted by \href{https://github.com/cloe-org}{\textbf{cloe-org}}\footnote{\url{https://github.com/cloe-org}}. As cosmology enters a precision era driven by galaxy survey missions such as \emph{Euclid}, there is a growing need for flexible, efficient, and differentiable software capable of supporting next-generation inference pipelines. \texttt{cloelib} addresses these demands through a modular architecture that interfaces seamlessly with established Boltzmann solvers whilst incorporating JAX-based automatic differentiation to enable gradient-based methods. The library defines consistent protocols for background evolution, perturbations, and non-linear structure formation, and supports a wide range of observables, including photometric and spectroscopic large-scale structure probes, as well as cross-correlations with the Cosmic Microwave Background and galaxy clusters. In its finalised form, \texttt{cloelib} is intended to serve as the reference theory computation infrastructure for Euclid's first cosmological release, bridging traditional numerical cosmology with modern optimisation techniques and emerging machine learning approaches to inference.
 
 # Statement of need
 
-The field of observational cosmology is undergoing a rapid transformation, driven by the advent of next-generation galaxy surveys such as the European Space Agency's *Euclid* mission [Euclid:2024], the Dark Energy Spectroscopic Instrument (DESI; [DESI_review]), the *Vera C. Rubin* Observatory's Large Synoptic Survey Telescope [LSST], and NASA's *Nancy Grace Roman* Space Telescope ([link](https://roman.gsfc.nasa.gov/science/ccs/ROTAC-Report-20250424-v1.pdf)). These projects are generating vast volumes of high-quality data, mapping
+The field of observational cosmology is undergoing a rapid transformation, driven by the advent of Stage IV galaxy surveys such as the European Space Agency's *Euclid* mission [Euclid:2024], the Dark Energy Spectroscopic Instrument (DESI; [DESI_review]), the *Vera C. Rubin* Observatory's Large Synoptic Survey Telescope [LSST], and NASA's *Nancy Grace Roman* Space Telescope ([link](https://roman.gsfc.nasa.gov/science/ccs/ROTAC-Report-20250424-v1.pdf)). These projects are generating vast volumes of high-quality data, mapping
 the large-scale structure of the Universe with unprecedented precision. Extracting robust scientific insights from these data requires the efficient computation of theoretical predictions that can be directly and reliably compared with observations to constrain cosmological models. This poses stringent demands on computational tools, which must accurately capture complex theoretical scenarios while remaining computationally efficient. Despite significant progress, existing cosmological software frameworks often lack the flexibility needed to seamlessly integrate diverse, pre-existing components and to explore a broad range of theoretical models alongside comprehensive treatments of systematic effects. \texttt{cloelib} addresses this gap by providing a highly flexible and extensible platform for computing theoretical predictions across multiple large-scale structure observables under a wide variety of cosmological models. In doing so, it enables faster and more streamlined statistical analyses, helping to meet the demands of the next generation of precision cosmology experiments.
 
 In this context, \texttt{cloelib} is a fully Pythonic library for observational modelling, designed to operationalise the flexibility and efficiency required for modern cosmological inference. It represents a natural evolution of the structural formalism originally developed in the Cosmology Likelihood for Observables in Euclid (\texttt{CLOE}) software, designed by the Euclid Consortium, extending it towards more advanced use cases and significantly enhanced capabilities beyond those presented in [EP-CLOE2]. The original \texttt{CLOE} ([link](https://github.com/cloe-org/CLOE)) software has played a central role in numerous Euclid analyses—see [Euclid:2024], [EP-CLOE3], [EP-CLOE4], [EP-CLOE5], and [EP-CLOE6]—demonstrating its robustness and scientific impact in forecasting and validating \emph{Euclid} performance. However, the increasing complexity of future cosmological analyses—such as the joint treatment of multiple probes, the inclusion of high-dimensional nuisance parameter spaces, and the combination of heterogeneous datasets—has exposed structural limitations in its original design. In practice, extending \texttt{CLOE} to accommodate new observables or modelling choices often required intrusive modifications across multiple parts of the software, leading to the accumulation of technical debt and reduced maintainability over time. Moreover, the framework was not originally conceived to support the independent development and seamless integration of new theoretical models, systematics, or data components within a unified pipeline. As a result, a substantial restructuring became necessary to meet these emerging requirements. \texttt{cloelib} builds directly on the conceptual and practical foundations laid by \texttt{CLOE}, whilst introducing a redesigned architecture in which components—such as theory predictions—are decoupled and interact through well-defined interfaces. This enables flexible composition of analysis pipelines, facilitates the inclusion of new physics or datasets, and improves scalability for large parameter spaces.
@@ -338,7 +338,7 @@ A key feature of \texttt{cloelib} is its native integration with JAX [jax2018git
 
 In addition, \texttt{cloelib} serves the practical needs of both the Euclid Collaboration and the wider cosmology community by offering implementations of survey-specific systematics, such as Alcock–Paczynski corrections, shear and photometric redshift calibration parameters, and spectroscopic purity in surveys. The library works seamlessly with \texttt{cloelike}, its companion likelihood module, which supports the computation of likelihoods for Euclid observables such as cosmic shear, 2x2-pt, and 3x2-pt photometric analyses, spectroscopic galaxy clustering and BAO, as well as their combinations. Together, these tools enable end-to-end cosmological analyses, covering the full chain from observable computation to likelihood evaluation and posterior sampling for parameter inference.
 
-Beyond its scientific scope, \texttt{cloelib} is designed for efficiency and consistency in cosmological applications, featuring native source code implementations of theoretical predictions and \texttt{jit} caching mechanisms that accelerate the computation of otherwise expensive integrals. The library is structured to support portability and reproducibility across different environments, facilitating tasks such as running inference chains and integrating with broader analysis pipelines. It also incorporates testing infrastructure and performance profiling tools to ensure robustness and scalability. By combining theoretical flexibility, computational performance, and modern programming practices within an Open Science framework, \texttt{cloelib} contributes to the computational toolkit for precision cosmology and is well suited for large-scale structure analyses in the coming decade.
+Beyond its scientific scope, \texttt{cloelib} is designed for efficiency and consistency in cosmological applications, featuring native source code implementations of theoretical predictions and \texttt{jit} caching mechanisms that accelerate the computation of otherwise expensive integrals. The library is structured to support portability and reproducibility across different environments, facilitating tasks such as running inference chains and integrating with broader analysis pipelines. It also incorporates testing infrastructure and performance profiling tools to ensure robustness and scalability. By combining theoretical flexibility, computational performance, and modern programming practices within an open science framework, \texttt{cloelib} contributes to the computational toolkit for precision cosmology and is well suited for large-scale structure analyses in the coming decade.
 
 # Software Design
 
@@ -436,7 +436,7 @@ nonlinear_pk_hmcode2020emu = hmcode2020emu_nonlinear.matter_power_spectrum(z, ks
 
 ## Photometric Observables
 
- \texttt{cloelib} provides robust computation of observables for photometric surveys, including galaxy clustering and cosmic shear, with advanced modelling of systematic effects. Specifically, the calculation of shear and position window functions is managed within the `photo` module. Each tracer must be initialised with a `Perturbations`-compatible instance, the galaxy density distribution in redshift bins, and the relevant systematic models, such as intrinsic alignments, galaxy bias, magnification, shear multiplicative bias calibration nuisance parameters, and photometric calibration nuisance parameters. Every computed window function is accessible from each tracer instance. Tracers are combined into two-point summary statistics, both in real and harmonic space, using the functions available in the `summary_statistics` module.
+ \texttt{cloelib} provides robust computation of observables for photometric surveys, including galaxy clustering, cosmic shear, and cosmic microwave background (CMB) lensing, with advanced modelling of systematic effects. Specifically, the calculation of shear and position window functions is managed within the `photo` module. Each tracer must be initialised with a `Perturbations`-compatible instance, the galaxy density distribution in redshift bins, and the relevant systematic models, such as intrinsic alignments, galaxy bias, magnification, shear multiplicative bias calibration nuisance parameters, and photometric calibration nuisance parameters. Every computed window function is accessible from each tracer instance. Tracers are combined into two-point summary statistics, both in real and harmonic space, using the functions available in the `summary_statistics` module.
 
 ```python
 from cloelib.observables.photo import ShearTracer, PositionsTracer
@@ -448,62 +448,39 @@ from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 # Create tracers with survey-specific nuisance parameters
 # PositionsTracer requires per-bin photo-z shifts
 # and magnification bias
+pos_nuisance = {
+    'b1_photo_poly0': 1.2,
+    **{f'b1_photo_poly{i}': 0.0 for i in range(1, 4)},
+    **{f'magnification_bias_{i}': 0.0 for i in range(1, 7)},
+    **{f'dz_pos_{i}': 0.0 for i in range(1, 7)},
+    **{f'width_pos_{i}': 1.0 for i in range(1, 7)},
+}
+# Compact example for a 6-bin tomographic setup.
+# Parameters are generated programmatically here, but can
+# also be defined individually for full survey-specific control.
 tracer_pos = PositionsTracer(
     perturbations=hmcode2020emu_nonlinear,
     dndz=my_dndz_pos_norm,
     z=zs,
     galaxy_bias_model='poly',
-    nuisance_params={
-    'b1_photo_poly0': 1.2, 'b1_photo_poly1': 0.0,
-    'b1_photo_poly2': 0.0, 'b1_photo_poly3': 0.0,
-    'magnification_bias_1': 0.0,
-    'magnification_bias_2': 0.0,
-    'magnification_bias_3': 0.0,
-    'magnification_bias_4': 0.0,
-    'magnification_bias_5': 0.0,
-    'magnification_bias_6': 0.0,
-    'dz_pos_1': 0.0,
-    'dz_pos_2': 0.0,
-    'dz_pos_3': 0.0,
-    'dz_pos_4': 0.0,
-    'dz_pos_5': 0.0,
-    'dz_pos_6': 0.0,
-    'width_pos_1': 1.0,
-    'width_pos_2': 1.0,
-    'width_pos_3': 1.0,
-    'width_pos_4': 1.0,
-    'width_pos_5': 1.0,
-    'width_pos_6': 1.0,
-    }
+    nuisance_params=pos_nuisance
 )
 
 # ShearTracer requires intrinsic alignment (IA)
 # and photo-z shift parameters
+shear_nuisance = {
+    'AIA': 1.72,
+    'CIA': 0.0134,
+    'EtaIA': -0.41,
+    **{f'multiplicative_bias_{i}': 0.0 for i in range(1, 7)},
+    **{f'dz_shear_{i}': 0.0 for i in range(1, 7)},
+    **{f'width_shear_{i}': 1.0 for i in range(1, 7)},
+}
 tracer_she = ShearTracer(
     perturbations=hmcode2020emu_nonlinear,
     dndz=my_dndz_pos_norm,
     z=zs,
-    nuisance_params={
-    'AIA': 1.72, 'CIA': 0.0134, 'EtaIA':-0.41,
-    'multiplicative_bias_1': 0.0,
-    'multiplicative_bias_2': 0.0,
-    'multiplicative_bias_3': 0.0,
-    'multiplicative_bias_4': 0.0,
-    'multiplicative_bias_5': 0.0,
-    'multiplicative_bias_6': 0.0,
-    'dz_shear_1': 0.0,
-    'dz_shear_2': 0.0,
-    'dz_shear_3': 0.0,
-    'dz_shear_4': 0.0,
-    'dz_shear_5': 0.0,
-    'dz_shear_6': 0.0,
-    'width_shear_1': 1.0,
-    'width_shear_2': 1.0,
-    'width_shear_3': 1.0,
-    'width_shear_4': 1.0,
-    'width_shear_5': 1.0,
-    'width_shear_6': 1.0
-    }
+    nuisance_params=shear_nuisance
 )
 
 # Compute angular power spectra using the Limber approximation
@@ -564,7 +541,7 @@ The same interface is used to compute two-point correlation function multipoles 
 
 ## Protocol Compliance of Interfaces
 
-\texttt{cloelib} natively supports Python structural subtyping (PEP 544); the `Background` and `Perturbations` protocols are marked with `@runtime_checkable`, allowing explicit compliance checks at the beginning of an analysis.
+\texttt{cloelib} natively supports Python structural subtyping (PEP 544); the `Background` and `Perturbations` protocols are marked with `@runtime_checkable`, allowing explicit compliance checks at the beginning of an analysis. New protocol interfaces can either be checked by the user as well as by continuous integration in the `GitHub` repository.
 
 ```python
 from cloelib.cosmology.cosmology import (
@@ -609,11 +586,11 @@ The `JAXBackground` and `JAXLinearPerturbations`/`JAXNonLinearPerturbations` cla
 
 \texttt{cloelib} exhibits performance comparable to other tools available in the community, despite being implemented exclusively in Python. The computational cost of the \texttt{Background}-compatible classes is negligible (effectively instantaneous), whereas the runtime of the \texttt{Perturbation}-compatible classes depends on the choice of backend, namely whether a Boltzmann solver or an emulator is employed.
 
-Below, we provide representative estimates of the computational time required to evaluate key cosmological observables (these tests were run on a MacBook Pro M4 from 2025). These comprise photometric probes—cosmic shear, photometric galaxy clustering, and galaxy–galaxy lensing, the so-called 3x2-pt analysis—calculated in harmonic space (angular power spectra). We also present corresponding estimates for full-shape analyses of spectroscopic galaxy clustering, in Fourier space (Legendre multipoles), utilising \texttt{comet-emu} as the backend. For all cases, \texttt{CAMB} is employed to compute \texttt{Background} quantities, while for photometric probes, \texttt{HMCode2020emu} is used as the \texttt{Perturbations} backend.
+Below, we provide representative estimates of the computational time required to evaluate key cosmological observables (Apple MacBook Pro, Model Mac16,1, with Apple M4 chip: 10 cores (4 performance, 6 efficiency), 16 GB RAM, running macOS). These comprise photometric probes—cosmic shear, photometric galaxy clustering, and galaxy–galaxy lensing, the so-called 3x2-pt analysis—calculated in harmonic space (angular power spectra). We also present corresponding estimates for full-shape analyses of spectroscopic galaxy clustering, in Fourier space (Legendre multipoles), utilising \texttt{comet-emu} as the backend. For all cases, \texttt{CAMB} is employed to compute \texttt{Background} quantities, while for photometric probes, \texttt{HMCode2020emu} is used as the \texttt{Perturbations} backend.
 
 For photometric analyses, initialising the shear and position tracer classes—each conforming to the \texttt{Tracer} protocol—typically requires approximately 0.4 seconds to compute the lensing efficiency (utilised for both shear and the magnification systematic effect in the position tracer). This quantity is cached, ensuring that all subsequent calls to either tracer are effectively instantaneous.
 
-The computation of angular power spectra for a 3x2-pt analysis—using 3000 multipole values, 512 $k$-values, 500 redshift $z$-values, and linear galaxy and magnification bias—with six redshift bins (78 spectra in total), using the Limber approximation, takes approximately 0.06 seconds per call. This follows a one-second initialization phase, during which \texttt{jit}-compiled quantities are cached to accelerate subsequent integral evaluations. For a *Euclid*-like final data release configuration as described in Euclid Collaboration: Mellier et al. (2025), with thirteen redshift bins, the computation of 351 angular power spectra for a 3x2-pt analysis requires approximately 0.1 seconds per call after initialization and caching. This represents a significant speed-up compared to the former \texttt{CLOE} software.
+The computation of angular power spectra for a 3x2-pt analysis—using 3000 multipole values, 512 $k$-values, 500 redshift $z$-values, and linear galaxy and magnification bias—with six redshift bins (78 spectra in total), using the Limber approximation, takes approximately 0.06 seconds per call. This follows a one-second initialization phase, during which \texttt{jit}-compiled quantities are cached to accelerate subsequent integral evaluations. For a *Euclid*-like final data release configuration as described in Euclid Collaboration: Mellier et al. (2025), with thirteen redshift bins, the computation of 351 angular power spectra for a 3x2-pt analysis requires approximately 0.1 seconds per call after initialization and caching. This is an important speed-up achievement with respect to the former \texttt{CLOE} software.
 
 For full-shape spectroscopic Legendre multipoles, the computation takes approximately 3 milliseconds for a single redshift bin.
 
@@ -674,10 +651,10 @@ For practical examples, example scripts, and interactive tutorials, visit the [c
 
 # Author Contributions
 
-In accordance with JOSS guidelines, we describe individual contributions below. Authors are listed in alphabetical order. All Tier 1 authors are core maintainers of the **cloe-org** organisation, responsible for the long-term sustainability of \texttt{cloelib}, the review of pull requests, and leadership of technical discussions.
+In accordance with JOSS guidelines, we describe individual contributions below. Authors are listed in alphabetical order. All Tier 1 authors are core maintainers and original developers of the **cloe-org** organisation, responsible for the long-term sustainability of \texttt{cloelib}, the review of pull requests, and leadership of technical discussions.
 
 - **M. Bonici**: Core architecture and protocol design; implementation of the JAX cosmology backends; lensing tracer kernels (including massive neutrino contributions); correlation function module and performance optimisation; caching system with JAX `lax` conditional compatibility; licence and project governance.
- - **G. Cañas-Herrera**: Project overview and release management; core architecture of the software, protocol and class inheritance design; CI pipeline configuration; pre-commit and code-quality tooling; issue and pull-request templates; README, documentation, and community contribution tracking (`all-contributors`); pyproject.toml versioning and release workflows. Developed models for systematic shear and calibration of photometric redshift nuisance parameters. Homogenisation of output format for observables.
+ - **G. Cañas-Herrera**: Project overview and release management; core architecture of the software, protocol and class inheritance design; continuous integration (CI) pipeline configuration; pre-commit and code-quality tooling; issue and pull-request templates; README, documentation, and community contribution tracking (`all-contributors`); pyproject.toml versioning and release workflows. Developed models for systematic shear and calibration of photometric redshift nuisance parameters. Homogenisation of output format for observables. Resources, Writing - Original Draft, Visualization, Funding.
 - **P. Carrilho**: Photometric observable module linear galaxy bias models with JAX-compatible conditional logic; HMCode2020Emu baryonic feedback support and further extrapolation support; \texttt{CAMB} dark-energy model configuration (PPF); mixing-matrix and pseudo-$C_\ell$ corrections; `interpax`-based interpolation in the extrapolator; growth-rate and matter power spectrum redshift/scale interfaces, implementation of EuclidEmulator2.
 - **S. Casas**: Implementation of the \texttt{CLASS} cosmology backend and its integration with the `Background` and `Perturbations` protocols; fixes to transverse-distance computations across \texttt{CAMB}, \texttt{CLASS}, and JAX backends; cosmology protocol refinements; CI pipeline and dependency updates.
 - **C. Moretti**: Spectroscopic analysis infrastructure: PBJ interface and RSD power spectrum fixes; BAO $\alpha$-parameter module and Alcock–Paczynski distortion utilities; extraction of $r_\mathrm{drag}$ from the background for BAO analyses; Legendre multipole summary statistics; version management and repository clean-up of deprecated directories.

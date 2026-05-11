@@ -104,6 +104,7 @@ bg = CAMBBackground(
     Omega_cdm0=0.2650,
     As=2.1e-9,
     ns=0.965,
+    alpha_s=0.0,   # running of the spectral index
     # ... other parameters
 )
 
@@ -293,37 +294,47 @@ Fast JAX-based emulator for linear and nonlinear power spectra using [cosmopower
 
 #### Available classes
 
-| Class                                           | Cosmology | Spectrum                    |
-| ----------------------------------------------- | --------- | --------------------------- |
-| `CosmoPowerJAXLCDMPerturbations.Linear`         | ΛCDM      | P(k) linear                 |
-| `CosmoPowerJAXLCDMPerturbations.LinearCB`       | ΛCDM      | P_cb(k) linear              |
-| `CosmoPowerJAXLCDMPerturbations.NonLinear`      | ΛCDM      | P(k) nonlinear (HMcode2020) |
-| `CosmoPowerJAXLCDMPerturbations.NonLinearCB`    | ΛCDM      | P_cb(k) nonlinear           |
-| `CosmoPowerJAXwCDMPerturbations.Linear`         | wCDM      | P(k) linear                 |
-| `CosmoPowerJAXwCDMPerturbations.LinearCB`       | wCDM      | P_cb(k) linear              |
-| `CosmoPowerJAXwCDMPerturbations.NonLinear`      | wCDM      | P(k) nonlinear              |
-| `CosmoPowerJAXwCDMPerturbations.NonLinearCB`    | wCDM      | P_cb(k) nonlinear           |
-| `CosmoPowerJAXw0waCDMPerturbations.Linear`      | w0waCDM   | P(k) linear                 |
-| `CosmoPowerJAXw0waCDMPerturbations.LinearCB`    | w0waCDM   | P_cb(k) linear              |
-| `CosmoPowerJAXw0waCDMPerturbations.NonLinear`   | w0waCDM   | P(k) nonlinear              |
-| `CosmoPowerJAXw0waCDMPerturbations.NonLinearCB` | w0waCDM   | P_cb(k) nonlinear           |
+| Class                                                | Cosmology        | Spectrum                    |
+| ---------------------------------------------------- | ---------------- | --------------------------- |
+| `CosmoPowerJAXLCDMPerturbations.Linear`              | ΛCDM             | P(k) linear                 |
+| `CosmoPowerJAXLCDMPerturbations.LinearCB`            | ΛCDM             | P_cb(k) linear              |
+| `CosmoPowerJAXLCDMPerturbations.NonLinear`           | ΛCDM             | P(k) nonlinear (HMcode2020) |
+| `CosmoPowerJAXLCDMPerturbations.NonLinearCB`         | ΛCDM             | P_cb(k) nonlinear           |
+| `CosmoPowerJAXwCDMPerturbations.Linear`              | wCDM             | P(k) linear                 |
+| `CosmoPowerJAXwCDMPerturbations.LinearCB`            | wCDM             | P_cb(k) linear              |
+| `CosmoPowerJAXwCDMPerturbations.NonLinear`           | wCDM             | P(k) nonlinear              |
+| `CosmoPowerJAXwCDMPerturbations.NonLinearCB`         | wCDM             | P_cb(k) nonlinear           |
+| `CosmoPowerJAXw0waCDMPerturbations.Linear`           | w0waCDM          | P(k) linear                 |
+| `CosmoPowerJAXw0waCDMPerturbations.LinearCB`         | w0waCDM          | P_cb(k) linear              |
+| `CosmoPowerJAXw0waCDMPerturbations.NonLinear`        | w0waCDM          | P(k) nonlinear              |
+| `CosmoPowerJAXw0waCDMPerturbations.NonLinearCB`      | w0waCDM          | P_cb(k) nonlinear           |
+| `CosmoPowerJAXCurvaturePerturbations.Linear`         | ΛCDM + curvature | P(k) linear                 |
+| `CosmoPowerJAXCurvaturePerturbations.LinearCB`       | ΛCDM + curvature | P_cb(k) linear              |
+| `CosmoPowerJAXCurvaturePerturbations.NonLinear`      | ΛCDM + curvature | P(k) nonlinear              |
+| `CosmoPowerJAXCurvaturePerturbations.NonLinearCB`    | ΛCDM + curvature | P_cb(k) nonlinear           |
+| `CosmoPowerJAXRunningIndexPerturbations.Linear`      | ΛCDM + α_s       | P(k) linear                 |
+| `CosmoPowerJAXRunningIndexPerturbations.LinearCB`    | ΛCDM + α_s       | P_cb(k) linear              |
+| `CosmoPowerJAXRunningIndexPerturbations.NonLinear`   | ΛCDM + α_s       | P(k) nonlinear              |
+| `CosmoPowerJAXRunningIndexPerturbations.NonLinearCB` | ΛCDM + α_s       | P_cb(k) nonlinear           |
 
-All classes support **N_mnu = 0, 1, 3** massive neutrinos.
+ΛCDM, wCDM, and w0waCDM classes support **N_mnu = 0, 1, 2, 3** massive neutrinos. Curvature and running spectral index classes have neutrino mass fixed at mnu = 0.06 eV.
 
 #### Parameter ranges
 
-| Parameter | ΛCDM         | wCDM         | w0waCDM      |
-| --------- | ------------ | ------------ | ------------ |
-| ombh2     | [0.001, 0.1] | [0.001, 0.1] | [0.001, 0.1] |
-| omch2     | [0.05, 0.9]  | [0.05, 0.9]  | [0.05, 0.9]  |
-| H0        | [20, 100]    | [20, 100]    | [20, 100]    |
-| ns        | [0.6, 1.3]   | [0.6, 1.3]   | [0.6, 1.3]   |
-| lnAs      | [1.61, 5]    | [1.61, 5]    | [1.61, 5]    |
-| z         | [0, 5]       | [0, 5]       | [0, 5]       |
-| w0        | —            | [-3, -0.33]  | [-3, -0.33]  |
-| wa        | —            | —            | [-3, 3]      |
-| mnu       | [0, 1] eV    | [0, 1] eV    | [0, 1] eV    |
-| log10TAGN | [7.6, 8.5]   | [7.6, 8.5]   | [7.6, 8.5]   |
+| Parameter | ΛCDM / wCDM / w0waCDM   | ΛCDM + curvature | ΛCDM + α_s      |
+| --------- | ----------------------- | ---------------- | --------------- |
+| ombh2     | [0.001, 0.1]            | [0.019, 0.025]   | [0.019, 0.025]  |
+| omch2     | [0.05, 0.9]             | [0.09, 0.15]     | [0.09, 0.15]    |
+| H0        | [20, 100]               | [60, 80]         | [60, 80]        |
+| ns        | [0.6, 1.3]              | [0.8, 1.2]       | [0.8, 1.2]      |
+| lnAs      | [1.61, 5]               | [1.6, 4.0]       | [1.6, 4.0]      |
+| z         | [0, 5]                  | [0, 5]           | [0, 5]          |
+| w0        | [-3, -0.33] (wCDM/w0wa) | —                | —               |
+| wa        | [-3, 3] (w0wa only)     | —                | —               |
+| mnu       | [0, 1] eV               | 0.06 eV (fixed)  | 0.06 eV (fixed) |
+| Omega_k0  | 0 (fixed)               | [-0.1, 0.1]      | 0 (fixed)       |
+| alpha_s   | —                       | —                | [-0.1, 0.1]     |
+| log10TAGN | [7.6, 8.5]              | [7.6, 8.5]       | [7.6, 8.5]      |
 
 #### Example
 

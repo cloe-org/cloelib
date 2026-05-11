@@ -104,6 +104,7 @@ bg = CAMBBackground(
     Omega_cdm0=0.2650,
     As=2.1e-9,
     ns=0.965,
+    alpha_s=0.0,   # running of the spectral index
     # ... other parameters
 )
 
@@ -187,20 +188,182 @@ Accurate and fast emulators of the linear, non-linear, and baryonic power spectr
 - Large cosmological parameter range;
 - Neural network evaluation with JAX;
 
-### CosmoPowerJAXPerturbations
+### TabulatedBoost / TabulatedBoostedPerturbations
 
-Fast JAX-based emulator for linear power spectra using [cosmopower-jax](https://github.com/dpiras/cosmopower-jax).
+Lightweight wrapper for applying a tabulated beyond-LCDM nonlinear boost to an existing nonlinear matter power spectrum.
 
-**Location**: `cloelib/cosmology/cosmopower_jax_cosmology.py`
+**Location**: `cloelib/cosmology/TabulatedBoost_cosmology.py`
 
-**When to use**: Fast linear predictions with full JAX compatibility, gradient-based inference, MCMC sampling
+**When to use**: You already have boost data from simulations or another external pipeline and want to interpolate it onto the `cloelib` perturbation grid.
 
 **Features**:
 
-- Full JAX compatibility enabling automatic differentiation and JIT compilation
-- Fast emulation of linear power spectra
-- Native support for gradient-based samplers (e.g. HMC/NUTS)
-- Limited to linear regime
+- Reads tabulated boost files with columns `[k, B(z_1), B(z_2), ...]`
+- Converts input `k` values from `h/Mpc` to the internal `1/Mpc` convention
+- Reuses `cloelib`'s wavenumber extrapolation machinery
+- Supports `power_law`, `freeze`, `one`, and `taper` high-redshift policies
+- Exposes a `TabulatedBoostedPerturbations` wrapper with boosted `matter_power_spectrum`, `growth_factor`, and `sigma8_0`
+
+**Input format**:
+
+- Column 1: `k` in `h/Mpc`
+- Remaining columns: boost values `B(k, z_i)` at each tabulated redshift
+- `z_cols` must list the redshifts corresponding to those boost columns, in the same order as the file
+
+**Example**:
+
+```python
+import numpy as np
+
+from cloelib.cosmology.camb_cosmology import (
+    CAMBBackground,
+    CAMBLinearPerturbations,
+)
+from cloelib.cosmology.HMcode2020Emu_cosmology import HMemuNonLinearPerturbations
+from cloelib.cosmology.TabulatedBoost_cosmology import (
+    TabulatedNonlinearBoost,
+    TabulatedBoostedPerturbations,
+)
+
+zs = np.linspace(0.0, 4.0, 100)
+z_cols = [
+    3.017980,
+    2.479559,
+    2.161320,
+    2.013288,
+    1.609499,
+    1.259818,
+    1.000000,
+    0.823800,
+    0.677100,
+    0.552300,
+    0.444200,
+    0.349200,
+    0.264800,
+    0.188900,
+    0.120200,
+    0.057540,
+    0.000031,
+    0.0,
+]
+
+background = CAMBBackground(...)
+linear_perturbations = CAMBLinearPerturbations(background, zs)
+nonlinear_perturbations = HMemuNonLinearPerturbations(
+    background,
+    linear_perturbations,
+    zs,
+)
+
+tabulated_boost = TabulatedNonlinearBoost(
+    background,
+    linear_perturbations,
+    zs,
+    "m11_p01_boosts.txt",
+    z_cols,
+    high_z_policy="freeze",
+)
+boosted_perturbations = TabulatedBoostedPerturbations(
+    linear_perturbations,
+    nonlinear_perturbations,
+    tabulated_boost.MGboost_interp,
+)
+```
+
+**Usage notes**:
+
+- The boost file is assumed to be defined relative to a LCDM baseline spectrum.
+- `TabulatedNonlinearBoost` sorts `z_cols` internally, so the input columns do not have to be pre-sorted.
+- A small synthetic test can cover interpolation behavior, but realistic validation still depends on the physical boost tables you provide.
+- The example notebook workflow can download DAKAR2 boost tables externally, but the core module itself does not depend on network access.
+
+### CosmoPowerJAXPerturbations
+
+Fast JAX-based emulator for linear and nonlinear power spectra using [cosmopower-jax](https://github.com/dpiras/cosmopower-jax).
+
+**Location**: `cloelib/cosmology/cosmopower_jax_cosmology.py`
+
+**When to use**: Fast predictions with full JAX compatibility, gradient-based inference, MCMC sampling
+
+**Features**:
+
+- Full JAX compatibility — automatic differentiation and JIT compilation
+- Linear and nonlinear P(k) and P_cb(k)
+- σ₈(z), fσ₈(z), growth factor D(z,k), growth rate f(z)
+- Emulator files downloaded automatically from Zenodo on first use
+
+#### Available classes
+
+| Class                                                | Cosmology        | Spectrum                    |
+| ---------------------------------------------------- | ---------------- | --------------------------- |
+| `CosmoPowerJAXLCDMPerturbations.Linear`              | ΛCDM             | P(k) linear                 |
+| `CosmoPowerJAXLCDMPerturbations.LinearCB`            | ΛCDM             | P_cb(k) linear              |
+| `CosmoPowerJAXLCDMPerturbations.NonLinear`           | ΛCDM             | P(k) nonlinear (HMcode2020) |
+| `CosmoPowerJAXLCDMPerturbations.NonLinearCB`         | ΛCDM             | P_cb(k) nonlinear           |
+| `CosmoPowerJAXwCDMPerturbations.Linear`              | wCDM             | P(k) linear                 |
+| `CosmoPowerJAXwCDMPerturbations.LinearCB`            | wCDM             | P_cb(k) linear              |
+| `CosmoPowerJAXwCDMPerturbations.NonLinear`           | wCDM             | P(k) nonlinear              |
+| `CosmoPowerJAXwCDMPerturbations.NonLinearCB`         | wCDM             | P_cb(k) nonlinear           |
+| `CosmoPowerJAXw0waCDMPerturbations.Linear`           | w0waCDM          | P(k) linear                 |
+| `CosmoPowerJAXw0waCDMPerturbations.LinearCB`         | w0waCDM          | P_cb(k) linear              |
+| `CosmoPowerJAXw0waCDMPerturbations.NonLinear`        | w0waCDM          | P(k) nonlinear              |
+| `CosmoPowerJAXw0waCDMPerturbations.NonLinearCB`      | w0waCDM          | P_cb(k) nonlinear           |
+| `CosmoPowerJAXCurvaturePerturbations.Linear`         | ΛCDM + curvature | P(k) linear                 |
+| `CosmoPowerJAXCurvaturePerturbations.LinearCB`       | ΛCDM + curvature | P_cb(k) linear              |
+| `CosmoPowerJAXCurvaturePerturbations.NonLinear`      | ΛCDM + curvature | P(k) nonlinear              |
+| `CosmoPowerJAXCurvaturePerturbations.NonLinearCB`    | ΛCDM + curvature | P_cb(k) nonlinear           |
+| `CosmoPowerJAXRunningIndexPerturbations.Linear`      | ΛCDM + α_s       | P(k) linear                 |
+| `CosmoPowerJAXRunningIndexPerturbations.LinearCB`    | ΛCDM + α_s       | P_cb(k) linear              |
+| `CosmoPowerJAXRunningIndexPerturbations.NonLinear`   | ΛCDM + α_s       | P(k) nonlinear              |
+| `CosmoPowerJAXRunningIndexPerturbations.NonLinearCB` | ΛCDM + α_s       | P_cb(k) nonlinear           |
+
+ΛCDM, wCDM, and w0waCDM classes support **N_mnu = 0, 1, 2, 3** massive neutrinos. Curvature and running spectral index classes have neutrino mass fixed at mnu = 0.06 eV.
+
+#### Parameter ranges
+
+| Parameter | ΛCDM / wCDM / w0waCDM   | ΛCDM + curvature | ΛCDM + α_s      |
+| --------- | ----------------------- | ---------------- | --------------- |
+| ombh2     | [0.001, 0.1]            | [0.019, 0.025]   | [0.019, 0.025]  |
+| omch2     | [0.05, 0.9]             | [0.09, 0.15]     | [0.09, 0.15]    |
+| H0        | [20, 100]               | [60, 80]         | [60, 80]        |
+| ns        | [0.6, 1.3]              | [0.8, 1.2]       | [0.8, 1.2]      |
+| lnAs      | [1.61, 5]               | [1.6, 4.0]       | [1.6, 4.0]      |
+| z         | [0, 5]                  | [0, 5]           | [0, 5]          |
+| w0        | [-3, -0.33] (wCDM/w0wa) | —                | —               |
+| wa        | [-3, 3] (w0wa only)     | —                | —               |
+| mnu       | [0, 1] eV               | 0.06 eV (fixed)  | 0.06 eV (fixed) |
+| Omega_k0  | 0 (fixed)               | [-0.1, 0.1]      | 0 (fixed)       |
+| alpha_s   | —                       | —                | [-0.1, 0.1]     |
+| log10TAGN | [7.6, 8.5]              | [7.6, 8.5]       | [7.6, 8.5]      |
+
+#### Example
+
+```python
+import numpy as np
+from cloelib.cosmology.camb_cosmology import CAMBBackground
+from cloelib.cosmology.cosmopower_jax_cosmology import CosmoPowerJAXLCDMPerturbations
+
+zs = np.array([0.0, 0.5, 1.0, 2.0])
+ks = np.logspace(-4, 1, 200)
+
+bg = CAMBBackground(
+    H0=67.0, Omega_b0=0.049, Omega_cdm0=0.270,
+    As=2.1e-9, ns=0.96, mnu=0.06, N_mnu=1,
+    w0=-1.0, wa=0.0, Omega_k0=0.0, gamma_MG=0.0,
+)
+
+# Linear P(k)
+lin = CosmoPowerJAXLCDMPerturbations.Linear(background=bg, redshifts=zs)
+Pk = lin.matter_power_spectrum(0.0, ks)   # shape (1, len(ks))
+
+# Nonlinear P(k) with baryonic feedback
+nl = CosmoPowerJAXLCDMPerturbations.NonLinear(background=bg, redshifts=zs, log10TAGN=7.6)
+Pk_nl = nl.matter_power_spectrum(0.0, ks)
+
+# sigma8 and fsigma8 as a function of redshift
+print(f"sigma8(z=0) = {lin.sigma8[0]:.4f}")
+print(f"fsigma8(z=0) = {lin.fsigma8[0]:.4f}")
+```
 
 ### JAXPerturbations
 
@@ -209,6 +372,20 @@ Pure JAX implementation for automatic differentiation.
 **Location**: `cloelib/cosmology/jax_cosmology.py`
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
+
+### EmantisPerturbations
+
+Accurate and fast emulator of the nonlinear matter power spectrum in modified gravity using [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis).
+
+**Location**: `cloelib/cosmology/emantis_cosmology.py`
+
+**When to use**: Predictions for the nonlinear matter clustering in f(R) gravity.
+
+**Features**:
+
+- Fast predictions of the nonlinear matter power spectrum in f(R) gravity;
+- Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;
+- Limited to the Hu & Sawicki model (n=1) with fR0 as free parameter;
 
 ## Adding Your Own Perturbations Implementation
 
@@ -228,6 +405,8 @@ class MySolverPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations: Optional[object] = None,
+        redshifts: np.ndarray = None,
         nonlinear_model: str = "halofit",
         kmax: float = 10.0,
         zmax: float = 5.0,
@@ -238,6 +417,11 @@ class MySolverPerturbations:
 
         Args:
             background: Background object (any implementation)
+            linearperturbations: Linear perturbations object. Accepted for interface
+                compatibility with cloelike, which always passes this as the second
+                positional argument when constructing NonLinPerturbations. Unused by
+                codes that compute nonlinear corrections internally (e.g. CAMB, CLASS).
+            redshifts: Array of redshifts for the calculations.
             nonlinear_model: Which non-linear model to use
             kmax: Maximum wavenumber in 1/Mpc
             zmax: Maximum redshift

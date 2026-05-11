@@ -33,6 +33,7 @@ class CAMBBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        alpha_s: float = 0.0,
     ) -> None:
         """
         Initialize the CAMBBackground instance with cosmological parameters.
@@ -44,7 +45,8 @@ class CAMBBackground:
             Omega_k0(float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
-            mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
+            alpha_s (float): Running of the scalar spectral index (d ns / d ln k).
+            mnu (Union[float, Sequence[float]], np.ndarray]): Total neutrino mass in eV.
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the dark energy equation of state.
@@ -60,6 +62,7 @@ class CAMBBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
+        self.alpha_s = alpha_s
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = gamma_MG
@@ -100,7 +103,9 @@ class CAMBBackground:
         self.interface_args["CAMBparams"].set_dark_energy(
             w=self.w0, wa=self.wa, dark_energy_model="ppf"
         )
-        self.interface_args["CAMBparams"].InitPower.set_params(As=self.As, ns=self.ns)
+        self.interface_args["CAMBparams"].InitPower.set_params(
+            As=self.As, ns=self.ns, nrun=self.alpha_s
+        )
 
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args["CAMBparams"])
@@ -446,6 +451,7 @@ class CAMBNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations: Optional[object],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         log10TAGN: Optional[float] = None,
@@ -455,6 +461,9 @@ class CAMBNonLinearPerturbations:
 
         Args:
             self (LinearPerturbations): An instance of the LinearPerturbations class.
+            linearperturbations: Linear perturbations object (unused by CAMB, which computes
+                nonlinear corrections internally; accepted for interface compatibility with
+                emulator-based NonLinPerturbations classes).
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
                 Defaults to None, which uses the CAMB default model.

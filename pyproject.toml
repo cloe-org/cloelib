@@ -44,6 +44,7 @@ tf-keras = ["tf-keras"]
 cosmopower-jax=["cosmopower-jax"]
 baccoemu = ["baccoemu"]
 emantis = ["emantis>=1.2.1"]
+pbjcosmo = ["pbjcosmo"]
 
 [tool.hatch.version]
 source = "vcs"

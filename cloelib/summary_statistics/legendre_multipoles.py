@@ -11,10 +11,12 @@ from cloelib.auxiliary.fftlog import fftlog
 import functools
 from typing import Optional
 import numpy as np
+from copy import deepcopy
 
 # cosmolib imports
 from cosmolib.data import (
     PowerSpectrumMultipoles,
+    PowerSpectrumMultipolesMixingMatrix,
     TwoPointCorrelationMultipoles,
     TwoPointCorrelationPolar,
 )
@@ -33,7 +35,7 @@ def format_output(stat: str):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             """cosmolib format is returned in Mpc/h units, differently from
-            cloelib standards
+            cloelib standards which is in Mpc units
             """
 
             def get_arg(name, idx):
@@ -52,12 +54,16 @@ def format_output(stat: str):
             h_fid = self.spectro_power.background.h
 
             if stat == "PK_multipoles":
-                scale_h = (
-                    kwargs["mixing_matrix"].get("kout")
-                    if "convolved" in func.__name__
-                    else get_arg("k", 0)
-                )
-                set_arg("k", 0, scale_h * h_fid)
+                if "convolved" in func.__name__:
+                    mixing_matrix = get_arg("mixing_matrix", 0)
+                    rescaled_mixing_matrix = deepcopy(mixing_matrix)
+                    scale_h = mixing_matrix.kout
+                    for key in [0, 2, 4]:
+                        rescaled_mixing_matrix.kin[key] = mixing_matrix.kin[key] * h_fid
+                        set_arg("mixing_matrix", 0, rescaled_mixing_matrix)
+                else:
+                    scale_h = get_arg("k", 0)
+                    set_arg("k", 0, scale_h * h_fid)
             else:
                 scale_h = get_arg("s", 0)
                 set_arg("s", 0, scale_h / h_fid)
@@ -446,7 +452,7 @@ class LegendreMultipoles:
     @format_output("PK_multipoles")
     def convolved_power_multipoles(
         self,
-        mixing_matrix: dict,
+        mixing_matrix: PowerSpectrumMultipolesMixingMatrix,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
         format_type: Optional[str] = None,
@@ -454,7 +460,7 @@ class LegendreMultipoles:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
 
         Parameters:
-            mixing_matrix (dict): Dicitonary containing the mixing matrix
+            mixing_matrix (PowerSpectrumMultipolesMixingMatrix): Dicitonary containing the mixing matrix
             ells (np.ndarray): Legendre multipole order
             use_AP (bool): Flag to switch between with and without AP corrections
             format_type (str): Type of output format
@@ -465,7 +471,7 @@ class LegendreMultipoles:
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
 
-        kin_arrays = [mixing_matrix[f"kin{ell}"] for ell in ells_tot]
+        kin_arrays = [mixing_matrix.kin[ell] for ell in ells_tot]
 
         if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
             multipoles_in = self.power_multipoles(
@@ -480,11 +486,11 @@ class LegendreMultipoles:
             }
 
         multipoles_out = {}
-        multipoles_out["k"] = mixing_matrix["kout"]
+        multipoles_out["k"] = mixing_matrix.kout
         for ell in ells:
             multipoles_out[f"ell{ell}"] = sum(
                 np.dot(
-                    mixing_matrix[f"W{ell}{ell_prime}"],
+                    mixing_matrix.mixing[f"ELL_{ell}-{ell_prime}"],
                     multipoles_in[f"ell{ell_prime}"],
                 )
                 for ell_prime in ells_tot
@@ -494,7 +500,7 @@ class LegendreMultipoles:
 
     def convolved_power_term_multipoles(
         self,
-        mixing_matrix: dict,
+        mixing_matrix: PowerSpectrumMultipolesMixingMatrix,
         term_list: list,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
@@ -502,7 +508,7 @@ class LegendreMultipoles:
         r"""Convolved power spectrum multipoles of specified terms.
 
         Parameters:
-            mixing_matrix (dict): Dicitonary containing the mixing matrix
+            mixing_matrix (PowerSpectrumMultipolesMixingMatrix): Dicitonary containing the mixing matrix
             term_list (list): List of terms to compute
             ells (np.ndarray): Legendre multipole order
             use_AP (bool): Flag to switch between with and without AP corrections
@@ -513,7 +519,7 @@ class LegendreMultipoles:
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
 
-        kin_arrays = [mixing_matrix[f"kin{ell}"] for ell in ells_tot]
+        kin_arrays = [mixing_matrix.kin[ell] for ell in ells_tot]
 
         if all(np.array_equal(kin_arrays[0], kin) for kin in kin_arrays):
             multipoles_in = self.power_term_multipoles(
@@ -528,11 +534,11 @@ class LegendreMultipoles:
             }
 
         multipoles_out = {}
-        multipoles_out["k"] = mixing_matrix["kout"]
+        multipoles_out["k"] = mixing_matrix.kout
         for ell in ells:
             multipoles_out[f"ell{ell}"] = sum(
                 np.dot(
-                    mixing_matrix[f"W{ell}{ell_prime}"],
+                    mixing_matrix.mixing[f"ELL_{ell}-{ell_prime}"],
                     multipoles_in[f"ell{ell_prime}"].T,
                 ).T
                 for ell_prime in ells_tot
@@ -565,11 +571,11 @@ class LegendreMultipoles:
         s: np.ndarray,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5,
-        logkmax: Optional[float] = 2,
+        logkmin: Optional[float] = -5.0,
+        logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
         kcut: Optional[float] = 0.4,
-        pow: Optional[float] = 2,
+        pow: Optional[float] = 2.0,
         format_type: Optional[str] = None,
     ) -> dict:
         r"""Two-point correlation function Legendre multipoles.
@@ -628,11 +634,11 @@ class LegendreMultipoles:
         s: np.ndarray,
         mu: np.ndarray,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5,
-        logkmax: Optional[float] = 2,
+        logkmin: Optional[float] = -5.0,
+        logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
         kcut: Optional[float] = 0.4,
-        pow: Optional[float] = 2,
+        pow: Optional[float] = 2.0,
         format_type: Optional[str] = None,
     ) -> dict:
         r"""Polar two-point correlation function.
@@ -675,3 +681,70 @@ class LegendreMultipoles:
         )
 
         return xi_polar
+
+    def two_point_correlation_term_multipoles(
+        self,
+        s: np.ndarray,
+        term_list: list,
+        ells: Optional[np.ndarray] = None,
+        use_AP: Optional[bool] = True,
+        logkmin: Optional[float] = -5.0,
+        logkmax: Optional[float] = 2.0,
+        nk: Optional[int] = 2048,
+        kcut: Optional[float] = 0.4,
+        pow: Optional[float] = 2.0,
+    ) -> dict:
+        r"""Two-point correlation function Legendre multipoles of specified terms.
+
+        Parameters
+        ----------
+        s: np.ndarray
+            Comoving separations
+        term_list: list
+            List of terms to compute
+        ells: np.ndarray
+            Legendre multipole order
+        use_AP: bool
+            Flag to switch between with and without AP corrections
+        logkmin: float
+            Left logarithmic edge of input wave mode array
+        logkmax: float
+            Right logarithmic edge of input wave mode array
+        nk: int
+            Number of logarithmic wave mode bins
+        kcut: float
+            Cutoff scale for exponential damping
+        pow: float
+            Power index for exponential damping
+        Returns
+        -------
+        multipoles: dict
+            Two-point correlation function Legendre multipoles of specified terms
+        """
+
+        if self.spectro_power.NLcode != "COMET":
+            raise ValueError(
+                "2PCF multipoles for specific terms can temporarily be retrieved only with COMET"
+            )
+
+        ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
+        k_hnkl = np.logspace(logkmin, logkmax, nk)
+        pk_multipoles = self.power_term_multipoles(
+            k=k_hnkl, term_list=term_list, ells=ells, use_AP=use_AP
+        )
+        volume_factor = (k_hnkl**3) / (2 * (np.pi**2))
+        xi_multipoles = {}
+        for ell in ells:
+            xi_temp = np.zeros((len(term_list), len(s)))
+            for term_id, term in enumerate(term_list):
+                y_array = (
+                    volume_factor
+                    * pk_multipoles[f"ell{ell}"][term_id]
+                    * self._UVcutoff(k=k_hnkl, kcut=kcut, pow=pow)
+                    * np.real(1j**ell)
+                )
+                transformer = fftlog(x=k_hnkl, fx=y_array, nu=2)
+                r_grid, transformed_log = transformer.fftlog(ell=ell)
+                xi_temp[term_id, :] = np.interp(s, r_grid, transformed_log)
+            xi_multipoles[f"ell{ell}"] = xi_temp
+        return xi_multipoles

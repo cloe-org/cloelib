@@ -48,14 +48,12 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | Background                                        | Perturbations                                                                 | SpectroPower                                                       |
 | ------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | [camb](https://camb.readthedocs.io)               | [camb](https://camb.readthedocs.io)                                           | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
-| [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                             | `PBJ` (not publicly available)                                     |
+| [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                             | [pbjcosmo](https://chiaramoretti.gitlab.io/pbj/)                   |
 | NA                                                | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)            | NA                                                                 |
 | NA                                                | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                | NA                                                                 |
 | NA                                                | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
 | NA                                                | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
 | NA                                                | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                         | NA                                                                 |
-
-We do not provide installation support for `PBJ`.
 
 <!-- --8<-- [end:supported-codes] -->
 
@@ -97,13 +95,13 @@ pip install .
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis]
+pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis]"
+> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo]"
 > ```
 
 You're all set! 🎉 Ready to compute cosmological observables.
@@ -170,7 +168,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 <table>
   <tbody>
     <tr>
-      <td align="center" valign="top" width="14.28%"><a href="http://alexhall.space"><img src="https://avatars.githubusercontent.com/u/59091484?v=4?s=100" width="100px;" alt="Alex Hall"/><br /><sub><b>Alex Hall</b></sub></a><br /><a href="#bug-ahallcosmo" title="Bug reports">🐛</a> <a href="#ideas-ahallcosmo" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://alexhall.space"><img src="https://avatars.githubusercontent.com/u/59091484?v=4?s=100" width="100px;" alt="Alex Hall"/><br /><sub><b>Alex Hall</b></sub></a><br /><a href="#bug-ahallcosmo" title="Bug reports">🐛</a> <a href="#ideas-ahallcosmo" title="Ideas, Planning, & Feedback">🤔</a> <a href="#mentoring-ahallcosmo" title="Mentoring">🧑‍🏫</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/itutusaus"><img src="https://avatars.githubusercontent.com/u/20775836?v=4?s=100" width="100px;" alt="itutusaus"/><br /><sub><b>itutusaus</b></sub></a><br /><a href="#review-itutusaus" title="Reviewed Pull Requests">👀</a> <a href="#projectManagement-itutusaus" title="Project Management">📆</a> <a href="#mentoring-itutusaus" title="Mentoring">🧑‍🏫</a> <a href="#promotion-itutusaus" title="Promotion">📣</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/llinke1"><img src="https://avatars.githubusercontent.com/u/42432333?v=4?s=100" width="100px;" alt="Laila Linke"/><br /><sub><b>Laila Linke</b></sub></a><br /><a href="#code-llinke1" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/DavidNavarroG"><img src="https://avatars.githubusercontent.com/u/29857945?v=4?s=100" width="100px;" alt="David Navarro Gironés"/><br /><sub><b>David Navarro Gironés</b></sub></a><br /><a href="#doc-DavidNavarroG" title="Documentation">📖</a></td>
@@ -239,6 +237,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/neelcosmo"><img src="https://avatars.githubusercontent.com/u/151792852?v=4?s=100" width="100px;" alt="Neel Shah"/><br /><sub><b>Neel Shah</b></sub></a><br /><a href="#code-neelcosmo" title="Code">💻</a> <a href="#ideas-neelcosmo" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/FelicitasKeil"><img src="https://avatars.githubusercontent.com/u/70713596?v=4?s=100" width="100px;" alt="Felicitas Keil"/><br /><sub><b>Felicitas Keil</b></sub></a><br /><a href="#code-FelicitasKeil" title="Code">💻</a> <a href="#ideas-FelicitasKeil" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jipdebuck"><img src="https://avatars.githubusercontent.com/u/236796982?v=4?s=100" width="100px;" alt="Jip de Buck"/><br /><sub><b>Jip de Buck</b></sub></a><br /><a href="#userTesting-jipdebuck" title="User Testing">📓</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/HironaoMiyatake"><img src="https://avatars.githubusercontent.com/u/1507529?v=4?s=100" width="100px;" alt="Hironao Miyatake"/><br /><sub><b>Hironao Miyatake</b></sub></a><br /><a href="#ideas-HironaoMiyatake" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>

@@ -15,7 +15,8 @@
       "profile": "http://alexhall.space",
       "contributions": [
         "bug",
-        "ideas"
+        "ideas",
+        "mentoring"
       ]
     },
     {
@@ -613,6 +614,15 @@
       "profile": "https://github.com/jipdebuck",
       "contributions": [
         "userTesting"
+      ]
+    },
+    {
+      "login": "HironaoMiyatake",
+      "name": "Hironao Miyatake",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1507529?v=4",
+      "profile": "https://github.com/HironaoMiyatake",
+      "contributions": [
+        "ideas"
       ]
     }
   ]

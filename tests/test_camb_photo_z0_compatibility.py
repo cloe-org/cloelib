@@ -48,7 +48,7 @@ def camb_photo_setup():
     # User redshifts WITHOUT z=0 (z=0 should be added automatically)
     # Use same grid as tracer for compatibility
     user_z = tracer_z
-    perturbations = CAMBNonLinearPerturbations(background, user_z)
+    perturbations = CAMBNonLinearPerturbations(background, None, user_z)
     n_z_bins = 2
     dndz = np.ones((n_z_bins, len(tracer_z)))
     dndz /= np.trapezoid(dndz, tracer_z, axis=1)[:, None]

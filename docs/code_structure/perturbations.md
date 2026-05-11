@@ -187,6 +187,95 @@ Accurate and fast emulators of the linear, non-linear, and baryonic power spectr
 - Large cosmological parameter range;
 - Neural network evaluation with JAX;
 
+### TabulatedBoost / TabulatedBoostedPerturbations
+
+Lightweight wrapper for applying a tabulated beyond-LCDM nonlinear boost to an existing nonlinear matter power spectrum.
+
+**Location**: `cloelib/cosmology/TabulatedBoost_cosmology.py`
+
+**When to use**: You already have boost data from simulations or another external pipeline and want to interpolate it onto the `cloelib` perturbation grid.
+
+**Features**:
+
+- Reads tabulated boost files with columns `[k, B(z_1), B(z_2), ...]`
+- Converts input `k` values from `h/Mpc` to the internal `1/Mpc` convention
+- Reuses `cloelib`'s wavenumber extrapolation machinery
+- Supports `power_law`, `freeze`, `one`, and `taper` high-redshift policies
+- Exposes a `TabulatedBoostedPerturbations` wrapper with boosted `matter_power_spectrum`, `growth_factor`, and `sigma8_0`
+
+**Input format**:
+
+- Column 1: `k` in `h/Mpc`
+- Remaining columns: boost values `B(k, z_i)` at each tabulated redshift
+- `z_cols` must list the redshifts corresponding to those boost columns, in the same order as the file
+
+**Example**:
+
+```python
+import numpy as np
+
+from cloelib.cosmology.camb_cosmology import (
+    CAMBBackground,
+    CAMBLinearPerturbations,
+)
+from cloelib.cosmology.HMcode2020Emu_cosmology import HMemuNonLinearPerturbations
+from cloelib.cosmology.TabulatedBoost_cosmology import (
+    TabulatedNonlinearBoost,
+    TabulatedBoostedPerturbations,
+)
+
+zs = np.linspace(0.0, 4.0, 100)
+z_cols = [
+    3.017980,
+    2.479559,
+    2.161320,
+    2.013288,
+    1.609499,
+    1.259818,
+    1.000000,
+    0.823800,
+    0.677100,
+    0.552300,
+    0.444200,
+    0.349200,
+    0.264800,
+    0.188900,
+    0.120200,
+    0.057540,
+    0.000031,
+    0.0,
+]
+
+background = CAMBBackground(...)
+linear_perturbations = CAMBLinearPerturbations(background, zs)
+nonlinear_perturbations = HMemuNonLinearPerturbations(
+    background,
+    linear_perturbations,
+    zs,
+)
+
+tabulated_boost = TabulatedNonlinearBoost(
+    background,
+    linear_perturbations,
+    zs,
+    "m11_p01_boosts.txt",
+    z_cols,
+    high_z_policy="freeze",
+)
+boosted_perturbations = TabulatedBoostedPerturbations(
+    linear_perturbations,
+    nonlinear_perturbations,
+    tabulated_boost.MGboost_interp,
+)
+```
+
+**Usage notes**:
+
+- The boost file is assumed to be defined relative to a LCDM baseline spectrum.
+- `TabulatedNonlinearBoost` sorts `z_cols` internally, so the input columns do not have to be pre-sorted.
+- A small synthetic test can cover interpolation behavior, but realistic validation still depends on the physical boost tables you provide.
+- The example notebook workflow can download DAKAR2 boost tables externally, but the core module itself does not depend on network access.
+
 ### CosmoPowerJAXPerturbations
 
 Fast JAX-based emulator for linear and nonlinear power spectra using [cosmopower-jax](https://github.com/dpiras/cosmopower-jax).

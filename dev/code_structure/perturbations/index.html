@@ -742,6 +742,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#emantisperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmantisPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1182,6 +1193,17 @@
     <span class="md-ellipsis">
       
         JAXPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#emantisperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmantisPerturbations
       
     </span>
   </a>
@@ -1692,6 +1714,16 @@
 <p>Pure JAX implementation for automatic differentiation.</p>
 <p><strong>Location</strong>: <code>cloelib/cosmology/jax_cosmology.py</code></p>
 <p><strong>When to use</strong>: Computing gradients, Fisher forecasts, HMC sampling</p>
+<h3 id="emantisperturbations">EmantisPerturbations<a class="headerlink" href="#emantisperturbations" title="Permanent link">&para;</a></h3>
+<p>Accurate and fast emulator of the nonlinear matter power spectrum in modified gravity using <a href="https://gitlab.obspm.fr/e-mantis/e-mantis">e-MANTIS</a>.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/emantis_cosmology.py</code></p>
+<p><strong>When to use</strong>: Predictions for the nonlinear matter clustering in f(R) gravity.</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Fast predictions of the nonlinear matter power spectrum in f(R) gravity;</li>
+<li>Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;</li>
+<li>Limited to the Hu &amp; Sawicki model (n=1) with fR0 as free parameter;</li>
+</ul>
 <h2 id="adding-your-own-perturbations-implementation">Adding Your Own Perturbations Implementation<a class="headerlink" href="#adding-your-own-perturbations-implementation" title="Permanent link">&para;</a></h2>
 <p>To add a new Perturbations implementation, follow these steps.</p>
 <h3 id="step-1-create-your-class">Step 1: Create Your Class<a class="headerlink" href="#step-1-create-your-class" title="Permanent link">&para;</a></h3>

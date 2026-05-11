@@ -309,10 +309,10 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
 
     lp_all = levin.pylevin(integral_type, thetagrid, f_of_x, logx, logy, N_thread)
 
-    n_sub = 32        # collocation points per bisection
-    n_bisec_max = 8   # maximum bisections
-    rel_acc = 1e-8    # relative accuracy target
-    boost_bessel = True   # use Boost Bessel functions (higher accuracy)
+    n_sub = 32  # collocation points per bisection
+    n_bisec_max = 8  # maximum bisections
+    rel_acc = 1e-8  # relative accuracy target
+    boost_bessel = True  # use Boost Bessel functions (higher accuracy)
     verbose = False
     lp_all.set_levin(n_sub, n_bisec_max, rel_acc, boost_bessel, verbose)
 

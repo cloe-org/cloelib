@@ -760,6 +760,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cloelib.cosmology.TabulatedBoost_cosmology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;TabulatedBoost_cosmology
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cloelib.cosmology.baccoemu_cosmology" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2203,6 +2214,17 @@
     <span class="md-ellipsis">
       
         <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;HMcode2020Emu_cosmology
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.cosmology.TabulatedBoost_cosmology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;TabulatedBoost_cosmology
       
     </span>
   </a>
@@ -4325,6 +4347,334 @@ ks : array_like
 <h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.sigma8_0--returns">Returns:<a class="headerlink" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.sigma8_0--returns" title="Permanent link">&para;</a></h6>
 <p>float
     The sigma8 value.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="cloelib.cosmology.TabulatedBoost_cosmology" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">TabulatedBoost_cosmology</span>
+
+
+<a href="#cloelib.cosmology.TabulatedBoost_cosmology" class="headerlink" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+        <p>Tabulated nonlinear boost module.</p>
+<p>This module provides a lightweight interface for using simulation-based
+nonlinear matter power spectrum boosts B(k, z).  It reads a text file
+containing a common k-grid and boost values for a set of snapshot
+redshifts, constructs a 2D spline interpolator B(z, k), and exposes it in
+the required format.</p>
+
+          
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">TabulatedNonlinearBoost</span>
+
+
+<a href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">TabulatedNonlinearBoost</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(boost_file)">boost_file</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(z_cols)">z_cols</span></span><span class="p">:</span> <span class="n"><span title="typing.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">],</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(high_z_policy)">high_z_policy</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">&#39;taper&#39;</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(z_decay)">z_decay</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Nonlinear matter power spectrum boost from a tabulated file B(k; z).</p>
+
+
+<details class="the-boost-file-is-expected-to-have" open>
+  <summary>The boost file is expected to have</summary>
+  <ul>
+<li>column 1: k values (same k-grid used for all redshifts)</li>
+<li>columns 2..N: boost values B(k; z_i) for each snapshot/redshift</li>
+</ul>
+</details>        <h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost--parameters" title="Permanent link">&para;</a></h6>
+<p>background : Background
+    A cosmological background instance containing parameters such as
+    Omega_b0, Omega_cdm0, H0, ns, mnu, w0, and wa. Note w0 and wa are assumed to be LCDM values for some modified gravity models.</p>
+
+
+<details class="linearperturbations-" open>
+  <summary>Perturbations</summary>
+  <p>A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline.</p>
+</details>
+
+<details class="zs-" open>
+  <summary>np.ndarray</summary>
+  <p>Array of redshifts at which to compute the MG corrections.</p>
+</details>
+
+<details class="boost_file-" open>
+  <summary>str</summary>
+  <p>Path to the text file containing [k, B(z1), B(z2), ..., B(zN)].
+Commented header lines starting with '#' are allowed.</p>
+</details>
+
+<details class="z_cols-" open>
+  <summary>Sequence[float]</summary>
+  <p>1D array or list of redshifts corresponding to columns 2..N in the
+boost file (same order). Length must match the number of boost columns.</p>
+</details>
+
+<details class="high_z_policy" open>
+  <summary>string (default taper)</summary>
+  <p>Gives the high redshift extrapolation policy. Can choose from the following:
+    options: "power_law", "freeze", "one", "taper"</p>
+</details>
+
+<details class="z_decay" open>
+  <summary>float</summary>
+  <p>Gives the decay rate after emulator max redshift going back to LCDM (boost=1)</p>
+</details>        <h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost--notes">Notes<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost--notes" title="Permanent link">&para;</a></h6>
+<p>This class simply builds a RectBivariateSpline over (z, k) so that you can
+pass <code>self.boost_interp</code> into <code>BoostedPerturbations</code> in exactly the same
+way as the ReACT emulator-based version.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">mg_spectrum_boost</span>
+
+
+<a href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">mg_spectrum_boost</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost(ks)">ks</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the nonlinear matter power spectrum boost.</p>
+<h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--parameters" title="Permanent link">&para;</a></h6>
+<p>ks: numpy.ndarray
+    Wave number in Mpc^{-1}</p>
+
+
+<details class="zs" open>
+  <summary>numpy.ndarray</summary>
+  <p>redshifts</p>
+</details>        <h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--returns">Returns<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--returns" title="Permanent link">&para;</a></h6>
+<p>MGboost_interp: numpy.ndarray
+    Nonlinear matter power spectrum boost at the specified scale
+    and redshift</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">TabulatedBoostedPerturbations</span>
+
+
+<a href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">TabulatedBoostedPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations(base_lin_perturbations)">base_lin_perturbations</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations(base_perturbations)">base_perturbations</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations(boost_interp)">boost_interp</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations--parameters" title="Permanent link">&para;</a></h6>
+<p>base_lin_perturbations : object
+    An object representing the linear perturbations, which may include methods
+    like <code>sigma_lensing</code> for lensing calculations. Must have the same background
+    as in the modified theory of gravity or dark energy (not ΛCDM for CPL-backgrounds!).</p>
+
+
+<details class="base_perturbations-" open>
+  <summary>object</summary>
+  <p>An object with a <code>matter_power_spectrum(z, k)</code> method that provides the
+nonlinear matter power spectrum for the ΛCDM model.</p>
+</details>
+
+<details class="boost_interp-" open>
+  <summary>callable</summary>
+  <p>A function or interpolator B(z, k) that returns the nonlinear boost
+to be applied to the ΛCDM spectrum.</p>
+</details>
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.matter_power_spectrum" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum</span>
+
+
+<a href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.matter_power_spectrum(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.matter_power_spectrum(k)">k</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the boosted nonlinear matter power spectrum.</p>
+<h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.matter_power_spectrum--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.matter_power_spectrum--parameters" title="Permanent link">&para;</a></h6>
+<p>z : float or np.ndarray
+    Redshift value or array of redshifts.
+k : float or np.ndarray
+    Wavenumber value or array of wavenumbers in 1/Mpc.</p>
+<h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.matter_power_spectrum--returns">Returns<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.matter_power_spectrum--returns" title="Permanent link">&para;</a></h6>
+<p>float or np.ndarray
+    Boosted matter power spectrum. The output is squeezed so scalar
+    inputs return a scalar, while array inputs return the corresponding
+    one- or two-dimensional array.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.growth_factor" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor</span>
+
+
+<a href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.growth_factor" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.growth_factor(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.growth_factor(ks)">ks</span></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor.</p>
+<p>If <code>ks</code> is provided:
+    D(z,k) = sqrt( P(z,k) / P(0,k) )
+If <code>ks</code> is None (linear growth via boost on large scales):
+    D(z)   = sqrt( B(z,k_lin) / B(0,k_lin) ), with a sensible default k_lin.</p>
+<h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.growth_factor--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.growth_factor--parameters" title="Permanent link">&para;</a></h6>
+<p>zs : array_like
+    Redshifts.
+ks : array_like or None
+    Wavenumbers. If None, returns linear-growth estimate from the boost at k_lin.</p>
+<h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.growth_factor--returns">Returns<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.growth_factor--returns" title="Permanent link">&para;</a></h6>
+<p>np.ndarray
+    If ks is None or scalar -&gt; shape (len(zs),)
+    If z and k arrays       -&gt; shape (len(zs), len(ks))</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
+
+
+<a href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma8_0</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the sigma8 value for the current cosmology.</p>
 
           
 

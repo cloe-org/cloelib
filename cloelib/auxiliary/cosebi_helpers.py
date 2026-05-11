@@ -199,7 +199,7 @@ def tm(n, t, tmin, nn, coeff_j):
         min angular seperation
     nn: mpmath
         normalizations from get_roots
-    rn: coeff_j
+    coeff_j:
         matrix elements from get_roots
 
     Returns

@@ -1486,23 +1486,24 @@
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">Omega_cdm0</span><span class="o">=</span><span class="mf">0.2650</span><span class="p">,</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">As</span><span class="o">=</span><span class="mf">2.1e-9</span><span class="p">,</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">ns</span><span class="o">=</span><span class="mf">0.965</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="c1"># ... other parameters</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Then create perturbations</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">pert</span> <span class="o">=</span> <span class="n">CAMBPerturbations</span><span class="p">(</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="c1"># other parameters</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">)</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># Compute power spectrum</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>  <span class="c1"># k in 1/Mpc</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="n">P_k_z</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">matter_power_spectrum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="c1"># Get σ₈</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="n">sigma8</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">sigma8_0</span><span class="p">()</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;σ₈ = </span><span class="si">{</span><span class="n">sigma8</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">alpha_s</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>   <span class="c1"># running of the spectral index</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="c1"># ... other parameters</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="p">)</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># Then create perturbations</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">pert</span> <span class="o">=</span> <span class="n">CAMBPerturbations</span><span class="p">(</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="c1"># other parameters</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="p">)</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># Compute power spectrum</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>  <span class="c1"># k in 1/Mpc</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="n">P_k_z</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">matter_power_spectrum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="c1"># Get σ₈</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="n">sigma8</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">sigma8_0</span><span class="p">()</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;σ₈ = </span><span class="si">{</span><span class="n">sigma8</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="classperturbations">CLASSPerturbations<a class="headerlink" href="#classperturbations" title="Permanent link">&para;</a></h3>
 <p>Interfaces with <a href="https://github.com/lesgourg/class_public">CLASS</a>.</p>
@@ -1712,49 +1713,89 @@
 <td>w0waCDM</td>
 <td>P_cb(k) nonlinear</td>
 </tr>
+<tr>
+<td><code>CosmoPowerJAXCurvaturePerturbations.Linear</code></td>
+<td>ΛCDM + curvature</td>
+<td>P(k) linear</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXCurvaturePerturbations.LinearCB</code></td>
+<td>ΛCDM + curvature</td>
+<td>P_cb(k) linear</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXCurvaturePerturbations.NonLinear</code></td>
+<td>ΛCDM + curvature</td>
+<td>P(k) nonlinear</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXCurvaturePerturbations.NonLinearCB</code></td>
+<td>ΛCDM + curvature</td>
+<td>P_cb(k) nonlinear</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXRunningIndexPerturbations.Linear</code></td>
+<td>ΛCDM + α_s</td>
+<td>P(k) linear</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXRunningIndexPerturbations.LinearCB</code></td>
+<td>ΛCDM + α_s</td>
+<td>P_cb(k) linear</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXRunningIndexPerturbations.NonLinear</code></td>
+<td>ΛCDM + α_s</td>
+<td>P(k) nonlinear</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXRunningIndexPerturbations.NonLinearCB</code></td>
+<td>ΛCDM + α_s</td>
+<td>P_cb(k) nonlinear</td>
+</tr>
 </tbody>
 </table>
-<p>All classes support <strong>N_mnu = 0, 1, 3</strong> massive neutrinos.</p>
+<p>ΛCDM, wCDM, and w0waCDM classes support <strong>N_mnu = 0, 1, 2, 3</strong> massive neutrinos. Curvature and running spectral index classes have neutrino mass fixed at mnu = 0.06 eV.</p>
 <h4 id="parameter-ranges">Parameter ranges<a class="headerlink" href="#parameter-ranges" title="Permanent link">&para;</a></h4>
 <table>
 <thead>
 <tr>
 <th>Parameter</th>
-<th>ΛCDM</th>
-<th>wCDM</th>
-<th>w0waCDM</th>
+<th>ΛCDM / wCDM / w0waCDM</th>
+<th>ΛCDM + curvature</th>
+<th>ΛCDM + α_s</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>ombh2</td>
 <td>[0.001, 0.1]</td>
-<td>[0.001, 0.1]</td>
-<td>[0.001, 0.1]</td>
+<td>[0.019, 0.025]</td>
+<td>[0.019, 0.025]</td>
 </tr>
 <tr>
 <td>omch2</td>
 <td>[0.05, 0.9]</td>
-<td>[0.05, 0.9]</td>
-<td>[0.05, 0.9]</td>
+<td>[0.09, 0.15]</td>
+<td>[0.09, 0.15]</td>
 </tr>
 <tr>
 <td>H0</td>
 <td>[20, 100]</td>
-<td>[20, 100]</td>
-<td>[20, 100]</td>
+<td>[60, 80]</td>
+<td>[60, 80]</td>
 </tr>
 <tr>
 <td>ns</td>
 <td>[0.6, 1.3]</td>
-<td>[0.6, 1.3]</td>
-<td>[0.6, 1.3]</td>
+<td>[0.8, 1.2]</td>
+<td>[0.8, 1.2]</td>
 </tr>
 <tr>
 <td>lnAs</td>
 <td>[1.61, 5]</td>
-<td>[1.61, 5]</td>
-<td>[1.61, 5]</td>
+<td>[1.6, 4.0]</td>
+<td>[1.6, 4.0]</td>
 </tr>
 <tr>
 <td>z</td>
@@ -1764,21 +1805,33 @@
 </tr>
 <tr>
 <td>w0</td>
+<td>[-3, -0.33] (wCDM/w0wa)</td>
 <td>—</td>
-<td>[-3, -0.33]</td>
-<td>[-3, -0.33]</td>
+<td>—</td>
 </tr>
 <tr>
 <td>wa</td>
+<td>[-3, 3] (w0wa only)</td>
 <td>—</td>
 <td>—</td>
-<td>[-3, 3]</td>
 </tr>
 <tr>
 <td>mnu</td>
 <td>[0, 1] eV</td>
-<td>[0, 1] eV</td>
-<td>[0, 1] eV</td>
+<td>0.06 eV (fixed)</td>
+<td>0.06 eV (fixed)</td>
+</tr>
+<tr>
+<td>Omega_k0</td>
+<td>0 (fixed)</td>
+<td>[-0.1, 0.1]</td>
+<td>0 (fixed)</td>
+</tr>
+<tr>
+<td>alpha_s</td>
+<td>—</td>
+<td>—</td>
+<td>[-0.1, 0.1]</td>
 </tr>
 <tr>
 <td>log10TAGN</td>

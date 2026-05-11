@@ -252,25 +252,32 @@ def _tm_fast(n, thetagrid, tmin, nn, coeff_j):
 
 def get_W_ell(thetagrid, Nmax, ells, N_thread):
     """
-    kernel function Tm-
+    Compute harmonic-space COSEBI kernels W_n(ell) for n = 1..Nmax.
 
-    Parameters:
+    The T_n^- real-space kernels are evaluated at full mpmath precision
+    (150 decimal digits) via ``_tm_fast``.  All Nmax kernels are then
+    stacked into a single ``(N_theta, Nmax)`` integrand matrix and passed
+    to pylevin in **one batched Levin call**, replacing the previous serial
+    loop of N separate pylevin instances.  The mathematical result and
+    numerical precision are identical to the serial version.
+
+    Parameters
     ----------
-    n: integer
-        cosebi index
-    z: float or array
-        log(theta/theta_min)
-    nn: mpmath
-        normalizations from get_roots
-    rn: coeff_j
-        matrix elements from get_roots
+    thetagrid : np.ndarray
+        Angular separation grid in radians (log-spaced).
+    Nmax : int
+        Maximum COSEBI mode index.
+    ells : np.ndarray
+        Multipoles at which W_n(ell) is evaluated.
+    N_thread : int
+        Number of threads passed to pylevin.
 
     Returns
     -------
-    tm (mp.math)
-        tminus kernel function
+    dict
+        Keys ``1..Nmax`` map to 1-D arrays of length ``len(ells)``;
+        key ``"metadata"`` holds ``{"THMIN": tmin, "THMAX": tmax}``.
     """
-
     print("start calculating roots and norms:")
 
     tmax = thetagrid[-1]
@@ -279,41 +286,47 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
     rn, nn, coeff_j = get_roots_and_norms(tmax, tmin, Nmax)
     print("done")
     ns = np.arange(1, Nmax + 1)
-    w_ells = {}
 
-    print("start performing the bessel integrals")
-    for n in ns:
-        print(n, "/", Nmax)
-        # Vectorized float64 kernel evaluation (replaces mpmath-based tm() loop)
-        Tm = _tm_fast(n, thetagrid, thetagrid[0], nn, coeff_j)
-        f_of_x = (thetagrid * Tm).reshape([len(thetagrid), 1])
+    # ------------------------------------------------------------------
+    # Step 1: evaluate all T_n^- kernels (full mpmath precision, no change)
+    # Shape of f_of_x: (N_theta, Nmax) — each column is theta * T_n^-(theta)
+    # ------------------------------------------------------------------
+    print("start evaluating kernels")
+    f_of_x = np.column_stack(
+        [thetagrid * _tm_fast(n, thetagrid, tmin, nn, coeff_j) for n in ns]
+    )  # (N_theta, Nmax)
 
-        integral_type = 1
-        logx = True  # Tells the code to create a logarithmic spline in x for f(x)
-        logy = True  # Tells the code to create a logarithmic spline in y for y = f(x)
+    # ------------------------------------------------------------------
+    # Step 2: single batched Levin call over all Nmax columns at once.
+    # pylevin treats each column of f_of_x as a separate integrand and
+    # returns result_levin of shape (len(ells), Nmax) in one C++ pass,
+    # saving Nmax-1 Python-level object creations and Levin setups.
+    # ------------------------------------------------------------------
+    print("start performing the bessel integrals (batched over all modes)")
+    integral_type = 1
+    logx = True  # logarithmic spline in x
+    logy = True  # logarithmic spline in y (T_n^- is positive on [tmin, tmax])
 
-        lp_single = levin.pylevin(
-            integral_type, thetagrid, f_of_x, logx, logy, N_thread
-        )
+    lp_all = levin.pylevin(integral_type, thetagrid, f_of_x, logx, logy, N_thread)
 
-        n_sub = 32  # number of collocation points in each bisection
-        n_bisec_max = 8  # maximum number of bisections used
-        rel_acc = 1e-8  # relative accuracy target
-        boost_bessel = True  # should the bessel functions be calculated with boost instead of GSL, higher accuracy at high Bessel orders
-        verbose = False  # should the code talk to you?
-        lp_single.set_levin(n_sub, n_bisec_max, rel_acc, boost_bessel, verbose)
+    n_sub = 32        # collocation points per bisection
+    n_bisec_max = 8   # maximum bisections
+    rel_acc = 1e-8    # relative accuracy target
+    boost_bessel = True   # use Boost Bessel functions (higher accuracy)
+    verbose = False
+    lp_all.set_levin(n_sub, n_bisec_max, rel_acc, boost_bessel, verbose)
 
-        result_levin = np.zeros((len(ells), 1))  # allocate the result
-        lp_single.levin_integrate_bessel_single(
-            thetagrid[0] * np.ones_like(ells),
-            thetagrid[-1] * np.ones_like(ells),
-            ells,
-            4 * np.ones_like(ells).astype(int),
-            result_levin,
-        )
+    result_levin = np.zeros((len(ells), Nmax))
+    lp_all.levin_integrate_bessel_single(
+        thetagrid[0] * np.ones_like(ells),
+        thetagrid[-1] * np.ones_like(ells),
+        ells,
+        4 * np.ones_like(ells).astype(int),
+        result_levin,
+    )
 
-        w_ells[n] = result_levin.flatten()
-
+    # Unpack columns back into the expected {n: array} dict layout
+    w_ells = {n: result_levin[:, n - 1] for n in ns}
     w_ells["metadata"] = {
         "THMIN": tmin,
         "THMAX": tmax,

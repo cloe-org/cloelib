@@ -92,6 +92,20 @@ def Cl_int_liz_ljz(WT1l, WT2l, Pkl, invH, invchi2, weights):
     return np.einsum("liz,ljz,lz,z,z,z->lij", WT1l, WT2l, Pkl, invH, invchi2, weights)
 
 
+@jax.jit
+def _cosebi_einsum_global(kernel_array, ell_weight, cl_stack):
+    # kernel_array: (n_modes, n_ell), ell_weight: (n_ell,), cl_stack: (n_pairs, 2, n_ell)
+    # -> (n_pairs, 2, n_modes)
+    return np.einsum("ml,l,pql->pqm", kernel_array, ell_weight, cl_stack)
+
+
+@jax.jit
+def _cosebi_einsum_perbin(kernel_array, ell_weight, cl_eb):
+    # kernel_array: (n_modes, n_ell), ell_weight: (n_ell,), cl_eb: (2, n_ell)
+    # -> (2, n_modes)
+    return np.einsum("ml,l,ql->qm", kernel_array, ell_weight, cl_eb)
+
+
 def _growth_rate_on_grid(perturbations, zs_target):
     # JAX-style backends; to be used for RSD calculation
     try:
@@ -208,6 +222,9 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
         software = "get_cosebis_from_cl (cloelib)"
 
     ns = np.asarray(ns)
+    # Single device->host sync for nmodes — moved outside any loop
+    nmodes = int(np.max(ns))
+    n_modes = ns.shape[0]
     # Pre-compute the ell weighting factor once: shape (n_ell,)
     ell_weight = ells * simpsons_weights_jit(len(ells)) / (2 * np.pi)
 
@@ -225,55 +242,57 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     is_global = not isinstance(first_val, dict)
 
     tomo_cosebis = {}
-    n_modes = ns.shape[0]
+
+    def _interp_cl(cl_map):
+        """Interpolate or return EE/BB slices onto `ells`."""
+        # Fast path: skip interp when ells is literally the same array object
+        # (common when called from get_cosebis which passes the same ells it
+        # used to compute the Cls).
+        if cl_map.ell is ells:
+            return cl_map.array[0, 0], cl_map.array[1, 1]
+        return (
+            np.interp(ells, cl_map.ell, cl_map.array[0, 0]),
+            np.interp(ells, cl_map.ell, cl_map.array[1, 1]),
+        )
 
     if is_global:
-        # All pairs share the same kernel: one batched einsum for all pairs.
+        # All pairs share the same kernel: one batched JIT'd einsum for all pairs.
         kernel_array, thmin, thmax = _resolve_w_ell(w_ell, she_she[0][0], ns)
+        n_pairs = len(she_she)
 
         # Stack EE and BB for all pairs: (n_pairs, 2, n_ell)
         cl_stack = np.stack(
-            [
-                np.stack(
-                    [
-                        np.interp(ells, cl_map.ell, cl_map.array[0, 0]),
-                        np.interp(ells, cl_map.ell, cl_map.array[1, 1]),
-                    ]
-                )
-                for _, cl_map in she_she
-            ]
+            [np.stack(list(_interp_cl(cl_map))) for _, cl_map in she_she]
         )
 
-        # kernel[m,l] * ell_weight[l] * cl[p,q,l] -> (n_pairs, 2, n_modes)
-        vals_all = np.einsum("ml,l,pql->pqm", kernel_array, ell_weight, cl_stack)
+        # Single JIT'd einsum: (n_pairs, 2, n_modes)
+        vals_all = _cosebi_einsum_global(kernel_array, ell_weight, cl_stack)
 
+        # Build all result arrays in 3 batch JAX ops instead of n_pairs*3
+        arr_all = np.zeros((n_pairs, 2, 2, n_modes), dtype=np.float64)
+        arr_all = arr_all.at[:, 0, 0, :].set(vals_all[:, 0, :])
+        arr_all = arr_all.at[:, 1, 1, :].set(vals_all[:, 1, :])
+
+        # Pure Python loop — no JAX ops, no device syncs
         for idx, (key, _) in enumerate(she_she):
-            arr = np.zeros((2, 2, n_modes), dtype=np.float64)
-            arr = arr.at[0, 0, :].set(vals_all[idx, 0])
-            arr = arr.at[1, 1, :].set(vals_all[idx, 1])
             tomo_cosebis[key] = COSEBI(
-                array=arr,
+                array=arr_all[idx],
                 mode=ns,
-                nmodes=int(np.max(ns)),
+                nmodes=nmodes,
                 thmin=thmin,
                 thmax=thmax,
                 software=software,
             )
     else:
-        # Per-bin kernels: one einsum per pair over both EE and BB simultaneously
+        # Per-bin kernels: one JIT'd einsum per pair over both EE and BB simultaneously
         for key, cl_map in she_she:
             kernel_array, thmin, thmax = _resolve_w_ell(w_ell, key, ns)
 
             # Stack EE and BB: (2, n_ell)
-            cl_eb = np.stack(
-                [
-                    np.interp(ells, cl_map.ell, cl_map.array[0, 0]),
-                    np.interp(ells, cl_map.ell, cl_map.array[1, 1]),
-                ]
-            )
+            cl_eb = np.stack(list(_interp_cl(cl_map)))
 
-            # kernel[m,l] * ell_weight[l] * cl[q,l] -> (2, n_modes)
-            vals = np.einsum("ml,l,ql->qm", kernel_array, ell_weight, cl_eb)
+            # JIT'd einsum: (2, n_modes)
+            vals = _cosebi_einsum_perbin(kernel_array, ell_weight, cl_eb)
 
             arr = np.zeros((2, 2, n_modes), dtype=np.float64)
             arr = arr.at[0, 0, :].set(vals[0])
@@ -281,7 +300,7 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
             tomo_cosebis[key] = COSEBI(
                 array=arr,
                 mode=ns,
-                nmodes=int(np.max(ns)),
+                nmodes=nmodes,
                 thmin=thmin,
                 thmax=thmax,
                 software=software,

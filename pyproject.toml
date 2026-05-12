@@ -33,7 +33,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 camb = ["camb==1.6.5"]
-classy = ["classy==3.3.1"]
+classy = ["classy==3.3.4"]
 comet-emu = ["comet-emu"]
 hmcode2020emu = ["HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"]
 euclidemu2 = ["euclidemu2==1.4.3"]

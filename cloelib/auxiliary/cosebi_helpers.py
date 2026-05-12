@@ -249,7 +249,7 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
 
     rn, nn, coeff_j = get_roots_and_norms(tmax, tmin, Nmax)
     print("done")
-    ns = np.arange(1, Nmax)
+    ns = np.arange(1, Nmax + 1)
     w_ells = {}
 
     print("start performing the bessel integrals")

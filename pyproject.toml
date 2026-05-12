@@ -18,26 +18,29 @@ authors = [
 ]
 
 dependencies = [
-    "interpax==0.3.3",
-    "jax==0.4.38",
-    "numpy<2.0",
-    "quadax==0.2.7",
-    "scipy<1.14",
-    "pytest==8.3.5",
-    "pytest-cov==6.1.1",
-    "mypy==1.17",
-    "pyinstrument>=4.6.2",
+    "interpax",
+    "jax",
+    "numpy>2.0",
+    "quadax",
+    "scipy>1.14",
+    "pytest",
+    "pytest-cov",
+    "mypy",
+    "pyinstrument",
     "cosmolib"
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-camb = ["camb"]
+camb = ["camb==1.6.5"]
+classy = ["classy==3.3.1"]
 comet-emu = ["comet-emu"]
+hmcode2020emu = ["HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"]
+euclidemu2 = ["euclidemu2==1.4.3"]
 pylevin = ["pylevin"]
 mpmath = ["mpmath"]
-tensorflow = ["tensorflow==2.13"]
-hmcode2020emu = ["HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"]
+tensorflow = ["tensorflow"]
+tf-keras = ["tf-keras"]
 
 [tool.hatch.version]
 source = "vcs"

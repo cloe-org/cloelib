@@ -8,8 +8,92 @@ from cloelib.auxiliary.math_utils import legendre
 from cloelib.auxiliary.fftlog import fftlog
 
 # General imports
+import functools
 from typing import Optional
 import numpy as np
+
+# cosmolib imports
+from cosmolib.data import PowerSpectrumMultipoles, TwoPointCorrelationMultipoles
+
+
+def format_output(stat: str):
+    """Decorator to format the output of the main GC observables.
+
+    Parameters
+    ----------
+    stat: str
+        Type of output to format ('PK' or '2PCF').
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            """cosmolib format returns in Mpc/h units, differently from cloelib standards"""
+            format_val = kwargs.get("format_type")
+
+            if format_val != "cosmolib":
+                return func(self, *args, **kwargs)
+
+            h_fid = self.spectro_power.background.h
+
+            if stat == "PK":
+                if "convolved" in func.__name__:
+                    mixing = (
+                        kwargs["mixing_matrix"]
+                        if "mixing_matrix" in kwargs
+                        else args[0]
+                    )
+                    scale_h = mixing.get("kout")
+                else:
+                    scale_h = kwargs["k"] if "k" in kwargs else args[0]
+                scale = scale_h * h_fid
+                if "k" in kwargs:
+                    kwargs["k"] = scale
+                else:
+                    args = (scale, *args[1:])
+            elif stat == "2PCF":
+                scale_h = kwargs["s"] if "s" in kwargs else args[0]
+                scale = scale_h / h_fid
+                if "s" in kwargs:
+                    kwargs["s"] = scale
+                else:
+                    args = (scale, *args[1:])
+
+            result = func(self, *args, **kwargs)
+
+            cosmo = {
+                key: float(val) if isinstance(val, float) else val
+                for key, val in vars(self.spectro_power.background).items()
+                if isinstance(val, (float, int)) and key != "h"
+            }
+            out = np.array(
+                [result.get(f"ell{i}", np.zeros(len(scale_h))) for i in range(5)]
+            )
+
+            if stat == "PK":
+                out *= h_fid**3
+                return PowerSpectrumMultipoles(
+                    k=scale_h,
+                    keff=scale_h,
+                    Nmodes=np.zeros_like(scale_h),
+                    multipoles=out,
+                    fiducial_cosmology=cosmo,
+                    zeff=self.spectro_power.redshift,
+                    nbar=self.nbar,
+                    Psn=1.0 / self.nbar,
+                )
+
+            elif stat == "2PCF":
+                return TwoPointCorrelationMultipoles(
+                    s=scale_h,
+                    multipoles=out,
+                    fiducial_cosmology=cosmo,
+                    zeff=self.spectro_power.redshift,
+                )
+
+        return wrapper
+
+    return decorator
 
 
 class LegendreMultipoles:
@@ -24,19 +108,13 @@ class LegendreMultipoles:
     ):
         """Initialize the class instance.
 
-        Parameters
-        ----------
-        spectro_power: SpectroPower
-            Class returning the anisotropic power spectrum (only density and
-            velocity field couplings; noise and systematics are included directly
-            here)
-        background_fiducial: Background
-            Background class for computing fiducial background distances
-        parameters: dict
-            Dictionary containing shot noise and parameters related to
-            observational systematics
-        nbar: float
-            Mean number denisty of the sample
+        Args:
+            spectro_power (SpectroPower): Class returning the anisotropic power spectrum (only density and
+                velocity field couplings; noise and systematics are included directly here)
+            background_fiducial (Background): Background class for computing fiducial background distances
+            parameters (dict): Dictionary containing shot noise and parameters related to
+                observational systematics
+            nbar (float): Mean number denisty of the sample
         """
         self.spectro_power = spectro_power
         self.redshift = spectro_power.redshift
@@ -55,15 +133,11 @@ class LegendreMultipoles:
 
         If the input is a scalar, it is converted to a NumPy array.
 
-        Parameters
-        ----------
-        param : scalar or array-like
-            Input parameter.
+        Args:
+            param (scalar|array-like): Input parameter.
 
-        Returns
-        -------
-        numpy.ndarray
-            Input parameter as a NumPy array.
+        Returns:
+            (numpy.ndarray): Input parameter as a NumPy array.
         """
         if np.isscalar(param):
             param = np.array([param])
@@ -74,24 +148,19 @@ class LegendreMultipoles:
     ) -> np.ndarray:
         r"""AP-distorted wavenumber.
 
-        .. math::
+        $$
             k(k_{\rm fid},\mu_{\rm fid}, z) &= k_{\rm fid} \
             \left[\frac{(\mu_{\rm fid})^2}{q_\parallel^2(z)} + \
             \frac{1-(\mu_{\rm fid}^2)}{q_\perp^2(z)}\right]^{1/2}
-        Parameters
-        ----------
-        k: np.ndarray
-           Fiducial wavenumber
-        mu: np.ndarray
-           Fiducial angle (cosinus) to the line of sight
-        z: float
-           Redshift
-        use_AP: bool
-            Flag to switch between with and without AP corrections
-        Returns
-        -------
-        kAP: np.ndarray
-           AP-distorted wavenumber
+        $$
+        Parameters:
+            k (np.ndarray): Fiducial wavenumber
+            mu (np.ndarray): Fiducial angle (cosinus) to the line of sight
+            z (float): Redshift
+            use_AP (bool): Flag to switch between with and without AP corrections
+
+        Returns:
+            kAP (np.ndarray): AP-distorted wavenumber
         """
         q_tr = self.ap_distortion.q_AP_tr(zs) if use_AP else 1.0
         q_lo = self.ap_distortion.q_AP_lo(zs) if use_AP else 1.0
@@ -231,26 +300,47 @@ class LegendreMultipoles:
             1.0 - self.parameters["fout"]
         ) ** 2 + self._Pk2d_noise(k, mu)
 
-    def power_multipoles(
-        self,
-        k: np.ndarray,
-        ells: Optional[np.ndarray] = None,
-        use_AP: Optional[bool] = True,
-    ) -> dict:
-        r"""Power spectrum Legendre multipoles.
+    def _Pk2d_term_tot(
+        self, k: np.ndarray, mu: np.ndarray, term_list: list
+    ) -> np.ndarray:
+        r"""2D power spectrum of specific RSD terms, accounting for systematics.
 
         Parameters
         ----------
         k: np.ndarray
             Wavenumber
-        ells: np.ndarray
-            Legendre multipole order
-        use_AP: bool
-            Flag to switch between with and without AP corrections
+        mu: np.ndarray
+            Angle (cosinus) to the line of sight
+        term_list: list
+            List of terms to compute
         Returns
         -------
-        multipoles: dict
-            Power spectrum Legendre multipoles
+        Pk2d_term_tot: np.ndarray
+            2D power spectrum of specific RSD terms
+        """
+        return (
+            self.spectro_power.Pk2d_term_rsd(k, mu, term_list=term_list)
+            * self._damping_function(k, mu)
+            * (1.0 - self.parameters["fout"]) ** 2
+        )
+
+    @format_output("PK")
+    def power_multipoles(
+        self,
+        k: np.ndarray,
+        ells: Optional[np.ndarray] = None,
+        use_AP: Optional[bool] = True,
+        format_type: Optional[str] = None,
+    ) -> dict:
+        r"""Power spectrum Legendre multipoles.
+
+        Parameters:
+            k (np.ndarray): Wavenumber
+            ells (np.ndarray): Legendre multipole order
+            use_AP (bool): Flag to switch between with and without AP corrections
+            format_type (str): Type of output format
+        Returns:
+            multipoles (dict): Power spectrum Legendre multipoles
         """
         ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
         AP_factor = (
@@ -270,6 +360,7 @@ class LegendreMultipoles:
                 "ab,b,b->a", Pk2d_tot, leg, self.mu_weights
             )
             multipoles[f"ell{ell}"] *= 2.0 * prefactors[i]
+
         return multipoles
 
     def power_term_multipoles(
@@ -281,20 +372,14 @@ class LegendreMultipoles:
     ) -> dict:
         r"""Power spectrum Legendre multipoles of specified terms.
 
-        Parameters
-        ----------
-        k: np.ndarray
-            Wavenumber
-        term_list: list
-            List of terms to compute
-        ells: np.ndarray
-            Legendre multipole order
-        use_AP: bool
-            Flag to switch between with and without AP corrections
-        Returns
-        -------
-        multipoles: dict
-            Power spectrum Legendre multipoles of specified terms
+        Parameters:
+            k (np.ndarray): Wavenumber
+            term_list (list): List of terms to compute
+            ells (np.ndarray): Legendre multipole order
+            use_AP (bool): Flag to switch between with and without AP corrections
+
+        Returns:
+            multipoles (dict): Power spectrum Legendre multipoles of specified terms
         """
         ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
         AP_factor = (
@@ -309,7 +394,7 @@ class LegendreMultipoles:
         Pk2d = np.empty((len(term_list), len(k), len(self.mu_grid)))
         rsd_ids = [index for index, term in enumerate(term_list) if "noise" not in term]
         if rsd_ids:
-            Pk2d[rsd_ids] = self.spectro_power.Pk2d_term_rsd(
+            Pk2d[rsd_ids] = self._Pk2d_term_tot(
                 kAP, muAP, term_list=[term_list[index] for index in rsd_ids]
             )
         noise_ids = [index for index in range(len(term_list)) if index not in rsd_ids]
@@ -338,26 +423,24 @@ class LegendreMultipoles:
             multipoles[f"ell{ell}"] *= 2.0 * prefactors[i]
         return multipoles
 
+    @format_output("PK")
     def convolved_power_multipoles(
         self,
         mixing_matrix: dict,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
+        format_type: Optional[str] = None,
     ) -> dict:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
 
-        Parameters
-        ----------
-        mixing_matrix: dict
-            Dicitonary containing the mixing matrix
-        ells: np.ndarray
-            Legendre multipole order
-        use_AP: bool
-            Flag to switch between with and without AP corrections
-        Returns
-        -------
-        multipoles_out: dict
-            Convolved power spectrum Legendre multipoles
+        Parameters:
+            mixing_matrix (dict): Dicitonary containing the mixing matrix
+            ells (np.ndarray): Legendre multipole order
+            use_AP (bool): Flag to switch between with and without AP corrections
+            format_type (str): Type of output format
+
+        Returns:
+            multipoles_out (dict): Convolved power spectrum Legendre multipoles
         """
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
@@ -398,20 +481,14 @@ class LegendreMultipoles:
     ) -> dict:
         r"""Convolved power spectrum multipoles of specified terms.
 
-        Parameters
-        ----------
-        mixing_matrix: dict
-            Dicitonary containing the mixing matrix
-        term_list: list
-            List of terms to compute
-        ells: np.ndarray
-            Legendre multipole order
-        use_AP: bool
-            Flag to switch between with and without AP corrections
-        Returns
-        -------
-        multipoles_out: dict
-            Convolved power spectrum Legendre multipoles of specified terms
+        Parameters:
+            mixing_matrix (dict): Dicitonary containing the mixing matrix
+            term_list (list): List of terms to compute
+            ells (np.ndarray): Legendre multipole order
+            use_AP (bool): Flag to switch between with and without AP corrections
+
+        Returns:
+            multipoles_out (dict): Convolved power spectrum Legendre multipoles of specified terms
         """
         ells_tot = [0, 2, 4]
         ells = self._ensure_array(ells) if ells is not None else ells_tot
@@ -462,6 +539,7 @@ class LegendreMultipoles:
         """
         return np.exp(-((k / kcut) ** pow))
 
+    @format_output("2PCF")
     def two_point_correlation_multipoles(
         self,
         s: np.ndarray,
@@ -472,6 +550,7 @@ class LegendreMultipoles:
         nk: Optional[int] = 2048,
         kcut: Optional[float] = 0.4,
         pow: Optional[float] = 2,
+        format_type: Optional[str] = None,
     ) -> dict:
         r"""Two-point correlation function Legendre multipoles.
 
@@ -493,6 +572,8 @@ class LegendreMultipoles:
             Cutoff scale for exponential damping
         pow: float
             Power index for exponential damping
+        format_type: str
+            Type of output format
         Returns
         -------
         multipoles: dict
@@ -518,4 +599,5 @@ class LegendreMultipoles:
             transformer = fftlog(x=k_hnkl, fx=y_array, nu=2)
             r_grid, transformed_log = transformer.fftlog(ell=ell)
             xi_multipoles[f"ell{ell}"] = np.interp(s, r_grid, transformed_log)
+
         return xi_multipoles

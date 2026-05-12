@@ -64,7 +64,7 @@ def camb_linearperturbations_instance(camb_background_instance, zs):
 @pytest.fixture(scope="module")
 def camb_nonlinearperturbations_instance(camb_background_instance, zs):
     """Fixture to create an instance of CAMBNonLinearPerturbations."""
-    camb_instance = CAMBNonLinearPerturbations(camb_background_instance, zs)
+    camb_instance = CAMBNonLinearPerturbations(camb_background_instance, None, zs)
     return camb_instance
 
 

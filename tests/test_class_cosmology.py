@@ -25,6 +25,7 @@ def class_background_instance(scope="module"):
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        alpha_s=0.0,
         mnu=0.0,
         w0=-1.0,
         wa=0.0,
@@ -62,7 +63,8 @@ def test_class_background_required_attributes(class_background_instance):
     attributes_found = {
         name
         for name, value in contents
-        if not callable(value) and not name.startswith("_")
+        if (not callable(value) or (callable(value) and isinstance(value, float)))
+        and not name.startswith("_")
     }
     assert attributes_required <= attributes_found
 

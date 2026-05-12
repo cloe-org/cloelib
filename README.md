@@ -11,6 +11,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 [![Linting: Ruff](https://img.shields.io/badge/linting-ruff-purple?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
 [![Code Style: Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg?logo=prettier&logoColor=white)](https://prettier.io/)
 [![Type Checking: mypy](https://img.shields.io/badge/type%20checking-mypy-8A2BE2?logo=mypy&logoColor=white)](https://mypy.readthedocs.io/)
+[![PyPI version](https://img.shields.io/pypi/v/cloelib.svg?logo=pypi&logoColor=white)](https://pypi.org/project/cloelib/)
 
 ---
 
@@ -53,9 +54,18 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | NA                                                           | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                | NA                                                                 |
 | NA                                                           | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
 | NA                                                           | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
-| [hi_class](https://github.com/emiliobellini/hi_class_public) | [hi_class](https://github.com/emiliobellini/hi_class_public)                  | NA                                                                 |
+
 
 We do not provide installation support for `PBJ`.
+| Background                                        | Perturbations                                                                 | SpectroPower                                                       |
+| ------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [camb](https://camb.readthedocs.io)               | [camb](https://camb.readthedocs.io)                                           | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
+| [class](https://github.com/lesgourg/class_public) | [class](https://github.com/lesgourg/class_public)                             | [pbjcosmo](https://chiaramoretti.gitlab.io/pbj/)                   |
+| NA                                                | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)            | NA                                                                 |
+| NA                                                | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                | NA                                                                 |
+| NA                                                | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
+| NA                                                | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
+| NA                                                | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                         | NA                                                                 |
 
 <!-- --8<-- [end:supported-codes] -->
 
@@ -97,14 +107,16 @@ pip install .
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu]
+pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu]"
+> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react]"
 > ```
+
+The `react` extra installs [`MGEmu`](https://github.com/nebblu/MGEmus.git) together with the TensorFlow support it needs for the ReACT modified-gravity boost module. If you only need that stack, `pip install ".[react,camb]"` is usually enough to get started.
 
 You're all set! 🎉 Ready to compute cosmological observables.
 
@@ -236,7 +248,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/emiliobellini"><img src="https://avatars.githubusercontent.com/u/6113149?v=4?s=100" width="100px;" alt="emiliobellini"/><br /><sub><b>emiliobellini</b></sub></a><br /><a href="#maintenance-emiliobellini" title="Maintenance">🚧</a> <a href="#ideas-emiliobellini" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://miguelzuma.github.io/"><img src="https://avatars.githubusercontent.com/u/5014027?v=4?s=100" width="100px;" alt="Miguel Zumalacarregui"/><br /><sub><b>Miguel Zumalacarregui</b></sub></a><br /><a href="#maintenance-miguelzuma" title="Maintenance">🚧</a> <a href="#ideas-miguelzuma" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/inigosaezcasares"><img src="https://avatars.githubusercontent.com/u/56702840?v=4?s=100" width="100px;" alt="Iñigo Sáez Casares"/><br /><sub><b>Iñigo Sáez Casares</b></sub></a><br /><a href="#code-inigosaezcasares" title="Code">💻</a> <a href="#ideas-inigosaezcasares" title="Ideas, Planning, & Feedback">🤔</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/neelcosmo"><img src="https://avatars.githubusercontent.com/u/151792852?v=4?s=100" width="100px;" alt="Neel Shah"/><br /><sub><b>Neel Shah</b></sub></a><br /><a href="#code-neelcosmo" title="Code">💻</a> <a href="#ideas-neelcosmo" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/neelcosmo"><img src="https://avatars.githubusercontent.com/u/151792852?v=4?s=100" width="100px;" alt="Neel Shah"/><br /><sub><b>Neel Shah</b></sub></a><br /><a href="#code-neelcosmo" title="Code">💻</a> <a href="#ideas-neelcosmo" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-neelcosmo" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/FelicitasKeil"><img src="https://avatars.githubusercontent.com/u/70713596?v=4?s=100" width="100px;" alt="Felicitas Keil"/><br /><sub><b>Felicitas Keil</b></sub></a><br /><a href="#code-FelicitasKeil" title="Code">💻</a> <a href="#ideas-FelicitasKeil" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jipdebuck"><img src="https://avatars.githubusercontent.com/u/236796982?v=4?s=100" width="100px;" alt="Jip de Buck"/><br /><sub><b>Jip de Buck</b></sub></a><br /><a href="#userTesting-jipdebuck" title="User Testing">📓</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/HironaoMiyatake"><img src="https://avatars.githubusercontent.com/u/1507529?v=4?s=100" width="100px;" alt="Hironao Miyatake"/><br /><sub><b>Hironao Miyatake</b></sub></a><br /><a href="#ideas-HironaoMiyatake" title="Ideas, Planning, & Feedback">🤔</a></td>

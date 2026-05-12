@@ -89,14 +89,14 @@ pert = CAMBPerturbations(background=bg)
 # Define redshift distribution (normalized.)
 z = np.linspace(0.01, 3.0, 100)
 dndz = np.exp(-((z - 0.7) / 0.3)**2)  # Gaussian n(z)
-dndz = dndz / np.trapz(dndz, z)  # Normalize
+dndz = dndz / np.trapezoid(dndz, z)  # Normalize
 
 # Multiple tomographic bins
 dndz_bins = np.array([
     np.exp(-((z - 0.5) / 0.2)**2),
     np.exp(-((z - 1.0) / 0.3)**2),
 ])
-dndz_bins = dndz_bins / np.trapz(dndz_bins, z, axis=1)[:, np.newaxis]
+dndz_bins = dndz_bins / np.trapezoid(dndz_bins, z, axis=1)[:, np.newaxis]
 
 # Nuisance parameters
 nuisance = {

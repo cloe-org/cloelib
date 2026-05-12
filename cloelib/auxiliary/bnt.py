@@ -72,11 +72,11 @@ class BNTMatrixCalculator:
             lower triangular with ones on the diagonal.
         """
 
-        trapz = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
+        trapezoid = np.trapezoid if hasattr(np, "trapezoid") else np.trapezoid
 
         nz_arr = np.stack(self.dndz_list, axis=0)
-        A = trapz(nz_arr, self.z, axis=1)
-        B = trapz(nz_arr / self.chi[None, :], self.z, axis=1)
+        A = trapezoid(nz_arr, self.z, axis=1)
+        B = trapezoid(nz_arr / self.chi[None, :], self.z, axis=1)
 
         BNT_matrix = np.eye(self.nbins)
         BNT_matrix[1, 0] = -1.0

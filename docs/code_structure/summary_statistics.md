@@ -51,7 +51,7 @@ pert = CAMBPerturbations(background=bg)
 # Create tracers
 z = np.linspace(0.01, 3.0, 100)
 dndz = np.exp(-((z - 0.7) / 0.3)**2)
-dndz = dndz / np.trapz(dndz, z)
+dndz = dndz / np.trapezoid(dndz, z)
 
 tracer1 = ShearTracer(perturbations=pert, dndz=dndz[np.newaxis, :], z=z, nuisance_params={...})
 tracer2 = ShearTracer(perturbations=pert, dndz=dndz[np.newaxis, :], z=z, nuisance_params={...})
@@ -91,7 +91,7 @@ dndz_bins = np.array([
     np.exp(-((z - 1.0) / 0.3)**2),
     np.exp(-((z - 1.5) / 0.4)**2),
 ])
-dndz_bins = dndz_bins / np.trapz(dndz_bins, z, axis=1)[:, np.newaxis]
+dndz_bins = dndz_bins / np.trapezoid(dndz_bins, z, axis=1)[:, np.newaxis]
 
 tracer = ShearTracer(perturbations=pert, dndz=dndz_bins, z=z, ...)
 
@@ -306,7 +306,7 @@ class MyCustomStatistic:
         for i, scale in enumerate(scales):
             # Compute statistic for this scale
             integrand = self._compute_integrand(scale, W1, W2, P_k, z, k)
-            result[i] = np.trapz(integrand, z)
+            result[i] = np.trapezoid(integrand, z)
 
         return result
 ```
@@ -329,7 +329,7 @@ def test_custom_statistic():
 
     z = np.linspace(0.1, 2.0, 50)
     dndz = np.exp(-((z - 1.0) / 0.3)**2)
-    dndz = dndz / np.trapz(dndz, z)
+    dndz = dndz / np.trapezoid(dndz, z)
 
     tracer = ShearTracer(
         perturbations=pert,
@@ -384,7 +384,7 @@ def compute_Cl_limber(self, ell, W1, W2, z_grid, k_grid, P_k_z):
 
     # Integrate
     integrand = W1 * W2 * P_limber / (chi**2 * H_z)
-    C_ell = np.trapz(integrand, z_grid)
+    C_ell = np.trapezoid(integrand, z_grid)
 
     return C_ell
 ```
@@ -410,7 +410,7 @@ def compute_xi_from_Cl(theta, ells, C_ell):
 
         # Integrate
         integrand = ells * C_ell * bessel
-        xi[i] = np.trapz(integrand, ells) / (2 * np.pi)
+        xi[i] = np.trapezoid(integrand, ells) / (2 * np.pi)
 
     return xi
 ```
@@ -433,7 +433,7 @@ def compute_multipole(k, mu, P_k_mu, ell):
 
     # Integrate over μ
     integrand = P_k_mu * L_ell(mu)
-    P_ell = (2 * ell + 1) / 2.0 * np.trapz(integrand, mu)
+    P_ell = (2 * ell + 1) / 2.0 * np.trapezoid(integrand, mu)
 
     return P_ell
 ```

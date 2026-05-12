@@ -21,7 +21,11 @@ This module computes final statistical quantities for likelihood evaluation, inc
 
 These quantities are directly measurable and form the basis for cosmological parameter inference.
 
-!!! warning cloelib does not use internal interpolations. Keep redshift and wavenumber arrays to a maximum of 1500 elements for optimal performance. Otherwise, memory problems may arise. See [Performance Tips](#performance-tips) for details.
+!!! warning cloelib does not use internal interpolations. Keep redshift and wavenumber arrays to a maximum of 1500 elements for optimal performance. Otherwise, memory problems may arise.
+
+## Performance Tips
+
+`cloelib` does not use internal interpolations. Keep redshift and wavenumber arrays to a maximum of 1500 elements for optimal performance. Otherwise, memory problems may arise.
 
 ## Performance Tips
 

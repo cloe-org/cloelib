@@ -39,17 +39,17 @@ def camb_background_instance():
     ombh2 = 0.022
     Omega_b0 = ombh2 / h**2
     camb_instance = CAMBBackground(
-        H0=H0,
-        Omega_b0=Omega_b0,
-        Omega_cdm0=Omega_cdm0,
-        Omega_k0=0.0,
-        As=2e-9,
-        ns=0.96,
-        mnu=0.0,
-        w0=-1.0,
-        wa=0.0,
-        gamma_MG=0.0,
-        N_mnu=0,
+    H0=H0,
+    Omega_b0=Omega_b0,
+    Omega_cdm0=Omega_cdm0,
+    Omega_k0=0.0,
+    As=2e-9,
+    ns=0.96,
+    mnu=0.0,
+    w0=-1.0,
+    wa=0.0,
+    gamma_MG=0.0,
+    N_mnu=0,
     )
     return camb_instance
 
@@ -64,7 +64,7 @@ def camb_linearperturbations_instance(camb_background_instance, zs):
 @pytest.fixture(scope="module")
 def camb_nonlinearperturbations_instance(camb_background_instance, zs):
     """Fixture to create an instance of CAMBNonLinearPerturbations."""
-    camb_instance = CAMBNonLinearPerturbations(camb_background_instance, zs)
+    camb_instance = CAMBNonLinearPerturbations(camb_background_instance, None, zs)
     return camb_instance
 
 

@@ -41,6 +41,11 @@ pylevin = ["pylevin"]
 mpmath = ["mpmath"]
 tensorflow = ["tensorflow"]
 tf-keras = ["tf-keras"]
+react = [
+    "MGemu @ git+https://github.com/nebblu/MGEmus.git",
+    "tensorflow",
+    "tf-keras",
+]
 cosmopower-jax=["cosmopower-jax"]
 baccoemu = ["baccoemu"]
 emantis = ["emantis>=1.2.1"]

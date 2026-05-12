@@ -260,8 +260,6 @@ P_mg = mg_pert.matter_power_spectrum(zs, k)
 
 Stay within these training ranges when sampling. Outside them, the implementation clips emulator inputs and applies its configured high-redshift policy, which is convenient for robustness but should not be treated as a new calibration region.
 
-
-
 ### TabulatedBoost / TabulatedBoostedPerturbations
 
 Lightweight wrapper for applying a tabulated beyond-LCDM nonlinear boost to an existing nonlinear matter power spectrum.
@@ -343,7 +341,6 @@ boosted_perturbations = TabulatedBoostedPerturbations(
     tabulated_boost.MGboost_interp,
 )
 ```
-
 
 ### CosmoPowerJAXPerturbations
 

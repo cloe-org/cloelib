@@ -21,15 +21,16 @@ class Weyl_Perturbations:
     ops by the wrapped perturbations implementation.
     """
 
-    def __init__(self, perturbations_NL: Perturbations, 
-                 perturbations_lin: Perturbations, 
-                 redshifts: T, 
-                 z_ini: float):
-        
-    def __init__(self, perturbations_NL: Perturbations, perturbations_lin: Perturbations, redshifts: T, z_ini: float):
+    def __init__(
+        self,
+        perturbations_NL: Perturbations,
+        perturbations_lin: Perturbations,
+        redshifts: T,
+        z_ini: float,
+    ):
         self.perturbations_lin = perturbations_lin
         self.perturbations_NL = perturbations_NL
-        self.z = redshifts # Note: These are the redshifts at which the Weyl potential measurement will be performed.
+        self.z = redshifts  # Note: These are the redshifts at which the Weyl potential measurement will be performed.
         self.z_ini = float(z_ini)
 
         # Check that z_ini is smaller or equal to the maximum redshift in perturbations_NL.z, otherwise print error
@@ -42,7 +43,9 @@ class Weyl_Perturbations:
 
         # Check if perturbations_NL.k and perturbations_lin.k are the same, otherwise print warning (could lead to errors when calculating the boost factor)
         if not np.array_equal(perturbations_NL.k, perturbations_lin.k):
-            print("Warning: perturbations_NL.k and perturbations_lin.k are not the same.")
+            print(
+                "Warning: perturbations_NL.k and perturbations_lin.k are not the same."
+            )
 
         self.k = perturbations_NL.k
 
@@ -60,10 +63,14 @@ class Weyl_Perturbations:
         return self.perturbations_NL.growth_factor(zs, ks)
 
     def growth_rate(self) -> T:
-        # Note: Current implementations of CAMB/CLASS pertrubations classes do not allow to specify a zs argument for growth_rate(), it is always calculated at self.z; 
-        
-        z_target = np.asarray(self.z) # These are the redshifts at which the Weyl potential measurement will be performed, and at which the growth rate will be calculated for the RSD contribution to Cell.
-        z_source = np.asarray(self.perturbations_NL.z) # These are the redshifts at which the growth rate is calculated in the perturbations_NL object. 
+        # Note: Current implementations of CAMB/CLASS pertrubations classes do not allow to specify a zs argument for growth_rate(), it is always calculated at self.z;
+
+        z_target = np.asarray(
+            self.z
+        )  # These are the redshifts at which the Weyl potential measurement will be performed, and at which the growth rate will be calculated for the RSD contribution to Cell.
+        z_source = np.asarray(
+            self.perturbations_NL.z
+        )  # These are the redshifts at which the growth rate is calculated in the perturbations_NL object.
 
         # Build pairwise comparison matrix
         matches = np.isclose(z_target[:, None], z_source[None, :], rtol=0.0, atol=1e-12)
@@ -78,12 +85,14 @@ class Weyl_Perturbations:
         # Take first match along each row → indices in z_source which match z_target entries
         indices = np.argmax(matches, axis=1)
 
-        gr = self.perturbations_NL.growth_rate() # This is the growth rate at all redshifts in perturbations_NL.z.
-        return gr[indices] # This is returning the growth rate at the redshifts corresponding to self.z.
+        gr = (
+            self.perturbations_NL.growth_rate()
+        )  # This is the growth rate at all redshifts in perturbations_NL.z.
+        return gr[
+            indices
+        ]  # This is returning the growth rate at the redshifts corresponding to self.z.
 
-    def matter_power_spectrum(
-        self, zs: T, ks: T
-    ) -> T:  
+    def matter_power_spectrum(self, zs: T, ks: T) -> T:
         """
         Return boosted matter power spectrum:
           P_boosted(zs, ks) = boost(zs, ks) * P_base(z_ini_array, ks)
@@ -95,25 +104,21 @@ class Weyl_Perturbations:
         z_ini_arr = zs * 0 + self.z_ini
 
         # Evaluate the base power spectrum at z_ini_arr and ks
-        P_base = self.perturbations_lin.matter_power_spectrum(
-            z_ini_arr, ks
-        )
+        P_base = self.perturbations_lin.matter_power_spectrum(z_ini_arr, ks)
 
         # Evaluate the linear and nonlinear power spectra at zs and ks
-        pk_linear_growth = self.perturbations_lin.matter_power_spectrum(zs, ks) 
-        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum(zs, ks)  
+        pk_linear_growth = self.perturbations_lin.matter_power_spectrum(zs, ks)
+        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum(zs, ks)
 
-        boost = pk_nonlinear_growth / pk_linear_growth 
+        boost = pk_nonlinear_growth / pk_linear_growth
 
         # Multiply the base power spectrum by the boost factor
         return boost * P_base
-    
-    def matter_power_spectrum_cb(
-        self, zs: T, ks: T
-    ) -> T:  
+
+    def matter_power_spectrum_cb(self, zs: T, ks: T) -> T:
         """
         Added for consistency with perturbations protocol; we apply a boost equivalently to the implementation in matter_power_spectrum.
-        
+
         Return boosted matter power spectrum of cold dark matter + baryons:
           P_boosted(zs, ks) = boost(zs, ks) * P_base(z_ini_array, ks)
 
@@ -124,22 +129,18 @@ class Weyl_Perturbations:
         z_ini_arr = zs * 0 + self.z_ini
 
         # Evaluate the base power spectrum at z_ini_arr and ks
-        P_base = self.perturbations_lin.matter_power_spectrum_cb(
-            z_ini_arr, ks
-        )
+        P_base = self.perturbations_lin.matter_power_spectrum_cb(z_ini_arr, ks)
 
         # Evaluate the linear and nonlinear power spectra at zs and ks
-        pk_linear_growth = self.perturbations_lin.matter_power_spectrum_cb(zs, ks) 
-        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum_cb(zs, ks)  
+        pk_linear_growth = self.perturbations_lin.matter_power_spectrum_cb(zs, ks)
+        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum_cb(zs, ks)
 
-        boost = pk_nonlinear_growth / pk_linear_growth 
-        P_base = self.perturbations_NL.matter_power_spectrum(
-            z_ini_arr, ks, hubble_units=hubble_units, k_hunit=k_hunit
-        )
+        boost = pk_nonlinear_growth / pk_linear_growth
+        P_base = self.perturbations_NL.matter_power_spectrum(z_ini_arr, ks)
 
         # Evaluate the linear and nonlinear power spectra at zs and ks
-        pk_linear_growth = self.perturbations_lin.matter_power_spectrum(zs, ks, hubble_units=hubble_units, k_hunit=k_hunit) 
-        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum(zs, ks, hubble_units=hubble_units, k_hunit=k_hunit)  
+        pk_linear_growth = self.perturbations_lin.matter_power_spectrum(zs, ks)
+        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum(zs, ks)
 
         # Compute the boost factor
         boost = pk_nonlinear_growth / pk_linear_growth

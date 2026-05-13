@@ -41,7 +41,7 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
         )
 
         # Defines z_ini
-        self.z_ini = self.perturbations.z_ini # We can directly access z_ini from the Weyl_Perturbations instance, which is set at initialization of that class.
+        self.z_ini = self.perturbations.z_ini  # We can directly access z_ini from the Weyl_Perturbations instance, which is set at initialization of that class.
 
         # Calculate sigma8 at z_ini by calling sigma8 at redshift 0 and multiplying by growth factor at z_ini (and dividing through growth factor today in case it's not already normalized to 1).
         self.sigma8_ini = (
@@ -123,7 +123,7 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
 
     def __init__(
         self,
-        perturbations: Perturbations,
+        perturbations: Weyl_Perturbations,
         dndz: np.ndarray,
         z: np.ndarray,
         nuisance_params: dict,
@@ -144,20 +144,7 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         self.Jhat_params = Jhat_params
 
         # Defines z_ini
-        if hasattr(
-            self.perturbations, "z_ini"
-        ):  # True if perturbations is an instance of Weyl_Perturbations)
-            self.z_ini = self.perturbations.z_ini
-        else:
-            # Fallback: use the first entry of perturbations.z,
-            # but ensure the array has exactly one element.
-            if len(self.perturbations.z) != 1:
-                raise ValueError(
-                    f"Cannot infer z_ini from perturbations.z: expected length 1, "
-                    f"got length {len(self.perturbations.z)}. "
-                    "Multi-z arrays would lead to inconsistent C_ell calculations."
-                )
-            self.z_ini = self.perturbations.z[0]
+        self.z_ini = self.perturbations.z_ini  # We can directly access z_ini from the Weyl_Perturbations instance, which is set at initialization of that class.
 
         # Calculate sigma8 at z_ini by calling sigma8 at redshift 0 and multiplying by growth factor at z_ini (and dividing through growth factor today in case it's not already normalized to 1).
         self.sigma8_ini = (

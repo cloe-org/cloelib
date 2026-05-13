@@ -39,7 +39,9 @@ class hi_classBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        alpha_s: float = 0.0,
         params_smg: Optional[dict] = {},
+        **kwargs,
     ) -> None:
         """
         Initialize the hi_classBackground instance with cosmological parameters.
@@ -51,6 +53,7 @@ class hi_classBackground:
             Omega_k0 (float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
+            alpha_s (float): Running of the scalar spectral index (d ns / d ln k).
             mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
@@ -68,6 +71,7 @@ class hi_classBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
+        self.alpha_s = alpha_s
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = (
@@ -94,6 +98,7 @@ class hi_classBackground:
         )
         self.interface_args["hi_classparams"]["Omega_k"] = self.Omega_k0
         self.interface_args["hi_classparams"]["n_s"] = self.ns
+        self.interface_args["hi_classparams"]["alpha_s"] = self.alpha_s
         self.interface_args["hi_classparams"]["A_s"] = self.As
         self.interface_args["hi_classparams"]["w0_fld"] = self.w0  # or w0
         self.interface_args["hi_classparams"]["wa_fld"] = self.wa  # or wa

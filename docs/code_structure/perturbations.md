@@ -439,6 +439,7 @@ Pure JAX implementation for automatic differentiation.
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
 <<<<<<< 287-hi-class
+
 ### hi_classPerturbations
 
 Interfaces with [hi_class](https://github.com/emiliobellini/hi_class_public).
@@ -458,7 +459,9 @@ pert = hi_classPerturbations(
     # other parameters
 )
 ```
+
 =======
+
 ### EmantisPerturbations
 
 Accurate and fast emulator of the nonlinear matter power spectrum in modified gravity using [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis).
@@ -472,7 +475,7 @@ Accurate and fast emulator of the nonlinear matter power spectrum in modified gr
 - Fast predictions of the nonlinear matter power spectrum in f(R) gravity;
 - Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;
 - Limited to the Hu & Sawicki model (n=1) with fR0 as free parameter;
->>>>>>> main
+  > > > > > > > main
 
 ## Adding Your Own Perturbations Implementation
 

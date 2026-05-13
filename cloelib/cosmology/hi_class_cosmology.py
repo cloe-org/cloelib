@@ -13,9 +13,6 @@ import warnings
 # Cosmology imports
 try:
     from hiclassy import HiClass  # type: ignore
-    from hiclassy import __file__ as hiclassyfile
-
-    print(f"Loaded hi_class from {hiclassyfile}.")
 except ImportError as e:
     raise ImportError("hiclassy could not be imported.") from e
 

@@ -21,6 +21,11 @@ class Weyl_Perturbations:
     ops by the wrapped perturbations implementation.
     """
 
+    def __init__(self, perturbations_NL: Perturbations, 
+                 perturbations_lin: Perturbations, 
+                 redshifts: T, 
+                 z_ini: float):
+        
     def __init__(self, perturbations_NL: Perturbations, perturbations_lin: Perturbations, redshifts: T, z_ini: float):
         self.perturbations_lin = perturbations_lin
         self.perturbations_NL = perturbations_NL
@@ -77,7 +82,7 @@ class Weyl_Perturbations:
         return gr[indices] # This is returning the growth rate at the redshifts corresponding to self.z.
 
     def matter_power_spectrum(
-        self, zs: T, ks: T, hubble_units: bool = False, k_hunit: bool = False
+        self, zs: T, ks: T
     ) -> T:  
         """
         Return boosted matter power spectrum:
@@ -90,6 +95,44 @@ class Weyl_Perturbations:
         z_ini_arr = zs * 0 + self.z_ini
 
         # Evaluate the base power spectrum at z_ini_arr and ks
+        P_base = self.perturbations_lin.matter_power_spectrum(
+            z_ini_arr, ks
+        )
+
+        # Evaluate the linear and nonlinear power spectra at zs and ks
+        pk_linear_growth = self.perturbations_lin.matter_power_spectrum(zs, ks) 
+        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum(zs, ks)  
+
+        boost = pk_nonlinear_growth / pk_linear_growth 
+
+        # Multiply the base power spectrum by the boost factor
+        return boost * P_base
+    
+    def matter_power_spectrum_cb(
+        self, zs: T, ks: T
+    ) -> T:  
+        """
+        Added for consistency with perturbations protocol; we apply a boost equivalently to the implementation in matter_power_spectrum.
+        
+        Return boosted matter power spectrum of cold dark matter + baryons:
+          P_boosted(zs, ks) = boost(zs, ks) * P_base(z_ini_array, ks)
+
+        Here z_ini_array is an array matching zs (type & shape) where every entry == self.z_ini.
+        """
+
+        # create z_ini array matching zs' type & shape
+        z_ini_arr = zs * 0 + self.z_ini
+
+        # Evaluate the base power spectrum at z_ini_arr and ks
+        P_base = self.perturbations_lin.matter_power_spectrum_cb(
+            z_ini_arr, ks
+        )
+
+        # Evaluate the linear and nonlinear power spectra at zs and ks
+        pk_linear_growth = self.perturbations_lin.matter_power_spectrum_cb(zs, ks) 
+        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum_cb(zs, ks)  
+
+        boost = pk_nonlinear_growth / pk_linear_growth 
         P_base = self.perturbations_NL.matter_power_spectrum(
             z_ini_arr, ks, hubble_units=hubble_units, k_hunit=k_hunit
         )

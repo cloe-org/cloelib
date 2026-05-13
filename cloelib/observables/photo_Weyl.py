@@ -6,7 +6,7 @@ Both classes are compatible with the Tracer protocol.
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.cosmology.cosmology import Perturbations
+from cloelib.cosmology.Weyl_cosmology import Weyl_Perturbations
 from cloelib.observables.photo import PositionsTracer, get_photo_rsd
 
 # General imports
@@ -24,7 +24,7 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
 
     def __init__(
         self,
-        perturbations: Perturbations,  # Note: We should require this to be an instance of Weyl_perturbations
+        perturbations: Weyl_Perturbations,  # Note: We require this to be an instance of Weyl_perturbations
         dndz: np.ndarray,
         z: np.ndarray,
         nuisance_params: dict,
@@ -41,21 +41,7 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
         )
 
         # Defines z_ini
-        if hasattr(
-            self.perturbations, "z_ini"
-        ):  # True if perturbations is an instance of Weyl_Perturbations)
-            self.z_ini = self.perturbations.z_ini
-        else:
-            # Fallback: use the first entry of perturbations.z,
-            # but ensure the array has exactly one element.
-            # Note: This will now lead to an error if perturbations is an instance of CAMB_perturbations (perturbations.z now enforced to contain 0 in recent changes). It still works with CLASS_perturbations. But we should probably remove this soon and enforce the use of the Weyl_perturbations class.
-            if len(self.perturbations.z) != 1:
-                raise ValueError(
-                    f"Cannot infer z_ini from perturbations.z: expected length 1, "
-                    f"got length {len(self.perturbations.z)}. "
-                    "Multi-z arrays would lead to inconsistent C_ell calculations."
-                )
-            self.z_ini = self.perturbations.z[0]
+        self.z_ini = self.perturbations.z_ini # We can directly access z_ini from the Weyl_Perturbations instance, which is set at initialization of that class.
 
         # Calculate sigma8 at z_ini by calling sigma8 at redshift 0 and multiplying by growth factor at z_ini (and dividing through growth factor today in case it's not already normalized to 1).
         self.sigma8_ini = (

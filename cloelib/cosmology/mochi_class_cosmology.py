@@ -573,7 +573,7 @@ class mochiCLASSLinearPerturbations:
         )  # type: ignore[union-attr]
         # To match array convention of CAMB
         return self.Pk_linear  # * (self.background.h) ** 3
-    
+
     def matter_power_spectrum_cb(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
@@ -618,7 +618,6 @@ class mochiCLASSLinearPerturbations:
             )
         # To match array convention of CAMB
         return self.Pk_cb_linear
-
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -682,7 +681,7 @@ class mochiCLASSLinearPerturbations:
 
 class mochiCLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
-    
+
     def __init__(
         self,
         background: Background,
@@ -722,7 +721,7 @@ class mochiCLASSNonLinearPerturbations:
         if background.mg_stable_basis_on:
             self.interface_args["CLASSparams"]["non_linear"] = "none"
         elif hmcode_version is not None:
-                self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
+            self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])

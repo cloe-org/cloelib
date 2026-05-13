@@ -188,6 +188,78 @@ Accurate and fast emulators of the linear, non-linear, and baryonic power spectr
 - Large cosmological parameter range;
 - Neural network evaluation with JAX;
 
+### ReACTEmu / BoostedPerturbations
+
+Modified-gravity nonlinear boost module based on [ReACT](https://arxiv.org/abs/2005.12184) and the [MGEmu](https://github.com/nebblu/MGEmus.git) emulator package.
+
+**Location**: `cloelib/cosmology/ReACTEmu_cosmology.py`
+
+**When to use**: Fast nonlinear modified-gravity corrections on top of an existing LCDM perturbation pipeline.
+
+**Features**:
+
+- Supports `fr`, `dgp`, `gamma`, `mu`, `wCDM`, `w0waCDM`, and `ide` model tags
+- Builds a boost interpolator `B(z, k)` and applies it to a baseline nonlinear matter spectrum
+- Includes configurable high-redshift behavior via `high_z_policy` and `z_decay`
+- Exposes boosted `matter_power_spectrum`, `growth_factor`, and `sigma8_0`
+
+**Installation**:
+
+```sh
+pip install ".[react]"
+```
+
+This extra installs [`MGEmu`](https://github.com/nebblu/MGEmus.git) together with the TensorFlow support it expects. In environments where you want to drive the baseline spectra with CAMB as well, `pip install ".[react,camb]"` is a sensible default.
+
+**Example**:
+
+```python
+import numpy as np
+
+from cloelib.cosmology.camb_cosmology import (
+    CAMBBackground,
+    CAMBLinearPerturbations,
+    CAMBNonLinearPerturbations,
+)
+from cloelib.cosmology.ReACTEmu_cosmology import (
+    MGemuNonlinearBoost,
+    BoostedPerturbations,
+)
+
+zs = np.array([0.0, 0.5, 1.0])
+k = np.logspace(-3, 1, 100)
+
+background = CAMBBackground(...)
+linear_pert = CAMBLinearPerturbations(background, zs)
+nonlinear_pert = CAMBNonLinearPerturbations(background, zs)
+
+boost = MGemuNonlinearBoost(
+    background,
+    linear_pert,
+    zs,
+    gravity_model="fr",
+    mgpars={"fr0": 1e-5},
+)
+mg_pert = BoostedPerturbations(linear_pert, nonlinear_pert, boost.MGboost_interp)
+P_mg = mg_pert.matter_power_spectrum(zs, k)
+```
+
+**Usage notes**:
+
+- `MGemuNonlinearBoost` expects an existing background plus a linear LCDM perturbation object. `BoostedPerturbations` then combines that boost with a baseline nonlinear spectrum.
+- Internal wavenumbers follow the standard `cloelib` convention in `1/Mpc`, even when external emulator data are defined in `h/Mpc`.
+- For models other than `wCDM`, `w0waCDM`, `ide`, and `mu`, the current implementation assumes a LCDM background with `w0 = -1` and `wa = 0`.
+
+**Emulator ranges**:
+
+- `fr`: `Omega_m` 0.24-0.35, `Omega_b` 0.04-0.06, `H0` 63-75, `ns` 0.9-1.01, `As` 1.7e-9-2.5e-9, `Omega_nu` 1e-11-0.00317, `fR0` 1e-10-1e-4, `z` 0-2.0
+- `dgp`: `Omega_m` 0.2899-0.3392, `Omega_b` 0.04044-0.05686, `H0` 62.9-73.1, `ns` 0.9432-0.9862, `As` 1.5e-9-2.7e-9, `Omega_nu` 1e-11-0.00317, `omegarc` 1e-3-100, `z` 0-2.4
+- `gamma`: `Omega_m` 0.2899-0.3392, `Omega_b` 0.04044-0.05686, `H0` 63.8-73.1, `ns` 0.9432-0.9862, `As` 1.9511e-9-2.2669e-9, `Omega_nu` 1e-11-0.00317, `gamma` 0-1, `q1` -5 to 5, `z` 0-2.4
+- `mu`: `Omega_m` 0.24-0.4, `H0` 60-84, `As` 1.7e-9-2.5e-9, `w0` -1.5 to -0.5, `wa` -0.5 to 0.5, `mu0` -0.999 to 3, `c1` -0.3333 to 1, `lam` 0-2, `q1/q2/q3` -2 to 2, `z` 0-2.5
+- `wCDM`, `w0waCDM`, `ide` (shared `ds` backend): `Omega_m` 0.22-0.37, `Omega_b` 0.03-0.08, `H0` 63-84, `ns` 0.8-1.1, `As` 1.7e-9-2.5e-9, `Omega_nu` 1e-11-0.00317, `w0` -1.3 to -0.5, `wa` -2 to 0.5, `xi` 0-150, `z` 0-2.5
+
+Stay within these training ranges when sampling. Outside them, the implementation clips emulator inputs and applies its configured high-redshift policy, which is convenient for robustness but should not be treated as a new calibration region.
+
 ### TabulatedBoost / TabulatedBoostedPerturbations
 
 Lightweight wrapper for applying a tabulated beyond-LCDM nonlinear boost to an existing nonlinear matter power spectrum.
@@ -269,13 +341,6 @@ boosted_perturbations = TabulatedBoostedPerturbations(
     tabulated_boost.MGboost_interp,
 )
 ```
-
-**Usage notes**:
-
-- The boost file is assumed to be defined relative to a LCDM baseline spectrum.
-- `TabulatedNonlinearBoost` sorts `z_cols` internally, so the input columns do not have to be pre-sorted.
-- A small synthetic test can cover interpolation behavior, but realistic validation still depends on the physical boost tables you provide.
-- The example notebook workflow can download DAKAR2 boost tables externally, but the core module itself does not depend on network access.
 
 ### CosmoPowerJAXPerturbations
 

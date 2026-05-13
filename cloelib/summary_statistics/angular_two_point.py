@@ -4,6 +4,7 @@
 from cloelib.observables.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
+from cloelib.observables.cmb import CMBLensingTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import simpsons_weights_jit
 from cloelib.profiling import profile_function
@@ -12,7 +13,6 @@ from cloelib.profiling import profile_function
 import interpax
 import jax.numpy as np
 import jax
-from scipy import integrate
 
 # results imports
 from cosmolib.data import AngularPowerSpectrum, COSEBI
@@ -117,10 +117,133 @@ def _growth_rate_on_grid(perturbations, zs_target):
     return np.interp(zs_target, z_raw, f_raw, left=f_raw[0], right=f_raw[-1])
 
 
+def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
+    """
+    Compute EE and BB COSEBIs for all SHE-SHE keys in `cells`.
+
+    Can be used as a standalone function without instantiating `AngularTwoPoint`
+    if angular power spectra are already available.
+
+    Parameters
+    ----------
+    cells : dict
+        Angular power spectra in cosmolib format.
+    ells : jax.numpy.ndarray
+        Multipoles at which the integration is performed.
+    w_ell : array-like
+        Harmonic-space COSEBIs kernels.
+    ns : array-like
+        Mode indices selecting kernels from `w_ell`.
+    software : str, optional
+        Software provenance tag stored in the output `COSEBI` objects.
+        Defaults to ``'get_cosebis_from_cl (cloelib)'``.
+
+    Returns
+    -------
+    dict
+        Dictionary keyed like `cells` with `COSEBI` values of shape ``(2, 2, n_modes)``.
+    """
+    if software is None:
+        software = "get_cosebis_from_cl (cloelib)"
+    w_ell = np.asarray(w_ell)
+    ns = np.asarray(ns)
+    weights = simpsons_weights_jit(len(ells))
+    tomo_cosebis = {}
+
+    for key, cl_map in cells.items():
+        if (key[0] != "SHE") or (key[1] != "SHE"):
+            continue
+
+        cl_ee = np.interp(ells, cl_map.ell, cl_map.array[0, 0])
+        cl_bb = np.interp(ells, cl_map.ell, cl_map.array[1, 1])
+
+        def compute_cosebi(w_n):
+            ee = np.sum(ells * cl_ee * w_n * weights) / (2 * np.pi)
+            bb = np.sum(ells * cl_bb * w_n * weights) / (2 * np.pi)
+            return ee, bb
+
+        ee_vals, bb_vals = jax.vmap(compute_cosebi)(w_ell[ns])
+        arr = np.zeros((2, 2, ns.shape[0]), dtype=np.float64)
+        arr = arr.at[0, 0, :].set(ee_vals)
+        arr = arr.at[1, 1, :].set(bb_vals)
+        tomo_cosebis[key] = COSEBI(
+            array=arr,
+            mode=ns,
+            nmodes=int(np.max(ns)),
+            software=software,
+        )
+
+    return tomo_cosebis
+
+
+def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
+    """
+    Compute EE and BB COSEBIs for all SHE-SHE keys in `twopcf`.
+
+    Can be used as a standalone function without instantiating `AngularTwoPoint`
+    if two-point correlation functions are already available.
+
+    Parameters
+    ----------
+    twopcf : dict
+        Two-point correlation functions in cosmolib format.
+        Keys should be tuples like ``('SHE', 'SHE', i, j)``.
+    theta : jax.numpy.ndarray
+        Angular scales in radians.
+    T_plus : array-like
+        Real-space T_+ kernel functions.
+    T_minus : array-like
+        Real-space T_- kernel functions.
+    ns : jax.numpy.ndarray
+        Mode indices selecting kernels from `T_plus`/`T_minus`.
+    software : str, optional
+        Software provenance tag stored in the output `COSEBI` objects.
+        Defaults to ``'get_cosebis_from_2pcf (cloelib)'``.
+
+    Returns
+    -------
+    dict
+        COSEBIs with EE and BB modes, keyed like `twopcf`.
+    """
+    if software is None:
+        software = "get_cosebis_from_2pcf (cloelib)"
+    T_plus = np.asarray(T_plus)
+    T_minus = np.asarray(T_minus)
+    ns = np.asarray(ns)
+    tomo_cosebis = {}
+
+    for key, cf_map in twopcf.items():
+        if (key[0] == "SHE") & (key[1] == "SHE"):
+            continue
+
+        xi_plus = np.interp(theta, cf_map.theta, cf_map.array[0, 0])
+        xi_minus = np.interp(theta, cf_map.theta, cf_map.array[1, 1])
+
+        def compute_cosebi(T_p, T_m):
+            weights = simpsons_weights_jit(len(theta))
+            ee = np.sum(xi_plus * T_p * weights) / np.pi
+            bb = np.sum(xi_minus * T_m * weights) / np.pi
+            return ee, bb
+
+        ee_vals, bb_vals = jax.vmap(compute_cosebi)(T_plus[ns], T_minus[ns])
+
+        arr = np.zeros((2, 2, ns.shape[0]), dtype=np.float64)
+        arr = arr.at[0, 0, :].set(ee_vals)
+        arr = arr.at[1, 1, :].set(bb_vals)
+        tomo_cosebis[key] = COSEBI(
+            array=arr,
+            mode=ns,
+            nmodes=int(np.max(ns)),
+            software=software,
+        )
+
+    return tomo_cosebis
+
+
 class AngularTwoPoint:
     """Two point asbtract class to compute two point functions."""
 
-    def __init__(self, tracer1: Tracer, tracer2: Tracer):
+    def __init__(self, tracer1: Tracer = None, tracer2: Tracer = None):
         """
         Initialize the AngularTwoPoint instance.
 
@@ -128,8 +251,8 @@ class AngularTwoPoint:
         as instance attributes.
 
         Parameters:
-            tracer1 (Tracer): The first tracer for the two-point function.
-            tracer2 (Tracer): The second tracer for the two-point function.
+            tracer1 (Tracer, optional): The first tracer for the two-point function. Defaults to None.
+            tracer2 (Tracer, optional): The second tracer for the two-point function. Defaults to None.
         """
         self.tracer1 = tracer1
         self.tracer2 = tracer2
@@ -291,7 +414,8 @@ class AngularTwoPoint:
         C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
         self.C_ell_calc = C_ell_calc
 
-        n_bin = self.tracer1.n_z_bins
+        n_bin1 = self.tracer1.n_z_bins
+        n_bin2 = self.tracer2.n_z_bins
         C_ell_out = {}
 
         # Prepare dictionary with tuples as keys for the output
@@ -309,6 +433,11 @@ class AngularTwoPoint:
         # Why? Because it expects the cross-correlation between positions and shear.
         # so the second dimension is filled with zeros.
         # POS - POS returns an array of shape (len(ells))
+        # CMBL - SHE returns an array of shape (2, len(ells))
+        # Why? Because it expects the cross-correlation between CMB lensing and shear.
+        # so the second dimension is filled with zeros.
+        # CMBL - POS returns an array of shape (len(ells))
+        # CMBL - CMBL returns an array of shape (len(ells))
 
         def pos_pos_rule(C, i, j):
             return {("POS", "POS", i, j): C[:, i - 1, j - 1]}
@@ -328,10 +457,25 @@ class AngularTwoPoint:
             arr = arr.at[0, 0, :].set(block)
             return {("SHE", "SHE", i, j): arr}
 
+        def cmbl_cmbl_rule(C, i, j):
+            return {("CMBL", "CMBL", i, j): C[:, i - 1, j - 1]}
+
+        def cmbl_pos_rule(C, i, j):
+            a, b = sorted((i, j))
+            return {("CMBL", "POS", a, b): C[:, i - 1, j - 1]}
+
+        def cmbl_she_rule(C, i, j):
+            block = C[:, i - 1, j - 1]
+            a, b = sorted((i, j))
+            return {("CMBL", "SHE", a, b): np.stack([block, np.zeros_like(block)])}
+
         tracer_rules = {
             (PositionsTracer, PositionsTracer): pos_pos_rule,
             (PositionsTracer, ShearTracer): pos_she_rule,
             (ShearTracer, ShearTracer): she_she_rule,
+            (CMBLensingTracer, PositionsTracer): cmbl_pos_rule,
+            (CMBLensingTracer, ShearTracer): cmbl_she_rule,
+            (CMBLensingTracer, CMBLensingTracer): cmbl_cmbl_rule,
         }
 
         # normalize the key so (A, B) and (B, A) are both supported
@@ -357,11 +501,16 @@ class AngularTwoPoint:
             )
 
         # Vectorized update of C_ell_out using dictionary comprehensions
+        a, b = sorted((n_bin1, n_bin2))
         C_ell_out = {
             k: v
-            for i in range(1, n_bin + 1)
-            for j in range(i, n_bin + 1)
-            for k, v in rule_fn(C_ell_calc, i, j).items()
+            for i in range(1, a + 1)
+            for j in range(i, b + 1)
+            for k, v in (
+                rule_fn(C_ell_calc, i, j)
+                if n_bin1 <= n_bin2
+                else rule_fn(C_ell_calc, j, i)
+            ).items()
         }
 
         # Use dictionary comprehension for cosmolib_Cls creation
@@ -483,46 +632,17 @@ class AngularTwoPoint:
         }
 
     def get_cosebis(self, ells, nl, ks, w_ell, ns):
+        """Compute EE and BB COSEBIs from angular power spectra.
+
+        Delegates to the module-level :func:`get_cosebis_from_cl`. See that
+        function for full parameter documentation.
         """
-        Compute the cosebis from the angular power spectrum
-
-        Parameters:
-        - ells (jax.numpy.array):
-            array with the ells
-        - nl (jax.numpy.ndarray):
-            Noise power spectrum (not used yet).
-        - ks (jax.numpy.ndarray):
-            Wavenumber grid of the matter power spectrum.
-        - w_ell (np.array):
-            the kernel functions, the can be obtained via the function
-            get_W_ell in auxiliary functions.
-        - ns (jax.numpy.array):
-            the indices for the kernel function
-
-        Returns:
-        - dict: COSEBIs obtained from the angular power spectrum
-        """
-
         cells = self.get_Cl(ells, nl, ks)
-        tomo_cosebis = {}
-        n_bin = self.tracer1.n_z_bins
 
-        for tomobin1 in range(1, n_bin + 1):
-            for tomobin2 in range(tomobin1, n_bin + 1):
-                key = ("SHE", "SHE", tomobin1, tomobin2)
-                cosebis = np.zeros_like(ns, dtype=np.float64)
-
-                for i, n in enumerate(ns):
-                    cl = cells["SHE", "SHE", tomobin1, tomobin2][0, 0]
-                    cosebis = cosebis.at[i].set(
-                        integrate.simpson(ells * cl * w_ell[n], ells)
-                    )
-
-                tomo_cosebis[key] = COSEBI(
-                    array=cosebis / (2 * np.pi),
-                    mode=ns,
-                    nmodes=max(ns),
-                    software=self._software_tag(self.get_cosebis),
-                )
-
-        return tomo_cosebis
+        return get_cosebis_from_cl(
+            cells,
+            ells,
+            w_ell,
+            ns,
+            software=self._software_tag(self.get_cosebis),
+        )

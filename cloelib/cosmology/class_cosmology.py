@@ -8,6 +8,7 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 import numpy as np
 import copy
 from typing import Optional, Union, Sequence
+import warnings
 
 # Cosmology imports
 try:
@@ -35,6 +36,8 @@ class CLASSBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        alpha_s: float = 0.0,
+        **kwargs,
     ) -> None:
         """
         Initialize the CLASSBackground instance with cosmological parameters.
@@ -46,6 +49,7 @@ class CLASSBackground:
             Omega_k0 (float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
+            alpha_s (float): Running of the scalar spectral index (d ns / d ln k).
             mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
@@ -62,6 +66,7 @@ class CLASSBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
+        self.alpha_s = alpha_s
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = gamma_MG  # Kept for protocol, but CLASS doesn't directly use it
@@ -86,6 +91,7 @@ class CLASSBackground:
         )
         self.interface_args["CLASSparams"]["Omega_k"] = self.Omega_k0
         self.interface_args["CLASSparams"]["n_s"] = self.ns
+        self.interface_args["CLASSparams"]["alpha_s"] = self.alpha_s
         self.interface_args["CLASSparams"]["A_s"] = self.As
         self.interface_args["CLASSparams"]["w0_fld"] = self.w0  # or w0
         self.interface_args["CLASSparams"]["wa_fld"] = self.wa  # or wa
@@ -248,7 +254,8 @@ class CLASSBackground:
         Returns:
             np.ndarray: Matter density values (no neutrinos).
         """
-        raise NotImplementedError("Not implemented for CLASS.")
+
+        return self.results.Om_b(zs) + self.results.Om_cdm(zs)
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -260,11 +267,7 @@ class CLASSBackground:
         Returns:
             (np.ndarray): Matter density values.
         """
-        try:
-            Omegam_0 = np.array([self.results.Om_m(z) for z in zs])
-        except TypeError:
-            Omegam_0 = self.results.Om_m(zs)
-        return Omegam_0
+        return self.results.Om_m(zs)
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -276,16 +279,17 @@ class CLASSBackground:
         Returns:
             (np.ndarray): Matter density values.
         """
-        try:
-            Omegab_0 = np.array([self.results.Om_b(z) for z in zs])
-        except TypeError:
-            Omegab_0 = self.results.Om_b(zs)
-        return Omegab_0
+        return self.results.Om_b(zs)
 
     @property
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering in Mpc."""
         return self.results.rs_drag()
+
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
+        return self.results.get_current_derived_parameters(["z_star"])["z_star"]
 
 
 class CLASSLinearPerturbations:
@@ -363,7 +367,25 @@ class CLASSLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        raise NotImplementedError("Not implemented for CLASS.")
+        if hubble_units or k_hunit:
+            raise ValueError("This CLASS method does not yet support h-units")
+
+        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+            warnings.warn(
+                "There are no massive neutrinos (N_mnu=0), this function will "
+                "return the usual matter power spectrum instead of _cb!",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.Pk_cb_linear = self.matter_power_spectrum(
+                zs, ks, hubble_units=False, k_hunit=False
+            )
+        else:
+            self.Pk_cb_linear = np.array(
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+            )
+        # To match array convention of CAMB
+        return self.Pk_cb_linear
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -419,10 +441,22 @@ class CLASSNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations: Optional[object],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
+        hmcode_version: Optional[str] = None,
     ):
-        """Initialize the CLASSNonLinearPerturbation instance."""
+        """Initialize the CLASSNonLinearPerturbation instance.
+
+        Args:
+            background: Background cosmology object.
+            linearperturbations: Linear perturbations object (unused by CLASS, which computes
+                nonlinear corrections internally; accepted for interface compatibility with
+                emulator-based NonLinPerturbations classes).
+            redshifts (np.ndarray): Array of redshifts for the calculations.
+            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
+            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
+        """
         self.background = background
         self.z = redshifts
         self.kmax = 100
@@ -439,7 +473,9 @@ class CLASSNonLinearPerturbations:
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
         self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
-        self.interface_args["CLASSparams"]["non linear"] = nonlinear_model
+        self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
+        if hmcode_version is not None:
+            self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
@@ -494,7 +530,25 @@ class CLASSNonLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        raise NotImplementedError("Not implemented for CLASS.")
+        if hubble_units or k_hunit:
+            raise ValueError("This CLASS method does not yet support h-units")
+
+        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+            warnings.warn(
+                "There are no massive neutrinos (N_mnu=0), this function will "
+                "return the usual matter power spectrum instead of _cb!",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.Pk_cb_nonlinear = self.matter_power_spectrum(
+                zs, ks, hubble_units=False, k_hunit=False
+            )
+        else:
+            self.Pk_cb_nonlinear = np.array(
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+            )
+        # To match array convention of CAMB
+        return self.Pk_cb_nonlinear
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""

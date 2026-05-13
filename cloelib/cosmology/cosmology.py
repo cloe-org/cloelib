@@ -78,6 +78,11 @@ class Background(Protocol):
         ...
 
     @property
+    def alpha_s(self) -> float:
+        """Running of the scalar spectral index (d ns / d ln k)."""
+        ...
+
+    @property
     def w0(self) -> float:
         """Dark energy parameter."""
         ...
@@ -128,6 +133,11 @@ class Background(Protocol):
     @property
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering in Mpc."""
+        ...
+
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
         ...
 
 

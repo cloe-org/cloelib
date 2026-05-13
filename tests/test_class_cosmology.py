@@ -25,6 +25,7 @@ def class_background_instance(scope="module"):
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        alpha_s=0.0,
         mnu=0.0,
         w0=-1.0,
         wa=0.0,
@@ -62,7 +63,8 @@ def test_class_background_required_attributes(class_background_instance):
     attributes_found = {
         name
         for name, value in contents
-        if not callable(value) and not name.startswith("_")
+        if (not callable(value) or (callable(value) and isinstance(value, float)))
+        and not name.startswith("_")
     }
     assert attributes_required <= attributes_found
 
@@ -339,7 +341,10 @@ def class_perturbation_instances(class_background_instance, zs, scope="module"):
         background=class_background_instance, redshifts=zs
     )
     class_non = CLASSNonLinearPerturbations(
-        background=class_background_instance, redshifts=zs, nonlinear_model="halofit"
+        background=class_background_instance,
+        linearperturbations=None,
+        redshifts=zs,
+        nonlinear_model="halofit",
     )
     return {"Linear": class_lin, "NonLinear": class_non}
 
@@ -401,44 +406,245 @@ def test_class_sigma8_consistency_linear_vs_nonlinear(class_background_instance,
         background=class_background_instance, redshifts=zs
     )
     class_non = CLASSNonLinearPerturbations(
-        background=class_background_instance, redshifts=zs, nonlinear_model="halofit"
+        background=class_background_instance,
+        linearperturbations=None,
+        redshifts=zs,
+        nonlinear_model="halofit",
     )
     assert np.abs(class_lin.sigma8_0() - class_non.sigma8_0()) < 1e-3
 
 
-def test_matter_power_spectrum_cb():
-    # not implemented yet
+def test_Omega_cb_returns_Om_b_plus_Om_cdm(class_background_instance):
     """
-    # Cosmology parameters
-    print("# Cosmology parameters")
-    _cosmo_pars = dict(
-        H0=67.7,
-        Omega_cdm0=0.12 / 0.677**2,
-        Omega_b0=0.022 / 0.677**2,
-        Omega_k0=0.0,
-        w0=-1.0,
-        wa=0.0,
-        ns=0.96,
-        mnu=0.1,
-        As=2e-9,
-        gamma_MG=0.0,
-        N_mnu=1,
-    )
-    background = CLASSBackground(**_cosmo_pars)
-
-    # linear
-    perturbations = CLASSLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
-    assert_allclose(perturbations.matter_power_spectrum(0, 1), 80.534861)
-    assert_allclose(perturbations.matter_power_spectrum_cb(0, 1), 81.748209, rtol=1e-03)
-
-    # non-linear
-    perturbations_nl = CLASSNonLinearPerturbations(
-        background, np.linspace(0.0, 2.0, 100)
-    )
-    assert_allclose(
-        perturbations_nl.matter_power_spectrum(0, 1), 736.010737, rtol=1.0e-03
-    )
-    assert_allclose(
-        perturbations_nl.matter_power_spectrum_cb(0, 1), 747.017036, rtol=1.0e-03
-    )
+    Ensure that `Omega_cb(zs)` correctly returns the sum
+    of the baryon and CDM density parameters for an array of redshifts.
     """
+    import numpy as np
+
+    # A set of redshifts (including z=0) to test the vectorised path
+    zs = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
+
+    # Reference values directly from CLASS
+    Om_b = class_background_instance.results.Om_b(zs)
+    Om_cdm = class_background_instance.results.Om_cdm(zs)
+    expected = Om_b + Om_cdm
+
+    # Call the wrapper under test
+    omega_cb = class_background_instance.Omega_cb(zs)
+
+    # Basic shape / type checks
+    assert isinstance(omega_cb, np.ndarray)
+    assert omega_cb.shape == zs.shape
+
+    # Verify element‑wise equality to CLASS precision
+    assert np.allclose(omega_cb, expected, rtol=1e-12, atol=1e-15)
+
+
+###########################
+# PERTURBATIONS UNIT TESTS
+###########################
+
+
+@pytest.fixture
+def class_lin_perturb_instance(class_background_instance):
+    """
+    Fixture that builds a fully‑initialised CLASSLinearPerturbations instance.
+    It re‑uses the existing `class_cosmo` background fixture (if you already have
+    one) or creates a fresh CLASSCosmology object with default parameters.
+    """
+    # ----- redshift & k grid -----------------------------------------
+    zs = np.array([0.0, 0.5, 1.0])  # a few test redshifts
+    # The perturbations class itself will set its own k‑grid, so we just
+    # pass the redshifts here.
+
+    # ----- instantiate perturbations ---------------------------------
+    pert = CLASSLinearPerturbations(background=class_background_instance, redshifts=zs)
+
+    return pert
+
+
+@pytest.fixture
+def class_lin_perturb_instance_nu(class_background_instance):
+    """
+    Fixture that builds a fully‑initialised CLASSLinearPerturbations instance.
+    It re‑uses the existing `class_cosmo` background fixture (if you already have
+    one) or creates a fresh CLASSCosmology object with default parameters.
+    """
+    # ----- redshift & k grid -----------------------------------------
+    zs = np.array([0.0, 0.5, 1.0])  # a few test redshifts
+    # The perturbations class itself will set its own k‑grid, so we just
+    # pass the redshifts here.
+
+    # add neutrinos:
+    class_background_instance.interface_args["CLASSparams"]["N_ncdm"] = 1
+    class_background_instance.interface_args["CLASSparams"]["m_ncdm"] = 0.2
+    # ----- instantiate perturbations ---------------------------------
+    pert = CLASSLinearPerturbations(background=class_background_instance, redshifts=zs)
+
+    return pert
+
+
+def test_matter_power_spectrum_cb_no_neutrinos(class_lin_perturb_instance):
+    """
+    Verify that with N_ncdm == 0 the CB power spectrum is identical
+    to the total matter power spectrum.
+    """
+    import warnings
+
+    # Ensure the perturbation object is in the “no‑neutrino” configuration.
+    # (The fixture may already provide this; otherwise we explicitly set it.)
+    class_lin_perturb_instance.interface_args["CLASSparams"]["N_ncdm"] = 0
+
+    zs = np.array([0.0, 0.5, 1.0])
+    ks = np.logspace(-3, 1, 15)  # 15 k‑values spanning 10⁻³–10¹ Mpc⁻¹
+
+    # Expected: ordinary matter power spectrum
+    pk_total = class_lin_perturb_instance.matter_power_spectrum(zs, ks)
+
+    # CB spectrum – should trigger the warning and fall back to pk_total
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        pk_cb = class_lin_perturb_instance.matter_power_spectrum_cb(zs, ks)
+
+        # Verify the warning was emitted
+        assert any("no massive neutrinos" in str(warn.message) for warn in w), (
+            "Expected warning about N_ncdm == 0 not raised"
+        )
+
+    # Shape and value checks
+    assert pk_cb.shape == pk_total.shape, "Shape mismatch between cb and total spectra"
+    assert np.allclose(pk_cb, pk_total, rtol=1e-12, atol=1e-15), (
+        "CB spectrum should equal total matter spectrum when N_ncdm == 0"
+    )
+
+
+def test_matter_power_spectrum_cb_with_neutrinos(class_lin_perturb_instance_nu):
+    """
+    With massive neutrinos present, check that the CB spectrum:
+      * has the correct (nz, nk) shape,
+      * matches the low‑level CLASS `pk_cb` values for a few random points.
+    """
+
+    zs = np.array([0.0, 0.5, 1.0])
+    ks = np.logspace(-3, 1, 20)
+
+    pk_cb = class_lin_perturb_instance_nu.matter_power_spectrum_cb(zs, ks)
+
+    # Basic shape check
+    assert pk_cb.shape == (len(zs), len(ks)), "Unexpected shape for CB power spectrum"
+
+    # Spot‑check a few random (z, k) entries against the direct CLASS call
+    rng = np.random.default_rng(seed=42)
+    for _ in range(5):
+        i = rng.integers(0, len(zs))
+        j = rng.integers(0, len(ks))
+        z_test = zs[i]
+        k_test = ks[j]
+
+        # Direct CLASS low‑level call
+        pk_direct = class_lin_perturb_instance_nu.results.pk_cb(k_test, z_test)  # type: ignore[union-attr]
+
+        assert np.isclose(pk_cb[i, j], pk_direct, rtol=1e-12, atol=1e-15), (
+            f"Mismatch at z={z_test}, k={k_test}"
+        )
+
+
+@pytest.fixture
+def class_nonlin_perturb_instance(class_background_instance):
+    """
+    Fixture that builds a fully‑initialised CLASSLinearPerturbations instance.
+    It re‑uses the existing `class_cosmo` background fixture (if you already have
+    one) or creates a fresh CLASSCosmology object with default parameters.
+    """
+    # ----- redshift & k grid -----------------------------------------
+    zs = np.array([0.0, 0.5, 1.0])  # a few test redshifts
+    # The perturbations class itself will set its own k‑grid, so we just
+    # pass the redshifts here.
+
+    # ----- instantiate perturbations ---------------------------------
+    pert = CLASSNonLinearPerturbations(
+        background=class_background_instance, linearperturbations=None, redshifts=zs
+    )
+
+    return pert
+
+
+@pytest.fixture
+def class_nonlin_perturb_instance_nu(class_background_instance):
+    """
+    Fixture that builds a fully‑initialised CLASSLinearPerturbations instance.
+    It re‑uses the existing `class_cosmo` background fixture (if you already have
+    one) or creates a fresh CLASSCosmology object with default parameters.
+    """
+    # ----- redshift & k grid -----------------------------------------
+    zs = np.array([0.0, 0.5, 1.0])  # a few test redshifts
+    # The perturbations class itself will set its own k‑grid, so we just
+    # pass the redshifts here.
+
+    # add neutrinos:
+    class_background_instance.interface_args["CLASSparams"]["N_ncdm"] = 1
+    class_background_instance.interface_args["CLASSparams"]["m_ncdm"] = 0.2
+    # ----- instantiate perturbations ---------------------------------
+    pert = CLASSNonLinearPerturbations(
+        background=class_background_instance, linearperturbations=None, redshifts=zs
+    )
+
+    return pert
+
+
+def test_nl_matter_power_spectrum_cb_no_neutrinos(class_nonlin_perturb_instance):
+    """
+    Verify that with N_ncdm == 0 the CB power spectrum raises a warning!
+    """
+    import warnings
+
+    # Ensure the perturbation object is in the “no‑neutrino” configuration.
+    # (The fixture may already provide this; otherwise we explicitly set it.)
+    class_nonlin_perturb_instance.interface_args["CLASSparams"]["N_ncdm"] = 0
+
+    zs = np.array([0.0, 0.5, 1.0])
+    ks = np.logspace(-3, 1, 15)  # 15 k‑values spanning 10⁻³–10¹ Mpc⁻¹
+
+    # Expected: ordinary matter power spectrum
+    class_nonlin_perturb_instance.matter_power_spectrum(zs, ks)
+
+    # CB spectrum – should trigger the warning and fall back to pk_total
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        class_nonlin_perturb_instance.matter_power_spectrum_cb(zs, ks)
+
+        # Verify the warning was emitted
+        assert any("no massive neutrinos" in str(warn.message) for warn in w), (
+            "Expected warning about N_ncdm == 0 not raised"
+        )
+
+
+def test_nl_matter_power_spectrum_cb_with_neutrinos(class_nonlin_perturb_instance_nu):
+    """
+    With massive neutrinos present, check that the CB spectrum:
+      * has the correct (nz, nk) shape,
+      * matches the low‑level CLASS `pk_cb` values for a few random points.
+    """
+
+    zs = np.array([0.0, 0.5, 1.0])
+    ks = np.logspace(-3, 1, 20)
+
+    pk_cb = class_nonlin_perturb_instance_nu.matter_power_spectrum_cb(zs, ks)
+
+    # Basic shape check
+    assert pk_cb.shape == (len(zs), len(ks)), "Unexpected shape for CB power spectrum"
+
+    # Spot‑check a few random (z, k) entries against the direct CLASS call
+    rng = np.random.default_rng(seed=42)
+    for _ in range(5):
+        i = rng.integers(0, len(zs))
+        j = rng.integers(0, len(ks))
+        z_test = zs[i]
+        k_test = ks[j]
+
+        # Direct CLASS low‑level call
+        pk_direct = class_nonlin_perturb_instance_nu.results.pk_cb(k_test, z_test)  # type: ignore[union-attr]
+
+        assert np.isclose(pk_cb[i, j], pk_direct, rtol=1e-12, atol=1e-15), (
+            f"Mismatch at z={z_test}, k={k_test}"
+        )

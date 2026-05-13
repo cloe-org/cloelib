@@ -92,7 +92,9 @@ class mochiCLASSEmuLinearPerturbations:
 
         self.params["z"] = redshifts
 
-        ref_train = np.load('/home/lgoh/cloe-org/mochi_class_parameterisation/data/ref_spec.npz')['ref_spec']
+        ref_train = np.load(
+            "/home/lgoh/cloe-org/mochi_class_parameterisation/data/ref_spec.npz"
+        )["ref_spec"]
         Pk_lin = ref_train[None, :] * self.cp_LIN.ten_to_predictions_np(self.params)
 
         k_out, z_out, Pk_out = extend_spectra(

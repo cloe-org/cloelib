@@ -397,8 +397,17 @@ class AngularTwoPoint:
             (ShearTracer, PositionsTracer): ("POS", "SHE"),
             (ShearTracer, ShearTracer): ("SHE", "SHE"),
         }
+
+        # ADDED FOR WEYL PROJECT: accept subclasses by scanning with isinstance
+        if tracer_types not in tracer_keys:
+            for (A, B), fn in tracer_keys.items():
+                if isinstance(self.tracer1, A) and isinstance(self.tracer2, B):
+                    tracer_types = (A, B)
+                    break
+        
         if tracer_types not in tracer_keys:
             raise ValueError("Unsupported tracer pair for mixing matrix.")
+        
         key_type = tracer_keys[tracer_types]
         ellmax = mixing_matrix[key_type + (1, 1)].shape[
             -1

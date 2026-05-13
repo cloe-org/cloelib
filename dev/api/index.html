@@ -29151,19 +29151,29 @@ for values outside the given grid.</p>
 if angular power spectra are already available.</p>
 <h6 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--parameters" title="Permanent link">&para;</a></h6>
 <p>cells : dict
-    Angular power spectra in cosmolib format.
+    Angular power spectra in cosmolib format.  All SHE-SHE bin pairs
+    present in the dict are processed automatically.
 ells : jax.numpy.ndarray
     Multipoles at which the integration is performed.
-w_ell : array-like
-    Harmonic-space COSEBIs kernels.
-ns : array-like
+w_ell : dict
+    Harmonic-space COSEBIs kernels.  Two layouts are accepted:</p>
+<div class="highlight"><pre><span></span><code>* **Global** — a single dict ``{n: array, ..., &quot;metadata&quot;: {...}}``
+  (as returned by ``get_W_ell``).  The same kernels are used for
+  every bin pair.
+* **Per-bin** — a dict ``{(i, j): {n: array, ..., &quot;metadata&quot;: {...}},
+  ...}`` supplying independent kernels per bin pair.  A ``None`` key
+  may be included as a global fallback for pairs without an explicit
+  entry.
+</code></pre></div>
+<p>ns : array-like
     Mode indices selecting kernels from <code>w_ell</code>.
 software : str, optional
     Software provenance tag stored in the output <code>COSEBI</code> objects.
     Defaults to <code>'get_cosebis_from_cl (cloelib)'</code>.</p>
 <h6 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns" title="Permanent link">&para;</a></h6>
 <p>dict
-    Dictionary keyed like <code>cells</code> with <code>COSEBI</code> values of shape <code>(2, 2, n_modes)</code>.</p>
+    Dictionary keyed like the SHE-SHE entries of <code>cells</code> with <code>COSEBI</code>
+    values of shape <code>(2, 2, n_modes)</code>.</p>
 
           
 
@@ -30991,19 +31001,29 @@ for values outside the given grid.</p>
 if angular power spectra are already available.</p>
 <h5 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--parameters" title="Permanent link">&para;</a></h5>
 <p>cells : dict
-    Angular power spectra in cosmolib format.
+    Angular power spectra in cosmolib format.  All SHE-SHE bin pairs
+    present in the dict are processed automatically.
 ells : jax.numpy.ndarray
     Multipoles at which the integration is performed.
-w_ell : array-like
-    Harmonic-space COSEBIs kernels.
-ns : array-like
+w_ell : dict
+    Harmonic-space COSEBIs kernels.  Two layouts are accepted:</p>
+<div class="highlight"><pre><span></span><code>* **Global** — a single dict ``{n: array, ..., &quot;metadata&quot;: {...}}``
+  (as returned by ``get_W_ell``).  The same kernels are used for
+  every bin pair.
+* **Per-bin** — a dict ``{(i, j): {n: array, ..., &quot;metadata&quot;: {...}},
+  ...}`` supplying independent kernels per bin pair.  A ``None`` key
+  may be included as a global fallback for pairs without an explicit
+  entry.
+</code></pre></div>
+<p>ns : array-like
     Mode indices selecting kernels from <code>w_ell</code>.
 software : str, optional
     Software provenance tag stored in the output <code>COSEBI</code> objects.
     Defaults to <code>'get_cosebis_from_cl (cloelib)'</code>.</p>
 <h5 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns" title="Permanent link">&para;</a></h5>
 <p>dict
-    Dictionary keyed like <code>cells</code> with <code>COSEBI</code> values of shape <code>(2, 2, n_modes)</code>.</p>
+    Dictionary keyed like the SHE-SHE entries of <code>cells</code> with <code>COSEBI</code>
+    values of shape <code>(2, 2, n_modes)</code>.</p>
 
           
 

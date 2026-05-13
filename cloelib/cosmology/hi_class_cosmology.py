@@ -40,7 +40,7 @@ class hi_classBackground:
         N_mnu: int,
         N_ur: Optional[float] = None,
         alpha_s: float = 0.0,
-        params_smg: Optional[dict] = {},
+        params_smg: Optional[dict] = None,
         **kwargs,
     ) -> None:
         """
@@ -88,6 +88,7 @@ class hi_classBackground:
             raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
 
         # Initialize hi_class parameters
+        params_smg = {} if params_smg is None else params_smg
         self.interface_args: dict = {
             "hi_classparams": {}
         }  # Use a dictionary for hi_class parameters

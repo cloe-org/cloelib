@@ -36,6 +36,8 @@ class CLASSBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        alpha_s: float = 0.0,
+        **kwargs,
     ) -> None:
         """
         Initialize the CLASSBackground instance with cosmological parameters.
@@ -47,6 +49,7 @@ class CLASSBackground:
             Omega_k0 (float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
+            alpha_s (float): Running of the scalar spectral index (d ns / d ln k).
             mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
@@ -63,6 +66,7 @@ class CLASSBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
+        self.alpha_s = alpha_s
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = gamma_MG  # Kept for protocol, but CLASS doesn't directly use it
@@ -87,6 +91,7 @@ class CLASSBackground:
         )
         self.interface_args["CLASSparams"]["Omega_k"] = self.Omega_k0
         self.interface_args["CLASSparams"]["n_s"] = self.ns
+        self.interface_args["CLASSparams"]["alpha_s"] = self.alpha_s
         self.interface_args["CLASSparams"]["A_s"] = self.As
         self.interface_args["CLASSparams"]["w0_fld"] = self.w0  # or w0
         self.interface_args["CLASSparams"]["wa_fld"] = self.wa  # or wa
@@ -281,6 +286,11 @@ class CLASSBackground:
         """Sound horizon radius at last scattering in Mpc."""
         return self.results.rs_drag()
 
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
+        return self.results.get_current_derived_parameters(["z_star"])["z_star"]
+
 
 class CLASSLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
@@ -431,10 +441,22 @@ class CLASSNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations: Optional[object],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
+        hmcode_version: Optional[str] = None,
     ):
-        """Initialize the CLASSNonLinearPerturbation instance."""
+        """Initialize the CLASSNonLinearPerturbation instance.
+
+        Args:
+            background: Background cosmology object.
+            linearperturbations: Linear perturbations object (unused by CLASS, which computes
+                nonlinear corrections internally; accepted for interface compatibility with
+                emulator-based NonLinPerturbations classes).
+            redshifts (np.ndarray): Array of redshifts for the calculations.
+            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
+            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
+        """
         self.background = background
         self.z = redshifts
         self.kmax = 100
@@ -451,7 +473,9 @@ class CLASSNonLinearPerturbations:
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
         self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
-        self.interface_args["CLASSparams"]["non linear"] = nonlinear_model
+        self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
+        if hmcode_version is not None:
+            self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])

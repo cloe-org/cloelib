@@ -10,7 +10,7 @@ This module computes survey-specific quantities including selection functions, w
 
 This module addresses:
 
-- Window functions for weak lensing surveys
+- Window functions for weak lensing surveys and CMB lensing
 - Galaxy bias modeling and corrections
 - Redshift-space power spectra P(k, μ)
 
@@ -166,9 +166,33 @@ tracer = PositionsTracer(
 window = tracer.get_window(z)
 ```
 
+#### CMBLensingTracer
+
+For CMB weak gravitational lensing (convergence) measurements.
+
+**Location**: `cloelib/observables/cmb.py`
+
+**What it does**:
+
+- Computes lensing window function W^κ(z)
+
+**Example**:
+
+```python
+from cloelib.observables.cmb import CMBLensingTracer
+
+z = np.arange(1e-3,pert.background.z_star,0.01)
+tracer = CMBLensingTracer(
+    perturbations=pert,
+    z=z,
+)
+
+window = tracer.get_window(z)
+```
+
 ### Adding Your Own Tracer
 
-To add a new type of photometric observable? The how..
+To add a new type of photometric observable, follow these steps.
 
 #### Step 1: Create Your Tracer Class
 
@@ -246,7 +270,7 @@ __all__ = [
 ]
 ```
 
-#### Step 3: Test It.
+#### Step 3: Write Tests
 
 ```python
 # tests/test_my_new_tracer.py
@@ -317,7 +341,7 @@ Useful for checking contributions of different terms.
 
 ### Existing SpectroPower Implementations
 
-#### CometEFT_spectro
+#### CometEFT_SpectroPower
 
 Fast emulator using [comet-emu](https://comet-emu.readthedocs.io) with EFT model.
 
@@ -329,38 +353,69 @@ Fast emulator using [comet-emu](https://comet-emu.readthedocs.io) with EFT model
 
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground
-from cloelib.observables.CometEFT_spectro import CometEFT_spectro
+from cloelib.observables.CometEFT_spectro import CometEFT_SpectroPower
 
 bg = CAMBBackground(H0=67.5, ...)
 
+RSD_parameters = {'b1': 1.412, ...} # Biases and counterterms
+redshift = 1.0
 spectro = CometEFT_spectro(
-    background=bg,
-    z_pk=1.0,  # Redshift for power spectrum
+    bg,
+    RSD_parameters,
+    redshift
 )
 
-k = np.logspace(-2, 0, 50)  # k in h/Mpc
+k = np.logspace(-2, 0, 50)  # k in 1/Mpc
 mu = np.linspace(0, 1, 20)  # μ from 0 (perpendicular) to 1 (parallel)
 
-P_k_mu = spectro.Pk2d_rsd(k, mu, z=1.0)  # Shape: (50, 20)
+P_k_mu = spectro.Pk2d_rsd(k, mu)  # Shape: (50, 20)
 ```
 
-#### CometVDG_spectro
+#### CometVDG_SpectroPower
 
-Comet emulator with VDG (velocity divergence - galaxy) model.
+Comet emulator with VDG_infty model.
 
 **Location**: `cloelib/observables/CometVDG_spectro.py`
 
 **When to use**: Alternative RSD modeling
 
-#### PBJ_spectro
+#### PBJSpectroPower
 
-Perturbation theory code (not publicly available).
+Perturbation theory code interfaced with `Background` and
+`LinearPerturbation` objects, its speed depends on the computation of
+linear quantities (i.e. on which `LinearPerturbation` backend is
+selected).
 
 **Location**: `cloelib/observables/PBJ_spectro.py`
 
+**When to use**: Predictions of nonlinear galaxy power spectrum for
+spectroscopic observables, beyond $\Lambda$CDM models, MCMC sampling.
+
+**Example**:
+
+```python
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
+from cloelib.observables.PBJ_spectro import PBJSpectroPower
+
+zs = np.asarray([1.])
+bg = CAMBBackground(H0=67.5, ...)
+linear_perturbations = CAMBLinearPerturbations(bg, zs)
+
+RSD_parameters = {'b1': 1.412, ...} # Biases and counterterms
+spectro = PBJSpectroPower(
+    linear_perturbations,
+	RSD_parameters
+	)
+
+k = np.logspace(-2, 0, 50)  # k in 1/Mpc
+mu = np.linspace(0, 1, 20)  # μ from 0 (perpendicular) to 1 (parallel)
+
+P_k_mu = spectro.Pk2d_rsd(k, mu)
+```
+
 ### Adding Your Own SpectroPower
 
-To interface with a new emulator or PT code? Proceed..
+To add a new SpectroPower implementation, follow these steps.
 
 #### Step 1: Create Your Class
 
@@ -486,7 +541,7 @@ def Pk2d_rsd(self, k, mu, **args):
     ...
 ```
 
-#### Step 3: Test It.
+#### Step 3: Write Tests
 
 ```python
 # tests/test_my_spectro_power.py
@@ -544,7 +599,7 @@ def test_with_different_parameters():
 
 ## Tips & Tricks for Both Protocols
 
-### Protocol Compliance ✅
+### Protocol Compliance
 
 Always verify your implementation:
 
@@ -559,7 +614,7 @@ assert isinstance(my_tracer, Tracer)
 assert isinstance(my_spectro, SpectroPower)
 ```
 
-### Nuisance Parameters 🎛️
+### Nuisance Parameters
 
 Keep nuisance parameters in a dictionary:
 
@@ -575,9 +630,9 @@ tracer = MyTracer(perturbations=pert, nuisance_params=nuisance)
 
 This makes it easy to vary parameters in MCMC!
 
-### Performance.
+### Performance
 
-These calculations get called A LOT in likelihood evaluation:
+These calculations are invoked frequently during likelihood evaluation:
 
 ```python
 from functools import lru_cache
@@ -592,7 +647,7 @@ class MyTracer:
         return self._get_window_cached(tuple(z.flat))
 ```
 
-### JAX Compatibility 🔥
+### JAX Compatibility
 
 If using JAX, avoid Python control flow:
 
@@ -611,9 +666,7 @@ result = jnp.where(z > 1.0, compute_high_z(z), compute_low_z(z))
 
 Ready to compute final statistics with your observables?
 
-- 📊 [Summary Statistics](summary_statistics.md) - Combine tracers into C_ℓ and multipoles
-- 🌊 [Perturbations](perturbations.md) - Review structure formation
-- 🌌 [Background](background.md) - Review the foundation
-- 📖 [API Reference](../api.md) - Full technical details
-
-Keep observing. 🔭.
+- [Summary Statistics](summary_statistics.md) – Combine tracers into C_ℓ and multipoles
+- [Perturbations](perturbations.md) – Review structure formation
+- [Background](background.md) – Review the foundation
+- [API Reference](../api.md) – Full technical details

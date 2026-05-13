@@ -9,6 +9,7 @@ import sys
 import numpy as np
 import copy
 from typing import Optional, Union, Sequence
+import warnings
 
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -48,6 +49,7 @@ class mochiCLASSBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        **kwargs,
     ) -> None:
         """
         Initialize the mochiCLASSBackground instance with cosmological parameters.
@@ -88,10 +90,6 @@ class mochiCLASSBackground:
         self.N_mnu = N_mnu
         self.mg_stable_basis_on = mg_stable_basis_on
         self.stable_MG_dict = stable_MG_dict
-        self.s = stable_MG_dict["s"]
-        self.a0 = stable_MG_dict["a0"]
-        self.a1 = stable_MG_dict["a1"]
-        self.b = stable_MG_dict["b"]
         self.mg_background_model = mg_background_model
         # We can set N_ur to a default value if not provided
         self._provided_N_ur = N_ur
@@ -512,12 +510,11 @@ class mochiCLASSBackground:
 class mochiCLASSLinearPerturbations:
     """Class for perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
 
-    def __init__(self, background: Background, redshifts: np.ndarray, ks: np.ndarray):
+    def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the CLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
-        self.k = ks
-        self.kmax = ks[-1]
+        self.kmax = 100
         self.results = None  # Store CLASS results
 
         # Ensure CLASS is initialized with necessary parameters
@@ -527,9 +524,12 @@ class mochiCLASSLinearPerturbations:
         self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
         self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["non_linear"] = "none"
+        self.interface_args["CLASSparams"]["non linear"] = "none"
+        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
+        self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
+
         try:
             self.results.compute()
         except mochi_classy._classy.CosmoComputationError as e:
@@ -573,6 +573,51 @@ class mochiCLASSLinearPerturbations:
         )  # type: ignore[union-attr]
         # To match array convention of CAMB
         return self.Pk_linear  # * (self.background.h) ** 3
+
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
+        r"""Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
+            and redshift
+        """
+        if hubble_units or k_hunit:
+            raise ValueError("This CLASS method does not yet support h-units")
+
+        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+            warnings.warn(
+                "There are no massive neutrinos (N_mnu=0), this function will "
+                "return the usual matter power spectrum instead of _cb!",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.Pk_cb_linear = self.matter_power_spectrum(
+                zs, ks, hubble_units=False, k_hunit=False
+            )
+        else:
+            self.Pk_cb_linear = np.array(
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+            )
+        # To match array convention of CAMB
+        return self.Pk_cb_linear
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -640,17 +685,28 @@ class mochiCLASSNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations: Optional[object],
         redshifts: np.ndarray,
-        ks: np.ndarray,
         nonlinear_model: Optional[str] = None,
-        log10TAGN: Optional[float] = None,
+        hmcode_version: Optional[str] = None,
     ):
-        """Initialize the CLASSNonLinearPerturbation instance."""
+        """Initialize the CLASSNonLinearPerturbation instance.
+
+        Args:
+            background: Background cosmology object.
+            linearperturbations: Linear perturbations object (unused by CLASS, which computes
+                nonlinear corrections internally; accepted for interface compatibility with
+                emulator-based NonLinPerturbations classes).
+            redshifts (np.ndarray): Array of redshifts for the calculations.
+            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
+            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
+        """
         self.background = background
-        self.k = ks
         self.z = redshifts
-        self.kmax = ks[-1]
-        self.nonlinear_model = nonlinear_model
+        self.kmax = 100
+
+        if nonlinear_model is None:
+            nonlinear_model = "none"
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -659,19 +715,19 @@ class mochiCLASSNonLinearPerturbations:
         self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
         self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        if not background.mg_stable_basis_on:
-            self.interface_args["CLASSparams"]["non_linear"] = self.nonlinear_model
-            if self.nonlinear_model == "hmcode" and log10TAGN is not None:
-                self.interface_args["CLASSparams"]["hmcode_version"] = (
-                    "2020_baryonic_feedback"
-                )
-                self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
-                self.interface_args["CLASSparams"]["hmcode_min_k_max"] = self.kmax
-        else:
+        self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
+        self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
+        self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
+        if background.mg_stable_basis_on:
             self.interface_args["CLASSparams"]["non_linear"] = "none"
-
+        elif hmcode_version is not None:
+            self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
+        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
+        self.results.compute()
+        self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
+
         try:
             self.results.compute()
         except mochi_classy._classy.CosmoComputationError as e:
@@ -680,7 +736,30 @@ class mochiCLASSNonLinearPerturbations:
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        """Calculate the MOCHI_CLASS non-linear matter power spectrum.
+        """Calculate the CLASS non-linear matter power spectrum.
+
+        Args:
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
+            hubble_units (Optional [bool]): Flag to specify if output in h units
+            k_hunit (Optional [bool]): Flag to specify if wavenumber in h units
+
+        Returns:
+            pk (numpy.ndarray): Non-linear matter power spectrum at the specified scale
+            and redshift
+        """
+        if hubble_units or k_hunit:
+            raise ValueError("This CLASS method does not yet support h-units")
+        self.Pk_nonlinear = np.array(
+            [[self.results.pk(ki, zi) for ki in ks] for zi in zs]
+        )
+        # To match array convention of CAMB
+        return self.Pk_nonlinear
+
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
+        """Calculate the CLASS non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).
 
         Parameters
         ----------
@@ -699,39 +778,46 @@ class mochiCLASSNonLinearPerturbations:
         Returns
         -------
         pk: numpy.ndarray
-            Non-linear matter power spectrum at the specified scale
+            Linear matter power spectrum at the specified scale
             and redshift
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_nonlinear = np.array(
-            [[self.results.pk(ki, zi) for ki in ks] for zi in zs]
-        )
+
+        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+            warnings.warn(
+                "There are no massive neutrinos (N_mnu=0), this function will "
+                "return the usual matter power spectrum instead of _cb!",
+                UserWarning,
+                stacklevel=2,
+            )
+            self.Pk_cb_nonlinear = self.matter_power_spectrum(
+                zs, ks, hubble_units=False, k_hunit=False
+            )
+        else:
+            self.Pk_cb_nonlinear = np.array(
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+            )
         # To match array convention of CAMB
-        return self.Pk_nonlinear
+        return self.Pk_cb_nonlinear
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        .. math::
+        $$
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
             /P_{\rm \delta\delta}(z=0, k)}\\
+        $$
 
-        and normalizes as for :math:`D(z)/D(0)`.
+        and normalizes as for $D(z)/D(0)$.
 
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
+        Args:
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
 
         Returns:
-        --------
-        np.ndarray
-            The growth factor at the specified redshift and wavenumber.
+            (np.ndarray): The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(
             self.matter_power_spectrum(zs, ks)
@@ -744,10 +830,8 @@ class mochiCLASSNonLinearPerturbations:
         """
         Calculate the growth rate f(z).
 
-        Returns
-        -------
-        np.ndarray
-            Scale-independent growth rate f(z)
+        Returns:
+            (np.ndarray): Scale-independent growth rate f(z)
         """
         arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
@@ -762,5 +846,4 @@ class mochiCLASSNonLinearPerturbations:
             The sigma8 value.
         """
 
-        sigma8_0 = self.results.get_current_derived_parameters(["sigma8"])["sigma8"]
-        return sigma8_0
+        return self.results.sigma8()  # type: ignore[union-attr]

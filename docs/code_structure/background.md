@@ -34,11 +34,13 @@ Every Background implementation must provide:
 - **`N_mnu`**: Number of massive neutrino species
 - **`As`**: Primordial power spectrum amplitude
 - **`ns`**: Primordial power spectrum spectral index
+- **`alpha_s`**: Running of the spectral index (d ns / d ln k)
 - **`w0`**: Dark energy equation of state parameter
 - **`wa`**: Dark energy evolution parameter
 - **`gamma_MG`**: Modified gravity parameter
 - **`rdrag`**: Sound horizon radius at last scattering (Mpc)
 - **`interface_args`**: Dictionary storing interface-specific parameters
+- **`z_star`**: Redshift of photon decoupling.
 
 ### Required Methods
 

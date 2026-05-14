@@ -66,7 +66,9 @@ class PyBirdSpectroPower:
         for c in ["c0", "c2", "c4"]:
             nuisance_parameters_pybird[c] *= h**2  # [Mpc]^2 -> [Mpc/h]^2
         for c in ["ct"]:
-            nuisance_parameters_pybird[c] *= h**4  # [Mpc]^4 -> [Mpc/h]^4
+            nuisance_parameters_pybird[c] *= (
+                -(h**4)
+            )  # [Mpc]^4 -> [Mpc/h]^4 + sign sitch to match PBJ convention
 
         pkl = N.get(
             nuisance_parameters_pybird
@@ -75,9 +77,21 @@ class PyBirdSpectroPower:
             k_ * h, pkl / h**3, k=3, axis=-1
         )  # k: [1/Mpc], Pk: [Mpc]^3
 
+        marg_parameter_names = {"bGamma3", "c0", "c2", "c4", "ct"}
+
         pkl_term = N.getmarg(
-            nuisance_parameters_pybird, {"bGamma3", "c0", "c2", "c4", "ct"}
+            nuisance_parameters_pybird,
+            marg_parameter_names,
         ).reshape(-1, 3, k_.shape[0])  # shape (Nterm, Nk*Nl) -> (Nterm, Nl, Nk)
+
+        for i, c in enumerate(marg_parameter_names):
+            if c in ["c0", "c2", "c4"]:
+                pkl_term[i] *= h**2  # [Mpc]^2 -> [Mpc/h]^2
+            if c in ["ct"]:
+                pkl_term[i] *= (
+                    -(h**4)
+                )  # [Mpc]^4 -> [Mpc/h]^4 + sign sitch to match PBJ convention
+
         self.ipkl_term = make_interp_spline(
             k_ * h, pkl_term / h**3, k=3, axis=-1
         )  # k: [1/Mpc], Pk: [Mpc]^3

@@ -859,6 +859,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cloelib.cosmology.hi_class_cosmology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;hi_class_cosmology
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cloelib.cosmology.jax_cosmology" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2346,6 +2357,17 @@
     <span class="md-ellipsis">
       
         <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;emantis_cosmology
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.cosmology.hi_class_cosmology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;hi_class_cosmology
       
     </span>
   </a>
@@ -12316,6 +12338,1177 @@ ks : array_like
 
         <p>Compute the sigma8 value for the current cosmology at z=0.</p>
 <h6 id="cloelib.cosmology.emantis_cosmology.EmantisFofrNonLinearPerturbations.sigma8_0--returns">Returns:<a class="headerlink" href="#cloelib.cosmology.emantis_cosmology.EmantisFofrNonLinearPerturbations.sigma8_0--returns" title="Permanent link">&para;</a></h6>
+<p>float
+    The sigma8 value.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="cloelib.cosmology.hi_class_cosmology" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">hi_class_cosmology</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology" class="headerlink" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+        <p>Implementation of Background and Perturbation cosmology using hi_class.</p>
+
+          
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">hi_classBackground</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">hi_classBackground</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(H0)">H0</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(Omega_b0)">Omega_b0</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(Omega_cdm0)">Omega_cdm0</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(Omega_k0)">Omega_k0</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(As)">As</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(ns)">ns</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(mnu)">mnu</a></span><span class="p">:</span> <span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="typing.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">],</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(w0)">w0</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(wa)">wa</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(gamma_MG)">gamma_MG</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(N_mnu)">N_mnu</a></span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(N_ur)">N_ur</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(alpha_s)">alpha_s</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(params_smg)">params_smg</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="dict">dict</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classBackground(**kwargs)">kwargs</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>A wrapper for hi_class background cosmological calculations.</p>
+
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(H0)" class="doc doc-heading doc-heading-parameter">              <b><code>H0</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(H0)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Hubble parameter at z=0 in km/s/Mpc.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(Omega_b0)" class="doc doc-heading doc-heading-parameter">              <b><code>Omega_b0</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(Omega_b0)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Baryonic matter density parameter.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(Omega_cdm0)" class="doc doc-heading doc-heading-parameter">              <b><code>Omega_cdm0</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(Omega_cdm0)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Cold dark matter density parameter.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(Omega_k0)" class="doc doc-heading doc-heading-parameter">              <b><code>Omega_k0</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(Omega_k0)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Curvature density parameter.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(As)" class="doc doc-heading doc-heading-parameter">              <b><code>As</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(As)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Scalar amplitude of primordial fluctuations.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(ns)" class="doc doc-heading doc-heading-parameter">              <b><code>ns</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(ns)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Scalar spectral index.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(alpha_s)" class="doc doc-heading doc-heading-parameter">              <b><code>alpha_s</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(alpha_s)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>, default:
+                  <code>0.0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Running of the scalar spectral index (d ns / d ln k).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(mnu)" class="doc doc-heading doc-heading-parameter">              <b><code>mnu</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(mnu)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Union">Union</span>[<span title="float">float</span>, <span title="typing.Sequence">Sequence</span>[<span title="float">float</span>], <span title="numpy.ndarray">ndarray</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Total neutrino mass in eV.
+Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(w0)" class="doc doc-heading doc-heading-parameter">              <b><code>w0</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(w0)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Equation of state parameter for dark energy.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(wa)" class="doc doc-heading doc-heading-parameter">              <b><code>wa</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(wa)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Time evolution of the equation of state.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(gamma_MG)" class="doc doc-heading doc-heading-parameter">              <b><code>gamma_MG</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(gamma_MG)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Modified gravity growth parameter (not directly used in hi_class, but kept for protocol compliance).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(N_mnu)" class="doc doc-heading doc-heading-parameter">              <b><code>N_mnu</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(N_mnu)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="int">int</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Number of massive neutrino species.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(N_ur)" class="doc doc-heading doc-heading-parameter">              <b><code>N_ur</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(N_ur)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="float">float</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Effective number of ultra-relativistic species.
+If not provided, it will be inferred from N_mnu such that N_eff = 3.044.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground(params_smg)" class="doc doc-heading doc-heading-parameter">              <b><code>params_smg</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground(params_smg)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="dict">dict</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Modified gravity parameters, or other extra parameters not passed by default.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.N_ur" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">N_ur</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.N_ur" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">N_ur</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Effective number of ultra-relativistic species.</p>
+<p>If the user gave one, return it; otherwise infer from other parameters such that
+N_eff = 3.044 for the standard model of cosmology.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.N_eff" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">N_eff</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.N_eff" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">N_eff</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the effective number of relativistic species.</p>
+<p>Assumes a standard value of T_ncdm = 0.71611 K for neutrinos.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.rdrag" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">rdrag</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.rdrag" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">rdrag</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Sound horizon radius at last scattering in Mpc.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.z_star" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">z_star</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.z_star" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">z_star</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Redshift of photon decoupling.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.hubble_parameter" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">hubble_parameter</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.hubble_parameter" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">hubble_parameter</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.hubble_parameter(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.hubble_parameter(units)">units</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">&#39;km/s/Mpc&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the Hubble parameter as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.hubble_parameter(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.hubble_parameter(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.hubble_parameter(units)" class="doc doc-heading doc-heading-parameter">              <b><code>units</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.hubble_parameter(units)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="str">str</span></code>, default:
+                  <code>&#39;km/s/Mpc&#39;</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Hubble parameter values at specified redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.comoving_distance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">comoving_distance</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.comoving_distance" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">comoving_distance</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.comoving_distance(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the comoving distance as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.comoving_distance(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.comoving_distance(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Comoving distance values.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.transverse_comoving_distance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">transverse_comoving_distance</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.transverse_comoving_distance" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">transverse_comoving_distance</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.transverse_comoving_distance(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the transverse comoving distance between two redshifts.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.transverse_comoving_distance(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.transverse_comoving_distance(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Transverse comoving distance values.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.angular_diameter_distance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">angular_diameter_distance</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.angular_diameter_distance" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">angular_diameter_distance</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.angular_diameter_distance(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the angular diameter distance as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.angular_diameter_distance(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.angular_diameter_distance(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Angular diameter distance values.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_cb</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_cb(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the cold dark matter + baryons (no neutrinos) as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Matter density values (no neutrinos).</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_m" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_m</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_m" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_m</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_m(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the matter density as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_m(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_m(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Matter density values.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_b" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">Omega_b</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_b" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_b</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_b(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the baryon density as a function of redshift.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_b(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.Omega_b(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>np.ndarray: Matter density values.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.get_background" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_background</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.get_background" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return all background quantities</p>
+<p>Return a dictionary of background quantities at all times.
+The name and list of quantities in the returned dictionary are
+defined in hi_class, in background_output_titles() and
+background_output_data(). The keys of the dictionary refer to
+redshift 'z', proper time 'proper time [Gyr]', conformal time
+'conf. time [Mpc]', and many quantities such as the Hubble
+rate, distances, densities, pressures, or growth factors. For
+each key, the dictionary contains an array of values
+corresponding to each sampled value of time.</p>
+<p>This function works for whatever request in the 'output'
+field, and even if 'output' was not passed or left blank.</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.get_background--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.get_background--parameters" title="Permanent link">&para;</a></h6>
+<p>None</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classBackground.get_background--returns">Returns<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classBackground.get_background--returns" title="Permanent link">&para;</a></h6>
+<p>background : dict
+    Dictionary of all background quantities at each time</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">hi_classLinearPerturbations</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">hi_classLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Class for perturbations cosmology using hi_class, inheriting from Perturbations parent class.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the hi_class linear matter power spectrum.</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum--returns">Returns<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_factor" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_factor" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_factor(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_factor(ks)">ks</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for given redshifts and wavenumbers.</p>
+<p>.. math::
+    D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+    /P_{\rm \delta\delta}(z=0, k)}\</p>
+<p>and normalizes as for :math:<code>D(z)/D(0)</code>.</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_factor--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_factor--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>        <h6 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_factor--returns">Returns:<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_factor--returns" title="Permanent link">&para;</a></h6>
+<p>np.ndarray
+    The growth factor at the specified redshift and wavenumber.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_rate" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_rate</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_rate" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth rate f(z).
+The standard expression for scale-independent f assumes LCDM and isn't valid in modified gravity.
+Instead, we use the scale-dependent growth rate at large k (1 Mpc^-1)</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_rate--returns">Returns<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.growth_rate--returns" title="Permanent link">&para;</a></h6>
+<p>np.ndarray
+    Scale-independent growth rate f(z)</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma8_0</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the sigma8 value for the current cosmology.</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.sigma8_0--returns">Returns:<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classLinearPerturbations.sigma8_0--returns" title="Permanent link">&para;</a></h6>
+<p>float
+    The sigma8 value.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">hi_classNonLinearPerturbations</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">hi_classNonLinearPerturbations</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(linearperturbations)">linearperturbations</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="object">object</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(redshifts)">redshifts</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(nonlinear_model)">nonlinear_model</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Class for non-linear perturbations cosmology using hi_class, inheriting from Perturbations parent class.</p>
+
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(background)" class="doc doc-heading doc-heading-parameter">              <b><code>background</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(background)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>Background cosmology object.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(linearperturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>linearperturbations</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(linearperturbations)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="object">object</span>]</code>)
+          –
+          <div class="doc-md-description">
+            <p>Linear perturbations object (unused by hi_class, which computes
+nonlinear corrections internally; accepted for interface compatibility with
+emulator-based NonLinPerturbations classes).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(redshifts)" class="doc doc-heading doc-heading-parameter">              <b><code>redshifts</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(redshifts)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Array of redshifts for the calculations.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(nonlinear_model)" class="doc doc-heading doc-heading-parameter">              <b><code>nonlinear_model</code></b>
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(nonlinear_model)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>The nonlinear model to use. Defaults to None (no nonlinear).</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the hi_class non-linear matter power spectrum.</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum--returns">Returns<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Non-linear matter power spectrum at the specified scale
+    and redshift</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the hi_class non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>
+
+<details class="hubble_units" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if output in h units, defaults to False</p>
+</details>
+
+<details class="k_hunit" open>
+  <summary>(Optional) bool</summary>
+  <p>Flag to specify if wavenumber in h units, defaults to False</p>
+</details>        <h6 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>pk: numpy.ndarray
+    Linear matter power spectrum at the specified scale
+    and redshift</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_factor" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_factor" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_factor(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_factor(ks)">ks</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for given redshifts and wavenumbers.</p>
+<p>.. math::
+    D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+    /P_{\rm \delta\delta}(z=0, k)}\</p>
+<p>and normalizes as for :math:<code>D(z)/D(0)</code>.</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_factor--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_factor--parameters" title="Permanent link">&para;</a></h6>
+<p>zs: numpy.ndarray
+    redshifts</p>
+
+
+<details class="ks" open>
+  <summary>numpy.ndarray</summary>
+  <p>wavenumber</p>
+</details>        <h6 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_factor--returns">Returns:<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_factor--returns" title="Permanent link">&para;</a></h6>
+<p>np.ndarray
+    The growth factor at the specified redshift and wavenumber.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_rate" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_rate</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_rate" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth rate f(z).
+The standard expression for scale-independent f assumes LCDM and isn't valid in modified gravity.
+Instead, we use the scale-dependent growth rate at large k (1 Mpc^-1)</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_rate--returns">Returns<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.growth_rate--returns" title="Permanent link">&para;</a></h6>
+<p>np.ndarray
+    Scale-independent growth rate f(z)</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
+
+
+<a href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma8_0</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the sigma8 value for the current cosmology.</p>
+<h6 id="cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.sigma8_0--returns">Returns:<a class="headerlink" href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations.sigma8_0--returns" title="Permanent link">&para;</a></h6>
 <p>float
     The sigma8 value.</p>
 

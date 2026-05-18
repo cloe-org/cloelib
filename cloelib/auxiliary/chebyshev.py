@@ -12,6 +12,7 @@ from cloelib.observables.photo import PositionsTracer, ShearTracer
 jax.config.update("jax_enable_x64", True)
 
 
+@jax.jit
 def dct_type1(f_values: Array) -> Array:
     """Compute the Discrete Cosine Transform (DCT) of type I.
 
@@ -21,11 +22,12 @@ def dct_type1(f_values: Array) -> Array:
     Returns:
         DCT type I of the input array.
     """
-    # return scipy.fft.dct(f_values, type=1)
-    N = f_values.shape[0]
-    x_ext = jnp.concatenate([f_values, f_values[-2:0:-1]])
-    X = jnp.fft.fft(x_ext)
-    return jnp.real(X[:N])
+
+    internal_reversed = jnp.flip(f_values[1:-1])
+    x_ext = jnp.concatenate([f_values, internal_reversed])
+    X = jnp.fft.rfft(x_ext)
+
+    return jnp.real(X[: f_values.shape[0]])
 
 
 def chebyshev_points(n: int) -> Array:
@@ -60,6 +62,7 @@ def chebyshev_points_interval(n: int, x_start: float, x_stop: float) -> Array:
     return mapped_pts
 
 
+@jax.jit
 def chebyshev_coefficients(f_values: Array) -> Array:
     """Compute Chebyshev coefficients from function values at Chebyshev points.
 
@@ -70,11 +73,12 @@ def chebyshev_coefficients(f_values: Array) -> Array:
     """
     N = len(f_values)
     c = dct_type1(f_values) / (N - 1)
-    c = c.at[0].set(c[0] / 2)
-    c = c.at[-1].set(c[-1] / 2)
-    # c[0] /= 2
-    # c[-1] /= 2
-    return c
+
+    scale = jnp.ones(N)
+    scale = scale.at[0].set(0.5)
+    scale = scale.at[-1].set(0.5)
+
+    return c * scale
 
 
 def chebyshev_interpolation(x: Array, c: Array) -> Array:
@@ -91,35 +95,40 @@ def chebyshev_interpolation(x: Array, c: Array) -> Array:
     return np.polynomial.chebyshev.chebval(x_scaled, c)
 
 
-def clenshaws_curtis_quadrature(n: int, a: float, b: float) -> tuple[Array, Array]:
+def clenshaws_curtis_quadrature(
+    n: int, a: float, b: float
+) -> tuple[jnp.ndarray, jnp.ndarray]:
     """Compute the Clenshaw-Curtis quadrature of a function f on [a, b].
 
     Args:
-        n: Number of Chebyshev points to use.
+        n: Number of quadrature points (N+1 nodi, con N = n-1).
         a: Start of the interval.
         b: End of the interval.
     Returns:
         cheb_pts : Chebyshev points on [a, b].
         weights : Corresponding weights for Clenshaw-Curtis quadrature.
     """
+    N = n - 1
 
-    # Modified Chebyshev moments of the first kind
-    # mu = jnp.array([jnp.sqrt(2),0]+[(1+(-1)**k)/(1-k**2) for k in range(2,n)])
+    # mu moments, mu_k = 2 / (1 - k^2) if k is even, 0 if k is odd
+    k = jnp.arange(n)
+    mu = jnp.where(k % 2 == 0, 2.0 / (1.0 - k**2), 0.0)
+    mu = mu.at[0].set(2.0)
+    mu = mu.at[-1].set(mu[-1] / 2.0)
 
-    mu = jnp.zeros(n)
-    for i in range(0, n, 2):
-        mu = mu.at[i].set(2.0 / (1 - i**2))
+    # IDCT-I using rFFT
+    internal_reversed = jnp.flip(mu[1:-1])
+    mu_ext = jnp.concatenate([mu, internal_reversed])
 
-    w = dct_type1(mu) / (n - 1)
-    w = w.at[0].set(w[0] / 2)
-    w = w.at[-1].set(w[-1] / 2)
-    # w[0] /= 2
-    # w[-1] /= 2
+    w = jnp.fft.rfft(mu_ext)
+    w = jnp.real(w[:n]) / N
+    w = w.at[0].set(w[0] / 2.0)
+    w = w.at[-1].set(w[-1] / 2.0)
 
-    # Scale weights to the interval [a, b]
-    w = (b - a) / 2 * w
+    # rescling weights to the interval [a, b]
+    w = w * (b - a) / 2.0
 
-    return chebyshev_points_interval(n - 1, a, b), w
+    return chebyshev_points_interval(N, a, b), w
 
 
 def comoving_distance_to_redshift(chi, background):

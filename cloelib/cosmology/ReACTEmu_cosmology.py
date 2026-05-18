@@ -91,6 +91,7 @@ class MGemuNonlinearBoost:
             "wCDM": "ds",
             "w0waCDM": "ds",
             "ide": "ds",
+            "ds": "ds"
         }
 
         allowed_models = set(MODEL_TO_BACKEND.keys())
@@ -205,7 +206,7 @@ class MGemuNonlinearBoost:
         wa = self.background.wa
 
         # Only enforce LCDM background if not in one of the "allowed" DE models
-        if self.gravity_model not in ["wCDM", "w0waCDM", "ide", "mu"]:
+        if self.gravity_model not in ["wCDM", "w0waCDM", "ide", "mu", "ds"]:
             assert self.background.w0 == -1.0 and self.background.wa == 0.0, (
                 "All other emulators are trained for ΛCDM background"
             )
@@ -415,9 +416,7 @@ class BoostedPerturbations:
 
         """
 
-        self.background = (
-            base_lin_perturbations.background
-        )  # not base_perturbations as those are only LCDM
+        self.background = base_lin_perturbations.background #not base_perturbations as those are only LCDM
         assert self.background.Omega_k0 == 0, "Non flat geometries not supported"
 
         self.base = base_perturbations

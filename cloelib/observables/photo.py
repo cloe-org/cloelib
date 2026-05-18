@@ -13,6 +13,7 @@ from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 # General imports
 import jax.numpy as np  # type: ignore
 import jax  # type: ignore
+import numpy as _onp  # type: ignore
 import interpax  # type: ignore
 import jax.lax as lx
 
@@ -272,7 +273,13 @@ class ShearTracer:
         # Modificarion of the lensing potential in modified gravity models
         # Similar to the scale-dependent linear growth factor, the scale-dependence
         # for now is ignored
-        factor *= self.sigma_lensing(z, self.perturbations.k[0])
+        sigma = self.sigma_lensing(z, self.perturbations.k)
+        if isinstance(sigma, (np.ndarray, _onp.ndarray)):
+            if sigma.ndim == 2:
+                # Attach only the first k index per z
+                sigma = sigma[:, 0]
+
+        factor *= sigma
         ####
         efficiency = self.get_lensing_efficiency(z)
         return np.einsum("ij, j->ij", efficiency, factor)

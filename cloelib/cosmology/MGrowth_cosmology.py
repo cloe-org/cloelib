@@ -69,6 +69,8 @@ class MGrowthLinearPerturbations:
         # must be w0waCDM (i.e. or wCDM, or LCDM)
         self.base = base_linear_perturbations
 
+        # is called later in kernels, has to match
+        self.z = self.base.z
         # Sort scale factors and redshifts in ascending order (early to late times)
         # hardcoded
         self.z_sorted = np.linspace(0.0, 5.0, 256, endpoint=True)
@@ -464,7 +466,7 @@ class MGrowthLinearPerturbations:
                     / 2
                     / np.pi**2,
                     ks,
-                )
+                )[0]
             )
         else:
             return self.dz_norm_w0wacdm_interp(0.0, 0.01)[0, 0] * self.base.sigma8_0()

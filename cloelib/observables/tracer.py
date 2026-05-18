@@ -1,11 +1,12 @@
 """Tracer protocol for different window functions."""
+
 # cloelib imports
 from cloelib.cosmology.cosmology import Perturbations
 
 # General imports
 from typing import Protocol, Union, TypeVar
 import numpy as np  # type: ignore
-import jax.numpy as jnp # type: ignore
+import jax.numpy as jnp  # type: ignore
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
@@ -55,13 +56,10 @@ class Tracer(Protocol):
         """
         Compute general window(s) given the selected tracer.
 
-        Parameters
-        ----------
-        z: float
-            Redshift at which window kernel is being evaluated
+        Args:
+          z (float): Redshift at which window kernel is being evaluated
 
-        Returns
-        -------
-        window: np.ndarray
+        Returns:
+          window (np.ndarray):
         """
         ...

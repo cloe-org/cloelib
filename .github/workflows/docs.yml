@@ -1,0 +1,66 @@
+name: Docs
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*" # Tags update 'stable' and version numbers
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopenblas-dev gfortran
+
+      - name: Install MkDocs and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs-material mkdocstrings[python] mike
+          pip install -e .
+
+      - name: Fetch gh-pages history
+        run: git fetch origin gh-pages --depth=1 || true
+
+      - name: Configure git author
+        run: |
+          git config --local user.name  "${{ github.actor }}"
+          git config --local user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+
+      - name: Verify Docs Build (Dry Run)
+        if: github.event_name == 'pull_request'
+        run: mkdocs build --strict
+
+      # Deploy only on Push
+      # This runs ONLY on Pushes (merges to main or tags).
+      # It is skipped entirely for PRs.
+      - name: Deploy documentation
+        if: github.event_name == 'push'
+        run: |
+          # Your deployment logic (using the tag/main logic discussed before)
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+             VERSION="${GITHUB_REF#refs/tags/}"
+             mike deploy --push --update-aliases $VERSION stable
+             mike set-default --push stable
+          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+             mike deploy --push --update-aliases dev latest
+          fi

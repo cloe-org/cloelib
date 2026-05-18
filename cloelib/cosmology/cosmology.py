@@ -1,13 +1,7 @@
-"""Protocols for Background and Perturbation cosmology classes.."""
-# General imports
-from typing import Protocol, Union, TypeVar, Optional, runtime_checkable
+"""Protocols for Background and Perturbation cosmology classes.
 
-import numpy as np  # type: ignore
-import jax.numpy as jnp
-
-"""
 ## Notes:
- 
+
 - Refactored cosmology.py from the original CLOE to provide a more flexible framework,
   enabling seamless integration with external cosmological codes while removing dependency on Cobaya.
 
@@ -15,7 +9,14 @@ import jax.numpy as jnp
   providing a unified and extensible template for interaction.
 """
 
+# General imports
+from typing import Protocol, Union, Sequence, TypeVar, Optional, runtime_checkable
+
+import numpy as np  # type: ignore
+import jax.numpy as jnp
+
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
+
 
 @runtime_checkable
 class Background(Protocol):
@@ -25,12 +26,12 @@ class Background(Protocol):
     def H0(self) -> float:
         """Hubble parameter at redshift 0 in km s-1 Mpc-1."""
         ...
-    
+
     @property
     def h(self) -> float:
         """Dimensionless Hubble constant."""
         ...
-    
+
     @property
     def Omega_b0(self) -> float:
         """Omega baryon; the baryon density/critical density at z=0."""
@@ -42,8 +43,23 @@ class Background(Protocol):
         ...
 
     @property
-    def mnu(self) -> float:
-        """Total neutrino mass in eV."""
+    def mnu(self) -> Union[float, Sequence[float], T]:
+        """Total neutrino mass in eV (float) or an array of individual neutrino masses in eV."""
+        ...
+
+    @property
+    def N_ur(self) -> float:
+        """Effective number of ultra-relativistic species. As defined by CLASS."""
+        ...
+
+    @property
+    def N_eff(self) -> float:
+        """Effective number of relativistic species."""
+        ...
+
+    @property
+    def N_mnu(self) -> int:
+        """Integer number of massive neutrino species."""
         ...
 
     @property
@@ -59,6 +75,11 @@ class Background(Protocol):
     @property
     def ns(self) -> float:
         """Scalar index of the primordial power spectrum."""
+        ...
+
+    @property
+    def alpha_s(self) -> float:
+        """Running of the scalar spectral index (d ns / d ln k)."""
         ...
 
     @property
@@ -80,13 +101,17 @@ class Background(Protocol):
     def interface_args(self) -> dict:
         """Save internal structure format of possible interface codes."""
         ...
-    
+
     def Omega_b(self, zs: T) -> T:
         """Compute the matter density as a function of redshift."""
         ...
 
     def Omega_m(self, zs: T) -> T:
         """Compute the matter density as a function of redshift."""
+        ...
+
+    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
+        """Computes the cold dark matter + baryons (no neutrinos) as a function of redshift."""
         ...
 
     def hubble_parameter(self, zs: T, units: str = "km/s/Mpc") -> T:
@@ -110,6 +135,11 @@ class Background(Protocol):
         """Sound horizon radius at last scattering in Mpc."""
         ...
 
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
+        ...
+
 
 @runtime_checkable
 class Perturbations(Protocol):
@@ -130,4 +160,12 @@ class Perturbations(Protocol):
 
     def matter_power_spectrum(self, zs: T, ks: T) -> T:
         """Retrieve the matter power spectrum."""
+        ...
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        """Retrieves matter power spectrum of cold dark matter + baryons (no neutrinos)."""
+        ...
+
+    def sigma8_0(self) -> float:
+        """Retrieve sigma8 at z=0."""
         ...

@@ -1,4 +1,5 @@
 """Module to compute Alcock-Paczynski (AP) distortions parameters."""
+
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 
@@ -9,6 +10,7 @@ import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
+
 class APDistortion:
     """Class to compute AP distortion parameters from cosmological background quantities."""
 
@@ -16,12 +18,9 @@ class APDistortion:
         """
         Initialize the class instance.
 
-        Parameters
-        ----------
-        background: Background
-            Background class for computing background distances
-        background_fiducial: Background
-            Background class for computing fiducial background distances
+        Parameters:
+            background (Background): Background class for computing background distances
+            background_fiducial (Background): Background class for computing fiducial background distances
         """
         self.background = background
         self.background_fiducial = background_fiducial
@@ -29,33 +28,31 @@ class APDistortion:
     def q_AP_tr(self, z: T) -> T:
         r"""AP distortion parameter transversal to the line of sight.
 
-        .. math::
-            q_{\perp}(z) &= \frac{D_{\rm M}(z)}{D_{\rm M,fid}(z)}\\
-        Parameters
-        ----------
-        z: np.ndarray
-           Redshift
-        Returns
-        -------
-        q_tr: np.ndarray
-           Transversal AP parameter
+        $$
+            q_{\perp}(z) = \frac{D_{\rm M}(z)}{D_{\rm M,fid}(z)}\\
+        $$
+
+        Parameters:
+            z (np.ndarray): Redshift
+        Returns:
+            q_tr (np.ndarray): Transversal AP parameter
         """
-        return (self.background.angular_diameter_distance(z)
-                / self.background_fiducial.angular_diameter_distance(z))
+        return self.background.angular_diameter_distance(
+            z
+        ) / self.background_fiducial.angular_diameter_distance(z)
 
     def q_AP_lo(self, z: T) -> T:
         r"""AP distortion parameter parallel to the line of sight.
 
-        .. math::
-            q_{\parallel}(z) &= \frac{H_{\rm fid}(z)}{H(z)}\\
-        Parameters
-        ----------
-        z: np.ndarray
-           Redshift
-        Returns
-        -------
-        q_tr: np.ndarray
-           Parallel AP parameter
+        $$
+            q_{\parallel}(z) = \frac{H_{\rm fid}(z)}{H(z)}\\
+        $$
+
+        Parameters:
+            z (np.ndarray): Redshift
+        Returns:
+            q_tr (np.ndarray): Parallel AP parameter
         """
-        return (self.background_fiducial.hubble_parameter(z)
-                / self.background.hubble_parameter(z))
+        return self.background_fiducial.hubble_parameter(
+            z
+        ) / self.background.hubble_parameter(z)

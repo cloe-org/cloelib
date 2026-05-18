@@ -1,46 +1,65 @@
-[tool.poetry]
-name = "cloelib"
-version = "0.8.2"
-description = "cloelib is a flexible and efficient library designed to compute cosmological observables for CLOE (Cosmology Likelihood for Observables in Euclid)"
-authors = [
-    "M. Bonici <marco.bonici@uwaterloo.ca>",
-    "G. Cañas-Herrera <guadalupe.canasherrera@esa.int>",
-    "P. Carrilho <pedro.carrilho@ed.ac.uk>",
-    "S. Casas <casas@physik.rwth-aachen.de>",
-    "C. Moretti <cmoretti@sissa.it>",
-    "A. Pezzotta <andrea.pezzotta@inaf.it>",
-]
-license = "MIT"
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-interpax = "0.3.3"
-jax = "0.4.38"
-numpy = "<2.0"
-quadax = "0.2.7"
-scipy = "<1.14"
-pytest = "8.3.5"
-pytest-cov = "6.1.1"
-pytest-pydocstyle = "2.4.0"
-mypy = "1.17"
-
-[tool.poetry.extras]
-camb = ["camb"]
-hmcode2020emu = ["HMcode2020Emu"]
-comet-emu = ["comet-emu"]
-
-[tool.poetry.dependencies.tensorflow]
-version = "==2.13"
-optional = true
-
-[tool.poetry.dependencies.HMcode2020Emu]
-git = "https://github.com/MariaTsedrik/HMcode2020Emu.git"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cloelib"
+description = "cloelib is a flexible and efficient library designed to compute cosmological observables for CLOE (Cosmology Likelihood for Observables in Euclid)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "M. Bonici", email = "marco.bonici@uwaterloo.ca" },
+    { name = "G. Cañas-Herrera", email = "canasherrera@strw.leidenuniv.nl" },
+    { name = "P. Carrilho", email = "p.carrilho@herts.ac.uk" },
+    { name = "S. Casas", email = "s.casas@protonmail.com" },
+    { name = "C. Moretti", email = "cmoretti@sissa.it" },
+    { name = "A. Pezzotta", email = "andrea.pezzotta@inaf.it" }
+]
+
+dependencies = [
+    "interpax",
+    "jax",
+    "numpy>2.0",
+    "quadax",
+    "scipy>1.14",
+    "pytest",
+    "pytest-cov",
+    "mypy",
+    "pyinstrument",
+    "cosmolib"
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+camb = ["camb==1.6.5"]
+classy = ["classy==3.3.4"]
+comet-emu = ["comet-emu"]
+hmcode2020emu = ["HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"]
+euclidemu2 = ["euclidemu2==1.4.3"]
+pylevin = ["pylevin"]
+mpmath = ["mpmath"]
+tensorflow = ["tensorflow"]
+tf-keras = ["tf-keras"]
+react = [
+    "MGemu @ git+https://github.com/nebblu/MGEmus.git",
+    "tensorflow",
+    "tf-keras",
+]
+cosmopower-jax=["cosmopower-jax"]
+baccoemu = ["baccoemu"]
+hiclassy = ["hiclassy==3.3.4"]
+emantis = ["emantis>=1.2.1"]
+pbjcosmo = ["pbjcosmo"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "cloelib/_version.py"
 
 [tool.pytest.ini_options]
-addopts = "--verbose --pydocstyle --cov=cloelib"
+addopts = "--verbose --cov=cloelib"
 
+[tool.hatch.metadata]
+allow-direct-references = true

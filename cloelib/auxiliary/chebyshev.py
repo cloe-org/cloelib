@@ -222,6 +222,7 @@ def Pkl_chebyshev_coeffs(
     return jnp.apply_along_axis(chebyshev_coefficients, 0, Pk)
 
 
+@jax.jit
 def w_ell(c: Array, T_tilde: Array) -> Array:
     """
     Compute the matrix contractio  to obtain w_ell from Chebyshev coefficients and T_tilde.
@@ -239,22 +240,6 @@ def w_ell(c: Array, T_tilde: Array) -> Array:
     return jnp.einsum("ijk,ljki->ljk", c, T_tilde)
 
 
-def kernel_grid_interpolator(tracer, chi_grid):
-    """
-    Interpolates the kernel values for a given grid based on the specified cosmological probes.
-    Returns a 2D array of interpolated kernel values, where rows correspond to the number of bins and columns correspond to the grid points.
-
-    Parameters:
-    tracer: An instance of a cosmological tracer class (e.g., PositionsTracer, ShearsTracer).
-    grid: A 1D array of grid points where the kernel values need to be interpolated.
-    Returns:
-    interpolated_kernel: A 2D array of shape (n_bins, len(grid)) containing the interpolated kernel values.
-    """
-    z_grid = comoving_distance_to_redshift(chi_grid, tracer.background)
-    kernel_values = tracer.get_window(tracer.z)
-    return akima_interpolation(kernel_values, tracer.z, z_grid, axis=-1)
-
-
 def _get_kernel_array_position(tracer: PositionsTracer, chi_grid):
     """
     Computes the kernel values for a given grid based on the specified cosmological probes.
@@ -267,7 +252,9 @@ def _get_kernel_array_position(tracer: PositionsTracer, chi_grid):
     kernel_array: A 2D array of shape (n_bins, len(grid)) containing the kernel values.
     """
 
-    return kernel_grid_interpolator(tracer, chi_grid)
+    z_grid = comoving_distance_to_redshift(chi_grid, tracer.background)
+    kernel_values = tracer.get_window_positions(tracer.z)
+    return akima_interpolation(kernel_values, tracer.z, z_grid, axis=-1)
 
 
 def _get_kernel_array_shear(tracer: ShearTracer, chi_grid):
@@ -282,7 +269,9 @@ def _get_kernel_array_shear(tracer: ShearTracer, chi_grid):
     kernel_array: A 2D array of shape (n_bins, len(grid)) containing the kernel values.
     """
 
-    return kernel_grid_interpolator(tracer, chi_grid) / chi_grid**2
+    z_grid = comoving_distance_to_redshift(chi_grid, tracer.background)
+    kernel_values = tracer.get_window_lensing(tracer.z)
+    return akima_interpolation(kernel_values, tracer.z, z_grid, axis=-1) / chi_grid**2
 
 
 def get_kernel_array(tracer, chi_grid):

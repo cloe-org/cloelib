@@ -1,7 +1,7 @@
 """Tests for cloelib.cosmology.mgrowth_cosmology.MGrowthLinearPerturbations.
 
 Covers every gravity model exposed by the class and a few interface contracts
-(shapes, LCDM limits, error handling). 
+(shapes, LCDM limits, error handling).
 """
 
 import numpy as np
@@ -90,7 +90,9 @@ def _make_mg(camb_background, camb_linear, model_name, mgpars):
 # -------------------------------
 
 
-@pytest.mark.parametrize("model_name,mgpars", SUPPORTED_MODELS, ids=[m for m, _ in SUPPORTED_MODELS])
+@pytest.mark.parametrize(
+    "model_name,mgpars", SUPPORTED_MODELS, ids=[m for m, _ in SUPPORTED_MODELS]
+)
 def test_initializes_for_all_models(camb_background, camb_linear, model_name, mgpars):
     """Every advertised gravity model should initialize without error."""
     mg = _make_mg(camb_background, camb_linear, model_name, mgpars)
@@ -171,7 +173,9 @@ def test_nonflat_geometry_rejected(camb_linear):
 # -------------------------------
 
 
-@pytest.mark.parametrize("model_name,mgpars", SUPPORTED_MODELS, ids=[m for m, _ in SUPPORTED_MODELS])
+@pytest.mark.parametrize(
+    "model_name,mgpars", SUPPORTED_MODELS, ids=[m for m, _ in SUPPORTED_MODELS]
+)
 def test_growth_factor_shape_and_normalization(
     camb_background, camb_linear, model_name, mgpars
 ):
@@ -191,7 +195,9 @@ def test_growth_factor_shape_and_normalization(
     assert np.all(np.diff(D, axis=0) <= 1e-10)
 
 
-@pytest.mark.parametrize("model_name,mgpars", SUPPORTED_MODELS, ids=[m for m, _ in SUPPORTED_MODELS])
+@pytest.mark.parametrize(
+    "model_name,mgpars", SUPPORTED_MODELS, ids=[m for m, _ in SUPPORTED_MODELS]
+)
 def test_growth_rate_shape_and_sign(camb_background, camb_linear, model_name, mgpars):
     mg = _make_mg(camb_background, camb_linear, model_name, mgpars)
 
@@ -207,7 +213,9 @@ def test_growth_rate_shape_and_sign(camb_background, camb_linear, model_name, mg
     assert np.all(f[0] < 1.5)
 
 
-@pytest.mark.parametrize("model_name,mgpars", SUPPORTED_MODELS, ids=[m for m, _ in SUPPORTED_MODELS])
+@pytest.mark.parametrize(
+    "model_name,mgpars", SUPPORTED_MODELS, ids=[m for m, _ in SUPPORTED_MODELS]
+)
 def test_matter_power_spectrum_shape_and_positivity(
     camb_background, camb_linear, model_name, mgpars
 ):
@@ -225,7 +233,9 @@ def test_matter_power_spectrum_shape_and_positivity(
     assert np.all(np.diff(pk, axis=0) <= 1e-10)
 
 
-@pytest.mark.parametrize("model_name,mgpars", SUPPORTED_MODELS, ids=[m for m, _ in SUPPORTED_MODELS])
+@pytest.mark.parametrize(
+    "model_name,mgpars", SUPPORTED_MODELS, ids=[m for m, _ in SUPPORTED_MODELS]
+)
 def test_sigma8_0_is_positive_float(camb_background, camb_linear, model_name, mgpars):
     mg = _make_mg(camb_background, camb_linear, model_name, mgpars)
     s8 = mg.sigma8_0()
@@ -277,7 +287,9 @@ def test_fr_growth_is_scale_dependent(camb_background, camb_linear):
     D = mg.growth_factor(zs, ks)
     # The k-dependence must be clearly non-trivial (>0.1% spread).
     rel_diff = abs(D[0, 1] - D[0, 0]) / D[0, 0]
-    assert rel_diff > 1e-3, f"Expected k-dependent growth in f(R), got rel_diff={rel_diff:.2e}"
+    assert rel_diff > 1e-3, (
+        f"Expected k-dependent growth in f(R), got rel_diff={rel_diff:.2e}"
+    )
     # Direction check: D(z, k_large)/D(0, k_large) < D(z, k_small)/D(0, k_small).
     assert D[0, 1] < D[0, 0]
 
@@ -298,7 +310,9 @@ LCDM_LIMIT_CASES = [
 ]
 
 
-@pytest.mark.parametrize("model_name,mgpars", LCDM_LIMIT_CASES, ids=[m for m, _ in LCDM_LIMIT_CASES])
+@pytest.mark.parametrize(
+    "model_name,mgpars", LCDM_LIMIT_CASES, ids=[m for m, _ in LCDM_LIMIT_CASES]
+)
 def test_lcdm_limit_matches_w0wacdm_baseline(
     camb_background, camb_linear, model_name, mgpars
 ):
@@ -353,7 +367,9 @@ def test_fr_growth_increases_with_fR0(camb_background, camb_linear):
 
 def test_check_ranges_flag_flips_for_extreme_musigma(camb_background, camb_linear):
     """`check_ranges` should be flipped to False when mu0 > 2*sigma0 + 1."""
-    mg_ok = _make_mg(camb_background, camb_linear, "musigma-de", {"mu0": 0.1, "sigma0": 0.1})
+    mg_ok = _make_mg(
+        camb_background, camb_linear, "musigma-de", {"mu0": 0.1, "sigma0": 0.1}
+    )
     mg_extreme = _make_mg(
         camb_background, camb_linear, "musigma-de", {"mu0": 2.0, "sigma0": 0.1}
     )
@@ -368,7 +384,9 @@ def test_check_ranges_flag_flips_for_extreme_musigma(camb_background, camb_linea
 
 def test_musigma_de_interpolators_are_lcdm_at_origin(camb_background, camb_linear):
     """At mu0=sigma0=0 the mu(a) and Sigma(z,k) interpolators must equal 1."""
-    mg = _make_mg(camb_background, camb_linear, "musigma-de", {"mu0": 0.0, "sigma0": 0.0})
+    mg = _make_mg(
+        camb_background, camb_linear, "musigma-de", {"mu0": 0.0, "sigma0": 0.0}
+    )
 
     a_samples = np.array([0.5, 0.8, 1.0])
     z_samples = np.array([0.0, 1.0])

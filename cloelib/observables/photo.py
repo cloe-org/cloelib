@@ -137,10 +137,14 @@ class ShearTracer:
         self.perturbations = perturbations
         ####
         # Modificarion of the lensing potential in modified gravity models
-        if hasattr(self.perturbations, 'sigma_lensing') and callable(getattr(self.perturbations, 'sigma_lensing')):
+        if hasattr(self.perturbations, "sigma_lensing") and callable(
+            getattr(self.perturbations, "sigma_lensing")
+        ):
             self.sigma_lensing = self.perturbations.sigma_lensing
         else:
-            self.sigma_lensing = lambda  *args, **kwargs: 1.0  # Default to no modification if sigma_lensing is not available
+            self.sigma_lensing = (
+                lambda *args, **kwargs: 1.0
+            )  # Default to no modification if sigma_lensing is not available
         ####
         self.background = self.perturbations.background
         self.z = z

@@ -135,6 +135,13 @@ class ShearTracer:
                 "One of the z array elements is equal to zero, breaking Limber integration."
             )
         self.perturbations = perturbations
+        ####
+        # Modificarion of the lensing potential in modified gravity models
+        if hasattr(self.perturbations, 'sigma_lensing') and callable(getattr(self.perturbations, 'sigma_lensing')):
+            self.sigma_lensing = self.perturbations.sigma_lensing
+        else:
+            self.sigma_lensing = lambda  *args, **kwargs: 1.0  # Default to no modification if sigma_lensing is not available
+        ####
         self.background = self.perturbations.background
         self.z = z
         self.nuisance_params = nuisance_params
@@ -257,6 +264,12 @@ class ShearTracer:
             * (1 + z)
             * self.background.comoving_distance(z)
         )
+        ####
+        # Modificarion of the lensing potential in modified gravity models
+        # Similar to the scale-dependent linear growth factor, the scale-dependence
+        # for now is ignored
+        factor *= self.sigma_lensing(z, self.perturbations.k[0])
+        ####
         efficiency = self.get_lensing_efficiency(z)
         return np.einsum("ij, j->ij", efficiency, factor)
 

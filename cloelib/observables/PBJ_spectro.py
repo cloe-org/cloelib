@@ -38,6 +38,9 @@ class PBJSpectroPower:
         self.parameters = nuisance_parameters
 
         assert np.asarray(redshift).size == 1, "Only a single redshift can be passed."
+        assert redshift in linear_perturbations.z, (
+            "Redshift requested for PBJ not previously computed with linear theory code"
+        )
 
         self.redshift = redshift
 

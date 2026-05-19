@@ -36,6 +36,8 @@ except (ImportError, AttributeError, TypeError) as e:
 class PyBirdSpectroPower:
     r"""Class to retrieve $P(k,\mu)$ with the EFT model from PyBird"""
 
+    NLcode = "PyBird"
+
     def __init__(self, linear_perturbations: Perturbations, nuisance_parameters: dict, redshift: float):
         r"""Class constructor.
 
@@ -48,7 +50,7 @@ class PyBirdSpectroPower:
         self.linear_perturbations = linear_perturbations
         self.background = linear_perturbations.background
         self.parameters = nuisance_parameters
-        #self.mask_z0 = linear_perturbations.z != 0.0
+        self.mask_z0 = linear_perturbations.z != 0.0
         #self.redshift = linear_perturbations.z[self.mask_z0]
         #z = self.redshift[0]  # assuming one sky - one redshift for now
         assert np.asarray(redshift).size == 1, "Only a single redshift can be passed."
@@ -84,14 +86,14 @@ class PyBirdSpectroPower:
             k_ * h, pkl / h**3, k=3, axis=-1
         )  # k: [1/Mpc], Pk: [Mpc]^3
 
-        marg_parameter_names = {"bGamma3", "c0", "c2", "c4", "ct"}
+        self.marg_parameter_names = ["bGamma3", "c0", "c2", "c4", "ct"]
 
         pkl_term = N.getmarg(
             nuisance_parameters_pybird,
-            marg_parameter_names,
+            self.marg_parameter_names,
         ).reshape(-1, 3, k_.shape[0])  # shape (Nterm, Nk*Nl) -> (Nterm, Nl, Nk)
 
-        for i, c in enumerate(marg_parameter_names):
+        for i, c in enumerate(self.marg_parameter_names):
             if c in ["c0", "c2", "c4"]:
                 pkl_term[i] *= h**2  # [Mpc]^2 -> [Mpc/h]^2
             if c in ["ct"]:
@@ -172,6 +174,14 @@ class PyBirdSpectroPower:
         Pk2d: np.ndarray
             2D power spectrum of specific terms
         """
+        
+        margs = np.array(["bG3", "c0", "c2", "c4", "ck4"])
+        mask = np.isin(margs, term_list)
+        
         leglmu = np.array([legendre(ell)(mu) for ell in ells])
-        pkmu_term = np.einsum("nlk,lm->nkm", self.ipkl_term(k), leglmu)
+        if k.ndim == 1:
+            sumrule = "flk,lm->fkm"#"lk,lm->km"
+        elif k.ndim == 2 and k.shape[1] == mu.shape[0]:
+            sumrule = "flkm,lm->fkm"  # for AP effect, k is a 2D mesh
+        pkmu_term = np.einsum(sumrule, self.ipkl_term(k), leglmu)[mask] #--> shape (Nterms, Nl, Nk) or (Nterms, Nk)
         return pkmu_term

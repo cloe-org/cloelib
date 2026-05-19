@@ -341,7 +341,7 @@ Useful for checking contributions of different terms.
 
 ### Existing SpectroPower Implementations
 
-#### CometEFT_spectro
+#### CometEFT_SpectroPower
 
 Fast emulator using [comet-emu](https://comet-emu.readthedocs.io) with EFT model.
 
@@ -353,34 +353,65 @@ Fast emulator using [comet-emu](https://comet-emu.readthedocs.io) with EFT model
 
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground
-from cloelib.observables.CometEFT_spectro import CometEFT_spectro
+from cloelib.observables.CometEFT_spectro import CometEFT_SpectroPower
 
 bg = CAMBBackground(H0=67.5, ...)
 
+RSD_parameters = {'b1': 1.412, ...} # Biases and counterterms
+redshift = 1.0
 spectro = CometEFT_spectro(
-    background=bg,
-    z_pk=1.0,  # Redshift for power spectrum
+    bg,
+    RSD_parameters,
+    redshift
 )
 
-k = np.logspace(-2, 0, 50)  # k in h/Mpc
+k = np.logspace(-2, 0, 50)  # k in 1/Mpc
 mu = np.linspace(0, 1, 20)  # μ from 0 (perpendicular) to 1 (parallel)
 
-P_k_mu = spectro.Pk2d_rsd(k, mu, z=1.0)  # Shape: (50, 20)
+P_k_mu = spectro.Pk2d_rsd(k, mu)  # Shape: (50, 20)
 ```
 
-#### CometVDG_spectro
+#### CometVDG_SpectroPower
 
-Comet emulator with VDG (velocity difference generator) model.
+Comet emulator with VDG_infty model.
 
 **Location**: `cloelib/observables/CometVDG_spectro.py`
 
 **When to use**: Alternative RSD modeling
 
-#### PBJ_spectro
+#### PBJSpectroPower
 
-Perturbation theory code (not publicly available).
+Perturbation theory code interfaced with `Background` and
+`LinearPerturbation` objects, its speed depends on the computation of
+linear quantities (i.e. on which `LinearPerturbation` backend is
+selected).
 
 **Location**: `cloelib/observables/PBJ_spectro.py`
+
+**When to use**: Predictions of nonlinear galaxy power spectrum for
+spectroscopic observables, beyond $\Lambda$CDM models, MCMC sampling.
+
+**Example**:
+
+```python
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
+from cloelib.observables.PBJ_spectro import PBJSpectroPower
+
+zs = np.asarray([1.])
+bg = CAMBBackground(H0=67.5, ...)
+linear_perturbations = CAMBLinearPerturbations(bg, zs)
+
+RSD_parameters = {'b1': 1.412, ...} # Biases and counterterms
+spectro = PBJSpectroPower(
+    linear_perturbations,
+	RSD_parameters
+	)
+
+k = np.logspace(-2, 0, 50)  # k in 1/Mpc
+mu = np.linspace(0, 1, 20)  # μ from 0 (perpendicular) to 1 (parallel)
+
+P_k_mu = spectro.Pk2d_rsd(k, mu)
+```
 
 ### Adding Your Own SpectroPower
 

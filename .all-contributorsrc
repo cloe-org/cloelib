@@ -140,7 +140,9 @@
       "contributions": [
         "code",
         "maintenance",
-        "ideas"
+        "ideas",
+        "review",
+        "bug"
       ]
     },
     {
@@ -202,7 +204,8 @@
       "contributions": [
         "code",
         "ideas",
-        "bug"
+        "bug",
+        "review"
       ]
     },
     {
@@ -594,7 +597,8 @@
       "profile": "https://github.com/neelcosmo",
       "contributions": [
         "code",
-        "ideas"
+        "ideas",
+        "bug"
       ]
     },
     {

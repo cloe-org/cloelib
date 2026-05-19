@@ -1,4 +1,4 @@
-"""Implementation of Background and Perturbation cosmology using CLASS."""
+"""Implementation of Background and Perturbation cosmology using hi_class."""
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
@@ -12,13 +12,13 @@ import warnings
 
 # Cosmology imports
 try:
-    from classy import Class  # type: ignore
+    from hiclassy import HiClass  # type: ignore
 except ImportError as e:
-    raise ImportError("classy could not be imported.") from e
+    raise ImportError("hiclassy could not be imported.") from e
 
 
-class CLASSBackground:
-    """A wrapper for CLASS background cosmological calculations."""
+class hi_classBackground:
+    """A wrapper for hi_class background cosmological calculations."""
 
     c0 = SPEED_OF_LIGHT / 1000
 
@@ -37,10 +37,11 @@ class CLASSBackground:
         N_mnu: int,
         N_ur: Optional[float] = None,
         alpha_s: float = 0.0,
+        params_smg: Optional[dict] = None,
         **kwargs,
     ) -> None:
         """
-        Initialize the CLASSBackground instance with cosmological parameters.
+        Initialize the hi_classBackground instance with cosmological parameters.
 
         Args:
             H0 (float): Hubble parameter at z=0 in km/s/Mpc.
@@ -54,10 +55,11 @@ class CLASSBackground:
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the equation of state.
-            gamma_MG (float): Modified gravity growth parameter (not directly used in CLASS, but kept for protocol compliance).
+            gamma_MG (float): Modified gravity growth parameter (not directly used in hi_class, but kept for protocol compliance).
             N_mnu (int): Number of massive neutrino species.
             N_ur (Optional[float]): Effective number of ultra-relativistic species.
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
+            params_smg (Optional[dict]): Modified gravity parameters, or other extra parameters not passed by default.
         """
         self.H0 = H0
         self.h = self.H0 / 100
@@ -69,7 +71,9 @@ class CLASSBackground:
         self.alpha_s = alpha_s
         self.w0 = w0
         self.wa = wa
-        self.gamma_MG = gamma_MG  # Kept for protocol, but CLASS doesn't directly use it
+        self.gamma_MG = (
+            gamma_MG  # Kept for protocol, but hi_class doesn't directly use it
+        )
         self.mnu = mnu
         self.N_mnu = N_mnu
         # We can set N_ur to a default value if not provided
@@ -80,35 +84,59 @@ class CLASSBackground:
         if self.N_mnu > 0 and np.sum(self.mnu) == 0:
             raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
 
-        # Initialize CLASS parameters
+        # Initialize hi_class parameters
+        params_smg = {} if params_smg is None else params_smg
         self.interface_args: dict = {
-            "CLASSparams": {}
-        }  # Use a dictionary for CLASS parameters
-        self.interface_args["CLASSparams"]["H0"] = self.H0
-        self.interface_args["CLASSparams"]["omega_b"] = self.Omega_b0 * (self.h) ** 2
-        self.interface_args["CLASSparams"]["omega_cdm"] = (
+            "hi_classparams": {}
+        }  # Use a dictionary for hi_class parameters
+        self.interface_args["hi_classparams"]["H0"] = self.H0
+        self.interface_args["hi_classparams"]["omega_b"] = self.Omega_b0 * (self.h) ** 2
+        self.interface_args["hi_classparams"]["omega_cdm"] = (
             self.Omega_cdm0 * (self.h) ** 2
         )
-        self.interface_args["CLASSparams"]["Omega_k"] = self.Omega_k0
-        self.interface_args["CLASSparams"]["n_s"] = self.ns
-        self.interface_args["CLASSparams"]["alpha_s"] = self.alpha_s
-        self.interface_args["CLASSparams"]["A_s"] = self.As
-        self.interface_args["CLASSparams"]["w0_fld"] = self.w0  # or w0
-        self.interface_args["CLASSparams"]["wa_fld"] = self.wa  # or wa
+        self.interface_args["hi_classparams"]["Omega_k"] = self.Omega_k0
+        self.interface_args["hi_classparams"]["n_s"] = self.ns
+        self.interface_args["hi_classparams"]["alpha_s"] = self.alpha_s
+        self.interface_args["hi_classparams"]["A_s"] = self.As
+        self.interface_args["hi_classparams"]["w0_fld"] = self.w0  # or w0
+        self.interface_args["hi_classparams"]["wa_fld"] = self.wa  # or wa
         # To get correct perturbations for w0wa
-        self.interface_args["CLASSparams"]["use_ppf"] = "yes"
+        self.interface_args["hi_classparams"]["use_ppf"] = "yes"
         # To avoid using a cosmological constant
-        self.interface_args["CLASSparams"]["Omega_Lambda"] = 0.0
+        self.interface_args["hi_classparams"]["Omega_Lambda"] = 0.0
 
         # Set neutrino parameters
         if self.N_mnu > 0:
-            self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
-        self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
-        self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
+            self.interface_args["hi_classparams"]["m_ncdm"] = (
+                self._set_neutrino_masses()
+            )
+        self.interface_args["hi_classparams"]["N_ncdm"] = self.N_mnu
+        self.interface_args["hi_classparams"]["N_ur"] = self.N_ur
 
-        # Initialize CLASS
-        self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
+        # Set modified gravity parameters, or other extra parameters not passed by default
+        for key_smg in params_smg:
+            if key_smg in self.interface_args["hi_classparams"]:
+                raise ValueError(
+                    f"'{key_smg}' is either passed as argument of hi_classBackground or has an enforced default value. It can't be passed again in params_smg."
+                )
+
+        # if a modified gravity model is specified, we need some extra handling for a possible DE fluid component
+        if "gravity_model" in params_smg:
+            # by default there is no DE fluid when there is a Horndeski scalar field, but one can include both with a nonzero Omega_fld
+            self.interface_args["hi_classparams"]["Omega_fld"] = params_smg.get(
+                "Omega_fld", 0.0
+            )
+            # if there is no DE fluid, hi_class cannot read fluid related parameters
+            if float(self.interface_args["hi_classparams"]["Omega_fld"]) == 0.0:
+                self.interface_args["hi_classparams"].pop("w0_fld")
+                self.interface_args["hi_classparams"].pop("wa_fld")
+                self.interface_args["hi_classparams"].pop("use_ppf")
+
+        self.interface_args["hi_classparams"].update(params_smg)
+
+        # Initialize hi_class
+        self.results = HiClass()
+        self.results.set(self.interface_args["hi_classparams"])
         self.results.compute()
 
     @property
@@ -129,7 +157,7 @@ class CLASSBackground:
         # If N_ur is not provided, we assume the standard model of cosmology
         # where N_eff = 3.044 (including photons, neutrinos, and their contributions)
         # This is a common assumption in cosmology.
-        # Values are taken from the CLASS documentation.
+        # Values are taken from the hi_class documentation.
         if self.N_mnu == 0:
             return 3.044
         elif self.N_mnu == 1:
@@ -154,7 +182,7 @@ class CLASSBackground:
         return self.results.Neff()
 
     def _set_neutrino_masses(self) -> str:
-        """Set the neutrino masses in the CLASS parameters.
+        """Set the neutrino masses in the hi_class parameters.
 
         This is a helper method to ensure that the neutrino masses are set correctly.
         """
@@ -189,11 +217,13 @@ class CLASSBackground:
             units (str): Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').
 
         Returns:
-            (np.ndarray): Hubble parameter values at specified redshifts.
+            np.ndarray: Hubble parameter values at specified redshifts.
         """
-        H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
+        H = np.array(
+            [self.results.Hubble(z) for z in zs]
+        )  # hi_class returns H in 1/Mpc
         if units == "km/s/Mpc":
-            return H * CLASSBackground.c0  # Convert to km/s/Mpc
+            return H * hi_classBackground.c0  # Convert to km/s/Mpc
         elif units == "1/Mpc":
             return H
         else:
@@ -207,7 +237,7 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Comoving distance values.
+            np.ndarray: Comoving distance values.
         """
         return np.array([self.results.comoving_distance(z) for z in zs])
 
@@ -219,7 +249,7 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Transverse comoving distance values.
+            np.ndarray: Transverse comoving distance values.
         """
         x = self.comoving_distance(zs)
 
@@ -240,7 +270,7 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Angular diameter distance values.
+            np.ndarray: Angular diameter distance values.
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
@@ -265,7 +295,7 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Matter density values.
+            np.ndarray: Matter density values.
         """
         return self.results.Om_m(zs)
 
@@ -277,9 +307,38 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Matter density values.
+            np.ndarray: Matter density values.
         """
         return self.results.Om_b(zs)
+
+    # this method can be used to retrieve all modified gravity background quantities
+    def get_background(self) -> dict:
+        """
+        Return all background quantities
+
+        Return a dictionary of background quantities at all times.
+        The name and list of quantities in the returned dictionary are
+        defined in hi_class, in background_output_titles() and
+        background_output_data(). The keys of the dictionary refer to
+        redshift 'z', proper time 'proper time [Gyr]', conformal time
+        'conf. time [Mpc]', and many quantities such as the Hubble
+        rate, distances, densities, pressures, or growth factors. For
+        each key, the dictionary contains an array of values
+        corresponding to each sampled value of time.
+
+        This function works for whatever request in the 'output'
+        field, and even if 'output' was not passed or left blank.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        background : dict
+            Dictionary of all background quantities at each time
+        """
+        return self.results.get_background()
 
     @property
     def rdrag(self) -> float:
@@ -292,27 +351,27 @@ class CLASSBackground:
         return self.results.get_current_derived_parameters(["z_star"])["z_star"]
 
 
-class CLASSLinearPerturbations:
-    """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
+class hi_classLinearPerturbations:
+    """Class for perturbations cosmology using hi_class, inheriting from Perturbations parent class."""
 
     def __init__(self, background: Background, redshifts: np.ndarray):
-        """Initialize the CLASSLinearPerturbation instance."""
+        """Initialize the hi_classLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 100
-        self.results = None  # Store CLASS results
+        self.results = None  # Store hi_class results
 
-        # Ensure CLASS is initialized with necessary parameters
+        # Ensure hi_class is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["non linear"] = "none"
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
+        self.interface_args["hi_classparams"]["output"] = "mPk, mTk"
+        self.interface_args["hi_classparams"]["P_k_max_1/Mpc"] = self.kmax
+        self.interface_args["hi_classparams"]["k_per_decade_for_bao"] = 70
+        self.interface_args["hi_classparams"]["k_per_decade_for_pk"] = 10
+        self.interface_args["hi_classparams"]["z_max_pk"] = np.max(self.z)
+        self.interface_args["hi_classparams"]["non linear"] = "none"
+        self.interface_args["hi_classparams"]["z_max_pk"] = np.max(self.z)
+        self.results = HiClass()
+        self.results.set(self.interface_args["hi_classparams"])
         self.results.compute()
         self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
@@ -324,20 +383,30 @@ class CLASSLinearPerturbations:
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        """Calculate the CLASS linear matter power spectrum.
+        """Calculate the hi_class linear matter power spectrum.
 
-        Args:
-            zs (numpy.ndarray): redshifts
-            ks (numpy.ndarray): wavenumber
-            hubble_units (Optional[bool]): Flag to specify if output in h units
-            k_hunit (Optional[bool]): Flag to specify if wavenumber in h units
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
 
-        Returns:
-            pk (numpy.ndarray): Linear matter power spectrum at the specified scale
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
             and redshift
         """
         if hubble_units or k_hunit:
-            raise ValueError("This CLASS method does not yet support h-units")
+            raise ValueError("This hi_class method does not yet support h-units")
         self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
         # To match array convention of CAMB
         return self.Pk_linear
@@ -368,9 +437,9 @@ class CLASSLinearPerturbations:
             and redshift
         """
         if hubble_units or k_hunit:
-            raise ValueError("This CLASS method does not yet support h-units")
+            raise ValueError("This hi_class method does not yet support h-units")
 
-        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+        if self.interface_args["hi_classparams"]["N_ncdm"] == 0:
             warnings.warn(
                 "There are no massive neutrinos (N_mnu=0), this function will "
                 "return the usual matter power spectrum instead of _cb!",
@@ -391,19 +460,24 @@ class CLASSLinearPerturbations:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        $$
+        .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
             /P_{\rm \delta\delta}(z=0, k)}\\
-        $$
 
-        and normalizes as for $D(z)/D(0)$.
+        and normalizes as for :math:`D(z)/D(0)`.
 
-        Args:
-            zs (numpy.ndarray): redshifts
-            ks (numpy.ndarray): wavenumber
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
 
         Returns:
-            (np.ndarray): The growth factor at the specified redshift and wavenumber.
+        --------
+        np.ndarray
+            The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(
             self.matter_power_spectrum(zs, ks)
@@ -415,11 +489,16 @@ class CLASSLinearPerturbations:
     def growth_rate(self) -> np.ndarray:
         """
         Calculate the growth rate f(z).
+        The standard expression for scale-independent f assumes LCDM and isn't valid in modified gravity.
+        Instead, we use the scale-dependent growth rate at large k (1 Mpc^-1)
 
-        Returns:
-            (np.ndarray): Scale-independent growth rate f(z)
+        Returns
+        -------
+        np.ndarray
+            Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
+
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -435,8 +514,8 @@ class CLASSLinearPerturbations:
         return self.results.sigma8()  # type: ignore[union-attr]
 
 
-class CLASSNonLinearPerturbations:
-    """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
+class hi_classNonLinearPerturbations:
+    """Class for non-linear perturbations cosmology using hi_class, inheriting from Perturbations parent class."""
 
     def __init__(
         self,
@@ -444,18 +523,16 @@ class CLASSNonLinearPerturbations:
         linearperturbations: Optional[object],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
-        hmcode_version: Optional[str] = None,
     ):
-        """Initialize the CLASSNonLinearPerturbation instance.
+        """Initialize the hi_classNonLinearPerturbation instance.
 
         Args:
             background: Background cosmology object.
-            linearperturbations: Linear perturbations object (unused by CLASS, which computes
+            linearperturbations: Linear perturbations object (unused by hi_class, which computes
                 nonlinear corrections internally; accepted for interface compatibility with
                 emulator-based NonLinPerturbations classes).
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
-            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
         """
         self.background = background
         self.z = redshifts
@@ -464,41 +541,49 @@ class CLASSNonLinearPerturbations:
         if nonlinear_model is None:
             nonlinear_model = "none"
 
-        # Ensure CLASS is initialized with necessary parameters
+        # Ensure hi_class is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
-        self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
-        self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
-        if hmcode_version is not None:
-            self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
+        self.interface_args["hi_classparams"]["output"] = "mPk, mTk"
+        self.interface_args["hi_classparams"]["P_k_max_1/Mpc"] = self.kmax
+        self.interface_args["hi_classparams"]["k_per_decade_for_bao"] = 70
+        self.interface_args["hi_classparams"]["k_per_decade_for_pk"] = 10
+        self.interface_args["hi_classparams"]["z_max_pk"] = np.max(self.z)
+        self.interface_args["hi_classparams"]["nonlinear_min_k_max"] = 50
+        self.interface_args["hi_classparams"]["hmcode_tol_sigma"] = 1e-8
+        self.interface_args["hi_classparams"]["non linear"] = nonlinear_model
+        self.interface_args["hi_classparams"]["z_max_pk"] = np.max(self.z)
+        self.results = HiClass()
+        self.results.set(self.interface_args["hi_classparams"])
         self.results.compute()
         self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        """Calculate the CLASS non-linear matter power spectrum.
+        """Calculate the hi_class non-linear matter power spectrum.
 
-        Args:
-            zs (numpy.ndarray): redshifts
-            ks (numpy.ndarray): wavenumber
-            hubble_units (Optional [bool]): Flag to specify if output in h units
-            k_hunit (Optional [bool]): Flag to specify if wavenumber in h units
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
 
-        Returns:
-            pk (numpy.ndarray): Non-linear matter power spectrum at the specified scale
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Non-linear matter power spectrum at the specified scale
             and redshift
         """
         if hubble_units or k_hunit:
-            raise ValueError("This CLASS method does not yet support h-units")
+            raise ValueError("This hi_class method does not yet support h-units")
         self.Pk_nonlinear = np.array(
             [[self.results.pk(ki, zi) for ki in ks] for zi in zs]
         )
@@ -508,7 +593,7 @@ class CLASSNonLinearPerturbations:
     def matter_power_spectrum_cb(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        """Calculate the CLASS non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).
+        """Calculate the hi_class non-linear matter power spectrum of cold dark matter + baryons (no neutrinos).
 
         Parameters
         ----------
@@ -531,9 +616,9 @@ class CLASSNonLinearPerturbations:
             and redshift
         """
         if hubble_units or k_hunit:
-            raise ValueError("This CLASS method does not yet support h-units")
+            raise ValueError("This hi_class method does not yet support h-units")
 
-        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+        if self.interface_args["hi_classparams"]["N_ncdm"] == 0:
             warnings.warn(
                 "There are no massive neutrinos (N_mnu=0), this function will "
                 "return the usual matter power spectrum instead of _cb!",
@@ -554,19 +639,24 @@ class CLASSNonLinearPerturbations:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        $$
+        .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
             /P_{\rm \delta\delta}(z=0, k)}\\
-        $$
 
-        and normalizes as for $D(z)/D(0)$.
+        and normalizes as for :math:`D(z)/D(0)`.
 
-        Args:
-            zs (numpy.ndarray): redshifts
-            ks (numpy.ndarray): wavenumber
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
 
         Returns:
-            (np.ndarray): The growth factor at the specified redshift and wavenumber.
+        --------
+        np.ndarray
+            The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(
             self.matter_power_spectrum(zs, ks)
@@ -578,11 +668,16 @@ class CLASSNonLinearPerturbations:
     def growth_rate(self) -> np.ndarray:
         """
         Calculate the growth rate f(z).
+        The standard expression for scale-independent f assumes LCDM and isn't valid in modified gravity.
+        Instead, we use the scale-dependent growth rate at large k (1 Mpc^-1)
 
-        Returns:
-            (np.ndarray): Scale-independent growth rate f(z)
+        Returns
+        -------
+        np.ndarray
+            Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
+
         return np.array(arr)
 
     def sigma8_0(self) -> float:

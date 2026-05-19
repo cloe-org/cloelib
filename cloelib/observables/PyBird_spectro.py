@@ -36,20 +36,27 @@ except (ImportError, AttributeError, TypeError) as e:
 class PyBirdSpectroPower:
     r"""Class to retrieve $P(k,\mu)$ with the EFT model from PyBird"""
 
-    def __init__(self, linear_perturbations: Perturbations, nuisance_parameters: dict):
+    def __init__(self, linear_perturbations: Perturbations, nuisance_parameters: dict, redshift: float):
         r"""Class constructor.
 
         Args:
           linear_perturbations (Perturbations): Perturbations object containing cosmology, linear power spectrum,
             redshift and growth functions
           nuisance_parameters (dict): Dictionary containing bias and counterterm parameters
+          redshift (float): single redshift in which to evaluate PBJ
         """
         self.linear_perturbations = linear_perturbations
         self.background = linear_perturbations.background
         self.parameters = nuisance_parameters
-        self.mask_z0 = linear_perturbations.z != 0.0
-        self.redshift = linear_perturbations.z[self.mask_z0]
-        z = self.redshift[0]  # assuming one sky - one redshift for now
+        #self.mask_z0 = linear_perturbations.z != 0.0
+        #self.redshift = linear_perturbations.z[self.mask_z0]
+        #z = self.redshift[0]  # assuming one sky - one redshift for now
+        assert np.asarray(redshift).size == 1, "Only a single redshift can be passed."
+        assert redshift in linear_perturbations.z, (
+            "Redshift requested for PBJ not previously computed with linear theory code"
+        )
+        self.redshift = redshift
+        z = self.redshift
 
         kk = np.geomspace(1.0e-4, 2.0, 512)
         plin = self.linear_perturbations.matter_power_spectrum(

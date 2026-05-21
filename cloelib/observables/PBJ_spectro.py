@@ -121,9 +121,7 @@ class PBJSpectroPower:
             )
         )
         D = float(
-            np.squeeze(
-                self.linear_perturbations.growth_factor(self.redshift, 0.05)
-            )
+            np.squeeze(self.linear_perturbations.growth_factor(self.redshift, 0.05))
         )
         pkmu_marg_dict = pbj_obj.P_kmu_2D_marg_dict(
             self.redshift,

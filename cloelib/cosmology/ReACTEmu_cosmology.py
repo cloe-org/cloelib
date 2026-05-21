@@ -91,7 +91,7 @@ class MGemuNonlinearBoost:
             "wCDM": "ds",
             "w0waCDM": "ds",
             "ide": "ds",
-            "ds": "ds"
+            "ds": "ds",
         }
 
         allowed_models = set(MODEL_TO_BACKEND.keys())
@@ -416,7 +416,9 @@ class BoostedPerturbations:
 
         """
 
-        self.background = base_lin_perturbations.background #not base_perturbations as those are only LCDM
+        self.background = (
+            base_lin_perturbations.background
+        )  # not base_perturbations as those are only LCDM
         assert self.background.Omega_k0 == 0, "Non flat geometries not supported"
 
         self.base = base_perturbations

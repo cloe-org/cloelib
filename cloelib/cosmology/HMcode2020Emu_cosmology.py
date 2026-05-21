@@ -96,7 +96,6 @@ class HMemuLinearPerturbations:
         self.Pk = Pk_out
         self.Pk_cb = Pk_cb_out
 
-
         pk_interp = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
         self.Pk_interp = pk_interp
 
@@ -104,7 +103,6 @@ class HMemuLinearPerturbations:
             self.z, self.k, Pk_cb_out, kx=1, ky=1
         )
         self.Pk_cb_interp = pk_cb_interp
-
 
     # def matter_power_spectrum(self, zs, ks) -> np.ndarray:
     #     r"""Compute the linear matter power spectrum.
@@ -118,7 +116,9 @@ class HMemuLinearPerturbations:
 
     #     """
     #     return self.Pk_interp(zs, ks)
-    def matter_power_spectrum(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
+    def matter_power_spectrum(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
         r"""Compute the linear matter power spectrum.
 
         Args:
@@ -184,10 +184,14 @@ class HMemuLinearPerturbations:
         float
             The sigma8 value.
         """
-        sigma8_arr, _ = HM2020_emu.get_sigma8(**_hm_emu_params_at_z0(self.params_hm_emu))
+        sigma8_arr, _ = HM2020_emu.get_sigma8(
+            **_hm_emu_params_at_z0(self.params_hm_emu)
+        )
         return float(sigma8_arr[0])
 
-    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False) -> np.ndarray:
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units=False, k_hunit=False
+    ) -> np.ndarray:
         r"""Compute the linear matter power spectrum of cold dark matter + baryons (no neutrinos).
 
         Args:
@@ -229,7 +233,7 @@ class HMemuLinearPerturbations:
         """
         D_cb_z_k = np.sqrt(
             self.matter_power_spectrum_cb(zs, ks)
-            / self.matter_power_spectrum_cb(0., ks)
+            / self.matter_power_spectrum_cb(0.0, ks)
         )
 
         return D_cb_z_k
@@ -381,7 +385,9 @@ class HMemuNonLinearPerturbations:
         float
             The sigma8 value.
         """
-        sigma8_arr, _ = HM2020_emu.get_sigma8(**_hm_emu_params_at_z0(self.params_hm_emu))
+        sigma8_arr, _ = HM2020_emu.get_sigma8(
+            **_hm_emu_params_at_z0(self.params_hm_emu)
+        )
         return float(sigma8_arr[0])
 
 

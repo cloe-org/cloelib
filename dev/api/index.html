@@ -4086,7 +4086,7 @@ ks : array_like
 
 
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(ks)">ks</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(ks)">ks</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(hubble_units)">hubble_units</a></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(k_hunit)">k_hunit</a></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4110,6 +4110,100 @@ ks : array_like
           –
           <div class="doc-md-description">
             <p>redshifts</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(hubble_units)" class="doc doc-heading doc-heading-parameter">              <b><code>hubble_units</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(hubble_units)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Flag to specify if output in h units</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(k_hunit)" class="doc doc-heading doc-heading-parameter">              <b><code>k_hunit</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(k_hunit)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Flag to specify if wavenumber in h units</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>pk</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>Linear matter power spectrum at the specified scale and redshift</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(ks)">ks</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</a></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</a></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wave number in h Mpc^{-1}</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>redshifts</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(hubble_units)" class="doc doc-heading doc-heading-parameter">              <b><code>hubble_units</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(hubble_units)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Flag to specify if output in h units</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(k_hunit)" class="doc doc-heading doc-heading-parameter">              <b><code>k_hunit</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(k_hunit)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Flag to specify if wavenumber in h units</p>
           </div>
         </li>
     </ul>
@@ -4166,6 +4260,65 @@ ks : array_like
         <li class="doc-section-item field-body">
 <h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="array_like">array_like</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumbers at which to calculate the growth factor.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>The growth factor as a function of redshift and wavenumber.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor_cb</span>
+
+
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(ks)">ks</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for cb for given redshifts and wavenumbers.</p>
+<div class="arithmatex">\[
+    D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+    /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+\]</div>
+<p>and normalizes as for <span class="arithmatex">\(D(z)/D(0)\)</span>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="array_like">array_like</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshifts at which to calculate the growth factor.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="array_like">array_like</span></code>)
           –
           <div class="doc-md-description">
             <p>Wavenumbers at which to calculate the growth factor.</p>
@@ -4285,7 +4438,7 @@ ks : array_like
 
     <div class="doc doc-contents ">
 
-        <p>Compute the linear matter power spectrum.</p>
+        <p>Compute the nonlinear matter power spectrum.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -4301,6 +4454,60 @@ ks : array_like
         <li class="doc-section-item field-body">
 <h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>redshifts</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>pk</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>Linear matter power spectrum at the specified scale and redshift</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(ks)">ks</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the nonlinear matter power spectrum.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wave number in h Mpc^{-1}</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
           –
           <div class="doc-md-description">
             <p>redshifts</p>
@@ -4360,6 +4567,65 @@ ks : array_like
         <li class="doc-section-item field-body">
 <h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="array_like">array_like</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumbers at which to calculate the growth factor.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>The growth factor as a function of redshift and wavenumber.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor_cb</span>
+
+
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(ks)">ks</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for cb for given redshifts and wavenumbers.</p>
+<div class="arithmatex">\[
+    D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+    /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+\]</div>
+<p>and normalizes as for <span class="arithmatex">\(D(z)/D(0)\)</span>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="array_like">array_like</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshifts at which to calculate the growth factor.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="array_like">array_like</span></code>)
           –
           <div class="doc-md-description">
             <p>Wavenumbers at which to calculate the growth factor.</p>
@@ -6990,6 +7256,47 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 <div class="doc doc-object doc-function">
 
 
+<h5 id="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.growth_factor_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor_cb</span>
+
+
+<a href="#cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.growth_factor_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.growth_factor_cb(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.growth_factor_cb(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for cb for given redshifts and wavenumbers.</p>
+<div class="arithmatex">\[
+    D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+    /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+\]</div>
+<p>and normalizes as for <span class="arithmatex">\(D(z)/D(0)\)</span>.</p>
+<p>Args
+    zs (numpy.ndarray): redshifts
+    ks (numpy.ndarray): wavenumber</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>The growth factor at the specified redshift and wavenumber.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h5 id="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.sigma8_0" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
 
@@ -7283,6 +7590,65 @@ Defaults to None, which uses the CAMB default model.</p>
         <li class="doc-section-item field-body">
 <h6 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
 <a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>wavenumber</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>The growth factor at the specified redshift and wavenumber.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor_cb</span>
+
+
+<a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for cb for given redshifts and wavenumbers.</p>
+<div class="arithmatex">\[
+    D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+    /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+\]</div>
+<p>and normalizes as for <span class="arithmatex">\(D(z)/D(0)\)</span>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>redshifts</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="numpy.ndarray">ndarray</span></code>)
           –
           <div class="doc-md-description">
             <p>wavenumber</p>
@@ -17577,6 +17943,47 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.growth_factor_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor_cb</span>
+
+
+<a href="#cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.growth_factor_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.growth_factor_cb(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.growth_factor_cb(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for cb for given redshifts and wavenumbers.</p>
+<div class="arithmatex">\[
+    D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+    /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+\]</div>
+<p>and normalizes as for <span class="arithmatex">\(D(z)/D(0)\)</span>.</p>
+<p>Args
+    zs (numpy.ndarray): redshifts
+    ks (numpy.ndarray): wavenumber</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>The growth factor at the specified redshift and wavenumber.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="cloelib.cosmology.camb_cosmology.CAMBLinearPerturbations.sigma8_0" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
 
@@ -17870,6 +18277,65 @@ Defaults to None, which uses the CAMB default model.</p>
         <li class="doc-section-item field-body">
 <h5 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
 <a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor(ks)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>wavenumber</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>The growth factor at the specified redshift and wavenumber.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor_cb</span>
+
+
+<a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for cb for given redshifts and wavenumbers.</p>
+<div class="arithmatex">\[
+    D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+    /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+\]</div>
+<p>and normalizes as for <span class="arithmatex">\(D(z)/D(0)\)</span>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>redshifts</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations.growth_factor_cb(ks)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
           –
           <div class="doc-md-description">
             <p>wavenumber</p>
@@ -22959,7 +23425,7 @@ heading_level: 3</p>
 
 
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(ks)">ks</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(ks)">ks</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(hubble_units)">hubble_units</a></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(k_hunit)">k_hunit</a></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -22983,6 +23449,100 @@ heading_level: 3</p>
           –
           <div class="doc-md-description">
             <p>redshifts</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(hubble_units)" class="doc doc-heading doc-heading-parameter">              <b><code>hubble_units</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(hubble_units)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Flag to specify if output in h units</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(k_hunit)" class="doc doc-heading doc-heading-parameter">              <b><code>k_hunit</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum(k_hunit)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Flag to specify if wavenumber in h units</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>pk</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>Linear matter power spectrum at the specified scale and redshift</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(ks)">ks</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(hubble_units)">hubble_units</a></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(k_hunit)">k_hunit</a></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the linear matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(ks)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wave number in h Mpc^{-1}</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>redshifts</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(hubble_units)" class="doc doc-heading doc-heading-parameter">              <b><code>hubble_units</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(hubble_units)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Flag to specify if output in h units</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(k_hunit)" class="doc doc-heading doc-heading-parameter">              <b><code>k_hunit</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.matter_power_spectrum_cb(k_hunit)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Flag to specify if wavenumber in h units</p>
           </div>
         </li>
     </ul>
@@ -23039,6 +23599,65 @@ heading_level: 3</p>
         <li class="doc-section-item field-body">
 <h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor(ks)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="array_like">array_like</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumbers at which to calculate the growth factor.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>The growth factor as a function of redshift and wavenumber.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor_cb</span>
+
+
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(ks)">ks</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for cb for given redshifts and wavenumbers.</p>
+<div class="arithmatex">\[
+    D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+    /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+\]</div>
+<p>and normalizes as for <span class="arithmatex">\(D(z)/D(0)\)</span>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="array_like">array_like</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshifts at which to calculate the growth factor.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_factor_cb(ks)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="array_like">array_like</span></code>)
           –
           <div class="doc-md-description">
             <p>Wavenumbers at which to calculate the growth factor.</p>
@@ -23158,7 +23777,7 @@ heading_level: 3</p>
 
     <div class="doc doc-contents ">
 
-        <p>Compute the linear matter power spectrum.</p>
+        <p>Compute the nonlinear matter power spectrum.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -23174,6 +23793,60 @@ heading_level: 3</p>
         <li class="doc-section-item field-body">
 <h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum(zs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>redshifts</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>pk</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>Linear matter power spectrum at the specified scale and redshift</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(ks)">ks</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the nonlinear matter power spectrum.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(ks)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wave number in h Mpc^{-1}</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.matter_power_spectrum_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
           –
           <div class="doc-md-description">
             <p>redshifts</p>
@@ -23233,6 +23906,65 @@ heading_level: 3</p>
         <li class="doc-section-item field-body">
 <h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor(ks)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="array_like">array_like</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumbers at which to calculate the growth factor.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>The growth factor as a function of redshift and wavenumber.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor_cb</span>
+
+
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(zs)">zs</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(ks)">ks</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for cb for given redshifts and wavenumbers.</p>
+<div class="arithmatex">\[
+    D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+    /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+\]</div>
+<p>and normalizes as for <span class="arithmatex">\(D(z)/D(0)\)</span>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="array_like">array_like</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Redshifts at which to calculate the growth factor.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_factor_cb(ks)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="array_like">array_like</span></code>)
           –
           <div class="doc-md-description">
             <p>Wavenumbers at which to calculate the growth factor.</p>
@@ -25436,7 +26168,7 @@ The SpectroPower protocol is used to define Spectroscopic observables.</p>
 
 
 <a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PBJSpectroPower</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(linear_perturbations)">linear_perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(nuisance_parameters)">nuisance_parameters</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PBJSpectroPower</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(linear_perturbations)">linear_perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(nuisance_parameters)">nuisance_parameters</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(redshift)">redshift</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -25455,7 +26187,7 @@ The SpectroPower protocol is used to define Spectroscopic observables.</p>
           –
           <div class="doc-md-description">
             <p>Perturbations object containing cosmology, linear power spectrum,
-redshift and growth functions</p>
+and growth functions</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -25464,6 +26196,14 @@ redshift and growth functions</p>
           –
           <div class="doc-md-description">
             <p>Dictionary containing bias and counterterm parameters</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.observables.PBJ_spectro.PBJSpectroPower(redshift)" class="doc doc-heading doc-heading-parameter">              <b><code>redshift</code></b>
+<a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(redshift)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>single redshift in which to evaluate PBJ</p>
           </div>
         </li>
     </ul>
@@ -28697,7 +29437,7 @@ heading_level: 3</p>
 
 
 <a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PBJSpectroPower</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(linear_perturbations)">linear_perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(nuisance_parameters)">nuisance_parameters</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PBJSpectroPower</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(linear_perturbations)">linear_perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(nuisance_parameters)">nuisance_parameters</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(redshift)">redshift</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -28716,7 +29456,7 @@ heading_level: 3</p>
           –
           <div class="doc-md-description">
             <p>Perturbations object containing cosmology, linear power spectrum,
-redshift and growth functions</p>
+and growth functions</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -28725,6 +29465,14 @@ redshift and growth functions</p>
           –
           <div class="doc-md-description">
             <p>Dictionary containing bias and counterterm parameters</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h4 id="cloelib.observables.PBJ_spectro.PBJSpectroPower(redshift)" class="doc doc-heading doc-heading-parameter">              <b><code>redshift</code></b>
+<a href="#cloelib.observables.PBJ_spectro.PBJSpectroPower(redshift)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>single redshift in which to evaluate PBJ</p>
           </div>
         </li>
     </ul>

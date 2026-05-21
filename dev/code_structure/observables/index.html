@@ -1545,7 +1545,7 @@
 <ul>
 <li><strong><code>background</code></strong>: Reference to Background object</li>
 </ul>
-<p>Note: SpectroPower uses Background directly, not Perturbations. This is because emulators often bypass traditional perturbation calculations.</p>
+<p>Note: SpectroPower can use Background directly in some cases, since emulators often bypass traditional perturbation calculations, so these are not always necessary (e.g. COMET), while the Background object is always needed for the parameters.</p>
 <h3 id="required-attribute">Required Attribute<a class="headerlink" href="#required-attribute" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong><code>NLcode</code></strong>: String identifying the non-linear code/emulator</li>

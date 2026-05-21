@@ -104,18 +104,6 @@ class HMemuLinearPerturbations:
         )
         self.Pk_cb_interp = pk_cb_interp
 
-    # def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-    #     r"""Compute the linear matter power spectrum.
-
-    #     Args:
-    #         ks (numpy.ndarray): Wave number in h Mpc^{-1}
-    #         zs (numpy.ndarray): redshifts
-
-    #     Returns:
-    #         pk (numpy.ndarray): Linear matter power spectrum at the specified scale and redshift
-
-    #     """
-    #     return self.Pk_interp(zs, ks)
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:

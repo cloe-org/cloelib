@@ -256,7 +256,7 @@ class LegendreMultipoles:
         """
         noise = (
             self.parameters["NP0"] * self._Pk2d_noise_k0(k)
-            + self.parameters["NP20"] * self._Pk2d_noise_k0(k)
+            + self.parameters["NP20"] * self._Pk2d_noise_k2(k)
             + self.parameters["NP22"] * self._Pk2d_noise_k2mu2(k, mu)
         )
         return noise

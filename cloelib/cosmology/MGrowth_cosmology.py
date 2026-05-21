@@ -316,7 +316,7 @@ class MGrowthLinearPerturbations:
     def _compute_growth_ds(self):
         # Correction due to non-universality of Dark Scattering,
         # i.e. dark energy interacts with dark matter only, not with baryons and neutrinos.
-        h = self.background.H0 / 100
+        h = self.background.h
         omega_cdm = self.background.Omega_cdm0
         omega0 = (
             omega_cdm + self.background.Omega_b0 + self.background.mnu / 93.14 / h**2
@@ -437,7 +437,7 @@ class MGrowthLinearPerturbations:
         Parameters
         ----------
         ks : numpy.ndarray
-            Wavenumber in h Mpc^{-1}.
+            Wavenumber in 1/Mpc.
         zs : numpy.ndarray
             Redshifts.
 
@@ -447,13 +447,19 @@ class MGrowthLinearPerturbations:
             Linear matter power spectrum at the specified redshifts and scales.
         """
         ps_base = self.base.matter_power_spectrum(0.0, ks)
-        return self.dz_norm_w0wacdm_interp(zs, ks) ** 2 * ps_base
+        pk = self.dz_norm_w0wacdm_interp(zs, ks) ** 2 * ps_base
+
+        return pk.squeeze()
 
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""
         if self.gravity_model == "fr" or self.gravity_model == "mu":
             ks = np.logspace(-3, 2, 512)
             pk_lin_z0 = self.matter_power_spectrum(0.0, ks)
+            # convert to h/Mpc
+            ks = ks * self.background.h
+            # convert to Mpc^3/h^3
+            pk_lin_z0 = pk_lin_z0 / self.background.h**3
 
             def bes_j_1(x):
                 return np.sin(x) / x - np.cos(x)
@@ -466,7 +472,7 @@ class MGrowthLinearPerturbations:
                     / 2
                     / np.pi**2,
                     ks,
-                )[0]
+                )
             )
         else:
             return self.dz_norm_w0wacdm_interp(0.0, 0.01)[0, 0] * self.base.sigma8_0()

@@ -628,6 +628,16 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "MartinKaercher",
+      "name": "Martin Kärcher",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64490739?v=4",
+      "profile": "https://github.com/MartinKaercher",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
     }
   ]
 }

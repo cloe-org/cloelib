@@ -106,6 +106,9 @@ class CLASSBackground:
         self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
         self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
 
+        # Fix YHe to standard BBN value to avoid interpolation failure at extreme omega_b
+        self.interface_args["CLASSparams"]["YHe"] = 0.2454006
+
         # Initialize CLASS
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])

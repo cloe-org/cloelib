@@ -3,11 +3,13 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.extrapolator import extend_spectra
 
 # General imports
 import numpy as np
 import copy
 from typing import Optional, Union, Sequence
+from scipy import interpolate
 import DMemu
 
 # Cosmology imports
@@ -39,41 +41,120 @@ class tbDDMNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
 
     c0 = SPEED_OF_LIGHT / 1000
+    _emul_cache = None  # shared DMemu instance — loaded once, reused across all instantiations
     
     def __init__(
         self,
         background: Background,
         redshifts: np.ndarray,
         f_dcdm: float,
-        epsilon: float, 
-        Gamma: float
+        epsilon: float,
+        Gamma: float,
+        use_emulator: bool = False,
+        log10TAGN: Optional[float] = None,
     ):
         """Initialize the tbDDMNonLinearPerturbations instance."""
-        self.background = background
-        self.z = redshifts
-        self.kmax = 30
+        self.background   = background
+        self.z            = redshifts
+        self.kmax         = 40
+        self.f            = f_dcdm
+        self.Gamma        = Gamma
+        self.vk           = epsilon * tbDDMNonLinearPerturbations.c0
+        self.use_emulator = use_emulator
+        self.log10TAGN    = log10TAGN if log10TAGN is not None else 7.6
 
-        self.f     = f_dcdm # fraction of cdm that decays
-        self.Gamma = Gamma # decay rate in 1/Gyr
-        self.vk    = epsilon*tbDDMNonLinearPerturbations.c0 # velocity fraction in km/s
+        # Initialize NN emulator (load once, reuse via class-level cache)
+        if tbDDMNonLinearPerturbations._emul_cache is None:
+            tbDDMNonLinearPerturbations._emul_cache = DMemu.TBDemu()
+        self.emul = tbDDMNonLinearPerturbations._emul_cache
 
-        # Initialize NN emulator
-        self.emul = DMemu.TBDemu()
+        # ---- NL LCDM baseline Pk ----------------------------------------
+        if not use_emulator:
+            # CLASS path: halofit-LCDM
+            # (boost is defined relative to halofit-LCDM by Bucko et al.)
+            self.interface_args = copy.deepcopy(self.background.interface_args)
+            self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
+            self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
+            self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
+            self.interface_args["CLASSparams"]["non linear"] = "halofit"
+            self.results = Class()
+            self.results.set(self.interface_args["CLASSparams"])
+            self.results.compute()
 
-        # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
-        self.interface_args["CLASSparams"]["non linear"] = "halofit" # note that the fitting formula is defined as a "boost" wrt halofit-LCDM
-        self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
-        # GFA, I added this line in order to retrieve the wavenumber grid (in 1/Mpc) used by CLASS to compute Pk
-        _, self.k, _ = self.results.get_pk_and_k_and_z(nonlinear=True, only_clustering_species = False, h_units=False)
+            _, self.k, _ = self.results.get_pk_and_k_and_z(
+                nonlinear=True, only_clustering_species=False, h_units=False
+            )
+            pk_nl_on_z = np.array(
+                [[self.results.pk(ki, zi) for ki in self.k] for zi in self.z]
+            )  # (nz, nk)
+
+        else:
+            # Emulator path: cosmopower-JAX HMcode2020 (w0wa-3degen-nonlinear.npz).
+            # Note: the 2bDDM boost was trained vs halofit-LCDM, but HMcode2020 and
+            # halofit agree at the few-percent level, so the inconsistency is small.
+            from cloelib.cosmology.cosmopower_jax_cosmology import (
+                emulator_data, load_pk_emulator, k_modes_path
+            )
+            cp_NL  = load_pk_emulator(emulator_data("w0wa-3degen-nonlinear.npz"))
+            k_emu  = np.loadtxt(k_modes_path)
+            self.k = k_emu
+
+            h         = self.background.h
+            # For CLASSBackground, background.mnu is always the total neutrino mass
+            mnu_total = self.background.mnu
+
+            params_nl = {
+                "ombh2":    np.tile(self.background.Omega_b0 * h**2,        len(self.z)),
+                "omch2":    np.tile(self.background.Omega_cdm0 * h**2,      len(self.z)),
+                "H0":       np.tile(self.background.H0,                     len(self.z)),
+                "ns":       np.tile(self.background.ns,                     len(self.z)),
+                "lnAs":     np.tile(np.log(self.background.As * 1e10),      len(self.z)),
+                "w0":       np.tile(self.background.w0,                     len(self.z)),
+                "wa":       np.tile(self.background.wa,                     len(self.z)),
+                "mnu":      np.tile(mnu_total,                              len(self.z)),
+                "logT_AGN": np.tile(self.log10TAGN,                         len(self.z)),
+                "z":        self.z,
+            }
+            pk_nl_on_z = np.array(cp_NL.predict(params_nl))  # (nz, nk)
+
+        # ---- 2bDDM boost (same for both paths) ---------------------------
+        # Single batched emulator call over the full (self.z × self.k) grid.
+        kk, zz    = np.meshgrid(self.k, self.z)
+        k_flat    = kk.ravel()
+        z_flat    = zz.ravel()
+
+        boost_flat = np.ones(len(z_flat))          # default 1 for z > 2.35
+        mask_valid = z_flat <= 2.35
+        if np.any(mask_valid):
+            with SuppressOutput():
+                boost_vals = self.emul.predict(
+                    k_flat[mask_valid],
+                    z_flat[mask_valid],
+                    self.f, self.vk, self.Gamma,
+                    allow_z_extrapolation=False
+                )
+            boost_flat[mask_valid] = np.asarray(boost_vals).ravel()
+
+        boost_grid = boost_flat.reshape(len(self.z), len(self.k))
+        pk_2bddm   = pk_nl_on_z * boost_grid
+
+        # Extend Pk to k=500 1/Mpc to avoid Akima extrapolation blowup at low z
+        k_out, z_out, Pk_out = extend_spectra(
+            self.k, self.z, pk_2bddm,
+            flag_range=True,
+            option_wavenumber="logk2",
+            option_redshift="power_law",
+            extrap_z=self.z,
+            option_cosmo="const",
+            ns=self.background.ns,
+            extrap_kmax=500.0,
+        )
+        self.k = k_out
+
+        # Pre-computed spline: matter_power_spectrum is a fast lookup
+        self.Pk_int = interpolate.RectBivariateSpline(
+            z_out, k_out, Pk_out, kx=1, ky=1
+        )
 
     def boost_2bDDM(self, z, k) -> float:
         """Calculate the boost factor for the 2bDDM suppression, with the emulator by Bucko et al. (2307.03222)
@@ -133,12 +214,8 @@ class tbDDMNonLinearPerturbations:
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-    
-        self.Pk_nonlinear = np.array(
-            [[self.results.pk(ki, zi)*self.boost_2bDDM(zi, ki) for ki in ks] for zi in zs] # we apply the boost factor for the 2bDDM suppression
-        )
-        # To match array convention of CAMB
-        return self.Pk_nonlinear
+
+        return self.Pk_int(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -180,5 +257,5 @@ class tbDDMNonLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.background.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)

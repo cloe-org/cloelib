@@ -3,9 +3,11 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from scipy.interpolate import RegularGridInterpolator
+from cloelib.auxiliary.extrapolator import extend_spectra
+from scipy import interpolate
 
 # General imports
+import os
 import numpy as np
 import copy
 from typing import Optional, Union, Sequence
@@ -46,7 +48,6 @@ class obDDMBackground:
 #        Gamma_dcdm: float,
         Gamma_times_f: float,
         N_ur: Optional[float] = None,
-        deg_ncdm: Optional[int] = None,
     ) -> None:
         """
         Initialize the obDDMBackground instance with cosmological parameters.
@@ -63,12 +64,11 @@ class obDDMBackground:
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the equation of state.
             gamma_MG (float): Modified gravity growth parameter (not directly used in CLASS, but kept for protocol compliance).
-            N_mnu (int): Number of massive neutrino species (i.e. N_ncdm in CLASS, before applying deg_ncdm).
+            N_mnu (int): Number of massive neutrino species (i.e. N_ncdm in CLASS). For a degenerate
+                mass case, pass mnu as the total mass and N_mnu as the number of species; _set_neutrino_masses
+                will distribute mnu/N_mnu to each species.
             N_ur (Optional[float]): Effective number of ultra-relativistic species.
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
-            deg_ncdm (Optional[int]): Degeneracy factor for the ncdm species. When set, CLASS treats
-                N_mnu species each with this degeneracy, which is equivalent to N_mnu*deg_ncdm identical
-                species but requires solving only N_mnu Boltzmann equations (faster).
             f_dcdm (float): fraction of the total cold dark matter that decays into dark radiation.
             Gamma_times_f (float): Decay rate of the dcdm component (in units of 1/Gyr) times f_dcdm.
         """
@@ -84,7 +84,6 @@ class obDDMBackground:
         self.gamma_MG = gamma_MG  # Kept for protocol, but CLASS doesn't directly use it
         self.mnu = mnu
         self.N_mnu = N_mnu
-        # We can set N_ur to a default value if not provided
         self._provided_N_ur = N_ur
 
         if np.sum(self.mnu) > 0 and self.N_mnu == 0:
@@ -119,19 +118,19 @@ class obDDMBackground:
         self.interface_args["CLASSparams"]["Omega_Lambda"] = 0.0
 
         # Set neutrino parameters
-        self.deg_ncdm = deg_ncdm
         if self.N_mnu > 0:
             self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
         self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
         self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
-        if self.deg_ncdm is not None:
-            self.interface_args["CLASSparams"]["deg_ncdm"] = self.deg_ncdm
 
         self.interface_args["CLASSparams"]["omega_ini_dcdm"] = (
             self.Omega_ini_dcdm * (self.h) ** 2
         )
         if (f_dcdm != 0):
             self.interface_args["CLASSparams"]["Gamma_dcdm"] = self.Gamma_dcdm*obDDMBackground.invGYR_TO_KMS_MPC
+
+        # Fix YHe to standard BBN value to avoid interpolation failure at extreme omega_b
+        self.interface_args["CLASSparams"]["YHe"] = 0.2454006
 
         # Initialize CLASS
         self.results = Class()
@@ -281,7 +280,6 @@ class obDDMBackground:
         Returns:
             np.ndarray: Matter density values.
         """
- #       return np.array([self.results.Om_m(z) for z in zs]) # GFA, this was leading to errors when asking self.background.Omega_m(0.0)
         zs = np.atleast_1d(zs)
         result = np.array([self.results.Om_m(z) for z in zs])
         return result if len(result) > 1 else result[0]
@@ -307,12 +305,11 @@ class obDDMBackground:
 class obDDMLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
 
-    def __init__(self, background: Background, redshifts: np.ndarray, use_emulator:bool):
+    def __init__(self, background: Background, redshifts: np.ndarray, use_emulator: bool = True):
         """Initialize the obDDMLinearPerturbations instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 49 #maximum k at which linear emulator is trained
-        self.results = None  # Store CLASS results
         self.use_emulator = use_emulator
 
         if self.use_emulator == True:
@@ -323,9 +320,10 @@ class obDDMLinearPerturbations:
             self.ns = self.background.ns
             self.f     = self.background.f_dcdm
             self.Gamma_times_f = self.background.Gamma_times_f #in 1/Gyr
-            # Load cosmopower emulator
-            EMU_PATH = "/home/abellan/CLOE_NEW/cloelib/cloelib/cosmology/ddm-1body-linear.npz"
-            DATA_PATH = "/home/abellan/CLOE_NEW/cloelib/cloelib/cosmology/small-k-modes.txt"
+            # Load cosmopower emulator (path relative to this file, works in any install location)
+            _this_dir = os.path.dirname(os.path.abspath(__file__))
+            EMU_PATH = os.path.join(_this_dir, "ddm-1body-linear.npz")
+            DATA_PATH = os.path.join(_this_dir, "small-k-modes.txt")
             cp = CosmoPowerJAX(probe="custom_log", filepath=EMU_PATH, verbose=False)
             self.k = np.loadtxt(DATA_PATH)
             # Pre-compute emulator predictions for all redshifts in self.z
@@ -343,8 +341,20 @@ class obDDMLinearPerturbations:
                     "z":             np.array([zi]),
                 }
                 pk_emu[i, :] = np.array(cp.predict(params)).squeeze()
-            # Build a 2D interpolator over (z, k) — evaluated as pk_interp(zi, ki)
-                self.pk_emulator_interp = RegularGridInterpolator((self.z, self.k), pk_emu, method="linear", bounds_error=False, fill_value=None)    
+            # Extend k range to 500 1/Mpc to prevent Akima blow-up in AngularTwoPoint
+            # at low z (z~1e-4) where Limber k >> k_max_emu ~50 1/Mpc
+            k_out, z_out, Pk_out = extend_spectra(
+                self.k, self.z, pk_emu,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=self.z,
+                option_cosmo="const",
+                ns=self.ns,
+                extrap_kmax=500.0,
+            )
+            self.k = k_out
+            self.Pk_int = interpolate.RectBivariateSpline(z_out, k_out, Pk_out, kx=1, ky=1)
         else:
             # Ensure CLASS is initialized with necessary parameters
             self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -352,15 +362,39 @@ class obDDMLinearPerturbations:
             self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
             self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
             self.interface_args["CLASSparams"]["non linear"] = "none"
-            # Match emulator training settings
- #           self.interface_args["CLASSparams"]["YHe"] = 0.2454006
- #           self.interface_args["CLASSparams"]["T_cmb"] = 2.7255
- #           if self.background.N_mnu > 0:
- #               self.interface_args["CLASSparams"]["T_ncdm"] = ",".join(["0.71611"] * self.background.N_mnu)
- #           self.interface_args["CLASSparams"]["l_max_ncdm"] = 40
- #           self.interface_args["CLASSparams"]["ncdm_fluid_approximation"] = 3
- #           self.interface_args["CLASSparams"]["tol_ncdm_synchronous"] = 1e-5
- #           self.interface_args["CLASSparams"]["ncdm_fluid_trigger_tau_over_tau_k"] = 100
+            # Precision settings matching the emulator training.  
+            if False:
+                emulator_accuracy_settings = {
+                    "YHe":                                        0.2454006,
+                    "T_cmb":                                      2.7255,
+                    "perturbations_sampling_stepsize":            0.05,
+                    "ur_fluid_approximation":                     2,
+                    "ur_fluid_trigger_tau_over_tau_k":            130.,
+                    "radiation_streaming_approximation":          2,
+                    "radiation_streaming_trigger_tau_over_tau_k": 240.,
+                    "hyper_flat_approximation_nu":                7000.,
+                    "transfer_neglect_delta_k_S_t0":              0.17,
+                    "transfer_neglect_delta_k_S_t1":              0.05,
+                    "transfer_neglect_delta_k_S_t2":              0.17,
+                    "transfer_neglect_delta_k_S_e":               0.17,
+                    "start_small_k_at_tau_c_over_tau_h":          0.0004,
+                    "start_large_k_at_tau_h_over_tau_k":          0.05,
+                    "tight_coupling_trigger_tau_c_over_tau_h":    0.005,
+                    "tight_coupling_trigger_tau_c_over_tau_k":    0.008,
+                    "start_sources_at_tau_c_over_tau_h":          0.006,
+                    # Neutrino precision settings
+                    "tol_ncdm_synchronous":                       1.e-5,
+                    "ncdm_fluid_trigger_tau_over_tau_k":          100,
+                    "ncdm_fluid_approximation":                   3,
+                }
+                self.interface_args["CLASSparams"].update(emulator_accuracy_settings)
+                # Neutrino sector: replace deg_ncdm shorthand with 3 explicit species matching emulator training
+                self.interface_args["CLASSparams"].pop("deg_ncdm", None)
+                self.interface_args["CLASSparams"]["N_ur"]   = 0.00441
+                self.interface_args["CLASSparams"]["N_ncdm"] = 3
+                self.interface_args["CLASSparams"]["m_ncdm"] = "0.02,0.02,0.02"
+                self.interface_args["CLASSparams"]["T_ncdm"] = "0.71611,0.71611,0.71611"
+
             self.results = Class()
             self.results.set(self.interface_args["CLASSparams"])
             self.results.compute()
@@ -401,7 +435,7 @@ class obDDMLinearPerturbations:
             raise ValueError("This CLASS method does not yet support h-units")
 
         if self.use_emulator == True:
-            self.Pk_linear = np.array([[self.pk_emulator_interp([[zi, ki]])[0] for ki in ks] for zi in zs])
+            self.Pk_linear = self.Pk_int(zs, ks)
         else:
             self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
         # To match array convention of CAMB
@@ -447,7 +481,7 @@ class obDDMLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.background.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
 
@@ -459,12 +493,16 @@ class obDDMNonLinearPerturbations:
         background: Background,
         linearperturbations: Perturbations,
         redshifts: np.ndarray,
+        use_emulator: bool = False,
+        log10TAGN: Optional[float] = None,
     ):
         """Initialize the obDDMNonLinearPerturbations instance."""
         self.background = background
         self.linearperturbations = linearperturbations
         self.z = redshifts
         self.kmax = 40
+        self.use_emulator = use_emulator
+        self.log10TAGN = log10TAGN if log10TAGN is not None else 7.6
         # These are only to check if the parameter is in a range where low error is expected.
         # Fit can still function well outside this range if the values are not extreme
         self.h = self.background.h
@@ -479,25 +517,89 @@ class obDDMNonLinearPerturbations:
             print("You have chosen omega_b={}!\n-> the fit could be unaccurate with this choice! (error might be > 10%)".format(self.wb))
         if(self.wm < 0.09 or self.wm > 0.28):
             print("You have chosen omega_m={}!\n-> the fit could be unaccurate with this choice! (error might be > 10%)".format(self.wm))
-        if(self.Gamma >= 0.0316455696): 
+        if(self.Gamma >= 0.0316455696):
             print("You have chosen a short lifetime of {} Gyr<31.6 Gyr\n-> the fit could be unaccurate with this choice! (error might be > 10%)".format(self.Gamma**-1.))
 
-        # Ensure CLASS is initialized with necessary parameters
-        self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["non linear"] = "halofit" # note that the fitting formula is defined as a "boost" wrt halofit-LCDM
-    
-        # we eliminate dcdm params (and set stable cdm abundance to the total cdm) since we just want to compute equivalent lcdm model
-        self.interface_args["CLASSparams"].pop("omega_ini_dcdm", None)
-        self.interface_args["CLASSparams"].pop("Gamma_dcdm", None)
-        self.interface_args["CLASSparams"]["omega_cdm"] = self.wdm
-        self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
-        # GFA, I added this line in order to retrieve the wavenumber grid (in 1/Mpc) used by CLASS to compute Pk
-        _, self.k, _ = self.results.get_pk_and_k_and_z(nonlinear=True, only_clustering_species = False, h_units=False)
+        if not self.use_emulator:
+        # CLASS params for equivalent LCDM (DDM params removed, total CDM restored)
+            self.interface_args = copy.deepcopy(self.background.interface_args)
+            self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
+            self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
+            self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
+            self.interface_args["CLASSparams"].pop("omega_ini_dcdm", None)
+            self.interface_args["CLASSparams"].pop("Gamma_dcdm", None)
+            self.interface_args["CLASSparams"]["omega_cdm"] = self.wdm            
+            self.interface_args["CLASSparams"]["non linear"] = "halofit"
+            self.results = Class()
+            self.results.set(self.interface_args["CLASSparams"])
+            self.results.compute()
+            _, self.k, _ = self.results.get_pk_and_k_and_z(nonlinear=True, only_clustering_species=False, h_units=False)
+        else:
+            # Emulator path: cosmopower-jax emulators for both NL and linear equiv LCDM Pk.
+
+            from cloelib.cosmology.cosmopower_jax_cosmology import (
+                emulator_data, load_pk_emulator, k_modes_path
+            )
+
+            cp_NL = load_pk_emulator(emulator_data("w0wa-3degen-nonlinear.npz"))
+            k_emu = np.loadtxt(k_modes_path)
+
+            mnu_total = self.background.mnu
+
+            params_nl = {
+                "ombh2":    np.tile(self.wb,                              len(self.z)),
+                "omch2":    np.tile(self.wdm,                             len(self.z)),
+                "H0":       np.tile(self.background.H0,                   len(self.z)),
+                "ns":       np.tile(self.background.ns,                   len(self.z)),
+                "lnAs":     np.tile(np.log(self.background.As * 1e10),    len(self.z)),
+                "w0":       np.tile(self.background.w0,                   len(self.z)),
+                "wa":       np.tile(self.background.wa,                   len(self.z)),
+                "mnu":      np.tile(mnu_total,                            len(self.z)),
+                "logT_AGN": np.tile(self.log10TAGN,                        len(self.z)),
+                "z":        self.z,
+            }
+
+            Pk_nonlin = np.array(cp_NL.predict(params_nl))
+            k_out_nl, z_out_nl, Pk_out_nl = extend_spectra(
+                k_emu, self.z, Pk_nonlin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=self.z,
+                option_cosmo="const",
+                ns=self.background.ns,
+                extrap_kmax=500.0,
+            )
+            self.Pk_int_lcdm = interpolate.RectBivariateSpline(z_out_nl, k_out_nl, Pk_out_nl, kx=1, ky=1)
+
+            # Linear LCDM Pk: w0wa-3degen-linear.npz emulator (same params, no logT_AGN)
+            cp_LIN = load_pk_emulator(emulator_data("w0wa-3degen-linear.npz"))
+
+            params_lin = {
+                "ombh2": np.tile(self.wb,                           len(self.z)),
+                "omch2": np.tile(self.wdm,                          len(self.z)),
+                "H0":    np.tile(self.background.H0,                len(self.z)),
+                "ns":    np.tile(self.background.ns,                len(self.z)),
+                "lnAs":  np.tile(np.log(self.background.As * 1e10), len(self.z)),
+                "w0":    np.tile(self.background.w0,                len(self.z)),
+                "wa":    np.tile(self.background.wa,                len(self.z)),
+                "mnu":   np.tile(mnu_total,                         len(self.z)),
+                "z":     self.z,
+            }
+
+            Pk_lin = np.array(cp_LIN.predict(params_lin))
+            k_out_lin, z_out_lin, Pk_out_lin = extend_spectra(
+                k_emu, self.z, Pk_lin,
+                flag_range=True,
+                option_wavenumber="logk2",
+                option_redshift="power_law",
+                extrap_z=self.z,
+                option_cosmo="const",
+                ns=self.background.ns,
+                extrap_kmax=500.0,
+            )
+            self.Pk_lin_int_lcdm = interpolate.RectBivariateSpline(z_out_lin, k_out_lin, Pk_out_lin, kx=1, ky=1)
+            self.k = k_out_nl  # extended k grid, shared by all three splines
 
     def eps_lin(self, z) -> float:
         """Calculate the function which describes the redshift evolution of the 1bDDM suppression, fit developed in Hubert et al. (2104.07675)
@@ -565,7 +667,10 @@ class obDDMNonLinearPerturbations:
                 boost factor for the 1bDDM suppression at given redshift and wavenumber
         """
         pk_1bDDM_lin = self.linearperturbations.matter_power_spectrum(np.array([z]), np.array([k]))[0, 0]
-        pk_LCDM_lin = self.results.pk_lin(k, z)
+        if self.use_emulator:
+            pk_LCDM_lin = self.Pk_lin_int_lcdm(np.array([z]), np.array([k]))[0, 0]
+        else:
+            pk_LCDM_lin = self.results.pk_lin(k, z)
 
         factor1 = pk_1bDDM_lin/pk_LCDM_lin
         factor2 = (1.0 - self.eps_nonlin(z,k)) / (1.0 - self.eps_lin(z))
@@ -603,14 +708,32 @@ class obDDMNonLinearPerturbations:
             raise ValueError("This CLASS method does not yet support h-units")
 
         # These are only to check if the parameter is in a range where low error is expected.
-        if(np.any(ks > 10)): 
-            print("You have chosen k>10 1/Mpc; \n-> the fit extrapolation could be inacurate")
-        if(np.any(zs > 2.35)):
-            print("You have chosen z>2.35; \n-> the fit could be unaccurate with this choice!")        
-                
-        self.Pk_nonlinear = np.array(
-            [[self.results.pk(ki, zi)*self.boost_1bDDM(zi, ki) for ki in ks] for zi in zs] # we apply the boost factor for the 1bDDM suppression
-        )
+#        if(np.any(ks > 10)):
+#            print("You have chosen k>10 1/Mpc; \n-> the fit extrapolation could be inacurate")
+#        if(np.any(zs > 2.35)):
+#            print("You have chosen z>2.35; \n-> the fit could be unaccurate with this choice!")
+
+        # NL LCDM Pk: CLASS halofit (default) or cosmopower emulator (use_emulator=True)
+        if self.use_emulator:
+            pk_LCDM_nl = self.Pk_int_lcdm(zs, ks)
+        else:
+            pk_LCDM_nl = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
+
+        # Linear LCDM Pk: emulator spline (use_emulator=True) or CLASS (default)
+        if self.use_emulator:
+            pk_LCDM_lin = self.Pk_lin_int_lcdm(zs, ks)
+        else:
+            pk_LCDM_lin = np.array([[self.results.pk_lin(ki, zi) for ki in ks] for zi in zs])
+
+        # Compute 1bDDM linear Pk grid in one vectorized call (critical for emulator performance)
+        pk_1bDDM_lin = self.linearperturbations.matter_power_spectrum(zs, ks)
+
+        # Vectorized boost factor: eq. 16 of Lesgourgues et al. (2406.18274)
+        eps_lin    = np.array([self.eps_lin(zi) for zi in zs])                              # shape (nz,)
+        eps_nonlin = np.array([[self.eps_nonlin(zi, ki) for ki in ks] for zi in zs])        # shape (nz, nk)
+        boost = (pk_1bDDM_lin / pk_LCDM_lin) * (1.0 - eps_nonlin) / (1.0 - eps_lin[:, None])
+
+        self.Pk_nonlinear = pk_LCDM_nl * boost
         # To match array convention of CAMB
         return self.Pk_nonlinear
 
@@ -653,5 +776,5 @@ class obDDMNonLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.background.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)

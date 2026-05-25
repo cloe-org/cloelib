@@ -32,6 +32,7 @@ def camb_cmb_setup():
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        alpha_s=0.0,
         mnu=0.06,
         w0=-1.0,
         wa=0.0,
@@ -41,7 +42,7 @@ def camb_cmb_setup():
 
     z_auto = np.linspace(0.01, 1100.0, 100)
     z_cross = np.linspace(0.2, 2.0, 40)
-    perturbations = CAMBNonLinearPerturbations(background, z_auto)
+    perturbations = CAMBNonLinearPerturbations(background, None, z_auto)
     n_z_bins = 1
     dndz = np.ones((n_z_bins, len(z_cross)))
     dndz /= np.trapezoid(dndz, z_cross, axis=1)[:, None]

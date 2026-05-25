@@ -140,7 +140,9 @@
       "contributions": [
         "code",
         "maintenance",
-        "ideas"
+        "ideas",
+        "review",
+        "bug"
       ]
     },
     {
@@ -202,7 +204,8 @@
       "contributions": [
         "code",
         "ideas",
-        "bug"
+        "bug",
+        "review"
       ]
     },
     {
@@ -594,7 +597,8 @@
       "profile": "https://github.com/neelcosmo",
       "contributions": [
         "code",
-        "ideas"
+        "ideas",
+        "bug"
       ]
     },
     {
@@ -622,6 +626,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1507529?v=4",
       "profile": "https://github.com/HironaoMiyatake",
       "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "MartinKaercher",
+      "name": "Martin Kärcher",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64490739?v=4",
+      "profile": "https://github.com/MartinKaercher",
+      "contributions": [
+        "code",
         "ideas"
       ]
     }

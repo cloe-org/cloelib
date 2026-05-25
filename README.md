@@ -14,6 +14,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 [![Type Checking: mypy](https://img.shields.io/badge/type%20checking-mypy-8A2BE2?logo=mypy&logoColor=white)](https://mypy.readthedocs.io/)
 [![PyPI version](https://img.shields.io/pypi/v/cloelib.svg?logo=pypi&logoColor=white)](https://pypi.org/project/cloelib/)
 [![CRediT](https://img.shields.io/badge/contributions-CRediT-using?color=%23cd2653)](https://credit.niso.org/implementing-credit/)
+[![All Contributors](https://img.shields.io/github/all-contributors/cloe-org/cloelib?color=ee8449)](#contributors-)
 
 ---
 

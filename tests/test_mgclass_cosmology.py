@@ -25,6 +25,7 @@ def mgclass_background_instance(scope="module"):
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        alpha_s=0.0,
         Y_He=0.25,
         mnu=0.0,
         w0=-1.0,
@@ -221,12 +222,12 @@ def mgclass_perturbation_instances(mgclass_background_instance, zs, scope="modul
         background=mgclass_background_instance, redshifts=zs
     )
     mgclass_non = MGCLASSNonLinearPerturbations(
-        background=mgclass_background_instance, redshifts=zs, nonlinear_model="halofit"
+        background=mgclass_background_instance, linearperturbations=None, redshifts=zs, nonlinear_model="halofit"
     )
     return {"Linear": mgclass_lin, "NonLinear": mgclass_non}
 
 
-@pytest.mark.parametrize("key", ["Linear"])
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_mgclass_perturbation_implements_protocol(mgclass_perturbation_instances, key):
     """Test that the MGCLASSPerturbation instances adhere to the protocol."""
     mgclass_instance = mgclass_perturbation_instances[key]
@@ -262,7 +263,7 @@ def test_mgclass_growth_factor(mgclass_perturbation_instances, key, zs, ks):
     assert result.shape == (len(zs), len(ks))
 
 
-@pytest.mark.parametrize("key", ["Linear"])
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_mgclass_growth_rate(mgclass_perturbation_instances, key, zs, ks):
     """Test MGCLASS growth_rate."""
     mgclass_instance = mgclass_perturbation_instances[key]
@@ -281,7 +282,7 @@ def test_mgclass_sigma8_consistency_linear_vs_nonlinear(
         background=mgclass_background_instance, redshifts=zs
     )
     mgclass_non = MGCLASSNonLinearPerturbations(
-        background=mgclass_background_instance, redshifts=zs, nonlinear_model="halofit"
+        background=mgclass_background_instance, linearperturbations=None, redshifts=zs, nonlinear_model="halofit"
     )
     assert np.abs(mgclass_lin.sigma8_0() - mgclass_non.sigma8_0()) < 1e-3
 
@@ -303,7 +304,7 @@ def test_Omega_cb_returns_Om_b_plus_Om_cdm(mgclass_background_instance):
         mgclass_background_instance.hubble_parameter(zs)
         / mgclass_background_instance.H0
     )
-    expected = (Om_b + Om_cdm) * (1.0 + zs) ** 3.0 / Ez**0.5
+    expected = (Om_b + Om_cdm) * (1.0 + zs) ** 3.0 / Ez**2.0
 
     # Call the wrapper under test
     omega_cb = mgclass_background_instance.Omega_cb(zs)
@@ -443,7 +444,7 @@ def mgclass_nonlin_perturb_instance(mgclass_background_instance):
 
     # ----- instantiate perturbations ---------------------------------
     pert = MGCLASSNonLinearPerturbations(
-        background=mgclass_background_instance, redshifts=zs
+        background=mgclass_background_instance, linearperturbations=None, redshifts=zs
     )
 
     return pert
@@ -466,7 +467,7 @@ def mgclass_nonlin_perturb_instance_nu(mgclass_background_instance):
     mgclass_background_instance.interface_args["MGCLASSparams"]["m_ncdm"] = 0.2
     # ----- instantiate perturbations ---------------------------------
     pert = MGCLASSNonLinearPerturbations(
-        background=mgclass_background_instance, redshifts=zs
+        background=mgclass_background_instance, linearperturbations=None, redshifts=zs
     )
 
     return pert

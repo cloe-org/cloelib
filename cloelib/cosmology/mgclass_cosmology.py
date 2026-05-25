@@ -40,6 +40,8 @@ class MGCLASSBackground:
         mg_params: dict,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        alpha_s: float = 0.0,
+        **kwargs,
     ) -> None:
         """
         Initialize the MGCLASSBackground class with cosmological parameters.
@@ -51,6 +53,7 @@ class MGCLASSBackground:
             Omega_k0 (float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
+            alpha_s (float): Running of the scalar spectral index (d ns / d ln k).
             mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
@@ -70,6 +73,7 @@ class MGCLASSBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
+        self.alpha_s = alpha_s
         self.Y_He = Y_He
         self.w0 = w0
         self.wa = wa
@@ -101,6 +105,7 @@ class MGCLASSBackground:
         )
         self.interface_args["MGCLASSparams"]["Omega_k"] = self.Omega_k0
         self.interface_args["MGCLASSparams"]["n_s"] = self.ns
+        self.interface_args["MGCLASSparams"]["alpha_s"] = self.alpha_s
         self.interface_args["MGCLASSparams"]["YHe"] = self.Y_He
         self.interface_args["MGCLASSparams"]["A_s"] = self.As
         self.interface_args["MGCLASSparams"]["w0_fld"] = self.w0  # or w0
@@ -277,7 +282,7 @@ class MGCLASSBackground:
                 [
                     (self.results.Omega_b() + self.results.Omega0_cdm())
                     * (1 + z) ** 3.0
-                    / (self.hubble_parameter(z) / self.H0) ** 0.5
+                    / (self.hubble_parameter(z) / self.H0) ** 2.0
                     for z in zs
                 ]
             )
@@ -285,7 +290,7 @@ class MGCLASSBackground:
             Omegacb = (
                 (self.results.Omega_b() + self.results.Omega0_cdm())
                 * (1 + zs) ** 3.0
-                / (self.hubble_parameter(zs) / self.H0) ** 0.5
+                / (self.hubble_parameter(zs) / self.H0) ** 2.0
             )
         return Omegacb
 
@@ -320,7 +325,7 @@ class MGCLASSBackground:
                 [
                     self.results.Omega_b()
                     * (1 + z) ** 3.0
-                    / (self.hubble_parameter(z) / self.H0) ** 0.5
+                    / (self.hubble_parameter(z) / self.H0) ** 2.0
                     for z in zs
                 ]
             )
@@ -328,7 +333,7 @@ class MGCLASSBackground:
             Omegab = (
                 self.results.Omega_b()
                 * (1 + zs) ** 3.0
-                / (self.hubble_parameter(zs) / self.H0) ** 0.5
+                / (self.hubble_parameter(zs) / self.H0) ** 2.0
             )
         return Omegab
 
@@ -514,6 +519,7 @@ class MGCLASSNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations: Optional[object],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
     ):
@@ -648,6 +654,23 @@ class MGCLASSNonLinearPerturbations:
         )
 
         return D_z_k
+
+    def growth_rate(self) -> np.ndarray:
+        """
+        Calculate the growth rate f(z).
+
+        Returns
+        -------
+        np.ndarray
+            Scale-independent growth rate f(z)
+        """
+        D_z_k0 = self.growth_factor(self.z, np.array([1.0e-2]))
+
+        return (
+            -(1 + self.z)
+            / D_z_k0[:, 0]
+            * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])  # type: ignore[union-attr]
+        )
 
     def sigma8_0(self) -> float:
         """

@@ -317,7 +317,6 @@ else:
 result = jnp.where(z > 1.0, compute_high_z(z), compute_low_z(z))
 ```
 
-
 ## Next Steps
 
 Ready to compute final statistics with your observables?

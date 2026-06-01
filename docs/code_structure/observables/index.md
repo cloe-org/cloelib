@@ -30,7 +30,6 @@ For spectroscopic observables (3D clustering, redshift-space distortions)
 
 - [Learn more about SpectroPower Protocol](spectro.md)
 
-
 ## Next Steps
 
 Ready to compute final statistics with your observables?

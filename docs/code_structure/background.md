@@ -398,5 +398,5 @@ def comoving_distance(self, zs):
 Now that you understand Background, you are ready for:
 
 - [Perturbations](perturbations.md) – Add structure formation on top of your background
-- [Observables](observables.md) – Connect background to survey measurements
+- [Observables](observables/index.md) – Connect background to survey measurements
 - [API Reference](../api.md) – Full technical documentation

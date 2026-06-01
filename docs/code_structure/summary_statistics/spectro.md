@@ -77,6 +77,21 @@ alpha_iso = alphas_z05['alpha_iso']            # Isotropic dilation
 alpha_AP = alphas_z05['alpha_AP']              # Alcock-Paczynski ratio
 ```
 
+## Next Steps
+
+The pipeline is now complete.
+From here:
+
+- [API Reference](../../api.md) – Full technical documentation
+- [Contributing Guide](../../contributing.md) – General contribution guidelines
+- [Playground Examples](https://github.com/cloe-org/playground) – Real usage examples
+- [Back to Overview](../index.md) – Review the architecture
+
+Or return to any component:
+
+- [Background](../background.md)
+- [Perturbations](../perturbations.md)
+- [Observables](../observables.md)
 
 ## Next Steps
 
@@ -94,22 +109,6 @@ Or return to any component:
 - [Perturbations](../perturbations.md)
 - [Observables](../observables.md)
 
-
-## Next Steps
-
-The pipeline is now complete.
-From here:
-
-- [API Reference](../../api.md) – Full technical documentation
-- [Contributing Guide](../../contributing.md) – General contribution guidelines
-- [Playground Examples](https://github.com/cloe-org/playground) – Real usage examples
-- [Back to Overview](../index.md) – Review the architecture
-
-Or return to any component:
-
-- [Background](../background.md)
-- [Perturbations](../perturbations.md)
-- [Observables](../observables.md)
 ## Next Steps
 
 The pipeline is now complete.

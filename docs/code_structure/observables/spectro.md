@@ -321,7 +321,7 @@ result = jnp.where(z > 1.0, compute_high_z(z), compute_low_z(z))
 
 Ready to compute final statistics with your observables?
 
-- [Summary Statistics](../summary_statistics.md) – Combine tracers into C_ℓ and multipoles
+- [Summary Statistics](../summary_statistics/index.md) – Combine tracers into C_ℓ and multipoles
 - [Perturbations](../perturbations.md) – Review structure formation
 - [Background](../background.md) – Review the foundation
 - [API Reference](../../api.md) – Full technical details

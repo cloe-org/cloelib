@@ -222,7 +222,10 @@ def mgclass_perturbation_instances(mgclass_background_instance, zs, scope="modul
         background=mgclass_background_instance, redshifts=zs
     )
     mgclass_non = MGCLASSNonLinearPerturbations(
-        background=mgclass_background_instance, linearperturbations=None, redshifts=zs, nonlinear_model="halofit"
+        background=mgclass_background_instance,
+        linearperturbations=None,
+        redshifts=zs,
+        nonlinear_model="halofit",
     )
     return {"Linear": mgclass_lin, "NonLinear": mgclass_non}
 
@@ -282,7 +285,10 @@ def test_mgclass_sigma8_consistency_linear_vs_nonlinear(
         background=mgclass_background_instance, redshifts=zs
     )
     mgclass_non = MGCLASSNonLinearPerturbations(
-        background=mgclass_background_instance, linearperturbations=None, redshifts=zs, nonlinear_model="halofit"
+        background=mgclass_background_instance,
+        linearperturbations=None,
+        redshifts=zs,
+        nonlinear_model="halofit",
     )
     assert np.abs(mgclass_lin.sigma8_0() - mgclass_non.sigma8_0()) < 1e-3
 

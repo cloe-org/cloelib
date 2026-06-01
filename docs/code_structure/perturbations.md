@@ -465,7 +465,6 @@ Interfaces with [hi_class](https://github.com/emiliobellini/hi_class_public).
 **Location**: `cloelib/cosmology/hi_class_cosmology.py`
 
 **When to use**: hi_class-specific features, comparison studies
->>>>>>> origin/main
 
 **Example**:
 
@@ -492,7 +491,6 @@ Accurate and fast emulator of the nonlinear matter power spectrum in modified gr
 - Fast predictions of the nonlinear matter power spectrum in f(R) gravity;
 - Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;
 - Limited to the Hu & Sawicki model (n=1) with fR0 as free parameter;
-  > > > > > > > main
 
 ## Adding Your Own Perturbations Implementation
 

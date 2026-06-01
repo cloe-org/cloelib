@@ -271,9 +271,9 @@ def test_cmb_lensing_tracer():
     assert tracer.get_window(z_high)[0] == 0.0
 ```
 
-# Tips & Tricks
+## Tips & Tricks
 
-## Protocol Compliance
+### Protocol Compliance
 
 Always verify your implementation:
 
@@ -283,7 +283,7 @@ from cloelib.observables.tracer import Tracer
 assert isinstance(my_tracer, Tracer)
 ```
 
-## Nuisance Parameters
+### Nuisance Parameters
 
 Keep nuisance parameters in a dictionary:
 
@@ -299,7 +299,7 @@ tracer = MyTracer(perturbations=pert, nuisance_params=nuisance)
 
 This makes it easy to vary parameters in MCMC!
 
-## Performance
+### Performance
 
 These calculations are invoked frequently during likelihood evaluation:
 
@@ -316,7 +316,7 @@ class MyTracer:
         return self._get_window_cached(tuple(z.flat))
 ```
 
-## JAX Compatibility
+### JAX Compatibility
 
 If using JAX, avoid Python control flow:
 
@@ -330,3 +330,13 @@ else:
 # Good (JIT-able)
 result = jnp.where(z > 1.0, compute_high_z(z), compute_low_z(z))
 ```
+
+
+## Next Steps
+
+Ready to compute final statistics with your observables?
+
+- [Summary Statistics](../summary_statistics.md) – Combine tracers into C_ℓ and multipoles
+- [Perturbations](../perturbations.md) – Review structure formation
+- [Background](../background.md) – Review the foundation
+- [API Reference](../../api.md) – Full technical details

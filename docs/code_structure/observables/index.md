@@ -35,7 +35,7 @@ For spectroscopic observables (3D clustering, redshift-space distortions)
 
 Ready to compute final statistics with your observables?
 
-- [Summary Statistics](summary_statistics.md) – Combine tracers into C_ℓ and multipoles
-- [Perturbations](perturbations.md) – Review structure formation
-- [Background](background.md) – Review the foundation
-- [API Reference](../api.md) – Full technical details
+- [Summary Statistics](../summary_statistics.md) – Combine tracers into C_ℓ and multipoles
+- [Perturbations](../perturbations.md) – Review structure formation
+- [Background](../background.md) – Review the foundation
+- [API Reference](../../api.md) – Full technical details

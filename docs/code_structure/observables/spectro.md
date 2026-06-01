@@ -290,9 +290,9 @@ def test_with_different_parameters():
     assert np.all(P2 > P1)
 ```
 
-# Tips & Tricks
+## Tips & Tricks
 
-## Protocol Compliance
+### Protocol Compliance
 
 Always verify your implementation:
 
@@ -302,7 +302,7 @@ from cloelib.observables.spectro import SpectroPower
 assert isinstance(my_spectro, SpectroPower)
 ```
 
-## JAX Compatibility
+### JAX Compatibility
 
 If using JAX, avoid Python control flow:
 
@@ -316,3 +316,13 @@ else:
 # Good (JIT-able)
 result = jnp.where(z > 1.0, compute_high_z(z), compute_low_z(z))
 ```
+
+
+## Next Steps
+
+Ready to compute final statistics with your observables?
+
+- [Summary Statistics](../summary_statistics.md) – Combine tracers into C_ℓ and multipoles
+- [Perturbations](../perturbations.md) – Review structure formation
+- [Background](../background.md) – Review the foundation
+- [API Reference](../../api.md) – Full technical details

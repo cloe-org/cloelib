@@ -1,4 +1,4 @@
-# For Photometric Surveys Summary Statistics (Using Tracers)
+# Photometric Surveys Summary Statistics (Using Tracers)
 
 ## AngularTwoPoint
 

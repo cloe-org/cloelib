@@ -1,4 +1,4 @@
-# Part 2: SpectroPower Protocol (Spectroscopic Observables)
+# SpectroPower Protocol (Spectroscopic Observables)
 
 **Protocol Definition**: `cloelib.observables.spectro.SpectroPower`
 

@@ -50,4 +50,4 @@ Or return to any component:
 
 - [Background](../background.md)
 - [Perturbations](../perturbations.md)
-- [Observables](../observables.md)
+- [Observables](../observables/index.md)

@@ -325,3 +325,5 @@ Ready to compute final statistics with your observables?
 - [Perturbations](../perturbations.md) – Review structure formation
 - [Background](../background.md) – Review the foundation
 - [API Reference](../../api.md) – Full technical details
+- [Back to Observables](index.md) – Review all oobservables
+- [Back to Overview](../index.md) – Review the architecture

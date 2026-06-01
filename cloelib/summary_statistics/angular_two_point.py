@@ -434,7 +434,6 @@ class AngularTwoPoint:
         return Pkl
 
     def get_Cl_limber_vec(self, ells, nl, ks):
-
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
         dz = self.tracer1.z[1] - self.tracer1.z[0]

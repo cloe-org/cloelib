@@ -143,7 +143,7 @@ def comoving_distance_to_redshift(chi, background):
     z : float
         Redshift corresponding to the given comoving distance.
     """
-    zs = np.logspace(np.log10(1e-4), np.log10(20.0), 10000)
+    zs = np.logspace(np.log10(1e-6), np.log10(20.0), 10000)
     chi_of_z = background.comoving_distance(zs)
     return akima_interpolation(zs, chi_of_z, chi)
 

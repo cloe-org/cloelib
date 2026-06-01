@@ -438,8 +438,6 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
-<<<<<<< 287-hi-class
-
 ### hi_classPerturbations
 
 Interfaces with [hi_class](https://github.com/emiliobellini/hi_class_public).
@@ -459,8 +457,6 @@ pert = hi_classPerturbations(
     # other parameters
 )
 ```
-
-=======
 
 ### EmantisPerturbations
 

@@ -195,6 +195,7 @@ class SplitNonLinearPerturbations:
 
     def __init__(
         self,
+        background: Background,
         redshifts: np.ndarray,
         pk_linear: np.ndarray,
         perturbations_lin: Perturbations,
@@ -204,7 +205,7 @@ class SplitNonLinearPerturbations:
         self.z = redshifts
         self.kmax = 100
         self.pk_linear = pk_linear
-        self.background = perturbations_lin.background
+        self.background = background
         self.perturbations_lin = perturbations_lin
         self.perturbations_NL = perturbations_NL
 
@@ -314,11 +315,11 @@ class SplitNonLinearPerturbations:
         """
         d_z_k = np.zeros([len(zs), len(ks)])
 
-        # background Omega_m is growth since this is how the class is initialised
+        # Use the background of lin. pert. class, including Omega_m^growth
 
-        g_ode = growth_function_ODE(
-            self.background, zs, (self.background.Omega_cdm0 + self.background.Omega_b0)
-        )
+        bg = self.perturbations_lin.background
+
+        g_ode = growth_function_ODE(bg, zs, (bg.Omega_cdm0 + bg.Omega_b0))
 
         for i in range(len(ks)):
             d_z_k[:, i] = g_ode / (g_ode[0] * (1 + zs))

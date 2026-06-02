@@ -135,6 +135,7 @@ def split_perturbation_instances(
     )
     split_pk_linear = (split_lin.matter_power_spectrum(zs, ks),)
     split_non = SplitNonLinearPerturbations(
+        background=class_background_instance_geo,
         redshifts=zs,
         pk_linear=split_pk_linear,
         perturbations_lin=class_lin_growth,

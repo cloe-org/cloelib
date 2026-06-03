@@ -33,6 +33,7 @@ class CAMBBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        alpha_s: float = 0.0,
     ) -> None:
         """
         Initialize the CAMBBackground instance with cosmological parameters.
@@ -44,7 +45,8 @@ class CAMBBackground:
             Omega_k0(float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
-            mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
+            alpha_s (float): Running of the scalar spectral index (d ns / d ln k).
+            mnu (Union[float, Sequence[float]], np.ndarray]): Total neutrino mass in eV.
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the dark energy equation of state.
@@ -60,6 +62,7 @@ class CAMBBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
+        self.alpha_s = alpha_s
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = gamma_MG
@@ -100,7 +103,9 @@ class CAMBBackground:
         self.interface_args["CAMBparams"].set_dark_energy(
             w=self.w0, wa=self.wa, dark_energy_model="ppf"
         )
-        self.interface_args["CAMBparams"].InitPower.set_params(As=self.As, ns=self.ns)
+        self.interface_args["CAMBparams"].InitPower.set_params(
+            As=self.As, ns=self.ns, nrun=self.alpha_s
+        )
 
         # Call CAMB to compute the background
         self.results = camb.get_background(self.interface_args["CAMBparams"])
@@ -434,6 +439,31 @@ class CAMBLinearPerturbations:
 
         return D_z_k
 
+    def growth_factor_cb(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+        r"""
+        Calculate the growth factor for cb for given redshifts and wavenumbers.
+
+        $$
+            D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+            /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+        $$
+
+        and normalizes as for $D(z)/D(0)$.
+
+        Args
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
+
+        Returns:
+            (np.ndarray): The growth factor at the specified redshift and wavenumber.
+        """
+        D_z_k_cb = np.sqrt(
+            self.matter_power_spectrum_cb(zs, ks)
+            / self.matter_power_spectrum_cb(np.array([0.0]), ks)[0]
+        )
+
+        return D_z_k_cb
+
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""
 
@@ -446,6 +476,7 @@ class CAMBNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
+        linearperturbations: Optional[object],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         log10TAGN: Optional[float] = None,
@@ -455,6 +486,9 @@ class CAMBNonLinearPerturbations:
 
         Args:
             self (LinearPerturbations): An instance of the LinearPerturbations class.
+            linearperturbations: Linear perturbations object (unused by CAMB, which computes
+                nonlinear corrections internally; accepted for interface compatibility with
+                emulator-based NonLinPerturbations classes).
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
                 Defaults to None, which uses the CAMB default model.
@@ -591,6 +625,30 @@ class CAMBNonLinearPerturbations:
             / self.matter_power_spectrum(np.array([0.0]), ks)[0]
         )
         return D_z_k
+
+    def growth_factor_cb(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+        r"""
+        Calculate the growth factor for cb for given redshifts and wavenumbers.
+
+        $$
+            D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+            /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+        $$
+
+        and normalizes as for $D(z)/D(0)$.
+
+        Args:
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
+
+        Returns:
+            (np.ndarray): The growth factor at the specified redshift and wavenumber.
+        """
+        D_z_k_cb = np.sqrt(
+            self.matter_power_spectrum_cb(zs, ks)
+            / self.matter_power_spectrum_cb(np.array([0.0]), ks)[0]
+        )
+        return D_z_k_cb
 
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""

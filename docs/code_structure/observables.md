@@ -166,6 +166,47 @@ tracer = PositionsTracer(
 window = tracer.get_window(z)
 ```
 
+#### PositionsTracer_Weyl_GC
+
+Weyl-specific galaxy-clustering tracer built on top of `PositionsTracer`.
+
+**Location**: `cloelib/observables/photo_Weyl.py`
+
+**What it does**:
+
+- Uses the `PositionsTracer` interface unchanged
+- Assumes a `Weyl_Perturbations` instance
+- Normalizes growth with respect to `z_ini`
+- Uses `bhat_binN` nuisance parameters for the galaxy bias times the matter fluctuation amplitude
+- Modifies the clustering window with the Weyl growth normalization and `sigma8(z_ini)`
+- Modifies the RSD and magnification windows consistently with the Weyl prescription
+
+**Notes**:
+
+- This is a photometric tracer and still conforms to the Tracer protocol
+- It reuses the parent `PositionsTracer` machinery for the inherited window pieces
+
+#### PositionsTracer_Weyl_GGL
+
+Weyl-specific galaxy-galaxy lensing tracer built on top of `PositionsTracer`.
+
+**Location**: `cloelib/observables/photo_Weyl.py`
+
+**What it does**:
+
+- Uses the `PositionsTracer` interface unchanged
+- Assumes a `Weyl_Perturbations` instance
+- Normalizes growth with respect to `z_ini`
+- Uses `bhat_binN` nuisance parameters for the galaxy bias times the matter fluctuation amplitude
+- Uses `Jhat_binN` parameters for the per-bin Weyl potential amplitude
+- Modifies the clustering window with `Jhat`, `bhat`, `Omega_m(z)^{-1}`, and `sigma8(z_ini)^2`
+- Uses the Weyl growth normalization in the RSD and magnification windows
+
+**Notes**:
+
+- This is also a photometric tracer and still conforms to the Tracer protocol
+- It inherits the remaining tracer behavior from `PositionsTracer`
+
 #### CMBLensingTracer
 
 For CMB weak gravitational lensing (convergence) measurements.

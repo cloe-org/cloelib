@@ -58,11 +58,13 @@ def format_output(stat: str):
                     mixing_matrix = get_arg("mixing_matrix", 0)
                     rescaled_mixing_matrix = deepcopy(mixing_matrix)
                     scale_h = mixing_matrix.kout
+                    k_center = kwargs.get("k_center", scale_h)
                     for key in [0, 2, 4]:
                         rescaled_mixing_matrix.kin[key] = mixing_matrix.kin[key] * h_fid
                         set_arg("mixing_matrix", 0, rescaled_mixing_matrix)
                 else:
                     scale_h = get_arg("k", 0)
+                    k_center = scale_h
                     set_arg("k", 0, scale_h * h_fid)
             else:
                 scale_h = get_arg("s", 0)
@@ -89,7 +91,7 @@ def format_output(stat: str):
                     * h_fid**3
                 )
                 return PowerSpectrumMultipoles(
-                    k=scale_h,
+                    k=k_center,
                     keff=scale_h,
                     Nmodes=np.zeros_like(scale_h),
                     multipoles=out,
@@ -456,6 +458,7 @@ class LegendreMultipoles:
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
         format_type: Optional[str] = None,
+        k_center: Optional[np.ndarray] = None
     ) -> dict:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
 

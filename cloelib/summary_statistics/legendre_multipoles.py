@@ -458,7 +458,7 @@ class LegendreMultipoles:
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
         format_type: Optional[str] = None,
-        k_center: Optional[np.ndarray] = None
+        k_center: Optional[np.ndarray] = None,
     ) -> dict:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
 

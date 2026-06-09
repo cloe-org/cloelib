@@ -574,10 +574,10 @@ class LegendreMultipoles:
         s: np.ndarray,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5.0,
+        logkmin: Optional[float] = -6.0,
         logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
-        kcut: Optional[float] = 0.4,
+        kcut: Optional[float] = 2.0,
         pow: Optional[float] = 2.0,
         format_type: Optional[str] = None,
     ) -> dict:
@@ -628,7 +628,6 @@ class LegendreMultipoles:
             transformer = fftlog(x=k_hnkl, fx=y_array, nu=2)
             r_grid, transformed_log = transformer.fftlog(ell=ell)
             xi_multipoles[f"ell{ell}"] = np.interp(s, r_grid, transformed_log)
-
         return xi_multipoles
 
     @format_output("2PCF_polar")
@@ -691,10 +690,10 @@ class LegendreMultipoles:
         term_list: list,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5.0,
+        logkmin: Optional[float] = -6.0,
         logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
-        kcut: Optional[float] = 0.4,
+        kcut: Optional[float] = 2.0,
         pow: Optional[float] = 2.0,
     ) -> dict:
         r"""Two-point correlation function Legendre multipoles of specified terms.
@@ -731,6 +730,7 @@ class LegendreMultipoles:
             )
 
         ells = self._ensure_array(ells) if ells is not None else np.array([0, 2, 4])
+        # Here you need to divide by self.spectro_power.parameters['h'] if you want to map into hMpc units
         k_hnkl = np.logspace(logkmin, logkmax, nk)
         pk_multipoles = self.power_term_multipoles(
             k=k_hnkl, term_list=term_list, ells=ells, use_AP=use_AP
@@ -743,6 +743,7 @@ class LegendreMultipoles:
                 y_array = (
                     volume_factor
                     * pk_multipoles[f"ell{ell}"][term_id]
+                    # Here you need to divide kcut by self.spectro_power.parameters['h'] if you want to map into hMpc units
                     * self._UVcutoff(k=k_hnkl, kcut=kcut, pow=pow)
                     * np.real(1j**ell)
                 )

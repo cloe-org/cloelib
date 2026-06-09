@@ -438,8 +438,6 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
-<<<<<<< 287-hi-class
-
 ### hi_classPerturbations
 
 Interfaces with [hi_class](https://github.com/emiliobellini/hi_class_public).
@@ -459,8 +457,6 @@ pert = hi_classPerturbations(
     # other parameters
 )
 ```
-
-=======
 
 ### EmantisPerturbations
 
@@ -776,7 +772,7 @@ def matter_power_spectrum(self, zs, ks):
 
 Now that you have a grounding in Perturbations, explore:
 
-- [Observables](observables.md) – Connect structure to survey measurements
-- [Summary Statistics](summary_statistics.md) – Compute final data products
+- [Observables](observables/index.md) – Connect structure to survey measurements
+- [Summary Statistics](summary_statistics/index.md) – Compute final data products
 - [Background](background.md) – Review the foundation
 - [API Reference](../api.md) – Full technical details

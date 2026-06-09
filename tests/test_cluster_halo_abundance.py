@@ -4,15 +4,15 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
-from cloelib.observables.clusters.auxiliary import convert_to_Delta_crit
+from cloelib.auxiliary.cluster_helpers import convert_to_Delta_crit
 from cloelib.observables.clusters.halo_abundance import (
     CastroHaloAbundance,
     TinkerHaloAbundance,
 )
-from cloelib.observables.clusters.matter_statistics import MatterStatistics
+from cloelib.observables.clusters.halo_model_properties import HaloModelProperties
 
 
-def test_MatterStatistics():
+def test_HaloModelProperties():
     # Cosmology parameters
     print("# Cosmology parameters")
     _H0 = 67.7
@@ -36,9 +36,9 @@ def test_MatterStatistics():
     background = CAMBBackground(**_cosmo_pars)
     perturbations = CAMBLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
 
-    # MatterStatistics
-    print("# MatterStatistics")
-    HS = MatterStatistics(perturbations)
+    # HaloModelProperties
+    print("# HaloModelProperties")
+    HS = HaloModelProperties(perturbations)
     HS_tinker = TinkerHaloAbundance(HS)
     HS_castro = CastroHaloAbundance(HS)
 
@@ -49,17 +49,17 @@ def test_MatterStatistics():
     M_test = np.logspace(14, 15, 5)
 
     print("    window")
-    W, dWdx = HS_tinker.core.window(k_test, R_test)
+    W, dWdx = HS_tinker.window(k_test, R_test)
     _ref = [9.999999e-01, 9.999968e-01, 9.999000e-01, 9.968413e-01, 9.035060e-01]
     assert_allclose(W[0], _ref)
     _ref = [-0.0002, -0.001125, -0.006324, -0.035485, -0.186105]
     assert_allclose(dWdx[0], _ref, atol=5e-07)
     print("    radius_M")
     _ref = [6.523691, 7.903632, 9.575468, 11.600945, 14.054865]
-    assert_allclose(HS_tinker.core.radius_M(M_test), _ref)
+    assert_allclose(HS_tinker.radius_M(M_test), _ref)
     print("    delta_c")
     _ref = [1.676099, 1.67969, 1.681921, 1.683324, 1.684226]
-    assert_allclose(HS_tinker.core.delta_c(z_test), _ref, rtol=5e-7)
+    assert_allclose(HS_tinker.delta_c(z_test), _ref, rtol=5e-7)
     print("    convert_to_Delta_crit")
     _ref = [103.349057, 123.372358, 139.008183, 150.092972, 157.673498]
     assert_allclose(
@@ -67,16 +67,16 @@ def test_MatterStatistics():
     )
     print("    sigma_z_R")
     _ref = [4.175587, 3.550908, 2.366934, 1.386543, 0.673829]
-    assert_allclose(HS_tinker.core.sigma_z_R(z_test, R_test)[0, :5], _ref, rtol=5e-3)
+    assert_allclose(HS_tinker.sigma_z_R(z_test, R_test)[0, :5], _ref, rtol=5e-3)
     print("    sigma_z_M")
     _ref = [0.908559, 0.799362, 0.698348, 0.605542, 0.520909]
-    assert_allclose(HS_tinker.core.sigma_z_M(z_test, M_test)[0], _ref, rtol=1e-3)
+    assert_allclose(HS_tinker.sigma_z_M(z_test, M_test)[0], _ref, rtol=1e-3)
     print("    nu_z_M")
     _ref = [1.851075, 2.103741, 2.407783, 2.776472, 3.227135]
-    assert_allclose(HS_tinker.core.nu_z_M(z_test, M_test)[0], _ref, rtol=5e-3)
+    assert_allclose(HS_tinker.nu_z_M(z_test, M_test)[0], _ref, rtol=5e-3)
     print("    dlns_dlnR")
     _ref = [-0.649273, -0.684757, -0.722659, -0.76278, -0.805423]
-    assert_allclose(3 * HS_tinker.core.dlns_dlnM(z_test, M_test)[0], _ref, rtol=1e-3)
+    assert_allclose(3 * HS_tinker.dlns_dlnM(z_test, M_test)[0], _ref, rtol=1e-3)
 
     print("    bias Tinker")
     _ref = [2.205833, 2.746553, 3.516339, 4.632278, 6.281516]

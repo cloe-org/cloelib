@@ -6,7 +6,7 @@ from scipy.special import j0, j1
 from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.cosmology import Perturbations
 
-from .auxiliary import convert_distance
+from cloelib.auxiliary.cluster_helpers import convert_distance
 
 
 def _bessel_j2(x):
@@ -14,7 +14,7 @@ def _bessel_j2(x):
     return 2.0 / x * j1(x) - j0(x)
 
 
-class MatterStatistics:
+class HaloModelProperties:
     def __init__(
         self,
         perturbations: Perturbations,

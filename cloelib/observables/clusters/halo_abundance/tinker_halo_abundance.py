@@ -1,28 +1,29 @@
 import numpy as np
 
-from cloelib.observables.clusters.auxiliary import convert_to_Delta_crit
-from cloelib.observables.clusters.matter_statistics import MatterStatistics
+from cloelib.auxiliary.cluster_helpers import convert_to_Delta_crit
+from cloelib.observables.clusters.halo_model_properties import HaloModelProperties
 
-from .halo_abundance_core import HaloAbundanceCore
+from .halo_abundance_base import HaloAbundanceBase
 
 
-class TinkerHaloAbundance:
+class TinkerHaloAbundance(HaloAbundanceBase):
+    """
+    Class implementing the Tinker et al. mass abundance models.
+
+    Following the cold dark matter
+    prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514) and
+    Castorina+13 (https://arxiv.org/pdf/1311.1212), the halo mass function
+    and halo bias do not include the massive neutrino contribution in the
+    computation of mass variance, power spectrum, and overdensity.
+    """
+
     def __init__(
         self,
-        matter_statistics: MatterStatistics,
+        halo_model_properties: HaloModelProperties,
         overdensity_type: str = "vir",
         overdensity: int = 200,
     ):
-        """
-        Class implementing the Tinker et al. mass abundance models.
-
-        Following the cold dark matter
-        prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514) and
-        Castorina+13 (https://arxiv.org/pdf/1311.1212), the halo mass function
-        and halo bias do not include the massive neutrino contribution in the
-        computation of mass variance, power spectrum, and overdensity.
-        """
-        self.core = HaloAbundanceCore(matter_statistics)
+        HaloAbundanceBase.__init__(self, halo_model_properties)
         self.overdensity_type = overdensity_type
         self.overdensity = overdensity
 
@@ -67,14 +68,14 @@ class TinkerHaloAbundance:
             bias[i,j], where i is the redshift axis and j the mass axis
         """
         # compute inputs
-        delta_c = self.core.delta_c(z)
-        nu = self.core.nu_z_M(z, M)
+        delta_c = self.delta_c(z)
+        nu = self.nu_z_M(z, M)
         Delta = convert_to_Delta_crit(
             self.overdensity_type,
             self.overdensity,
-            self.core.matter_statistics.background,
+            self.halo_model_properties.background,
             z,
-        ) / self.core.matter_statistics.background.Omega_cb(z)
+        ) / self.halo_model_properties.background.Omega_cb(z)
 
         ###################
         # Bias computations
@@ -98,24 +99,3 @@ class TinkerHaloAbundance:
             + B_par * _nu**b_par
             + C_par * _nu**c_par
         ).T
-
-    def dn_dm(self, z, M):
-        r"""Derivative of the number density.
-
-        Computes the derivative of the number density
-        at the requested redshift and mass points.
-
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points.
-        M: numpy.ndarray
-            Mass points in h^{-1} Msun.
-
-        Returns
-        -------
-        dn_dm: numpy.ndarray
-            dn_dm[i,j], where i is the redshift axis and j the mass axis.
-            Units: h^4 Mpc^{-3} Ms^{-1}.
-        """
-        return self.core.dn_dm_fsigmanu(z, M, self.f_sigma_nu(z, M))

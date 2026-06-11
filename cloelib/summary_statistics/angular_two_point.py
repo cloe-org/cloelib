@@ -669,6 +669,11 @@ class AngularTwoPoint:
             (PositionsTracer, ShearTracer): ("POS", "SHE"),
             (ShearTracer, PositionsTracer): ("POS", "SHE"),
             (ShearTracer, ShearTracer): ("SHE", "SHE"),
+            (CMBLensingTracer, PositionsTracer): ("CMBL", "POS"),
+            (PositionsTracer, CMBLensingTracer): ("CMBL", "POS"),
+            (CMBLensingTracer, ShearTracer): ("CMBL", "SHE"),
+            (ShearTracer, CMBLensingTracer): ("CMBL", "SHE"),
+            (CMBLensingTracer, CMBLensingTracer): ("CMBL", "CMBL"),
         }
         if tracer_types not in tracer_keys:
             raise ValueError("Unsupported tracer pair for mixing matrix.")
@@ -732,6 +737,32 @@ class AngularTwoPoint:
                     )
 
                     C_ell_out[key] = arr
+        elif tracer_types in [
+            (CMBLensingTracer, PositionsTracer),
+            (PositionsTracer, CMBLensingTracer),
+        ]:
+            n_bin = max(self.tracer1.n_z_bins, self.tracer2.n_z_bins)
+            for i in range(1, n_bin + 1):
+                key = ("CMBL", "POS", 1, i)
+                C_ell_out[key] = mixing_matrix[key].array @ C_ell_calc[key].array
+
+        elif tracer_types in [
+            (CMBLensingTracer, ShearTracer),
+            (ShearTracer, CMBLensingTracer),
+        ]:
+            n_bin = max(self.tracer1.n_z_bins, self.tracer2.n_z_bins)
+            for i in range(1, n_bin + 1):
+                key = ("CMBL", "SHE", 1, i)
+                arr = np.zeros((2, mixing_matrix[key].ell.shape[0]))
+                for idx in [0, 1]:
+                    arr = arr.at[idx].set(
+                        mixing_matrix[key] @ C_ell_calc[key].array[idx]
+                    )
+                C_ell_out[key] = arr
+
+        elif tracer_types == (CMBLensingTracer, CMBLensingTracer):
+            key = ("CMBL", "CMBL", 1, 1)
+            C_ell_out[key] = mixing_matrix[key].array @ C_ell_calc[key].array
 
         # Wrap results in Map objects
         return {

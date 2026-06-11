@@ -12,7 +12,7 @@ import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
-import cosmopower as cp  # noqa: E402
+import cosmopower as cp
 
 
 class mochiCLASSEmuLinearPerturbations:
@@ -22,7 +22,7 @@ class mochiCLASSEmuLinearPerturbations:
     """
 
     def __init__(
-        self, background: Background, redshifts: np.ndarray, cp_file: str = None
+        self, background: Background, redshifts: np.ndarray, cp_file: str
     ):
         """
         Initialize the emulator with a given cosmological background and redshift array.
@@ -33,7 +33,8 @@ class mochiCLASSEmuLinearPerturbations:
             Background cosmology object, providing all necessary cosmological parameters.
         redshifts : np.ndarray
             Array of redshift values for which the power spectrum should be computed.
-
+        cp_file : str
+            Path to the file containing the trained Cosmopower emulator for linear perturbations.
         Raises
         ------
         AssertionError
@@ -51,7 +52,7 @@ class mochiCLASSEmuLinearPerturbations:
         self.k_max = self.k_emu[-1]
 
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
-        assert background.b == 1, "emulator only trained on b=1 for now"
+        assert background.stable_MG_dict["b"] == 1, "emulator only trained on b=1 for now"
 
         redshift_max = 5
         self.z = redshifts[redshifts <= redshift_max]
@@ -59,18 +60,18 @@ class mochiCLASSEmuLinearPerturbations:
         # Currently emulator implemented for stable basis parametrisation,
         # NOT for the standard mochi_class input of c_s^2, Delta_Mpl etc.
         cp_bounds = {
-            "s": np.array([-0.3, 0.3]),
-            "a0": np.array([0, 1]),
-            "a1": np.array([-1, 0]),
-            "w0": np.array([-1.5, -0.5]),
-            "wa": np.array([-0.5, 0.5]),
+            "s": np.array([-0.99, 0]),
+            "a0": np.array([0, 10]),
+            "a1": np.array([-10, 0]),
+            "w0": np.array([-1.6, -0.4]),
+            "wa": np.array([-2, 1]),
             "z": np.array([0.0, 5.0]),
         }
 
         self.params = {
-            "s": background.s,
-            "a0": background.a0,
-            "a1": background.a1,
+            "s": background.stable_MG_dict["s"],
+            "a0": background.stable_MG_dict["a0"],
+            "a1": background.stable_MG_dict["a1"],
             "w0": background.w0,
             "wa": background.wa,
         }
@@ -102,8 +103,10 @@ class mochiCLASSEmuLinearPerturbations:
             self.z,
             Pk_lin * background.h**-3,
             flag_range=True,
-            option_wavenumber="linear",
+            option_wavenumber="logk2",
             option_redshift="power_law",
+            extrap_kmax=100.0,
+            extrap_kmin=self.k_min,
             extrap_z=redshifts,
             option_cosmo="const",
             ns=background.ns,

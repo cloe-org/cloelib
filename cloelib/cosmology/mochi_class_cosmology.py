@@ -224,9 +224,7 @@ class mochiCLASSBackground:
             elif self.mg_background_model == "wowa":
                 mochiclass_stable_basis_dict = {
                     "Omega_Lambda": 0,
-                    "Omega_scf": 0,
-                    # "Omega_fld": 0.0,
-                    # "Omega_smg": 0.0,
+                    "Omega_smg": 0.0,
                     "use_ppf": "yes",
                     "c_gamma_over_c_fld": 0.4,
                     "fluid_equation_of_state": "CLP",
@@ -371,7 +369,11 @@ class mochiCLASSBackground:
         Returns:
             np.ndarray: Hubble parameter values at specified redshifts.
         """
-        H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
+        if isinstance(zs, np.ndarray):
+            H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
+        else:
+            H = np.array([self.results.Hubble(zs)])
+            
         if units == "km/s/Mpc":
             return H * mochiCLASSBackground.c0  # Convert to km/s/Mpc
         elif units == "1/Mpc":
@@ -389,7 +391,10 @@ class mochiCLASSBackground:
         Returns:
             np.ndarray: Comoving distance values.
         """
-        return np.array([self.results.comoving_distance(z) for z in zs])
+        if isinstance(zs, np.ndarray):
+            return np.array([self.results.comoving_distance(z) for z in zs])
+        else:
+            return np.array([self.results.comoving_distance(zs)])
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -423,7 +428,10 @@ class mochiCLASSBackground:
         Returns:
             np.ndarray: Angular diameter distance values.
         """
-        return np.array([self.results.angular_distance(z) for z in zs])
+        if isinstance(zs, np.ndarray):
+            return np.array([self.results.angular_distance(z) for z in zs])
+        else:
+            return np.array([self.results.angular_distance(zs)])
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -568,10 +576,20 @@ class mochiCLASSLinearPerturbations:
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
         # ks /= self.background.h
+        k_scalar = np.ndim(ks) == 0
+        z_scalar = np.ndim(zs) == 0
+
+        ks = np.atleast_1d(ks)
+        zs = np.atleast_1d(zs)
+
         self.Pk_linear = np.array(
             [[self.results.pk_lin(ki, zi) for ki in ks] for zi in zs]
-        )  # type: ignore[union-attr]
-        # To match array convention of CAMB
+        )
+
+        if k_scalar:
+            self.Pk_linear = self.Pk_linear[:, 0]
+        if z_scalar:
+            self.Pk_linear = self.Pk_linear[0, :]
         return self.Pk_linear  # * (self.background.h) ** 3
 
     def matter_power_spectrum_cb(
@@ -689,6 +707,7 @@ class mochiCLASSNonLinearPerturbations:
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         hmcode_version: Optional[str] = None,
+        log10TAGN: Optional[float] = None,
     ):
         """Initialize the CLASSNonLinearPerturbation instance.
 
@@ -700,6 +719,7 @@ class mochiCLASSNonLinearPerturbations:
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
             hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
+            log10TAGN (Optional[float]): HMCode baryonic feedback log_10_T_AGN parameter. Defaults to None.
         """
         self.background = background
         self.z = redshifts
@@ -722,10 +742,14 @@ class mochiCLASSNonLinearPerturbations:
             self.interface_args["CLASSparams"]["non_linear"] = "none"
         elif hmcode_version is not None:
             self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
+            if hmcode_version =="2020_baryonic_feedback":
+                try:
+                    self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
+                except KeyError:
+                    raise KeyError("log10TAGN is required for HMcode 2020 baryonic feedback model.")
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
         self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
         try:

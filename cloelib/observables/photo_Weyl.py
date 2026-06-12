@@ -43,7 +43,7 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
         # Defines z_ini
         self.z_ini = self.perturbations.z_ini  # We can directly access z_ini from the Weyl_Perturbations instance, which is set at initialization of that class.
 
-        # Get sigma8 at z_ini 
+        # Get sigma8 at z_ini
         self.sigma8_ini = self.perturbations.sigma8_zini()
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z))
@@ -138,7 +138,7 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         # Defines z_ini
         self.z_ini = self.perturbations.z_ini  # We can directly access z_ini from the Weyl_Perturbations instance, which is set at initialization of that class.
 
-        # Get sigma8 at z_ini 
+        # Get sigma8 at z_ini
         self.sigma8_ini = self.perturbations.sigma8_zini()
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z) in your scheme)

@@ -43,16 +43,8 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
         # Defines z_ini
         self.z_ini = self.perturbations.z_ini  # We can directly access z_ini from the Weyl_Perturbations instance, which is set at initialization of that class.
 
-        # Calculate sigma8 at z_ini by calling sigma8 at redshift 0 and multiplying by growth factor at z_ini (and dividing through growth factor today in case it's not already normalized to 1).
-        self.sigma8_ini = (
-            self.perturbations.sigma8_0()
-            * self.perturbations.growth_factor(
-                np.array([self.z_ini]), self.perturbations.k[:1]
-            )[0, 0]
-            / self.perturbations.growth_factor(np.array([0]), self.perturbations.k[:1])[
-                0, 0
-            ]
-        )
+        # Get sigma8 at z_ini 
+        self.sigma8_ini = self.perturbations.sigma8_zini()
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z))
         bias_vals = np.asarray(
@@ -146,16 +138,8 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         # Defines z_ini
         self.z_ini = self.perturbations.z_ini  # We can directly access z_ini from the Weyl_Perturbations instance, which is set at initialization of that class.
 
-        # Calculate sigma8 at z_ini by calling sigma8 at redshift 0 and multiplying by growth factor at z_ini (and dividing through growth factor today in case it's not already normalized to 1).
-        self.sigma8_ini = (
-            self.perturbations.sigma8_0()
-            * self.perturbations.growth_factor(
-                np.array([self.z_ini]), self.perturbations.k[:1]
-            )[0, 0]
-            / self.perturbations.growth_factor(np.array([0]), self.perturbations.k[:1])[
-                0, 0
-            ]
-        )
+        # Get sigma8 at z_ini 
+        self.sigma8_ini = self.perturbations.sigma8_zini()
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z) in your scheme)
         bias_vals = np.asarray(

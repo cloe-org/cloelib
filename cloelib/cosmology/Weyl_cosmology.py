@@ -150,3 +150,10 @@ class Weyl_Perturbations:
 
     def sigma8_0(self) -> float:
         return self.perturbations_NL.sigma8_0()
+
+    def sigma8_zini(self) -> float:
+        # Calculate sigma8 at z_ini using the linear growth factor
+        k = np.array([0.1])  # roughly corresponds to the scales probed by sigma8; exact k value does not matter as we're using the linear perturbation function
+        D_zini = self.perturbations_lin.growth_factor(np.array([self.z_ini]), k)[0,0] #this is already normalized to 1 at z=0 
+        sigma8_zini = self.sigma8_0() * D_zini 
+        return sigma8_zini

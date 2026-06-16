@@ -522,7 +522,7 @@ class mochiCLASSLinearPerturbations:
         """Initialize the CLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
-        self.kmax = 100
+        self.kmax = 200
         self.results = None  # Store CLASS results
 
         # Ensure CLASS is initialized with necessary parameters
@@ -589,7 +589,7 @@ class mochiCLASSLinearPerturbations:
         if k_scalar:
             self.Pk_linear = self.Pk_linear[:, 0]
         if z_scalar:
-            self.Pk_linear = self.Pk_linear[0, :]
+            self.Pk_linear = self.Pk_linear[0]
         return self.Pk_linear  # * (self.background.h) ** 3
 
     def matter_power_spectrum_cb(
@@ -620,6 +620,12 @@ class mochiCLASSLinearPerturbations:
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
 
+        k_scalar = np.ndim(ks) == 0
+        z_scalar = np.ndim(zs) == 0
+
+        ks = np.atleast_1d(ks)
+        zs = np.atleast_1d(zs)
+
         if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
             warnings.warn(
                 "There are no massive neutrinos (N_mnu=0), this function will "
@@ -627,13 +633,17 @@ class mochiCLASSLinearPerturbations:
                 UserWarning,
                 stacklevel=2,
             )
-            self.Pk_cb_linear = self.matter_power_spectrum(
-                zs, ks, hubble_units=False, k_hunit=False
-            )
+            self.Pk_cb_linear = np.array(
+            [[self.results.pk_lin(ki, zi) for ki in ks] for zi in zs])
+
         else:
             self.Pk_cb_linear = np.array(
                 [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
             )
+        if k_scalar:
+            self.Pk_cb_linear = self.Pk_cb_linear[:, 0]
+        if z_scalar:
+            self.Pk_cb_linear = self.Pk_cb_linear[0]
         # To match array convention of CAMB
         return self.Pk_cb_linear
 
@@ -666,6 +676,36 @@ class mochiCLASSLinearPerturbations:
         )
 
         return D_z_k
+    
+    def growth_factor_cb(self, zs, ks) -> np.ndarray:
+        r"""
+        Calculate the growth factor of cold dark matter + baryons (no neutrinos) for given redshifts and wavenumbers.
+
+        .. math::
+            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
+            /P_{\rm \delta\delta}(z=0, k)}\\
+
+        and normalizes as for :math:`D(z)/D(0)`.
+
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
+
+        Returns:
+        --------
+        np.ndarray
+            The growth factor at the specified redshift and wavenumber.
+        """
+        D_z_k_cb = np.sqrt(
+            self.matter_power_spectrum_cb(zs, ks)
+            / self.matter_power_spectrum_cb(np.zeros_like(zs), ks)
+        )
+
+        return D_z_k_cb
 
     def growth_rate(self) -> np.ndarray:
         """

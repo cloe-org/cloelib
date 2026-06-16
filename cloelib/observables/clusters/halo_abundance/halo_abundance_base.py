@@ -2,7 +2,7 @@ import numpy as np
 from scipy.integrate import simpson
 
 from cloelib.cosmology import derived_cosmology
-from cloelib.auxiliary.cluster_helpers import (
+from cloelib.auxiliary.halo_helpers import (
     tabulated_return,
     tophat_window,
     tophat_window_derivative,

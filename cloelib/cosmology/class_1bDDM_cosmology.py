@@ -48,6 +48,7 @@ class obDDMBackground:
 #        Gamma_dcdm: float,
         Gamma_times_f: float,
         N_ur: Optional[float] = None,
+        use_emulator: bool = True,
     ) -> None:
         """
         Initialize the obDDMBackground instance with cosmological parameters.
@@ -71,6 +72,8 @@ class obDDMBackground:
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
             f_dcdm (float): fraction of the total cold dark matter that decays into dark radiation.
             Gamma_times_f (float): Decay rate of the dcdm component (in units of 1/Gyr) times f_dcdm.
+            use_emulator (bool): If True (default), use the CosmoPower-JAX 1bDDM background
+                and global emulators instead of CLASS for distances and sigma8/r_d.
         """
         self.H0 = H0
         self.h = self.H0 / 100
@@ -97,6 +100,8 @@ class obDDMBackground:
         self.Gamma_dcdm = Gamma_times_f/f_dcdm
         self.Gamma_times_f = Gamma_times_f
         assert f_dcdm >= 0. and f_dcdm <= 1., "f is not within (0,1), chosen f is: {}".format(f_dcdm) # well-defined f
+
+        self.use_emulator = use_emulator
 
         # Initialize CLASS parameters
         self.interface_args: dict = {
@@ -132,10 +137,27 @@ class obDDMBackground:
         # Fix YHe to standard BBN value to avoid interpolation failure at extreme omega_b
         self.interface_args["CLASSparams"]["YHe"] = 0.2454006
 
-        # Initialize CLASS
-        self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
+        if self.use_emulator:
+            assert self.Omega_k0 == 0.0, "The 1bDDM background emulator only supports flat geometries."
+            _emu_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "emulator-data-jax")
+            self._cp_distances = CosmoPowerJAX(
+                probe="custom_log",
+                filepath=os.path.join(_emu_dir, "ddm-1body-distances.npz"),
+                verbose=False,
+            )
+            cp_global = CosmoPowerJAX(
+                probe="custom",
+                filepath=os.path.join(_emu_dir, "ddm-1body-global.npz"),
+                verbose=False,
+            )
+            _, Omega_m0_emu, rdrag_emu = np.array(cp_global.predict(self._emulator_params())).squeeze()
+            self._Omega_m0_emu = float(Omega_m0_emu)
+            self._rdrag_emu = float(rdrag_emu)
+        else:
+            # Initialize CLASS
+            self.results = Class()
+            self.results.set(self.interface_args["CLASSparams"])
+            self.results.compute()
 
     @property
     def _interface_args(self) -> dict:
@@ -177,6 +199,8 @@ class obDDMBackground:
 
         Assumes a standard value of T_ncdm = 0.71611 K for neutrinos.
         """
+        if self.use_emulator:
+            return 3.044
         return self.results.Neff()
 
     def _set_neutrino_masses(self) -> str:
@@ -206,6 +230,57 @@ class obDDMBackground:
         else:
             raise TypeError("mnu must be a float, numpy.ndarray or Sequence of floats")
 
+    def _emulator_params(self, zs: Optional[np.ndarray] = None) -> dict:
+        """Build the parameter dictionary for the DDM-1body background emulators.
+
+        Args:
+            zs (Optional[np.ndarray]): Array of redshifts. If None, a single
+                entry is returned (for emulators without a redshift input).
+
+        Returns:
+            dict: Parameter dictionary in the format expected by CosmoPowerJAX.
+        """
+        n = 1 if zs is None else len(zs)
+        params = {
+            "omega_b": np.full(n, self.Omega_b0 * self.h ** 2),
+            "omega_cdm_tot": np.full(n, (self.Omega_cdm0 + self.Omega_ini_dcdm) * self.h ** 2),
+            "h": np.full(n, self.h),
+            "n_s": np.full(n, self.ns),
+            "ln10^{10}A_s": np.full(n, np.log(1e10 * self.As)),
+            "tau_reio": np.full(n, 0.054),
+            "f_dcdm": np.full(n, self.f_dcdm),
+            "Gamma_times_f": np.full(n, self.Gamma_times_f),
+        }
+        if zs is not None:
+            params["z"] = np.asarray(zs)
+        return params
+
+    def _emulator_distances(self, zs: np.ndarray) -> np.ndarray:
+        """Return (N, 3) array of [H(z), D_A(z), D_L(z)] with correct z=0 limits.
+
+        The distances emulator is trained for z >= Z_EMU_MIN = 0.02.  Below that
+        limit we linearly interpolate to the exact z=0 boundary values:
+            H(0) = H0  [1/Mpc],  D_A(0) = 0 [Mpc],  D_L(0) = 0 [Mpc].
+        """
+        Z_EMU_MIN = 0.02
+        H0_inv_Mpc = self.h * 100.0 / obDDMBackground.c0
+        boundary = np.array([H0_inv_Mpc, 0.0, 0.0])
+
+        mask_low = zs < Z_EMU_MIN
+        out = np.empty((len(zs), 3))
+
+        z_high = zs[~mask_low]
+        if z_high.size > 0:
+            out[~mask_low] = np.array(self._cp_distances.predict(self._emulator_params(z_high)))
+
+        if mask_low.any():
+            pred_min = np.array(self._cp_distances.predict(self._emulator_params(np.array([Z_EMU_MIN]))))
+            at_min = pred_min[0]
+            t = (zs[mask_low] / Z_EMU_MIN)[:, None]
+            out[mask_low] = boundary + (at_min - boundary) * t
+
+        return out
+
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
         Return the Hubble parameter as a function of redshift.
@@ -217,7 +292,11 @@ class obDDMBackground:
         Returns:
             np.ndarray: Hubble parameter values at specified redshifts.
         """
-        H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
+        if self.use_emulator:
+            zs = np.atleast_1d(zs)
+            H = self._emulator_distances(zs)[:, 0]
+        else:
+            H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
         if units == "km/s/Mpc":
             return H * obDDMBackground.c0  # Convert to km/s/Mpc
         elif units == "1/Mpc":
@@ -235,6 +314,9 @@ class obDDMBackground:
         Returns:
             np.ndarray: Comoving distance values.
         """
+        if self.use_emulator:
+            zs = np.atleast_1d(zs)
+            return self.angular_diameter_distance(zs) * (1.0 + zs)
         return np.array([self.results.comoving_distance(z) for z in zs])
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
@@ -268,6 +350,9 @@ class obDDMBackground:
         Returns:
             np.ndarray: Angular diameter distance values.
         """
+        if self.use_emulator:
+            zs = np.atleast_1d(zs)
+            return self._emulator_distances(zs)[:, 1]
         return np.array([self.results.angular_distance(z) for z in zs])
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
@@ -281,24 +366,21 @@ class obDDMBackground:
             np.ndarray: Matter density values.
         """
         zs = np.atleast_1d(zs)
+        if self.use_emulator:
+            if not np.all(zs == 0.0):
+                raise ValueError(
+                    "The 1bDDM background emulator only provides Omega_m at z=0. "
+                    "Pass zs=0.0 or set use_emulator=False for z-dependent Omega_m."
+                )
+            return self._Omega_m0_emu if len(zs) > 1 else float(self._Omega_m0_emu)
         result = np.array([self.results.Om_m(z) for z in zs])
         return result if len(result) > 1 else result[0]
-
-    def Omega_b(self, zs: np.ndarray) -> np.ndarray:
-        """
-        Return the baryon density as a function of redshift.
-
-        Args:
-            zs (np.ndarray): Array of redshifts.
-
-        Returns:
-            np.ndarray: Matter density values.
-        """
-        return np.array([self.results.Om_b(z) for z in zs])
 
     @property
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering in Mpc."""
+        if self.use_emulator:
+            return self._rdrag_emu
         return self.results.rs_drag()
 
 
@@ -321,9 +403,9 @@ class obDDMLinearPerturbations:
             self.f     = self.background.f_dcdm
             self.Gamma_times_f = self.background.Gamma_times_f #in 1/Gyr
             # Load cosmopower emulator (path relative to this file, works in any install location)
-            _this_dir = os.path.dirname(os.path.abspath(__file__))
-            EMU_PATH = os.path.join(_this_dir, "ddm-1body-linear.npz")
-            DATA_PATH = os.path.join(_this_dir, "small-k-modes.txt")
+            _emu_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "emulator-data-jax")
+            EMU_PATH = os.path.join(_emu_dir, "ddm-1body-linear.npz")
+            DATA_PATH = os.path.join(_emu_dir, "small-k-modes.txt")
             cp = CosmoPowerJAX(probe="custom_log", filepath=EMU_PATH, verbose=False)
             self.k = np.loadtxt(DATA_PATH)
             # Pre-compute emulator predictions for all redshifts in self.z
@@ -355,6 +437,22 @@ class obDDMLinearPerturbations:
             )
             self.k = k_out
             self.Pk_int = interpolate.RectBivariateSpline(z_out, k_out, Pk_out, kx=1, ky=1)
+
+            # Load global emulator for sigma8 (no z dependence)
+            GLOBAL_EMU_PATH = os.path.join(_emu_dir, "ddm-1body-global.npz")
+            cp_global = CosmoPowerJAX(probe="custom", filepath=GLOBAL_EMU_PATH, verbose=False)
+            global_params = {
+                "omega_b":       np.array([self.wb]),
+                "omega_cdm_tot": np.array([self.wdm]),
+                "h":             np.array([self.h]),
+                "n_s":           np.array([self.ns]),
+                "ln10^{10}A_s":  np.array([self.log_As]),
+                "tau_reio":      np.array([0.054]),
+                "f_dcdm":        np.array([self.f]),
+                "Gamma_times_f": np.array([self.Gamma_times_f]),
+            }
+            sigma8_emu, _, _ = np.array(cp_global.predict(global_params)).squeeze()
+            self._sigma8_emu = float(sigma8_emu)
         else:
             # Ensure CLASS is initialized with necessary parameters
             self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -483,6 +581,19 @@ class obDDMLinearPerturbations:
         """
         arr = [self.background.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
+
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns
+        -------
+        float
+            The sigma8 value.
+        """
+        if self.use_emulator:
+            return self._sigma8_emu
+        return self.results.sigma8()
 
 
 class obDDMNonLinearPerturbations:
@@ -778,3 +889,14 @@ class obDDMNonLinearPerturbations:
         """
         arr = [self.background.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
+
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns
+        -------
+        float
+            The sigma8 value.
+        """
+        return self.linearperturbations.sigma8_0()

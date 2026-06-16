@@ -1,4 +1,4 @@
-# Code Structure: Guide to cloelib's Architecture
+# Guide to cloelib's Architecture
 
 This guide explains the modular architecture of **cloelib** and provides instructions for contributors to extend the library by adding new implementations of Perturbations and Observables.
 
@@ -6,71 +6,58 @@ This guide explains the modular architecture of **cloelib** and provides instruc
 
 **cloelib** follows a layered architecture that separates cosmological calculations into distinct components:
 
-```
-Background → Perturbations → Observables → Summary Statistics
+```mermaid
+graph LR
+    A["<b>Background</b><br/>Distances, Hubble, Densities"] --> B["<b>Perturbations</b><br/>Power Spectra, Growth Rates"]
+    B --> C["<b>Observables</b><br/>Survey-Specific Predictions"]
+    C --> D["<b>Summary Statistics</b><br/>Power Spectra, Correlation Functions"]
+
+    style A fill:#e1f5ff
+    style B fill:#f3e5f5
+    style C fill:#e8f5e9
+    style D fill:#fff3e0
 ```
 
 Each layer depends on the previous one, creating a flexible pipeline from fundamental cosmology to final data products.
 
 ### Design Principles
 
-**Modularity**: The architecture allows easy swapping of implementations (e.g., CAMB for CLASS).
+`cloelib` embraces the following principles:
 
-**Flexibility**: New components can be added by implementing the appropriate protocol.
-
-**Reproducibility**: Clear interfaces ensure consistent behavior across implementations.
-
-**Extensibility**: Protocol-based design enables contributors to extend the library without modifying existing code.
+- **Modularity**: Each module owns one responsibility—Background handles cosmology, Perturbations handles structure growth, Observables handles survey specifics, and Summary Statistics handles final products. This keeps code maintainable, testable, and extensible. The architecture allows easy swapping of external code implementations (e.g., CAMB for CLASS)
+- **Extensibility**: Uses [Python protocols (PEP 544)](https://typing.python.org/en/latest/spec/protocol.html) for type safety and flexibility—any class implementing required methods is valid, with no inheritance needed.
+- **Flexibility**: Contributors can extend the library without modifying existing code by implementing classes that satisfy the required protocols—no need to touch cloelib source code.
+- **Reproducibility**: Clear interfaces ensure consistent behavior across implementations, boosting the capacity of the user to reproduce results with other external codes.
 
 ## Core Components
 
 ### 1. [Background](background.md)
 
-The Background module provides the cosmological foundation, computing distances, Hubble parameters, and matter densities as functions of redshift.
-
-**Purpose**: Compute background quantities as functions of redshift
-
-**Dependencies**: None (foundational layer)
-
-**Use case**: Implementing new Boltzmann solvers or emulators
-
-[Learn more about Background](background.md)
+- **Purpose**: Compute background quantities as functions of redshift
+- **Dependencies**: None (foundational layer)
+- **Use case**: Implementing new Boltzmann solvers or emulators
+- [Learn more about Background](background.md)
 
 ### 2. [Perturbations](perturbations.md)
 
-The Perturbations module computes structure formation quantities including matter power spectra, growth factors, and growth rates.
+- **Purpose**: Calculate perturbation theory quantities
+- **Dependencies**: Background module
+- **Use case**: Adding (non)-linear models or new structure formation codes
+- [Learn more about Perturbations](perturbations.md)
 
-**Purpose**: Calculate perturbation theory quantities
+### 3. [Observables](observables/index.md)
 
-**Dependencies**: Background module
+- **Purpose**: Compute survey-specific observables
+- **Dependencies**: Perturbations (for tracers) or Background/Perturbations (for spectroscopic)
+- **Use case**: Adding new measurement types or survey configurations
+- [Learn more about Observables](observables/index.md)
 
-**Use case**: Adding non-linear models or new structure formation codes
+### 4. [Summary Statistics](summary_statistics/index.md)
 
-[Learn more about Perturbations](perturbations.md)
-
-### 3. [Observables](observables.md)
-
-The Observables module connects theoretical predictions to survey measurements, handling selection functions, biases, and window functions.
-
-**Purpose**: Compute survey-specific observables
-
-**Dependencies**: Perturbations (for tracers) or Background (for spectroscopic)
-
-**Use case**: Adding new measurement types or survey configurations
-
-[Learn more about Observables](observables.md)
-
-### 4. [Summary Statistics](summary_statistics.md)
-
-The Summary Statistics module produces final data products for comparison with observations, including angular power spectra, correlation functions, and multipoles.
-
-**Purpose**: Compute final statistical quantities
-
-**Dependencies**: Observables module
-
-**Use case**: Implementing new statistical estimators
-
-[Learn more about Summary Statistics](summary_statistics.md)
+- **Purpose**: Compute final statistical quantities
+- **Dependencies**: Observables module
+- **Use case**: Implementing new statistical estimators
+- [Learn more about Summary Statistics](summary_statistics/index.md)
 
 ## Typical Workflow
 
@@ -102,36 +89,6 @@ Each module page includes:
 - Testing recommendations
 
 The protocol-based design means contributors only need to implement the required methods without inheriting from base classes or understanding the entire codebase.
-
-## Design Philosophy
-
-### Protocol-Based Design
-
-**cloelib** uses Python protocols (PEP 544) instead of traditional inheritance:
-
-- **Type safety**: Static type checkers can verify implementations satisfy the protocol
-- **Flexibility**: Any class implementing required methods is valid
-- **Clear contracts**: Protocols explicitly document requirements
-
-### Separation of Concerns
-
-Each module has a specific responsibility:
-
-- **Background**: Pure cosmology (no structure formation)
-- **Perturbations**: Structure growth (no survey details)
-- **Observables**: Survey specifics (no final statistics)
-- **Summary Statistics**: Final products (no cosmology details)
-
-This separation improves code maintainability, testability, and extensibility.
-
-### JAX Compatibility
-
-Most implementations support both NumPy and JAX arrays:
-
-- **Automatic differentiation**: Enables gradient computation for parameter inference
-- **GPU acceleration**: Allows scaling to larger problems
-- **JIT compilation**: Provides improved performance
-- **NumPy compatibility**: Maintains familiar interface
 
 ## Additional Resources
 

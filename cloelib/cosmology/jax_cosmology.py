@@ -8,7 +8,10 @@ All of the functions are completely differentiable.
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background
-from cloelib.cosmology.derived_cosmology import rdrag_fitting_function
+from cloelib.cosmology.derived_cosmology import (
+    rdrag_fitting_function,
+    z_star_fitting_function,
+)
 
 # General imports
 import jax.numpy as jnp
@@ -43,6 +46,8 @@ class JAXBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        alpha_s: float = 0.0,
+        **kwargs,
     ):
         """
         Initialize the JAXBackground class.
@@ -54,6 +59,8 @@ class JAXBackground:
             Omega_k0(float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
+            alpha_s (float): Running of the scalar spectral index (d ns / d ln k).
+                Note: JAXBackground does not use alpha_s (emulator not trained with it).
             mnu (Union[float, Sequence[float], jnp.ndarray]): Total neutrino mass in eV.
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
@@ -71,6 +78,7 @@ class JAXBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
+        self.alpha_s = alpha_s
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = gamma_MG
@@ -346,6 +354,11 @@ class JAXBackground:
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering."""
         return rdrag_fitting_function(self)
+
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
+        return z_star_fitting_function(self)
 
 
 class JAXLinearPerturbations:

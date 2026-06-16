@@ -35,6 +35,7 @@ def camb_photo_setup():
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        alpha_s=0.0,
         mnu=0.06,
         w0=-1.0,
         wa=0.0,
@@ -48,7 +49,7 @@ def camb_photo_setup():
     # User redshifts WITHOUT z=0 (z=0 should be added automatically)
     # Use same grid as tracer for compatibility
     user_z = tracer_z
-    perturbations = CAMBNonLinearPerturbations(background, user_z)
+    perturbations = CAMBNonLinearPerturbations(background, None, user_z)
     n_z_bins = 2
     dndz = np.ones((n_z_bins, len(tracer_z)))
     dndz /= np.trapezoid(dndz, tracer_z, axis=1)[:, None]
@@ -72,6 +73,7 @@ def test_no_collision_and_power_spectrum_at_all_z(camb_photo_setup):
     nuisance_params = {
         **{f"multiplicative_bias_{i + 1}": 0.0 for i in range(n_z_bins)},
         **{f"dz_shear_{i + 1}": 0.0 for i in range(n_z_bins)},
+        **{f"width_shear_{i + 1}": 1.0 for i in range(n_z_bins)},
         "AIA": 1.0,
         "CIA": 0.0164,
         "EtaIA": -0.41,

@@ -82,6 +82,24 @@ def rdrag_fitting_function(background, neff=3.046):
     return r_d
 
 
+def z_star_fitting_function(background):
+    r"""Compute the redshift of photon decoupling.
+
+    Assumes a cosmology-independent z_star.
+
+    Parameters
+    ----------
+    background: Background
+        Background class containing cosmology
+
+    Returns
+    -------
+    z_star: float
+        redshift of photon decoupling.
+    """
+    return 1090.0
+
+
 def hubble_rate(
     lna: float, h0: float, omega_m: float, omega_k: float, w0: float, wa: float
 ) -> np.ndarray:

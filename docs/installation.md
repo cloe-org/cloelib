@@ -24,16 +24,16 @@ pip install .
 4. **Add optional dependencies** – Enhance with external codes and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument]
+pip install .[camb,classy,hmcode2020emu,comet-emu,pbjcosmo,pylevin,mpmath,tensorflow,pyinstrument,react]
 ```
 
-> **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
+> **Note:** Some shells require quoting the argument when brackets are present:
 >
 > ```sh
-> pip install ".[camb,classy,hmcode2020emu,comet-emu,pylevin,mpmath,tensorflow,pyinstrument]"
+> pip install ".[camb,classy,hmcode2020emu,comet-emu,pbjcosmo,pylevin,mpmath,tensorflow,pyinstrument,react]"
 > ```
 
-You're all set! 🎉 Ready to compute cosmological observables.
+The installation is now complete.
 
 ## Optional Dependencies
 
@@ -42,5 +42,6 @@ Several optional dependencies enhance **cloelib** capabilities:
 - **`pyinstrument`** – Time profiling for performance optimization
 - **`pylevin`**, **`mpmath`** – Required for specific observational probes (e.g., COSEBIs)
 - **`tensorflow`** – Needed for certain emulator backends (e.g., `HMCode2020emu`)
+- **`react`** – Installs [`MGEmu`](https://github.com/nebblu/MGEmus.git) plus the TensorFlow support needed by the ReACT modified-gravity boost module
 
 These are not included in the default installation but can be added as shown above as other external cosmological codes.

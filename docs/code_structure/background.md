@@ -4,7 +4,7 @@ The **Background** module provides the cosmological foundation for structure for
 
 ## Overview
 
-the foundational layer that computes quantities for a smooth, homogeneous universe, including:
+The Background module is the foundational layer that computes quantities for a smooth, homogeneous universe, including:
 
 - Comoving distances to objects at various redshifts
 - Hubble parameter evolution with redshift
@@ -16,7 +16,7 @@ This module does not include structure formation or clustering calculations.
 
 **Protocol Definition**: `cloelib.cosmology.cosmology.Background`
 
-The Background protocol defines the interface that all background implementations must satisfy. This protocol defines the required interface for all background implementations.
+The Background protocol defines the interface that all background implementations must satisfy.
 
 ### Required Properties
 
@@ -34,11 +34,13 @@ Every Background implementation must provide:
 - **`N_mnu`**: Number of massive neutrino species
 - **`As`**: Primordial power spectrum amplitude
 - **`ns`**: Primordial power spectrum spectral index
+- **`alpha_s`**: Running of the spectral index (d ns / d ln k)
 - **`w0`**: Dark energy equation of state parameter
 - **`wa`**: Dark energy evolution parameter
 - **`gamma_MG`**: Modified gravity parameter
 - **`rdrag`**: Sound horizon radius at last scattering (Mpc)
 - **`interface_args`**: Dictionary storing interface-specific parameters
+- **`z_star`**: Redshift of photon decoupling.
 
 ### Required Methods
 
@@ -155,9 +157,31 @@ grad_fn = jax.grad(lambda h0: bg.comoving_distance(jnp.array([1.0]))[0])
 dchi_dH0 = grad_fn(67.5)
 ```
 
+### hi_classBackground
+
+Interfaces with the [hi_class](https://github.com/emiliobellini/hi_class_public) Boltzmann solver.
+
+**Location**: `cloelib/cosmology/hi_class_cosmology.py`
+
+**When to use**: When you need hi_class-specific features or comparing with hi_class-based pipelines
+
+**Example**:
+
+```python
+from cloelib.cosmology.hi_class_cosmology import hi_classBackground
+
+bg = hi_classBackground(
+    H0=67.5,
+    Omega_b0=0.0492,
+    Omega_cdm0=0.2650,
+    params_smg = {...}, # modified gravity parameters enter here
+    # ... similar parameters to CLASS
+)
+```
+
 ## Adding Your Own Background Implementation
 
-To The workflow is as follows..
+To add a new Background implementation, follow these steps.
 
 ### Step 1: Create Your Class
 
@@ -341,21 +365,7 @@ class MyBackground:
 
 ## Tips & Tricks
 
-### Caching 🗄️
-
-Background calculations can be expensive. Consider caching:
-
-```python
-from cloelib.auxiliary.cache import cached_method
-
-class MyBackground:
-    @cached_method
-    def comoving_distance(self, zs):
-        # Expensive calculation here
-        return self._solver.compute_distance(zs)
-```
-
-### Unit Conversions 📏
+### Unit Conversions
 
 Always check units. The protocol specifies:
 
@@ -363,7 +373,7 @@ Always check units. The protocol specifies:
 - Hubble parameter: km/s/Mpc (default) or 1/Mpc (if `units="1/Mpc"`)
 - Masses: eV
 
-### Edge Cases 🔍
+### Edge Cases
 
 Handle edge cases gracefully:
 
@@ -385,10 +395,8 @@ def comoving_distance(self, zs):
 
 ## Next Steps
 
-Now that you understand Background, you're ready for:
+Now that you understand Background, you are ready for:
 
-- 🌊 [Perturbations](perturbations.md) - Add structure formation on top of your background
-- 🔭 [Observables](observables.md) - Connect background to survey measurements
-- 📖 [API Reference](../api.md) - Full technical documentation
-
-Happy computing..
+- [Perturbations](perturbations.md) – Add structure formation on top of your background
+- [Observables](observables/index.md) – Connect background to survey measurements
+- [API Reference](../api.md) – Full technical documentation

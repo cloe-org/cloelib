@@ -81,12 +81,12 @@ def class_perturbation_instances_geo(class_background_instance_geo, zs, scope="m
     class_lin = CLASSLinearPerturbations(
         background=class_background_instance_geo, redshifts=zs
     )
-    class_non = CLASSNonLinearPerturbations(
+    class_nl = CLASSNonLinearPerturbations(
         background=class_background_instance_geo,
         redshifts=zs,
         nonlinear_model="halofit",
     )
-    return {"Linear": class_lin, "NonLinear": class_non}
+    return {"Linear": class_lin, "NonLinear": class_nl}
 
 
 @pytest.fixture
@@ -99,12 +99,12 @@ def class_perturbation_instances_growth(
     class_lin = CLASSLinearPerturbations(
         background=class_background_instance_growth, redshifts=zs
     )
-    class_non = CLASSNonLinearPerturbations(
+    class_nl = CLASSNonLinearPerturbations(
         background=class_background_instance_growth,
         redshifts=zs,
         nonlinear_model="halofit",
     )
-    return {"Linear": class_lin, "NonLinear": class_non}
+    return {"Linear": class_lin, "NonLinear": class_nl}
 
 
 @pytest.fixture
@@ -133,15 +133,15 @@ def split_perturbation_instances(
         redshifts=zs,
         lin_perturbations=class_lin_geo,
     )
-    split_pk_linear = (split_lin.matter_power_spectrum(zs, ks),)
-    split_non = SplitNonLinearPerturbations(
+
+    split_nl = SplitNonLinearPerturbations(
         background=class_background_instance_geo,
         redshifts=zs,
-        pk_linear=split_pk_linear,
-        perturbations_lin=class_lin_growth,
-        perturbations_NL=class_nl_growth,
+        lin_perturbations_split=split_lin,
+        lin_perturbations_growth=class_lin_growth,
+        nl_perturbations_growth=class_nl_growth,
     )
-    return {"Linear": split_lin, "NonLinear": split_non}
+    return {"Linear": split_lin, "NonLinear": split_nl}
 
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
@@ -184,3 +184,132 @@ def test_split_growth_rate(split_perturbation_instances, key):
     result = split_instance.growth_rate()
     assert isinstance(result, np.ndarray)
     assert result.ndim == 1
+
+
+@pytest.fixture
+def lin_perturb_instance_nu(
+    class_background_instance_geo, class_perturbation_instances_geo
+):
+    """
+    Fixture that builds a fully‑initialised SplitLinearPerturbations instance.
+    It re‑uses the existing `class_cosmo` background fixture (if you already have
+    one) or creates a fresh CLASSCosmology object with default parameters.
+    """
+    # ----- redshift & k grid -----------------------------------------
+    zs = np.array([0.0, 0.5, 1.0])  # a few test redshifts
+    # The perturbations class itself will set its own k‑grid, so we just
+    # pass the redshifts here.
+
+    # add neutrinos:
+    class_background_instance_geo.interface_args["CLASSparams"]["N_ncdm"] = 1
+    class_background_instance_geo.interface_args["CLASSparams"]["m_ncdm"] = 0.2
+    # ----- instantiate perturbations ---------------------------------
+    class_pert = CLASSLinearPerturbations(
+        background=class_background_instance_geo, redshifts=zs
+    )
+
+    split_pert = SplitLinearPerturbations(
+        background=class_background_instance_geo,
+        omega_m_growth=0.3,  # to match the geometry regime for CLASS comparison
+        redshifts=zs,
+        lin_perturbations=class_pert,
+    )
+
+    return {"CLASS": class_pert, "Split": split_pert}
+
+
+def test_lin_mps_cb_with_neutrinos(lin_perturb_instance_nu):
+    """
+    With massive neutrinos present, check that the CB spectrum:
+      * has the correct (nz, nk) shape,
+      * matches the low‑level CLASS `pk_cb` values for a few random points.
+    """
+
+    zs = np.array([0.0, 0.5, 1.0])
+    ks = np.logspace(-3, 1, 20)
+
+    pk_cb = lin_perturb_instance_nu["Split"].matter_power_spectrum_cb(zs, ks)
+
+    # Basic shape check
+    assert pk_cb.shape == (len(zs), len(ks)), "Unexpected shape for CB power spectrum"
+
+    # Spot‑check a few random (z, k) entries against the direct CLASS call
+    rng = np.random.default_rng(seed=42)
+    for _ in range(5):
+        i = rng.integers(0, len(zs))
+        j = rng.integers(0, len(ks))
+        z_test = zs[i]
+        k_test = ks[j]
+
+        # Direct CLASS low‑level call
+        pk_direct = lin_perturb_instance_nu["CLASS"].results.pk_cb(k_test, z_test)  # type: ignore[union-attr]
+
+        assert np.isclose(pk_cb[i, j], pk_direct, rtol=1e-12, atol=1e-15), (
+            f"Mismatch at z={z_test}, k={k_test}"
+        )
+
+
+@pytest.fixture
+def nl_perturb_instance_nu(
+    class_background_instance_geo,
+    class_perturbation_instances_geo,
+    lin_perturb_instance_nu,
+):
+    """
+    Fixture that builds a fully‑initialised SplitLinearPerturbations instance.
+    It re‑uses the existing `class_cosmo` background fixture (if you already have
+    one) or creates a fresh CLASSCosmology object with default parameters.
+    """
+    # ----- redshift & k grid -----------------------------------------
+    zs = np.array([0.0, 0.5, 1.0])  # a few test redshifts
+    np.logspace(-3, 1, 20)
+
+    # add neutrinos:
+    class_background_instance_geo.interface_args["CLASSparams"]["N_ncdm"] = 1
+    class_background_instance_geo.interface_args["CLASSparams"]["m_ncdm"] = 0.2
+    # ----- instantiate perturbations ---------------------------------
+    class_pert = CLASSNonLinearPerturbations(
+        background=class_background_instance_geo, redshifts=zs
+    )
+
+    split_pert = SplitNonLinearPerturbations(
+        background=class_background_instance_geo,
+        redshifts=zs,
+        lin_perturbations_split=lin_perturb_instance_nu["Split"],
+        lin_perturbations_growth=lin_perturb_instance_nu["CLASS"],
+        nl_perturbations_growth=class_pert,
+    )
+
+    return {"CLASS": class_pert, "Split": split_pert}
+
+
+def test_nl_mps_cb_with_neutrinos(nl_perturb_instance_nu):
+    """
+    With massive neutrinos present, check that the CB spectrum:
+      * has the correct (nz, nk) shape,
+      * matches the low‑level CLASS `pk_cb` values for a few random points.
+    """
+
+    zs = np.array([0.0, 0.5, 1.0])
+    ks = np.logspace(-3, 1, 20)
+
+    pk_cb = nl_perturb_instance_nu["Split"].matter_power_spectrum_cb(zs, ks)
+
+    # Basic shape check
+    assert pk_cb.shape == (len(zs), len(ks)), "Unexpected shape for CB power spectrum"
+
+    # Spot‑check a few random (z, k) entries against the direct CLASS call
+    rng = np.random.default_rng(seed=42)
+    for _ in range(5):
+        i = rng.integers(0, len(zs))
+        j = rng.integers(0, len(ks))
+        z_test = zs[i]
+        k_test = ks[j]
+
+        # Direct CLASS low‑level call
+        pk_direct = nl_perturb_instance_nu["CLASS"].results.pk_cb(k_test, z_test)  # type: ignore[union-attr]
+
+        # assert np.isclose(pk_cb[0, 0], pk_direct, rtol=1e-12, atol=1e-15), (
+        assert np.isclose(pk_cb[i, j], pk_direct, rtol=1e-12, atol=1e-15), (
+            f"Mismatch at z={z_test}, k={k_test}"
+        )

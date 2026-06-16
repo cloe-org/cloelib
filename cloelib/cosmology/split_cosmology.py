@@ -57,7 +57,7 @@ class SplitLinearPerturbations:
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.pk_linear_EBS = self.lin_perturbations.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
+        pk_linear_EBS = self.lin_perturbations.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
 
         omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
 
@@ -65,12 +65,12 @@ class SplitLinearPerturbations:
         g_z_geo = growth_function_ODE(self.background, zs, omega_m_geo)
         g_z_growth = growth_function_ODE(self.background, zs, self.omega_m_growth)
 
-        self.pk_linear = np.zeros_like(self.pk_linear_EBS)
+        self.pk_linear = np.zeros_like(pk_linear_EBS)
 
         # Rescale the matter power spectrum with G(z)
         for i in range(len(zs)):
             rescale_fac = g_z_growth[i] ** 2 / g_z_geo[i] ** 2
-            self.pk_linear[i, :] = rescale_fac * self.pk_linear_EBS[i, :]
+            self.pk_linear[i, :] = rescale_fac * pk_linear_EBS[i, :]
 
         # Rescale sigma_8 here to avoid repeatedly calling the ODE
         self.sigma8 = g_z_growth[0] / g_z_geo[0] * self.lin_perturbations.sigma8_0()
@@ -100,13 +100,14 @@ class SplitLinearPerturbations:
 
         Returns
         -------
-        pk_linear: numpy.ndarray
-            Rescaled linear matter power spectrum at the specified scale
-            and redshift.
+        pk_linear_cb: numpy.ndarray
+            Rescaled linear matter power spectrum of cold dark matter + baryons
+            at the specified scale and redshift.
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.pk_linear_EBS = self.lin_perturbations.matter_power_spectrum_cb(zs, ks)  # type:ignore[union-attr]
+
+        pk_linear_EBS_cb = self.lin_perturbations.matter_power_spectrum_cb(zs, ks)  # type:ignore[union-attr]
 
         omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
 
@@ -114,16 +115,16 @@ class SplitLinearPerturbations:
         g_z_geo = growth_function_ODE(self.background, zs, omega_m_geo)
         g_z_growth = growth_function_ODE(self.background, zs, self.omega_m_growth)
 
-        self.pk_linear = np.zeros_like(self.pk_linear_EBS)
+        self.pk_linear_cb = np.zeros_like(pk_linear_EBS_cb)
 
         # Rescale the matter power spectrum with G(z)
         for i in range(len(zs)):
             rescale_fac = g_z_growth[i] ** 2 / g_z_geo[i] ** 2
-            self.pk_linear[i, :] = rescale_fac * self.pk_linear_EBS[i, :]
+            self.pk_linear_cb[i, :] = rescale_fac * pk_linear_EBS_cb[i, :]
 
         # Rescale sigma_8 here to avoid repeatedly calling the ODE
         self.sigma8 = g_z_growth[0] / g_z_geo[0] * self.lin_perturbations.sigma8_0()
-        return self.pk_linear
+        return self.pk_linear_cb
 
     def growth_factor(
         self, zs, ks=np.logspace(np.log10(1e-5), np.log10(1e0), 200)
@@ -147,7 +148,7 @@ class SplitLinearPerturbations:
 
         Returns:
         --------
-        np.ndarray
+        d_z_k: numpy.ndarray
             The growth factor at the specified redshift and wavenumber.
         """
         d_z_k = np.zeros([len(zs), len(ks)])
@@ -163,7 +164,7 @@ class SplitLinearPerturbations:
 
         Returns
         -------
-        np.ndarray
+        growth_rate_f: numpy.ndarray
             Scale-independent growth rate f(z)
         """
         growth_factor_D = self.growth_factor(self.z)[:, 0]
@@ -183,7 +184,7 @@ class SplitLinearPerturbations:
 
         Returns:
         --------
-        float
+        sigma8: float
             The sigma8 value.
         """
         return self.sigma8
@@ -197,17 +198,17 @@ class SplitNonLinearPerturbations:
         self,
         background: Background,
         redshifts: np.ndarray,
-        pk_linear: np.ndarray,
-        perturbations_lin: Perturbations,
-        perturbations_NL: Perturbations,
+        lin_perturbations_split: np.ndarray,
+        lin_perturbations_growth: Perturbations,
+        nl_perturbations_growth: Perturbations,
     ):
         """Initialize the OmgrowthLinearPerturbation and OmgrowthNonLinearPerturbation instance."""
         self.z = redshifts
         self.kmax = 100
-        self.pk_linear = pk_linear
         self.background = background
-        self.perturbations_lin = perturbations_lin
-        self.perturbations_NL = perturbations_NL
+        self.lin_perturbations_split = lin_perturbations_split
+        self.lin_perturbations_growth = lin_perturbations_growth
+        self.nl_perturbations_growth = nl_perturbations_growth
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -230,21 +231,23 @@ class SplitNonLinearPerturbations:
 
         Returns
         -------
-        pk: numpy.ndarray
+        pk_nonlinear: numpy.ndarray
             Non-linear matter power spectrum at the specified scale
             and redshift
         """
 
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        pk_linear_growth = self.perturbations_lin.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
-        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
+        pk_linear_growth = self.lin_perturbations_growth.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
+        pk_nonlinear_growth = self.nl_perturbations_growth.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
 
         # Compute the boost factor
         boost = pk_nonlinear_growth / pk_linear_growth
 
         # Multiply the boost to the rescaled power spectrum
-        pk_nonlinear = boost * self.pk_linear
+        pk_nonlinear = boost * self.lin_perturbations_split.matter_power_spectrum(
+            zs, ks
+        )
 
         return pk_nonlinear.squeeze()
 
@@ -270,23 +273,29 @@ class SplitNonLinearPerturbations:
 
         Returns
         -------
-        pk: numpy.ndarray
-            Non-linear matter power spectrum at the specified scale
-            and redshift
+        pk_nonlinear_cb: numpy.ndarray
+            Non-linear matter power spectrum of cold dark matter + baryons at
+            the specified scale and redshift
         """
 
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        pk_linear_growth = self.perturbations_lin.matter_power_spectrum_cb(zs, ks)  # type:ignore[union-attr]
-        pk_nonlinear_growth = self.perturbations_NL.matter_power_spectrum_cb(zs, ks)  # type:ignore[union-attr]
+        pk_linear_growth_cb = self.lin_perturbations_growth.matter_power_spectrum_cb(
+            zs, ks
+        )  # type:ignore[union-attr]
+        pk_nonlinear_growth_cb = self.nl_perturbations_growth.matter_power_spectrum_cb(
+            zs, ks
+        )  # type:ignore[union-attr]
 
         # Compute the boost factor
-        boost = pk_nonlinear_growth / pk_linear_growth
+        boost = pk_nonlinear_growth_cb / pk_linear_growth_cb
 
         # Multiply the boost to the rescaled power spectrum
-        pk_nonlinear = boost * self.pk_linear
+        pk_nonlinear_cb = boost * self.lin_perturbations_split.matter_power_spectrum_cb(
+            zs, ks
+        )
 
-        return pk_nonlinear.squeeze()
+        return pk_nonlinear_cb.squeeze()
 
     def growth_factor(
         self, zs, ks=np.logspace(np.log10(1e-5), np.log10(1e0), 200)
@@ -310,14 +319,14 @@ class SplitNonLinearPerturbations:
 
         Returns:
         --------
-        np.ndarray
+        d_z_k: numpy.ndarray
             The growth factor at the specified redshift and wavenumber.
         """
         d_z_k = np.zeros([len(zs), len(ks)])
 
         # Use the background of lin. pert. class, including Omega_m^growth
 
-        bg = self.perturbations_lin.background
+        bg = self.lin_perturbations_growth.background
 
         g_ode = growth_function_ODE(bg, zs, (bg.Omega_cdm0 + bg.Omega_b0))
 
@@ -332,7 +341,7 @@ class SplitNonLinearPerturbations:
 
         Returns
         -------
-        np.ndarray
+        growth_rate_f: numpy.ndarray
             Scale-independent growth rate f(z)
         """
         growth_factor_D = self.growth_factor(self.z)[:, 0]
@@ -352,7 +361,9 @@ class SplitNonLinearPerturbations:
 
         Returns:
         --------
-        float
-            The sigma8 value.
+        sigma8_0: float
+            The sigma8 value taken from the SplitLinearPerturbations class to
+            account for the rescaling that is implemented in the split as in
+            2301.03694, Equation (8).
         """
-        return self.perturbations_lin.sigma8_0()
+        return self.lin_perturbations_split.sigma8_0()

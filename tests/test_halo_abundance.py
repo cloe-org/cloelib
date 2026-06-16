@@ -5,11 +5,11 @@ from numpy.testing import assert_allclose
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.auxiliary.halo_helpers import convert_to_Delta_crit
-from cloelib.observables.clusters.halo_abundance import (
+from cloelib.observables.halos.halo_abundance import (
     CastroHaloAbundance,
     TinkerHaloAbundance,
 )
-from cloelib.observables.clusters.halo_model_properties import HaloModelProperties
+from cloelib.observables.halos.halo_model_properties import HaloModelProperties
 
 
 def test_HaloModelProperties():

@@ -7,7 +7,7 @@ from cloelib.auxiliary.halo_helpers import (
     tophat_window,
     tophat_window_derivative,
 )
-from cloelib.observables.clusters.halo_model_properties import HaloModelProperties
+from cloelib.observables.halos.halo_model_properties import HaloModelProperties
 
 
 class HaloAbundanceBase:

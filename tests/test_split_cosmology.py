@@ -83,6 +83,7 @@ def class_perturbation_instances_geo(class_background_instance_geo, zs, scope="m
     )
     class_nl = CLASSNonLinearPerturbations(
         background=class_background_instance_geo,
+        linearperturbations=class_lin,
         redshifts=zs,
         nonlinear_model="halofit",
     )
@@ -101,6 +102,7 @@ def class_perturbation_instances_growth(
     )
     class_nl = CLASSNonLinearPerturbations(
         background=class_background_instance_growth,
+        linearperturbations=class_lin,
         redshifts=zs,
         nonlinear_model="halofit",
     )
@@ -252,7 +254,6 @@ def test_lin_mps_cb_with_neutrinos(lin_perturb_instance_nu):
 @pytest.fixture
 def nl_perturb_instance_nu(
     class_background_instance_geo,
-    class_perturbation_instances_geo,
     lin_perturb_instance_nu,
 ):
     """
@@ -269,7 +270,9 @@ def nl_perturb_instance_nu(
     class_background_instance_geo.interface_args["CLASSparams"]["m_ncdm"] = 0.2
     # ----- instantiate perturbations ---------------------------------
     class_pert = CLASSNonLinearPerturbations(
-        background=class_background_instance_geo, redshifts=zs
+        background=class_background_instance_geo,
+        linearperturbations=lin_perturb_instance_nu["CLASS"],
+        redshifts=zs,
     )
 
     split_pert = SplitNonLinearPerturbations(

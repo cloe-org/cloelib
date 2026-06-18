@@ -522,7 +522,7 @@ class mochiCLASSLinearPerturbations:
         """Initialize the CLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
-        self.kmax = 200
+        self.kmax = 100
         self.results = None  # Store CLASS results
 
         # Ensure CLASS is initialized with necessary parameters

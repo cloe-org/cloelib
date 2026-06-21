@@ -6,9 +6,10 @@ Both classes are compatible with the Tracer protocol.
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.cosmology.cosmology import Perturbations
+from cloelib.cosmology.cosmology import Perturbations,Background
 from cloelib.auxiliary.math_utils import cached_stacked_simpson, simps
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.cosmology.split_cosmology import SplitLinearPerturbations
 
 # General imports
 import jax.numpy as np  # type: ignore
@@ -117,10 +118,11 @@ class ShearTracer:
     def __init__(
         self,
         perturbations: Perturbations,
+        background: Background,
+        splitlinearperturbations: SplitLinearPerturbations,
         dndz: np.ndarray,
         z: np.ndarray,
         nuisance_params: dict,
-        Omega_m_IA: float,
         Omega_m_lens: float,
     ):
         r"""
@@ -139,10 +141,11 @@ class ShearTracer:
                 "One of the z array elements is equal to zero, breaking Limber integration."
             )
         self.perturbations = perturbations
-        self.background = self.perturbations.background
+        self.background = background
+        self.splitlinearperturbations = splitlinearperturbations
         self.z = z
         self.nuisance_params = nuisance_params
-        self.Omega_m_IA = Omega_m_IA
+        self.Omega_m_IA = self.perturbations.background.Omega_m(0.0)
         self.Omega_m_lens = Omega_m_lens
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 1
@@ -176,8 +179,8 @@ class ShearTracer:
           window_IA (np.ndarray):
         """
         Omega_m0 = self.Omega_m_IA
-        Hz = self.perturbations.background.hubble_parameter(z)
-        Dz = self.perturbations.growth_factor(z, self.perturbations.k)[:, 1]
+        Hz = self.background.hubble_parameter(z)
+        Dz = self.splitlinearperturbations.growth_factor(z, self.perturbations.k)[:, 1]
         # TODO discuss whether we want growth factor to output a 1D or a 2D array
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]
@@ -289,6 +292,7 @@ class PositionsTracer:
     def __init__(
         self,
         perturbations: Perturbations,
+        background = Background,
         dndz: np.ndarray,
         z: np.ndarray,
         galaxy_bias_model: str,
@@ -313,7 +317,7 @@ class PositionsTracer:
                 "One of the z array elements is equal to zero, breaking Limber integration."
             )
         self.perturbations = perturbations
-        self.background = self.perturbations.background
+        self.background = background
         self.z = z
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 0
@@ -408,7 +412,7 @@ class PositionsTracer:
             window = (
                 self.bias_array[: self.n_z_bins, None]
                 * self.dndz_shifted
-                * self.perturbations.background.hubble_parameter(z)
+                * self.background.hubble_parameter(z)
                 / c_0
             )
             return window
@@ -417,7 +421,7 @@ class PositionsTracer:
             window = (
                 self.bias_array[None, :]
                 * self.dndz_shifted
-                * self.perturbations.background.hubble_parameter(z)
+                * self.background.hubble_parameter(z)
                 / c_0
             )
             return window
@@ -545,7 +549,7 @@ class PositionsTracer:
           (numpy.ndarray): 1-D Numpy array of shear kernel values for specified bin
             at specified scale for the redshifts defined in z
         """
-        Omega_m0 = self.background.Omega_m(0.0)
+        Omega_m0 = self.Omega_m_lens
         factor = (
             3
             / 2

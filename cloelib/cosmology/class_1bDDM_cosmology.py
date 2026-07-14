@@ -11,7 +11,7 @@ import os
 import numpy as np
 import copy
 from typing import Optional, Union, Sequence
-import DMemu
+# import DMemu
 
 # Cosmology imports
 try:
@@ -19,18 +19,20 @@ try:
 except ImportError as e:
     raise ImportError("classy could not be imported.") from e
 
-#cosmopower import
+# cosmopower import
 import warnings
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     from cosmopower_jax.cosmopower_jax import CosmoPowerJAX
+
 
 class obDDMBackground:
     """A wrapper for CLASS background cosmological calculations."""
 
     c0 = SPEED_OF_LIGHT / 1000
-    invGYR_TO_KMS_MPC = 977.792 # to convert from 1/Gyr to km/s/Mpc
- 
+    invGYR_TO_KMS_MPC = 977.792  # to convert from 1/Gyr to km/s/Mpc
+
     def __init__(
         self,
         H0: float,
@@ -45,7 +47,7 @@ class obDDMBackground:
         gamma_MG: float,
         N_mnu: int,
         f_dcdm: float,
-#        Gamma_dcdm: float,
+        #        Gamma_dcdm: float,
         Gamma_times_f: float,
         N_ur: Optional[float] = None,
         use_emulator: bool = True,
@@ -78,7 +80,7 @@ class obDDMBackground:
         self.H0 = H0
         self.h = self.H0 / 100
         self.Omega_b0 = Omega_b0
-        self.Omega_cdm0 = Omega_cdm0*(1.0 - f_dcdm) #stable component
+        self.Omega_cdm0 = Omega_cdm0 * (1.0 - f_dcdm)  # stable component
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
@@ -93,13 +95,15 @@ class obDDMBackground:
             raise ValueError("If mnu is provided, N_mnu must be greater than 0.")
         if self.N_mnu > 0 and np.sum(self.mnu) == 0:
             raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
-            
+
         # set DCDM parameters
         self.f_dcdm = f_dcdm
-        self.Omega_ini_dcdm = Omega_cdm0*f_dcdm 
-        self.Gamma_dcdm = Gamma_times_f/f_dcdm
+        self.Omega_ini_dcdm = Omega_cdm0 * f_dcdm
+        self.Gamma_dcdm = Gamma_times_f / f_dcdm
         self.Gamma_times_f = Gamma_times_f
-        assert f_dcdm >= 0. and f_dcdm <= 1., "f is not within (0,1), chosen f is: {}".format(f_dcdm) # well-defined f
+        assert f_dcdm >= 0.0 and f_dcdm <= 1.0, (
+            "f is not within (0,1), chosen f is: {}".format(f_dcdm)
+        )  # well-defined f
 
         self.use_emulator = use_emulator
 
@@ -115,8 +119,8 @@ class obDDMBackground:
         self.interface_args["CLASSparams"]["Omega_k"] = self.Omega_k0
         self.interface_args["CLASSparams"]["n_s"] = self.ns
         self.interface_args["CLASSparams"]["A_s"] = self.As
-        self.interface_args["CLASSparams"]["w0_fld"] = self.w0  
-        self.interface_args["CLASSparams"]["wa_fld"] = self.wa  
+        self.interface_args["CLASSparams"]["w0_fld"] = self.w0
+        self.interface_args["CLASSparams"]["wa_fld"] = self.wa
         # To get correct perturbations for w0wa
         self.interface_args["CLASSparams"]["use_ppf"] = "yes"
         # To avoid using a cosmological constant
@@ -131,15 +135,21 @@ class obDDMBackground:
         self.interface_args["CLASSparams"]["omega_ini_dcdm"] = (
             self.Omega_ini_dcdm * (self.h) ** 2
         )
-        if (f_dcdm != 0):
-            self.interface_args["CLASSparams"]["Gamma_dcdm"] = self.Gamma_dcdm*obDDMBackground.invGYR_TO_KMS_MPC
+        if f_dcdm != 0:
+            self.interface_args["CLASSparams"]["Gamma_dcdm"] = (
+                self.Gamma_dcdm * obDDMBackground.invGYR_TO_KMS_MPC
+            )
 
         # Fix YHe to standard BBN value to avoid interpolation failure at extreme omega_b
         self.interface_args["CLASSparams"]["YHe"] = 0.2454006
 
         if self.use_emulator:
-            assert self.Omega_k0 == 0.0, "The 1bDDM background emulator only supports flat geometries."
-            _emu_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "emulator-data-jax")
+            assert self.Omega_k0 == 0.0, (
+                "The 1bDDM background emulator only supports flat geometries."
+            )
+            _emu_dir = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "emulator-data-jax"
+            )
             self._cp_distances = CosmoPowerJAX(
                 probe="custom_log",
                 filepath=os.path.join(_emu_dir, "ddm-1body-distances.npz"),
@@ -150,7 +160,9 @@ class obDDMBackground:
                 filepath=os.path.join(_emu_dir, "ddm-1body-global.npz"),
                 verbose=False,
             )
-            _, Omega_m0_emu, rdrag_emu = np.array(cp_global.predict(self._emulator_params())).squeeze()
+            _, Omega_m0_emu, rdrag_emu = np.array(
+                cp_global.predict(self._emulator_params())
+            ).squeeze()
             self._Omega_m0_emu = float(Omega_m0_emu)
             self._rdrag_emu = float(rdrag_emu)
         else:
@@ -242,8 +254,10 @@ class obDDMBackground:
         """
         n = 1 if zs is None else len(zs)
         params = {
-            "omega_b": np.full(n, self.Omega_b0 * self.h ** 2),
-            "omega_cdm_tot": np.full(n, (self.Omega_cdm0 + self.Omega_ini_dcdm) * self.h ** 2),
+            "omega_b": np.full(n, self.Omega_b0 * self.h**2),
+            "omega_cdm_tot": np.full(
+                n, (self.Omega_cdm0 + self.Omega_ini_dcdm) * self.h**2
+            ),
             "h": np.full(n, self.h),
             "n_s": np.full(n, self.ns),
             "ln10^{10}A_s": np.full(n, np.log(1e10 * self.As)),
@@ -271,10 +285,14 @@ class obDDMBackground:
 
         z_high = zs[~mask_low]
         if z_high.size > 0:
-            out[~mask_low] = np.array(self._cp_distances.predict(self._emulator_params(z_high)))
+            out[~mask_low] = np.array(
+                self._cp_distances.predict(self._emulator_params(z_high))
+            )
 
         if mask_low.any():
-            pred_min = np.array(self._cp_distances.predict(self._emulator_params(np.array([Z_EMU_MIN]))))
+            pred_min = np.array(
+                self._cp_distances.predict(self._emulator_params(np.array([Z_EMU_MIN])))
+            )
             at_min = pred_min[0]
             t = (zs[mask_low] / Z_EMU_MIN)[:, None]
             out[mask_low] = boundary + (at_min - boundary) * t
@@ -296,7 +314,9 @@ class obDDMBackground:
             zs = np.atleast_1d(zs)
             H = self._emulator_distances(zs)[:, 0]
         else:
-            H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
+            H = np.array(
+                [self.results.Hubble(z) for z in zs]
+            )  # CLASS returns H in 1/Mpc
         if units == "km/s/Mpc":
             return H * obDDMBackground.c0  # Convert to km/s/Mpc
         elif units == "1/Mpc":
@@ -387,23 +407,29 @@ class obDDMBackground:
 class obDDMLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
 
-    def __init__(self, background: Background, redshifts: np.ndarray, use_emulator: bool = True):
+    def __init__(
+        self, background: Background, redshifts: np.ndarray, use_emulator: bool = True
+    ):
         """Initialize the obDDMLinearPerturbations instance."""
         self.background = background
         self.z = redshifts
-        self.kmax = 49 #maximum k at which linear emulator is trained
+        self.kmax = 49  # maximum k at which linear emulator is trained
         self.use_emulator = use_emulator
 
-        if self.use_emulator == True:
+        if self.use_emulator:
             self.h = self.background.h
-            self.wb = self.background.Omega_b0*self.h**2
-            self.wdm = (self.background.Omega_cdm0 + self.background.Omega_ini_dcdm)*self.h**2
-            self.log_As = np.log(1e10*self.background.As)
+            self.wb = self.background.Omega_b0 * self.h**2
+            self.wdm = (
+                self.background.Omega_cdm0 + self.background.Omega_ini_dcdm
+            ) * self.h**2
+            self.log_As = np.log(1e10 * self.background.As)
             self.ns = self.background.ns
-            self.f     = self.background.f_dcdm
-            self.Gamma_times_f = self.background.Gamma_times_f #in 1/Gyr
+            self.f = self.background.f_dcdm
+            self.Gamma_times_f = self.background.Gamma_times_f  # in 1/Gyr
             # Load cosmopower emulator (path relative to this file, works in any install location)
-            _emu_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "emulator-data-jax")
+            _emu_dir = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "emulator-data-jax"
+            )
             EMU_PATH = os.path.join(_emu_dir, "ddm-1body-linear.npz")
             DATA_PATH = os.path.join(_emu_dir, "small-k-modes.txt")
             cp = CosmoPowerJAX(probe="custom_log", filepath=EMU_PATH, verbose=False)
@@ -412,21 +438,23 @@ class obDDMLinearPerturbations:
             pk_emu = np.zeros((len(self.z), len(self.k)))
             for i, zi in enumerate(self.z):
                 params = {
-                    "omega_b":       np.array([self.wb]),
+                    "omega_b": np.array([self.wb]),
                     "omega_cdm_tot": np.array([self.wdm]),
-                    "h":             np.array([self.h]),
-                    "n_s":           np.array([self.ns]),
-                    "ln10^{10}A_s":  np.array([self.log_As]),
-                    "tau_reio":      np.array([0.054]),
-                    "f_dcdm":        np.array([self.f]),
+                    "h": np.array([self.h]),
+                    "n_s": np.array([self.ns]),
+                    "ln10^{10}A_s": np.array([self.log_As]),
+                    "tau_reio": np.array([0.054]),
+                    "f_dcdm": np.array([self.f]),
                     "Gamma_times_f": np.array([self.Gamma_times_f]),
-                    "z":             np.array([zi]),
+                    "z": np.array([zi]),
                 }
                 pk_emu[i, :] = np.array(cp.predict(params)).squeeze()
             # Extend k range to 500 1/Mpc to prevent Akima blow-up in AngularTwoPoint
             # at low z (z~1e-4) where Limber k >> k_max_emu ~50 1/Mpc
             k_out, z_out, Pk_out = extend_spectra(
-                self.k, self.z, pk_emu,
+                self.k,
+                self.z,
+                pk_emu,
                 flag_range=True,
                 option_wavenumber="logk2",
                 option_redshift="power_law",
@@ -436,19 +464,23 @@ class obDDMLinearPerturbations:
                 extrap_kmax=500.0,
             )
             self.k = k_out
-            self.Pk_int = interpolate.RectBivariateSpline(z_out, k_out, Pk_out, kx=1, ky=1)
+            self.Pk_int = interpolate.RectBivariateSpline(
+                z_out, k_out, Pk_out, kx=1, ky=1
+            )
 
             # Load global emulator for sigma8 (no z dependence)
             GLOBAL_EMU_PATH = os.path.join(_emu_dir, "ddm-1body-global.npz")
-            cp_global = CosmoPowerJAX(probe="custom", filepath=GLOBAL_EMU_PATH, verbose=False)
+            cp_global = CosmoPowerJAX(
+                probe="custom", filepath=GLOBAL_EMU_PATH, verbose=False
+            )
             global_params = {
-                "omega_b":       np.array([self.wb]),
+                "omega_b": np.array([self.wb]),
                 "omega_cdm_tot": np.array([self.wdm]),
-                "h":             np.array([self.h]),
-                "n_s":           np.array([self.ns]),
-                "ln10^{10}A_s":  np.array([self.log_As]),
-                "tau_reio":      np.array([0.054]),
-                "f_dcdm":        np.array([self.f]),
+                "h": np.array([self.h]),
+                "n_s": np.array([self.ns]),
+                "ln10^{10}A_s": np.array([self.log_As]),
+                "tau_reio": np.array([0.054]),
+                "f_dcdm": np.array([self.f]),
                 "Gamma_times_f": np.array([self.Gamma_times_f]),
             }
             sigma8_emu, _, _ = np.array(cp_global.predict(global_params)).squeeze()
@@ -460,35 +492,35 @@ class obDDMLinearPerturbations:
             self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
             self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
             self.interface_args["CLASSparams"]["non linear"] = "none"
-            # Precision settings matching the emulator training.  
+            # Precision settings matching the emulator training.
             if False:
                 emulator_accuracy_settings = {
-                    "YHe":                                        0.2454006,
-                    "T_cmb":                                      2.7255,
-                    "perturbations_sampling_stepsize":            0.05,
-                    "ur_fluid_approximation":                     2,
-                    "ur_fluid_trigger_tau_over_tau_k":            130.,
-                    "radiation_streaming_approximation":          2,
-                    "radiation_streaming_trigger_tau_over_tau_k": 240.,
-                    "hyper_flat_approximation_nu":                7000.,
-                    "transfer_neglect_delta_k_S_t0":              0.17,
-                    "transfer_neglect_delta_k_S_t1":              0.05,
-                    "transfer_neglect_delta_k_S_t2":              0.17,
-                    "transfer_neglect_delta_k_S_e":               0.17,
-                    "start_small_k_at_tau_c_over_tau_h":          0.0004,
-                    "start_large_k_at_tau_h_over_tau_k":          0.05,
-                    "tight_coupling_trigger_tau_c_over_tau_h":    0.005,
-                    "tight_coupling_trigger_tau_c_over_tau_k":    0.008,
-                    "start_sources_at_tau_c_over_tau_h":          0.006,
+                    "YHe": 0.2454006,
+                    "T_cmb": 2.7255,
+                    "perturbations_sampling_stepsize": 0.05,
+                    "ur_fluid_approximation": 2,
+                    "ur_fluid_trigger_tau_over_tau_k": 130.0,
+                    "radiation_streaming_approximation": 2,
+                    "radiation_streaming_trigger_tau_over_tau_k": 240.0,
+                    "hyper_flat_approximation_nu": 7000.0,
+                    "transfer_neglect_delta_k_S_t0": 0.17,
+                    "transfer_neglect_delta_k_S_t1": 0.05,
+                    "transfer_neglect_delta_k_S_t2": 0.17,
+                    "transfer_neglect_delta_k_S_e": 0.17,
+                    "start_small_k_at_tau_c_over_tau_h": 0.0004,
+                    "start_large_k_at_tau_h_over_tau_k": 0.05,
+                    "tight_coupling_trigger_tau_c_over_tau_h": 0.005,
+                    "tight_coupling_trigger_tau_c_over_tau_k": 0.008,
+                    "start_sources_at_tau_c_over_tau_h": 0.006,
                     # Neutrino precision settings
-                    "tol_ncdm_synchronous":                       1.e-5,
-                    "ncdm_fluid_trigger_tau_over_tau_k":          100,
-                    "ncdm_fluid_approximation":                   3,
+                    "tol_ncdm_synchronous": 1.0e-5,
+                    "ncdm_fluid_trigger_tau_over_tau_k": 100,
+                    "ncdm_fluid_approximation": 3,
                 }
                 self.interface_args["CLASSparams"].update(emulator_accuracy_settings)
                 # Neutrino sector: replace deg_ncdm shorthand with 3 explicit species matching emulator training
                 self.interface_args["CLASSparams"].pop("deg_ncdm", None)
-                self.interface_args["CLASSparams"]["N_ur"]   = 0.00441
+                self.interface_args["CLASSparams"]["N_ur"] = 0.00441
                 self.interface_args["CLASSparams"]["N_ncdm"] = 3
                 self.interface_args["CLASSparams"]["m_ncdm"] = "0.02,0.02,0.02"
                 self.interface_args["CLASSparams"]["T_ncdm"] = "0.71611,0.71611,0.71611"
@@ -497,7 +529,9 @@ class obDDMLinearPerturbations:
             self.results.set(self.interface_args["CLASSparams"])
             self.results.compute()
             # GFA, I added this line in order to retrieve the wavenumber grid (in 1/Mpc) used by CLASS to compute Pk
-            _, self.k, _ = self.results.get_pk_and_k_and_z(nonlinear=False, only_clustering_species = False, h_units=False)
+            _, self.k, _ = self.results.get_pk_and_k_and_z(
+                nonlinear=False, only_clustering_species=False, h_units=False
+            )
 
     @property
     def _interface_args(self) -> dict:
@@ -532,12 +566,14 @@ class obDDMLinearPerturbations:
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
 
-        if self.use_emulator == True:
+        if self.use_emulator:
             self.Pk_linear = self.Pk_int(zs, ks)
         else:
-            self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+            self.Pk_linear = np.array(
+                [[self.results.pk(ki, zi) for ki in ks] for zi in zs]
+            )  # type: ignore[union-attr]
         # To match array convention of CAMB
-        
+
         return self.Pk_linear
 
     def growth_factor(self, zs, ks) -> np.ndarray:
@@ -617,39 +653,61 @@ class obDDMNonLinearPerturbations:
         # These are only to check if the parameter is in a range where low error is expected.
         # Fit can still function well outside this range if the values are not extreme
         self.h = self.background.h
-        self.wb = self.background.Omega_b0*self.h**2
-        self.wdm = (self.background.Omega_cdm0 + self.background.Omega_ini_dcdm)*self.h**2
+        self.wb = self.background.Omega_b0 * self.h**2
+        self.wdm = (
+            self.background.Omega_cdm0 + self.background.Omega_ini_dcdm
+        ) * self.h**2
         self.wm = self.wb + self.wdm
-        self.f     = self.background.f_dcdm
-        self.Gamma = self.background.Gamma_dcdm #in 1/Gyr
-        if (self.h < 0.6 or self.h > 0.8):
-            print("You have chosen h={}!\n-> the fit could be unaccurate with this choice! (error might be > 10%)".format(self.h))
-        if(self.wb < 0.019 or self.wb > 0.026):
-            print("You have chosen omega_b={}!\n-> the fit could be unaccurate with this choice! (error might be > 10%)".format(self.wb))
-        if(self.wm < 0.09 or self.wm > 0.28):
-            print("You have chosen omega_m={}!\n-> the fit could be unaccurate with this choice! (error might be > 10%)".format(self.wm))
-        if(self.Gamma >= 0.0316455696):
-            print("You have chosen a short lifetime of {} Gyr<31.6 Gyr\n-> the fit could be unaccurate with this choice! (error might be > 10%)".format(self.Gamma**-1.))
+        self.f = self.background.f_dcdm
+        self.Gamma = self.background.Gamma_dcdm  # in 1/Gyr
+        if self.h < 0.6 or self.h > 0.8:
+            print(
+                "You have chosen h={}!\n-> the fit could be unaccurate with this choice! (error might be > 10%)".format(
+                    self.h
+                )
+            )
+        if self.wb < 0.019 or self.wb > 0.026:
+            print(
+                "You have chosen omega_b={}!\n-> the fit could be unaccurate with this choice! (error might be > 10%)".format(
+                    self.wb
+                )
+            )
+        if self.wm < 0.09 or self.wm > 0.28:
+            print(
+                "You have chosen omega_m={}!\n-> the fit could be unaccurate with this choice! (error might be > 10%)".format(
+                    self.wm
+                )
+            )
+        if self.Gamma >= 0.0316455696:
+            print(
+                "You have chosen a short lifetime of {} Gyr<31.6 Gyr\n-> the fit could be unaccurate with this choice! (error might be > 10%)".format(
+                    self.Gamma**-1.0
+                )
+            )
 
         if not self.use_emulator:
-        # CLASS params for equivalent LCDM (DDM params removed, total CDM restored)
+            # CLASS params for equivalent LCDM (DDM params removed, total CDM restored)
             self.interface_args = copy.deepcopy(self.background.interface_args)
             self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
             self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
             self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
             self.interface_args["CLASSparams"].pop("omega_ini_dcdm", None)
             self.interface_args["CLASSparams"].pop("Gamma_dcdm", None)
-            self.interface_args["CLASSparams"]["omega_cdm"] = self.wdm            
+            self.interface_args["CLASSparams"]["omega_cdm"] = self.wdm
             self.interface_args["CLASSparams"]["non linear"] = "halofit"
             self.results = Class()
             self.results.set(self.interface_args["CLASSparams"])
             self.results.compute()
-            _, self.k, _ = self.results.get_pk_and_k_and_z(nonlinear=True, only_clustering_species=False, h_units=False)
+            _, self.k, _ = self.results.get_pk_and_k_and_z(
+                nonlinear=True, only_clustering_species=False, h_units=False
+            )
         else:
             # Emulator path: cosmopower-jax emulators for both NL and linear equiv LCDM Pk.
 
             from cloelib.cosmology.cosmopower_jax_cosmology import (
-                emulator_data, load_pk_emulator, k_modes_path
+                emulator_data,
+                load_pk_emulator,
+                k_modes_path,
             )
 
             cp_NL = load_pk_emulator(emulator_data("w0wa-3degen-nonlinear.npz"))
@@ -658,21 +716,23 @@ class obDDMNonLinearPerturbations:
             mnu_total = self.background.mnu
 
             params_nl = {
-                "ombh2":    np.tile(self.wb,                              len(self.z)),
-                "omch2":    np.tile(self.wdm,                             len(self.z)),
-                "H0":       np.tile(self.background.H0,                   len(self.z)),
-                "ns":       np.tile(self.background.ns,                   len(self.z)),
-                "lnAs":     np.tile(np.log(self.background.As * 1e10),    len(self.z)),
-                "w0":       np.tile(self.background.w0,                   len(self.z)),
-                "wa":       np.tile(self.background.wa,                   len(self.z)),
-                "mnu":      np.tile(mnu_total,                            len(self.z)),
-                "logT_AGN": np.tile(self.log10TAGN,                        len(self.z)),
-                "z":        self.z,
+                "ombh2": np.tile(self.wb, len(self.z)),
+                "omch2": np.tile(self.wdm, len(self.z)),
+                "H0": np.tile(self.background.H0, len(self.z)),
+                "ns": np.tile(self.background.ns, len(self.z)),
+                "lnAs": np.tile(np.log(self.background.As * 1e10), len(self.z)),
+                "w0": np.tile(self.background.w0, len(self.z)),
+                "wa": np.tile(self.background.wa, len(self.z)),
+                "mnu": np.tile(mnu_total, len(self.z)),
+                "logT_AGN": np.tile(self.log10TAGN, len(self.z)),
+                "z": self.z,
             }
 
             Pk_nonlin = np.array(cp_NL.predict(params_nl))
             k_out_nl, z_out_nl, Pk_out_nl = extend_spectra(
-                k_emu, self.z, Pk_nonlin,
+                k_emu,
+                self.z,
+                Pk_nonlin,
                 flag_range=True,
                 option_wavenumber="logk2",
                 option_redshift="power_law",
@@ -681,26 +741,30 @@ class obDDMNonLinearPerturbations:
                 ns=self.background.ns,
                 extrap_kmax=500.0,
             )
-            self.Pk_int_lcdm = interpolate.RectBivariateSpline(z_out_nl, k_out_nl, Pk_out_nl, kx=1, ky=1)
+            self.Pk_int_lcdm = interpolate.RectBivariateSpline(
+                z_out_nl, k_out_nl, Pk_out_nl, kx=1, ky=1
+            )
 
             # Linear LCDM Pk: w0wa-3degen-linear.npz emulator (same params, no logT_AGN)
             cp_LIN = load_pk_emulator(emulator_data("w0wa-3degen-linear.npz"))
 
             params_lin = {
-                "ombh2": np.tile(self.wb,                           len(self.z)),
-                "omch2": np.tile(self.wdm,                          len(self.z)),
-                "H0":    np.tile(self.background.H0,                len(self.z)),
-                "ns":    np.tile(self.background.ns,                len(self.z)),
-                "lnAs":  np.tile(np.log(self.background.As * 1e10), len(self.z)),
-                "w0":    np.tile(self.background.w0,                len(self.z)),
-                "wa":    np.tile(self.background.wa,                len(self.z)),
-                "mnu":   np.tile(mnu_total,                         len(self.z)),
-                "z":     self.z,
+                "ombh2": np.tile(self.wb, len(self.z)),
+                "omch2": np.tile(self.wdm, len(self.z)),
+                "H0": np.tile(self.background.H0, len(self.z)),
+                "ns": np.tile(self.background.ns, len(self.z)),
+                "lnAs": np.tile(np.log(self.background.As * 1e10), len(self.z)),
+                "w0": np.tile(self.background.w0, len(self.z)),
+                "wa": np.tile(self.background.wa, len(self.z)),
+                "mnu": np.tile(mnu_total, len(self.z)),
+                "z": self.z,
             }
 
             Pk_lin = np.array(cp_LIN.predict(params_lin))
             k_out_lin, z_out_lin, Pk_out_lin = extend_spectra(
-                k_emu, self.z, Pk_lin,
+                k_emu,
+                self.z,
+                Pk_lin,
                 flag_range=True,
                 option_wavenumber="logk2",
                 option_redshift="power_law",
@@ -709,12 +773,14 @@ class obDDMNonLinearPerturbations:
                 ns=self.background.ns,
                 extrap_kmax=500.0,
             )
-            self.Pk_lin_int_lcdm = interpolate.RectBivariateSpline(z_out_lin, k_out_lin, Pk_out_lin, kx=1, ky=1)
+            self.Pk_lin_int_lcdm = interpolate.RectBivariateSpline(
+                z_out_lin, k_out_lin, Pk_out_lin, kx=1, ky=1
+            )
             self.k = k_out_nl  # extended k grid, shared by all three splines
 
     def eps_lin(self, z) -> float:
         """Calculate the function which describes the redshift evolution of the 1bDDM suppression, fit developed in Hubert et al. (2104.07675)
-        
+
         Parameters
         ----------
         z: float
@@ -724,22 +790,34 @@ class obDDMNonLinearPerturbations:
         -------
         eps_lin: float
                  "linear" part of 1bDDM suppression at given redshift
-         """
-        u = self.wb/0.02216
-        v = self.h/0.6776
-        w = self.wm/0.1412
-        
-        eps1 = 5.323 - 1.4644*u - 1.391*v + (-2.055 +1.329*u + 0.8672*v)*w + (0.2682 - 0.3509*u)*w*w
-        eps2 = 0.9260 + (0.05735 - 0.02690*v)*w + (-0.01373 + 0.006713*v)*w*w
-        eps3 = (9.553 - 0.7860*v) + (0.4884 + 0.1754*v)*w + (-0.2512 + 0.07558*v)*w*w
-        
-        eps_lin = self.f*eps1*((self.Gamma)**eps2)*((1./(1.+z*0.105))**eps3)
-        
+        """
+        u = self.wb / 0.02216
+        v = self.h / 0.6776
+        w = self.wm / 0.1412
+
+        eps1 = (
+            5.323
+            - 1.4644 * u
+            - 1.391 * v
+            + (-2.055 + 1.329 * u + 0.8672 * v) * w
+            + (0.2682 - 0.3509 * u) * w * w
+        )
+        eps2 = 0.9260 + (0.05735 - 0.02690 * v) * w + (-0.01373 + 0.006713 * v) * w * w
+        eps3 = (
+            (9.553 - 0.7860 * v)
+            + (0.4884 + 0.1754 * v) * w
+            + (-0.2512 + 0.07558 * v) * w * w
+        )
+
+        eps_lin = (
+            self.f * eps1 * ((self.Gamma) ** eps2) * ((1.0 / (1.0 + z * 0.105)) ** eps3)
+        )
+
         return eps_lin
-    
+
     def eps_nonlin(self, z, k) -> float:
         """Calculate the function which describes the non-linear 1bDDM suppression, fit developed in Hubert et al. (2104.07675)
-        
+
         Parameters
         ----------
         z: float
@@ -751,20 +829,25 @@ class obDDMNonLinearPerturbations:
         -------
         eps_nonlin: float
                    "non-linear" 1bDDM suppression at given redshift and wavenumber
-         """
-        a = 0.7208 + 2.027*self.Gamma + (3.431 - 0.4)*(1./(1.+z*1.1)) - 0.18
-        b = 0.0120 + 2.786*self.Gamma + (0.6499 + 0.02)*(1./(1.+z*1.1)) - 0.09
-        p = 1.045 + 1.225*self.Gamma + (0.2207)*(1./(1.+z*1.1)) - 0.099
-        q = 0.9922 + 1.735*self.Gamma + (0.2154)*(1./(1.+z*1.1)) - 0.056
-        
-        correction_k =  (1.+a*(k**p))/(1.+b*(k**q))
-        eps_nonlin = self.eps_lin(z)*correction_k 
-        
+        """
+        a = 0.7208 + 2.027 * self.Gamma + (3.431 - 0.4) * (1.0 / (1.0 + z * 1.1)) - 0.18
+        b = (
+            0.0120
+            + 2.786 * self.Gamma
+            + (0.6499 + 0.02) * (1.0 / (1.0 + z * 1.1))
+            - 0.09
+        )
+        p = 1.045 + 1.225 * self.Gamma + (0.2207) * (1.0 / (1.0 + z * 1.1)) - 0.099
+        q = 0.9922 + 1.735 * self.Gamma + (0.2154) * (1.0 / (1.0 + z * 1.1)) - 0.056
+
+        correction_k = (1.0 + a * (k**p)) / (1.0 + b * (k**q))
+        eps_nonlin = self.eps_lin(z) * correction_k
+
         return eps_nonlin
 
     def boost_1bDDM(self, z, k) -> float:
         """Calculate the boost factor for the 1bDDM suppression, as in eq. 16 of Lesgourgues et al. (2406.18274)
-        
+
         Parameters
         ----------
         z: float
@@ -777,18 +860,19 @@ class obDDMNonLinearPerturbations:
         S_1bDDM: float
                 boost factor for the 1bDDM suppression at given redshift and wavenumber
         """
-        pk_1bDDM_lin = self.linearperturbations.matter_power_spectrum(np.array([z]), np.array([k]))[0, 0]
+        pk_1bDDM_lin = self.linearperturbations.matter_power_spectrum(
+            np.array([z]), np.array([k])
+        )[0, 0]
         if self.use_emulator:
             pk_LCDM_lin = self.Pk_lin_int_lcdm(np.array([z]), np.array([k]))[0, 0]
         else:
             pk_LCDM_lin = self.results.pk_lin(k, z)
 
-        factor1 = pk_1bDDM_lin/pk_LCDM_lin
-        factor2 = (1.0 - self.eps_nonlin(z,k)) / (1.0 - self.eps_lin(z))
-        S_1bDDM = factor1*factor2
-        
-        return S_1bDDM
+        factor1 = pk_1bDDM_lin / pk_LCDM_lin
+        factor2 = (1.0 - self.eps_nonlin(z, k)) / (1.0 - self.eps_lin(z))
+        S_1bDDM = factor1 * factor2
 
+        return S_1bDDM
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -819,10 +903,10 @@ class obDDMNonLinearPerturbations:
             raise ValueError("This CLASS method does not yet support h-units")
 
         # These are only to check if the parameter is in a range where low error is expected.
-#        if(np.any(ks > 10)):
-#            print("You have chosen k>10 1/Mpc; \n-> the fit extrapolation could be inacurate")
-#        if(np.any(zs > 2.35)):
-#            print("You have chosen z>2.35; \n-> the fit could be unaccurate with this choice!")
+        #        if(np.any(ks > 10)):
+        #            print("You have chosen k>10 1/Mpc; \n-> the fit extrapolation could be inacurate")
+        #        if(np.any(zs > 2.35)):
+        #            print("You have chosen z>2.35; \n-> the fit could be unaccurate with this choice!")
 
         # NL LCDM Pk: CLASS halofit (default) or cosmopower emulator (use_emulator=True)
         if self.use_emulator:
@@ -834,15 +918,21 @@ class obDDMNonLinearPerturbations:
         if self.use_emulator:
             pk_LCDM_lin = self.Pk_lin_int_lcdm(zs, ks)
         else:
-            pk_LCDM_lin = np.array([[self.results.pk_lin(ki, zi) for ki in ks] for zi in zs])
+            pk_LCDM_lin = np.array(
+                [[self.results.pk_lin(ki, zi) for ki in ks] for zi in zs]
+            )
 
         # Compute 1bDDM linear Pk grid in one vectorized call (critical for emulator performance)
         pk_1bDDM_lin = self.linearperturbations.matter_power_spectrum(zs, ks)
 
         # Vectorized boost factor: eq. 16 of Lesgourgues et al. (2406.18274)
-        eps_lin    = np.array([self.eps_lin(zi) for zi in zs])                              # shape (nz,)
-        eps_nonlin = np.array([[self.eps_nonlin(zi, ki) for ki in ks] for zi in zs])        # shape (nz, nk)
-        boost = (pk_1bDDM_lin / pk_LCDM_lin) * (1.0 - eps_nonlin) / (1.0 - eps_lin[:, None])
+        eps_lin = np.array([self.eps_lin(zi) for zi in zs])  # shape (nz,)
+        eps_nonlin = np.array(
+            [[self.eps_nonlin(zi, ki) for ki in ks] for zi in zs]
+        )  # shape (nz, nk)
+        boost = (
+            (pk_1bDDM_lin / pk_LCDM_lin) * (1.0 - eps_nonlin) / (1.0 - eps_lin[:, None])
+        )
 
         self.Pk_nonlinear = pk_LCDM_nl * boost
         # To match array convention of CAMB

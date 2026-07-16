@@ -289,7 +289,7 @@ class PositionsTracer:
     def __init__(
         self,
         perturbations: Perturbations,
-        background = Background,
+        background : Background,
         dndz: np.ndarray,
         z: np.ndarray,
         galaxy_bias_model: str,

@@ -5,6 +5,7 @@ from cloelib.auxiliary import units
 
 # General imports
 import numpy as np
+from scipy import optimize, integrate
 
 _log10_GRAVITATIONAL_CONSTANT = np.log10(units.GRAVITATIONAL_CONSTANT)
 
@@ -97,3 +98,168 @@ def z_star_fitting_function(background):
         redshift of photon decoupling.
     """
     return 1090.0
+
+
+def hubble_rate(
+    lna: float, h0: float, omega_m: float, omega_k: float, w0: float, wa: float
+) -> np.ndarray:
+    """
+    Analytic integral of the Hubble rate H(z) for the w0wa model, see e.g.
+    Equ.(9) of 1910.09273.
+
+    Parameters
+    ----------
+    lna: float
+        logarithm of the scale factor
+
+    h0: float
+        Hubble parameter at z=0 in km/s/Mpc
+
+    omega_m: float
+        matter density parameter today
+
+    omega_k: float
+        curvature parameter today
+
+    w0: float
+        w_0 of the CPL dark energy parametrisation
+
+    wa: float
+        w_a of the CPL dark energy parametrisation
+
+    Returns
+    -------
+    h_z: float
+        Hubble rate at the time ln(a)
+    """
+    z = np.exp(-lna) - 1
+    h_z = h0 * np.sqrt(
+        omega_m * (1 + z) ** 3
+        + omega_k * (1 + z) ** 2
+        + (1 - omega_m - omega_k)
+        * (1 + z) ** (3 * (1 + w0 + wa))
+        * np.exp(-3 * wa * z / (1 + z))
+    )
+    return h_z
+
+
+def growth_function_ODE_derivative(
+    lna: float,
+    y: np.ndarray,
+    h0: float,
+    omega_m: float,
+    omega_m_geo: float,
+    omega_k: float,
+    w0: float,
+    wa: float,
+) -> np.ndarray:
+    """Calculates the derivative of the growth factor for the differential
+    equation in the format for scipy.integrate.solve_ivp . Equation can be
+    found in 0810.1744, Equ. (10)
+
+    Parameters
+    ----------
+    lna: float
+        logarithm of the scale factor
+
+    y: np.ndarray
+        current step of the ODE
+
+    h0: float
+        Hubble parameter at z=0 in km/s/Mpc
+
+    omega_m: float
+        matter density parameter today, either geometry or growth for the split
+
+    omega_m_geo: float
+        matter density parameter today, in the geometry regime of the split
+
+    omega_k: float
+        curvature parameter today
+
+    w0: float
+        w_0 of the CPL dark energy parametrisation
+
+    wa: float
+        w_a of the CPL dark energy parametrisation
+
+    Returns
+    -------
+    deriv: np.ndarray
+        time derivative of the state y at time ln(a)
+    """
+    deriv = np.zeros([len(y)])
+    z = np.exp(-lna) - 1
+
+    h_rate = hubble_rate(lna, h0, omega_m, omega_k, w0, wa)
+    h_geo = hubble_rate(lna, h0, omega_m_geo, omega_k, w0, wa)
+
+    hPrime_geo = optimize.approx_fprime(
+        lna, hubble_rate, 2e-8, h0, omega_m_geo, omega_k, w0, wa
+    )
+    c1 = 4 + hPrime_geo / h_geo
+    c2 = 3 + hPrime_geo / h_geo - 3 / 2 * omega_m * (1 + z) ** 3 * (h0 / h_rate) ** 2
+
+    deriv[0] = y[1]
+    deriv[1] = -c1[0] * y[1] - c2[0] * y[0]
+    return deriv
+
+
+def growth_function_ODE(background, zs: np.ndarray, omega_m=-1) -> np.ndarray:
+    """Calculates the differential equation using scipy.integrate.solve_ivp .
+    The initial values for the ODE are from Miranda et al. 1712.04289, p. 4
+
+    Parameters
+    ----------
+    background: Background
+        background cosmology calculated e.g. by an Einstein-Boltzmann solver
+
+    zs: numpy.ndarray
+        redshifts
+
+    omega_m: float
+        matter density parameter today, defaults to -1 as an implicit flag for
+        users who want to use this function outside of the growth-geometry split
+
+    Returns
+    -------
+    growth: np.ndarray
+        growth factor G(z) at the redshifts zs
+    """
+
+    lna_vec = np.flip(np.log(1 / (1 + zs)))
+    zinit = 1000
+
+    # Used as a flag, so that the function is usable without specifying omega_m
+    if omega_m == -1:
+        omega_m = background.Omega_cdm0 + background.Omega_b0
+
+    omega_m_geo = background.Omega_cdm0 + background.Omega_b0
+    omega_k = background.Omega_k0
+    w0 = background.w0
+    wa = background.wa
+    h0 = background.H0
+
+    e_z_init = (
+        hubble_rate(np.log(1 / (1 + zinit)), h0, omega_m, omega_k, w0, wa) / 100 / h0
+    )
+
+    y0 = np.ones(2)
+
+    y0[1] = (
+        -6
+        / 5
+        * (1 - omega_m - omega_k)
+        * (1 + zinit) ** (3 * (1 + w0 + wa))
+        * np.exp(-3 * wa * zinit / (1 + zinit))
+        * e_z_init ** (-2)
+    )
+
+    growth = integrate.solve_ivp(
+        growth_function_ODE_derivative,
+        (np.min(lna_vec), np.max(lna_vec)),
+        y0,
+        t_eval=lna_vec,
+        args=(h0, omega_m, omega_m_geo, omega_k, w0, wa),
+    )
+    return np.flip(growth.y[0])

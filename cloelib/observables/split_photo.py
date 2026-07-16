@@ -6,7 +6,7 @@ Both classes are compatible with the Tracer protocol.
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.cosmology.cosmology import Perturbations,Background
+from cloelib.cosmology.cosmology import Perturbations, Background
 from cloelib.auxiliary.math_utils import cached_stacked_simpson, simps
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 

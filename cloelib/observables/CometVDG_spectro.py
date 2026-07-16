@@ -20,6 +20,7 @@ class CometVDG_SpectroPower:
     r"""Class to retrieve $P(k,\mu)$ (including RSD) with the VDG model from COMET."""
 
     NLcode = "COMET"
+    RSDmodel = "VDG_infty"
 
     def __init__(self, background: Background, RSD_parameters: dict, redshift: float):
         r"""Class constructor.

@@ -9,7 +9,6 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations,Background
 from cloelib.auxiliary.math_utils import cached_stacked_simpson, simps
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
-from cloelib.cosmology.split_cosmology import SplitLinearPerturbations
 
 # General imports
 import jax.numpy as np  # type: ignore
@@ -119,7 +118,6 @@ class ShearTracer:
         self,
         perturbations: Perturbations,
         background: Background,
-        splitlinearperturbations: SplitLinearPerturbations,
         dndz: np.ndarray,
         z: np.ndarray,
         nuisance_params: dict,
@@ -142,10 +140,9 @@ class ShearTracer:
             )
         self.perturbations = perturbations
         self.background = background
-        self.splitlinearperturbations = splitlinearperturbations
         self.z = z
         self.nuisance_params = nuisance_params
-        self.Omega_m_IA = self.perturbations.background.Omega_m(0.0)
+        self.Omega_m_IA = self.background.Omega_m(0.0)
         self.Omega_m_lens = Omega_m_lens
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 1
@@ -180,7 +177,7 @@ class ShearTracer:
         """
         Omega_m0 = self.Omega_m_IA
         Hz = self.background.hubble_parameter(z)
-        Dz = self.splitlinearperturbations.growth_factor(z, self.perturbations.k)[:, 1]
+        Dz = self.perturbations.growth_factor(z, self.perturbations.k)[:, 1]
         # TODO discuss whether we want growth factor to output a 1D or a 2D array
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]

@@ -24,6 +24,7 @@ class PBJSpectroPower:
         linear_perturbations: Perturbations,
         nuisance_parameters: dict,
         redshift: float,
+        h_units: bool = False
     ):
         r"""Class constructor.
 
@@ -36,6 +37,7 @@ class PBJSpectroPower:
         self.linear_perturbations = linear_perturbations
         self.background = linear_perturbations.background
         self.parameters = nuisance_parameters
+        self.h_units = h_units
 
         assert np.asarray(redshift).size == 1, "Only a single redshift can be passed."
         assert redshift in linear_perturbations.z, (
@@ -66,10 +68,16 @@ class PBJSpectroPower:
         Returns:
           Pk2d_rsd (np.ndarray): 2D power spectrum from couplings of density and velocity fields
         """
+        #print("pbj_obj.kL: ", pbj_obj.kL)
+        #print("h_units: ", self.h_units)
         plinear = self.linear_perturbations.matter_power_spectrum_cb(
-            0.0, pbj_obj.kL, hubble_units=False, k_hunit=False
+            0.0, pbj_obj.kL, hubble_units=self.h_units, k_hunit=self.h_units
         )
-        pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="1/Mpc")
+        
+        if self.h_units:
+            pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="h/Mpc")
+        else:
+            pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="1/Mpc")
 
         pkmu = pbj_obj.P_kmu_2D(
             self.redshift,
@@ -84,6 +92,8 @@ class PBJSpectroPower:
             IRres=True,
             **self.parameters,
         )
+        #print('within pbj')
+        #print('D: ', self.linear_perturbations.growth_factor_cb(self.redshift, 0.05), 'redshift: ', self.redshift)
 
         return pkmu
 
@@ -108,10 +118,16 @@ class PBJSpectroPower:
         Pk2d: np.ndarray
             2D power spectrum of specific terms
         """
+        #print("pbj_obj.kL: ", pbj_obj.kL)
+        #print("h_units: ", self.h_units)
+
         plinear = self.linear_perturbations.matter_power_spectrum(
-            0.0, pbj_obj.kL, hubble_units=False, k_hunit=False
+            0.0, pbj_obj.kL, hubble_units=self.h_units, k_hunit=self.h_units
         )
-        pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="1/Mpc")
+        if self.h_units:
+            pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="h/Mpc")
+        else:
+            pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="1/Mpc")
 
         f = float(
             np.squeeze(
@@ -135,4 +151,7 @@ class PBJSpectroPower:
             b1=self.parameters["b1"],
         )
         Pk2d = np.array([pkmu_marg_dict[key] for key in term_list])
+        #print('within pbj')
+        #print('D: ', self.linear_perturbations.growth_factor(self.redshift, 0.05), 'redshift: ', self.redshift)
+
         return Pk2d

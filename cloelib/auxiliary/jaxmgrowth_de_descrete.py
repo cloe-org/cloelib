@@ -5,6 +5,15 @@ from scipy.special import hyp2f1
 from scipy.integrate import quad
 
 
+def get_z_bin_jax(z, zbin_edges):
+    """JAX-compatible bin index for use inside jit/odeint."""
+    zbin_edges = jnp.asarray(zbin_edges)
+    bin_idx = jnp.digitize(z, zbin_edges, right=False) - 1
+    last = zbin_edges.shape[0] - 2
+    bin_idx = jnp.clip(bin_idx, 0, last)
+    bin_idx = jnp.where(z >= zbin_edges[-1], last, bin_idx)
+    return bin_idx
+
 @jit
 def interp1d_jax(x, xp, fp):
     """
@@ -240,6 +249,19 @@ def DE_D_derivatives(D, a, a_grid, w_vals, omega0):
 
 
 @jit
+def DE_fde_D_derivatives(D, a, fde_vals, omega0, zbin_edges):
+    """Original version - kept for backward compatibility if needed."""
+    D1, D2 = D
+    omegaL = (1.0 - omega0) * fde_vals[get_z_bin_jax(1.0 / a - 1.0, zbin_edges)]
+    E2 = omega0 / a**3 + omegaL
+    # f'=0 inside bins ⇒ like w_eff = -1
+    dlnH = -1.5 * (omega0 / a**3) / E2
+    Om = (omega0 / a**3) / E2
+    dD1 = D2
+    dD2 = -D2 / a * (3.0 + dlnH) + 1.5 * D1 / a**2 * Om
+    return jnp.array([dD1, dD2])
+
+@jit
 def D_derivatives_LCDM(D, a, omega0):
     """
     Highly optimized version for LCDM (w0=-1, wa=0) that is used with jax.experimental.ode.odeint
@@ -449,7 +471,7 @@ class MGrowth(object):
 
         self.a_start = 1.0e-4
         self.aa = jnp.concatenate([jnp.array([self.a_start]), jnp.array(self.a_arr)])
-        self.aa_interp = jnp.logspace(-5, 0.5, 512)
+        self.aa_interp = jnp.logspace(-5, 1.5, 512)
 
 
 class w_a(MGrowth):
@@ -496,6 +518,29 @@ class w_a(MGrowth):
         f = self.aa * dDda / D
         return D[1:], f[1:]
 
+class fde_a(MGrowth):
+    def __init__(self, CosmoDict=None):
+        super().__init__(CosmoDict)
+
+    def growth_parameters(self, fde_vals, zbin_edges):
+        """
+        Computes growth for piecewise-constant f_DE(z) (constant within redshift bins).
+
+        Args:
+            fde_vals: per-bin f_DE amplitudes, length = len(zbin_edges) - 1
+            zbin_edges: redshift bin edges (ascending)
+        """
+        D_sol = odeint(
+            DE_fde_D_derivatives,
+            jnp.array([self.a_start, 1.0]),
+            self.aa,
+            fde_vals,
+            self.omega0,
+            zbin_edges,
+        )
+        D, dDda = D_sol.T
+        f = self.aa * dDda / D
+        return D[1:], f[1:]
 
 class mu_a(MGrowth):
     def __init__(self, CosmoDict=None):

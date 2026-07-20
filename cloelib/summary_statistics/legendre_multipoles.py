@@ -131,6 +131,7 @@ class LegendreMultipoles:
         background_fiducial: Background,
         parameters: dict,
         nbar: float,
+        h_units: bool = False
     ):
         """Initialize the class instance.
 
@@ -145,7 +146,7 @@ class LegendreMultipoles:
         self.spectro_power = spectro_power
         self.redshift = spectro_power.redshift
         self.background_fiducial = background_fiducial
-        self.ap_distortion = APDistortion(spectro_power.background, background_fiducial)
+        self.ap_distortion = APDistortion(spectro_power.background, background_fiducial, h_units)
 
         self.mu_grid, self.mu_weights = np.polynomial.legendre.leggauss(10)
         self.mu_grid = 0.5 * (self.mu_grid + 1.0)

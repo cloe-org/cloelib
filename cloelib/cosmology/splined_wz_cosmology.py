@@ -1,4 +1,4 @@
-"""Implementation of Background and Perturbation cosmology for binned density of dark energy."""
+"""Implementation of Background and Perturbation cosmology for binned equation of state of dark energy."""
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
@@ -8,9 +8,10 @@ from cloelib.cosmology.cosmology import Perturbations
 # General imports
 import numpy as np
 from typing import Optional
-from scipy.integrate import quad
+from scipy.integrate import quad, cumulative_trapezoid
 from scipy import interpolate
 import jax.numpy as jnp
+from scipy.interpolate import make_interp_spline, CubicSpline
 
 # Cosmology imports
 try:
@@ -27,77 +28,32 @@ except ImportError:
     raise ImportError("HMcode2020emu could not be imported or initialised.")
 
 
-def get_z_bin(z, zbin_edges):
+
+def w_of_z(z, z_i, w_i):
     """
-    Returns the bin index for a given redshift value.
+    Returns the equation of state as a function of redshift.
 
-    Parameters:
-    -----------
-    z : float or array-like
-        Redshift value(s) to bin
-    zbin_edges : array-like
-        Array of bin edges (must be sorted in ascending order)
-
-    Returns:
-    --------
-    bin_index : int or array
-        Bin index (0-indexed). Returns -1 for values below the first edge
-        and len(zbin_edges)-2 for values at or above the last edge.
+    Outside the knot range, w is held constant at the endpoint values:
+    w_i[0] for z < z_i[0] and w_i[-1] for z > z_i[-1].
     """
-    # Check if input is scalar
-    is_scalar = np.isscalar(z)
-
-    # Convert to array for processing
     z = np.asarray(z)
-    zbin_edges = np.asarray(zbin_edges)
-
-    # np.digitize returns the index of the bin (1-indexed)
-    # right=False means left edge inclusive, right edge exclusive
-    bin_idx = np.digitize(z, zbin_edges, right=False) - 1
-
-    # Handle edge cases:
-    # - Values below first edge get -1
-    # - Values at or above last edge get the last bin index
-    bin_idx = np.clip(bin_idx, -1, len(zbin_edges) - 2)
-
-    # For values exactly at the last edge, put them in the last bin
-    if is_scalar:
-        if z >= zbin_edges[-1]:
-            bin_idx = len(zbin_edges) - 2
-    else:
-        bin_idx[z >= zbin_edges[-1]] = len(zbin_edges) - 2
-
-    # Return scalar if input was scalar, otherwise return array
-    return bin_idx.item() if is_scalar else bin_idx
+    #spl_i = make_interp_spline(z_i, w_i)
+    spl_i = CubicSpline(z_i, w_i)
+    return spl_i(np.clip(z, z_i[0], z_i[-1]))
 
 
-def get_de_density(z, zbin_edges, fde_i):
+def get_de_density(z, z_i, w_i):
     """
     Optimized version using pre-computation and vectorization.
     """
     z = np.asarray(z)
-    bins = get_z_bin(z, zbin_edges)
-
-    # Vectorized computation
-    # For each z, get the product from cumulative products
-    # Use np.maximum to handle negative bin indices
-    bin_idx_safe = np.maximum(0, bins)
+    w_grid = np.asarray(w_of_z(z, z_i, w_i), dtype=float)
+    de_integrand = (1.0 + w_grid) / (1.0 + z)
+    de_int = cumulative_trapezoid(de_integrand, z, initial=0.0)
+    return np.exp(3.0 * de_int)
 
 
-    # Compute final density
-    rho = np.array([fde_i[bin_idx_safe_i] for bin_idx_safe_i in bin_idx_safe])
-
-    return rho
-
-
-def get_de_density_i(z, zbin_edges, fde_i):
-    bins = get_z_bin(z, zbin_edges)
-    # Handle bins as scalar (get_z_bin returns scalar for scalar input)
-    bin_idx = bins if isinstance(bins, (int, np.integer)) else bins[0]
-    return fde_i[bin_idx]
-
-
-class DEBinnedDensityBackground:
+class DESplinedEoSBackground:
     """Beyond w0wa-background cosmological calculations."""
 
     def __init__(
@@ -109,9 +65,8 @@ class DEBinnedDensityBackground:
         As: float,
         ns: float,
         mnu: float,
-        zbin_edges: np.ndarray,  # zbin_widths: np.ndarray, zbin_centers: np.ndarray,
-        fde_i: np.ndarray,
-        binning: str = "step",
+        z_i: np.ndarray, 
+        w_i: np.ndarray,
     ) -> None:
         """
         Initialize the CAMBBackground instance with cosmological parameters.
@@ -124,9 +79,8 @@ class DEBinnedDensityBackground:
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
             mnu (float): Total sum of neutrino mass in [eV].
-            zbin_edges (np.ndarray): Array of bin edges for the redshift bins.
-            fde_i (np.ndarray): Array of density of dark energy parameters for the redshift bins.
-            binning (str): Type of binning used for the redshift bins.
+            z_i (np.ndarray): Array of redshift values for the spline.
+            w_i (np.ndarray): Array of equation of state parameters for the redshift bins.
         """
         self.H0 = H0
         self.h = self.H0 / 100
@@ -137,10 +91,8 @@ class DEBinnedDensityBackground:
         self.ns = ns
         self.mnu = mnu
         self.Omega_m0 = Omega_cdm0 + Omega_b0 + self.mnu / 93.14 / (self.h) ** 2
-        self.zbin_edges = zbin_edges
-        self.zbin_widths = np.diff(zbin_edges)
-        self.zbin_centers = 0.5 * (zbin_edges[1:] + zbin_edges[:-1])
-        self.fde_i = fde_i
+        self.z_i = z_i
+        self.w_i = w_i
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
@@ -154,7 +106,7 @@ class DEBinnedDensityBackground:
             np.ndarray: Hubble parameter values at specified redshifts.
         """
         DE_z_grid = get_de_density(
-            zs, self.zbin_edges, self.fde_i
+            zs, self.z_i, self.w_i
         )
         E_z_grid = np.sqrt(
             self.Omega_m0 * pow(1.0 + zs, 3) + (1 - self.Omega_m0) * DE_z_grid
@@ -177,29 +129,20 @@ class DEBinnedDensityBackground:
         Returns:
             np.ndarray: Comoving distance values.
         """
-
-        def r_z_int(z):
-            return 1.0 / np.sqrt(
-                self.Omega_m0 * pow(1.0 + z, 3)
-                + (1 - self.Omega_m0)
-                * get_de_density_i(
-                    z, self.zbin_edges, self.fde_i
-                )
-            )
-
-        zz_ = np.hstack(([0.0], zs)) if zs[0] != 0.0 else zs
-        r_z_grid = (
-            np.array(
-                [
-                    quad(r_z_int, zz_[i], zz_[i + 1])[0] / self.H0
-                    for i in range(len(zz_) - 1)
-                ]
-            )
+        prepend_z0 = zs[0] != 0.0
+        zz_ = np.hstack(([0.0], zs)) if prepend_z0 else zs
+        DE_z_grid = get_de_density(zz_, self.z_i, self.w_i)
+        E_z_grid = np.sqrt(
+            self.Omega_m0 * pow(1.0 + zz_, 3) + (1 - self.Omega_m0) * DE_z_grid
+        )
+        # Dimensionless integral of c/H0 / E(z); convert to Mpc
+        r_z_total = (
+            cumulative_trapezoid(1.0 / E_z_grid, zz_, initial=0.0)
             * SPEED_OF_LIGHT
             / 1000
-        )  # Mpc
-        r_z_total = np.cumsum(r_z_grid)
-        return r_z_total
+            / self.H0
+        )
+        return r_z_total[1:] if prepend_z0 else r_z_total
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -243,13 +186,8 @@ class DEBinnedDensityBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        if np.isscalar(zs):
-            DE_z_grid = get_de_density_i(
-                zs, self.zbin_edges, self.fde_i
-            )
-        else:
-            DE_z_grid = get_de_density(
-                zs, self.zbin_edges, self.fde_i
+        DE_z_grid = get_de_density(
+                zs, self.z_i, self.w_i
             )
         E2_z_grid = self.Omega_m0 * pow(1.0 + zs, 3) + (1 - self.Omega_m0) * DE_z_grid
         return self.Omega_m0 * pow(1.0 + zs, 3) / E2_z_grid
@@ -264,13 +202,8 @@ class DEBinnedDensityBackground:
         Returns:
             np.ndarray: Baryonic density values at specified redshifts.
         """
-        if np.isscalar(zs):
-            DE_z_grid = get_de_density_i(
-                zs, self.zbin_edges, self.fde_i
-            )
-        else:
-            DE_z_grid = get_de_density(
-                zs, self.zbin_edges, self.fde_i
+        DE_z_grid = get_de_density(
+                zs, self.z_i, self.w_i
             )
         E2_z_grid = self.Omega_m0 * pow(1.0 + zs, 3) + (1 - self.Omega_m0) * DE_z_grid
         return self.Omega_b0 * pow(1.0 + zs, 3) / E2_z_grid
@@ -289,11 +222,11 @@ class DEBinnedDensityBackground:
         return rdrag
 
 
-class DEBinnedDensityLinearPerturbations:
+class DESplinedEoSLinearPerturbations:
     """Class for linear perturbations using MGrowth, inheriting from Perturbations parent class."""
 
     def __init__(
-        self, background: DEBinnedDensityBackground, base_linear_perturbations: Perturbations
+        self, background: DESplinedEoSBackground, base_linear_perturbations: Perturbations
     ) -> None:
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
         # must be binned-DE
@@ -321,15 +254,12 @@ class DEBinnedDensityLinearPerturbations:
         )  # in 1/Mpc
         self.k_len = len(self.k)
 
-        self.zbin_edges = background.zbin_edges
-        self.zbin_widths = background.zbin_widths
-        self.zbin_centers = background.zbin_centers
-        self.fde_i = background.fde_i
+        self.z_i = background.z_i
+        self.w_i = background.w_i
         self.a_grid = jnp.linspace(1e-4, 1.0, 512)
         z_grid = 1.0 / np.linspace(1e-4, 1.0, 512) - 1.0
-        bins = get_z_bin(z_grid, background.zbin_edges)
-        fde_vals = [self.fde_i[bins_i] for bins_i in bins]
-        self.fde_vals = jnp.array(fde_vals)
+        w_vals = w_of_z(z_grid, background.z_i, background.w_i)
+        self.w_vals = jnp.array(w_vals)
 
         # Build background dict for MGrowth
         background_mgrowth = {
@@ -344,16 +274,14 @@ class DEBinnedDensityLinearPerturbations:
 
     def _compute_growth(self, bg_dict):
         """Handle model-specific MGrowth and LCDM growth evaluation."""
-        cosmo = mgrowth.fde_a(bg_dict)
-        # growth expects per-bin amplitudes (len = n_bins), not the a-grid samples
-        D_raw, f_raw = cosmo.growth_parameters(
-            jnp.asarray(self.fde_i), jnp.asarray(self.zbin_edges)
-        )
+        # D_mg, f_mg = self._compute_growth_w_interp()
+        cosmo = mgrowth.w_a(bg_dict)
+        D_raw, f_raw = cosmo.growth_parameters(self.a_grid, self.w_vals, use_fast=False)
         D_mg, f_mg = (
             np.repeat(D_raw[::-1, None], self.k_len, axis=1),
             np.repeat(f_raw[::-1, None], self.k_len, axis=1),
         )
-
+        # D_mg, f_mg = D_raw[::-1], f_raw[::-1]
 
         # Get LCDM growth and construct array over k to be applied as normalisation
         base_cosmo = mgrowth.LCDM(bg_dict)
@@ -443,12 +371,12 @@ class DEBinnedDensityLinearPerturbations:
         return self.base.sigma8_0() * Dz_div_Dlcdmz0
 
 
-class DEBinnedDensityNonlinearPerturbations:
+class DESplinedEoSNonlinearPerturbations:
     """Class for nonlinear (pseudo) perturbations using MGrowth, inheriting from Perturbations parent class."""
 
     def __init__(
         self,
-        background: DEBinnedDensityBackground,
+        background: DESplinedEoSBackground,
         linearperturbations: Perturbations,
         redshifts: np.ndarray,
         log10TAGN: Optional[float] = None,

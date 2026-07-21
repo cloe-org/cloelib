@@ -254,7 +254,7 @@ class DEBinnedEoSBackground:
         Returns:
             np.ndarray: Angular diameter distance values.
         """
-        raise self.transverse_comoving_distance(zs) / (1 + zs)
+        return self.transverse_comoving_distance(zs) / (1 + zs)
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """

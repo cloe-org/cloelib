@@ -40,6 +40,16 @@ def interp1d_jax(x, xp, fp):
 
 
 @jit
+def interp1d_deriv_jax(x, xp, fp):
+    """Local slope of the piecewise-linear interpolant used by interp1d_jax."""
+    n = xp.shape[0]
+    indices = jnp.clip(jnp.searchsorted(xp, x) - 1, 0, n - 2)
+    dx = xp[indices + 1] - xp[indices]
+    dx_safe = jnp.where(dx == 0, 1.0, dx)
+    return (fp[indices + 1] - fp[indices]) / dx_safe
+
+
+@jit
 def trapz_jax(y, x):
     """
     JAX-compatible trapezoidal integration.
@@ -256,6 +266,24 @@ def DE_fde_D_derivatives(D, a, fde_vals, omega0, zbin_edges):
     E2 = omega0 / a**3 + omegaL
     # f'=0 inside bins ⇒ like w_eff = -1
     dlnH = -1.5 * (omega0 / a**3) / E2
+    Om = (omega0 / a**3) / E2
+    dD1 = D2
+    dD2 = -D2 / a * (3.0 + dlnH) + 1.5 * D1 / a**2 * Om
+    return jnp.array([dD1, dD2])
+
+@jit
+def DE_fde_D_derivatives_spline(D, a, fde_vals, omega0, a_grid):
+    """Growth ODE for interpolated f_DE(a), including df_DE/da in dlnH/dlna.
+
+    With E^2 = Omega_m0/a^3 + (1-Omega_m0) f_DE(a),
+    dlnH/dlna = -1.5 (Omega_m0/a^3)/E^2 + 0.5 a (1-Omega_m0) f_DE'(a)/E^2.
+    """
+    D1, D2 = D
+    fde = interp1d_jax(a, a_grid, fde_vals)
+    dfde_da = interp1d_deriv_jax(a, a_grid, fde_vals)
+    omegaL = (1.0 - omega0) * fde
+    E2 = omega0 / a**3 + omegaL
+    dlnH = -1.5 * (omega0 / a**3) / E2 + 0.5 * a * (1.0 - omega0) * dfde_da / E2
     Om = (omega0 / a**3) / E2
     dD1 = D2
     dD2 = -D2 / a * (3.0 + dlnH) + 1.5 * D1 / a**2 * Om
@@ -537,6 +565,30 @@ class fde_a(MGrowth):
             fde_vals,
             self.omega0,
             zbin_edges,
+        )
+        D, dDda = D_sol.T
+        f = self.aa * dDda / D
+        return D[1:], f[1:]
+
+class fde_a_spline(MGrowth):
+    def __init__(self, CosmoDict=None):
+        super().__init__(CosmoDict)
+
+    def growth_parameters(self, fde_vals, a_grid):
+        """
+        Computes growth for spline-interpolated f_DE(z).
+
+        Args:
+            fde_vals: f_DE(z) values on a_grid
+            a_grid: scale factor grid for f_DE(z) interpolation
+        """
+        D_sol = odeint(
+            DE_fde_D_derivatives_spline,
+            jnp.array([self.a_start, 1.0]),
+            self.aa,
+            fde_vals,
+            self.omega0,
+            a_grid,
         )
         D, dDda = D_sol.T
         f = self.aa * dDda / D

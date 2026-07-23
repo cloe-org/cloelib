@@ -51,6 +51,7 @@ baccoemu = ["baccoemu"]
 hiclassy = ["hiclassy==3.3.4"]
 emantis = ["emantis>=1.2.1"]
 pbjcosmo = ["pbjcosmo"]
+mochi_classy = ["mochi_class_public @ git+https://github.com/mcataneo/mochi_class_public.git"]
 
 [tool.hatch.version]
 source = "vcs"

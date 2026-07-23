@@ -49,6 +49,7 @@ class mochiCLASSBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        alpha_s: float = 0.0,
         **kwargs,
     ) -> None:
         """
@@ -61,6 +62,7 @@ class mochiCLASSBackground:
             Omega_k0 (float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
+            alpha_s (float): Running of the scalar spectral index (d ns / d ln k).
             mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
@@ -81,6 +83,7 @@ class mochiCLASSBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
+        self.alpha_s = alpha_s
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = (
@@ -111,6 +114,7 @@ class mochiCLASSBackground:
         self.interface_args["CLASSparams"]["Omega_k"] = self.Omega_k0
         self.interface_args["CLASSparams"]["n_s"] = self.ns
         self.interface_args["CLASSparams"]["A_s"] = self.As
+        self.interface_args["CLASSparams"]["alpha_s"] = self.alpha_s
 
         # Set neutrino parameters
         if self.N_mnu > 0:
@@ -224,9 +228,7 @@ class mochiCLASSBackground:
             elif self.mg_background_model == "wowa":
                 mochiclass_stable_basis_dict = {
                     "Omega_Lambda": 0,
-                    "Omega_scf": 0,
-                    # "Omega_fld": 0.0,
-                    # "Omega_smg": 0.0,
+                    "Omega_smg": 0.0,
                     "use_ppf": "yes",
                     "c_gamma_over_c_fld": 0.4,
                     "fluid_equation_of_state": "CLP",
@@ -437,6 +439,19 @@ class mochiCLASSBackground:
         """
         return self.results.Om_m(zs)
 
+    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values (no neutrinos).
+        """
+
+        return self.results.Om_b(zs) + self.results.Om_cdm(zs)
+
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the baryon density as a function of redshift.
@@ -447,7 +462,7 @@ class mochiCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return np.array([self.results.Om_b(z) for z in zs])
+        return self.results.Om_b(zs)
 
     def Om_smg(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -500,6 +515,11 @@ class mochiCLASSBackground:
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering in Mpc."""
         return self.results.rs_drag()
+
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
+        return self.results.get_current_derived_parameters(["z_star"])["z_star"]
 
 
 ####################################
@@ -658,7 +678,7 @@ class mochiCLASSLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -689,6 +709,7 @@ class mochiCLASSNonLinearPerturbations:
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         hmcode_version: Optional[str] = None,
+        log10TAGN: Optional[float] = None,
     ):
         """Initialize the CLASSNonLinearPerturbation instance.
 
@@ -700,6 +721,7 @@ class mochiCLASSNonLinearPerturbations:
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
             hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
+            log10TAGN (Optional[float]): HMCode baryonic feedback log_10_T_AGN parameter. Defaults to None.
         """
         self.background = background
         self.z = redshifts
@@ -722,10 +744,16 @@ class mochiCLASSNonLinearPerturbations:
             self.interface_args["CLASSparams"]["non_linear"] = "none"
         elif hmcode_version is not None:
             self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
+            if hmcode_version == "2020_baryonic_feedback":
+                try:
+                    self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
+                except KeyError:
+                    raise KeyError(
+                        "log10TAGN is required for HMcode 2020 baryonic feedback model."
+                    )
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
         self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
         try:
@@ -828,12 +856,12 @@ class mochiCLASSNonLinearPerturbations:
 
     def growth_rate(self) -> np.ndarray:
         """
-        Calculate the growth rate f(z).
+        Calculate the scale-dependent growth rate f(z).
 
         Returns:
-            (np.ndarray): Scale-independent growth rate f(z)
+            (np.ndarray): Scale-dependent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
     def sigma8_0(self) -> float:

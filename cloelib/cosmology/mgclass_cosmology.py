@@ -7,6 +7,10 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 # General imports
 import numpy as np
 import copy
+import ctypes
+import os
+import sys
+from contextlib import contextmanager
 from typing import Optional, Union, Sequence
 import warnings
 
@@ -15,6 +19,22 @@ try:
     from mgclassy import Class  # type: ignore
 except ImportError as e:
     raise ImportError("mgclassy could not be imported.") from e
+
+
+@contextmanager
+def _suppress_native_stdout():
+    """Suppress unconditional stdout writes from the MGCLASS C extension."""
+    stdout_fd = sys.stdout.fileno()
+    saved_fd = os.dup(stdout_fd)
+    devnull_fd = os.open(os.devnull, os.O_WRONLY)
+    try:
+        os.dup2(devnull_fd, stdout_fd)
+        yield
+    finally:
+        ctypes.CDLL(None).fflush(None)
+        os.dup2(saved_fd, stdout_fd)
+        os.close(saved_fd)
+        os.close(devnull_fd)
 
 
 class MGCLASSBackground:
@@ -132,7 +152,8 @@ class MGCLASSBackground:
         # Initialize MGCLASS
         self.results = Class()
         self.results.set(self.interface_args["MGCLASSparams"])
-        self.results.compute()
+        with _suppress_native_stdout():
+            self.results.compute()
 
     @property
     def _interface_args(self) -> dict:
@@ -369,7 +390,8 @@ class MGCLASSLinearPerturbations:
         self.interface_args["MGCLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["MGCLASSparams"])
-        self.results.compute()
+        with _suppress_native_stdout():
+            self.results.compute()
         self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
     @property
@@ -544,7 +566,8 @@ class MGCLASSNonLinearPerturbations:
         self.interface_args["MGCLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["MGCLASSparams"])
-        self.results.compute()
+        with _suppress_native_stdout():
+            self.results.compute()
         self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
     def matter_power_spectrum(

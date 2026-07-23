@@ -46,11 +46,15 @@ jobs:
           use-mamba: true
       - name: Install cloelib and extras from pyproject.toml
         run: |
-          mamba run -n $ENV_NAME python -m pip install --upgrade pip
-          mamba run -n $ENV_NAME python -m pip install ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy]"
-      - name: Install external prereq using pip
-        run: |
-          pip install mgclassy==2.9.4.5
+          # MGCLASS 2.9.4.5 contains legacy C declarations. Use the system
+          # compiler (GNU C17) while retaining the Mamba environment's Python.
+          ENV_PREFIX="$(mamba run -n "$ENV_NAME" python -c 'import sys; print(sys.prefix)')"
+          export PATH="/usr/bin:/bin:${ENV_PREFIX}/bin:${PATH}"
+          export CC=/usr/bin/gcc
+          export CFLAGS="-std=gnu17 ${CFLAGS:-}"
+          "${ENV_PREFIX}/bin/python" -m pip install --upgrade pip
+          "${ENV_PREFIX}/bin/python" -m pip install \
+            ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy,mgclassy]"
       - name: Run tests
         run: mamba run -n $ENV_NAME python -m pytest
   build:

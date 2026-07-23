@@ -438,6 +438,26 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
+### hi_classPerturbations
+
+Interfaces with [hi_class](https://github.com/emiliobellini/hi_class_public).
+
+**Location**: `cloelib/cosmology/hi_class_cosmology.py`
+
+**When to use**: hi_class-specific features, comparison studies
+
+**Example**:
+
+```python
+from cloelib.cosmology.hi_class_cosmology import hi_classBackground, hi_classPerturbations
+
+bg = hi_classBackground(...)
+pert = hi_classPerturbations(
+    background=bg,
+    # other parameters
+)
+```
+
 ### EmantisPerturbations
 
 Accurate and fast emulator of the nonlinear matter power spectrum in modified gravity using [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis).
@@ -451,6 +471,7 @@ Accurate and fast emulator of the nonlinear matter power spectrum in modified gr
 - Fast predictions of the nonlinear matter power spectrum in f(R) gravity;
 - Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;
 - Limited to the Hu & Sawicki model (n=1) with fR0 as free parameter;
+  > > > > > > > main
 
 ## Adding Your Own Perturbations Implementation
 
@@ -751,7 +772,7 @@ def matter_power_spectrum(self, zs, ks):
 
 Now that you have a grounding in Perturbations, explore:
 
-- [Observables](observables.md) – Connect structure to survey measurements
-- [Summary Statistics](summary_statistics.md) – Compute final data products
+- [Observables](observables/index.md) – Connect structure to survey measurements
+- [Summary Statistics](summary_statistics/index.md) – Compute final data products
 - [Background](background.md) – Review the foundation
 - [API Reference](../api.md) – Full technical details

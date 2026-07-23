@@ -31,7 +31,7 @@ def mochiCLASS_background_instance(scope="module"):
         N_mnu=0,
         mg_stable_basis_on=False,
         stable_MG_dict={},
-        mg_background_model='lcdm'
+        mg_background_model="lcdm",
     )
     return mochiCLASS_instance
 
@@ -168,7 +168,7 @@ def test_set_neutrino_masses_single_float():
         N_mnu=1,
         mg_stable_basis_on=False,
         stable_MG_dict={},
-        mg_background_model='lcdm'
+        mg_background_model="lcdm",
     )
     assert bg._set_neutrino_masses() == "0.1"
 
@@ -188,7 +188,7 @@ def test_set_neutrino_masses_degenerate():
         N_mnu=3,
         mg_stable_basis_on=False,
         stable_MG_dict={},
-        mg_background_model='lcdm'
+        mg_background_model="lcdm",
     )
     assert bg._set_neutrino_masses() == "0.1,0.1,0.1"
 
@@ -208,7 +208,7 @@ def test_set_neutrino_masses_array():
         N_mnu=2,
         mg_stable_basis_on=False,
         stable_MG_dict={},
-        mg_background_model='lcdm'
+        mg_background_model="lcdm",
     )
     assert bg._set_neutrino_masses() == "0.05,0.03"
 
@@ -228,7 +228,7 @@ def test_set_neutrino_masses_sequence():
         N_mnu=3,
         mg_stable_basis_on=False,
         stable_MG_dict={},
-        mg_background_model='lcdm'
+        mg_background_model="lcdm",
     )
     assert bg._set_neutrino_masses() == "0.02,0.04,0.06"
 
@@ -249,7 +249,7 @@ def test_set_neutrino_masses_wrong_length():
             N_mnu=3,
             mg_stable_basis_on=False,
             stable_MG_dict={},
-            mg_background_model='lcdm'
+            mg_background_model="lcdm",
         )
         bg._set_neutrino_masses()
 
@@ -270,7 +270,7 @@ def test_set_neutrino_masses_wrong_type():
             N_mnu=1,
             mg_stable_basis_on=False,
             stable_MG_dict={},
-            mg_background_model='lcdm'
+            mg_background_model="lcdm",
         )
         bg._set_neutrino_masses()
 
@@ -354,7 +354,9 @@ def test_mochiCLASS_angular_diameter_distance(mochiCLASS_background_instance, zs
 
 
 @pytest.fixture
-def mochiCLASS_perturbation_instances(mochiCLASS_background_instance, zs, scope="module"):
+def mochiCLASS_perturbation_instances(
+    mochiCLASS_background_instance, zs, scope="module"
+):
     """Fixture to create the Linear instance of mochiCLASSPerturbations."""
     mochiCLASS_lin = mochiCLASSLinearPerturbations(
         background=mochiCLASS_background_instance, redshifts=zs
@@ -381,7 +383,9 @@ def ks(scope="module"):
 
 
 @pytest.mark.parametrize("key", ["Linear"])
-def test_mochiCLASS_matter_power_spectrum(mochiCLASS_perturbation_instances, key, zs, ks):
+def test_mochiCLASS_matter_power_spectrum(
+    mochiCLASS_perturbation_instances, key, zs, ks
+):
     """Test mochiCLASS matter_power_spectrum."""
     mochiCLASS_instance = mochiCLASS_perturbation_instances[key]
     assert hasattr(mochiCLASS_instance, "matter_power_spectrum")
@@ -413,6 +417,7 @@ def test_mochiCLASS_growth_rate(mochiCLASS_perturbation_instances, key, zs, ks):
     result = mochiCLASS_instance.growth_rate()
     assert isinstance(result, np.ndarray)
     assert result.ndim == 1
+
 
 def test_Omega_cb_returns_Om_b_plus_Om_cdm(mochiCLASS_background_instance):
     """
@@ -551,4 +556,3 @@ def test_matter_power_spectrum_cb_with_neutrinos(mochiCLASS_lin_perturb_instance
         assert np.isclose(pk_cb[i, j], pk_direct, rtol=1e-12, atol=1e-15), (
             f"Mismatch at z={z_test}, k={k_test}"
         )
-

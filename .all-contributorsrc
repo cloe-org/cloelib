@@ -649,6 +649,15 @@
         "review",
         "mentoring"
       ]
+    },
+    {
+      "login": "ytchang05",
+      "name": "Yu-Ting",
+      "avatar_url": "https://avatars.githubusercontent.com/u/67809413?v=4",
+      "profile": "https://github.com/ytchang05",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }

@@ -639,6 +639,16 @@
         "code",
         "ideas"
       ]
+    },
+    {
+      "login": "chiaradeleo1",
+      "name": "Chiara De Leo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/151924166?v=4",
+      "profile": "https://github.com/chiaradeleo1",
+      "contributions": [
+        "review",
+        "mentoring"
+      ]
     }
   ]
 }

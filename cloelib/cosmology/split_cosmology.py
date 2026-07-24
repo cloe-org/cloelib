@@ -12,13 +12,13 @@ class SplitLinearPerturbations:
     def __init__(
         self,
         background: Background,
-        omega_m_growth: float,
+        Omega_m_growth: float,
         redshifts: np.ndarray,
         lin_perturbations: Perturbations,
     ):
         """Initialise SplitLinearPerturbations."""
         self.background = background
-        self.omega_m_growth = omega_m_growth
+        self.Omega_m_growth = Omega_m_growth
         self.z = redshifts
         self.kmax = 100
         self.lin_perturbations = lin_perturbations
@@ -59,11 +59,11 @@ class SplitLinearPerturbations:
             raise ValueError("This CLASS method does not yet support h-units")
         pk_linear_EBS = self.lin_perturbations.matter_power_spectrum(zs, ks)  # type:ignore[union-attr]
 
-        omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
+        Omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
 
         # Compute the growth factor
-        g_z_geo = growth_function_ODE(self.background, zs, omega_m_geo)
-        g_z_growth = growth_function_ODE(self.background, zs, self.omega_m_growth)
+        g_z_geo = growth_function_ODE(self.background, zs, Omega_m_geo)
+        g_z_growth = growth_function_ODE(self.background, zs, self.Omega_m_growth)
 
         self.pk_linear = np.zeros_like(pk_linear_EBS)
 
@@ -109,11 +109,11 @@ class SplitLinearPerturbations:
 
         pk_linear_EBS_cb = self.lin_perturbations.matter_power_spectrum_cb(zs, ks)  # type:ignore[union-attr]
 
-        omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
+        Omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
 
         # Compute the growth factor
-        g_z_geo = growth_function_ODE(self.background, zs, omega_m_geo)
-        g_z_growth = growth_function_ODE(self.background, zs, self.omega_m_growth)
+        g_z_geo = growth_function_ODE(self.background, zs, Omega_m_geo)
+        g_z_growth = growth_function_ODE(self.background, zs, self.Omega_m_growth)
 
         self.pk_linear_cb = np.zeros_like(pk_linear_EBS_cb)
 
@@ -152,7 +152,7 @@ class SplitLinearPerturbations:
             The growth factor at the specified redshift and wavenumber.
         """
         d_z_k = np.zeros([len(zs), len(ks)])
-        g_ode = growth_function_ODE(self.background, zs, self.omega_m_growth)
+        g_ode = growth_function_ODE(self.background, zs, self.Omega_m_growth)
         for i in range(len(ks)):
             d_z_k[:, i] = g_ode / (g_ode[0] * (1 + zs))
 

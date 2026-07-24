@@ -225,6 +225,7 @@ class HMemuNonLinearPerturbations:
 
         self.z = ensure_z_zero_included(redshifts[redshifts <= redshift_max])
         self.background = background
+        self.linearperturbations = linearperturbations
 
         self.params_hm_emu = {
             "omega_cdm": self.background.Omega_cdm0,

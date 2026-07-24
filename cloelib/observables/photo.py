@@ -335,6 +335,7 @@ class PositionsTracer:
         ]
         self.include_rsd = include_rsd
         self.use_Pcb = use_Pcb
+
         # Using dict.get so I can provide a default since lax has to compile every branch of the conditional
         def per_bin_case():
             bias_array = np.asarray(

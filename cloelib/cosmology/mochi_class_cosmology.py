@@ -669,16 +669,19 @@ class mochiCLASSLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(self, k) -> np.ndarray:
         """
-        Calculate the growth rate f(z).
+        Calculate the scale-dependent growth rate f(z).
 
-        Returns
+        Args:
+            k (float): Wavenumber at which to evaluate the growth rate.
+
+        Returns:
         -------
         np.ndarray
-            Scale-independent growth rate f(z)
+            Scale-dependent growth rate f(z)
         """
-        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -742,6 +745,9 @@ class mochiCLASSNonLinearPerturbations:
         self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
         if background.mg_stable_basis_on:
             self.interface_args["CLASSparams"]["non_linear"] = "none"
+            print(
+                "Non-linear corrections are not yet implemented for modified gravity in mochi_CLASS. Setting non_linear to 'none'."
+            )
         elif hmcode_version is not None:
             self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
             if hmcode_version == "2020_baryonic_feedback":
@@ -854,14 +860,19 @@ class mochiCLASSNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(self, k) -> np.ndarray:
         """
         Calculate the scale-dependent growth rate f(z).
 
+        Args:
+            k (float): Wavenumber at which to evaluate the growth rate.
+
         Returns:
-            (np.ndarray): Scale-dependent growth rate f(z)
+        -------
+        np.ndarray
+            Scale-dependent growth rate f(z)
         """
-        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
     def sigma8_0(self) -> float:

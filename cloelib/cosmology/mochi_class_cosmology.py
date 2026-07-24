@@ -669,12 +669,12 @@ class mochiCLASSLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self, k) -> np.ndarray:
+    def growth_rate(self, k=1.0) -> np.ndarray:
         """
         Calculate the scale-dependent growth rate f(z).
 
         Args:
-            k (float): Wavenumber at which to evaluate the growth rate.
+            k (float): Wavenumber at which to evaluate the growth rate. Defaults to 1.0 (scale-independent).
 
         Returns:
         -------
@@ -860,12 +860,12 @@ class mochiCLASSNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self, k) -> np.ndarray:
+    def growth_rate(self, k=1.0) -> np.ndarray:
         """
         Calculate the scale-dependent growth rate f(z).
 
         Args:
-            k (float): Wavenumber at which to evaluate the growth rate.
+            k (float): Wavenumber at which to evaluate the growth rate. Defaults to 1.0 (scale-independent).
 
         Returns:
         -------

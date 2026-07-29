@@ -1,8 +1,6 @@
 """
 Module with two classes for gravitational-wave observables: GW number counts and
 GW weak lensing.
-
-Both classes are compatible with the Tracer protocol.
 """
 
 # cloelib imports
@@ -74,16 +72,13 @@ class GWNumberCountsTracer:
             self.nuisance_params[f"dz_gw_{i + 1}"] for i in range(dndz.shape[0])
         ]
         self.width_gw_i = [
-            self.nuisance_params[f"width_gw_{i + 1}"]
-            for i in range(dndz.shape[0])
+            self.nuisance_params[f"width_gw_{i + 1}"] for i in range(dndz.shape[0])
         ]
         self.dndz = dndz
         # Correct dndz for width_gw.
         self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_gw_i)
         # Correct dndz_stretched for dz_gw.
-        self.dndz_shifted = shift_dndz_jax(
-            self.dndz_stretched, z, self.dz_gw_i
-        )
+        self.dndz_shifted = shift_dndz_jax(self.dndz_stretched, z, self.dz_gw_i)
         self.flags = {"gw_bias_model": gw_bias_model}
         self.n_z_bins = dndz.shape[0]
 
@@ -110,9 +105,7 @@ class GWNumberCountsTracer:
             z_nz_max = jax.vmap(
                 lambda i: lx.dynamic_index_in_dim(self.z, i, keepdims=False)
             )(index_max_nz)
-            return interpax.interp1d(
-                self.z, z_nz_max, bias_array, extrap=True
-            )
+            return interpax.interp1d(self.z, z_nz_max, bias_array, extrap=True)
 
         def poly_case():
             poly_order = 3
@@ -139,41 +132,6 @@ class GWNumberCountsTracer:
         index = np.argwhere(conditions, size=1).squeeze()
 
         self.bias_array = [per_bin_case, per_bin_int_case, poly_case][index]()
-
-    def _window_integrand(self, z, zprime) -> np.ndarray:
-        r"""
-        Window integrand.
-
-        Returns the shifted GW source redshift distribution evaluated at
-        `zprime`. This is the source-distribution part of the GW number-count
-        window, analogous to the density part of `PositionsTracer`.
-
-        Parameters:
-          z (float): Redshift at which kernel is being evaluated
-          zprime (float): Redshift parameter that will be integrated over
-
-        Returns:
-          window_integrand (np.ndarray):
-        """
-        del z
-        return np.asarray(
-            [np.interp(zprime, self.z, dndz_i) for dndz_i in self.dndz_shifted]
-        )
-
-    def _get_prefactor(self, ells) -> np.ndarray:
-        r"""
-        Compute the needed prefactor in Limber approximation.
-
-        GW number counts are scalar observables, so no spin-dependent shear
-        prefactor is applied.
-
-        Parameters:
-          ells (np.ndarray): Multipoles at which the prefactor is evaluated
-
-        Returns:
-          prefactor (np.ndarray):
-        """
-        return np.ones_like(ells)
 
     def get_window_number_counts(self, z) -> np.ndarray:
         r"""GW number-count window function.
@@ -290,56 +248,14 @@ class GWWeakLensingTracer:
             self.nuisance_params[f"dz_gw_{i + 1}"] for i in range(dndz.shape[0])
         ]
         self.width_gw_i = [
-            self.nuisance_params[f"width_gw_{i + 1}"]
-            for i in range(dndz.shape[0])
+            self.nuisance_params[f"width_gw_{i + 1}"] for i in range(dndz.shape[0])
         ]
         self.n_z_bins = dndz.shape[0]
         self.dndz = dndz
         # Correct dndz for width_gw.
         self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_gw_i)
         # Correct dndz_stretched for dz_gw.
-        self.dndz_shifted = shift_dndz_jax(
-            self.dndz_stretched, z, self.dz_gw_i
-        )
-
-    def _window_integrand(self, z, zprime) -> np.ndarray:
-        r"""
-        Window integrand.
-
-        Returns the source distribution times the lensing geometry entering the
-        GW weak-lensing efficiency. This is analogous to the geometric
-        efficiency used by `ShearTracer`, but for the scalar GW amplitude
-        lensing observable.
-
-        Parameters:
-          z (float): Redshift at which kernel is being evaluated
-          zprime (float): Redshift parameter that will be integrated over
-
-        Returns:
-          window_integrand (np.ndarray):
-        """
-        dndz_primes = np.asarray(
-            [np.interp(zprime, self.z, dndz_i) for dndz_i in self.dndz_shifted]
-        )
-        chi = self.background.comoving_distance(np.asarray([z]))[0]
-        chi_prime = self.background.comoving_distance(np.asarray([zprime]))[0]
-        geometry = np.where(zprime > z, (chi_prime - chi) / chi_prime, 0.0)
-        return dndz_primes * geometry
-
-    def _get_prefactor(self, ells) -> np.ndarray:
-        r"""
-        Compute the needed prefactor in Limber approximation.
-
-        GW weak lensing is treated as a scalar convergence observable, not
-        as spin-2 galaxy shear, so no spin-dependent shear prefactor is applied.
-
-        Parameters:
-          ells (np.ndarray): Multipoles at which the prefactor is evaluated
-
-        Returns:
-          prefactor (np.ndarray):
-        """
-        return np.ones_like(ells)
+        self.dndz_shifted = shift_dndz_jax(self.dndz_stretched, z, self.dz_gw_i)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
         """Compute the GW lensing efficiency in a redshift bin."""

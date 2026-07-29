@@ -496,16 +496,24 @@ class AngularTwoPoint:
         Pkl = self._matter_power_spectrum_limber_grid(
             zs_calc, ks, self.tracer1.perturbations.z, ells
         )
-        # Added the prefactor here as this is where we have access to ells.
-        # There may be a more efficient way to do the multiplication
-        prefactor = (
+        # Observable-dependent harmonic responses. The windows themselves
+        # retain their common scalar/geometric normalization.
+        shear_prefactor = (
             np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
             / (ells + 0.5) ** 2
         )
-        # Did it this way to avoid an if statement, but would be good to know how necessary this is
-        prefactor_cell = (
-            prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle
-        ) * (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle)
+        gw_prefactor = 2.0 * ells * (ells + 1.0) / (ells + 0.5) ** 2
+
+        def tracer_prefactor(tracer):
+            shear_toggle = tracer.prefact_toggle
+            gw_toggle = getattr(tracer, "gw_prefact_toggle", 0)
+            return (
+                1.0
+                + shear_toggle * (shear_prefactor - 1.0)
+                + gw_toggle * (gw_prefactor - 1.0)
+            )
+
+        prefactor_cell = tracer_prefactor(self.tracer1) * tracer_prefactor(self.tracer2)
         weights = simpsons_weights_jit(len(H))
 
         # C_ell_calc = (

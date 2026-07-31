@@ -6,7 +6,7 @@ on:
       - main
 env:
   ENV_NAME: cloe-org-env
-  ENV_FILE: cloe-org-environments/environments/cloe-org-env-linux-v2026.1.yaml
+  ENV_FILE: cloe-org-environments/environments/cloe-org-env-linux-v2026.2.yaml
 jobs:
   style:
     name: Style (pre-commit)
@@ -35,6 +35,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: cloe-org/cloe-org-environments
+          ref: 2026.2
           path: cloe-org-environments
       - name: Setup Mambaforge
         uses: conda-incubator/setup-miniconda@v3

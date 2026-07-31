@@ -34,16 +34,18 @@ def hi_class_background_instance(scope="module"):
     return hi_class_instance
 
 
-def test_hi_class_background_required_methods():
+def test_hi_class_background_required_methods(hi_class_background_instance):
     """Test that all required methods are present."""
     methods_required = {
         name
         for name, value in Background.__dict__.items()
         if callable(value) and not name.startswith("_")
     }
-    contents = hi_classBackground.__dict__.items()
     methods_found = {
-        name for name, value in contents if callable(value) and not name.startswith("_")
+        name
+        for name in dir(hi_class_background_instance)
+        if callable(getattr(hi_class_background_instance, name))
+        and not name.startswith("_")
     }
     assert methods_required <= methods_found
 
@@ -354,10 +356,6 @@ def test_hi_class_perturbation_implements_protocol(
 ):
     """Test that the hi_classPerturbation instances adhere to the protocol."""
     hi_class_instance = hi_class_perturbation_instances[key]
-    hi_class_instance = hi_class_perturbation_instances["Linear"]
-    print([f for f in dir(hi_class_instance) if not f.startswith("_")])
-    # print(hi_class_instance)
-    # print(key)
     assert isinstance(hi_class_instance, Perturbations)
 
 
@@ -396,9 +394,18 @@ def test_hi_class_growth_rate(hi_class_perturbation_instances, key, zs, ks):
     hi_class_instance = hi_class_perturbation_instances[key]
     assert hasattr(hi_class_instance, "growth_rate")
     assert callable(hi_class_instance.growth_rate)
-    result = hi_class_instance.growth_rate()
+    result = hi_class_instance.growth_rate(zs, ks)
     assert isinstance(result, np.ndarray)
-    assert result.ndim == 1
+    assert result.shape == (len(zs), len(ks))
+
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_hi_class_growth_rate_requires_wavenumbers(
+    hi_class_perturbation_instances, key
+):
+    """Scale-dependent growth cannot use an implicit reference wavenumber."""
+    with pytest.raises(ValueError, match="explicit ks"):
+        hi_class_perturbation_instances[key].growth_rate()
 
 
 def test_hi_class_sigma8_consistency_linear_vs_nonlinear(

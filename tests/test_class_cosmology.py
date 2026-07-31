@@ -35,16 +35,18 @@ def class_background_instance(scope="module"):
     return class_instance
 
 
-def test_class_background_required_methods():
+def test_class_background_required_methods(class_background_instance):
     """Test that all required methods are present."""
     methods_required = {
         name
         for name, value in Background.__dict__.items()
         if callable(value) and not name.startswith("_")
     }
-    contents = CLASSBackground.__dict__.items()
     methods_found = {
-        name for name, value in contents if callable(value) and not name.startswith("_")
+        name
+        for name in dir(class_background_instance)
+        if callable(getattr(class_background_instance, name))
+        and not name.startswith("_")
     }
     assert methods_required <= methods_found
 
@@ -353,10 +355,6 @@ def class_perturbation_instances(class_background_instance, zs, scope="module"):
 def test_class_perturbation_implements_protocol(class_perturbation_instances, key):
     """Test that the CLASSPerturbation instances adhere to the protocol."""
     class_instance = class_perturbation_instances[key]
-    class_instance = class_perturbation_instances["Linear"]
-    print([f for f in dir(class_instance) if not f.startswith("_")])
-    # print(class_instance)
-    # print(key)
     assert isinstance(class_instance, Perturbations)
 
 

@@ -53,6 +53,8 @@ emantis = ["emantis>=1.2.1"]
 pbjcosmo = ["pbjcosmo"]
 mochi_classy = ["mochi_classy @ git+https://github.com/mcataneo/mochi_class_public.git@mochi_classy"]
 
+mgclassy = ["mgclassy==2.9.4.5"]
+
 [tool.hatch.version]
 source = "vcs"
 

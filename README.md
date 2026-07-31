@@ -54,7 +54,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | [camb](https://camb.readthedocs.io)                           | [camb](https://camb.readthedocs.io)                                           | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
 | [class](https://github.com/lesgourg/class_public)             | [class](https://github.com/lesgourg/class_public)                             | [pbjcosmo](https://chiaramoretti.gitlab.io/pbj/)                   |
 | [mochi_class](https://github.com/mcataneo/mochi_class_public) | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)            | NA                                                                 |
-| NA                                                            | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                | NA                                                                 |
+| [mgclass](https://gitlab.com/zizgitlab/mgclass--ii)           | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                | NA                                                                 |
 | NA                                                            | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
 | NA                                                            | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
 | NA                                                            | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                         | NA                                                                 |
@@ -99,13 +99,13 @@ pip install .
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mochi_classy]
+pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,mochi_classy]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mochi_classy]"
+> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mochi_classy,mgclassy]"
 > ```
 
 The `react` extra installs [`MGEmu`](https://github.com/nebblu/MGEmus.git) together with the TensorFlow support it needs for the ReACT modified-gravity boost module. If you only need that stack, `pip install ".[react,camb]"` is usually enough to get started.
@@ -247,6 +247,8 @@ This project follows the [all-contributors](https://github.com/all-contributors/
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MartinKaercher"><img src="https://avatars.githubusercontent.com/u/64490739?v=4?s=100" width="100px;" alt="Martin Kärcher"/><br /><sub><b>Martin Kärcher</b></sub></a><br /><a href="#code-MartinKaercher" title="Code">💻</a> <a href="#ideas-MartinKaercher" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/chiaradeleo1"><img src="https://avatars.githubusercontent.com/u/151924166?v=4?s=100" width="100px;" alt="Chiara De Leo"/><br /><sub><b>Chiara De Leo</b></sub></a><br /><a href="#review-chiaradeleo1" title="Reviewed Pull Requests">👀</a> <a href="#mentoring-chiaradeleo1" title="Mentoring">🧑‍🏫</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ytchang05"><img src="https://avatars.githubusercontent.com/u/67809413?v=4?s=100" width="100px;" alt="Yu-Ting"/><br /><sub><b>Yu-Ting</b></sub></a><br /><a href="#code-ytchang05" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

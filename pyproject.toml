@@ -52,6 +52,8 @@ hiclassy = ["hiclassy==3.3.4"]
 emantis = ["emantis>=1.2.1"]
 pbjcosmo = ["pbjcosmo"]
 
+mgclassy = ["mgclassy==2.9.4.5"]
+
 [tool.hatch.version]
 source = "vcs"
 

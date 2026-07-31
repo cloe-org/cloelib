@@ -45,6 +45,16 @@ jobs:
           activate-environment: ${{ env.ENV_NAME }}
           environment-file: ${{ env.ENV_FILE }}
           use-mamba: true
+      - name: Prepare MOCHI compiler aliases
+        run: |
+          ENV_PREFIX=$(mamba run -n "$ENV_NAME" python -c 'import sys; print(sys.prefix)')
+          TOOLCHAIN_DIR="$RUNNER_TEMP/mochi-toolchain"
+          mkdir -p "$TOOLCHAIN_DIR"
+          ln -s "$ENV_PREFIX/bin/gcc" "$TOOLCHAIN_DIR/gcc-15"
+          ln -s "$ENV_PREFIX/bin/g++" "$TOOLCHAIN_DIR/g++-15"
+          echo "$TOOLCHAIN_DIR" >> "$GITHUB_PATH"
+          echo "CC=$ENV_PREFIX/bin/gcc" >> "$GITHUB_ENV"
+          echo "CXX=$ENV_PREFIX/bin/g++" >> "$GITHUB_ENV"
       - name: Install cloelib and extras from pyproject.toml
         run: |
           # MGCLASS 2.9.4.5 contains legacy C declarations. Use the system
@@ -63,7 +73,7 @@ jobs:
             "${ENV_PREFIX}/bin/python" -m pip install --upgrade pip
           env PATH="$PATH" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
             "${ENV_PREFIX}/bin/python" -m pip install \
-            ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy,mgclassy]"
+            ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy,mgclassy,mochi_classy]"
       - name: Run tests
         run: mamba run -n $ENV_NAME python -m pytest
   build:

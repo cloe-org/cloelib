@@ -59,8 +59,10 @@ jobs:
           chmod +x "$TOOLCHAIN_DIR/gcc"
           export PATH="$TOOLCHAIN_DIR:/usr/bin:/bin:${ENV_PREFIX}/bin:${PATH}"
           export PKG_CONFIG_PATH="${ENV_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-          mamba run -n "$ENV_NAME" python -m pip install --upgrade pip
-          mamba run -n "$ENV_NAME" python -m pip install \
+          env PATH="$PATH" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
+            "${ENV_PREFIX}/bin/python" -m pip install --upgrade pip
+          env PATH="$PATH" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
+            "${ENV_PREFIX}/bin/python" -m pip install \
             ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy,mgclassy]"
       - name: Run tests
         run: mamba run -n $ENV_NAME python -m pytest

@@ -49,6 +49,7 @@ class mochiCLASSBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        alpha_s: float = 0.0,
         **kwargs,
     ) -> None:
         """
@@ -61,6 +62,7 @@ class mochiCLASSBackground:
             Omega_k0 (float): Curvature density parameter.
             As (float): Scalar amplitude of primordial fluctuations.
             ns (float): Scalar spectral index.
+            alpha_s (float): Running of the scalar spectral index (d ns / d ln k).
             mnu (Union[float, Sequence[float], np.ndarray]): Total neutrino mass in eV.
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
@@ -81,6 +83,7 @@ class mochiCLASSBackground:
         self.Omega_k0 = Omega_k0
         self.As = As
         self.ns = ns
+        self.alpha_s = alpha_s
         self.w0 = w0
         self.wa = wa
         self.gamma_MG = (
@@ -111,6 +114,7 @@ class mochiCLASSBackground:
         self.interface_args["CLASSparams"]["Omega_k"] = self.Omega_k0
         self.interface_args["CLASSparams"]["n_s"] = self.ns
         self.interface_args["CLASSparams"]["A_s"] = self.As
+        self.interface_args["CLASSparams"]["alpha_s"] = self.alpha_s
 
         # Set neutrino parameters
         if self.N_mnu > 0:
@@ -369,11 +373,7 @@ class mochiCLASSBackground:
         Returns:
             np.ndarray: Hubble parameter values at specified redshifts.
         """
-        if isinstance(zs, np.ndarray):
-            H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
-        else:
-            H = np.array([self.results.Hubble(zs)])
-            
+        H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
         if units == "km/s/Mpc":
             return H * mochiCLASSBackground.c0  # Convert to km/s/Mpc
         elif units == "1/Mpc":
@@ -391,10 +391,7 @@ class mochiCLASSBackground:
         Returns:
             np.ndarray: Comoving distance values.
         """
-        if isinstance(zs, np.ndarray):
-            return np.array([self.results.comoving_distance(z) for z in zs])
-        else:
-            return np.array([self.results.comoving_distance(zs)])
+        return np.array([self.results.comoving_distance(z) for z in zs])
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -428,10 +425,7 @@ class mochiCLASSBackground:
         Returns:
             np.ndarray: Angular diameter distance values.
         """
-        if isinstance(zs, np.ndarray):
-            return np.array([self.results.angular_distance(z) for z in zs])
-        else:
-            return np.array([self.results.angular_distance(zs)])
+        return np.array([self.results.angular_distance(z) for z in zs])
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -445,6 +439,19 @@ class mochiCLASSBackground:
         """
         return self.results.Om_m(zs)
 
+    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values (no neutrinos).
+        """
+
+        return self.results.Om_b(zs) + self.results.Om_cdm(zs)
+
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the baryon density as a function of redshift.
@@ -455,7 +462,7 @@ class mochiCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        return np.array([self.results.Om_b(z) for z in zs])
+        return self.results.Om_b(zs)
 
     def Om_smg(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -508,6 +515,11 @@ class mochiCLASSBackground:
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering in Mpc."""
         return self.results.rs_drag()
+
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
+        return self.results.get_current_derived_parameters(["z_star"])["z_star"]
 
 
 ####################################
@@ -576,20 +588,10 @@ class mochiCLASSLinearPerturbations:
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
         # ks /= self.background.h
-        k_scalar = np.ndim(ks) == 0
-        z_scalar = np.ndim(zs) == 0
-
-        ks = np.atleast_1d(ks)
-        zs = np.atleast_1d(zs)
-
         self.Pk_linear = np.array(
             [[self.results.pk_lin(ki, zi) for ki in ks] for zi in zs]
-        )
-
-        if k_scalar:
-            self.Pk_linear = self.Pk_linear[:, 0]
-        if z_scalar:
-            self.Pk_linear = self.Pk_linear[0]
+        )  # type: ignore[union-attr]
+        # To match array convention of CAMB
         return self.Pk_linear  # * (self.background.h) ** 3
 
     def matter_power_spectrum_cb(
@@ -620,12 +622,6 @@ class mochiCLASSLinearPerturbations:
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
 
-        k_scalar = np.ndim(ks) == 0
-        z_scalar = np.ndim(zs) == 0
-
-        ks = np.atleast_1d(ks)
-        zs = np.atleast_1d(zs)
-
         if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
             warnings.warn(
                 "There are no massive neutrinos (N_mnu=0), this function will "
@@ -633,17 +629,13 @@ class mochiCLASSLinearPerturbations:
                 UserWarning,
                 stacklevel=2,
             )
-            self.Pk_cb_linear = np.array(
-            [[self.results.pk_lin(ki, zi) for ki in ks] for zi in zs])
-
+            self.Pk_cb_linear = self.matter_power_spectrum(
+                zs, ks, hubble_units=False, k_hunit=False
+            )
         else:
             self.Pk_cb_linear = np.array(
                 [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
             )
-        if k_scalar:
-            self.Pk_cb_linear = self.Pk_cb_linear[:, 0]
-        if z_scalar:
-            self.Pk_cb_linear = self.Pk_cb_linear[0]
         # To match array convention of CAMB
         return self.Pk_cb_linear
 
@@ -676,47 +668,20 @@ class mochiCLASSLinearPerturbations:
         )
 
         return D_z_k
-    
-    def growth_factor_cb(self, zs, ks) -> np.ndarray:
-        r"""
-        Calculate the growth factor of cold dark matter + baryons (no neutrinos) for given redshifts and wavenumbers.
 
-        .. math::
-            D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
-            /P_{\rm \delta\delta}(z=0, k)}\\
+    def growth_rate(self, k=1.0) -> np.ndarray:
+        """
+        Calculate the scale-dependent growth rate f(z).
 
-        and normalizes as for :math:`D(z)/D(0)`.
-
-        Parameters
-        ----------
-        zs: numpy.ndarray
-            redshifts
-
-        ks: numpy.ndarray
-            wavenumber
+        Args:
+            k (float): Wavenumber at which to evaluate the growth rate. Defaults to 1.0 (scale-independent).
 
         Returns:
-        --------
-        np.ndarray
-            The growth factor at the specified redshift and wavenumber.
-        """
-        D_z_k_cb = np.sqrt(
-            self.matter_power_spectrum_cb(zs, ks)
-            / self.matter_power_spectrum_cb(np.zeros_like(zs), ks)
-        )
-
-        return D_z_k_cb
-
-    def growth_rate(self) -> np.ndarray:
-        """
-        Calculate the growth rate f(z).
-
-        Returns
         -------
         np.ndarray
-            Scale-independent growth rate f(z)
+            Scale-dependent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -780,13 +745,18 @@ class mochiCLASSNonLinearPerturbations:
         self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
         if background.mg_stable_basis_on:
             self.interface_args["CLASSparams"]["non_linear"] = "none"
+            print(
+                "Non-linear corrections are not yet implemented for modified gravity in mochi_CLASS. Setting non_linear to 'none'."
+            )
         elif hmcode_version is not None:
             self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
-            if hmcode_version =="2020_baryonic_feedback":
+            if hmcode_version == "2020_baryonic_feedback":
                 try:
                     self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
                 except KeyError:
-                    raise KeyError("log10TAGN is required for HMcode 2020 baryonic feedback model.")
+                    raise KeyError(
+                        "log10TAGN is required for HMcode 2020 baryonic feedback model."
+                    )
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
@@ -890,14 +860,19 @@ class mochiCLASSNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(self, k=1.0) -> np.ndarray:
         """
-        Calculate the growth rate f(z).
+        Calculate the scale-dependent growth rate f(z).
+
+        Args:
+            k (float): Wavenumber at which to evaluate the growth rate. Defaults to 1.0 (scale-independent).
 
         Returns:
-            (np.ndarray): Scale-independent growth rate f(z)
+        -------
+        np.ndarray
+            Scale-dependent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
     def sigma8_0(self) -> float:

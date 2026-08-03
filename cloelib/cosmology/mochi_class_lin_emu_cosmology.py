@@ -21,9 +21,7 @@ class mochiCLASSEmuLinearPerturbations:
     based on the stable basis parametrisation.
     """
 
-    def __init__(
-        self, background: Background, redshifts: np.ndarray, cp_file: str
-    ):
+    def __init__(self, background: Background, redshifts: np.ndarray, cp_file: str):
         """
         Initialize the emulator with a given cosmological background and redshift array.
 
@@ -52,7 +50,9 @@ class mochiCLASSEmuLinearPerturbations:
         self.k_max = self.k_emu[-1]
 
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
-        assert background.stable_MG_dict['b'] == 1, "emulator only trained on b=1 for now"
+        assert background.stable_MG_dict["b"] == 1, (
+            "emulator only trained on b=1 for now"
+        )
 
         redshift_max = 5
         self.z = redshifts[redshifts <= redshift_max]
@@ -69,9 +69,9 @@ class mochiCLASSEmuLinearPerturbations:
         }
 
         self.params = {
-            "s": background.stable_MG_dict['s'],
-            "a0": background.stable_MG_dict['a0'],
-            "a1": background.stable_MG_dict['a1'],
+            "s": background.stable_MG_dict["s"],
+            "a0": background.stable_MG_dict["a0"],
+            "a1": background.stable_MG_dict["a1"],
             "w0": background.w0,
             "wa": background.wa,
         }

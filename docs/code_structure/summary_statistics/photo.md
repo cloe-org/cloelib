@@ -35,9 +35,11 @@ tracer2 = ShearTracer(perturbations=pert, dndz=dndz[np.newaxis, :], z=z, nuisanc
 two_point = AngularTwoPoint(tracer1=tracer1, tracer2=tracer2)
 
 ells = np.logspace(1, 3, 20)  # ℓ from 10 to 1000
-C_ell = two_point.get_Cl(ells=ells)  # Shape: (1, 1, 20) for single bins
+C_ell = two_point.get_Cl(ells=ells, nl=0, ks=pert.k)
 
-print(f"C_ℓ at ℓ=100: {C_ell[0, 0, 10]:.2e}")
+# Results use cosmolib field/bin keys. Shear spectra store E/B components.
+shear_auto = C_ell[("SHE", "SHE", 1, 1)]
+print(f"C_ℓ at index 10: {shear_auto.array[0, 0, 10]:.2e}")
 ```
 
 **Cross-Correlations**:
@@ -47,14 +49,14 @@ You can correlate different tracers to calculate different statistics:
 ```python
 # Shear-shear (cosmic shear)
 shear_tracer = ShearTracer(...)
-C_shear_shear = AngularTwoPoint(shear_tracer, shear_tracer).get_Cl(ells)
+C_shear_shear = AngularTwoPoint(shear_tracer, shear_tracer).get_Cl(ells, 0, pert.k)
 
 # Position-position (galaxy clustering)
 pos_tracer = PositionsTracer(...)
-C_gg = AngularTwoPoint(pos_tracer, pos_tracer).get_Cl(ells)
+C_gg = AngularTwoPoint(pos_tracer, pos_tracer).get_Cl(ells, 0, pert.k)
 
 # Shear-position (galaxy-galaxy lensing)
-C_g_shear = AngularTwoPoint(pos_tracer, shear_tracer).get_Cl(ells)
+C_g_shear = AngularTwoPoint(pos_tracer, shear_tracer).get_Cl(ells, 0, pert.k)
 ```
 
 **Tomographic Bins**:
@@ -74,7 +76,7 @@ tracer = ShearTracer(perturbations=pert, dndz=dndz_bins, z=z, ...)
 
 # Auto and cross-correlations
 two_point = AngularTwoPoint(tracer, tracer)
-C_ell = two_point.get_Cl(ells)
+C_ell = two_point.get_Cl(ells, nl=0, ks=pert.k)
 ```
 
 **COSEBIs**:
@@ -126,6 +128,7 @@ The pipeline is now complete.
 From here:
 
 - [API Reference](../../api.md) – Full technical documentation
+- [Gravitational-Wave Summary Statistics](gw.md) – Compute angular GW correlations
 - [Contributing Guide](../../contributing.md) – General contribution guidelines
 - [Playground Examples](https://github.com/cloe-org/playground) – Real usage examples
 - [Back to Summary Statistics](index.md) – Review all summary statistics

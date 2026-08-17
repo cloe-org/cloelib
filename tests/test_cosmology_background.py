@@ -23,6 +23,7 @@ def test_background_required_methods():
         "angular_diameter_distance",
         "Omega_b",
         "Omega_m",
+        "Omega_cb",
         "transverse_comoving_distance",
     }
     assert methods_required == methods_found
@@ -47,26 +48,24 @@ def test_background_required_attributes():
         "Omega_cdm0",
         "H0",
         "ns",
+        "alpha_s",
         "N_ur",
         "N_mnu",
         "N_eff",
         "interface_args",
         "rdrag",
+        "z_star",
     }
     assert attributes_required == attributes_found
 
 
-def test_cosmo():
+def test_derived_cosmology():
     # Cosmology parameters
     print("# Cosmology parameters")
-    _H0 = 67.7
-    _h = _H0 / 100.0
-    _omch2 = 0.12
-    _ombh2 = 0.022
     _cosmo_pars = dict(
-        H0=_H0,
-        Omega_cdm0=_omch2 / _h**2,
-        Omega_b0=_ombh2 / _h**2,
+        H0=67.7,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_b0=0.022 / 0.677**2,
         Omega_k0=0.0,
         w0=-1.0,
         wa=0.0,
@@ -75,6 +74,7 @@ def test_cosmo():
         As=2e-9,
         gamma_MG=0.0,
         N_mnu=1,
+        alpha_s=0.0,
     )
 
     _z_test = np.zeros(1)
@@ -91,3 +91,33 @@ def test_cosmo():
         # to be fixed in another PR
         if _Background != JAXBackground:
             assert_allclose(background.rdrag, 147.50225, rtol=1e-1)
+
+
+def test_Omega_cb():
+    # Cosmology parameters
+    print("# Cosmology parameters")
+    _cosmo_pars = dict(
+        H0=67.7,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_k0=0.0,
+        w0=-1.0,
+        wa=0.0,
+        ns=0.96,
+        alpha_s=0.0,
+        mnu=0.1,
+        As=2e-9,
+        gamma_MG=0.0,
+        N_mnu=1,
+    )
+
+    _z_test = np.zeros(1)
+    # not implemented for CLASSBackground yet
+    for _Background in (CAMBBackground, JAXBackground):
+        background = _Background(**_cosmo_pars)
+        assert (background.Omega_cb(_z_test) < background.Omega_m(_z_test)).all()
+        assert_allclose(
+            background.Omega_cb(_z_test)[0],
+            _cosmo_pars["Omega_cdm0"] + _cosmo_pars["Omega_b0"],
+            rtol=1e-03,
+        )

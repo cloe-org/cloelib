@@ -78,6 +78,11 @@ class Background(Protocol):
         ...
 
     @property
+    def alpha_s(self) -> float:
+        """Running of the scalar spectral index (d ns / d ln k)."""
+        ...
+
+    @property
     def w0(self) -> float:
         """Dark energy parameter."""
         ...
@@ -105,6 +110,10 @@ class Background(Protocol):
         """Compute the matter density as a function of redshift."""
         ...
 
+    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
+        """Computes the cold dark matter + baryons (no neutrinos) as a function of redshift."""
+        ...
+
     def hubble_parameter(self, zs: T, units: str = "km/s/Mpc") -> T:
         """Retrieve the hubble parameter as a function of redshift."""
         ...
@@ -124,6 +133,11 @@ class Background(Protocol):
     @property
     def rdrag(self) -> float:
         """Sound horizon radius at last scattering in Mpc."""
+        ...
+
+    @property
+    def z_star(self) -> float:
+        """Redshift of photon decoupling."""
         ...
 
 
@@ -146,4 +160,12 @@ class Perturbations(Protocol):
 
     def matter_power_spectrum(self, zs: T, ks: T) -> T:
         """Retrieve the matter power spectrum."""
+        ...
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        """Retrieves matter power spectrum of cold dark matter + baryons (no neutrinos)."""
+        ...
+
+    def sigma8_0(self) -> float:
+        """Retrieve sigma8 at z=0."""
         ...

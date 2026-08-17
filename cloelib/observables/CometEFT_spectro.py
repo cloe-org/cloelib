@@ -17,21 +17,18 @@ except ImportError:
 
 
 class CometEFT_SpectroPower:
-    r"""Class to retrieve :math:`P(k,\mu)` (including RSD) with the EFT model from COMET."""
+    r"""Class to retrieve $P(k,\mu)$ (including RSD) with the EFT model from COMET."""
 
     NLcode = "COMET"
+    RSDmodel = "EFTofLSS"
 
     def __init__(self, background: Background, RSD_parameters: dict, redshift: float):
         r"""Class constructor.
 
-        Parameters
-        ----------
-        background: Background
-            Background class containing cosmology and background distances
-        RSD_parameters: dict
-            Dictionary containing bias and counterterm parameters
-        redshift: float
-            Redshift at which to evaluate :math:`P(k,\mu)`
+        Args:
+          background (Background): Background class containing cosmology and background distances
+          RSD_parameters (dict): Dictionary containing bias and counterterm parameters
+          redshift (float): Redshift at which to evaluate $P(k,\mu)$
         """
         self.background = background
 
@@ -111,16 +108,12 @@ class CometEFT_SpectroPower:
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields.
 
-        Parameters
-        ----------
-        k: np.ndarray
-            Wavenumber
-        mu: np.ndarray
-            Angle (cosinus) to the line of sight
-        Returns
-        -------
-        Pk2d_rsd: np.ndarray
-            2D power spectrum from couplings of density and velocity fields
+        Args:
+          k (np.ndarray): Wavenumber
+          mu (np.ndarray): Angle (cosinus) to the line of sight
+
+        Returns:
+          Pk2d_rsd (np.ndarray): 2D power spectrum from couplings of density and velocity fields
         """
         return np.squeeze(
             comet_inst.P2d_nostoch(
@@ -136,18 +129,13 @@ class CometEFT_SpectroPower:
     ) -> np.ndarray:
         r"""2D power spectrum for a subset of specific diagrams of the loop expansion.
 
-        Parameters
-        ----------
-        k: np.ndarray
-            Wavenumber
-        mu: np.ndarray
-            Angle (cosinus) to the line of sight
-        term_list: list
-            Identifiers of loop diagrams
-        Returns
-        -------
-        Pk2d_term_rsd: np.ndarray
-            2D power spectrum of specific terms
+        Args:
+          k (np.ndarray): Wavenumber
+          mu (np.ndarray): Angle (cosinus) to the line of sight
+          term_list (list): Identifiers of loop diagrams
+
+        Returns:
+          Pk2d_term_rsd (np.ndarray): 2D power spectrum of specific terms
         """
         term_list_expanded, index_map = [], {}
         for key in term_list:

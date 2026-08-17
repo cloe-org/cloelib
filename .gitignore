@@ -16,6 +16,7 @@ poetry.lock
 build/
 dist/
 *.egg-info/
+_version.py
 
 # setuptools_scm generated version file
 _version.py
@@ -41,6 +42,9 @@ pytest_cache/
 
 # MyPy
 .mypy_cache/
+
+# MkDocs build output
+site/
 
 # Caches
 .cache/

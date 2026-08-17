@@ -45,7 +45,7 @@ Resolves #IssueNumber
 - [ ] I have run locally pre-commit using `pre-commit run --all-files`
 - [ ] I have tested my changes locally
 - [ ] No new warnings or errors introduced
-- [ ] I have updated documentation (if applicable)
+- [ ] I have updated documentation (if applicable) - docstrings & instructions in `cloelib/docs/`
 - [ ] My changes do not introduce breaking changes (i.e: the package still gets installed)
 - [ ] I have added unit tests (if applicable)
 - [ ] I have consistently updated the GitHub information for the project, including milestones, task types, and other relevant details.
@@ -61,8 +61,6 @@ Resolves #IssueNumber
 - [ ] Quality of new/changed unit tests is acceptable
 - [ ] No data files have been included in the commits
 - [ ] Implementation follows the agreed task description point by point
-- [ ] Check that there are no `No newline at the end of file` warnings
 - [ ] Check that any added folder/file has been added to the `README.md` file
-- [ ] Check that the implementation follows the contributing guidelines and style choices
-- [ ] Check that the documentation has been updated accordantly
+- [ ] Check that the documentation has been updated accordantly (docstrings & instructions in `cloelib/docs/`)
 - [ ] Check that the corresponding branch has been deleted after merging. If not, delete it

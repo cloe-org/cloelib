@@ -587,12 +587,9 @@ class AngularTwoPoint:
             return {("POS", "POS", i, j): C[:, i - 1, j - 1]}
 
         def pos_she_rule(C, i, j):
-            block1 = C[:, i - 1, j - 1]
-            block2 = C[:, j - 1, i - 1]
-
+            block = C[:, i - 1, j - 1]
             return {
-                ("POS", "SHE", i, j): np.stack([block1, np.zeros_like(block1)]),
-                ("POS", "SHE", j, i): np.stack([block2, np.zeros_like(block2)]),
+                ("POS", "SHE", i, j): np.stack([block, np.zeros_like(block)])
             }
 
         def she_she_rule(C, i, j):
@@ -652,10 +649,14 @@ class AngularTwoPoint:
             (ShearTracer, GWWeakLensingTracer): she_gwwl_rule,
         }
 
-        # normalize the key so (A, B) and (B, A) are both supported
+        # Normalize the key so (A, B) and (B, A) are both supported. Keep
+        # track of the reversal because C_ell_calc retains the input tracer
+        # order on its two tomographic-bin axes.
         key = (type(self.tracer1), type(self.tracer2))
+        key_was_reversed = False
         if key not in tracer_rules and key[::-1] in tracer_rules:
             key = key[::-1]
+            key_was_reversed = True
 
         rule_fn = tracer_rules.get(key)
         if rule_fn is None:
@@ -663,28 +664,24 @@ class AngularTwoPoint:
                 f"No rule defined for tracers {type(self.tracer1)}, {type(self.tracer2)}"
             )
 
-        gw_types = (GWNumberCountsTracer, GWWeakLensingTracer)
-        contains_gw = key[0] in gw_types or key[1] in gw_types
-        if contains_gw:
-            same_tracer = key[0] is key[1]
-            C_ell_out = {
-                k: v
-                for i in range(1, n_bin1 + 1)
-                for j in range(i if same_tracer else 1, n_bin2 + 1)
-                for k, v in rule_fn(C_ell_calc, i, j).items()
-            }
+        if key_was_reversed:
+            C_ell_for_rule = np.swapaxes(C_ell_calc, 1, 2)
+            n_rule_bin1, n_rule_bin2 = n_bin2, n_bin1
         else:
-            a, b = sorted((n_bin1, n_bin2))
-            C_ell_out = {
-                k: v
-                for i in range(1, a + 1)
-                for j in range(i, b + 1)
-                for k, v in (
-                    rule_fn(C_ell_calc, i, j)
-                    if n_bin1 <= n_bin2
-                    else rule_fn(C_ell_calc, j, i)
-                ).items()
-            }
+            C_ell_for_rule = C_ell_calc
+            n_rule_bin1, n_rule_bin2 = n_bin1, n_bin2
+
+        # Same-observable spectra are symmetric in their tomographic bins and
+        # retain the established upper-triangle output. Cross-observable
+        # spectra use the full Cartesian product; each rule emits one key in
+        # canonical tracer order.
+        symmetric_output = key[0] is key[1]
+        C_ell_out = {
+            k: v
+            for i in range(1, n_rule_bin1 + 1)
+            for j in range(i if symmetric_output else 1, n_rule_bin2 + 1)
+            for k, v in rule_fn(C_ell_for_rule, i, j).items()
+        }
 
         # Use dictionary comprehension for cosmolib_Cls creation
         return {

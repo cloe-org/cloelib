@@ -220,16 +220,6 @@ class GWWeakLensingTracer:
           nuisance_params (dict): A dictionary containing additional parameters
             that are not directly related to the cosmological model but may
             affect the GW observations.
-
-        Notes
-        -----
-        This tracer uses the same geometric lensing-efficiency structure as
-        `ShearTracer.get_lensing_efficiency`. It does not use the galaxy
-        magnification-bias factor from `PositionsTracer`, and it does not apply
-        shear intrinsic-alignment or multiplicative-bias terms. The window
-        returned here is the paper-normalized scalar convergence kernel; the
-        released GW-MGCAMB ``gwamp`` harmonic response is applied by
-        `AngularTwoPoint`.
         """
         if 0.0 in z:
             raise ValueError(
@@ -246,7 +236,6 @@ class GWWeakLensingTracer:
         self.nuisance_params = nuisance_params
         # GW convergence is scalar, unlike spin-2 galaxy shear.
         self.prefact_toggle = 0
-        # Select the GW-MGCAMB ``gwamp`` harmonic response in AngularTwoPoint.
         self.gw_prefact_toggle = 1
         self.dz_gw_i = [
             self.nuisance_params[f"dz_gw_{i + 1}"] for i in range(dndz.shape[0])

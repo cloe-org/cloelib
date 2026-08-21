@@ -1811,32 +1811,40 @@ class CosmoPowerJAXLCDMPerturbations:
 
 
 class CosmoPowerJAXCurvaturePerturbations:
-    """Class for LCDM+curvature cosmology perturbations using CosmoPower-JAX emulators.
+    """Class for w0waCDM+curvature cosmology perturbations using CosmoPower-JAX.
 
-    Supports non-zero spatial curvature (Omega_k0 != 0). Neutrino mass is fixed at
-    mnu=0.06 eV during training and is not a free parameter of these emulators.
-    Uses a dedicated k-mode grid (curvature-kmodes.txt) and emulator files:
-    - lcdm-curvature-linear.npz
-    - lcdm-curvature-nonlinear.npz
-    - lcdm-curvature-s8-fs8.npz
+    Supports non-zero spatial curvature (Omega_k0 != 0) together with a w0waCDM
+    dark energy background (free w0, wa). Neutrino configuration is selected by
+    ``background.N_mnu``:
+    - 0 : massless neutrinos
+    - 1 : one massive neutrino
+    - 3 : three degenerate massive neutrinos
 
-    Emulator parameter ranges:
-        ombh2    in [0.019, 0.025]
-        omch2    in [0.09,  0.15]
-        H0       in [60,    80]
-        ns       in [0.8,   1.2]
-        lnAs     in [1.6,   4.0]
-        z        in [0,     5]
-        logT_AGN in [7.3,   8.5]  (nonlinear and sigma8/fsigma8 emulators only)
-        omk      in [-0.1,  0.1]
+    Uses a dedicated k-mode grid (curvature-kmodes.txt). Emulator inputs are
+    validated against :data:`CP_EMULATOR_BOUNDS`; ``omk`` is bounded to
+    ``[-0.3, 0.3]``. Emulator file names are placeholders and may be renamed.
     """
 
     class Linear:
-        """Emulator for the linear matter power spectrum in LCDM+curvature cosmology."""
+        """Linear matter power spectrum in w0waCDM+curvature cosmology."""
 
         def __init__(self, background: Background, redshifts: np.ndarray):
-            cp_file = emulator_data("lcdm-curvature-linear.npz")
-            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
+            if background.N_mnu == 0:
+                cp_file = emulator_data("w0wa-curvature-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-s8-fs8.npz")
+                self.has_neutrinos = False
+            elif background.N_mnu == 1:
+                cp_file = emulator_data("w0wa-curvature-1mass-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-1mass-s8-fs8.npz")
+                self.has_neutrinos = True
+            elif background.N_mnu == 3:
+                cp_file = emulator_data("w0wa-curvature-3degen-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-3degen-s8-fs8.npz")
+                self.has_neutrinos = True
+            else:
+                raise ValueError(
+                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 3"
+                )
 
             self.cp_LIN = load_pk_emulator(cp_file)
             self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
@@ -1852,8 +1860,12 @@ class CosmoPowerJAXCurvaturePerturbations:
                 "H0": self.background.H0,
                 "ns": self.background.ns,
                 "lnAs": np.log(self.background.As * 1e10),
+                "w0": self.background.w0,
+                "wa": self.background.wa,
                 "omk": self.background.Omega_k0,
             }
+            if self.has_neutrinos:
+                self.params["mnu"] = self.background.mnu
 
             check_emulator_bounds(self.params)
 
@@ -1887,8 +1899,10 @@ class CosmoPowerJAXCurvaturePerturbations:
 
         def __str__(self):
             return (
-                "Cosmopower-JAX linear P(k) module for LCDM+curvature cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
+                "Cosmopower-JAX linear P(k) module for w0waCDM+curvature cosmology.\n"
+                f"Configuration: N_mnu={self.background.N_mnu}, "
+                f"Omega_k0={self.background.Omega_k0}, "
+                f"w0={self.background.w0}, wa={self.background.wa}."
             )
 
         def matter_power_spectrum(self, zs, ks):
@@ -1904,7 +1918,7 @@ class CosmoPowerJAXCurvaturePerturbations:
             return self.sigma8[0]
 
     class NonLinear:
-        """Emulator for the nonlinear matter power spectrum in LCDM+curvature cosmology."""
+        """Nonlinear matter power spectrum in w0waCDM+curvature cosmology."""
 
         def __init__(
             self,
@@ -1913,8 +1927,22 @@ class CosmoPowerJAXCurvaturePerturbations:
             redshifts: np.ndarray,
             log10TAGN: Optional[float] = None,
         ):
-            cp_file = emulator_data("lcdm-curvature-nonlinear.npz")
-            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
+            if background.N_mnu == 0:
+                cp_file = emulator_data("w0wa-curvature-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-s8-fs8.npz")
+                self.has_neutrinos = False
+            elif background.N_mnu == 1:
+                cp_file = emulator_data("w0wa-curvature-1mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-1mass-s8-fs8.npz")
+                self.has_neutrinos = True
+            elif background.N_mnu == 3:
+                cp_file = emulator_data("w0wa-curvature-3degen-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-3degen-s8-fs8.npz")
+                self.has_neutrinos = True
+            else:
+                raise ValueError(
+                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 3"
+                )
 
             self.cp_NONLIN = load_pk_emulator(cp_file)
             self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
@@ -1930,9 +1958,13 @@ class CosmoPowerJAXCurvaturePerturbations:
                 "H0": self.background.H0,
                 "ns": self.background.ns,
                 "lnAs": np.log(self.background.As * 1e10),
-                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
+                "w0": self.background.w0,
+                "wa": self.background.wa,
                 "omk": self.background.Omega_k0,
+                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
             }
+            if self.has_neutrinos:
+                self.params["mnu"] = self.background.mnu
 
             check_emulator_bounds(self.params)
 
@@ -1963,8 +1995,10 @@ class CosmoPowerJAXCurvaturePerturbations:
 
         def __str__(self):
             return (
-                "Cosmopower-JAX nonlinear P(k) module for LCDM+curvature cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
+                "Cosmopower-JAX nonlinear P(k) module for w0waCDM+curvature cosmology.\n"
+                f"Configuration: N_mnu={self.background.N_mnu}, "
+                f"Omega_k0={self.background.Omega_k0}, "
+                f"w0={self.background.w0}, wa={self.background.wa}."
             )
 
         def matter_power_spectrum(self, zs, ks):
@@ -1980,11 +2014,25 @@ class CosmoPowerJAXCurvaturePerturbations:
             return self.sigma8[0]
 
     class LinearCB:
-        """Emulator for the cb linear matter power spectrum in LCDM+curvature cosmology."""
+        """cb linear matter power spectrum in w0waCDM+curvature cosmology."""
 
         def __init__(self, background: Background, redshifts: np.ndarray):
-            cp_file = emulator_data("lcdm-curvature-cb-linear.npz")
-            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
+            if background.N_mnu == 0:
+                cp_file = emulator_data("w0wa-curvature-cb-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-s8-fs8.npz")
+                self.has_neutrinos = False
+            elif background.N_mnu == 1:
+                cp_file = emulator_data("w0wa-curvature-1mass-cb-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-1mass-s8-fs8.npz")
+                self.has_neutrinos = True
+            elif background.N_mnu == 3:
+                cp_file = emulator_data("w0wa-curvature-3degen-cb-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-3degen-s8-fs8.npz")
+                self.has_neutrinos = True
+            else:
+                raise ValueError(
+                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 3"
+                )
 
             self.cp_LIN = load_pk_emulator(cp_file)
             self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
@@ -2000,8 +2048,12 @@ class CosmoPowerJAXCurvaturePerturbations:
                 "H0": self.background.H0,
                 "ns": self.background.ns,
                 "lnAs": np.log(self.background.As * 1e10),
+                "w0": self.background.w0,
+                "wa": self.background.wa,
                 "omk": self.background.Omega_k0,
             }
+            if self.has_neutrinos:
+                self.params["mnu"] = self.background.mnu
 
             check_emulator_bounds(self.params)
 
@@ -2035,8 +2087,10 @@ class CosmoPowerJAXCurvaturePerturbations:
 
         def __str__(self):
             return (
-                "Cosmopower-JAX linear P_cb(k) module for LCDM+curvature cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
+                "Cosmopower-JAX linear P_cb(k) module for w0waCDM+curvature cosmology.\n"
+                f"Configuration: N_mnu={self.background.N_mnu}, "
+                f"Omega_k0={self.background.Omega_k0}, "
+                f"w0={self.background.w0}, wa={self.background.wa}."
             )
 
         def matter_power_spectrum(self, zs, ks):
@@ -2052,7 +2106,7 @@ class CosmoPowerJAXCurvaturePerturbations:
             return self.sigma8[0]
 
     class NonLinearCB:
-        """Emulator for the cb nonlinear matter power spectrum in LCDM+curvature cosmology."""
+        """cb nonlinear matter power spectrum in w0waCDM+curvature cosmology."""
 
         def __init__(
             self,
@@ -2061,8 +2115,22 @@ class CosmoPowerJAXCurvaturePerturbations:
             redshifts: np.ndarray,
             log10TAGN: Optional[float] = None,
         ):
-            cp_file = emulator_data("lcdm-curvature-cb-nonlinear.npz")
-            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
+            if background.N_mnu == 0:
+                cp_file = emulator_data("w0wa-curvature-cb-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-s8-fs8.npz")
+                self.has_neutrinos = False
+            elif background.N_mnu == 1:
+                cp_file = emulator_data("w0wa-curvature-1mass-cb-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-1mass-s8-fs8.npz")
+                self.has_neutrinos = True
+            elif background.N_mnu == 3:
+                cp_file = emulator_data("w0wa-curvature-3degen-cb-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-curvature-3degen-s8-fs8.npz")
+                self.has_neutrinos = True
+            else:
+                raise ValueError(
+                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 3"
+                )
 
             self.cp_NONLIN = load_pk_emulator(cp_file)
             self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
@@ -2078,9 +2146,13 @@ class CosmoPowerJAXCurvaturePerturbations:
                 "H0": self.background.H0,
                 "ns": self.background.ns,
                 "lnAs": np.log(self.background.As * 1e10),
+                "w0": self.background.w0,
+                "wa": self.background.wa,
                 "omk": self.background.Omega_k0,
                 "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
             }
+            if self.has_neutrinos:
+                self.params["mnu"] = self.background.mnu
 
             check_emulator_bounds(self.params)
 
@@ -2111,8 +2183,10 @@ class CosmoPowerJAXCurvaturePerturbations:
 
         def __str__(self):
             return (
-                "Cosmopower-JAX nonlinear P_cb(k) module for LCDM+curvature cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
+                "Cosmopower-JAX nonlinear P_cb(k) module for w0waCDM+curvature cosmology.\n"
+                f"Configuration: N_mnu={self.background.N_mnu}, "
+                f"Omega_k0={self.background.Omega_k0}, "
+                f"w0={self.background.w0}, wa={self.background.wa}."
             )
 
         def matter_power_spectrum(self, zs, ks):
@@ -2129,32 +2203,40 @@ class CosmoPowerJAXCurvaturePerturbations:
 
 
 class CosmoPowerJAXRunningIndexPerturbations:
-    """Class for LCDM+running spectral index cosmology perturbations using CosmoPower-JAX emulators.
+    """Class for w0waCDM+running spectral index cosmology using CosmoPower-JAX.
 
-    Supports a running spectral index alpha_s = d ns / d ln k. Neutrino mass is fixed at
-    mnu=0.06 eV during training and is not a free parameter of these emulators.
-    Uses the standard k-mode grid (k-modes.txt) and emulator files:
-    - lcdm-running-linear.npz
-    - lcdm-running-nonlinear.npz
-    - lcdm-running-s8-fs8.npz
+    Supports a running spectral index alpha_s = d ns / d ln k together with a
+    w0waCDM dark energy background (free w0, wa). Neutrino configuration is
+    selected by ``background.N_mnu``:
+    - 0 : massless neutrinos
+    - 1 : one massive neutrino
+    - 3 : three degenerate massive neutrinos
 
-    Emulator parameter ranges:
-        ombh2    in [0.019, 0.025]
-        omch2    in [0.09,  0.15]
-        H0       in [60,    80]
-        ns       in [0.8,   1.2]
-        lnAs     in [1.6,   4.0]
-        z        in [0,     5]
-        alpha_s  in [-0.1,  0.1]
-        logT_AGN in [7.3,   8.5]  (nonlinear and sigma8/fsigma8 emulators only)
+    Uses the standard k-mode grid (k-modes.txt). Emulator inputs are validated
+    against :data:`CP_EMULATOR_BOUNDS`; ``alpha_s`` is bounded to ``[-0.3, 0.3]``.
+    Emulator file names are placeholders and may be renamed.
     """
 
     class Linear:
-        """Emulator for the linear matter power spectrum in LCDM+running spectral index cosmology."""
+        """Linear matter power spectrum in w0waCDM+running spectral index cosmology."""
 
         def __init__(self, background: Background, redshifts: np.ndarray):
-            cp_file = emulator_data("lcdm-nrun-linear.npz")
-            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
+            if background.N_mnu == 0:
+                cp_file = emulator_data("w0wa-nrun-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-s8-fs8.npz")
+                self.has_neutrinos = False
+            elif background.N_mnu == 1:
+                cp_file = emulator_data("w0wa-nrun-1mass-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-1mass-s8-fs8.npz")
+                self.has_neutrinos = True
+            elif background.N_mnu == 3:
+                cp_file = emulator_data("w0wa-nrun-3degen-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-3degen-s8-fs8.npz")
+                self.has_neutrinos = True
+            else:
+                raise ValueError(
+                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 3"
+                )
 
             self.cp_LIN = load_pk_emulator(cp_file)
             self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
@@ -2170,8 +2252,12 @@ class CosmoPowerJAXRunningIndexPerturbations:
                 "H0": self.background.H0,
                 "ns": self.background.ns,
                 "lnAs": np.log(self.background.As * 1e10),
+                "w0": self.background.w0,
+                "wa": self.background.wa,
                 "alpha_s": self.background.alpha_s,
             }
+            if self.has_neutrinos:
+                self.params["mnu"] = self.background.mnu
 
             check_emulator_bounds(self.params)
 
@@ -2205,8 +2291,10 @@ class CosmoPowerJAXRunningIndexPerturbations:
 
         def __str__(self):
             return (
-                "Cosmopower-JAX linear P(k) module for LCDM+running spectral index cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
+                "Cosmopower-JAX linear P(k) module for w0waCDM+running spectral index cosmology.\n"
+                f"Configuration: N_mnu={self.background.N_mnu}, "
+                f"alpha_s={self.background.alpha_s}, "
+                f"w0={self.background.w0}, wa={self.background.wa}."
             )
 
         def matter_power_spectrum(self, zs, ks):
@@ -2222,7 +2310,7 @@ class CosmoPowerJAXRunningIndexPerturbations:
             return self.sigma8[0]
 
     class NonLinear:
-        """Emulator for the nonlinear matter power spectrum in LCDM+running spectral index cosmology."""
+        """Nonlinear matter power spectrum in w0waCDM+running spectral index cosmology."""
 
         def __init__(
             self,
@@ -2231,8 +2319,22 @@ class CosmoPowerJAXRunningIndexPerturbations:
             redshifts: np.ndarray,
             log10TAGN: Optional[float] = None,
         ):
-            cp_file = emulator_data("lcdm-nrun-nonlinear.npz")
-            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
+            if background.N_mnu == 0:
+                cp_file = emulator_data("w0wa-nrun-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-s8-fs8.npz")
+                self.has_neutrinos = False
+            elif background.N_mnu == 1:
+                cp_file = emulator_data("w0wa-nrun-1mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-1mass-s8-fs8.npz")
+                self.has_neutrinos = True
+            elif background.N_mnu == 3:
+                cp_file = emulator_data("w0wa-nrun-3degen-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-3degen-s8-fs8.npz")
+                self.has_neutrinos = True
+            else:
+                raise ValueError(
+                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 3"
+                )
 
             self.cp_NONLIN = load_pk_emulator(cp_file)
             self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
@@ -2248,9 +2350,13 @@ class CosmoPowerJAXRunningIndexPerturbations:
                 "H0": self.background.H0,
                 "ns": self.background.ns,
                 "lnAs": np.log(self.background.As * 1e10),
+                "w0": self.background.w0,
+                "wa": self.background.wa,
                 "alpha_s": self.background.alpha_s,
                 "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
             }
+            if self.has_neutrinos:
+                self.params["mnu"] = self.background.mnu
 
             check_emulator_bounds(self.params)
 
@@ -2281,8 +2387,10 @@ class CosmoPowerJAXRunningIndexPerturbations:
 
         def __str__(self):
             return (
-                "Cosmopower-JAX nonlinear P(k) module for LCDM+running spectral index cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
+                "Cosmopower-JAX nonlinear P(k) module for w0waCDM+running spectral index cosmology.\n"
+                f"Configuration: N_mnu={self.background.N_mnu}, "
+                f"alpha_s={self.background.alpha_s}, "
+                f"w0={self.background.w0}, wa={self.background.wa}."
             )
 
         def matter_power_spectrum(self, zs, ks):
@@ -2298,11 +2406,25 @@ class CosmoPowerJAXRunningIndexPerturbations:
             return self.sigma8[0]
 
     class LinearCB:
-        """Emulator for the cb linear matter power spectrum in LCDM+running spectral index cosmology."""
+        """cb linear matter power spectrum in w0waCDM+running spectral index cosmology."""
 
         def __init__(self, background: Background, redshifts: np.ndarray):
-            cp_file = emulator_data("lcdm-nrun-cb-linear.npz")
-            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
+            if background.N_mnu == 0:
+                cp_file = emulator_data("w0wa-nrun-cb-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-s8-fs8.npz")
+                self.has_neutrinos = False
+            elif background.N_mnu == 1:
+                cp_file = emulator_data("w0wa-nrun-1mass-cb-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-1mass-s8-fs8.npz")
+                self.has_neutrinos = True
+            elif background.N_mnu == 3:
+                cp_file = emulator_data("w0wa-nrun-3degen-cb-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-3degen-s8-fs8.npz")
+                self.has_neutrinos = True
+            else:
+                raise ValueError(
+                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 3"
+                )
 
             self.cp_LIN = load_pk_emulator(cp_file)
             self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
@@ -2318,8 +2440,12 @@ class CosmoPowerJAXRunningIndexPerturbations:
                 "H0": self.background.H0,
                 "ns": self.background.ns,
                 "lnAs": np.log(self.background.As * 1e10),
+                "w0": self.background.w0,
+                "wa": self.background.wa,
                 "alpha_s": self.background.alpha_s,
             }
+            if self.has_neutrinos:
+                self.params["mnu"] = self.background.mnu
 
             check_emulator_bounds(self.params)
 
@@ -2353,8 +2479,10 @@ class CosmoPowerJAXRunningIndexPerturbations:
 
         def __str__(self):
             return (
-                "Cosmopower-JAX linear P_cb(k) module for LCDM+running spectral index cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
+                "Cosmopower-JAX linear P_cb(k) module for w0waCDM+running spectral index cosmology.\n"
+                f"Configuration: N_mnu={self.background.N_mnu}, "
+                f"alpha_s={self.background.alpha_s}, "
+                f"w0={self.background.w0}, wa={self.background.wa}."
             )
 
         def matter_power_spectrum(self, zs, ks):
@@ -2370,7 +2498,7 @@ class CosmoPowerJAXRunningIndexPerturbations:
             return self.sigma8[0]
 
     class NonLinearCB:
-        """Emulator for the cb nonlinear matter power spectrum in LCDM+running spectral index cosmology."""
+        """cb nonlinear matter power spectrum in w0waCDM+running spectral index cosmology."""
 
         def __init__(
             self,
@@ -2379,8 +2507,22 @@ class CosmoPowerJAXRunningIndexPerturbations:
             redshifts: np.ndarray,
             log10TAGN: Optional[float] = None,
         ):
-            cp_file = emulator_data("lcdm-nrun-cb-nonlinear.npz")
-            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
+            if background.N_mnu == 0:
+                cp_file = emulator_data("w0wa-nrun-cb-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-s8-fs8.npz")
+                self.has_neutrinos = False
+            elif background.N_mnu == 1:
+                cp_file = emulator_data("w0wa-nrun-1mass-cb-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-1mass-s8-fs8.npz")
+                self.has_neutrinos = True
+            elif background.N_mnu == 3:
+                cp_file = emulator_data("w0wa-nrun-3degen-cb-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-nrun-3degen-s8-fs8.npz")
+                self.has_neutrinos = True
+            else:
+                raise ValueError(
+                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 3"
+                )
 
             self.cp_NONLIN = load_pk_emulator(cp_file)
             self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
@@ -2396,9 +2538,13 @@ class CosmoPowerJAXRunningIndexPerturbations:
                 "H0": self.background.H0,
                 "ns": self.background.ns,
                 "lnAs": np.log(self.background.As * 1e10),
+                "w0": self.background.w0,
+                "wa": self.background.wa,
                 "alpha_s": self.background.alpha_s,
                 "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
             }
+            if self.has_neutrinos:
+                self.params["mnu"] = self.background.mnu
 
             check_emulator_bounds(self.params)
 
@@ -2429,8 +2575,10 @@ class CosmoPowerJAXRunningIndexPerturbations:
 
         def __str__(self):
             return (
-                "Cosmopower-JAX nonlinear P_cb(k) module for LCDM+running spectral index cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
+                "Cosmopower-JAX nonlinear P_cb(k) module for w0waCDM+running spectral index cosmology.\n"
+                f"Configuration: N_mnu={self.background.N_mnu}, "
+                f"alpha_s={self.background.alpha_s}, "
+                f"w0={self.background.w0}, wa={self.background.wa}."
             )
 
         def matter_power_spectrum(self, zs, ks):

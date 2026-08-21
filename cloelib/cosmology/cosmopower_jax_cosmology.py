@@ -116,6 +116,43 @@ k_modes_path = emulator_data("k-modes.txt", ZENODO_URL)
 k_modes_curvature_path = emulator_data("curvature-kmodes.txt", ZENODO_URL)
 
 
+CP_EMULATOR_BOUNDS = {
+    "ombh2": np.array([0.001, 0.1]),
+    "omch2": np.array([0.05, 0.9]),
+    "H0": np.array([20.0, 100.0]),
+    "ns": np.array([0.6, 1.3]),
+    "lnAs": np.array([1.61, 5.0]),
+    "mnu": np.array([0.0, 1.0]),
+    "logT_AGN": np.array([7.3, 8.5]),
+    "w0": np.array([-3.0, -0.33]),
+    "wa": np.array([-3.0, 3.0]),
+    "w": np.array([-3.0, 0.0]),
+    "omk": np.array([-0.3, 0.3]),
+    "alpha_s": np.array([-0.3, 0.3]),
+}
+
+
+def check_emulator_bounds(params: dict) -> None:
+    """Validate emulator input parameters against their training-box bounds.
+
+    Parameters
+    ----------
+    params : dict
+        Mapping of parameter name to its scalar value. Keys not present in
+        ``CP_EMULATOR_BOUNDS`` (e.g. ``z``) are skipped.
+
+    Raises
+    ------
+    ValueError
+        If any parameter lies outside its emulator training range.
+    """
+    for key, value in params.items():
+        if key not in CP_EMULATOR_BOUNDS:
+            continue
+        if np.prod(np.asarray(value) - CP_EMULATOR_BOUNDS[key]) > 0:
+            raise ValueError(f"Parameter {key} out of emulator range.")
+
+
 class CosmoPowerJAXw0waCDMPerturbations:
     """
     Class for w0waCDM cosmology perturbations using CosmoPower-JAX emulators.
@@ -173,19 +210,6 @@ class CosmoPowerJAXw0waCDMPerturbations:
             redshift_max = 5
             self.z = redshifts[redshifts <= redshift_max]
 
-            cp_bounds = {
-                "ombh2": np.array([0.001, 0.1]),
-                "omch2": np.array([0.05, 0.9]),
-                "H0": np.array([20, 100]),
-                "ns": np.array([0.6, 1.3]),
-                "lnAs": np.array([1.61, 5]),
-                "w0": np.array([-3.0, -0.33]),
-                "wa": np.array([-3, 3]),
-                "z": np.array([0.0, 5.0]),
-            }
-            if self.has_neutrinos:
-                cp_bounds["mnu"] = np.array([0.00, 1.0])
-
             self.params = {
                 "ombh2": self.background.Omega_b0 * self.background.h**2,
                 "omch2": self.background.Omega_cdm0 * self.background.h**2,
@@ -198,12 +222,10 @@ class CosmoPowerJAXw0waCDMPerturbations:
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
 
-            for key in self.params.keys():
-                if np.prod(self.params[key] - cp_bounds[key]) > 0:
-                    raise ValueError(f"Parameter {key} out of emulator range.")
-                else:
-                    self.params[key] = np.tile(self.params[key], len(redshifts))
+            check_emulator_bounds(self.params)
 
+            for key in self.params.keys():
+                self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
 
             self.sigma_params = self.params.copy()
@@ -386,19 +408,6 @@ class CosmoPowerJAXw0waCDMPerturbations:
             redshift_max = 5
             self.z = redshifts[redshifts <= redshift_max]
 
-            cp_bounds = {
-                "ombh2": np.array([0.001, 0.1]),
-                "omch2": np.array([0.05, 0.9]),
-                "H0": np.array([20, 100]),
-                "ns": np.array([0.6, 1.3]),
-                "lnAs": np.array([1.61, 5]),
-                "w0": np.array([-3.0, -0.33]),
-                "wa": np.array([-3, 3]),
-                "z": np.array([0.0, 5.0]),
-            }
-            if self.has_neutrinos:
-                cp_bounds["mnu"] = np.array([0.00, 1.0])
-
             self.params = {
                 "ombh2": self.background.Omega_b0 * self.background.h**2,
                 "omch2": self.background.Omega_cdm0 * self.background.h**2,
@@ -411,12 +420,10 @@ class CosmoPowerJAXw0waCDMPerturbations:
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
 
-            for key in self.params.keys():
-                if np.prod(self.params[key] - cp_bounds[key]) > 0:
-                    raise ValueError(f"Parameter {key} out of emulator range.")
-                else:
-                    self.params[key] = np.tile(self.params[key], len(redshifts))
+            check_emulator_bounds(self.params)
 
+            for key in self.params.keys():
+                self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
 
             self.sigma_params = self.params.copy()
@@ -558,20 +565,6 @@ class CosmoPowerJAXw0waCDMPerturbations:
             redshift_max = 5
             self.z = redshifts[redshifts <= redshift_max]
 
-            cp_bounds = {
-                "ombh2": np.array([0.001, 0.1]),
-                "omch2": np.array([0.05, 0.9]),
-                "H0": np.array([20, 100]),
-                "ns": np.array([0.6, 1.3]),
-                "lnAs": np.array([1.61, 5]),
-                "w0": np.array([-3.0, -0.33]),
-                "wa": np.array([-3, 3]),
-                "z": np.array([0.0, 5.0]),
-                "logT_AGN": np.array([7.3, 8.5]),
-            }
-            if self.has_neutrinos:
-                cp_bounds["mnu"] = np.array([0.00, 1.0])
-
             self.params = {
                 "ombh2": self.background.Omega_b0 * self.background.h**2,
                 "omch2": self.background.Omega_cdm0 * self.background.h**2,
@@ -585,12 +578,10 @@ class CosmoPowerJAXw0waCDMPerturbations:
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
 
-            for key in self.params.keys():
-                if np.prod(self.params[key] - cp_bounds[key]) > 0:
-                    raise ValueError(f"Parameter {key} out of emulator range.")
-                else:
-                    self.params[key] = np.tile(self.params[key], len(redshifts))
+            check_emulator_bounds(self.params)
 
+            for key in self.params.keys():
+                self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
 
             Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
@@ -746,6 +737,8 @@ class CosmoPowerJAXw0waCDMPerturbations:
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -893,6 +886,8 @@ class CosmoPowerJAXwCDMPerturbations:
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -1029,6 +1024,8 @@ class CosmoPowerJAXwCDMPerturbations:
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -1164,6 +1161,8 @@ class CosmoPowerJAXwCDMPerturbations:
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -1280,6 +1279,8 @@ class CosmoPowerJAXwCDMPerturbations:
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -1392,6 +1393,8 @@ class CosmoPowerJAXLCDMPerturbations:
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -1502,6 +1505,8 @@ class CosmoPowerJAXLCDMPerturbations:
             }
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
+
+            check_emulator_bounds(self.params)
 
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
@@ -1621,6 +1626,8 @@ class CosmoPowerJAXLCDMPerturbations:
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -1736,6 +1743,8 @@ class CosmoPowerJAXLCDMPerturbations:
             if self.has_neutrinos:
                 self.params["mnu"] = self.background.mnu
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -1846,6 +1855,8 @@ class CosmoPowerJAXCurvaturePerturbations:
                 "omk": self.background.Omega_k0,
             }
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -1923,6 +1934,8 @@ class CosmoPowerJAXCurvaturePerturbations:
                 "omk": self.background.Omega_k0,
             }
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -1989,6 +2002,8 @@ class CosmoPowerJAXCurvaturePerturbations:
                 "lnAs": np.log(self.background.As * 1e10),
                 "omk": self.background.Omega_k0,
             }
+
+            check_emulator_bounds(self.params)
 
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
@@ -2066,6 +2081,8 @@ class CosmoPowerJAXCurvaturePerturbations:
                 "omk": self.background.Omega_k0,
                 "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
             }
+
+            check_emulator_bounds(self.params)
 
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
@@ -2156,6 +2173,8 @@ class CosmoPowerJAXRunningIndexPerturbations:
                 "alpha_s": self.background.alpha_s,
             }
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -2233,6 +2252,8 @@ class CosmoPowerJAXRunningIndexPerturbations:
                 "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
             }
 
+            check_emulator_bounds(self.params)
+
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
             self.params["z"] = redshifts
@@ -2299,6 +2320,8 @@ class CosmoPowerJAXRunningIndexPerturbations:
                 "lnAs": np.log(self.background.As * 1e10),
                 "alpha_s": self.background.alpha_s,
             }
+
+            check_emulator_bounds(self.params)
 
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))
@@ -2376,6 +2399,8 @@ class CosmoPowerJAXRunningIndexPerturbations:
                 "alpha_s": self.background.alpha_s,
                 "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
             }
+
+            check_emulator_bounds(self.params)
 
             for key in self.params.keys():
                 self.params[key] = np.tile(self.params[key], len(redshifts))

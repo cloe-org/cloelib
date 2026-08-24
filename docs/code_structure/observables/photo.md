@@ -1,8 +1,10 @@
-# Tracer Protocol (Photometric Observables)
+# Photometric Observables (Tracer Protocol)
 
 **Protocol Definition**: `cloelib.observables.tracer.Tracer`
 
-Tracers define window functions for photometric surveys—how galaxies are distributed in redshift and how they trace the matter field.
+Photometric tracers define window functions describing how galaxies are
+distributed in redshift and how they trace the matter field. They implement the
+same `Tracer` protocol used by the [gravitational-wave tracers](gw.md).
 
 ## Required Property
 
@@ -74,6 +76,8 @@ nuisance = {
     'multiplicative_bias_2': 0.0,
     'dz_shear_1': 0.0,  # Photo-z bias
     'dz_shear_2': 0.0,
+    'width_shear_1': 1.0,
+    'width_shear_2': 1.0,
     'AIA': 1.0,         # Intrinsic alignment amplitude
     'CIA': 0.0164,      # IA normalization
     'EtaIA': -0.41,     # IA redshift evolution
@@ -118,10 +122,12 @@ from cloelib.observables.photo import PositionsTracer
 
 # Nuisance for clustering
 nuisance = {
-    'bias_1': 1.5,      # Galaxy bias
-    'bias_2': 1.8,
-    'dz_clustering_1': 0.0,
-    'dz_clustering_2': 0.0,
+    'b1_photo_bin0': 1.5,  # Galaxy bias (zero-based bin suffix)
+    'b1_photo_bin1': 1.8,
+    'dz_pos_1': 0.0,
+    'dz_pos_2': 0.0,
+    'width_pos_1': 1.0,
+    'width_pos_2': 1.0,
     'magnification_bias_1': 0.0,
     'magnification_bias_2': 0.0,
 }
@@ -130,6 +136,7 @@ tracer = PositionsTracer(
     perturbations=pert,
     dndz=dndz_bins,
     z=z,
+    galaxy_bias_model="per_bin",
     nuisance_params=nuisance,
 )
 
@@ -339,5 +346,6 @@ Ready to compute final statistics with your observables?
 - [Perturbations](../perturbations.md) – Review structure formation
 - [Background](../background.md) – Review the foundation
 - [API Reference](../../api.md) – Full technical details
-- [Back to Observables](index.md) – Review all oobservables
+- [Gravitational-Wave Observables](gw.md) – Use the Tracer protocol for GW sources
+- [Back to Observables](index.md) – Review all observables
 - [Back to Overview](../index.md) – Review the architecture

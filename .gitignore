@@ -18,6 +18,10 @@ dist/
 *.egg-info/
 _version.py
 
+# setuptools_scm generated version file
+_version.py
+*/_version.py
+
 # Jupyter notebooks
 notebooks/
 *.ipynb

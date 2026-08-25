@@ -78,6 +78,11 @@ class Background(Protocol):
         ...
 
     @property
+    def alpha_s(self) -> float:
+        """Running of the scalar spectral index (d ns / d ln k)."""
+        ...
+
+    @property
     def w0(self) -> float:
         """Dark energy parameter."""
         ...

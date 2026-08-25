@@ -1,4 +1,4 @@
-"""Implementation of Background and Perturbation cosmology using CLASS."""
+"""Implementation of Background and Perturbation cosmology using MGCLASS, a patch to CLASS for modified gravity models."""
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
@@ -7,18 +7,38 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 # General imports
 import numpy as np
 import copy
+import ctypes
+import os
+import sys
+from contextlib import contextmanager
 from typing import Optional, Union, Sequence
 import warnings
 
 # Cosmology imports
 try:
-    from classy import Class  # type: ignore
+    from mgclassy import Class  # type: ignore
 except ImportError as e:
-    raise ImportError("classy could not be imported.") from e
+    raise ImportError("mgclassy could not be imported.") from e
 
 
-class CLASSBackground:
-    """A wrapper for CLASS background cosmological calculations."""
+@contextmanager
+def _suppress_native_stdout():
+    """Suppress unconditional stdout writes from the MGCLASS C extension."""
+    stdout_fd = sys.stdout.fileno()
+    saved_fd = os.dup(stdout_fd)
+    devnull_fd = os.open(os.devnull, os.O_WRONLY)
+    try:
+        os.dup2(devnull_fd, stdout_fd)
+        yield
+    finally:
+        ctypes.CDLL(None).fflush(None)
+        os.dup2(saved_fd, stdout_fd)
+        os.close(saved_fd)
+        os.close(devnull_fd)
+
+
+class MGCLASSBackground:
+    """A wrapper for MGCLASS background cosmological calculations."""
 
     c0 = SPEED_OF_LIGHT / 1000
 
@@ -30,17 +50,21 @@ class CLASSBackground:
         Omega_k0: float,
         As: float,
         ns: float,
+        Y_He: float,
         mnu: Union[float, Sequence[float], np.ndarray],
         w0: float,
         wa: float,
         gamma_MG: float,
+        mg_ansatz: str,
+        mg_z_init: float,
+        mg_params: dict,
         N_mnu: int,
         N_ur: Optional[float] = None,
         alpha_s: float = 0.0,
         **kwargs,
     ) -> None:
         """
-        Initialize the CLASSBackground instance with cosmological parameters.
+        Initialize the MGCLASSBackground class with cosmological parameters.
 
         Args:
             H0 (float): Hubble parameter at z=0 in km/s/Mpc.
@@ -54,10 +78,13 @@ class CLASSBackground:
                 Can be a single float for degenerate masses, an array (or a sequence of floats) for individual species.
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the equation of state.
-            gamma_MG (float): Modified gravity growth parameter (not directly used in CLASS, but kept for protocol compliance).
+            gamma_MG (float): Modified gravity growth parameter (not directly used in MGCLASS, but kept for protocol compliance).
             N_mnu (int): Number of massive neutrino species.
             N_ur (Optional[float]): Effective number of ultra-relativistic species.
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
+            mg_ansatz (str): Modified gravity model name
+            mg_z_init (float): Redshift at which the MG model starts applying
+            mg_params (dict): dictionary for an MGCLASS model parameters
         """
         self.H0 = H0
         self.h = self.H0 / 100
@@ -67,9 +94,12 @@ class CLASSBackground:
         self.As = As
         self.ns = ns
         self.alpha_s = alpha_s
+        self.Y_He = Y_He
         self.w0 = w0
         self.wa = wa
-        self.gamma_MG = gamma_MG  # Kept for protocol, but CLASS doesn't directly use it
+        self.gamma_MG = (
+            gamma_MG  # Kept for protocol, but MGCLASS doesn't directly use it
+        )
         self.mnu = mnu
         self.N_mnu = N_mnu
         # We can set N_ur to a default value if not provided
@@ -80,40 +110,56 @@ class CLASSBackground:
         if self.N_mnu > 0 and np.sum(self.mnu) == 0:
             raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
 
-        # Initialize CLASS parameters
+        self.mg_ansatz = mg_ansatz
+        self.mg_z_init = mg_z_init
+        self.mg_params = mg_params
+
+        # Initialize MGCLASS parameters
         self.interface_args: dict = {
-            "CLASSparams": {}
-        }  # Use a dictionary for CLASS parameters
-        self.interface_args["CLASSparams"]["H0"] = self.H0
-        self.interface_args["CLASSparams"]["omega_b"] = self.Omega_b0 * (self.h) ** 2
-        self.interface_args["CLASSparams"]["omega_cdm"] = (
+            "MGCLASSparams": {}
+        }  # Use a dictionary for MGCLASS parameters
+        self.interface_args["MGCLASSparams"]["H0"] = self.H0
+        self.interface_args["MGCLASSparams"]["omega_b"] = self.Omega_b0 * (self.h) ** 2
+        self.interface_args["MGCLASSparams"]["omega_cdm"] = (
             self.Omega_cdm0 * (self.h) ** 2
         )
-        self.interface_args["CLASSparams"]["Omega_k"] = self.Omega_k0
-        self.interface_args["CLASSparams"]["n_s"] = self.ns
-        self.interface_args["CLASSparams"]["alpha_s"] = self.alpha_s
-        self.interface_args["CLASSparams"]["A_s"] = self.As
-        self.interface_args["CLASSparams"]["w0_fld"] = self.w0  # or w0
-        self.interface_args["CLASSparams"]["wa_fld"] = self.wa  # or wa
+        self.interface_args["MGCLASSparams"]["Omega_k"] = self.Omega_k0
+        self.interface_args["MGCLASSparams"]["n_s"] = self.ns
+        self.interface_args["MGCLASSparams"]["alpha_s"] = self.alpha_s
+        self.interface_args["MGCLASSparams"]["YHe"] = self.Y_He
+        self.interface_args["MGCLASSparams"]["A_s"] = self.As
+        self.interface_args["MGCLASSparams"]["w0_fld"] = self.w0  # or w0
+        self.interface_args["MGCLASSparams"]["wa_fld"] = self.wa  # or wa
         # To get correct perturbations for w0wa
-        self.interface_args["CLASSparams"]["use_ppf"] = "yes"
+        self.interface_args["MGCLASSparams"]["use_ppf"] = "yes"
         # To avoid using a cosmological constant
-        self.interface_args["CLASSparams"]["Omega_Lambda"] = 0.0
+        self.interface_args["MGCLASSparams"]["Omega_Lambda"] = 0.0
 
         # Set neutrino parameters
         if self.N_mnu > 0:
-            self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
-        self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
-        self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
+            self.interface_args["MGCLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
+        self.interface_args["MGCLASSparams"]["N_ncdm"] = self.N_mnu
+        self.interface_args["MGCLASSparams"]["N_ur"] = self.N_ur
 
-        # Initialize CLASS
+        # To use the appropriate gauge where MGCLASS modified gravity is implemented
+        self.interface_args["MGCLASSparams"]["gauge"] = "newtonian"
+        self.interface_args["MGCLASSparams"]["mg_z_init"] = self.mg_z_init
+        self.interface_args["MGCLASSparams"]["mg_ansatz"] = self.mg_ansatz
+        # Use a dictionary for an MGCLASS model parameters
+        for mgparam in self.mg_params.keys():
+            self.interface_args["MGCLASSparams"][mgparam] = self.mg_params[mgparam]
+
+        # Initialize MGCLASS
         self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
+        self.results.set(self.interface_args["MGCLASSparams"])
+        with _suppress_native_stdout():
+            self.results.compute()
 
     @property
     def _interface_args(self) -> dict:
-        """Save internal structure format of interface codes."""
+        """
+        Save internal structure format of interface codes
+        """
         return self.interface_args
 
     @property
@@ -129,7 +175,7 @@ class CLASSBackground:
         # If N_ur is not provided, we assume the standard model of cosmology
         # where N_eff = 3.044 (including photons, neutrinos, and their contributions)
         # This is a common assumption in cosmology.
-        # Values are taken from the CLASS documentation.
+        # Values are taken from the MGCLASS documentation.
         if self.N_mnu == 0:
             return 3.044
         elif self.N_mnu == 1:
@@ -154,7 +200,7 @@ class CLASSBackground:
         return self.results.Neff()
 
     def _set_neutrino_masses(self) -> str:
-        """Set the neutrino masses in the CLASS parameters.
+        """Set the neutrino masses in the MGCLASS parameters.
 
         This is a helper method to ensure that the neutrino masses are set correctly.
         """
@@ -183,17 +229,16 @@ class CLASSBackground:
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
         Return the Hubble parameter as a function of redshift.
-
         Args:
             zs (np.ndarray): Array of redshifts.
             units (str): Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').
 
         Returns:
-            (np.ndarray): Hubble parameter values at specified redshifts.
+            np.ndarray: Hubble parameter values at specified redshifts.
         """
-        H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
+        H = np.array([self.results.Hubble(z) for z in zs])  # MGCLASS returns H in 1/Mpc
         if units == "km/s/Mpc":
-            return H * CLASSBackground.c0  # Convert to km/s/Mpc
+            return H * MGCLASSBackground.c0  # Convert to km/s/Mpc
         elif units == "1/Mpc":
             return H
         else:
@@ -202,14 +247,13 @@ class CLASSBackground:
     def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the comoving distance as a function of redshift.
-
         Args:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Comoving distance values.
+            np.ndarray: Comoving distance values.
         """
-        return np.array([self.results.comoving_distance(z) for z in zs])
+        return self.results.z_of_r(zs)[0]
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -218,8 +262,8 @@ class CLASSBackground:
         Args:
             zs (np.ndarray): Array of redshifts.
 
-        Returns:
-            (np.ndarray): Transverse comoving distance values.
+        Return:
+            np.ndarray: Transverse comoving distance values.
         """
         x = self.comoving_distance(zs)
 
@@ -234,13 +278,12 @@ class CLASSBackground:
 
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Return the angular diameter distance as a function of redshift.
-
+        Returns the angular diameter distance as a function of redshift.
         Args:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Angular diameter distance values.
+            np.ndarray: Angular diameter distance values.
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
@@ -255,7 +298,22 @@ class CLASSBackground:
             np.ndarray: Matter density values (no neutrinos).
         """
 
-        return self.results.Om_b(zs) + self.results.Om_cdm(zs)
+        try:
+            Omegacb = np.array(
+                [
+                    (self.results.Omega_b() + self.results.Omega0_cdm())
+                    * (1 + z) ** 3.0
+                    / (self.hubble_parameter(z) / self.H0) ** 2.0
+                    for z in zs
+                ]
+            )
+        except TypeError:
+            Omegacb = (
+                (self.results.Omega_b() + self.results.Omega0_cdm())
+                * (1 + zs) ** 3.0
+                / (self.hubble_parameter(zs) / self.H0) ** 2.0
+            )
+        return Omegacb
 
     def Omega_m(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -265,9 +323,13 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Matter density values.
+            np.ndarray: Matter density values.
         """
-        return self.results.Om_m(zs)
+        try:
+            Omegam = np.array([self.results.Om_m(z) for z in zs])
+        except TypeError:
+            Omegam = self.results.Om_m(zs)
+        return Omegam
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -277,9 +339,24 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Matter density values.
+            np.ndarray: Matter density values.
         """
-        return self.results.Om_b(zs)
+        try:
+            Omegab = np.array(
+                [
+                    self.results.Omega_b()
+                    * (1 + z) ** 3.0
+                    / (self.hubble_parameter(z) / self.H0) ** 2.0
+                    for z in zs
+                ]
+            )
+        except TypeError:
+            Omegab = (
+                self.results.Omega_b()
+                * (1 + zs) ** 3.0
+                / (self.hubble_parameter(zs) / self.H0) ** 2.0
+            )
+        return Omegab
 
     @property
     def rdrag(self) -> float:
@@ -292,52 +369,63 @@ class CLASSBackground:
         return self.results.get_current_derived_parameters(["z_star"])["z_star"]
 
 
-class CLASSLinearPerturbations:
-    """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
+class MGCLASSLinearPerturbations:
+    """Class for perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
 
     def __init__(self, background: Background, redshifts: np.ndarray):
-        """Initialize the CLASSLinearPerturbation instance."""
+        """Initialize the MGCLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 100
-        self.results = None  # Store CLASS results
+        self.results = None  # Store MGCLASS results
 
-        # Ensure CLASS is initialized with necessary parameters
+        # Ensure MGCLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["non linear"] = "none"
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
+        self.interface_args["MGCLASSparams"]["output"] = "mPk, mTk"
+        self.interface_args["MGCLASSparams"]["P_k_max_1/Mpc"] = self.kmax
+        self.interface_args["MGCLASSparams"]["k_per_decade_for_bao"] = 70
+        self.interface_args["MGCLASSparams"]["k_per_decade_for_pk"] = 10
+        self.interface_args["MGCLASSparams"]["z_max_pk"] = np.max(self.z)
+        self.interface_args["MGCLASSparams"]["non linear"] = "none"
+        self.interface_args["MGCLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
+        self.results.set(self.interface_args["MGCLASSparams"])
+        with _suppress_native_stdout():
+            self.results.compute()
         self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
     @property
     def _interface_args(self) -> dict:
-        """Save internal structure format of interface codes."""
+        """Save internal structure format of interface codes"""
         return self.interface_args
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        """Calculate the CLASS linear matter power spectrum.
+        """Calculate the MGCLASS linear matter power spectrum.
 
-        Args:
-            zs (numpy.ndarray): redshifts
-            ks (numpy.ndarray): wavenumber
-            hubble_units (Optional[bool]): Flag to specify if output in h units
-            k_hunit (Optional[bool]): Flag to specify if wavenumber in h units
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
 
-        Returns:
-            pk (numpy.ndarray): Linear matter power spectrum at the specified scale
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
             and redshift
         """
         if hubble_units or k_hunit:
-            raise ValueError("This CLASS method does not yet support h-units")
+            raise ValueError("This MGCLASS method does not yet support h-units")
         self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
         # To match array convention of CAMB
         return self.Pk_linear
@@ -370,7 +458,7 @@ class CLASSLinearPerturbations:
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
 
-        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+        if self.interface_args["MGCLASSparams"]["N_ncdm"] == 0:
             warnings.warn(
                 "There are no massive neutrinos (N_mnu=0), this function will "
                 "return the usual matter power spectrum instead of _cb!",
@@ -391,19 +479,24 @@ class CLASSLinearPerturbations:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        $$
+        .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
             /P_{\rm \delta\delta}(z=0, k)}\\
-        $$
 
-        and normalizes as for $D(z)/D(0)$.
+        and normalizes as for :math:`D(z)/D(0)`.
 
-        Args:
-            zs (numpy.ndarray): redshifts
-            ks (numpy.ndarray): wavenumber
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
 
         Returns:
-            (np.ndarray): The growth factor at the specified redshift and wavenumber.
+        --------
+        np.ndarray
+            The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(
             self.matter_power_spectrum(zs, ks)
@@ -416,11 +509,18 @@ class CLASSLinearPerturbations:
         """
         Calculate the growth rate f(z).
 
-        Returns:
-            (np.ndarray): Scale-independent growth rate f(z)
+        Returns
+        -------
+        np.ndarray
+            Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
-        return np.array(arr)
+        D_z_k0 = self.growth_factor(self.z, np.array([1.0e-2]))
+
+        return (
+            -(1 + self.z)
+            / D_z_k0[:, 0]
+            * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])  # type: ignore[union-attr]
+        )
 
     def sigma8_0(self) -> float:
         """
@@ -435,8 +535,8 @@ class CLASSLinearPerturbations:
         return self.results.sigma8()  # type: ignore[union-attr]
 
 
-class CLASSNonLinearPerturbations:
-    """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
+class MGCLASSNonLinearPerturbations:
+    """Class for non-linear perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
 
     def __init__(
         self,
@@ -444,19 +544,8 @@ class CLASSNonLinearPerturbations:
         linearperturbations: Optional[object],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
-        hmcode_version: Optional[str] = None,
     ):
-        """Initialize the CLASSNonLinearPerturbation instance.
-
-        Args:
-            background: Background cosmology object.
-            linearperturbations: Linear perturbations object (unused by CLASS, which computes
-                nonlinear corrections internally; accepted for interface compatibility with
-                emulator-based NonLinPerturbations classes).
-            redshifts (np.ndarray): Array of redshifts for the calculations.
-            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
-            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
-        """
+        """Initialize the MGCLASSNonLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 100
@@ -464,41 +553,50 @@ class CLASSNonLinearPerturbations:
         if nonlinear_model is None:
             nonlinear_model = "none"
 
-        # Ensure CLASS is initialized with necessary parameters
+        # Ensure MGCLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
-        self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
-        self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
-        self.interface_args["CLASSparams"]["k_per_decade_for_bao"] = 70
-        self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-        self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
-        self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
-        self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
-        if hmcode_version is not None:
-            self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
-        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
+        self.interface_args["MGCLASSparams"]["output"] = "mPk, mTk"
+        self.interface_args["MGCLASSparams"]["P_k_max_1/Mpc"] = self.kmax
+        self.interface_args["MGCLASSparams"]["k_per_decade_for_bao"] = 70
+        self.interface_args["MGCLASSparams"]["k_per_decade_for_pk"] = 10
+        self.interface_args["MGCLASSparams"]["z_max_pk"] = np.max(self.z)
+        self.interface_args["MGCLASSparams"]["nonlinear_min_k_max"] = 50
+        self.interface_args["MGCLASSparams"]["hmcode_tol_sigma"] = 1e-8
+        self.interface_args["MGCLASSparams"]["non linear"] = nonlinear_model
+        self.interface_args["MGCLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
-        self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
+        self.results.set(self.interface_args["MGCLASSparams"])
+        with _suppress_native_stdout():
+            self.results.compute()
         self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
     ) -> np.ndarray:
-        """Calculate the CLASS non-linear matter power spectrum.
+        """Calculate the MGCLASS non-linear matter power spectrum.
 
-        Args:
-            zs (numpy.ndarray): redshifts
-            ks (numpy.ndarray): wavenumber
-            hubble_units (Optional [bool]): Flag to specify if output in h units
-            k_hunit (Optional [bool]): Flag to specify if wavenumber in h units
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
 
-        Returns:
-            pk (numpy.ndarray): Non-linear matter power spectrum at the specified scale
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Non-linear matter power spectrum at the specified scale
             and redshift
         """
         if hubble_units or k_hunit:
-            raise ValueError("This CLASS method does not yet support h-units")
+            raise ValueError("This MGCLASS method does not yet support h-units")
         self.Pk_nonlinear = np.array(
             [[self.results.pk(ki, zi) for ki in ks] for zi in zs]
         )
@@ -533,7 +631,7 @@ class CLASSNonLinearPerturbations:
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
 
-        if self.interface_args["CLASSparams"]["N_ncdm"] == 0:
+        if self.interface_args["MGCLASSparams"]["N_ncdm"] == 0:
             warnings.warn(
                 "There are no massive neutrinos (N_mnu=0), this function will "
                 "return the usual matter power spectrum instead of _cb!",
@@ -554,19 +652,24 @@ class CLASSNonLinearPerturbations:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        $$
+        .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
             /P_{\rm \delta\delta}(z=0, k)}\\
-        $$
 
-        and normalizes as for $D(z)/D(0)$.
+        and normalizes as for :math:`D(z)/D(0)`.
 
-        Args:
-            zs (numpy.ndarray): redshifts
-            ks (numpy.ndarray): wavenumber
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
 
         Returns:
-            (np.ndarray): The growth factor at the specified redshift and wavenumber.
+        --------
+        np.ndarray
+            The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(
             self.matter_power_spectrum(zs, ks)
@@ -579,11 +682,18 @@ class CLASSNonLinearPerturbations:
         """
         Calculate the growth rate f(z).
 
-        Returns:
-            (np.ndarray): Scale-independent growth rate f(z)
+        Returns
+        -------
+        np.ndarray
+            Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
-        return np.array(arr)
+        D_z_k0 = self.growth_factor(self.z, np.array([1.0e-2]))
+
+        return (
+            -(1 + self.z)
+            / D_z_k0[:, 0]
+            * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])  # type: ignore[union-attr]
+        )
 
     def sigma8_0(self) -> float:
         """

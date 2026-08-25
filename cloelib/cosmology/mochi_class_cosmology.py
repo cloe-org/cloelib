@@ -1,8 +1,9 @@
-"""Implementation of Background and Perturbation cosmology using CLASS."""
+"""Implementation of Background and Perturbation cosmology using MOCHI_CLASS (https://github.com/mcataneo/mochi_class_public)."""
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+import sys
 
 # General imports
 import numpy as np
@@ -10,15 +11,24 @@ import copy
 from typing import Optional, Union, Sequence
 import warnings
 
-# Cosmology imports
+np.set_printoptions(threshold=sys.maxsize)
+
+# Cosmology imports (make sure it's the version of mochi_class that's being imported not the standard CLASS!)
 try:
-    from classy import Class  # type: ignore
+    import mochi_classy
+    from mochi_classy import Class  # type: ignore
+
+    print(f"Loaded mochi_classy from {mochi_classy.__file__}")
 except ImportError as e:
-    raise ImportError("classy could not be imported.") from e
+    raise ImportError("mochi_classy could not be imported.") from e
+
+####################################
+############ BACKGROUND ############
+####################################
 
 
-class CLASSBackground:
-    """A wrapper for CLASS background cosmological calculations."""
+class mochiCLASSBackground:
+    """A wrapper for MOCHI_CLASS background cosmological calculations."""
 
     c0 = SPEED_OF_LIGHT / 1000
 
@@ -33,6 +43,9 @@ class CLASSBackground:
         mnu: Union[float, Sequence[float], np.ndarray],
         w0: float,
         wa: float,
+        mg_stable_basis_on: bool,
+        stable_MG_dict: dict,
+        mg_background_model: str,
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
@@ -40,7 +53,7 @@ class CLASSBackground:
         **kwargs,
     ) -> None:
         """
-        Initialize the CLASSBackground instance with cosmological parameters.
+        Initialize the mochiCLASSBackground instance with cosmological parameters.
 
         Args:
             H0 (float): Hubble parameter at z=0 in km/s/Mpc.
@@ -55,10 +68,14 @@ class CLASSBackground:
             w0 (float): Equation of state parameter for dark energy.
             wa (float): Time evolution of the equation of state.
             gamma_MG (float): Modified gravity growth parameter (not directly used in CLASS, but kept for protocol compliance).
+            mg_stable_basis_on (bool): Flag to indicate if stable basis for modified gravity is used.
+            stable_MG_dict (dict): Dictionary of stable basis parameters lna_smg, Delta_M2, D_kin, cs2 and alpha_B0 for input into mochi_class.
+            mg_background_model (str): Desired background expansion model ('lcdm', 'wowa') for modified gravity in mochi_class.
             N_mnu (int): Number of massive neutrino species.
             N_ur (Optional[float]): Effective number of ultra-relativistic species.
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
         """
+        # TO-DO: ADD MOCHI_CLASS MG PARAMS
         self.H0 = H0
         self.h = self.H0 / 100
         self.Omega_b0 = Omega_b0
@@ -69,9 +86,14 @@ class CLASSBackground:
         self.alpha_s = alpha_s
         self.w0 = w0
         self.wa = wa
-        self.gamma_MG = gamma_MG  # Kept for protocol, but CLASS doesn't directly use it
+        self.gamma_MG = (
+            gamma_MG  # Kept for protocol, but mochi_CLASS doesn't directly use it
+        )
         self.mnu = mnu
         self.N_mnu = N_mnu
+        self.mg_stable_basis_on = mg_stable_basis_on
+        self.stable_MG_dict = stable_MG_dict
+        self.mg_background_model = mg_background_model
         # We can set N_ur to a default value if not provided
         self._provided_N_ur = N_ur
 
@@ -80,7 +102,7 @@ class CLASSBackground:
         if self.N_mnu > 0 and np.sum(self.mnu) == 0:
             raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
 
-        # Initialize CLASS parameters
+        # Initialize CLASS parameters (TO-DO: ADD PARAMS HERE AS WELL)
         self.interface_args: dict = {
             "CLASSparams": {}
         }  # Use a dictionary for CLASS parameters
@@ -91,14 +113,8 @@ class CLASSBackground:
         )
         self.interface_args["CLASSparams"]["Omega_k"] = self.Omega_k0
         self.interface_args["CLASSparams"]["n_s"] = self.ns
-        self.interface_args["CLASSparams"]["alpha_s"] = self.alpha_s
         self.interface_args["CLASSparams"]["A_s"] = self.As
-        self.interface_args["CLASSparams"]["w0_fld"] = self.w0  # or w0
-        self.interface_args["CLASSparams"]["wa_fld"] = self.wa  # or wa
-        # To get correct perturbations for w0wa
-        self.interface_args["CLASSparams"]["use_ppf"] = "yes"
-        # To avoid using a cosmological constant
-        self.interface_args["CLASSparams"]["Omega_Lambda"] = 0.0
+        self.interface_args["CLASSparams"]["alpha_s"] = self.alpha_s
 
         # Set neutrino parameters
         if self.N_mnu > 0:
@@ -106,10 +122,176 @@ class CLASSBackground:
         self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
         self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
 
+        ########### CHECK BACKGROUND MODEL AND MG SWITCH ################
+        # WITH MG
+        if mg_stable_basis_on:
+            # MOCHI CLASS GENERAL PARAMETERS
+            file_mochiclass_params_stable_general = {  # combines common_hiclass_params and mochiclass_params from alpha_B0
+                "gravity_model": "stable_params",
+                "method_gr_smg": "on",
+                "z_gr_smg": 99.0,
+                "skip_stability_tests_smg": "yes",  # cause stable parameters
+                "a_min_stability_test_smg": 1e-2,
+                "skip_math_stability_smg": "no",  ######### <---------------------- ADAPT FOR TESTING
+                "exp_rate_smg": 1.0,
+                "pert_initial_conditions_smg": "zero",
+                "pert_ic_ini_z_ref_smg": 1e10,
+                "pert_ic_tolerance_smg": 2e-2,
+                "pert_ic_regulator_smg": 1e-15,
+                "pert_qs_ic_tolerance_test_smg": 10,
+                "method_qs_smg": "automatic",
+                "z_fd_qs_smg": 0.0,
+                "trigger_mass_qs_smg": 1.0e2,
+                "trigger_rad_qs_smg": 1.0e2,
+                "eps_s_qs_smg": 0.01,
+                "n_min_qs_smg": 100,
+                "n_max_qs_smg": 10000,
+            }
+            for key, value in file_mochiclass_params_stable_general.items():
+                self.interface_args["CLASSparams"][key] = value
+            # LOAD MG PARAMETRISATIONS
+            lna_smg = self.stable_MG_dict["lna_smg"]
+            Delta_Mpl = self.stable_MG_dict["Delta_M2"]
+            Dkin = self.stable_MG_dict["D_kin"]
+            cs2 = self.stable_MG_dict["cs2"]
+            alpha_B0 = self.stable_MG_dict["alpha_B0"]
+            if isinstance(alpha_B0, np.ndarray):
+                # convert array to float
+                alpha_B0_str = (
+                    np.array2string(alpha_B0, separator=",", precision=16)
+                    .replace("\n", "")
+                    .strip("[]")
+                )
+            elif isinstance(alpha_B0, (int, float, np.number)):
+                # convert to string
+                alpha_B0_str = str(alpha_B0)
+            else:
+                raise ValueError("alpha_B0 must be a number or a 1D array")
+            mochiclass_stable_basis_dict = {
+                # omega settings here assume that MG (stable basis) is loaded
+                "Omega_Lambda": 0.0,
+                "Omega_fld": 0.0,
+                "Omega_smg": -1.0,  # fractional density scalar field today (0: no smg, negative: specify both Omega_Lambda and Omega_fld, infer Omega_smg, 0<...<1: specify both Omega_Lambda and Omega_smg, infer Omega_fld)
+                "lna_smg": np.array2string(lna_smg, separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+                "Delta_M2": np.array2string(Delta_Mpl, separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+                "D_kin": np.array2string(Dkin, separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+                "cs2": np.array2string(cs2, separator=",", precision=16)
+                .replace("\n", "")
+                .strip("[]"),
+                "parameters_smg": alpha_B0_str,
+            }
+            # Check expansion model for MG
+            if self.mg_background_model == "lcdm":
+                mochiclass_stable_basis_dict["expansion_model"] = "lcdm"
+            elif self.mg_background_model == "wowa":
+                w0 = self.w0
+                wa = self.wa
+                mochiclass_stable_basis_dict["expansion_model"] = "w0wa"
+                mochiclass_stable_basis_dict["expansion_smg"] = (
+                    np.array2string(
+                        np.array([0.5, w0, wa]), separator=",", precision=16
+                    )
+                    .replace("\n", "")
+                    .strip("[]")
+                )  # for wowa: expansion_smg = Omega_smg, w0, wa
+            elif self.mg_background_model == "rho_de":
+                lna_de = self.stable_MG_dict["lna_de"]
+                rho_de = self.stable_MG_dict["rho_de"]
+                mochiclass_stable_basis_dict["expansion_model"] = "rho_de"
+                mochiclass_stable_basis_dict["expansion_smg"] = 0.5
+                mochiclass_stable_basis_dict["lna_de"] = (
+                    np.array2string(lna_de, separator=",", precision=16)
+                    .replace("\n", "")
+                    .strip("[]")
+                )
+                mochiclass_stable_basis_dict["de_evo"] = (
+                    np.array2string(rho_de, separator=",", precision=16)
+                    .replace("\n", "")
+                    .strip("[]")
+                )
+            else:
+                raise ValueError(
+                    "mg_background_model must be 'lcdm', 'wowa' or 'rho_de'"
+                )
+
+        # ########## NO MG TURNED ON ##########
+        else:
+            # Check expansion model for MG
+            if self.mg_background_model == "lcdm":
+                mochiclass_stable_basis_dict = {"Omega_fld": 0.0, "Omega_smg": 0.0}
+            elif self.mg_background_model == "wowa":
+                mochiclass_stable_basis_dict = {
+                    "Omega_Lambda": 0,
+                    "Omega_smg": 0.0,
+                    "use_ppf": "yes",
+                    "c_gamma_over_c_fld": 0.4,
+                    "fluid_equation_of_state": "CLP",
+                    "w0_fld": self.w0,
+                    "wa_fld": self.wa,
+                    "cs2_fld": 1,
+                }
+            elif (
+                self.mg_background_model == "rho_de"
+            ):  # no MG (activate stable basis, but LCDM values)
+                lna_smg = self.stable_MG_dict["lna_smg"]
+                Delta_Mpl = self.stable_MG_dict["Delta_M2"]
+                Dkin = self.stable_MG_dict["D_kin"]
+                cs2 = self.stable_MG_dict["cs2"]
+                lna_de = self.stable_MG_dict["lna_de"]
+                rho_de = self.stable_MG_dict["rho_de"]
+                mochiclass_stable_basis_dict = {
+                    "Omega_Lambda": 0.0,
+                    "Omega_fld": 0.0,
+                    "Omega_smg": -1.0,
+                    "expansion_model": "rho_de",
+                    "expansion_smg": 0.5,
+                    "lna_de": np.array2string(lna_de, separator=",", precision=16)
+                    .replace("\n", "")
+                    .strip("[]"),
+                    "de_evo": np.array2string(rho_de, separator=",", precision=16)
+                    .replace("\n", "")
+                    .strip("[]"),
+                    "lna_smg": np.array2string(lna_smg, separator=",", precision=16)
+                    .replace("\n", "")
+                    .strip("[]"),
+                    "Delta_M2": np.array2string(
+                        np.zeros_like(lna_smg), separator=",", precision=16
+                    )
+                    .replace("\n", "")
+                    .strip("[]"),
+                    "D_kin": np.array2string(
+                        np.ones_like(lna_smg) * 1e-8, separator=",", precision=16
+                    )
+                    .replace("\n", "")
+                    .strip("[]"),
+                    "cs2": np.array2string(
+                        np.ones_like(lna_smg), separator=",", precision=16
+                    )
+                    .replace("\n", "")
+                    .strip("[]"),
+                    "parameters_smg": "0.0",
+                }
+            else:
+                raise ValueError(
+                    "mg_background_model must be 'lcdm', 'wowa' or 'rho_de'"
+                )
+
+        # load the mochi_class stable basis dictionary
+        for key, value in mochiclass_stable_basis_dict.items():
+            self.interface_args["CLASSparams"][key] = value
         # Initialize CLASS
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
+        try:
+            self.results.compute()
+        except mochi_classy._classy.CosmoComputationError as e:
+            raise RuntimeError(f"Error computing CLASS results: {e}")
 
     @property
     def _interface_args(self) -> dict:
@@ -189,11 +371,11 @@ class CLASSBackground:
             units (str): Units for the Hubble parameter ('1/Mpc' or 'km/s/Mpc').
 
         Returns:
-            (np.ndarray): Hubble parameter values at specified redshifts.
+            np.ndarray: Hubble parameter values at specified redshifts.
         """
         H = np.array([self.results.Hubble(z) for z in zs])  # CLASS returns H in 1/Mpc
         if units == "km/s/Mpc":
-            return H * CLASSBackground.c0  # Convert to km/s/Mpc
+            return H * mochiCLASSBackground.c0  # Convert to km/s/Mpc
         elif units == "1/Mpc":
             return H
         else:
@@ -207,7 +389,7 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Comoving distance values.
+            np.ndarray: Comoving distance values.
         """
         return np.array([self.results.comoving_distance(z) for z in zs])
 
@@ -219,7 +401,7 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Transverse comoving distance values.
+            np.ndarray: Transverse comoving distance values.
         """
         x = self.comoving_distance(zs)
 
@@ -232,6 +414,7 @@ class CLASSBackground:
 
         return y
 
+    # TO-DO: Get alpha parameters and M?
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the angular diameter distance as a function of redshift.
@@ -240,9 +423,21 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Angular diameter distance values.
+            np.ndarray: Angular diameter distance values.
         """
         return np.array([self.results.angular_distance(z) for z in zs])
+
+    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Return the matter density as a function of redshift.
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns:
+            np.ndarray: Matter density values.
+        """
+        return self.results.Om_m(zs)
 
     def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -257,18 +452,6 @@ class CLASSBackground:
 
         return self.results.Om_b(zs) + self.results.Om_cdm(zs)
 
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
-        """
-        Return the matter density as a function of redshift.
-
-        Args:
-            zs (np.ndarray): Array of redshifts.
-
-        Returns:
-            (np.ndarray): Matter density values.
-        """
-        return self.results.Om_m(zs)
-
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the baryon density as a function of redshift.
@@ -277,9 +460,56 @@ class CLASSBackground:
             zs (np.ndarray): Array of redshifts.
 
         Returns:
-            (np.ndarray): Matter density values.
+            np.ndarray: Matter density values.
         """
         return self.results.Om_b(zs)
+
+    def Om_smg(self, zs: np.ndarray) -> np.ndarray:
+        """
+        Calculate dark energy density fraction Om_smg(z)
+        (exactly, the ratio of quantities defined by Class
+        as index_bg_rho_smg and index_bg_rho_crit in the background module)
+
+        requires mochi_class v3.3.3 - 12/11/2025
+
+        Args:
+            zs (np.ndarray): Array of redshifts.
+
+        Returns
+        -------
+        np.ndarray
+            dark energy density fraction Om_smg(z)
+        """
+        arr = [self.results.Om_smg(zi) for zi in zs]
+        return np.array(arr)
+
+    def get_background(self) -> dict:
+        """
+        Return all background quantities
+
+        Return a dictionary of background quantities at all times.
+        The name and list of quantities in the returned dictionary are
+        defined in CLASS, in background_output_titles() and
+        background_output_data(). The keys of the dictionary refer to
+        redshift 'z', proper time 'proper time [Gyr]', conformal time
+        'conf. time [Mpc]', and many quantities such as the Hubble
+        rate, distances, densities, pressures, or growth factors. For
+        each key, the dictionary contains an array of values
+        corresponding to each sampled value of time.
+
+        This function works for whatever request in the 'output'
+        field, and even if 'output' was not passed or left blank.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        background : dict
+            Dictionary of all background quantities at each time
+        """
+        return self.results.get_background()
 
     @property
     def rdrag(self) -> float:
@@ -292,8 +522,13 @@ class CLASSBackground:
         return self.results.get_current_derived_parameters(["z_star"])["z_star"]
 
 
-class CLASSLinearPerturbations:
-    """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
+####################################
+############## LINEAR ##############
+####################################
+
+
+class mochiCLASSLinearPerturbations:
+    """Class for perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
 
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the CLASSLinearPerturbation instance."""
@@ -313,8 +548,12 @@ class CLASSLinearPerturbations:
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
         self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
+
+        try:
+            self.results.compute()
+        except mochi_classy._classy.CosmoComputationError as e:
+            raise RuntimeError(f"Error computing CLASS results: {e}")
 
     @property
     def _interface_args(self) -> dict:
@@ -326,21 +565,34 @@ class CLASSLinearPerturbations:
     ) -> np.ndarray:
         """Calculate the CLASS linear matter power spectrum.
 
-        Args:
-            zs (numpy.ndarray): redshifts
-            ks (numpy.ndarray): wavenumber
-            hubble_units (Optional[bool]): Flag to specify if output in h units
-            k_hunit (Optional[bool]): Flag to specify if wavenumber in h units
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
 
-        Returns:
-            pk (numpy.ndarray): Linear matter power spectrum at the specified scale
+        ks: numpy.ndarray
+            wavenumber
+
+        hubble_units: (Optional) bool
+            Flag to specify if output in h units, defaults to False
+
+        k_hunit: (Optional) bool
+            Flag to specify if wavenumber in h units, defaults to False
+
+        Returns
+        -------
+        pk: numpy.ndarray
+            Linear matter power spectrum at the specified scale
             and redshift
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        # ks /= self.background.h
+        self.Pk_linear = np.array(
+            [[self.results.pk_lin(ki, zi) for ki in ks] for zi in zs]
+        )  # type: ignore[union-attr]
         # To match array convention of CAMB
-        return self.Pk_linear
+        return self.Pk_linear  # * (self.background.h) ** 3
 
     def matter_power_spectrum_cb(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -391,19 +643,24 @@ class CLASSLinearPerturbations:
         r"""
         Calculate the growth factor for given redshifts and wavenumbers.
 
-        $$
+        .. math::
             D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
             /P_{\rm \delta\delta}(z=0, k)}\\
-        $$
 
-        and normalizes as for $D(z)/D(0)$.
+        and normalizes as for :math:`D(z)/D(0)`.
 
-        Args:
-            zs (numpy.ndarray): redshifts
-            ks (numpy.ndarray): wavenumber
+        Parameters
+        ----------
+        zs: numpy.ndarray
+            redshifts
+
+        ks: numpy.ndarray
+            wavenumber
 
         Returns:
-            (np.ndarray): The growth factor at the specified redshift and wavenumber.
+        --------
+        np.ndarray
+            The growth factor at the specified redshift and wavenumber.
         """
         D_z_k = np.sqrt(
             self.matter_power_spectrum(zs, ks)
@@ -412,14 +669,19 @@ class CLASSLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(self, k=1.0) -> np.ndarray:
         """
-        Calculate the growth rate f(z).
+        Calculate the scale-dependent growth rate f(z).
+
+        Args:
+            k (float): Wavenumber at which to evaluate the growth rate. Defaults to 1.0 (scale-independent).
 
         Returns:
-            (np.ndarray): Scale-independent growth rate f(z)
+        -------
+        np.ndarray
+            Scale-dependent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -431,12 +693,17 @@ class CLASSLinearPerturbations:
         float
             The sigma8 value.
         """
+        sigma8_0 = self.results.get_current_derived_parameters(["sigma8"])["sigma8"]
+        return sigma8_0
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+
+####################################
+############ NONLINEAR ############
+####################################
 
 
-class CLASSNonLinearPerturbations:
-    """Class for non-linear perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
+class mochiCLASSNonLinearPerturbations:
+    """Class for non-linear perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
 
     def __init__(
         self,
@@ -445,6 +712,7 @@ class CLASSNonLinearPerturbations:
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         hmcode_version: Optional[str] = None,
+        log10TAGN: Optional[float] = None,
     ):
         """Initialize the CLASSNonLinearPerturbation instance.
 
@@ -456,6 +724,7 @@ class CLASSNonLinearPerturbations:
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
             hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
+            log10TAGN (Optional[float]): HMCode baryonic feedback log_10_T_AGN parameter. Defaults to None.
         """
         self.background = background
         self.z = redshifts
@@ -474,13 +743,29 @@ class CLASSNonLinearPerturbations:
         self.interface_args["CLASSparams"]["nonlinear_min_k_max"] = 50
         self.interface_args["CLASSparams"]["hmcode_tol_sigma"] = 1e-8
         self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
-        if hmcode_version is not None:
+        if background.mg_stable_basis_on:
+            self.interface_args["CLASSparams"]["non_linear"] = "none"
+            print(
+                "Non-linear corrections are not yet implemented for modified gravity in mochi_CLASS. Setting non_linear to 'none'."
+            )
+        elif hmcode_version is not None:
             self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
+            if hmcode_version == "2020_baryonic_feedback":
+                try:
+                    self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
+                except KeyError:
+                    raise KeyError(
+                        "log10TAGN is required for HMcode 2020 baryonic feedback model."
+                    )
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
-        self.results.compute()
         self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
+
+        try:
+            self.results.compute()
+        except mochi_classy._classy.CosmoComputationError as e:
+            raise RuntimeError(f"Error computing CLASS results: {e}")
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -575,14 +860,19 @@ class CLASSNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(self, k=1.0) -> np.ndarray:
         """
-        Calculate the growth rate f(z).
+        Calculate the scale-dependent growth rate f(z).
+
+        Args:
+            k (float): Wavenumber at which to evaluate the growth rate. Defaults to 1.0 (scale-independent).
 
         Returns:
-            (np.ndarray): Scale-independent growth rate f(z)
+        -------
+        np.ndarray
+            Scale-dependent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]  # type: ignore[union-attr]
         return np.array(arr)
 
     def sigma8_0(self) -> float:

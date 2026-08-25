@@ -140,7 +140,9 @@
       "contributions": [
         "code",
         "maintenance",
-        "ideas"
+        "ideas",
+        "review",
+        "bug"
       ]
     },
     {
@@ -202,7 +204,8 @@
       "contributions": [
         "code",
         "ideas",
-        "bug"
+        "bug",
+        "review"
       ]
     },
     {
@@ -232,7 +235,8 @@
       "contributions": [
         "code",
         "test",
-        "ideas"
+        "ideas",
+        "doc"
       ]
     },
     {
@@ -594,7 +598,8 @@
       "profile": "https://github.com/neelcosmo",
       "contributions": [
         "code",
-        "ideas"
+        "ideas",
+        "bug"
       ]
     },
     {
@@ -623,6 +628,35 @@
       "profile": "https://github.com/HironaoMiyatake",
       "contributions": [
         "ideas"
+      ]
+    },
+    {
+      "login": "MartinKaercher",
+      "name": "Martin Kärcher",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64490739?v=4",
+      "profile": "https://github.com/MartinKaercher",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "chiaradeleo1",
+      "name": "Chiara De Leo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/151924166?v=4",
+      "profile": "https://github.com/chiaradeleo1",
+      "contributions": [
+        "review",
+        "mentoring"
+      ]
+    },
+    {
+      "login": "ytchang05",
+      "name": "Yu-Ting",
+      "avatar_url": "https://avatars.githubusercontent.com/u/67809413?v=4",
+      "profile": "https://github.com/ytchang05",
+      "contributions": [
+        "code"
       ]
     }
   ]

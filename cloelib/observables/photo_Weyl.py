@@ -48,10 +48,7 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z))
         bias_vals = np.asarray(
-            [
-                nuisance_params.get("bhat_bin%d" % bin, 1.0)
-                for bin in range(self.n_z_bins)
-            ]
+            [nuisance_params["bhat_bin%d" % bin] for bin in range(self.n_z_bins)]
         )
         self.bias_array = np.pad(bias_vals, (0, self.z.shape[0] - self.n_z_bins))
 
@@ -143,17 +140,14 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z) in your scheme)
         bias_vals = np.asarray(
-            [
-                nuisance_params.get("bhat_bin%d" % bin, 1.0)
-                for bin in range(self.n_z_bins)
-            ]
+            [nuisance_params["bhat_bin%d" % bin] for bin in range(self.n_z_bins)]
         )
         # pad to match parent's expected length (parent used padding too)
         self.bias_array = np.pad(bias_vals, (0, self.z.shape[0] - self.n_z_bins))
 
         # Build Jhat_array from provided Jhat_params
         jhat_vals = np.asarray(
-            [Jhat_params.get("Jhat_bin%d" % bin, 1.0) for bin in range(self.n_z_bins)]
+            [Jhat_params["Jhat_bin%d" % bin] for bin in range(self.n_z_bins)]
         )
         self.Jhat_array = np.pad(jhat_vals, (0, self.z.shape[0] - self.n_z_bins))
 

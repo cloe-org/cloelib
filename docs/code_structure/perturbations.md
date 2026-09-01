@@ -456,6 +456,54 @@ Accurate and fast emulator of modified gravity matter power spectra using the bi
 - Compatible with Euclid-like large-scale structure analyses;
 - Designed for efficient MCMC and nested sampling analyses through lazy emulator loading;
 
+### MG CosmoPower-JAX boost perturbations
+
+Applies a CosmoPower-JAX modified-gravity **boost** \(B(k,z) = P*\mathrm{MG}/P*{\Lambda\mathrm{CDM}}\)
+as a multiplicative operator on top of an external LCDM baseline perturbation
+object, so that the GR limit (\(\mu = \eta = 1\)) reproduces the baseline spectrum
+exactly.
+
+**Location**: `cloelib/cosmology/mg_cosmopower_jax_cosmology.py`
+
+**When to use**: Phenomenological \(\mu(z), \eta(z)\) modified gravity where the
+nonlinear MG power spectrum is obtained by boosting a fast LCDM emulator
+(e.g. `CosmoPowerJAXLCDMPerturbations`) rather than solving MG directly.
+
+**Two modes**, selected by `MGParams.bin_index`:
+
+- **Single-bin** (`bin_index` is an int): \(\mu, \eta\) vary in one redshift bin
+  (per-bin emulators `mg-boost-{linear,nonlinear}-bin{0..4}.npz`);
+- **Multi-bin** (`bin_index=None`): \(\mu\) (and \(\eta\), linear only) vary in all
+  five bins simultaneously (joint emulators `mg-boost-{linear,nonlinear}-multibin.npz`).
+
+**Features**:
+
+- Emulator-based MG boost applied to any external LCDM `Perturbations` solver;
+- Provides the modified lensing parameter \(\Sigma(z) = \mu(1+\eta)/2\) (a step
+  function over the redshift bins) that `photo.py` applies to the WL kernel;
+- Scale-independent growth rate \(f(z)\) and \(\sigma_8\) from an internally-built
+  linear MG \(P(k)\); GR limit recovered to machine precision (no regridding);
+- Mutable `MGParams` holder for injecting sampled \(\mu, \eta\) each likelihood call;
+- Lazy, cached emulator loading for efficient MCMC / nested sampling.
+
+**Example**:
+
+```python
+import numpy as np
+from cloelib.cosmology.cosmopower_jax_cosmology import CosmoPowerJAXLCDMPerturbations as LCDM
+from cloelib.cosmology.mg_cosmopower_jax_cosmology import MGParams, mg_perturbations
+
+# single-bin (bin 4); use MGParams(mu=..., eta=...) with bin_index=None for multi-bin
+mg = MGParams(mu=1.0, eta=1.0, bin_index=4)
+Lin, NonLin = mg_perturbations(
+    mg, MODEL_DIR, baseline_linear=LCDM.Linear, baseline_nonlinear=LCDM.NonLinear
+)
+# in the sampling wrapper, before each loglike:  mg.mu, mg.eta = ...
+```
+
+`binned_mg_perturbations` (single-bin) and `multibin_mg_perturbations` (multi-bin)
+are kept as aliases of `mg_perturbations` for backwards compatibility.
+
 ### MGCLASSPerturbations
 
 Interfaces with [MGCLASS](https://gitlab.com/zizgitlab/mgclass--ii).

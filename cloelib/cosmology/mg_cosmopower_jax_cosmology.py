@@ -1,10 +1,10 @@
 """Binned modified-gravity perturbations using CosmoPower-JAX boost emulators.
 
-This module applies a per-bin modified-gravity *boost*
+This module applies a modified-gravity *boost*
 
     B(k, z) = P_MG(k, z) / P_LCDM(k, z)
 
-predicted by Ivan's CosmoPower-JAX emulators on top of an external LCDM baseline
+predicted by CosmoPower-JAX emulators on top of an external LCDM baseline
 (another cloelib ``Perturbations`` object). The boost is applied as a
 multiplicative operator *at query time* on the baseline's own k-grid:
 
@@ -14,30 +14,54 @@ so that at B = 1 (mu = eta = 1, GR) the result is the baseline LCDM spectrum
 *exactly* -- the GR limit is recovered to machine precision, with no regridding
 artefacts.
 
+Two modes, selected by ``MGParams.bin_index``:
+
+* **Single-bin** (``bin_index`` is an int): mu, eta vary in ONE redshift bin
+  (the others held at GR). One emulator per bin::
+
+      mg-boost-linear-bin{0..4}.npz     inputs [Omega_m,Omega_b,h,ns,lnAs,mu,eta,z]
+      mg-boost-nonlinear-bin{0..4}.npz  inputs [Omega_m,Omega_b,h,ns,lnAs,mu,z]
+
+* **Multi-bin** (``bin_index`` is ``None``): mu (and eta, linear only) vary in
+  ALL 5 bins simultaneously -- the joint "unbinned" analysis. One emulator per
+  sector::
+
+      mg-boost-linear-multibin.npz     inputs [...,mu1..mu5, eta1..eta5, z]
+      mg-boost-nonlinear-multibin.npz  inputs [...,mu1..mu5, z]
+
+k is in h/Mpc; lnAs = ln(1e10 * As); emulators are loaded with
+``probe='custom_log'`` so ``predict()`` returns the boost directly. eta has NO
+nonlinear P(k) effect (it is not an NL input); it enters only via ``Sigma``.
+
 Drop-in replacement for the ``LinPerturbations`` / ``NonLinPerturbations`` classes
 in ``cloelike`` (``EuclidLikelihood_photo_Cls``). Provides the modified lensing
 parameter ``Sigma(z) = mu(1 + eta)/2`` that ``photo.py`` applies to the WL kernel.
 
-Emulators (per MG bin, bin_index dropped), trained on log10(boost):
-    mg-boost-linear-bin{0..4}.npz     inputs [Omega_m,Omega_b,h,ns,lnAs,mu,eta,z]  (800 k)
-    mg-boost-nonlinear-bin{0..4}.npz  inputs [Omega_m,Omega_b,h,ns,lnAs,mu,z]       (1024 k)
-  k in h/Mpc; lnAs = ln(1e10 * As); loaded with probe='custom_log' so predict()
-  returns the boost directly. eta has NO nonlinear effect (not an NL input).
-
-Injecting mu/eta/bin_index
---------------------------
+Injecting mu/eta
+----------------
 cloelike builds ``background`` from a fixed cosmo-key list (no mu/eta/bin_index)
 and calls ``LinPerturbations(background, zs)`` / ``NonLinPerturbations(background,
 lp, zs, log10TAGN=...)``. MG params are injected via a mutable ``MGParams`` holder
-bound by ``binned_mg_perturbations(...)``; the sampling wrapper updates mu/eta
-before each ``loglike`` call. bin_index is fixed per run (as in the paper).
+bound by ``mg_perturbations(...)``; the sampling wrapper updates mu/eta before
+each ``loglike`` call. ``bin_index`` is fixed per run (as in the paper).
 
+    # single-bin
     mg = MGParams(mu=1.0, eta=1.0, bin_index=4)
-    Lin, NonLin = binned_mg_perturbations(mg, MODEL_DIR,
-                                          baseline_linear=LCDM.Linear,
-                                          baseline_nonlinear=LCDM.NonLinear)
-    # in the sampling wrapper, before each loglike:
-    mg.mu, mg.eta = param_dict["mu"], param_dict["eta"]
+    Lin, NonLin = mg_perturbations(mg, MODEL_DIR,
+                                   baseline_linear=LCDM.Linear,
+                                   baseline_nonlinear=LCDM.NonLinear)
+    # before each loglike:  mg.mu, mg.eta = param_dict["mu"], param_dict["eta"]
+
+    # multi-bin
+    mg = MGParams(mu=np.ones(5), eta=np.ones(5))          # bin_index=None
+    Lin, NonLin = mg_perturbations(mg, MODEL_DIR, LCDM.Linear, LCDM.NonLinear)
+    # before each loglike:
+    #   mg.mu  = np.array([param_dict[f"mu{i}"]  for i in range(1, 6)])
+    #   mg.eta = np.array([param_dict[f"eta{i}"] for i in range(1, 6)])
+
+``binned_mg_perturbations`` (single-bin) and ``multibin_mg_perturbations``
+(multi-bin) are kept as aliases of ``mg_perturbations`` for backwards
+compatibility; the mode is chosen by ``mg_params.bin_index`` in all cases.
 """
 
 import os
@@ -47,23 +71,36 @@ from scipy import interpolate
 
 _trapz = getattr(np, "trapezoid", np.trapz)  # numpy<2 compatibility
 
-# Table 1 MG redshift bins: bin_index -> (zmin, zmax)
-_BIN_EDGES = {
-    0: (0.00, 0.43),
-    1: (0.43, 0.91),
-    2: (0.91, 1.47),
-    3: (1.47, 2.15),
-    4: (2.15, 3.00),
-}
+# Table 1 MG redshift bins: index -> (zmin, zmax)
+_BIN_EDGES = [(0.00, 0.43), (0.43, 0.91), (0.91, 1.47), (1.47, 2.15), (2.15, 3.00)]
+N_BINS = len(_BIN_EDGES)
 
 _EMU_CACHE = {}
 
 
-def _load_emu(branch, bin_index, model_dir):
-    """Load (and cache) a CosmoPower-JAX boost emulator. branch: 'linear'|'nonlinear'."""
-    key = (branch, int(bin_index), os.path.abspath(model_dir))
+def _emu_filename(branch, bin_index):
+    """Emulator filename for a sector ('linear'|'nonlinear') and mode.
+
+    ``bin_index=None`` -> the joint multi-bin emulator; an int -> that bin.
+    """
+    if bin_index is None:
+        return f"mg-boost-{branch}-multibin.npz"
+    return f"mg-boost-{branch}-bin{int(bin_index)}.npz"
+
+
+def _load_emu(branch, model_dir, bin_index=None):
+    """Load (and cache) a CosmoPower-JAX boost emulator.
+
+    branch : 'linear' | 'nonlinear'
+    bin_index : int for the per-bin (single-bin) emulator, or None for multi-bin.
+    """
+    key = (
+        branch,
+        bin_index if bin_index is None else int(bin_index),
+        os.path.abspath(model_dir),
+    )
     if key not in _EMU_CACHE:
-        fp = os.path.join(model_dir, f"mg-boost-{branch}-bin{int(bin_index)}.npz")
+        fp = os.path.join(model_dir, _emu_filename(branch, bin_index))
         if not os.path.exists(fp):
             raise FileNotFoundError(f"MG emulator not found: {fp}")
         with warnings.catch_warnings():
@@ -78,24 +115,37 @@ def _load_emu(branch, bin_index, model_dir):
 
 
 def _boost_spline(emu, background, mu, eta, z):
-    """Build a RectBivariateSpline B(z, k) from the emulator.
+    """Build a RectBivariateSpline B(z, k) from a boost emulator.
+
+    Handles both the single-bin emulators (scalar ``mu``/``eta`` -> parameter
+    names ``'mu'``/``'eta'``) and the multi-bin emulators (length-N ``mu``/``eta``
+    -> ``'mu1'..'muN'``/``'eta1'..'etaN'``). The right columns are selected from
+    ``emu.parameters``, so the linear branch (uses eta) and nonlinear branch (no
+    eta) are both handled automatically.
 
     The emulator k-grid is padded with constant edge values so the spline does
-    *constant* (not divergent) extrapolation in k outside the trained range
-    (the linear mu-boost is ~scale-independent there; high/low k are scale-cut).
-    Input columns are stacked in the emulator's own parameter order, so the same
-    helper handles the linear branch (has 'eta') and nonlinear branch (no 'eta').
+    *constant* (not divergent) extrapolation in k outside the trained range.
     """
     z = np.atleast_1d(np.asarray(z, dtype=float))
+    mu = np.atleast_1d(np.asarray(mu, dtype=float))
+    eta = np.atleast_1d(np.asarray(eta, dtype=float))
+
     src = {
         "Omega_m": background.Omega_cdm0 + background.Omega_b0,
         "Omega_b": background.Omega_b0,
         "h": background.H0 / 100.0,
         "ns": background.ns,
         "lnAs": np.log(background.As * 1e10),  # training convention
-        "mu": float(mu),
-        "eta": float(eta),
     }
+    if "mu" in emu.parameters:  # single-bin emulator
+        src["mu"] = float(mu[0])
+        src["eta"] = float(eta[0])
+    else:  # multi-bin emulator: mu1..muN (and eta1..etaN for the linear branch)
+        for i in range(mu.size):
+            src[f"mu{i + 1}"] = float(mu[i])
+        for i in range(eta.size):
+            src[f"eta{i + 1}"] = float(eta[i])
+
     cols = [
         z if name == "z" else np.full(z.shape[0], src[name]) for name in emu.parameters
     ]
@@ -116,19 +166,52 @@ def _sigma8(k, pk0):
 
 
 class MGParams:
-    """Mutable holder for per-call MG params (mu, eta) and the fixed bin_index."""
+    """Mutable holder for the per-call MG parameters.
 
-    def __init__(self, mu=1.0, eta=1.0, bin_index=0):
-        self.mu = float(mu)
-        self.eta = float(eta)
-        self.bin_index = int(bin_index)
+    Single-bin:  ``MGParams(mu=1.0, eta=1.0, bin_index=i)``  -- scalar mu/eta in
+                 bin ``i`` (the other bins held at GR).
+    Multi-bin:   ``MGParams(mu=[...], eta=[...])``           -- length-``N_BINS``
+                 arrays, ``bin_index=None`` (default). ``mu``/``eta`` default to
+                 ``ones(N_BINS)`` (GR).
+    """
+
+    def __init__(self, mu=None, eta=None, bin_index=None):
+        self.bin_index = None if bin_index is None else int(bin_index)
+        if self.bin_index is None:
+            self.mu = np.ones(N_BINS) if mu is None else np.asarray(mu, dtype=float)
+            self.eta = np.ones(N_BINS) if eta is None else np.asarray(eta, dtype=float)
+        else:
+            self.mu = 1.0 if mu is None else float(mu)
+            self.eta = 1.0 if eta is None else float(eta)
 
 
-def binned_mg_perturbations(mg_params, model_dir, baseline_linear, baseline_nonlinear):
+def _sigma_of_z(zs, mu, eta, bin_index):
+    r"""Sigma(z) = mu(1+eta)/2 in the active bin(s), 1 (GR) elsewhere.
+
+    Single-bin (``bin_index`` int): non-GR only inside that bin.
+    Multi-bin (``bin_index`` None): step function over all bins.
+    """
+    zs = np.atleast_1d(np.asarray(zs, dtype=float))
+    sigma = np.ones_like(zs, dtype=float)
+    mu = np.atleast_1d(np.asarray(mu, dtype=float))
+    eta = np.atleast_1d(np.asarray(eta, dtype=float))
+    if bin_index is None:  # multi-bin step function
+        for i, (zmin, zmax) in enumerate(_BIN_EDGES):
+            sigma[(zs > zmin) & (zs <= zmax)] = mu[i] * (1.0 + eta[i]) / 2.0
+    else:  # single active bin
+        zmin, zmax = _BIN_EDGES[bin_index]
+        sigma[(zs > zmin) & (zs <= zmax)] = float(mu[0]) * (1.0 + float(eta[0])) / 2.0
+    return sigma
+
+
+def mg_perturbations(mg_params, model_dir, baseline_linear, baseline_nonlinear):
     """Build cloelib-compatible (Linear, NonLinear) MG perturbation classes.
 
+    The single-bin vs multi-bin mode is chosen by ``mg_params.bin_index``
+    (int -> single-bin, None -> multi-bin).
+
     mg_params : MGParams                 read at every instantiation (sampled mu/eta)
-    model_dir : str                      dir with mg-boost-*-bin{0..4}.npz
+    model_dir : str                      directory holding the mg-boost-*.npz files
     baseline_linear / baseline_nonlinear : LCDM perturbation classes, e.g.
         CosmoPowerJAXLCDMPerturbations.Linear / .NonLinear
     """
@@ -144,7 +227,7 @@ def binned_mg_perturbations(mg_params, model_dir, baseline_linear, baseline_nonl
             self.mu, self.eta = mg_params.mu, mg_params.eta
             self._base = baseline_linear(background, self.z)
             self._boost = _boost_spline(
-                _load_emu("linear", self.bin_index, model_dir),
+                _load_emu("linear", model_dir, self.bin_index),
                 background,
                 self.mu,
                 self.eta,
@@ -186,14 +269,14 @@ def binned_mg_perturbations(mg_params, model_dir, baseline_linear, baseline_nonl
             )
             self._base_lin = base_lin
             self._boost_nl = _boost_spline(
-                _load_emu("nonlinear", self.bin_index, model_dir),
+                _load_emu("nonlinear", model_dir, self.bin_index),
                 background,
                 self.mu,
                 self.eta,
                 self.z,
             )
             self._boost_lin = _boost_spline(
-                _load_emu("linear", self.bin_index, model_dir),
+                _load_emu("linear", model_dir, self.bin_index),
                 background,
                 self.mu,
                 self.eta,
@@ -237,16 +320,13 @@ def binned_mg_perturbations(mg_params, model_dir, baseline_linear, baseline_nonl
             return _sigma8(k, self._pk_lin(0.0, k).flatten())
 
         # --- modified lensing parameter (applied to WL kernel in photo.py) ---
-        def _get_active_bin_mask(self, zs):
-            zs = np.atleast_1d(zs)
-            zmin, zmax = _BIN_EDGES[self.bin_index]
-            return (zs > zmin) & (zs <= zmax)
-
         def Sigma(self, zs):
-            r"""Sigma = mu(1+eta)/2 inside the active bin, 1 (LCDM) elsewhere."""
-            zs = np.atleast_1d(zs)
-            sigma = np.ones_like(zs, dtype=float)
-            sigma[self._get_active_bin_mask(zs)] = self.mu * (1.0 + self.eta) / 2.0
-            return sigma
+            r"""Sigma = mu(1+eta)/2 in the active bin(s), 1 (LCDM) elsewhere."""
+            return _sigma_of_z(zs, self.mu, self.eta, self.bin_index)
 
     return Linear, NonLinear
+
+
+# Backwards-compatible aliases: mode is selected by mg_params.bin_index.
+binned_mg_perturbations = mg_perturbations
+multibin_mg_perturbations = mg_perturbations

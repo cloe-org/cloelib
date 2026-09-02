@@ -29,6 +29,7 @@ class mochiBoostLinearPerturbations:
                 base_perturbations: Perturbations,
                 zs: np.ndarray,
                 cp_file: str,
+                stable_MG_dict: dict,
                 high_z_policy: str = "taper",
                 z_decay: float = 0.75):
         """
@@ -45,6 +46,8 @@ class mochiBoostLinearPerturbations:
             Must be sorted in ascending order.
         cp_file : str
             Path to the file containing the trained Cosmopower emulator for linear perturbations.
+        stable_MG_dict : dict
+            Dictionary containing the MG stable basis parameters.
         high_z_policy : str
             Extrapolation policy for redshifts above the emulator range.
             One of "power_law", "freeze", "one", "taper".
@@ -83,10 +86,10 @@ class mochiBoostLinearPerturbations:
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
         self.params = {
-            "s": background.stable_MG_dict["s"],
-            "a0": background.stable_MG_dict["a0"],
-            "a1": background.stable_MG_dict["a1"],
-            "M02": background.stable_MG_dict["M02"],
+            "s": stable_MG_dict["s"],
+            "a0": stable_MG_dict["a0"],
+            "a1": stable_MG_dict["a1"],
+            "M02": stable_MG_dict["M02"],
             "w0": background.w0,
             "wa": background.wa,
         }

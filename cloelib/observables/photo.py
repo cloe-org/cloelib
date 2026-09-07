@@ -21,6 +21,11 @@ import jax.lax as lx
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 
+def _unit_sigma(z):
+    """Default MG lensing parameter Sigma(z) = 1 for GR / LCDM perturbations."""
+    return np.ones_like(z)
+
+
 @jax.jit
 def _L_coeffs(ells):
     ell = ells.astype(np.float64)
@@ -259,15 +264,8 @@ class ShearTracer:
         )
         efficiency = self.get_lensing_efficiency(z)
 
-        # -------------------------
-        # MG modification
-        # -------------------------
-        if hasattr(self.perturbations, "Sigma"):
-            Sigma = self.perturbations.Sigma(z)  # shape (nz,)
-
-        else:
-            Sigma = np.ones_like(z)
-
+        # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.
+        Sigma = getattr(self.perturbations, "Sigma", _unit_sigma)(z)
         return np.einsum("ij, j->ij", efficiency, factor) * Sigma[np.newaxis, :]
 
     def get_window(self, z):

@@ -69,7 +69,7 @@ import warnings
 import numpy as np
 from scipy import interpolate
 
-_trapz = getattr(np, "trapezoid", np.trapz)  # numpy<2 compatibility
+_trapz = np.trapezoid if hasattr(np, "trapezoid") else np.trapz  # numpy<2 compat
 
 # Table 1 MG redshift bins: index -> (zmin, zmax)
 _BIN_EDGES = [(0.00, 0.43), (0.43, 0.91), (0.91, 1.47), (1.47, 2.15), (2.15, 3.00)]

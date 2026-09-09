@@ -355,8 +355,13 @@ class TATTContribution(AbstractIAContribution):
 
     Args:
       tracer: the owning `ShearTracer`.
-      A1, A2, b_TA, eta1, eta2: free TATT parameters (Table 2 of the
-        reference paper; the full `zTATT` model uses all five).
+      A1: tidal-alignment amplitude (Table 2 of the reference paper).
+      A2: tidal-torquing amplitude (Table 2).
+      b_TA: tidal-alignment-of-galaxy-bias-tracers amplitude (Table 2).
+      eta1: redshift-evolution index for `A1`'s (1+z)/(1+z0) scaling
+        (Table 2; the full `zTATT` model uses all five of these).
+      eta2: redshift-evolution index for `A2`'s (1+z)/(1+z0) scaling
+        (Table 2).
       z0: pivot redshift for the (1+z)/(1+z0) scaling. Fixed at 0.62 in the
         reference paper's fiducial setup (their Table 3).
       C_IA: the `C_bar_1 * rho_crit` normalisation constant (see above);

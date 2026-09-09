@@ -501,7 +501,7 @@ cls = {**cls_sheshe, **cls_posshe, **cls_pospos}
 Calculation of the Legendre multipoles (both in Fourier and configuration space) is handled by the `LegendreMultipoles` module, which interfaces with objects that comply with the `SpectroPower` protocol. This module implements shared modelling layers that are handled coherently by \texttt{cloelib}, rather than relying on individual implementations of external pipelines. Modelled effects include shot-noise corrections, Alcock-Paczynski distortions, and the convolution with the survey window function, as well as a number of observational systematic effects, such as spectroscopic redshift errors and the presence of contaminants. In addition, this module can compute the two-point correlation function and projects it—or $P(k,\mu)$—to Legendre multipoles. As an example, we show below how to obtain a prediction for the power spectrum multipoles using the \texttt{comet-emu} package.
 
 ```python
-from cloelib.observables.CometEFT_spectro import CometEFT_SpectroPower
+from cloelib.observables.spectro.CometEFT_spectro import CometEFT_SpectroPower
 from cloelib.summary_statistics.legendre_multipoles import LegendreMultipoles
 import numpy as np
 

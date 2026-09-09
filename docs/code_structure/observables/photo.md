@@ -1,6 +1,6 @@
 # Tracer Protocol (Photometric Observables)
 
-**Protocol Definition**: `cloelib.observables.tracer.Tracer`
+**Protocol Definition**: `cloelib.observables.photo.tracer.Tracer`
 
 Tracers define window functions for photometric surveys—how galaxies are distributed in redshift and how they trace the matter field.
 
@@ -36,7 +36,7 @@ Handles different tracer types (shear has extra factors, galaxy clustering doesn
 
 For weak gravitational lensing (cosmic shear) measurements.
 
-**Location**: `cloelib/observables/photo.py`
+**Location**: `cloelib/observables/photo/shear.py`
 
 **What it does**:
 
@@ -98,11 +98,56 @@ window = tracer.get_window(z)  # Shape: (n_bins, len(z))
 - Photo-z error handling
 - Multiplicative shear bias
 
+**Intrinsic alignment models**: `ShearTracer` accepts an `ia_model` keyword
+(default `"NLA"`, reproducing the behavior above exactly). `ia_model="TATT"`
+switches to the Tidal Alignment + Tidal Torquing model (Blazek et al. 2019;
+Navarro-Gironés et al. 2026, arXiv:2602.16448) instead, reading
+`nuisance_params["AIA"/"A2IA"/"bTA"]` (and optionally `"EtaIA"/"Eta2IA"/
+"z0IA"`) - everything downstream (`AngularTwoPoint.get_Cl`, `get_pseudo_Cl`,
+`get_cosebis`) is unchanged either way:
+
+```python
+from cloelib.observables.photo import ShearTracer
+
+tracer = ShearTracer(
+    perturbations=pert,
+    dndz=dndz_bins,
+    z=z,
+    nuisance_params={**nuisance, 'A2IA': 0.4, 'bTA': -0.83},
+    ia_model="TATT",
+)
+```
+
+TATT's ten one-loop perturbation-theory kernels come from a
+`tatt_loop_computer` (default: `PlaceholderTATTLoopComputer`, illustrative
+kernels with no extra dependency). For real kernels, pass
+`PBJTATTLoopComputer` (computed via the `fast-pt` package's
+`FASTPT.IA_ta`/`.IA_tt`/`.IA_mix`, an optional dependency -
+`pip install cloelib[fastpt]`), constructed from the _same_ `perturbations`
+object already passed above:
+
+```python
+from cloelib.observables.photo.shear import PBJTATTLoopComputer
+
+tracer = ShearTracer(
+    perturbations=pert,
+    dndz=dndz_bins,
+    z=z,
+    nuisance_params={**nuisance, 'A2IA': 0.4, 'bTA': -0.83},
+    ia_model="TATT",
+    tatt_loop_computer=PBJTATTLoopComputer(pert),
+)
+```
+
+`TATTContribution`, `PlaceholderTATTLoopComputer`, and `PBJTATTLoopComputer`
+all live in `cloelib.observables.photo.shear`, alongside `ShearTracer`
+itself.
+
 ### PositionsTracer
 
 For galaxy clustering (galaxy positions) measurements.
 
-**Location**: `cloelib/observables/photo.py`
+**Location**: `cloelib/observables/photo/positions.py`
 
 **What it does**:
 
@@ -168,7 +213,7 @@ To add a new type of photometric observable, follow these steps.
 
 ```python
 # cloelib/observables/my_new_tracer.py
-from cloelib.observables.tracer import Tracer
+from cloelib.observables.photo.tracer import Tracer
 from cloelib.cosmology.cosmology import Perturbations
 import numpy as np
 import jax.numpy as jnp
@@ -278,7 +323,7 @@ def test_cmb_lensing_tracer():
 Always verify your implementation:
 
 ```python
-from cloelib.observables.tracer import Tracer
+from cloelib.observables.photo.tracer import Tracer
 
 assert isinstance(my_tracer, Tracer)
 ```

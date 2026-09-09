@@ -9,6 +9,12 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import cached_stacked_simpson, simps
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.observables.contributions import (
+    GalaxyBiasContribution,
+    IntrinsicAlignmentContribution,
+    LensingContribution,
+    MagnificationContribution,
+)
 
 # General imports
 import jax.numpy as np  # type: ignore
@@ -158,6 +164,21 @@ class ShearTracer:
         # Correct dndz_stretched for dz_shear
         self.dndz_shifted = shift_dndz_jax(self.dndz_stretched, z, self.dz_shear_i)
 
+        self.lensing = LensingContribution(self)
+        self.ia = IntrinsicAlignmentContribution(self)
+
+    def get_contributions(self):
+        """Return this tracer's window as its separable Contribution terms.
+
+        Both currently delegate to `get_window_lensing`/`get_window_IA`, so
+        this is a no-op decomposition today - the seam a future TATT
+        contribution would occupy in place of `self.ia`.
+
+        Returns:
+          contributions (tuple): `(self.lensing, self.ia)`.
+        """
+        return (self.lensing, self.ia)
+
     def get_window_IA(self, z):
         r"""Window integrand.
 
@@ -280,7 +301,7 @@ class ShearTracer:
         Returns:
           window (np.ndarray):
         """
-        total_window = self.get_window_lensing(z) + self.get_window_IA(z)
+        total_window = sum(c.compute_kernel(z) for c in self.get_contributions())
         # Apply multiplicative bias
         total_window *= 1 + np.array(self.m_bias)[:, None]
         return total_window
@@ -390,6 +411,22 @@ class PositionsTracer:
         index = np.argwhere(conditions, size=1).squeeze()
 
         self.bias_array = [per_bin_case, per_bin_int_case, poly_case][index]()
+
+        self.bias = GalaxyBiasContribution(self)
+        self.magnification = MagnificationContribution(self)
+
+    def get_contributions(self):
+        """Return this tracer's window as its separable Contribution terms.
+
+        Both currently delegate to `get_window_positions`/
+        `get_window_magnification`, so this is a no-op decomposition today -
+        the seam a future non-linear galaxy bias contribution would occupy
+        in place of `self.bias`.
+
+        Returns:
+          contributions (tuple): `(self.bias, self.magnification)`.
+        """
+        return (self.bias, self.magnification)
 
     def get_window_positions(self, z) -> np.ndarray:
         r"""Galaxy Positions window function.
@@ -576,5 +613,5 @@ class PositionsTracer:
         Returns:
           window (np.ndarray):
         """
-        window = self.get_window_positions(z) + self.get_window_magnification(z)
+        window = sum(c.compute_kernel(z) for c in self.get_contributions())
         return window

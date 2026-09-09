@@ -171,8 +171,17 @@ class ShearTracer:
         """
         Omega_m0 = self.background.Omega_m(0.0)
         Hz = self.perturbations.background.hubble_parameter(z)
-        Dz = self.perturbations.growth_factor(z, self.perturbations.k)[:, 1]
+        # `growth_factor` is backend-dependent: some backends (e.g. CAMB)
+        # return D(z, k) with an explicit k-axis; others (e.g. the JAX
+        # backends) ignore `ks` entirely and return a scale-independent
+        # D(z), and don't set a `.k` attribute at all. NLA treats growth as
+        # ~scale-independent, so when a k-axis is present we pick a single
+        # representative column (unchanged from the historical behavior);
+        # when it isn't, the backend's own 1D D(z) is used directly.
         # TODO discuss whether we want growth factor to output a 1D or a 2D array
+        ks = getattr(self.perturbations, "k", None)
+        Dz_raw = self.perturbations.growth_factor(z, ks)
+        Dz = Dz_raw[:, 1] if getattr(Dz_raw, "ndim", 1) == 2 else Dz_raw
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]
         Eta_IA = self.nuisance_params["EtaIA"]

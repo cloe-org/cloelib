@@ -143,7 +143,19 @@ class Background(Protocol):
 
 @runtime_checkable
 class Perturbations(Protocol):
-    """Protocol for Perturbation cosmology class."""
+    """Protocol for Perturbation cosmology class.
+
+    Note: some consumers (e.g. `ShearTracer.get_window_IA`,
+    `AngularTwoPoint.get_Cl`) informally read `.k`/`.z` attributes off a
+    `Perturbations` instance for the wavenumber/redshift grid it was built
+    on. These are deliberately *not* part of this Protocol: not every
+    backend sets them (e.g. the JAX backends ignore the `ks` argument to
+    `growth_factor` and never set `self.k`), and several tests assert
+    `isinstance(instance, Perturbations)` for those backends. Code reading
+    `.k`/`.z` off an arbitrary `Perturbations` must use
+    `getattr(perturbations, "k", None)` / handle their absence, not assume
+    they exist.
+    """
 
     @property
     def background(self) -> Background:

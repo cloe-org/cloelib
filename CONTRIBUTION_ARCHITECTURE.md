@@ -60,8 +60,32 @@ plain matter power spectrum (TATT is the only one that uses them today):
 `spectrum_engine.py` looks these up via `getattr(obj, name, None)` rather
 than requiring them on the base `Contribution` Protocol, so nothing about
 the simpler contributions (`LensingContribution`,
-`IntrinsicAlignmentContribution`, `GalaxyBiasContribution`,
+`NLAContribution`, `GalaxyBiasContribution`,
 `MagnificationContribution`) needs to change.
+
+`IntrinsicAlignmentContribution` (`contributions.py`) is the general base
+every IA model shares: `NLAContribution` and `TATTContribution`
+(`photo/shear.py`) both subclass it, so the _specific_ model is always the
+class name a reader sees (`NLAContribution`, `TATTContribution`), and the
+_general_ "this is some IA model" question is a single, unambiguous
+`isinstance(x, IntrinsicAlignmentContribution)` check - not a name that
+could be mistaken for the general concept while actually only being one
+specific model (`NLAContribution` used to be called
+`IntrinsicAlignmentContribution` itself, which was exactly that trap).
+
+It's a plain base class, not a `Protocol`, deliberately:
+`TATTContribution.get_requirements_for_interaction`/`get_effective_pk` use
+`isinstance(other, IntrinsicAlignmentContribution)` to ask "is the _other_
+side of this pairing also IA?", and that's a nominal question, not a
+structural one - `LensingContribution` and `NLAContribution` both expose
+exactly `compute_kernel(z)` (they satisfy the same `Contribution`
+Protocol), so no structural feature distinguishes "IA" from "not IA" for a
+`Protocol`-based `isinstance` check to key off. An empty
+`@runtime_checkable` Protocol matches _any_ object under `isinstance` (it
+has no members to check for), which would make the II-vs-GI pruning this
+base class exists for silently apply to everything - a concrete, checkable
+failure mode, not a style preference. Nominal typing (a real base class) is
+correct here.
 
 ### 2.2 The generalized spectrum engine
 
@@ -125,37 +149,36 @@ ShearTracer(perturbations, dndz, z, nuisance_params, ia_model="TATT")
 
 reading `nuisance_params["AIA"/"A2IA"/"bTA"]` (`=A1`/`A2`/`b_TA`) and
 optionally `["EtaIA"/"Eta2IA"/"z0IA"]`. `ia_model="NLA"` (the default)
-reproduces the pre-existing `IntrinsicAlignmentContribution` behavior
+reproduces the pre-existing `NLAContribution` behavior
 exactly; passing a `Contribution` instance directly is also supported, for
 any other model.
 
-### Two kernel backends
+### Kernel backend
 
-The ten one-loop kernel _values_ come from a `tatt_loop_computer`:
+The ten one-loop kernel _values_ come from a required `tatt_loop_computer`
+(`TATTContribution` has no illustrative default - `ShearTracer` raises
+`ValueError` if `ia_model="TATT"` is used without one, rather than silently
+reporting made-up numbers). **`PBJTATTLoopComputer`** is the real-physics
+implementation: it calls `fastpt.FASTPT.IA_ta`/`.IA_tt`/`.IA_mix` (the
+`fast-pt` PyPI package, an optional dependency -
+`pip install cloelib[fastpt]`) on the linear matter power spectrum, with
+the same extrapolation settings and `C_window` production CLOE uses. This
+is exactly how TATT was implemented in production CLOE
+(`github.com/cloe-org/CLOE`, `cloe/non_linear/miscellanous.py::
+ia_tatt_terms`, `cloe/non_linear/pLL_phot.py::Pii_ee_halo_tatt`/
+`Pdeltai_halo_tatt`) - verified directly against that source: same three
+FAST-PT calls, same kernel names, same `c1**2*Pdd + 2*c1*c1d*D**4*
+(a00e+c00e) + ...` assembly `TATTContribution.get_effective_pk` implements.
+`cloelib`'s own `pbjcosmo`-based PBJ interface (`spectro/PBJ_spectro.py`)
+has no IA/TATT support of its own (verified against `pbjcosmo` 1.6.1's
+published source: its PT wrapper class subclasses a `fastpt` variant
+without `IA_*` methods), but `pbjcosmo` itself depends on this same
+`fast-pt` package as its PT engine - `PBJTATTLoopComputer` goes straight to
+`fast-pt`, independent of whether `pbjcosmo` is installed. Any other object
+exposing the same `.compute(name) -> callable(matter_pk, ks, zs)`
+interface is also accepted, for a different PT backend.
 
-- **`PlaceholderTATTLoopComputer`** (the default) - an explicitly
-  illustrative, smooth, unvalidated stand-in (same honesty precedent as
-  `toy_cloelib.computers.TensorMockComputer`), so the architecture is
-  runnable and testable with no extra dependency.
-- **`PBJTATTLoopComputer`** - real physics: calls
-  `fastpt.FASTPT.IA_ta`/`.IA_tt`/`.IA_mix` (the `fast-pt` PyPI package, an
-  optional dependency - `pip install cloelib[fastpt]`) on the linear matter
-  power spectrum, with the same extrapolation settings and `C_window`
-  production CLOE uses. This is exactly how TATT was implemented in
-  production CLOE (`github.com/cloe-org/CLOE`,
-  `cloe/non_linear/miscellanous.py::ia_tatt_terms`,
-  `cloe/non_linear/pLL_phot.py::Pii_ee_halo_tatt`/`Pdeltai_halo_tatt`) -
-  verified directly against that source: same three FAST-PT calls, same
-  kernel names, same `c1**2*Pdd + 2*c1*c1d*D**4*(a00e+c00e) + ...` assembly
-  `TATTContribution.get_effective_pk` implements. `cloelib`'s own
-  `pbjcosmo`-based PBJ interface (`spectro/PBJ_spectro.py`) has no
-  IA/TATT support of its own (verified against `pbjcosmo` 1.6.1's
-  published source: its PT wrapper class subclasses a `fastpt` variant
-  without `IA_*` methods), but `pbjcosmo` itself depends on this same
-  `fast-pt` package as its PT engine - `PBJTATTLoopComputer` goes straight
-  to `fast-pt`, independent of whether `pbjcosmo` is installed.
-
-Pass the real backend via the same constructor call - no manual
+Pass it via the same constructor call - no manual
 `tracer.ia = TATTContribution(...)` rebuild, no separately-tracked linear
 `Perturbations` object:
 
@@ -211,12 +234,12 @@ directly if it has no such attribute (i.e. it's already linear). Passing
 cloelib/observables/
 ├── photo/                  # ShearTracer, PositionsTracer, and everything they build on
 │   ├── shear.py              # ShearTracer + its IA models: LensingContribution,
-│   │                          # IntrinsicAlignmentContribution, TATTContribution,
-│   │                          # PlaceholderTATTLoopComputer, PBJTATTLoopComputer
+│   │                          # NLAContribution, TATTContribution,
+│   │                          # PBJTATTLoopComputer
 │   ├── positions.py           # PositionsTracer + GalaxyBiasContribution,
 │   │                          # MagnificationContribution, RSD helpers
 │   ├── tracer.py              # the Tracer protocol
-│   ├── contributions.py       # the Contribution protocol, AbstractIAContribution marker
+│   ├── contributions.py       # the Contribution protocol, IntrinsicAlignmentContribution base
 │   └── spectrum_engine.py     # SpectrumRequest, SpectraBank, needs_generalized_engine, ...
 ├── spectro/                 # SpectroPower and its backends
 │   ├── spectro.py             # the SpectroPower protocol
@@ -239,9 +262,10 @@ from, rather than scattered across several top-level files.
 - `ShearTracer(perturbations, dndz, z, nuisance_params)`,
   `PositionsTracer(perturbations, dndz, z, galaxy_bias_model,
 nuisance_params, include_rsd=False)`, `CMBLensingTracer(perturbations, z)`
-  signatures are unchanged; `ia_model` and `tatt_loop_computer` are
-  additive, optional kwargs with defaults that reproduce today's exact
-  numerics.
+  signatures are unchanged; `ia_model` is an additive, optional kwarg
+  defaulting to `"NLA"`, which reproduces today's exact numerics.
+  `tatt_loop_computer` is only meaningful (and required) with
+  `ia_model="TATT"`; passing it otherwise raises `ValueError`.
 - `AngularTwoPoint(tracer1, tracer2).get_Cl(ells, nl, ks)`'s return schema
   (`dict` keyed by `("POS"|"SHE"|"CMBL", ..., i, j)` →
   `AngularPowerSpectrum`) and its packaging logic (`_package_cl`,

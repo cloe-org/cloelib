@@ -22,7 +22,7 @@ from cloelib.observables.photo.positions import (
     MagnificationContribution,
 )
 from cloelib.observables.photo.shear import (
-    IntrinsicAlignmentContribution,
+    NLAContribution,
     LensingContribution,
 )
 
@@ -89,7 +89,7 @@ def test_shear_tracer_contributions_match_component_methods(tracers):
     contributions = tracer.get_contributions()
     assert len(contributions) == 2
     assert isinstance(contributions[0], LensingContribution)
-    assert isinstance(contributions[1], IntrinsicAlignmentContribution)
+    assert isinstance(contributions[1], NLAContribution)
 
     np.testing.assert_array_equal(
         np.asarray(contributions[0].compute_kernel(z)),

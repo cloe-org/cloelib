@@ -8,33 +8,34 @@ Everything needed to build and use a shear tracer - including its
 intrinsic-alignment options - lives in this one module:
 
 - `ShearTracer` itself.
-- `LensingContribution`, `IntrinsicAlignmentContribution` (the default NLA
-  model): the two `Contribution`s a plain `ShearTracer` is built from.
+- `LensingContribution`, `NLAContribution` (the default IA model): the two
+  `Contribution`s a plain `ShearTracer` is built from.
 - `TATTContribution` (Eqs. 9-16 of Navarro-Gironés et al. 2026,
   arXiv:2602.16448, "Euclid preparation. CIV. Impact of galaxy intrinsic
   alignment modelling choices on Euclid 3x2pt cosmology"): an alternative
-  IA model, selected via `ShearTracer(..., ia_model="TATT")`. Its ten
-  one-loop kernels come from a `loop_computer`, one of:
-    - `PlaceholderTATTLoopComputer` (the default: illustrative, no extra
-      dependency - exercises the architecture, not real physics).
-    - `PBJTATTLoopComputer`: real physics, via `fastpt.FASTPT.IA_ta`/
-      `.IA_tt`/`.IA_mix` (the `fast-pt` PyPI package - an optional
-      dependency, `pip install cloelib[fastpt]`) on the linear matter
-      power spectrum. The same three FAST-PT calls, kernel names, and
-      `c1**2*Pdd + 2*c1*c1d*D**4*(a00e+c00e) + ...` assembly production
-      CLOE used (github.com/cloe-org/CLOE, `cloe/non_linear/
-      miscellanous.py`/`pLL_phot.py`) - verified directly against that
-      source. `cloelib`'s own `pbjcosmo`-based PBJ interface
-      (`spectro/PBJ_spectro.py`) has no IA/TATT support of its own (verified
-      against pbjcosmo 1.6.1's published source: its own PT wrapper class
-      subclasses a `fastpt` variant without `IA_*` methods), but
-      `pbjcosmo` itself depends on this same `fast-pt` package as its PT
-      engine - so this goes straight to `fast-pt`, independent of whether
-      `pbjcosmo` is installed.
+  IA model, selected via `ShearTracer(..., ia_model="TATT",
+  tatt_loop_computer=...)`. Its ten one-loop kernels come from a required
+  `loop_computer` - `PBJTATTLoopComputer`: real physics, via
+  `fastpt.FASTPT.IA_ta`/`.IA_tt`/`.IA_mix` (the `fast-pt` PyPI package - an
+  optional dependency, `pip install cloelib[fastpt]`) on the linear matter
+  power spectrum. The same three FAST-PT calls, kernel names, and
+  `c1**2*Pdd + 2*c1*c1d*D**4*(a00e+c00e) + ...` assembly production CLOE
+  used (github.com/cloe-org/CLOE, `cloe/non_linear/miscellanous.py`/
+  `pLL_phot.py`) - verified directly against that source. `cloelib`'s own
+  `pbjcosmo`-based PBJ interface (`spectro/PBJ_spectro.py`) has no IA/TATT
+  support of its own (verified against pbjcosmo 1.6.1's published source:
+  its own PT wrapper class subclasses a `fastpt` variant without `IA_*`
+  methods), but `pbjcosmo` itself depends on this same `fast-pt` package as
+  its PT engine - so this goes straight to `fast-pt`, independent of
+  whether `pbjcosmo` is installed. `loop_computer` is a required argument
+  (not defaulted to anything illustrative): `TATTContribution` only ever
+  reports kernel values it can stand behind as real physics - passing any
+  other object exposing the same `.compute(name) -> callable(matter_pk,
+  ks, zs)` interface is also supported, for a different PT backend.
 
 Pass `loop_computer=PBJTATTLoopComputer(perturbations)` directly to
-`ShearTracer(..., ia_model="TATT", tatt_loop_computer=...)` for real
-kernels - one constructor call, not build-then-replace `.ia`.
+`ShearTracer(..., ia_model="TATT", tatt_loop_computer=...)` - one
+constructor call, not build-then-replace `.ia`.
 
 See `CONTRIBUTION_ARCHITECTURE.md` for the design this all
 follows.
@@ -47,7 +48,10 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import cached_stacked_simpson, simps
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
-from cloelib.observables.photo.contributions import AbstractIAContribution, Contribution
+from cloelib.observables.photo.contributions import (
+    IntrinsicAlignmentContribution,
+    Contribution,
+)
 from cloelib.observables.photo.spectrum_engine import SpectraBank, SpectrumRequest
 
 # General imports
@@ -75,12 +79,14 @@ class LensingContribution:
         return self._tracer.get_window_lensing(z)
 
 
-class IntrinsicAlignmentContribution(AbstractIAContribution):
-    """Intrinsic-alignment kernel term of `ShearTracer.get_window()`.
+class NLAContribution(IntrinsicAlignmentContribution):
+    """NLA (nonlinear alignment model) intrinsic-alignment kernel term of
+    `ShearTracer.get_window()`.
 
-    The NLA model implemented by `ShearTracer.get_window_IA` - the default
+    Implemented by `ShearTracer.get_window_IA` - the default
     `ia_model="NLA"` on `ShearTracer`. `ia_model="TATT"` swaps in
-    `TATTContribution` here instead; `get_window()` and `AngularTwoPoint`
+    `TATTContribution` here instead - a different intrinsic-alignment
+    model, hence the distinct name; `get_window()` and `AngularTwoPoint`
     don't need to change either way.
     """
 
@@ -107,53 +113,6 @@ _BB_ONLY_KERNELS = (
 )
 _GI_KERNELS = ("tatt_A_0_0E", "tatt_C_0_0E", "tatt_A_0_E2", "tatt_B_0_E2")
 _ALL_KERNELS = _EE_ONLY_KERNELS + _SHARED_KERNELS + _BB_ONLY_KERNELS
-
-
-class PlaceholderTATTLoopComputer:
-    """Illustrative stand-in for the ten TATT one-loop kernels.
-
-    NOT validated physics. Returns a smooth, clearly-synthetic power-law
-    shape derived from the base matter Pk purely so the generalized engine
-    has *something* finite and k-dependent to integrate - enough to
-    exercise and test the architecture (shapes, request pruning, the
-    per-contribution-pair Limber integral), not to produce a scientifically
-    meaningful TATT signal. Use `PBJTATTLoopComputer` for real physics.
-
-    Mirrors the same honesty precedent `toy_cloelib.computers
-    .TensorMockComputer` sets for its own (also explicitly mock) NLGB basis
-    stack.
-    """
-
-    #: distinct, arbitrary exponents so the ten kernels aren't numerically
-    #: identical to each other - still no claim to physical meaning. Kept
-    #: small and non-negative so `ks**exponent` stays well-behaved at the
-    #: low-k end of a typical grid (unlike a real one-loop kernel, which
-    #: has its own, generally different, low-k falloff) - a negative
-    #: exponent here would make this placeholder numerically dominate the
-    #: tree-level C1**2 * P_dd term by many orders of magnitude at low k,
-    #: which would make a comparison plot look broken rather than
-    #: illustrative.
-    _EXPONENTS = {name: 0.02 * i for i, name in enumerate(_ALL_KERNELS)}
-
-    #: One-loop terms are generically suppressed relative to the tree-level
-    #: power spectrum (roughly by powers of the tidal-field variance). Using
-    #: the raw matter Pk as this placeholder's overall scale made it
-    #: dominate the real C1**2 * P_dd term by 5-6 orders of magnitude in
-    #: practice - a comparison plot with no such suppression looks like
-    #: something is broken, not like an illustrative TATT-vs-NLA
-    #: comparison. This factor is chosen only to keep the placeholder's
-    #: magnitude in a plausible range; it has no physical derivation.
-    _SUPPRESSION = 1e-2
-
-    def compute(self, name: str):
-        exponent = self._EXPONENTS[name]
-
-        def _compute(matter_pk: jnp.ndarray, ks: jnp.ndarray, zs: jnp.ndarray):
-            del zs  # pure k-kernel, no z-dependence by construction
-            p_at_z0 = matter_pk[0]
-            return self._SUPPRESSION * p_at_z0 * ks**exponent
-
-        return _compute
 
 
 class PBJTATTLoopComputer:
@@ -329,7 +288,7 @@ def _growth_factor_1d(perturbations, z):
     return d_raw[:, 1] if getattr(d_raw, "ndim", 1) == 2 else d_raw
 
 
-class TATTContribution(AbstractIAContribution):
+class TATTContribution(IntrinsicAlignmentContribution):
     r"""TATT intrinsic-alignment contribution (Eqs. 9-16 of Navarro-Gironés
     et al. 2026, arXiv:2602.16448), see module docstring.
 
@@ -368,12 +327,13 @@ class TATTContribution(AbstractIAContribution):
         same convention and default (0.0134) as `ShearTracer`'s NLA model.
       loop_computer: object exposing `.compute(name) -> callable(matter_pk,
         ks, zs)` for each of the ten kernel names in `_ALL_KERNELS` - the
-        "SpectrumComputer" for the one-loop terms. Defaults to
-        `PlaceholderTATTLoopComputer()`; pass
-        `PBJTATTLoopComputer(perturbations)` for real FAST-PT-
-        computed kernels instead (or build a `ShearTracer` directly with
-        `ia_model="TATT", tatt_loop_computer=PBJTATTLoopComputer(...)`,
-        which does this for you), or any object with the same interface.
+        "SpectrumComputer" for the one-loop terms. Required: pass
+        `PBJTATTLoopComputer(perturbations)` (or build a `ShearTracer`
+        directly with `ia_model="TATT",
+        tatt_loop_computer=PBJTATTLoopComputer(...)`, which does this for
+        you), or any other object with the same interface. No default -
+        `TATTContribution` only ever reports kernel values it can stand
+        behind as real physics.
     """
 
     def __init__(
@@ -382,11 +342,11 @@ class TATTContribution(AbstractIAContribution):
         A1: float,
         A2: float,
         b_TA: float,
+        loop_computer: object,
         eta1: float = 0.0,
         eta2: float = 0.0,
         z0: float = 0.62,
         C_IA: float = 0.0134,
-        loop_computer: Optional[object] = None,
     ) -> None:
         self._tracer = tracer
         self.A1 = A1
@@ -396,7 +356,7 @@ class TATTContribution(AbstractIAContribution):
         self.eta2 = eta2
         self.z0 = z0
         self.C_IA = C_IA
-        self._loop_computer = loop_computer or PlaceholderTATTLoopComputer()
+        self._loop_computer = loop_computer
 
     def compute_kernel(self, z):
         """Amplitude-free IA weighting kernel: n_i(z) * H(z)/c.
@@ -468,7 +428,7 @@ class TATTContribution(AbstractIAContribution):
         GI-only analysis would be wasted one-loop-integral cost for terms
         that get multiplied into a total no GI computation ever reads.
         """
-        if isinstance(other, AbstractIAContribution):
+        if isinstance(other, IntrinsicAlignmentContribution):
             return self.get_spectrum_requests()
         return tuple(r for r in self.get_spectrum_requests() if r.name in _GI_KERNELS)
 
@@ -480,7 +440,7 @@ class TATTContribution(AbstractIAContribution):
         `TATTContribution` with identical parameters), and is the natural
         generalisation for a genuine cross-population II term otherwise.
         `other`'s C1/C1delta/C2 are used when it exposes them (i.e. it's
-        also a `TATTContribution`); a plain `IntrinsicAlignmentContribution`
+        also a `TATTContribution`); a plain `NLAContribution`
         (NLA) has no C1delta/C2 of its own, so it's treated as
         C1delta=C2=0 - the correct NLA limit, just cross-correlated against
         this contribution's full TATT terms rather than assuming both sides
@@ -500,7 +460,7 @@ class TATTContribution(AbstractIAContribution):
                 SpectrumRequest(name=name, compute=self._loop_computer.compute(name))
             )[None, :]
 
-        if isinstance(other, AbstractIAContribution):
+        if isinstance(other, IntrinsicAlignmentContribution):
             c1_other = other._C1(zs) if hasattr(other, "_C1") else c1_self
             c1d_self = self._C1delta(zs)
             c1d_other = other._C1delta(zs) if hasattr(other, "_C1delta") else 0.0
@@ -555,19 +515,19 @@ class ShearTracer:
           z (np.ndarray): A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
           ia_model (str | Contribution): Which intrinsic-alignment contribution to
             use. `"NLA"` (default) reproduces the exact pre-existing behavior of
-            this class (`IntrinsicAlignmentContribution`/`get_window_IA`, reading
+            this class (`NLAContribution`/`get_window_IA`, reading
             `nuisance_params["AIA"/"CIA"/"EtaIA"]`). `"TATT"` builds a
             `TATTContribution` from `nuisance_params["AIA"]` (=A1),
             `nuisance_params["A2IA"]`, `nuisance_params["bTA"]`, and optionally
             `nuisance_params["Eta2IA"]`/`["z0IA"]` (default 0.0/0.62). Advanced
             use: pass a `Contribution` instance directly to use any other model.
-          tatt_loop_computer: only used when `ia_model="TATT"` - the
-            `TATTContribution`'s one-loop kernel backend (see
-            `TATTContribution`'s docstring). Defaults to
-            `PlaceholderTATTLoopComputer()` (illustrative, no extra
-            dependency); pass `PBJTATTLoopComputer(perturbations)`
-            for real FAST-PT-computed kernels. Passing this with any other
-            `ia_model` raises `ValueError`.
+          tatt_loop_computer: required when `ia_model="TATT"` (raises
+            `ValueError` if omitted) - the `TATTContribution`'s one-loop
+            kernel backend (see `TATTContribution`'s docstring). Pass
+            `PBJTATTLoopComputer(perturbations)` for real FAST-PT-computed
+            kernels, or any other object with the same `.compute(name)`
+            interface. Passing this with any `ia_model` other than
+            `"TATT"` raises `ValueError`.
         """
         if 0.0 in z:
             raise ValueError(
@@ -618,9 +578,10 @@ class ShearTracer:
         """Resolve the `ia_model` constructor argument into a Contribution.
 
         `"NLA"` (default) preserves the exact pre-existing behavior; `"TATT"`
-        builds a `TATTContribution`; anything else must already be a
-        `Contribution` instance, used as-is. `tatt_loop_computer` is only
-        meaningful for `"TATT"`.
+        builds a `TATTContribution`, which requires `tatt_loop_computer`
+        (no illustrative default - see `TATTContribution`'s docstring);
+        anything else must already be a `Contribution` instance, used as-is.
+        `tatt_loop_computer` is only meaningful for `"TATT"`.
         """
         if ia_model != "TATT" and tatt_loop_computer is not None:
             raise ValueError(
@@ -628,23 +589,25 @@ class ShearTracer:
                 f"(got ia_model={ia_model!r})."
             )
         if ia_model == "NLA":
-            return IntrinsicAlignmentContribution(self)
+            return NLAContribution(self)
         if ia_model == "TATT":
-            kwargs = (
-                {"loop_computer": tatt_loop_computer}
-                if tatt_loop_computer is not None
-                else {}
-            )
+            if tatt_loop_computer is None:
+                raise ValueError(
+                    "ia_model='TATT' requires tatt_loop_computer (e.g. "
+                    "PBJTATTLoopComputer(perturbations), from "
+                    "cloelib.observables.photo.shear) - TATTContribution "
+                    "has no illustrative default."
+                )
             return TATTContribution(
                 self,
                 A1=nuisance_params["AIA"],
                 A2=nuisance_params["A2IA"],
                 b_TA=nuisance_params["bTA"],
+                loop_computer=tatt_loop_computer,
                 eta1=nuisance_params.get("EtaIA", 0.0),
                 eta2=nuisance_params.get("Eta2IA", 0.0),
                 z0=nuisance_params.get("z0IA", 0.62),
                 C_IA=nuisance_params.get("CIA", 0.0134),
-                **kwargs,
             )
         if isinstance(ia_model, str):
             raise ValueError(

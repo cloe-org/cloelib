@@ -10,7 +10,7 @@ this code fail loudly here first. They intentionally do not re-derive the
 physics or assert anything about *correctness* - only that today's exact
 output is preserved (in particular: they guarantee the Contribution-based
 architecture in `cloelib.observables.photo` - `LensingContribution`,
-`IntrinsicAlignmentContribution`, `GalaxyBiasContribution`,
+`NLAContribution`, `GalaxyBiasContribution`,
 `MagnificationContribution` composed via `get_contributions()` - reproduces
 the same output as directly-summed window methods, for every default
 (non-TATT) configuration).

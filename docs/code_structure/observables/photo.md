@@ -104,29 +104,18 @@ switches to the Tidal Alignment + Tidal Torquing model (Blazek et al. 2019;
 Navarro-Gironés et al. 2026, arXiv:2602.16448) instead, reading
 `nuisance_params["AIA"/"A2IA"/"bTA"]` (and optionally `"EtaIA"/"Eta2IA"/
 "z0IA"`) - everything downstream (`AngularTwoPoint.get_Cl`, `get_pseudo_Cl`,
-`get_cosebis`) is unchanged either way:
+`get_cosebis`) is unchanged either way.
+
+TATT's ten one-loop perturbation-theory kernels come from a required
+`tatt_loop_computer` (no illustrative default - `ShearTracer` raises
+`ValueError` if `ia_model="TATT"` is used without one). Real kernels come
+from `PBJTATTLoopComputer` (computed via the `fast-pt` package's
+`FASTPT.IA_ta`/`.IA_tt`/`.IA_mix`, an optional dependency -
+`pip install cloelib[fastpt]`), constructed from the _same_ `perturbations`
+object passed to `ShearTracer`:
 
 ```python
 from cloelib.observables.photo import ShearTracer
-
-tracer = ShearTracer(
-    perturbations=pert,
-    dndz=dndz_bins,
-    z=z,
-    nuisance_params={**nuisance, 'A2IA': 0.4, 'bTA': -0.83},
-    ia_model="TATT",
-)
-```
-
-TATT's ten one-loop perturbation-theory kernels come from a
-`tatt_loop_computer` (default: `PlaceholderTATTLoopComputer`, illustrative
-kernels with no extra dependency). For real kernels, pass
-`PBJTATTLoopComputer` (computed via the `fast-pt` package's
-`FASTPT.IA_ta`/`.IA_tt`/`.IA_mix`, an optional dependency -
-`pip install cloelib[fastpt]`), constructed from the _same_ `perturbations`
-object already passed above:
-
-```python
 from cloelib.observables.photo.shear import PBJTATTLoopComputer
 
 tracer = ShearTracer(
@@ -139,9 +128,8 @@ tracer = ShearTracer(
 )
 ```
 
-`TATTContribution`, `PlaceholderTATTLoopComputer`, and `PBJTATTLoopComputer`
-all live in `cloelib.observables.photo.shear`, alongside `ShearTracer`
-itself.
+`TATTContribution` and `PBJTATTLoopComputer` both live in
+`cloelib.observables.photo.shear`, alongside `ShearTracer` itself.
 
 ### PositionsTracer
 

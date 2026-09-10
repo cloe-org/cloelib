@@ -76,7 +76,7 @@ def _spectrum_requests(contribution) -> Sequence[SpectrumRequest]:
     """`contribution.get_spectrum_requests()` if defined, else `()`.
 
     The plain (non-TATT) `Contribution`s (`LensingContribution`,
-    `IntrinsicAlignmentContribution`, `GalaxyBiasContribution`,
+    `NLAContribution`, `GalaxyBiasContribution`,
     `MagnificationContribution`) have no such method - by design, so this
     always returns `()` for them without requiring any change to those
     classes.

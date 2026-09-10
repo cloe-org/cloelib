@@ -1,13 +1,13 @@
 """Photometric probe tracers: cosmic shear and angular galaxy clustering.
 
 `ShearTracer` and everything related to its intrinsic-alignment models
-(`LensingContribution`, `IntrinsicAlignmentContribution`,
-`TATTContribution`, `PlaceholderTATTLoopComputer`, `PBJTATTLoopComputer`)
-live together in `photo.shear`. `PositionsTracer` and its Contributions
+(`LensingContribution`, `NLAContribution`,
+`TATTContribution`, `PBJTATTLoopComputer`) live together in `photo.shear`.
+`PositionsTracer` and its Contributions
 (`GalaxyBiasContribution`, `MagnificationContribution`) live together in
 `photo.positions`. The generic, tracer-agnostic pieces both of those (and
 `AngularTwoPoint`) build on - the `Tracer` protocol, the `Contribution`
-protocol/`AbstractIAContribution` marker, and the generalized
+protocol/`IntrinsicAlignmentContribution` base, and the generalized
 per-contribution-pair spectrum engine - live here too, in `photo.tracer`,
 `photo.contributions`, `photo.spectrum_engine` respectively; moved from the
 old flat `cloelib/observables/tracer.py`/`contributions.py`/

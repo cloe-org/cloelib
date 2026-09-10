@@ -7,12 +7,16 @@ for every configuration that doesn't need it (already covered exhaustively
 by `test_photo_tracers_characterization.py`/`test_contributions.py`, since
 `ia_model="NLA"` is the default and unchanged), that TATT's request pruning
 and NLA-reduction limit are correct, and that the generalized Cl path
-produces finite, correctly-shaped output - with both
-`PlaceholderTATTLoopComputer` (no extra dependency, illustrative kernels)
-and, when `fast-pt` is installed, `PBJTATTLoopComputer` (real FAST-PT
-`IA_ta`/`IA_tt`/`IA_mix` kernels, matching production CLOE's
-`cloe/non_linear/miscellanous.py::ia_tatt_terms` - see
-`cloelib/observables/photo/shear.py`).
+produces finite, correctly-shaped output. `TATTContribution` requires a
+real `loop_computer` (no illustrative default - see
+`cloelib/observables/photo/shear.py`), so most tests here use
+`_StubTATTLoopComputer` (below - a minimal, dependency-free stand-in, not
+part of the public API) purely to exercise the architecture (shapes,
+request pruning, the Limber integral) independent of any PT backend; tests
+that specifically validate the real backend use `PBJTATTLoopComputer`
+(real FAST-PT `IA_ta`/`IA_tt`/`IA_mix` kernels, matching production CLOE's
+`cloe/non_linear/miscellanous.py::ia_tatt_terms`) and are skipped unless
+`fast-pt` is installed.
 """
 
 import numpy as np
@@ -23,10 +27,10 @@ from cloelib.cosmology.camb_cosmology import (
     CAMBLinearPerturbations,
     CAMBNonLinearPerturbations,
 )
-from cloelib.observables.photo.contributions import AbstractIAContribution
+from cloelib.observables.photo.contributions import IntrinsicAlignmentContribution
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.observables.photo.shear import (
-    IntrinsicAlignmentContribution,
+    NLAContribution,
     TATTContribution,
     _ALL_KERNELS,
     _GI_KERNELS,
@@ -76,6 +80,26 @@ def linear_perturbations(cosmo_setup):
     return CAMBLinearPerturbations(perturbations.background, perturbations.z)
 
 
+class _StubTATTLoopComputer:
+    """Minimal, dependency-free stand-in for a real TATT `loop_computer`.
+
+    Used only to exercise the Contribution/generalized-engine architecture
+    (shapes, request pruning, the per-contribution-pair Limber integral) in
+    tests that don't need `fast-pt` installed - not part of the public API,
+    and not a claim of physical accuracy. Real kernels come from
+    `PBJTATTLoopComputer` (see the `_FASTPT_INSTALLED`-gated tests below).
+    """
+
+    def compute(self, name):
+        del name  # same kernel shape regardless of which one is requested
+
+        def _compute(matter_pk, ks, zs):
+            del ks, zs
+            return 1e-2 * matter_pk[0]
+
+        return _compute
+
+
 def _shear_nuisance(n_z_bins, **extra):
     return {
         **{f"multiplicative_bias_{i + 1}": 0.0 for i in range(n_z_bins)},
@@ -104,8 +128,8 @@ def test_ia_model_nla_default_gives_identical_contribution_type(cosmo_setup):
         nuisance_params=_shear_nuisance(1),
         ia_model="NLA",
     )
-    assert isinstance(default_tracer.ia, IntrinsicAlignmentContribution)
-    assert isinstance(explicit_tracer.ia, IntrinsicAlignmentContribution)
+    assert isinstance(default_tracer.ia, NLAContribution)
+    assert isinstance(explicit_tracer.ia, NLAContribution)
     assert not needs_generalized_engine(
         default_tracer.get_contributions(), default_tracer.get_contributions()
     )
@@ -122,9 +146,10 @@ def test_ia_model_tatt_builds_tatt_contribution(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(1, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
+        tatt_loop_computer=_StubTATTLoopComputer(),
     )
     assert isinstance(tracer.ia, TATTContribution)
-    assert isinstance(tracer.ia, AbstractIAContribution)
+    assert isinstance(tracer.ia, IntrinsicAlignmentContribution)
     assert tracer.ia.A1 == 1.0
     assert tracer.ia.A2 == 0.4
     assert tracer.ia.b_TA == -0.83
@@ -160,6 +185,7 @@ def test_requirements_pruned_for_gi_vs_ii(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(1, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
+        tatt_loop_computer=_StubTATTLoopComputer(),
     )
     tatt = tracer.ia
     lensing = tracer.lensing
@@ -191,6 +217,7 @@ def test_tatt_reduces_to_nla_form_when_a2_and_bta_zero(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(1, A2IA=0.0, bTA=0.0),
         ia_model="TATT",
+        tatt_loop_computer=_StubTATTLoopComputer(),
     )
     tatt = tracer.ia
 
@@ -228,6 +255,7 @@ def test_generalized_cl_finite_and_correctly_shaped(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
+        tatt_loop_computer=_StubTATTLoopComputer(),
     )
     pos_tracer = PositionsTracer(
         perturbations=perturbations,
@@ -303,6 +331,7 @@ def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.0),
         ia_model="TATT",
+        tatt_loop_computer=_StubTATTLoopComputer(),
     )
 
     cl_nla = AngularTwoPoint(nla_tracer, nla_tracer).get_Cl(ells, 0, ks)
@@ -327,6 +356,7 @@ def test_rsd_with_generalized_engine_raises_not_implemented(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
+        tatt_loop_computer=_StubTATTLoopComputer(),
     )
     pos_tracer = PositionsTracer(
         perturbations=perturbations,
@@ -353,8 +383,7 @@ def test_pbj_tatt_loop_computer_kernels_finite_and_correctly_shaped(
 ):
     """The real FAST-PT backend must return all ten named kernels, each
     finite and shaped like the requested k-grid - `TATTContribution`'s
-    `get_effective_pk` relies on this shape contract (same as
-    `PlaceholderTATTLoopComputer`'s).
+    `get_effective_pk` relies on this shape contract.
     """
     computer = PBJTATTLoopComputer(linear_perturbations)
     ks = np.logspace(-3, 1, 40)
@@ -388,10 +417,10 @@ def test_pbj_tatt_reduces_to_nla_form_when_a2_and_bta_zero(
     cosmo_setup, linear_perturbations
 ):
     """Same check as `test_tatt_reduces_to_nla_form_when_a2_and_bta_zero`,
-    but with the real FAST-PT loop computer wired in instead of the
-    placeholder - since every kernel term is multiplied by a zero
-    amplitude at A2=b_TA=0, the assembled P_II/P_deltaI must still collapse
-    to the exact NLA form regardless of which backend computed the kernels.
+    but with the real FAST-PT loop computer - since every kernel term is
+    multiplied by a zero amplitude at A2=b_TA=0, the assembled
+    P_II/P_deltaI must still collapse to the exact NLA form regardless of
+    which backend computed the kernels.
     """
     perturbations, z = cosmo_setup
     dndz = np.ones((1, len(z)))
@@ -402,17 +431,7 @@ def test_pbj_tatt_reduces_to_nla_form_when_a2_and_bta_zero(
         z=z,
         nuisance_params=_shear_nuisance(1, A2IA=0.0, bTA=0.0),
         ia_model="TATT",
-    )
-    tracer.ia = TATTContribution(
-        tracer,
-        A1=tracer.ia.A1,
-        A2=tracer.ia.A2,
-        b_TA=tracer.ia.b_TA,
-        eta1=tracer.ia.eta1,
-        eta2=tracer.ia.eta2,
-        z0=tracer.ia.z0,
-        C_IA=tracer.ia.C_IA,
-        loop_computer=PBJTATTLoopComputer(linear_perturbations),
+        tatt_loop_computer=PBJTATTLoopComputer(linear_perturbations),
     )
     tatt = tracer.ia
 
@@ -440,17 +459,14 @@ def test_pbj_tatt_generalized_cl_finite_with_real_fastpt(
 ):
     """End-to-end regression test for a real numerical-stability bug found
     while developing `PBJTATTLoopComputer`: the real FAST-PT kernels are
-    steep and sign-changing near their k-grid's edges (unlike
-    `PlaceholderTATTLoopComputer`'s deliberately smooth, tame shape), and
-    the Limber grid `k_l = (ell+0.5)/chi` reaches well past that k-grid at
-    the low-z/high-ell corner (chi -> 0). Naively extrapolating such a
-    kernel there (`Pkl_interp_signed`'s akima extrapolation) sent the
-    interpolated log-magnitude to hundreds, overflowing `10**(...)` to
-    +-inf and producing a NaN `Cl` - fixed by clamping the query k to the
-    grid's own domain before interpolating (see `Pkl_interp_signed`'s
-    docstring in `angular_two_point.py`). This test would have caught that
-    bug directly (the placeholder-based tests above do not, since the
-    placeholder never triggers it).
+    steep and sign-changing near their k-grid's edges, and the Limber grid
+    `k_l = (ell+0.5)/chi` reaches well past that k-grid at the
+    low-z/high-ell corner (chi -> 0). Naively extrapolating such a kernel
+    there (`Pkl_interp_signed`'s akima extrapolation) sent the interpolated
+    log-magnitude to hundreds, overflowing `10**(...)` to +-inf and
+    producing a NaN `Cl` - fixed by clamping the query k to the grid's own
+    domain before interpolating (see `Pkl_interp_signed`'s docstring in
+    `angular_two_point.py`). This test would have caught that bug directly.
     """
     perturbations, z = cosmo_setup
     n_z_bins = 2
@@ -463,17 +479,7 @@ def test_pbj_tatt_generalized_cl_finite_with_real_fastpt(
         z=z,
         nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
-    )
-    shear_tracer.ia = TATTContribution(
-        shear_tracer,
-        A1=shear_tracer.ia.A1,
-        A2=shear_tracer.ia.A2,
-        b_TA=shear_tracer.ia.b_TA,
-        eta1=shear_tracer.ia.eta1,
-        eta2=shear_tracer.ia.eta2,
-        z0=shear_tracer.ia.z0,
-        C_IA=shear_tracer.ia.C_IA,
-        loop_computer=PBJTATTLoopComputer(linear_perturbations),
+        tatt_loop_computer=PBJTATTLoopComputer(linear_perturbations),
     )
     pos_tracer = PositionsTracer(
         perturbations=perturbations,

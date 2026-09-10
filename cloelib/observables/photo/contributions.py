@@ -34,18 +34,28 @@ class Contribution(Protocol):
         ...
 
 
-class AbstractIAContribution:
-    """Marker base for intrinsic-alignment contributions.
+class IntrinsicAlignmentContribution:
+    """Base class for every intrinsic-alignment model - the general "this is
+    an IA contribution" type. `NLAContribution` and `TATTContribution`
+    (`photo/shear.py`) are its two concrete models today; a future IA model
+    would be a third subclass here, not a fourth unrelated name.
 
     Lets a contribution ask "is the other side of this pairing also IA?" -
     e.g. TATT needs its II-only one-loop terms (Eq. 14 of Navarro-Gironés
     et al. 2026) only when paired with another IA contribution, not with a
-    density/lensing one. Mirrors `toy_cloelib.contributions.
+    density/lensing one - via `isinstance(other,
+    IntrinsicAlignmentContribution)`. Mirrors `toy_cloelib.contributions.
     AbstractIAContribution`, which the same TATT pruning logic there relies
-    on. Carries no behavior of its own.
+    on. Carries no behavior of its own: a plain base class, not a
+    `typing.Protocol` - an empty `@runtime_checkable` Protocol matches
+    *any* object under `isinstance` (nothing to structurally check for),
+    which would silently break the II-vs-GI pruning this class exists for.
+    `NLAContribution` and `LensingContribution` both satisfy the same
+    `Contribution` Protocol (`compute_kernel(z)`), so "is this IA" is a
+    nominal question with no structural feature to key a Protocol off.
 
     The concrete photometric-probe Contributions (`LensingContribution`,
-    `IntrinsicAlignmentContribution`, `TATTContribution`, ... for shear;
+    `NLAContribution`, `TATTContribution`, ... for shear;
     `GalaxyBiasContribution`, `MagnificationContribution` for positions)
     live alongside their owning tracer in `cloelib.observables.photo.shear`
     / `.positions` - this module holds only the generic, tracer-agnostic

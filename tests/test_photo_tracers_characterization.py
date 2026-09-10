@@ -111,7 +111,11 @@ def tracer_setup():
     }
 
     shear_tracer = ShearTracer(
-        perturbations=perturbations, dndz=dndz, z=z, nuisance_params=nuisance_shear
+        perturbations=perturbations,
+        dndz=dndz,
+        z=z,
+        nuisance_params=nuisance_shear,
+        ia_model="NLA",
     )
     pos_per_bin = PositionsTracer(
         perturbations=perturbations,

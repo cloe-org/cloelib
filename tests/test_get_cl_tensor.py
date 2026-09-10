@@ -43,8 +43,17 @@ def grids():
 
 def _build_perturbations(z_grid, ks, H0=67.7):
     background = JAXBackground(
-        H0=H0, Omega_b0=0.05, Omega_cdm0=0.25, Omega_k0=0.0,
-        As=2e-9, ns=0.96, mnu=0.06, w0=-1.0, wa=0.0, gamma_MG=0.0, N_mnu=1,
+        H0=H0,
+        Omega_b0=0.05,
+        Omega_cdm0=0.25,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=0.06,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+        N_mnu=1,
     )
     perturbations = JAXNonLinearPerturbations(background=background)
     # JAXNonLinearPerturbations evaluates P(k,z) on the fly - it has no
@@ -57,8 +66,12 @@ def _build_perturbations(z_grid, ks, H0=67.7):
 
 def _nuisance_shear(**extra):
     return {
-        "multiplicative_bias_1": 0.0, "dz_shear_1": 0.0, "width_shear_1": 1.0,
-        "AIA": 1.0, "CIA": 0.0134, "EtaIA": -0.41,
+        "multiplicative_bias_1": 0.0,
+        "dz_shear_1": 0.0,
+        "width_shear_1": 1.0,
+        "AIA": 1.0,
+        "CIA": 0.0134,
+        "EtaIA": -0.41,
         **extra,
     }
 
@@ -72,8 +85,11 @@ def test_get_cl_tensor_matches_get_cl_packaged_values(grids):
     dndz = jnp.ones((1, len(grids["z_tracer"])))
     dndz = dndz / jnp.trapezoid(dndz, grids["z_tracer"], axis=1)[:, None]
     tracer = ShearTracer(
-        perturbations=perturbations, dndz=dndz, z=grids["z_tracer"],
+        perturbations=perturbations,
+        dndz=dndz,
+        z=grids["z_tracer"],
         nuisance_params=_nuisance_shear(),
+        ia_model="NLA",
     )
     two_point = AngularTwoPoint(tracer, tracer)
 
@@ -97,8 +113,11 @@ def test_get_cl_is_not_differentiable(grids):
         dndz = jnp.ones((1, len(grids["z_tracer"])))
         dndz = dndz / jnp.trapezoid(dndz, grids["z_tracer"], axis=1)[:, None]
         tracer = ShearTracer(
-            perturbations=perturbations, dndz=dndz, z=grids["z_tracer"],
+            perturbations=perturbations,
+            dndz=dndz,
+            z=grids["z_tracer"],
             nuisance_params=_nuisance_shear(),
+            ia_model="NLA",
         )
         cl = AngularTwoPoint(tracer, tracer).get_Cl(grids["ells"], 0, grids["ks"])
         return jnp.sum(cl[("SHE", "SHE", 1, 1)].array)
@@ -118,8 +137,11 @@ def test_get_cl_tensor_differentiable_nla(grids):
         dndz = jnp.ones((1, len(grids["z_tracer"])))
         dndz = dndz / jnp.trapezoid(dndz, grids["z_tracer"], axis=1)[:, None]
         tracer = ShearTracer(
-            perturbations=perturbations, dndz=dndz, z=grids["z_tracer"],
+            perturbations=perturbations,
+            dndz=dndz,
+            z=grids["z_tracer"],
             nuisance_params=_nuisance_shear(AIA=AIA),
+            ia_model="NLA",
         )
         two_point = AngularTwoPoint(tracer, tracer)
         return jnp.sum(two_point.get_Cl_tensor(grids["ells"], 0, grids["ks"]))
@@ -148,9 +170,12 @@ def test_get_cl_tensor_differentiable_tatt(grids):
 
     def loss(A2IA):
         tracer = ShearTracer(
-            perturbations=perturbations, dndz=dndz, z=grids["z_tracer"],
+            perturbations=perturbations,
+            dndz=dndz,
+            z=grids["z_tracer"],
             nuisance_params=_nuisance_shear(A2IA=A2IA, bTA=-0.83),
-            ia_model="TATT", tatt_loop_computer=PBJTATTLoopComputer(perturbations),
+            ia_model="TATT",
+            tatt_loop_computer=PBJTATTLoopComputer(perturbations),
         )
         two_point = AngularTwoPoint(tracer, tracer)
         return jnp.sum(two_point.get_Cl_tensor(grids["ells"], 0, grids["ks"]))

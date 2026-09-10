@@ -290,18 +290,19 @@ class JAXBackground:
         Return the matter density as a function of redshift.
 
         Args:
-            zs (np.ndarray): Array of redshifts.
+            zs (np.ndarray): Array of redshifts. A bare Python/JAX scalar
+                is also accepted (returns a scalar) - `ShearTracer.
+                get_window_lensing`/`get_window_IA`/`get_window_magnification`
+                all call this as `Omega_m(0.0)`.
 
         Returns:
             (np.ndarray): Matter density values.
         """
-        return jnp.array(
-            [
-                (self.Omega_m0)
-                * (1 + z) ** 3
-                / (self.hubble_parameter(z) / self.H0) ** 2
-                for z in zs
-            ]
+        zs = jnp.asarray(zs)
+        return (
+            self.Omega_m0
+            * (1 + zs) ** 3
+            / (self.hubble_parameter(zs) / self.H0) ** 2
         )
 
     def Omega_cb(self, zs: jnp.ndarray) -> jnp.ndarray:

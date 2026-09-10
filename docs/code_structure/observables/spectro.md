@@ -40,7 +40,7 @@ Useful for checking contributions of different terms.
 
 Fast emulator using [comet-emu](https://comet-emu.readthedocs.io) with EFT model.
 
-**Location**: `cloelib/observables/CometEFT_spectro.py`
+**Location**: `cloelib/observables/spectro/CometEFT_spectro.py`
 
 **When to use**: Fast predictions for clustering, MCMC sampling
 
@@ -48,7 +48,7 @@ Fast emulator using [comet-emu](https://comet-emu.readthedocs.io) with EFT model
 
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground
-from cloelib.observables.CometEFT_spectro import CometEFT_SpectroPower
+from cloelib.observables.spectro.CometEFT_spectro import CometEFT_SpectroPower
 
 bg = CAMBBackground(H0=67.5, ...)
 
@@ -70,7 +70,7 @@ P_k_mu = spectro.Pk2d_rsd(k, mu)  # Shape: (50, 20)
 
 Comet emulator with VDG_infty model.
 
-**Location**: `cloelib/observables/CometVDG_spectro.py`
+**Location**: `cloelib/observables/spectro/CometVDG_spectro.py`
 
 **When to use**: Alternative RSD modeling
 
@@ -81,7 +81,7 @@ Perturbation theory code interfaced with `Background` and
 linear quantities (i.e. on which `LinearPerturbation` backend is
 selected).
 
-**Location**: `cloelib/observables/PBJ_spectro.py`
+**Location**: `cloelib/observables/spectro/PBJ_spectro.py`
 
 **When to use**: Predictions of nonlinear galaxy power spectrum for
 spectroscopic observables, beyond $\Lambda$CDM models, MCMC sampling.
@@ -90,7 +90,7 @@ spectroscopic observables, beyond $\Lambda$CDM models, MCMC sampling.
 
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
-from cloelib.observables.PBJ_spectro import PBJSpectroPower
+from cloelib.observables.spectro.PBJ_spectro import PBJSpectroPower
 
 zs = np.asarray([1.])
 bg = CAMBBackground(H0=67.5, ...)

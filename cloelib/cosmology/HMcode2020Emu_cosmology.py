@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using HMcode2020Emu."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, WithLinearSpectrumGrid
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.auxiliary.math_utils import ensure_z_zero_included
 
@@ -214,7 +214,7 @@ class HMemuNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Perturbations,
+        linearperturbations: WithLinearSpectrumGrid,
         redshifts: np.ndarray,
         log10TAGN: Optional[float] = None,
     ):
@@ -430,6 +430,7 @@ class HMemuNonLinearPerturbations:
         self.params_hm_emu["z"] = np.insert(self.z, 0, 0.0)
         max_len = len(self.params_hm_emu["z"])
         for k, v in self.params_hm_emu.items():
+            v = np.atleast_1d(v)
             if len(v) < max_len:
                 pad_size = max_len - len(v)
                 # Repeat last element to match length

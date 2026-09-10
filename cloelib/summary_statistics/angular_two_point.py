@@ -507,6 +507,54 @@ class AngularTwoPoint:
         return Pkl
 
     @profile_function
+    def get_Cl_tensor(self, ells, nl, ks) -> jax.numpy.ndarray:
+        """
+        Compute the angular power spectrum Cl using Limber approximation,
+        as a plain `jax.numpy.ndarray` - the exact same computation
+        `get_Cl` runs, without the final packaging step.
+
+        Use this instead of `get_Cl` when you need `jax.grad`/`jax.jacobian`
+        through the result: `get_Cl`'s return value is a `dict` of
+        `cosmolib.data.photo.AngularPowerSpectrum` objects, and that
+        dataclass's `__post_init__` unconditionally does
+        `np.asarray(self.array, dtype=float)` - a plain NumPy cast, in an
+        external package that predates and is unaware of JAX. That cast
+        severs any `jax.grad` trace passing through it
+        (`TracerArrayConversionError`), even though the physics computed
+        here is itself fully differentiable (Limber integral, window
+        functions, and - with the JAX-native cosmology backend - the
+        growth-factor ODE solve and halofit all differentiate cleanly;
+        confirmed against finite differences in `playground/tutorials/
+        observables/photo_autodiff.ipynb`). `get_Cl` itself can't be made
+        differentiable without either changing `cosmolib`'s dataclass (an
+        external dependency, out of cloelib's control) or breaking its
+        return type for every existing caller - this method sidesteps the
+        packaging step entirely instead, changing nothing about `get_Cl`.
+
+        Parameters:
+            ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
+            nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): Angular power spectrum Cl for the given multipoles,
+            shape `(len(ells), n_bins1, n_bins2)` - `get_Cl`'s packaging
+            (`_package_cl`) builds its per-pair-type output (e.g. SHE-SHE's
+            2x2 E/B-mode block) from these same values, not a plain
+            reshape of this tensor; e.g. for a SHE-SHE pair,
+            `get_Cl(...)[("SHE","SHE",i,j)].array[0, 0]` (the EE block)
+            equals `get_Cl_tensor(...)[:, i-1, j-1]` exactly.
+        """
+        contributions1 = getattr(self.tracer1, "get_contributions", lambda: ())()
+        contributions2 = getattr(self.tracer2, "get_contributions", lambda: ())()
+
+        if needs_generalized_engine(contributions1, contributions2):
+            return self._compute_cl_generalized(
+                ells, ks, contributions1, contributions2
+            )
+        return self._compute_cl_legacy(ells, nl, ks)
+
+    @profile_function
     def get_Cl(self, ells, nl, ks) -> dict:
         """
         Compute the angular power spectrum Cl using Limber approximation.
@@ -514,6 +562,9 @@ class AngularTwoPoint:
         Combines the window functions of the tracers, interpolated matter power
         spectrum, Hubble parameter, and comoving distances to calculate the
         two-point angular statistics.
+
+        Not differentiable via `jax.grad` - see `get_Cl_tensor` for the same
+        computation without the step that breaks that.
 
         Parameters:
             ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
@@ -523,15 +574,7 @@ class AngularTwoPoint:
         Returns:
             (jax.numpy.ndarray): Angular power spectrum Cl for the given multipoles.
         """
-        contributions1 = getattr(self.tracer1, "get_contributions", lambda: ())()
-        contributions2 = getattr(self.tracer2, "get_contributions", lambda: ())()
-
-        if needs_generalized_engine(contributions1, contributions2):
-            C_ell_calc = self._compute_cl_generalized(
-                ells, ks, contributions1, contributions2
-            )
-        else:
-            C_ell_calc = self._compute_cl_legacy(ells, nl, ks)
+        C_ell_calc = self.get_Cl_tensor(ells, nl, ks)
         self.C_ell_calc = C_ell_calc
 
         return self._package_cl(C_ell_calc, ells)

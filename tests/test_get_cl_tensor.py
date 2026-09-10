@@ -1,19 +1,22 @@
 """
-Tests for `AngularTwoPoint.get_Cl_tensor` - the differentiable counterpart
+Tests for `AngularTwoPoint.get_Cl_tensor`, the packaging-free counterpart
 to `get_Cl` (see its docstring in `angular_two_point.py`, and the
 investigation this came out of, `playground/tutorials/observables/
 photo_autodiff.ipynb`).
 
-`get_Cl` itself cannot be made differentiable via `jax.grad`: its packaging
-step wraps the result in `cosmolib.data.photo.AngularPowerSpectrum`, whose
-`__post_init__` unconditionally does `np.asarray(self.array, dtype=float)`
-- a plain NumPy cast, in an external package unaware of JAX, that severs
-any `jax.grad` trace passing through it. `get_Cl_tensor` returns the exact
-same pre-packaging tensor without that step, so it differentiates cleanly.
-These tests use `cloelib.cosmology.jax_cosmology` (`JAXBackground`,
-`JAXNonLinearPerturbations`) specifically, since it's the one cosmology
-backend that's pure JAX end-to-end - CAMB/HMcode2020Emu/etc. call non-JAX
-external codes internally regardless of this method.
+`get_Cl`'s packaging step wraps the result in `cosmolib.data.photo.
+AngularPowerSpectrum`; that dataclass's `__post_init__` used to
+unconditionally do `np.asarray(self.array, dtype=float)` - a plain NumPy
+cast that severed any `jax.grad` trace passing through it. `cosmolib`'s
+`26-fix-jax-clash-with-cloelib-photo-classes` fix made that cast
+JAX-aware, so `get_Cl` itself is differentiable now too - `get_Cl_tensor`
+remains worth using on its own merits (skips building the packaged `dict`
+and `AngularPowerSpectrum` objects), not as a differentiability
+workaround. These tests use `cloelib.cosmology.jax_cosmology`
+(`JAXBackground`, `JAXNonLinearPerturbations`) specifically, since it's
+the one cosmology backend that's pure JAX end-to-end - CAMB/
+HMcode2020Emu/etc. call non-JAX external codes internally regardless of
+this method.
 """
 
 import importlib.util
@@ -101,14 +104,16 @@ def test_get_cl_tensor_matches_get_cl_packaged_values(grids):
     assert jnp.allclose(ee_packaged, cl_tensor[:, 0, 0])
 
 
-def test_get_cl_is_not_differentiable(grids):
-    """Documents the actual limitation `get_Cl_tensor` exists to work
-    around: `get_Cl`'s packaging step breaks `jax.grad`. If `cosmolib`
-    ever changes `AngularPowerSpectrum` to be JAX-aware, this test starts
-    failing - a deliberate tripwire, not something to silently relax.
+def test_get_cl_is_now_directly_differentiable(grids):
+    """`get_Cl` itself must differentiate cleanly now (no `get_Cl_tensor`
+    workaround needed), now that `cosmolib`'s
+    `26-fix-jax-clash-with-cloelib-photo-classes` fix stopped
+    `AngularPowerSpectrum.__post_init__` from casting a JAX trace to plain
+    NumPy. Its gradient must also match `get_Cl_tensor`'s exactly - same
+    physics, only the packaging differs.
     """
 
-    def loss(H0):
+    def loss_packaged(H0):
         perturbations = _build_perturbations(grids["z_grid"], grids["ks"], H0=H0)
         dndz = jnp.ones((1, len(grids["z_tracer"])))
         dndz = dndz / jnp.trapezoid(dndz, grids["z_tracer"], axis=1)[:, None]
@@ -122,8 +127,30 @@ def test_get_cl_is_not_differentiable(grids):
         cl = AngularTwoPoint(tracer, tracer).get_Cl(grids["ells"], 0, grids["ks"])
         return jnp.sum(cl[("SHE", "SHE", 1, 1)].array)
 
-    with pytest.raises(jax.errors.TracerArrayConversionError):
-        jax.grad(loss)(67.7)
+    def loss_tensor(H0):
+        perturbations = _build_perturbations(grids["z_grid"], grids["ks"], H0=H0)
+        dndz = jnp.ones((1, len(grids["z_tracer"])))
+        dndz = dndz / jnp.trapezoid(dndz, grids["z_tracer"], axis=1)[:, None]
+        tracer = ShearTracer(
+            perturbations=perturbations,
+            dndz=dndz,
+            z=grids["z_tracer"],
+            nuisance_params=_nuisance_shear(),
+            ia_model="NLA",
+        )
+        two_point = AngularTwoPoint(tracer, tracer)
+        return jnp.sum(two_point.get_Cl_tensor(grids["ells"], 0, grids["ks"])[:, 0, 0])
+
+    val_packaged, grad_packaged = jax.value_and_grad(loss_packaged)(67.7)
+    val_tensor, grad_tensor = jax.value_and_grad(loss_tensor)(67.7)
+
+    assert jnp.isfinite(grad_packaged) and grad_packaged != 0.0
+    assert jnp.allclose(val_packaged, val_tensor)
+    assert jnp.allclose(grad_packaged, grad_tensor)
+
+    eps = 1e-4
+    fd_H0 = (loss_packaged(67.7 + eps) - loss_packaged(67.7 - eps)) / (2 * eps)
+    assert jnp.allclose(grad_packaged, fd_H0, rtol=1e-3)
 
 
 def test_get_cl_tensor_differentiable_nla(grids):

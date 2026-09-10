@@ -513,23 +513,24 @@ class AngularTwoPoint:
         as a plain `jax.numpy.ndarray` - the exact same computation
         `get_Cl` runs, without the final packaging step.
 
-        Use this instead of `get_Cl` when you need `jax.grad`/`jax.jacobian`
-        through the result: `get_Cl`'s return value is a `dict` of
-        `cosmolib.data.photo.AngularPowerSpectrum` objects, and that
-        dataclass's `__post_init__` unconditionally does
-        `np.asarray(self.array, dtype=float)` - a plain NumPy cast, in an
-        external package that predates and is unaware of JAX. That cast
+        `get_Cl` itself is now also differentiable via `jax.grad`/
+        `jax.jacobian` (as of `cosmolib`'s
+        `26-fix-jax-clash-with-cloelib-photo-classes` fix: its
+        `AngularPowerSpectrum.__post_init__` used to unconditionally do
+        `np.asarray(self.array, dtype=float)` - a plain NumPy cast that
         severs any `jax.grad` trace passing through it
-        (`TracerArrayConversionError`), even though the physics computed
-        here is itself fully differentiable (Limber integral, window
-        functions, and - with the JAX-native cosmology backend - the
-        growth-factor ODE solve and halofit all differentiate cleanly;
-        confirmed against finite differences in `playground/tutorials/
-        observables/photo_autodiff.ipynb`). `get_Cl` itself can't be made
-        differentiable without either changing `cosmolib`'s dataclass (an
-        external dependency, out of cloelib's control) or breaking its
-        return type for every existing caller - this method sidesteps the
-        packaging step entirely instead, changing nothing about `get_Cl`.
+        (`TracerArrayConversionError`) - it now branches on `jax.Array`
+        and uses `jax.numpy.asarray` instead when the input is JAX's, so
+        it no longer breaks the trace). Prefer `get_Cl_tensor` over
+        `get_Cl` anyway when you don't need the packaged, per-pair-type
+        `dict`: it skips building that dict and the `AngularPowerSpectrum`
+        wrapper objects entirely, which is the more meaningful saving for
+        anything running under `jax.jit`/`jax.vmap`. The physics itself
+        (Limber integral, window functions, and - with the JAX-native
+        cosmology backend - the growth-factor ODE solve and halofit) was
+        always fully differentiable; confirmed against finite differences
+        in `playground/tutorials/observables/photo_autodiff.ipynb` and
+        `validation/photo_autodiff.ipynb`.
 
         Parameters:
             ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
@@ -563,8 +564,11 @@ class AngularTwoPoint:
         spectrum, Hubble parameter, and comoving distances to calculate the
         two-point angular statistics.
 
-        Not differentiable via `jax.grad` - see `get_Cl_tensor` for the same
-        computation without the step that breaks that.
+        Differentiable via `jax.grad` (requires `cosmolib`'s
+        `26-fix-jax-clash-with-cloelib-photo-classes` fix; see
+        `get_Cl_tensor`'s docstring). `get_Cl_tensor` returns the same
+        computation without the packaging step, which is still cheaper for
+        code that doesn't need the packaged `dict`.
 
         Parameters:
             ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
@@ -917,7 +921,7 @@ class AngularTwoPoint:
                 arr = np.zeros((2, mixing_matrix[("POS", "SHE", a, b)].ell.shape[0]))
                 for idx in [0, 1]:
                     arr = arr.at[idx].set(
-                        mixing_matrix[("POS", "SHE", a, b)]
+                        mixing_matrix[("POS", "SHE", a, b)].array
                         @ C_ell_calc[("POS", "SHE", a, b)].array[idx]
                     )
                 C_ell_out[("POS", "SHE", a, b)] = arr

@@ -300,9 +300,7 @@ class JAXBackground:
         """
         zs = jnp.asarray(zs)
         return (
-            self.Omega_m0
-            * (1 + zs) ** 3
-            / (self.hubble_parameter(zs) / self.H0) ** 2
+            self.Omega_m0 * (1 + zs) ** 3 / (self.hubble_parameter(zs) / self.H0) ** 2
         )
 
     def Omega_cb(self, zs: jnp.ndarray) -> jnp.ndarray:

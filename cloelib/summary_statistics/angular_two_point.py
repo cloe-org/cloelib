@@ -1,10 +1,15 @@
 """Module for angular two-point functions."""
 
 # cloelib imports
-from cloelib.observables.tracer import Tracer
+from cloelib.observables.photo.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
 from cloelib.observables.cmb import CMBLensingTracer
+from cloelib.observables.photo.spectrum_engine import (
+    build_spectra_bank,
+    get_effective_pk,
+    needs_generalized_engine,
+)
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import simpsons_weights_jit
 from cloelib.profiling import profile_function
@@ -72,6 +77,74 @@ def Pkl_interp(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
 
 
 Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, None)))
+
+
+@jax.jit
+def Pkl_interp_signed(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
+    """
+    Interpolate a possibly-negative effective power spectrum on a Limber grid.
+
+    `Pkl_interp` interpolates `log10(P)` in log-log `(log10(k), z)` space,
+    which assumes `P > 0` everywhere - true for the plain matter power
+    spectrum, but not for e.g. a matter-intrinsic (`GI`) effective spectrum,
+    which is generically signed (`C1(z)` in the TATT/NLA model carries a
+    minus sign - see `tatt.py`).
+
+    A first attempt at this interpolated `P` itself (not `log10(P)`)
+    linearly to sidestep `log10` of a negative number; that turned out to
+    be a real bug, not just a simplification - `P(k,z)` spans many orders
+    of magnitude across a log-spaced `k` grid, and interpax's akima
+    interpolation of the raw values across that range was wildly
+    inaccurate (verified: it produced results independent of the actual
+    effective-Pk terms, off by 5-6 orders of magnitude from the correct
+    C1**2 * P_dd limit). This keeps log-log accuracy for the *magnitude*
+    (`log10(|P|)`) and interpolates the sign separately, recombining
+    `sign(interpolated sign) * 10**(interpolated log10|P|)` - standard
+    practice for interpolating a signed, log-scale quantity.
+
+    Used by the generalized engine (`AngularTwoPoint._compute_cl_
+    generalized`) instead of `Pkl_interp`, which stays log-log (and
+    untouched) for the always-positive legacy path.
+
+    Parameters/Returns: as `Pkl_interp`.
+    """
+    log_abs_pk = jax.numpy.log10(jax.numpy.abs(Pk) + 1e-300)
+    sign_pk = jax.numpy.sign(Pk)
+
+    log_ks = jax.numpy.log10(ks)
+    # A real (non-power-law) effective spectrum - e.g. TATT's one-loop
+    # kernels, which are steep and sign-changing near the edges of their
+    # k-grid, unlike the smooth matter Pk `Pkl_interp` extrapolates - has no
+    # well-defined asymptotic shape past its own grid to extrapolate at all:
+    # akima extrapolation there can send the *extrapolated* log-magnitude to
+    # +-hundreds at extreme Limber wavenumbers (k_l = (ell+0.5)/chi blows up
+    # as chi -> 0, i.e. the z ~ 0 edge of the redshift grid, at high ell),
+    # which `10**(...)` either overflows to +-inf (poisoning the whole Cl
+    # sum) or, if merely clipped after the fact, leaves an astronomically
+    # large-but-finite value that still dominates the sum - found via a
+    # genuine bad `Cl` from a real FAST-PT-backed `TATTContribution`
+    # (`PBJ_tatt.py`), not the smoother placeholder kernels, which never
+    # extrapolate steeply enough to trigger this. Clamping the query k to
+    # the grid's own domain before interpolating - constant (edge-value)
+    # behavior past the grid, standard practice for a function with no
+    # known extrapolation law - avoids extrapolating this kind of kernel at
+    # all; the clamped region only ever affects the physically negligible
+    # chi~0 edge (both the `dz` weight and the `1/chi**2` Limber prefactor
+    # already suppress it there), not genuine bulk grid values.
+    log_k = jax.numpy.clip(jax.numpy.log10(k_l), log_ks.min(), log_ks.max())
+
+    interp_log_abs = interpax.interp2d(
+        log_k, z_l, log_ks, zs, log_abs_pk, method="akima", extrap=True
+    )
+    interp_sign = interpax.interp2d(
+        log_k, z_l, log_ks, zs, sign_pk, method="akima", extrap=True
+    )
+    return jax.numpy.sign(interp_sign) * 10**interp_log_abs
+
+
+Pkl_interp_signed_vmap = jax.jit(
+    jax.vmap(Pkl_interp_signed, in_axes=(0, None, None, None, None))
+)
 
 
 @jax.jit
@@ -434,6 +507,54 @@ class AngularTwoPoint:
         return Pkl
 
     @profile_function
+    def get_Cl_tensor(self, ells, nl, ks) -> jax.numpy.ndarray:
+        """
+        Compute the angular power spectrum Cl using Limber approximation,
+        as a plain `jax.numpy.ndarray` - the exact same computation
+        `get_Cl` runs, without the final packaging step.
+
+        Use this instead of `get_Cl` when you need `jax.grad`/`jax.jacobian`
+        through the result: `get_Cl`'s return value is a `dict` of
+        `cosmolib.data.photo.AngularPowerSpectrum` objects, and that
+        dataclass's `__post_init__` unconditionally does
+        `np.asarray(self.array, dtype=float)` - a plain NumPy cast, in an
+        external package that predates and is unaware of JAX. That cast
+        severs any `jax.grad` trace passing through it
+        (`TracerArrayConversionError`), even though the physics computed
+        here is itself fully differentiable (Limber integral, window
+        functions, and - with the JAX-native cosmology backend - the
+        growth-factor ODE solve and halofit all differentiate cleanly;
+        confirmed against finite differences in `playground/tutorials/
+        observables/photo_autodiff.ipynb`). `get_Cl` itself can't be made
+        differentiable without either changing `cosmolib`'s dataclass (an
+        external dependency, out of cloelib's control) or breaking its
+        return type for every existing caller - this method sidesteps the
+        packaging step entirely instead, changing nothing about `get_Cl`.
+
+        Parameters:
+            ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
+            nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): Angular power spectrum Cl for the given multipoles,
+            shape `(len(ells), n_bins1, n_bins2)` - `get_Cl`'s packaging
+            (`_package_cl`) builds its per-pair-type output (e.g. SHE-SHE's
+            2x2 E/B-mode block) from these same values, not a plain
+            reshape of this tensor; e.g. for a SHE-SHE pair,
+            `get_Cl(...)[("SHE","SHE",i,j)].array[0, 0]` (the EE block)
+            equals `get_Cl_tensor(...)[:, i-1, j-1]` exactly.
+        """
+        contributions1 = getattr(self.tracer1, "get_contributions", lambda: ())()
+        contributions2 = getattr(self.tracer2, "get_contributions", lambda: ())()
+
+        if needs_generalized_engine(contributions1, contributions2):
+            return self._compute_cl_generalized(
+                ells, ks, contributions1, contributions2
+            )
+        return self._compute_cl_legacy(ells, nl, ks)
+
+    @profile_function
     def get_Cl(self, ells, nl, ks) -> dict:
         """
         Compute the angular power spectrum Cl using Limber approximation.
@@ -442,6 +563,9 @@ class AngularTwoPoint:
         spectrum, Hubble parameter, and comoving distances to calculate the
         two-point angular statistics.
 
+        Not differentiable via `jax.grad` - see `get_Cl_tensor` for the same
+        computation without the step that breaks that.
+
         Parameters:
             ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
             nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
@@ -449,6 +573,21 @@ class AngularTwoPoint:
 
         Returns:
             (jax.numpy.ndarray): Angular power spectrum Cl for the given multipoles.
+        """
+        C_ell_calc = self.get_Cl_tensor(ells, nl, ks)
+        self.C_ell_calc = C_ell_calc
+
+        return self._package_cl(C_ell_calc, ells)
+
+    def _compute_cl_legacy(self, ells, nl, ks):
+        """Fast path: one shared Pk grid, tracer-level windows.
+
+        Exercised whenever neither tracer's contributions declare any extra
+        `SpectrumRequest`s (`spectrum_engine.needs_generalized_engine` is
+        `False`) - every configuration that doesn't opt into a
+        generalized-engine-aware contribution (e.g. `ia_model="TATT"`).
+        Only the packaging at the end is shared with `_compute_cl_generalized`
+        (`_package_cl`); the Cl computation itself is fully independent.
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
@@ -547,8 +686,98 @@ class AngularTwoPoint:
 
         # Apply prefactor as before
         C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
-        self.C_ell_calc = C_ell_calc
+        return C_ell_calc
 
+    def _compute_cl_generalized(self, ells, ks, contributions1, contributions2):
+        """Cl via the per-contribution-pair engine (`spectrum_engine.py`).
+
+        Reached only when some contribution declares extra `SpectrumRequest`s
+        (e.g. `TATTContribution`). Sums `Cl_integration(W1, W2, Pkl_pair, ...)`
+        over every `(c1, c2)` in the Cartesian product of both tracers'
+        contributions, each pair using its own effective P(k,z)
+        (`spectrum_engine.get_effective_pk`, falling back to the plain
+        matter Pk when a pair has nothing special to say) - the same
+        physics separation `toy_cloelib.engine.compute_angular_power_
+        spectrum` uses, reusing cloelib's own existing jitted Limber
+        kernels (`Pkl_interp_vmap`, `Cl_integration`) unchanged for each
+        pair's integral.
+
+        Does not support RSD (`PositionsTracer(..., include_rsd=True)`)
+        paired with a generalized-engine-requiring contribution - that
+        combination isn't exercised by TATT and is left as a documented gap
+        rather than guessed at.
+        """
+        if (
+            isinstance(self.tracer1, PositionsTracer)
+            and getattr(self.tracer1, "include_rsd", False)
+        ) or (
+            isinstance(self.tracer2, PositionsTracer)
+            and getattr(self.tracer2, "include_rsd", False)
+        ):
+            raise NotImplementedError(
+                "The generalized Cl engine (contributions declaring extra "
+                "SpectrumRequests, e.g. TATTContribution) does not support "
+                "PositionsTracer(include_rsd=True) yet."
+            )
+
+        c_0 = SPEED_OF_LIGHT / 1000
+        zs_calc = self.tracer1.z
+        dz = self.tracer1.z[1] - self.tracer1.z[0]
+        H = self.tracer1.perturbations.background.hubble_parameter(
+            zs_calc, units="km/s/Mpc"
+        )
+        chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
+        chi2 = chi**2
+        weights = simpsons_weights_jit(len(H))
+
+        pert_zs = self.tracer1.perturbations.z
+        matter_pk = self.tracer1.perturbations.matter_power_spectrum(pert_zs, ks)
+        bank = build_spectra_bank(
+            contributions1, contributions2, matter_pk, ks, pert_zs
+        )
+
+        k_lz = np.expand_dims((ells + 0.5), 1) / chi
+        n_bin1 = self.tracer1.n_z_bins
+        n_bin2 = self.tracer2.n_z_bins
+        C_ell_calc = np.zeros((len(ells), n_bin1, n_bin2))
+
+        for c1 in contributions1:
+            for c2 in contributions2:
+                pk_eff = get_effective_pk(c1, c2, bank)
+                if pk_eff is None:
+                    Pkl_pair = Pkl_interp_vmap(k_lz, zs_calc, ks, pert_zs, matter_pk.T)
+                else:
+                    # Effective spectra (e.g. TATT's GI/II terms) are
+                    # generically signed - see `Pkl_interp_signed`'s
+                    # docstring - so they can't go through the log-log
+                    # `Pkl_interp` the always-positive matter Pk uses above.
+                    Pkl_pair = Pkl_interp_signed_vmap(
+                        k_lz, zs_calc, ks, pert_zs, pk_eff.T
+                    )
+
+                W1 = c1.compute_kernel(zs_calc)
+                W2 = c2.compute_kernel(zs_calc)
+                C_ell_calc = C_ell_calc + Cl_integration(
+                    W1, W2, Pkl_pair, H, chi2, weights
+                )
+
+        C_ell_calc = C_ell_calc * c_0 * dz
+
+        prefactor = (
+            np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
+            / (ells + 0.5) ** 2
+        )
+        prefactor_cell = (
+            prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle
+        ) * (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle)
+        return C_ell_calc * prefactor_cell[:, None, None]
+
+    def _package_cl(self, C_ell_calc, ells) -> dict:
+        """Slice/reshape `C_ell_calc` into the cosmolib-format output dict.
+
+        Shared, untouched packaging logic - identical regardless of which
+        computation produced `C_ell_calc`.
+        """
         n_bin1 = self.tracer1.n_z_bins
         n_bin2 = self.tracer2.n_z_bins
         C_ell_out = {}

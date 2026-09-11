@@ -75,7 +75,10 @@ jobs:
             "${ENV_PREFIX}/bin/python" -m pip install \
             ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy,mgclassy,mochi_classy]"
       - name: Run tests
-        run: mamba run -n $ENV_NAME python -m pytest -n 4 --dist=loadfile
+        run: |
+          # These third-party emulators unpack shared archives during import.
+          mamba run -n $ENV_NAME python -m pytest --collect-only --no-cov tests/test_ReACTEmu.py tests/test_baccoemu.py
+          mamba run -n $ENV_NAME python -m pytest -n 4 --dist=loadfile
         env:
           OMP_NUM_THREADS: "1"
           OPENBLAS_NUM_THREADS: "1"

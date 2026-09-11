@@ -157,6 +157,27 @@ grad_fn = jax.grad(lambda h0: bg.comoving_distance(jnp.array([1.0]))[0])
 dchi_dH0 = grad_fn(67.5)
 ```
 
+### MGCLASSBackground
+
+Interfaces with the [MGCLASS](https://gitlab.com/zizgitlab/mgclass--ii) Boltzmann solver.
+
+**Location**: `cloelib/cosmology/mgclass_cosmology.py`
+
+**When to use**: When you need MGCLASS-specific features or comparing with MGCLASS-based pipelines
+
+**Example**:
+
+```python
+from cloelib.cosmology.mgclass_cosmology import MGCLASSBackground
+
+bg = MGCLASSBackground(
+    H0=67.5,
+    Omega_b0=0.0492,
+    Omega_cdm0=0.2650,
+    # other parameters
+)
+```
+
 ### hi_classBackground
 
 Interfaces with the [hi_class](https://github.com/emiliobellini/hi_class_public) Boltzmann solver.
@@ -398,5 +419,5 @@ def comoving_distance(self, zs):
 Now that you understand Background, you are ready for:
 
 - [Perturbations](perturbations.md) – Add structure formation on top of your background
-- [Observables](observables.md) – Connect background to survey measurements
+- [Observables](observables/index.md) – Connect background to survey measurements
 - [API Reference](../api.md) – Full technical documentation

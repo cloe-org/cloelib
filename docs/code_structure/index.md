@@ -45,19 +45,19 @@ Each layer depends on the previous one, creating a flexible pipeline from fundam
 - **Use case**: Adding (non)-linear models or new structure formation codes
 - [Learn more about Perturbations](perturbations.md)
 
-### 3. [Observables](observables.md)
+### 3. [Observables](observables/index.md)
 
 - **Purpose**: Compute survey-specific observables
 - **Dependencies**: Perturbations (for tracers) or Background/Perturbations (for spectroscopic)
 - **Use case**: Adding new measurement types or survey configurations
-- [Learn more about Observables](observables.md)
+- [Learn more about Observables](observables/index.md)
 
-### 4. [Summary Statistics](summary_statistics.md)
+### 4. [Summary Statistics](summary_statistics/index.md)
 
 - **Purpose**: Compute final statistical quantities
 - **Dependencies**: Observables module
 - **Use case**: Implementing new statistical estimators
-- [Learn more about Summary Statistics](summary_statistics.md)
+- [Learn more about Summary Statistics](summary_statistics/index.md)
 
 ## Typical Workflow
 

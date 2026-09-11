@@ -439,6 +439,31 @@ class CAMBLinearPerturbations:
 
         return D_z_k
 
+    def growth_factor_cb(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+        r"""
+        Calculate the growth factor for cb for given redshifts and wavenumbers.
+
+        $$
+            D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+            /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+        $$
+
+        and normalizes as for $D(z)/D(0)$.
+
+        Args
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
+
+        Returns:
+            (np.ndarray): The growth factor at the specified redshift and wavenumber.
+        """
+        D_z_k_cb = np.sqrt(
+            self.matter_power_spectrum_cb(zs, ks)
+            / self.matter_power_spectrum_cb(np.array([0.0]), ks)[0]
+        )
+
+        return D_z_k_cb
+
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""
 
@@ -600,6 +625,30 @@ class CAMBNonLinearPerturbations:
             / self.matter_power_spectrum(np.array([0.0]), ks)[0]
         )
         return D_z_k
+
+    def growth_factor_cb(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+        r"""
+        Calculate the growth factor for cb for given redshifts and wavenumbers.
+
+        $$
+            D(z, k) =\sqrt{P_{\rm \delta_{cb}\delta_{cb}}(z, k)\
+            /P_{\rm \delta_{cb}\delta_{cb}}(z=0, k)}\\
+        $$
+
+        and normalizes as for $D(z)/D(0)$.
+
+        Args:
+            zs (numpy.ndarray): redshifts
+            ks (numpy.ndarray): wavenumber
+
+        Returns:
+            (np.ndarray): The growth factor at the specified redshift and wavenumber.
+        """
+        D_z_k_cb = np.sqrt(
+            self.matter_power_spectrum_cb(zs, ks)
+            / self.matter_power_spectrum_cb(np.array([0.0]), ks)[0]
+        )
+        return D_z_k_cb
 
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""

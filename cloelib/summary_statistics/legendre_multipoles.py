@@ -58,11 +58,13 @@ def format_output(stat: str):
                     mixing_matrix = get_arg("mixing_matrix", 0)
                     rescaled_mixing_matrix = deepcopy(mixing_matrix)
                     scale_h = mixing_matrix.kout
+                    k_center = kwargs.get("k_center", scale_h)
                     for key in [0, 2, 4]:
                         rescaled_mixing_matrix.kin[key] = mixing_matrix.kin[key] * h_fid
                         set_arg("mixing_matrix", 0, rescaled_mixing_matrix)
                 else:
                     scale_h = get_arg("k", 0)
+                    k_center = scale_h
                     set_arg("k", 0, scale_h * h_fid)
             else:
                 scale_h = get_arg("s", 0)
@@ -89,7 +91,7 @@ def format_output(stat: str):
                     * h_fid**3
                 )
                 return PowerSpectrumMultipoles(
-                    k=scale_h,
+                    k=k_center,
                     keff=scale_h,
                     Nmodes=np.zeros_like(scale_h),
                     multipoles=out,
@@ -256,7 +258,7 @@ class LegendreMultipoles:
         """
         noise = (
             self.parameters["NP0"] * self._Pk2d_noise_k0(k)
-            + self.parameters["NP20"] * self._Pk2d_noise_k0(k)
+            + self.parameters["NP20"] * self._Pk2d_noise_k2(k)
             + self.parameters["NP22"] * self._Pk2d_noise_k2mu2(k, mu)
         )
         return noise
@@ -456,6 +458,7 @@ class LegendreMultipoles:
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
         format_type: Optional[str] = None,
+        k_center: Optional[np.ndarray] = None,
     ) -> dict:
         r"""Power spectrum Legendre multipoles convolved with the mixing matrix.
 
@@ -571,10 +574,10 @@ class LegendreMultipoles:
         s: np.ndarray,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5.0,
+        logkmin: Optional[float] = -6.0,
         logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
-        kcut: Optional[float] = 0.4,
+        kcut: Optional[float] = 2.0,
         pow: Optional[float] = 2.0,
         format_type: Optional[str] = None,
     ) -> dict:
@@ -634,10 +637,10 @@ class LegendreMultipoles:
         s: np.ndarray,
         mu: np.ndarray,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5.0,
+        logkmin: Optional[float] = -6.0,
         logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
-        kcut: Optional[float] = 0.4,
+        kcut: Optional[float] = 2.0,
         pow: Optional[float] = 2.0,
         format_type: Optional[str] = None,
     ) -> dict:
@@ -688,10 +691,10 @@ class LegendreMultipoles:
         term_list: list,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5.0,
+        logkmin: Optional[float] = -6.0,
         logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
-        kcut: Optional[float] = 0.4,
+        kcut: Optional[float] = 2.0,
         pow: Optional[float] = 2.0,
     ) -> dict:
         r"""Two-point correlation function Legendre multipoles of specified terms.

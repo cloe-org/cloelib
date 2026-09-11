@@ -27,10 +27,10 @@ from cloelib.auxiliary.extrapolator import extend_spectra
 import numpy as np
 from scipy import interpolate
 import os
+import tempfile
 import urllib.request
 import warnings
 from typing import Optional
-
 
 # Zenodo URL for emulator files
 ZENODO_URL = "https://zenodo.org/records/19678842/files"
@@ -62,7 +62,14 @@ def emulator_data(filename: str, zenodo_url: str = None) -> str:
     if not os.path.exists(file_path):
         url = f"{zenodo_url}/{filename}"
         print(f"Downloading {filename} from {url} ...")
-        urllib.request.urlretrieve(url, file_path)
+        fd, temporary_path = tempfile.mkstemp(dir=DATA_DIR)
+        os.close(fd)
+        try:
+            urllib.request.urlretrieve(url, temporary_path)
+            os.replace(temporary_path, file_path)
+        finally:
+            if os.path.exists(temporary_path):
+                os.unlink(temporary_path)
 
     return file_path
 

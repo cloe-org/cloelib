@@ -75,7 +75,12 @@ jobs:
             "${ENV_PREFIX}/bin/python" -m pip install \
             ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy,mgclassy,mochi_classy]"
       - name: Run tests
-        run: mamba run -n $ENV_NAME python -m pytest
+        run: mamba run -n $ENV_NAME python -m pytest -n 4 --dist=loadfile
+        env:
+          OMP_NUM_THREADS: "1"
+          OPENBLAS_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+          NUMEXPR_NUM_THREADS: "1"
   build:
     name: Build
     runs-on: ubuntu-latest

@@ -25,6 +25,7 @@ dependencies = [
     "scipy>1.14",
     "pytest",
     "pytest-cov",
+    "pytest-xdist",
     "mypy",
     "pyinstrument",
     "cosmolib"

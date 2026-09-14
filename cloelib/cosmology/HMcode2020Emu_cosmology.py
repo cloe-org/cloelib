@@ -216,13 +216,6 @@ class HMemuLinearPerturbations:
         float
             The sigma8 value.
         """
-        self.params_hm_emu["z"] = np.insert(self.z, 0, 0.0)
-        max_len = len(self.params_hm_emu["z"])
-        for k, v in self.params_hm_emu.items():
-            if len(v) < max_len:
-                pad_size = max_len - len(v)
-                # Repeat last element to match length
-                self.params_hm_emu[k] = np.pad(v, (0, pad_size), mode="edge")
         self.sigma8, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
         return self.sigma8[0]
 
@@ -438,13 +431,7 @@ class HMemuNonLinearPerturbations:
         float
             The sigma8 value.
         """
-        self.params_hm_emu["z"] = np.insert(self.z, 0, 0.0)
-        max_len = len(self.params_hm_emu["z"])
-        for k, v in self.params_hm_emu.items():
-            if len(v) < max_len:
-                pad_size = max_len - len(v)
-                # Repeat last element to match length
-                self.params_hm_emu[k] = np.pad(v, (0, pad_size), mode="edge")
+
         self.sigma8, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
         return self.sigma8[0]
 

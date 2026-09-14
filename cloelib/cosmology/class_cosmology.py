@@ -121,7 +121,9 @@ class CLASSBackground:
                 raise ValueError("If Omega_wdm0 is provided, m_wdm is also needed.")
 
             if self.T_wdm_over_T_gamma is None:
-                raise ValueError("If Omega_wdm0 is provided, T_wdm_over_T_gamma is also needed.")
+                raise ValueError(
+                    "If Omega_wdm0 is provided, T_wdm_over_T_gamma is also needed."
+                )
 
             self.interface_args["CLASSparams"]["N_ncdm"] = 1
             self.interface_args["CLASSparams"]["m_ncdm"] = self.m_wdm
@@ -496,9 +498,6 @@ class CLASSNonLinearPerturbations:
         self.background = background
         self.z = redshifts
         self.kmax = 100
-
-        if self.background.Omega_wdm0 is not None:
-            raise ValueError("CLASSNonLinearPerturbations is not compatible with warm dark matter. Set Omega_wdm0=None.")
 
         if nonlinear_model is None:
             nonlinear_model = "none"

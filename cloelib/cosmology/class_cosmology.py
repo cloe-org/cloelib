@@ -10,8 +10,6 @@ import copy
 from typing import Optional, Union, Sequence
 import warnings
 
-import warnings
-
 # Cosmology imports
 try:
     from classy import Class  # type: ignore
@@ -84,7 +82,6 @@ class CLASSBackground:
         self.m_wdm = m_wdm
 
         if self.f_wdm is not None:
-
             warnings.warn(
                 "Mixed cold warm dark matter is not compatible with massive neutrinos yet."
                 " N_mnu and mnu will be set to zero ignoring the user provided values."
@@ -120,7 +117,6 @@ class CLASSBackground:
 
         # Set warm dark matter parameters
         if self.f_wdm is not None:
-
             if self.m_wdm is None:
                 raise ValueError("If f_wdm is provided, m_wdm is also needed.")
 
@@ -134,12 +130,18 @@ class CLASSBackground:
 
             omega_wdm = self.f_wdm * self.Omega_cdm0 * (self.h) ** 2 / (1 - self.f_wdm)
             self.interface_args["CLASSparams"]["omega_ncdm"] = omega_wdm
-            self.interface_args["CLASSparams"]["T_ncdm"] = (4/11)**(1/3)*(94.1*omega_wdm)**(1/3)*self.m_wdm**(-1/3)
+            self.interface_args["CLASSparams"]["T_ncdm"] = (
+                (4 / 11) ** (1 / 3)
+                * (94.1 * omega_wdm) ** (1 / 3)
+                * self.m_wdm ** (-1 / 3)
+            )
 
         else:
             # Set neutrino parameters
             if self.N_mnu > 0:
-                self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
+                self.interface_args["CLASSparams"]["m_ncdm"] = (
+                    self._set_neutrino_masses()
+                )
             self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
 
         self.interface_args["CLASSparams"]["N_ur"] = self.N_ur

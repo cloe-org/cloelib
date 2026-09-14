@@ -288,6 +288,7 @@ class PositionsTracer:
         galaxy_bias_model: str,
         nuisance_params: dict,
         include_rsd: bool = False,
+        use_Pcb: bool = False,
     ):
         r"""
         Initialize the class instance.
@@ -301,6 +302,8 @@ class PositionsTracer:
           z (np.ndarray): A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
           galaxy_bias_model (str): A string specifying the model used to describe the galaxy bias
           nuisance_params (dict): A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
+          include_rsd (bool): A flag indicating whether to include redshift-space distortions in the calculations.
+          use_Pcb (bool): A flag indicating whether to use the power spectrum of cold dark matter + baryons (no neutrinos).
         """
         if 0.0 in z:
             raise ValueError(
@@ -331,6 +334,7 @@ class PositionsTracer:
             for i in range(dndz.shape[0])
         ]
         self.include_rsd = include_rsd
+        self.use_Pcb = use_Pcb
 
         # Using dict.get so I can provide a default since lax has to compile every branch of the conditional
         def per_bin_case():

@@ -433,6 +433,83 @@ class AngularTwoPoint:
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
         return Pkl
 
+    def _cb_power_spectrum_limber_grid(self, z_l, ks, zs, ells) -> jax.numpy.ndarray:
+        """
+        Prepare the cb power spectrum grid for Limber approximation.
+
+        It calculates the k values on the Limber grid using the comoving
+        distances and multipoles, then interpolates the cb power
+        spectrum accordingly.
+
+        Parameters:
+            z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
+            ells (jax.numpy.ndarray): Multipole moments for angular power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): Interpolated cb power spectrum on the Limber grid.
+        """
+        chi = self.tracer1.perturbations.background.comoving_distance(z_l)
+        k_lz = np.expand_dims((ells + 0.5), 1) / chi
+        Pk = self.tracer1.perturbations.matter_power_spectrum_cb(zs, ks)
+        Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
+        return Pkl
+
+    def _cbxmatter_power_spectrum_limber_grid(
+        self, z_l, ks, zs, ells
+    ) -> jax.numpy.ndarray:
+        """
+        Prepare the cb cross matter power spectrum grid for Limber approximation.
+
+        It calculates the k values on the Limber grid using the comoving
+        distances and multipoles, then interpolates the cb cross matter power
+        spectrum accordingly.
+
+        Parameters:
+            z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
+            ells (jax.numpy.ndarray): Multipole moments for angular power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): Interpolated cb cross matter power spectrum on the Limber grid.
+        """
+        chi = self.tracer1.perturbations.background.comoving_distance(z_l)
+        k_lz = np.expand_dims((ells + 0.5), 1) / chi
+
+        tracer_she = (
+            self.tracer1 if isinstance(self.tracer1, ShearTracer) else self.tracer2
+        )
+        tracer_pos = (
+            self.tracer1 if isinstance(self.tracer1, PositionsTracer) else self.tracer2
+        )
+
+        # This solution is a bit sketchy, but it works for now.
+        # The idea is to check if the tracer has non-linear perturbations or not.
+        # If it does, we use the non-linear matter power spectrum, otherwise we use the linear one.
+        try:  # Non linear perturbations
+            Pcb_nl = tracer_pos.perturbations.matter_power_spectrum_cb(zs, ks)
+            Pcb_l = (
+                tracer_pos.perturbations.linearperturbations.matter_power_spectrum_cb(
+                    zs, ks
+                )
+            )
+            Pmm_l = tracer_she.perturbations.linearperturbations.matter_power_spectrum(
+                zs, ks
+            )
+            f_cb = tracer_pos.perturbations.background.Omega_cb(
+                0
+            ) / tracer_pos.perturbations.background.Omega_m(0)
+            Pk = f_cb * (Pcb_nl - Pcb_l) + np.sqrt(Pcb_l * Pmm_l)
+        except AttributeError:  # Linear perturbations
+            Pcb_l = tracer_pos.perturbations.matter_power_spectrum_cb(zs, ks)
+            Pmm_l = tracer_she.perturbations.matter_power_spectrum(zs, ks)
+            Pk = np.sqrt(Pcb_l * Pmm_l)
+
+        Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
+        return Pkl
+
     @profile_function
     def get_Cl(self, ells, nl, ks) -> dict:
         """
@@ -492,9 +569,28 @@ class AngularTwoPoint:
                 ):
                     WT2_rsd = self.tracer2.get_window_rsd(ells, H, f, chi)
 
-        Pkl = self._matter_power_spectrum_limber_grid(
-            zs_calc, ks, self.tracer1.perturbations.z, ells
+        need_pcb = (
+            isinstance(self.tracer1, PositionsTracer)
+            and getattr(self.tracer1, "use_Pcb", False)
+        ) or (
+            isinstance(self.tracer2, PositionsTracer)
+            and getattr(self.tracer2, "use_Pcb", False)
         )
+
+        if need_pcb:
+            if same_tracer:
+                Pkl = self._cb_power_spectrum_limber_grid(
+                    zs_calc, ks, self.tracer1.perturbations.z, ells
+                )
+            else:
+                Pkl = self._cbxmatter_power_spectrum_limber_grid(
+                    zs_calc, ks, self.tracer1.perturbations.z, ells
+                )
+        else:
+            Pkl = self._matter_power_spectrum_limber_grid(
+                zs_calc, ks, self.tracer1.perturbations.z, ells
+            )
+
         # Added the prefactor here as this is where we have access to ells.
         # There may be a more efficient way to do the multiplication
         prefactor = (

@@ -4,8 +4,8 @@ Tests for the generalized spectrum engine and TATT (see
 
 These check the *architecture*: that the generalized engine is a true no-op
 for every configuration that doesn't need it (already covered exhaustively
-by `test_photo_tracers_characterization.py`/`test_contributions.py`, since
-`ia_model="NLA"` is the default and unchanged), that TATT's request pruning
+by `test_photo_tracers_characterization.py`/`test_contributions.py`, which
+build their `ShearTracer`s with explicit `ia_model="NLA"`), that TATT's request pruning
 and NLA-reduction limit are correct, and that the generalized Cl path
 produces finite, correctly-shaped output. `TATTContribution` requires a
 real `loop_computer` (no illustrative default - see
@@ -112,8 +112,10 @@ def _shear_nuisance(n_z_bins, **extra):
     }
 
 
-def test_ia_model_nla_default_gives_identical_contribution_type(cosmo_setup):
-    """`ia_model="NLA"` (the default) must build the pre-existing NLA class."""
+def test_ia_model_none_default_means_no_ia_contribution(cosmo_setup):
+    """`ia_model=None` (the default) must mean no intrinsic-alignment
+    contribution at all - only lensing. `ia_model="NLA"` must build the
+    pre-existing NLA class."""
     perturbations, z = cosmo_setup
     dndz = np.ones((1, len(z)))
     dndz /= np.trapezoid(dndz, z, axis=1)[:, None]
@@ -121,17 +123,18 @@ def test_ia_model_nla_default_gives_identical_contribution_type(cosmo_setup):
     default_tracer = ShearTracer(
         perturbations=perturbations, dndz=dndz, z=z, nuisance_params=_shear_nuisance(1)
     )
-    explicit_tracer = ShearTracer(
+    nla_tracer = ShearTracer(
         perturbations=perturbations,
         dndz=dndz,
         z=z,
         nuisance_params=_shear_nuisance(1),
         ia_model="NLA",
     )
-    assert isinstance(default_tracer.ia, NLAContribution)
-    assert isinstance(explicit_tracer.ia, NLAContribution)
+    assert default_tracer.ia is None
+    assert default_tracer.get_contributions() == (default_tracer.lensing,)
+    assert isinstance(nla_tracer.ia, NLAContribution)
     assert not needs_generalized_engine(
-        default_tracer.get_contributions(), default_tracer.get_contributions()
+        nla_tracer.get_contributions(), nla_tracer.get_contributions()
     )
 
 

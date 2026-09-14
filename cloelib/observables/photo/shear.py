@@ -7,9 +7,12 @@ which holds `PositionsTracer`.
 Everything needed to build and use a shear tracer - including its
 intrinsic-alignment options - lives in this one module:
 
-- `ShearTracer` itself.
-- `LensingContribution`, `NLAContribution` (the default IA model): the two
-  `Contribution`s a plain `ShearTracer` is built from.
+- `ShearTracer` itself. By default (`ia_model=None`) it has no
+  intrinsic-alignment contribution at all - only `LensingContribution`.
+  Pass `ia_model="NLA"` explicitly for `NLAContribution` (the nonlinear
+  alignment model), or `ia_model="TATT"` for `TATTContribution` below.
+- `LensingContribution`, `NLAContribution`: two of the `Contribution`s a
+  `ShearTracer` can be built from.
 - `TATTContribution` (Eqs. 9-16 of Navarro-Gironés et al. 2026,
   arXiv:2602.16448, "Euclid preparation. CIV. Impact of galaxy intrinsic
   alignment modelling choices on Euclid 3x2pt cosmology"): an alternative
@@ -83,11 +86,12 @@ class NLAContribution(IntrinsicAlignmentContribution):
     """NLA (nonlinear alignment model) intrinsic-alignment kernel term of
     `ShearTracer.get_window()`.
 
-    Implemented by `ShearTracer.get_window_IA` - the default
-    `ia_model="NLA"` on `ShearTracer`. `ia_model="TATT"` swaps in
-    `TATTContribution` here instead - a different intrinsic-alignment
-    model, hence the distinct name; `get_window()` and `AngularTwoPoint`
-    don't need to change either way.
+    Implemented by `ShearTracer.get_window_IA` - selected via
+    `ia_model="NLA"` on `ShearTracer` (the default, `ia_model=None`, has no
+    IA contribution at all). `ia_model="TATT"` swaps in `TATTContribution`
+    here instead - a different intrinsic-alignment model, hence the
+    distinct name; `get_window()` and `AngularTwoPoint` don't need to
+    change either way.
     """
 
     def __init__(self, tracer: "ShearTracer") -> None:
@@ -502,7 +506,7 @@ class ShearTracer:
         dndz: np.ndarray,
         z: np.ndarray,
         nuisance_params: dict,
-        ia_model: "str | Contribution" = "NLA",
+        ia_model: "str | Contribution | None" = None,
         tatt_loop_computer: Optional[object] = None,
     ):
         r"""
@@ -513,9 +517,10 @@ class ShearTracer:
           dndz (np.ndarray): A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
             It is expected to be normalised.
           z (np.ndarray): A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
-          ia_model (str | Contribution): Which intrinsic-alignment contribution to
-            use. `"NLA"` (default) reproduces the exact pre-existing behavior of
-            this class (`NLAContribution`/`get_window_IA`, reading
+          ia_model (str | Contribution | None): Which intrinsic-alignment
+            contribution to use. `None` (default) means no intrinsic-alignment
+            contribution at all - `get_window()`/`get_Cl` use only the lensing
+            term. `"NLA"` builds `NLAContribution` (`get_window_IA`, reading
             `nuisance_params["AIA"/"CIA"/"EtaIA"]`). `"TATT"` builds a
             `TATTContribution` from `nuisance_params["AIA"]` (=A1),
             `nuisance_params["A2IA"]`, `nuisance_params["bTA"]`, and optionally
@@ -565,20 +570,21 @@ class ShearTracer:
     def get_contributions(self):
         """Return this tracer's window as its separable Contribution terms.
 
-        Both currently delegate to `get_window_lensing`/`get_window_IA`, so
-        this is a no-op decomposition today - the seam a future TATT
-        contribution would occupy in place of `self.ia`.
-
         Returns:
-          contributions (tuple): `(self.lensing, self.ia)`.
+          contributions (tuple): `(self.lensing,)` if `ia_model=None` (the
+            default - no intrinsic-alignment contribution), otherwise
+            `(self.lensing, self.ia)`.
         """
+        if self.ia is None:
+            return (self.lensing,)
         return (self.lensing, self.ia)
 
     def _build_ia_contribution(self, ia_model, nuisance_params, tatt_loop_computer):
         """Resolve the `ia_model` constructor argument into a Contribution.
 
-        `"NLA"` (default) preserves the exact pre-existing behavior; `"TATT"`
-        builds a `TATTContribution`, which requires `tatt_loop_computer`
+        `None` (default) means no intrinsic-alignment contribution at all;
+        `"NLA"` builds `NLAContribution`; `"TATT"` builds a
+        `TATTContribution`, which requires `tatt_loop_computer`
         (no illustrative default - see `TATTContribution`'s docstring);
         anything else must already be a `Contribution` instance, used as-is.
         `tatt_loop_computer` is only meaningful for `"TATT"`.
@@ -588,6 +594,8 @@ class ShearTracer:
                 "tatt_loop_computer is only used when ia_model='TATT' "
                 f"(got ia_model={ia_model!r})."
             )
+        if ia_model is None:
+            return None
         if ia_model == "NLA":
             return NLAContribution(self)
         if ia_model == "TATT":

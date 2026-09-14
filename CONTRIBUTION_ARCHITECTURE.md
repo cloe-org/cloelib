@@ -101,19 +101,22 @@ uses for its `tracer_rules` type-pair dispatch.
 `needs_generalized_engine(contributions1, contributions2)`:
 
 ```python
-def get_Cl(self, ells, nl, ks) -> dict:
+def get_Cl_tensor(self, ells, nl, ks) -> jax.numpy.ndarray:
     if needs_generalized_engine(contributions1, contributions2):
-        C_ell_calc = self._compute_cl_generalized(...)
-    else:
-        C_ell_calc = self._compute_cl_legacy(...)  # original, untouched
-    return self._package_cl(C_ell_calc, ells)       # shared either way
+        return self._compute_cl_generalized(...)
+    return self._compute_cl_legacy(...)              # original, untouched
+
+def get_Cl(self, ells, nl, ks) -> dict:
+    C_ell_calc = self.get_Cl_tensor(ells, nl, ks)
+    return self._package_cl(C_ell_calc, ells)         # unchanged either way
 ```
 
 `_compute_cl_legacy` is the original `get_Cl` body: one shared Pk grid,
 tracer-level windows, the existing jitted `Cl_integration`/`Pkl_interp`
 kernels. It runs, unmodified, for every configuration that doesn't opt into
 a generalized-engine-aware contribution - which is `False` for any tracer
-built with today's defaults (`ia_model="NLA"`, linear galaxy bias). Only
+built with today's defaults (`ia_model=None` - no IA contribution - or
+`ia_model="NLA"`, plus linear galaxy bias). Only
 `ia_model="TATT"` (or a future non-linear-bias contribution) takes
 `_compute_cl_generalized`, which sums `Cl_integration(...)` over every
 `(c1, c2)` contribution pair, each against its own effective P(k,z)
@@ -129,6 +132,38 @@ its docstring: a real, steep, sign-changing kernel has no well-defined
 extrapolation law, unlike the smooth matter Pk `Pkl_interp` extrapolates).
 The original log-log `Pkl_interp` is untouched, still used by the legacy
 path.
+
+### 2.3 Differentiability: `get_Cl_tensor`
+
+`get_Cl`'s own return value - a `dict` of `cosmolib.data.photo.
+AngularPowerSpectrum` objects - can never be differentiated via
+`jax.grad`: that dataclass's `__post_init__` unconditionally does
+`np.asarray(self.array, dtype=float)`, a plain NumPy cast in an external
+package with no notion of JAX, which raises `TracerArrayConversionError`
+the moment a traced value reaches it. This is true regardless of whether
+the _physics_ itself is differentiable - and with `cloelib.cosmology.
+jax_cosmology` (`JAXBackground`/`JAXLinearPerturbations`/
+`JAXNonLinearPerturbations`, the one cosmology backend that's pure JAX
+end-to-end), it is: the Limber integral, window functions, growth-factor
+ODE solve, and halofit all differentiate cleanly, for both NLA and TATT's
+own amplitude parameters (confirmed against finite differences in
+`tests/test_get_cl_tensor.py` and `playground/tutorials/observables/
+photo_autodiff.ipynb`). TATT's one-loop kernels themselves are the one
+hard exception: `PBJTATTLoopComputer` calls FAST-PT (plain NumPy/SciPy),
+so gradients through cosmological parameters that would affect the
+kernels' _shape_ aren't available - only through TATT's own amplitude
+parameters, which multiply the (fixed) kernel values.
+
+`get_Cl_tensor(ells, nl, ks)` exposes the exact same computation `get_Cl`
+runs - literally the same `C_ell_calc` tensor - without the packaging step
+that breaks it, as a genuine public method (not a workaround via private
+methods). `get_Cl` itself is unchanged: it now calls `get_Cl_tensor`
+internally and packages the result, same as before. Fixing this at the
+root would mean either changing `cosmolib`'s dataclass (external,
+out of cloelib's control) or changing `get_Cl`'s return type for every
+existing caller - `get_Cl_tensor` sidesteps the problem instead of
+"fixing" it, which is why it exists as an addition rather than a change
+to `get_Cl`.
 
 ## 3. TATT
 
@@ -148,10 +183,10 @@ ShearTracer(perturbations, dndz, z, nuisance_params, ia_model="TATT")
 ```
 
 reading `nuisance_params["AIA"/"A2IA"/"bTA"]` (`=A1`/`A2`/`b_TA`) and
-optionally `["EtaIA"/"Eta2IA"/"z0IA"]`. `ia_model="NLA"` (the default)
-reproduces the pre-existing `NLAContribution` behavior
-exactly; passing a `Contribution` instance directly is also supported, for
-any other model.
+optionally `["EtaIA"/"Eta2IA"/"z0IA"]`. `ia_model=None` (the default) means
+no intrinsic-alignment contribution at all; `ia_model="NLA"` reproduces the
+pre-existing `NLAContribution` behavior exactly; passing a `Contribution`
+instance directly is also supported, for any other model.
 
 ### Kernel backend
 
@@ -259,13 +294,17 @@ from, rather than scattered across several top-level files.
 
 ## 5. Compatibility guarantees
 
-- `ShearTracer(perturbations, dndz, z, nuisance_params)`,
-  `PositionsTracer(perturbations, dndz, z, galaxy_bias_model,
+- `PositionsTracer(perturbations, dndz, z, galaxy_bias_model,
 nuisance_params, include_rsd=False)`, `CMBLensingTracer(perturbations, z)`
-  signatures are unchanged; `ia_model` is an additive, optional kwarg
-  defaulting to `"NLA"`, which reproduces today's exact numerics.
-  `tatt_loop_computer` is only meaningful (and required) with
-  `ia_model="TATT"`; passing it otherwise raises `ValueError`.
+  signatures are unchanged. `ShearTracer`'s `ia_model` kwarg is additive and
+  optional, but its default is **not** compatibility-preserving: `ia_model=
+  None` (the default) means no intrinsic-alignment contribution at all -
+  callers that want NLA (the historical, implicit behavior) must now pass
+  `ia_model="NLA"` explicitly. This was a deliberate choice: an implicit
+  default that silently ran a physics model was considered more surprising
+  than requiring it be named. `tatt_loop_computer` is only meaningful (and
+  required) with `ia_model="TATT"`; passing it otherwise raises
+  `ValueError`.
 - `AngularTwoPoint(tracer1, tracer2).get_Cl(ells, nl, ks)`'s return schema
   (`dict` keyed by `("POS"|"SHE"|"CMBL", ..., i, j)` →
   `AngularPowerSpectrum`) and its packaging logic (`_package_cl`,

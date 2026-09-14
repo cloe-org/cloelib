@@ -65,6 +65,7 @@ def tracers():
             "CIA": 0.0134,
             "EtaIA": -0.41,
         },
+        ia_model="NLA",
     )
     pos_tracer = PositionsTracer(
         perturbations=perturbations,

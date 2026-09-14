@@ -1025,7 +1025,7 @@ def romb(function, a, b, args=(), divmax=6, return_error=False):
     tplquad : Triple integrals.
     romb : Integrators for sampled data.
     simps : Integrators for sampled data.
-    cumtrapz : Cumulative integration for sampled data.
+    cumulative_trapezoid : Cumulative integration for sampled data.
     ode : ODE integrator.
     odeint : ODE integrator.
     References

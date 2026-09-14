@@ -70,6 +70,7 @@ jax_cache/
 # Data and binaries
 */data/*
 *.dat
+!tests/validation_data/*.dat
 *.fits
 %.hdf5
 *.h5

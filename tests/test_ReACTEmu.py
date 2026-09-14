@@ -6,32 +6,9 @@ from cloelib.cosmology.ReACTEmu_cosmology import (
     BoostedPerturbations,
 )
 
-import urllib.request
-import zipfile
 from pathlib import Path
 
-
-# -------------------------------
-# Download utility
-# -------------------------------
-
-VALIDATION_URL = "https://drive.google.com/uc?id=16IftTSG1g7bVGhaajWJPSAln06XVOijI"
-
-
-def ensure_validation_data() -> Path:
-    """Download & extract validation_data.zip into the same directory as this test file."""
-    here = Path(__file__).parent
-    zip_path = here / "validation_data.zip"
-    extract_dir = here  # extract right here, so we get here/validation_data/...
-
-    if not (extract_dir / "validation_data").exists():
-        if not zip_path.exists():
-            print(f"Downloading validation dataset from {VALIDATION_URL} → {zip_path}")
-            urllib.request.urlretrieve(VALIDATION_URL, zip_path)
-        with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(extract_dir)
-
-    return extract_dir / "validation_data"
+VALIDATION_DATA = Path(__file__).parent / "validation_data"
 
 
 # -------------------------------
@@ -172,9 +149,7 @@ def test_boosted_scalar_input():
 def test_mg_boost_matches_validation(
     camb_background, camb_linear, model_name, mgparam, filename
 ):
-    # Get external data directory (download & unzip if needed)
-    data_dir = ensure_validation_data()
-    data_path = data_dir / filename
+    data_path = VALIDATION_DATA / filename
 
     linear_pert, zs = camb_linear
 

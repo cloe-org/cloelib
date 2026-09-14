@@ -10,6 +10,8 @@ import copy
 from typing import Optional, Union, Sequence
 import warnings
 
+import warnings
+
 # Cosmology imports
 try:
     from classy import Class  # type: ignore
@@ -36,6 +38,8 @@ class CLASSBackground:
         gamma_MG: float,
         N_mnu: int,
         N_ur: Optional[float] = None,
+        f_wdm: Optional[float] = None,
+        m_wdm: Optional[float] = None,
         alpha_s: float = 0.0,
         **kwargs,
     ) -> None:
@@ -58,6 +62,8 @@ class CLASSBackground:
             N_mnu (int): Number of massive neutrino species.
             N_ur (Optional[float]): Effective number of ultra-relativistic species.
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
+            f_wdm (Optional[float]): Fraction of warm dark matter with respect to the total amount of dark matter.
+            m_wdm (Optional[float]): Mass of the warm dark matter particle in eV.
         """
         self.H0 = H0
         self.h = self.H0 / 100
@@ -74,6 +80,18 @@ class CLASSBackground:
         self.N_mnu = N_mnu
         # We can set N_ur to a default value if not provided
         self._provided_N_ur = N_ur
+        self.f_wdm = f_wdm
+        self.m_wdm = m_wdm
+
+        if self.f_wdm is not None:
+
+            warnings.warn(
+                "Mixed cold warm dark matter is not compatible with massive neutrinos yet."
+                " N_mnu and mnu will be set to zero ignoring the user provided values."
+            )
+
+            self.N_mnu = 0
+            self.mnu = 0
 
         if np.sum(self.mnu) > 0 and self.N_mnu == 0:
             raise ValueError("If mnu is provided, N_mnu must be greater than 0.")
@@ -100,10 +118,30 @@ class CLASSBackground:
         # To avoid using a cosmological constant
         self.interface_args["CLASSparams"]["Omega_Lambda"] = 0.0
 
-        # Set neutrino parameters
-        if self.N_mnu > 0:
-            self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
-        self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
+        # Set warm dark matter parameters
+        if self.f_wdm is not None:
+
+            if self.m_wdm is None:
+                raise ValueError("If f_wdm is provided, m_wdm is also needed.")
+
+            if self.f_wdm >= 1:
+                raise ValueError("If provided, f_wdm must be < 1.")
+            if self.f_wdm < 0:
+                raise ValueError("If provided, f_wdm must be >= 0.")
+
+            self.interface_args["CLASSparams"]["N_ncdm"] = 1
+            self.interface_args["CLASSparams"]["m_ncdm"] = self.m_wdm
+
+            omega_wdm = self.f_wdm * self.Omega_cdm0 * (self.h) ** 2 / (1 - self.f_wdm)
+            self.interface_args["CLASSparams"]["omega_ncdm"] = omega_wdm
+            self.interface_args["CLASSparams"]["T_ncdm"] = (4/11)**(1/3)*(94.1*omega_wdm)**(1/3)*self.m_wdm**(-1/3)
+
+        else:
+            # Set neutrino parameters
+            if self.N_mnu > 0:
+                self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
+            self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
+
         self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
 
         # Initialize CLASS

@@ -6,7 +6,10 @@ Both classes are compatible with the Tracer protocol.
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.cosmology.Weyl_cosmology import Weyl_Perturbations
+from cloelib.cosmology.Weyl_cosmology import (
+    WeylNonLinearPerturbations,
+    WeylLinearPerturbations,
+)
 from cloelib.observables.photo import PositionsTracer, get_photo_rsd
 
 # General imports
@@ -24,7 +27,8 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
 
     def __init__(
         self,
-        perturbations: Weyl_Perturbations,  # Note: We require this to be an instance of Weyl_perturbations
+        perturbations: WeylNonLinearPerturbations
+        | WeylLinearPerturbations,  # Note: We require this to be an instance of WeylNonLinearPerturbations (WeylLinearPerturbations also permitted should only linear scales be used)
         dndz: np.ndarray,
         z: np.ndarray,
         nuisance_params: dict,
@@ -112,7 +116,8 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
 
     def __init__(
         self,
-        perturbations: Weyl_Perturbations,
+        perturbations: WeylNonLinearPerturbations
+        | WeylLinearPerturbations,  # Note: We require this to be an instance of WeylNonLinearPerturbations (WeylLinearPerturbations also permitted should only linear scales be used)
         dndz: np.ndarray,
         z: np.ndarray,
         nuisance_params: dict,

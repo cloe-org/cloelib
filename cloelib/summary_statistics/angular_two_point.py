@@ -433,23 +433,7 @@ class AngularTwoPoint:
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
         return Pkl
 
-    @profile_function
-    def get_Cl(self, ells, nl, ks) -> dict:
-        """
-        Compute the angular power spectrum Cl using Limber approximation.
-
-        Combines the window functions of the tracers, interpolated matter power
-        spectrum, Hubble parameter, and comoving distances to calculate the
-        two-point angular statistics.
-
-        Parameters:
-            ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
-            nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
-            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
-
-        Returns:
-            (jax.numpy.ndarray): Angular power spectrum Cl for the given multipoles.
-        """
+    def get_Cl_limber_vec(self, ells, nl, ks):
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
         dz = self.tracer1.z[1] - self.tracer1.z[0]
@@ -545,8 +529,27 @@ class AngularTwoPoint:
                 * dz
             )
 
-        # Apply prefactor as before
-        C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
+        return C_ell_calc * prefactor_cell[:, None, None]
+
+    @profile_function
+    def get_Cl(self, ells, nl, ks) -> dict:
+        """
+        Compute the angular power spectrum Cl using Limber approximation.
+
+        Combines the window functions of the tracers, interpolated matter power
+        spectrum, Hubble parameter, and comoving distances to calculate the
+        two-point angular statistics.
+
+        Parameters:
+            ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
+            nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): Angular power spectrum Cl for the given multipoles.
+        """
+
+        C_ell_calc = self.get_Cl_limber_vec(ells, nl, ks)
         self.C_ell_calc = C_ell_calc
 
         n_bin1 = self.tracer1.n_z_bins

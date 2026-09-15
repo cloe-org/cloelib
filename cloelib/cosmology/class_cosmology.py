@@ -80,16 +80,13 @@ class CLASSBackground:
         self.N_mnu = N_mnu
         # We can set N_ur to a default value if not provided
         self._provided_N_ur = N_ur
-        self.Omega_wdm0 = Omega_wdm0
-        self.m_wdm = m_wdm
-        self.T_wdm_over_T_gamma = T_wdm_over_T_gamma
 
         if np.sum(self.mnu) > 0 and self.N_mnu == 0:
             raise ValueError("If mnu is provided, N_mnu must be greater than 0.")
         if self.N_mnu > 0 and np.sum(self.mnu) == 0:
             raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
 
-        if self.Omega_wdm0 is not None and self.N_mnu > 0:
+        if Omega_wdm0 is not None and self.N_mnu > 0:
             raise ValueError(
                 "Warm dark matter is not compatible with massive neutrinos."
                 " Either set Omega_wdm0=None or N_mnu=0."
@@ -116,21 +113,21 @@ class CLASSBackground:
         self.interface_args["CLASSparams"]["Omega_Lambda"] = 0.0
 
         # Set warm dark matter parameters
-        if self.Omega_wdm0 is not None:
-            if self.m_wdm is None:
+        if Omega_wdm0 is not None:
+            if m_wdm is None:
                 raise ValueError("If Omega_wdm0 is provided, m_wdm is also needed.")
 
-            if self.T_wdm_over_T_gamma is None:
+            if T_wdm_over_T_gamma is None:
                 raise ValueError(
                     "If Omega_wdm0 is provided, T_wdm_over_T_gamma is also needed."
                 )
 
             self.interface_args["CLASSparams"]["N_ncdm"] = 1
-            self.interface_args["CLASSparams"]["m_ncdm"] = self.m_wdm
+            self.interface_args["CLASSparams"]["m_ncdm"] = m_wdm
 
-            omega_wdm = self.Omega_wdm0 * (self.h) ** 2
+            omega_wdm = Omega_wdm0 * (self.h) ** 2
             self.interface_args["CLASSparams"]["omega_ncdm"] = omega_wdm
-            self.interface_args["CLASSparams"]["T_ncdm"] = self.T_wdm_over_T_gamma
+            self.interface_args["CLASSparams"]["T_ncdm"] = T_wdm_over_T_gamma
 
         else:
             # Set neutrino parameters

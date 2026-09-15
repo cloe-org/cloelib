@@ -199,7 +199,7 @@ class CosmoPowerJAXw0waCDMPerturbations:
                 self.params["mnu"] = self.background.mnu
 
             for key in self.params.keys():
-                if np.product(self.params[key] - cp_bounds[key]) > 0:
+                if np.prod(self.params[key] - cp_bounds[key]) > 0:
                     raise ValueError(f"Parameter {key} out of emulator range.")
                 else:
                     self.params[key] = np.tile(self.params[key], len(redshifts))
@@ -412,7 +412,7 @@ class CosmoPowerJAXw0waCDMPerturbations:
                 self.params["mnu"] = self.background.mnu
 
             for key in self.params.keys():
-                if np.product(self.params[key] - cp_bounds[key]) > 0:
+                if np.prod(self.params[key] - cp_bounds[key]) > 0:
                     raise ValueError(f"Parameter {key} out of emulator range.")
                 else:
                     self.params[key] = np.tile(self.params[key], len(redshifts))
@@ -586,7 +586,7 @@ class CosmoPowerJAXw0waCDMPerturbations:
                 self.params["mnu"] = self.background.mnu
 
             for key in self.params.keys():
-                if np.product(self.params[key] - cp_bounds[key]) > 0:
+                if np.prod(self.params[key] - cp_bounds[key]) > 0:
                     raise ValueError(f"Parameter {key} out of emulator range.")
                 else:
                     self.params[key] = np.tile(self.params[key], len(redshifts))

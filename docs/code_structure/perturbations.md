@@ -260,23 +260,22 @@ P_mg = mg_pert.matter_power_spectrum(zs, k)
 
 Stay within these training ranges when sampling. Outside them, the implementation clips emulator inputs and applies its configured high-redshift policy, which is convenient for robustness but should not be treated as a new calibration region.
 
-### Weyl_Perturbations
+### WeylPerturbations
 
-Wrapper for Weyl-potential measurements that combines a linear perturbations object and a nonlinear perturbations object, then applies a nonlinear boost relative to a fixed initial redshift `z_ini`.
+Wrapper for Weyl-potential measurements that expects an existing linear perturbations object (and a nonlinear perturbations object for the WeylNonLinearPerturbations class), replacing the power spectra with those at `z_ini` (with a boost in the nonlinear case).
 
 **Location**: `cloelib/cosmology/Weyl_cosmology.py`
 
-**When to use**: You want a boosted matter power spectrum at a chosen initial redshift, applying a late-time non-linear boost to it; this is required when using the tracer classes in `cloelib/observables/photo_Weyl.py`.
+**When to use**: You want a matter power spectrum at a chosen initial redshift (applying a late-time non-linear boost to it); this is required when using the tracer classes in `cloelib/observables/photo_Weyl.py`.
 
 **Features**:
 
-- Wraps a linear and a nonlinear perturbations object
+- Wraps a linear perturbations object (and a nonlinear one for the WeylNonLinearPerturbations class)
 - Requires both objects to share the same `Background` instance
-- Checks that `z_ini` is within the nonlinear perturbation redshift coverage
-- Warns if the linear and nonlinear `k` grids differ
+- Checks that `z_ini` is within the linear perturbation redshift coverage
 - Returns boosted `matter_power_spectrum` and `matter_power_spectrum_cb` values using the ratio `P_nl / P_lin`
-- Delegates `growth_rate` to the wrapped nonlinear perturbations object
-- Exposes `sigma8_0()` from the wrapped nonlinear perturbations object
+- Delegates `growth_rate` to the wrapped linear (or nonlinear) perturbations object
+- Exposes `sigma8_0()` from the wrapped linear (or nonlinear) perturbations object
 
 ### TabulatedBoost / TabulatedBoostedPerturbations
 

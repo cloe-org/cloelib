@@ -8,6 +8,7 @@ from cloelib.observables.cmb import CMBLensingTracer
 from cloelib.observables.photo.spectrum_engine import (
     build_spectra_bank,
     get_effective_pk,
+    get_pk_terms,
     needs_generalized_engine,
 )
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
@@ -704,7 +705,12 @@ class AngularTwoPoint:
         physics separation `toy_cloelib.engine.compute_angular_power_
         spectrum` uses, reusing cloelib's own existing jitted Limber
         kernels (`Pkl_interp_vmap`, `Cl_integration`) unchanged for each
-        pair's integral.
+        pair's integral. A pair whose bias amplitudes vary per tomographic
+        bin (e.g. `NonLinearGalaxyBiasContribution`) instead declares
+        `get_pk_terms` - several additive `(kernel1, kernel2, pk)` triples
+        rather than one shared pair (see `spectrum_engine.PkTerm`'s
+        docstring); checked first, per `(c1, c2)`, before falling back to
+        `get_effective_pk`.
 
         Does not support RSD (`PositionsTracer(..., include_rsd=True)`)
         paired with a generalized-engine-requiring contribution - that
@@ -747,6 +753,21 @@ class AngularTwoPoint:
 
         for c1 in contributions1:
             for c2 in contributions2:
+                terms = get_pk_terms(c1, c2, zs_calc, bank)
+                if terms is not None:
+                    # Per-bin-varying amplitudes (e.g.
+                    # `NonLinearGalaxyBiasContribution`): several additive
+                    # (kernel1, kernel2, pk) triples instead of one shared
+                    # pair - see `PkTerm`'s docstring.
+                    for term in terms:
+                        Pkl_pair = Pkl_interp_signed_vmap(
+                            k_lz, zs_calc, ks, pert_zs, term.pk.T
+                        )
+                        C_ell_calc = C_ell_calc + Cl_integration(
+                            term.kernel1, term.kernel2, Pkl_pair, H, chi2, weights
+                        )
+                    continue
+
                 pk_eff = get_effective_pk(c1, c2, bank)
                 if pk_eff is None:
                     Pkl_pair = Pkl_interp_vmap(k_lz, zs_calc, ks, pert_zs, matter_pk.T)

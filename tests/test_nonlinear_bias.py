@@ -249,9 +249,7 @@ def test_pos_pos_matches_legacy_linear_bias_when_higher_order_zero(cosmo_setup):
         dndz=dndz,
         z=z,
         galaxy_bias_model="per_bin",
-        nuisance_params=_pos_nuisance(
-            n_z_bins, b1_photo_bin0=1.8, b1_photo_bin1=1.3
-        ),
+        nuisance_params=_pos_nuisance(n_z_bins, b1_photo_bin0=1.8, b1_photo_bin1=1.3),
     )
     nlbias_tracer = _nlbias_tracer(
         perturbations,
@@ -294,9 +292,7 @@ def test_pos_she_matches_legacy_linear_bias_when_higher_order_zero(cosmo_setup):
         dndz=dndz,
         z=z,
         galaxy_bias_model="per_bin",
-        nuisance_params=_pos_nuisance(
-            n_z_bins, b1_photo_bin0=1.8, b1_photo_bin1=1.3
-        ),
+        nuisance_params=_pos_nuisance(n_z_bins, b1_photo_bin0=1.8, b1_photo_bin1=1.3),
     )
     nlbias_tracer = _nlbias_tracer(
         perturbations,

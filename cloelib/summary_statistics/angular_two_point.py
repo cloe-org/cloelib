@@ -48,6 +48,32 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray:
 
 
 @jax.jit
+def Cl_integration_batched(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray:
+    """
+    Same as `Cl_integration`, batched (and summed) over an extra leading
+    "term" axis on `WT1`/`WT2`/`Pkl`.
+
+    Lets a caller with several *different* `(kernel1, kernel2, Pk)` triples
+    to sum into one Cl (e.g. `NonLinearGalaxyBiasContribution`'s several
+    `PkTerm`s per contribution pairing - see `spectrum_engine.PkTerm`)
+    fuse the whole sum into one `einsum` call instead of a Python loop over
+    `Cl_integration` - the sum over the term axis `t` falls out of
+    `einsum` for free (it appears in every input but not the output
+    subscripts, so it's contracted/summed exactly like `z` already is).
+
+    Parameters:
+        WT1, WT2 (jax.numpy.ndarray): shape `(n_terms, n_bin, len(z))`.
+        Pkl (jax.numpy.ndarray): shape `(n_terms, len(ells), len(z))`.
+        H, chi2, weights: as `Cl_integration`.
+
+    Returns:
+        (jax.numpy.ndarray): shape `(len(ells), n_bin1, n_bin2)`, summed
+          over the term axis.
+    """
+    return np.einsum("tiz,tjz,tlz,z,z,z->lij", WT1, WT2, Pkl, 1 / H, 1 / chi2, weights)
+
+
+@jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
     """
     Interpolate the matter power spectrum on a Limber grid.
@@ -145,6 +171,19 @@ def Pkl_interp_signed(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
 
 Pkl_interp_signed_vmap = jax.jit(
     jax.vmap(Pkl_interp_signed, in_axes=(0, None, None, None, None))
+)
+
+# Batches `Pkl_interp_signed_vmap` over an extra leading "term" axis on
+# `Pk` - lets `_compute_cl_generalized` interpolate every `PkTerm.pk` for
+# one contribution pairing (e.g. `NonLinearGalaxyBiasContribution`'s up to
+# thirteen terms per pairing - see `spectrum_engine.PkTerm`) in one batched
+# XLA call instead of one Python-level `Pkl_interp_signed_vmap` call per
+# term. Purely a performance change - each term's own interpolation is
+# identical either way (`vmap` batches independent per-term work, it
+# doesn't combine terms' `Pk`s before interpolating), so this changes no
+# numerics, only how many dispatches it takes.
+Pkl_interp_signed_vmap_terms = jax.jit(
+    jax.vmap(Pkl_interp_signed_vmap, in_axes=(None, None, None, None, 0))
 )
 
 
@@ -758,14 +797,22 @@ class AngularTwoPoint:
                     # Per-bin-varying amplitudes (e.g.
                     # `NonLinearGalaxyBiasContribution`): several additive
                     # (kernel1, kernel2, pk) triples instead of one shared
-                    # pair - see `PkTerm`'s docstring.
-                    for term in terms:
-                        Pkl_pair = Pkl_interp_signed_vmap(
-                            k_lz, zs_calc, ks, pert_zs, term.pk.T
-                        )
-                        C_ell_calc = C_ell_calc + Cl_integration(
-                            term.kernel1, term.kernel2, Pkl_pair, H, chi2, weights
-                        )
+                    # pair - see `PkTerm`'s docstring. Stacked and batched
+                    # (`Pkl_interp_signed_vmap_terms`/`Cl_integration_
+                    # batched`) into one interpolation call and one summed
+                    # einsum per pairing, rather than looping
+                    # `Pkl_interp_signed_vmap`/`Cl_integration` once per
+                    # term - a pure performance change (see those
+                    # functions' docstrings), not a numerical one.
+                    kernel1_stack = np.stack([t.kernel1 for t in terms])
+                    kernel2_stack = np.stack([t.kernel2 for t in terms])
+                    pk_stack = np.stack([t.pk.T for t in terms])
+                    Pkl_stack = Pkl_interp_signed_vmap_terms(
+                        k_lz, zs_calc, ks, pert_zs, pk_stack
+                    )
+                    C_ell_calc = C_ell_calc + Cl_integration_batched(
+                        kernel1_stack, kernel2_stack, Pkl_stack, H, chi2, weights
+                    )
                     continue
 
                 pk_eff = get_effective_pk(c1, c2, bank)

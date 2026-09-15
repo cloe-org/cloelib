@@ -440,6 +440,7 @@ class NonLinearGalaxyBiasContribution:
         self.b3nl = b3nl
         self.bk2 = bk2
         self._loop_computer = loop_computer
+        self._growth4_cache: tuple | None = None
 
     def _bias_kernel(self, bias_array, z):
         """Per-bin bias-weighted density kernel: `bias_i * n_i(z) * H(z)/c`."""
@@ -460,11 +461,28 @@ class NonLinearGalaxyBiasContribution:
         """`D(z)^4`, robust to backend-dependent `growth_factor` shape -
         same handling `shear.py`'s `_growth_factor_1d`/`TATTContribution.
         _D4` use, and for the same reason (see class docstring).
+
+        Cached by identity of `zs` (`bank.zs`/`perturbations.z` is the same
+        array object across every `_loop_pk` call within - and typically
+        across every `get_Cl` call on - one tracer). Found to matter a
+        great deal for at least the CAMB backend: `CAMBNonLinearPerturbations
+        .growth_factor` rebuilds a `scipy.interpolate.RectBivariateSpline`
+        from scratch on every call (profiled: ~55% of one `get_Cl` call's
+        total time was `growth_factor`, called once per `_loop_pk` call -
+        seven times per `get_pk_terms` call on a same-bin pairing - before
+        this cache existed), so recomputing it once per one-loop kernel
+        instead of once per `zs` array is a real, not just theoretical,
+        cost.
         """
+        cached = self._growth4_cache
+        if cached is not None and cached[0] is zs:
+            return cached[1]
         ks = getattr(self._tracer.perturbations, "k", None)
         d_raw = self._tracer.perturbations.growth_factor(zs, ks)
         d = d_raw[:, 1] if getattr(d_raw, "ndim", 1) == 2 else d_raw
-        return d**4
+        result = d**4
+        self._growth4_cache = (zs, result)
+        return result
 
     def get_spectrum_requests(self):
         return tuple(

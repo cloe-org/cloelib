@@ -62,13 +62,15 @@ def Cl_integration_batched(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray
     subscripts, so it's contracted/summed exactly like `z` already is).
 
     Parameters:
-        WT1, WT2 (jax.numpy.ndarray): shape `(n_terms, n_bin, len(z))`.
-        Pkl (jax.numpy.ndarray): shape `(n_terms, len(ells), len(z))`.
-        H, chi2, weights: as `Cl_integration`.
+        WT1 (jax.numpy.ndarray): Window function for the first tracer, shape (n_terms, n_bin1, len(z)).
+        WT2 (jax.numpy.ndarray): Window function for the second tracer, shape (n_terms, n_bin2, len(z)).
+        Pkl (jax.numpy.ndarray): Power spectrum interpolated on Limber grid, shape (n_terms, len(ells), len(z)).
+        H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
+        chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
+        weights (jax.numpy.ndarray): Array of weights used for the fixed nodes integration.
 
     Returns:
-        (jax.numpy.ndarray): shape `(len(ells), n_bin1, n_bin2)`, summed
-          over the term axis.
+        (jax.numpy.ndarray): Angular power spectrum Cl with shape (len(ells), n_bin1, n_bin2), summed over the term axis.
     """
     return np.einsum("tiz,tjz,tlz,z,z,z->lij", WT1, WT2, Pkl, 1 / H, 1 / chi2, weights)
 

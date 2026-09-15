@@ -178,9 +178,11 @@ class PkTerm:
     need for this and keep using `get_effective_pk`.
 
     Attributes:
-      kernel1, kernel2: window kernels for this term, shape `(n_bin1,
-        len(zs))` / `(n_bin2, len(zs))` - not necessarily either
-        contribution's own `compute_kernel(z)` output.
+      kernel1: window kernel for the first tracer, shape `(n_bin1, len(zs))` -
+        not necessarily this term's own contribution's `compute_kernel(z)`
+        output.
+      kernel2: window kernel for the second tracer, shape `(n_bin2, len(zs))` -
+        same caveat as `kernel1`.
       pk: the power spectrum this term should be integrated against,
         shape `(len(bank.zs), len(bank.ks))` - as `get_effective_pk`
         returns, but scoped to just this one additive term.

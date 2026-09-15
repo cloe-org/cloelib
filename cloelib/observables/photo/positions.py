@@ -418,20 +418,21 @@ class NonLinearGalaxyBiasContribution:
         this for you), or any other object with the same interface. No
         default - like `TATTContribution`, this only ever reports kernel
         values it can stand behind as real physics.
-      b2, bs2, b3nl, bk2: quadratic, tidal (`s^2`), third-order non-local,
-        and non-local/counterterm biases respectively, each shape
-        `(n_z_bins,)`.
+      b2: quadratic bias, shape `(n_z_bins,)`.
+      bs2: tidal (`s^2`) bias, shape `(n_z_bins,)`.
+      b3nl: third-order non-local bias, shape `(n_z_bins,)`.
+      bk2: non-local/counterterm bias, shape `(n_z_bins,)`.
     """
 
     def __init__(
         self,
         tracer: "PositionsTracer",
-        b1,
+        b1: np.ndarray,
         loop_computer: object,
-        b2,
-        bs2,
-        b3nl,
-        bk2,
+        b2: np.ndarray,
+        bs2: np.ndarray,
+        b3nl: np.ndarray,
+        bk2: np.ndarray,
     ) -> None:
         self._tracer = tracer
         self.b1 = b1

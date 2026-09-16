@@ -121,8 +121,13 @@ class NDGPemuNonLinearPerturbations:
 
         # Build interpolation for power spectrum boost.
         self.boost_interp = interpolate.RectBivariateSpline(
-            self.z, np.log(self.k), pk_boost_extended
+            self.z, np.log(self.k), pk_boost_extended, kx=1, ky=1
         )
+
+        # outputed k is different from k_out above to improve k sampling when
+        # later using the interpolator above for the C_ell calculation.
+        # This may be changed if C_ell calculation is modified.
+        self.k = linearperturbations.k
 
     @property
     def background(self) -> Background:

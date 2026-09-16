@@ -227,8 +227,15 @@ class WeylNonLinearPerturbations:
         k = np.array(
             [0.1]
         )  # roughly corresponds to the scales probed by sigma8; exact k value does not matter as we're using the linear perturbation function
-        D_zini = self.linearperturbations.growth_factor(np.array([self.z_ini]), k)[
-            0, 0
-        ]  # this is already normalized to 1 at z=0
+        D_zini = np.squeeze(
+            self.linearperturbations.growth_factor(np.array([self.z_ini]), k)
+        )  # this is already normalized to 1 at z=0
         sigma8_zini = self.sigma8_0() * D_zini
         return sigma8_zini
+
+    def growth_since_zini(self, z) -> np.ndarray:
+        """New function to account for the growth (in GR) since z_ini"""
+        growth = np.squeeze(self.growth_factor(z, self.k[:1])) / np.squeeze(
+            self.growth_factor(np.array([self.z_ini]), self.k[:1])
+        )
+        return growth

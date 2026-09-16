@@ -56,16 +56,6 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
         )
         self.bias_array = np.pad(bias_vals, (0, self.z.shape[0] - self.n_z_bins))
 
-    def growth_since_zini(self, z) -> np.ndarray:
-        """New function to account for the growth (in GR) since z_ini"""
-        growth = (
-            self.perturbations.growth_factor(z, self.perturbations.k[:1])[:, 0]
-            / self.perturbations.growth_factor(
-                np.array([self.z_ini]), self.perturbations.k[:1]
-            )[0, 0]
-        )
-        return growth
-
     def get_window_positions(self, z) -> np.ndarray:
         """Weyl GC positions window: uses bhat and divides by sigma8_ini (single power)."""
 
@@ -84,13 +74,13 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
     def get_window_rsd(self, ells, H, f, chi) -> np.ndarray:
         """Weyl GC RSD window: multiply by growth_factor (normalized to z_ini) once."""
         # S_i(z) = H(z) f(z) n_i(z) / c
-        growth_factor = self.growth_since_zini(self.z)
+        growth_factor = self.perturbations.growth_since_zini(self.z)
         S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted * growth_factor
         return get_photo_rsd(ells, chi, S)
 
     def get_window_magnification(self, z):
         """Weyl GC magnification: multiply by growth_factor (normalized to z_ini) once."""
-        growth_factor = self.growth_since_zini(z)
+        growth_factor = self.perturbations.growth_since_zini(z)
 
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (
@@ -156,16 +146,6 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         )
         self.Jhat_array = np.pad(jhat_vals, (0, self.z.shape[0] - self.n_z_bins))
 
-    def growth_since_zini(self, z) -> np.ndarray:
-        """New function to account for the growth (in GR) since z_ini"""
-        growth = (
-            self.perturbations.growth_factor(z, self.perturbations.k[:1])[:, 0]
-            / self.perturbations.growth_factor(
-                np.array([self.z_ini]), self.perturbations.k[:1]
-            )[0, 0]
-        )
-        return growth
-
     def get_window_positions(self, z) -> np.ndarray:
         """Weyl-modified positions window: multiplies by Jhat and by bhat; removes Omega_m^{-1}(z) factor;
         divides by sigma8_ini^2."""
@@ -187,14 +167,14 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
     def get_window_rsd(self, ells, H, f, chi) -> np.ndarray:
         """Weyl GC RSD window: multiply by growth_factor (normalized to z_ini) once."""
         # S_i(z) = H(z) f(z) n_i(z) / c
-        growth_factor = self.growth_since_zini(self.z)
+        growth_factor = self.perturbations.growth_since_zini(self.z)
         S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted * growth_factor**2
         return get_photo_rsd(ells, chi, S)
 
     def get_window_magnification(self, z):
         """Override magnification window: include growth factor squared (Weyl-specific)."""
         # Weyl project: added growth factor normalized to its value at z_ini
-        growth_factor = self.growth_since_zini(z)
+        growth_factor = self.perturbations.growth_since_zini(z)
 
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (

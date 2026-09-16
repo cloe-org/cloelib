@@ -85,7 +85,7 @@ class NDGPemuNonLinearPerturbations:
         # Get default wavenumber bins from the emulator (h/Mpc -> 1/Mpc).
         k_emu = self.ndgpemu.k_vals * self.params_emu["h"]
 
-        # Let the emulator do it's own extrapolation to low-k values.
+        # Let the emulator do it's own extrapolation to low-k values (constant).
         k_min = 0.0001
         k_emu = np.concatenate(
             [np.linspace(k_min, k_emu[0], 100, endpoint=False), k_emu]
@@ -95,7 +95,7 @@ class NDGPemuNonLinearPerturbations:
         # Loop over redshifts, with a call to the emulator each time.
         pk_boost_emu = np.zeros((len(z_emu), len(k_emu)))
         for i,z_val in enumerate(z_emu):
-            pk_boost_emu[i,:] = self.ndgpemu.predict(H0rc, z_val, self.params_emu, k_out=k_emu / self.params_emu["h"], ext=0)
+            pk_boost_emu[i,:] = self.ndgpemu.predict(H0rc, z_val, self.params_emu, k_out=k_emu / self.params_emu["h"], ext=3)
 
         # Extrapolate emulator prediction in wavenumber and redshift.
         k_extended, z_extended, pk_boost_extended = extend_spectra(

@@ -56,7 +56,7 @@ class NDGPemuNonLinearPerturbations:
             "Ob": [0.04, 0.06],
             "ns": [0.92, 1],
             "As": [1.7e-9, 2.5e-9],
-            "h": [0.61, 0.73]
+            "h": [0.61, 0.73],
         }
 
         # Build parameter dict. of standard parameters for the emulator.
@@ -71,10 +71,14 @@ class NDGPemuNonLinearPerturbations:
         # If activated, constant extrapolation in cosmological parameters (not omega_rc).
         if extrapolate_cosmo:
             for param in self.params_emu:
-                self.params_emu[param] = np.clip(self.params_emu[param], a_min=param_ranges[param][0], a_max=param_ranges[param][1])
+                self.params_emu[param] = np.clip(
+                    self.params_emu[param],
+                    a_min=param_ranges[param][0],
+                    a_max=param_ranges[param][1],
+                )
 
         # nDGP parameter for the emulator.
-        H0rc = (1 / 4 / omega_rc)**(1/2)
+        H0rc = (1 / 4 / omega_rc) ** (1 / 2)
 
         # Maximum redshift of the emulator.
         z_max = 2
@@ -94,8 +98,10 @@ class NDGPemuNonLinearPerturbations:
         # Get boost from nDGPemu.
         # Loop over redshifts, with a call to the emulator each time.
         pk_boost_emu = np.zeros((len(z_emu), len(k_emu)))
-        for i,z_val in enumerate(z_emu):
-            pk_boost_emu[i,:] = self.ndgpemu.predict(H0rc, z_val, self.params_emu, k_out=k_emu / self.params_emu["h"], ext=3)
+        for i, z_val in enumerate(z_emu):
+            pk_boost_emu[i, :] = self.ndgpemu.predict(
+                H0rc, z_val, self.params_emu, k_out=k_emu / self.params_emu["h"], ext=3
+            )
 
         # Extrapolate emulator prediction in wavenumber and redshift.
         k_extended, z_extended, pk_boost_extended = extend_spectra(

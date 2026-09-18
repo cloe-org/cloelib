@@ -88,7 +88,19 @@ class _StubTATTLoopComputer:
     tests that don't need `fast-pt` installed - not part of the public API,
     and not a claim of physical accuracy. Real kernels come from
     `PBJTATTLoopComputer` (see the `_FASTPT_INSTALLED`-gated tests below).
+
+    `linear_perturbations` is required because `TATTContribution._C1`/
+    `_C2`/`_D4` read growth off `self._loop_computer.linear_perturbations`
+    (matching what the real `PBJTATTLoopComputer` exposes), not off the
+    tracer's own `perturbations`. Tests here pass the *same* `perturbations`
+    object the tracer itself uses (from `cosmo_setup`) - not a separately
+    "correct" linear one - so that growth is computed identically on both
+    sides of the NLA-equivalence checks below; this is an architecture
+    stub, not a claim that `cosmo_setup`'s perturbations are linear.
     """
+
+    def __init__(self, linear_perturbations):
+        self.linear_perturbations = linear_perturbations
 
     def compute(self, name):
         del name  # same kernel shape regardless of which one is requested
@@ -149,7 +161,7 @@ def test_ia_model_tatt_builds_tatt_contribution(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(1, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
     assert isinstance(tracer.ia, TATTContribution)
     assert isinstance(tracer.ia, IntrinsicAlignmentContribution)
@@ -188,7 +200,7 @@ def test_requirements_pruned_for_gi_vs_ii(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(1, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
     tatt = tracer.ia
     lensing = tracer.lensing
@@ -220,7 +232,7 @@ def test_tatt_reduces_to_nla_form_when_a2_and_bta_zero(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(1, A2IA=0.0, bTA=0.0),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
     tatt = tracer.ia
 
@@ -258,7 +270,7 @@ def test_generalized_cl_finite_and_correctly_shaped(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
     pos_tracer = PositionsTracer(
         perturbations=perturbations,
@@ -334,7 +346,7 @@ def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.0),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
 
     cl_nla = AngularTwoPoint(nla_tracer, nla_tracer).get_Cl(ells, 0, ks)
@@ -359,7 +371,7 @@ def test_rsd_with_generalized_engine_raises_not_implemented(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
     pos_tracer = PositionsTracer(
         perturbations=perturbations,

@@ -279,17 +279,32 @@ class PBJTATTLoopComputer:
         return _compute
 
 
-def _growth_factor_1d(perturbations, z):
+def _growth_factor_1d(perturbations, z, k_pivot_hmpc: float = 0.03):
     """D(z) as a 1D array, robust to backend-dependent `growth_factor` shape.
 
     Same handling `ShearTracer.get_window_IA` uses: some
     backends (e.g. CAMB) return D(z, k) with an explicit k-axis; others
     (the JAX backends) ignore `ks` and return a scale-independent D(z), and
     don't set a `.k` attribute at all.
+
+    When a k-axis is present, picks the tabulated k closest to a fixed
+    physical pivot scale (`k_pivot_hmpc`, in h/Mpc, converted to the
+    backend's own Mpc^-1 units via `background.h`) rather than a fixed
+    grid index - growth is mildly scale-dependent once neutrinos are
+    massive, and a fixed grid index (e.g. "index 1") silently drifts to a
+    different physical k, and hence a slightly different D(z), if the
+    tabulated k-grid's resolution or minimum changes. Matches CosmoSIS's
+    own growth-pivot convention in tatt_interface.py (its `k_h > 0.03`
+    cut), which otherwise disagrees with this one at the ~0.1% level for
+    m_nu > 0.
     """
     ks = getattr(perturbations, "k", None)
     d_raw = perturbations.growth_factor(z, ks)
-    return d_raw[:, 1] if getattr(d_raw, "ndim", 1) == 2 else d_raw
+    if getattr(d_raw, "ndim", 1) != 2:
+        return d_raw
+    k_pivot = k_pivot_hmpc * perturbations.background.h
+    pivot_idx = int(_numpy.argmin(_numpy.abs(_numpy.asarray(ks) - k_pivot)))
+    return d_raw[:, pivot_idx]
 
 
 class TATTContribution(IntrinsicAlignmentContribution):
@@ -389,7 +404,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
 
     def _C1(self, zs):
         omega_m0 = self._tracer.background.Omega_m(0.0)
-        d = _growth_factor_1d(self._tracer.perturbations, zs)
+        d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
         return (
             -self.A1
             * self.C_IA
@@ -400,7 +415,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
 
     def _C2(self, zs):
         omega_m0 = self._tracer.background.Omega_m(0.0)
-        d = _growth_factor_1d(self._tracer.perturbations, zs)
+        d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
         return (
             5
             * self.A2
@@ -414,7 +429,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
         return self.b_TA * self._C1(zs)
 
     def _D4(self, zs):
-        return _growth_factor_1d(self._tracer.perturbations, zs) ** 4
+        return _growth_factor_1d(self._loop_computer.linear_perturbations, zs) ** 4
 
     def get_spectrum_requests(self):
         return tuple(

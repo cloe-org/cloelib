@@ -688,7 +688,7 @@ class AngularTwoPoint:
                 arr = np.zeros((2, mixing_matrix[("POS", "SHE", a, b)].ell.shape[0]))
                 for idx in [0, 1]:
                     arr = arr.at[idx].set(
-                        mixing_matrix[("POS", "SHE", a, b)]
+                        mixing_matrix[("POS", "SHE", a, b)].array
                         @ C_ell_calc[("POS", "SHE", a, b)].array[idx]
                     )
                 C_ell_out[("POS", "SHE", a, b)] = arr

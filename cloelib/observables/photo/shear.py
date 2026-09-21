@@ -119,6 +119,29 @@ _GI_KERNELS = ("tatt_A_0_0E", "tatt_C_0_0E", "tatt_A_0_E2", "tatt_B_0_E2")
 _ALL_KERNELS = _EE_ONLY_KERNELS + _SHARED_KERNELS + _BB_ONLY_KERNELS
 
 
+def _is_known_linear_perturbations(perturbations) -> bool:
+    """Whether `perturbations` is itself one of cloelib's own linear-only
+    backends (`HMemuLinearPerturbations`, `CAMBLinearPerturbations`, ...).
+
+    Identified by cloelib's own `*LinearPerturbations` naming convention
+    (consistently followed across every cosmology backend module) rather
+    than an `isinstance` check against every concrete class: several
+    backends (CAMB, CLASS, BACCOemu, MGCLASS, mochi_class, hi_class, ...)
+    are optional dependencies, so importing all of them here just to check
+    would make this module require every optional extra. Used only as the
+    fallback when `perturbations` has no `.linearperturbations` attribute
+    of its own - see `PBJTATTLoopComputer.__init__`.
+
+    Deliberately not a plain `.endswith("LinearPerturbations")`: a
+    `*NonLinearPerturbations` class name (e.g. `CAMBNonLinearPerturbations`)
+    also ends with that suffix (`"NonLinearPerturbations"` itself ends with
+    `"LinearPerturbations"`) - excluding any name containing `"NonLinear"`
+    is what actually distinguishes the two conventions.
+    """
+    name = type(perturbations).__name__
+    return name.endswith("LinearPerturbations") and "NonLinear" not in name
+
+
 class PBJTATTLoopComputer:
     r"""FAST-PT-backed computer for the ten TATT one-loop kernels.
 
@@ -142,16 +165,25 @@ class PBJTATTLoopComputer:
     that's built *from* a separate linear one sets it -
     `HMemuNonLinearPerturbations`, `EE2NonLinearPerturbations`,
     `BACCOemuNonLinearPerturbations`, `EmantisFofrNonLinearPerturbations`,
-    `JAXNonLinearPerturbations`), else `perturbations` itself (assumed
-    already linear - true if you pass a `*LinearPerturbations` object
-    directly). No separate linear-perturbations variable to track and pass
-    alongside the tracer's own `perturbations`.
+    `JAXNonLinearPerturbations`), else `perturbations` itself *if and only
+    if* it's itself a recognized `*LinearPerturbations` backend (see
+    `_is_known_linear_perturbations`) - raises `ValueError` otherwise (PR
+    #569 review): the absence of a `.linearperturbations` attribute does
+    not by itself mean the object passed in *is* linear, and silently
+    treating an unrecognized nonlinear backend as linear would be a
+    physical error, not a numerical one (FAST-PT would still return
+    finite-looking, wrong spectra) - the kind that shouldn't fail silently.
+    `CAMBNonLinearPerturbations` is the concrete case this currently
+    excludes: it does not set `.linearperturbations` (its own
+    `matter_power_spectrum` is always nonlinear), so it now raises here
+    instead of being misused - pass `CAMBLinearPerturbations` directly
+    instead.
 
-    Known gap: `CAMBNonLinearPerturbations` does not (yet) set
-    `.linearperturbations`, and its own `matter_power_spectrum` is always
-    nonlinear - passing one here silently uses the *nonlinear* Pk as
-    FAST-PT input instead of raising, which is physically wrong. Not
-    fixed here; flagged rather than guessed at.
+    TODO (PR #569 review): standardize access to the corresponding linear
+    perturbations object across nonlinear cosmology backends (e.g. also
+    wiring it up for `CAMBNonLinearPerturbations`), so PT-based observables
+    can retrieve a linear P(k,z) through one common interface instead of
+    this getattr-plus-name-check fallback.
 
     FAST-PT requires its input k-grid to be evenly log-spaced (an FFTLog
     requirement); `TATTContribution`'s own `ks` (whatever grid the calling
@@ -191,10 +223,25 @@ class PBJTATTLoopComputer:
             )
         self._fpt = fpt
         # See class docstring: use the nonlinear backend's own linear
-        # source if it has one, else assume `perturbations` is linear.
-        self.linear_perturbations = getattr(
-            perturbations, "linearperturbations", perturbations
-        )
+        # source if it has one; else, only accept `perturbations` itself if
+        # it's a recognized linear backend - fail loudly otherwise rather
+        # than silently treating an unrecognized object as linear.
+        linear = getattr(perturbations, "linearperturbations", None)
+        if linear is not None:
+            self.linear_perturbations = linear
+        elif _is_known_linear_perturbations(perturbations):
+            self.linear_perturbations = perturbations
+        else:
+            raise ValueError(
+                "PBJTATTLoopComputer requires a linear matter-power-"
+                f"spectrum source, but {type(perturbations).__name__!r} "
+                "exposes no `.linearperturbations` attribute and isn't "
+                "itself a recognized *LinearPerturbations backend. Pass a "
+                "linear perturbations object directly (e.g. "
+                "CAMBLinearPerturbations), or a nonlinear backend that "
+                "sets `.linearperturbations` (e.g. "
+                "HMemuNonLinearPerturbations)."
+            )
         self._cached_ks: Optional[_numpy.ndarray] = None
         self._cached_kernels: Optional[Dict[str, _numpy.ndarray]] = None
 

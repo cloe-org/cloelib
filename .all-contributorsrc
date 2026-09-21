@@ -669,6 +669,16 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "lshuns",
+      "name": "Shun-Sheng Li",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41175095?v=4",
+      "profile": "https://lshuns.github.io/",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ]
 }

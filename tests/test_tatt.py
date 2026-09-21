@@ -328,9 +328,7 @@ def test_multiplicative_shear_bias_applied_in_generalized_path(cosmo_setup):
             perturbations=perturbations,
             dndz=dndz,
             z=z,
-            nuisance_params=_shear_nuisance(
-                n_z_bins, A2IA=0.4, bTA=-0.83, **m_kwargs
-            ),
+            nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.4, bTA=-0.83, **m_kwargs),
             ia_model="TATT",
             tatt_loop_computer=_StubTATTLoopComputer(perturbations),
         )
@@ -356,9 +354,7 @@ def test_multiplicative_shear_bias_applied_in_generalized_path(cosmo_setup):
         ells, 0, ks
     )
     cl_she_she_biased = AngularTwoPoint(she_biased, she_biased).get_Cl(ells, 0, ks)
-    cl_pos_she_unbiased = AngularTwoPoint(pos_tracer, she_unbiased).get_Cl(
-        ells, 0, ks
-    )
+    cl_pos_she_unbiased = AngularTwoPoint(pos_tracer, she_unbiased).get_Cl(ells, 0, ks)
     cl_pos_she_biased = AngularTwoPoint(pos_tracer, she_biased).get_Cl(ells, 0, ks)
 
     for i in (1, 2):

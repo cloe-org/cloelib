@@ -55,7 +55,11 @@ from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
     Contribution,
 )
-from cloelib.observables.photo.spectrum_engine import SpectraBank, SpectrumRequest
+from cloelib.observables.photo.spectrum_engine import (
+    SpectraBank,
+    SpectrumRequest,
+    compute_effective_pk,
+)
 
 # General imports
 import jax.numpy as np  # type: ignore
@@ -640,6 +644,49 @@ class ShearTracer:
         if self.ia is None:
             return (self.lensing,)
         return (self.lensing, self.ia)
+
+    def get_ia_effective_spectra(self, ks=None, zs=None) -> Dict[str, "np.ndarray"]:
+        """The IA model's own effective power spectra - `P_II(k,z)` and
+        `P_deltaI(k,z)` - the same grids `AngularTwoPoint._compute_cl_
+        generalized` integrates internally, exposed directly for
+        inspection/plotting/validation (e.g. against an external code's own
+        tabulated TATT spectra) without building a `SpectraBank` by hand.
+
+        Only meaningful for an IA model that defines its own effective
+        spectra (currently `TATTContribution`) - raises `ValueError` for
+        `ia_model=None` (no IA contribution) or `ia_model="NLA"` (whose
+        P_II/P_deltaI share the matter Pk's k-shape by construction: the
+        amplitude is applied directly inside `get_window_IA`, not exposed
+        as a separate grid).
+
+        Args:
+          ks: wavenumber grid to evaluate on. Defaults to
+            `self.perturbations.k`.
+          zs: redshift grid to evaluate on. Defaults to
+            `self.perturbations.z`.
+
+        Returns:
+          dict: `{"II": P_II(k,z), "deltaI": P_deltaI(k,z)}`, each shape
+            `(len(zs), len(ks))`.
+        """
+        if self.ia is None or getattr(self.ia, "get_effective_pk", None) is None:
+            ia_name = type(self.ia).__name__ if self.ia is not None else None
+            raise ValueError(
+                "get_ia_effective_spectra() needs an IA model that defines "
+                "its own effective power spectra (currently ia_model="
+                f"'TATT'); this tracer's ia is {ia_name!r}, which has no "
+                "separate P_II/P_deltaI - either no IA contribution at "
+                "all, or NLA, whose IA amplitude is applied directly "
+                "inside get_window_IA rather than as a separate "
+                "effective-Pk grid."
+            )
+        ks = self.perturbations.k if ks is None else ks
+        zs = self.perturbations.z if zs is None else zs
+        matter_pk = self.perturbations.matter_power_spectrum(zs, ks)
+        return {
+            "II": compute_effective_pk(self.ia, self.ia, matter_pk, ks, zs),
+            "deltaI": compute_effective_pk(self.ia, self.lensing, matter_pk, ks, zs),
+        }
 
     def _build_ia_contribution(self, ia_model, nuisance_params, tatt_loop_computer):
         """Resolve the `ia_model` constructor argument into a Contribution.

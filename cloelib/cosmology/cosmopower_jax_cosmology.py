@@ -54,10 +54,15 @@ def emulator_data(filename: str, zenodo_url: str = None) -> str:
     if zenodo_url is None:
         zenodo_url = ZENODO_URL
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DATA_DIR = os.path.join(BASE_DIR, "emulator-data-jax")
-    os.makedirs(DATA_DIR, exist_ok=True)
-    file_path = os.path.join(DATA_DIR, filename)
+    cache_dir = os.environ.get("CLOELIB_CACHE_DIR")
+    if not cache_dir:
+        cache_dir = os.path.join(
+            os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"),
+            "cloelib",
+        )
+    data_dir = os.path.join(cache_dir, "cosmopower-jax")
+    os.makedirs(data_dir, exist_ok=True)
+    file_path = os.path.join(data_dir, filename)
 
     if not os.path.exists(file_path):
         url = f"{zenodo_url}/{filename}"

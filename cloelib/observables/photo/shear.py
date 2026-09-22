@@ -645,7 +645,11 @@ class ShearTracer:
             return (self.lensing,)
         return (self.lensing, self.ia)
 
-    def get_ia_effective_spectra(self, ks=None, zs=None) -> Dict[str, "np.ndarray"]:
+    def get_ia_effective_spectra(
+        self,
+        ks: Optional[np.ndarray] = None,
+        zs: Optional[np.ndarray] = None,
+    ) -> Dict[str, np.ndarray]:
         """The IA model's own effective power spectra - `P_II(k,z)` and
         `P_deltaI(k,z)` - the same grids `AngularTwoPoint._compute_cl_
         generalized` integrates internally, exposed directly for

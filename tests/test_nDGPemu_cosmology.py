@@ -96,7 +96,7 @@ def test_mg_boost_cloelib_vs_external(
         linearperturbations=camb_linearperturbations_instance,
         nonlinearperturbations_lcdm=camb_nonlinearperturbations_instance,
         redshifts=zs,
-        omega_rc=omega_rc
+        omega_rc=omega_rc,
     )
 
     # Init. nDGP emulator.
@@ -112,10 +112,14 @@ def test_mg_boost_cloelib_vs_external(
 
     # Compute nDGPemu boost by calling the emulator directly (k in units of h/Mpc).
     boost_ext = np.zeros((zs.shape[0], ks.shape[0]))
-    for i,zi in enumerate(zs):
-        boost_ext[i,:] = ndpgemu_ext.predict(
-        (1 / 4 / omega_rc)**(1/2), zi, ndgpemu_ext_params, k_out=ks/camb_background_instance.h, ext=3
-    )
+    for i, zi in enumerate(zs):
+        boost_ext[i, :] = ndpgemu_ext.predict(
+            (1 / 4 / omega_rc) ** (1 / 2),
+            zi,
+            ndgpemu_ext_params,
+            k_out=ks / camb_background_instance.h,
+            ext=3,
+        )
     np.min(boost_ext)
 
     # Compute nDGP power spectrum.

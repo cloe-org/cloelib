@@ -1,14 +1,14 @@
-# Gravitational-Wave Observables (Tracer Protocol)
+# Gravitational-Wave Observables
 
-Gravitational-wave (GW) observables use the shared
-`cloelib.observables.tracer.Tracer` interface, but are implemented separately
-from the photometric tracers in `cloelib/observables/gw.py`.
+Gravitational-wave (GW) observables provide the same `get_window(z)` interface
+used by `AngularTwoPoint` for other projected observables. They are implemented
+in `cloelib/observables/gw.py`.
 
 Both GW tracers require a non-zero redshift grid and a normalized source
 distribution with shape `(n_bins, n_z)`. The last dimension of `dndz` must
-match `z`; the weak-lensing integration also assumes that this grid is evenly
-sampled. Redshift-distribution nuisance parameters are one-based (`dz_gw_1`,
-`width_gw_1`, and so on).
+match `z`, and the grid must be evenly sampled. Redshift-distribution nuisance
+parameters are one-based (`dz_gw_1`, `width_gw_1`, and so on) and are required
+for every bin.
 
 ## GWNumberCountsTracer
 
@@ -29,7 +29,8 @@ The available `gw_bias_model` values are:
 - `poly`: a cubic bias in redshift, with coefficients `b1_GW_poly0` through
   `b1_GW_poly3`.
 
-Missing bias parameters default to `1.0`.
+Missing bias parameters default to `1.0`. This differs from the redshift-shift
+and width parameters, which must be supplied for every bin.
 
 ```python
 from cloelib.observables.gw import GWNumberCountsTracer
@@ -102,6 +103,6 @@ keys.
 ## Next Steps
 
 - [Gravitational-Wave Summary Statistics](../summary_statistics/gw.md) – Compute angular power spectra
-- [Photometric Observables](photo.md) – Review the other Tracer implementations
+- [Photometric Observables](photo.md) – Review the other projected observables
 - [API Reference](../../api.md) – Full class and method details
 - [Back to Observables](index.md) – Review all observable interfaces

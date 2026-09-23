@@ -17,12 +17,11 @@ This module addresses:
 
 ## Observable Interfaces
 
-**cloelib** uses two observable protocols. The `Tracer` protocol covers
-projected angular observables in both photometric and gravitational-wave
-analyses, while `SpectroPower` covers three-dimensional spectroscopic
-observables.
+**cloelib** supports projected angular observables through the window interface
+consumed by `AngularTwoPoint`, while the `SpectroPower` protocol covers
+three-dimensional spectroscopic observables.
 
-### **Tracer Protocol**
+### **Projected Angular Observables**
 
 For projected observables such as angular number counts and weak lensing:
 

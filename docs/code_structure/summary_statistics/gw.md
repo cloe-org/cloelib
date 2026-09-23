@@ -1,4 +1,4 @@
-# Gravitational-Wave Summary Statistics (Using Tracers)
+# Gravitational-Wave Summary Statistics
 
 Gravitational-wave (GW) tracers use the same `AngularTwoPoint` Limber
 integration as photometric tracers. `GWNumberCountsTracer` represents angular
@@ -24,6 +24,13 @@ The complete dictionary key also contains the one-based tomographic bin
 indices, for example `("GWNC", "GWWL", 1, 2)`. Each value is a cosmolib
 `AngularPowerSpectrum`. Correlations involving galaxy shear reserve a second
 component for the B-mode and currently fill it with zeros.
+
+Auto-spectra contain the upper triangle of tomographic bin pairs. Spectra
+between different observables contain the full Cartesian product. Reversing
+the input tracer order does not change the canonical output-key order shown in
+the table.
+
+The `nl` argument is currently reserved and is set to zero here.
 
 ```python
 import jax.numpy as jnp
@@ -78,8 +85,9 @@ The factor therefore appears once in a cross-spectrum containing one GWWL
 field and twice in a GWWL auto-spectrum.
 
 !!! note
-GW tracers are supported by full-sky `get_Cl`. The current `get_pseudo_Cl`
-mixing-matrix path supports photometric `POS` and `SHE` pairs only.
+GW tracers are supported by the unmasked Limber `get_Cl` calculation. The
+current `get_pseudo_Cl` mixing-matrix path supports photometric `POS` and
+`SHE` pairs only.
 
 ## Next Steps
 

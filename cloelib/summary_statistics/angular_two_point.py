@@ -588,9 +588,7 @@ class AngularTwoPoint:
 
         def pos_she_rule(C, i, j):
             block = C[:, i - 1, j - 1]
-            return {
-                ("POS", "SHE", i, j): np.stack([block, np.zeros_like(block)])
-            }
+            return {("POS", "SHE", i, j): np.stack([block, np.zeros_like(block)])}
 
         def she_she_rule(C, i, j):
             block = C[:, i - 1, j - 1]

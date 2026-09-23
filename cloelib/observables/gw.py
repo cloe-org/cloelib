@@ -35,17 +35,16 @@ class GWNumberCountsTracer:
         Initialize the class instance.
 
         Parameters:
-          perturbations (Perturbations): An object from NonLinearPerturbations class
-          dndz (np.ndarray): A n-dimensional array representing the number density
-            distribution of GW sources as a function of redshift.
-            It is expected to be normalised.
-          z (np.ndarray): A 1-dimensional array representing the redshift values
-            corresponding to the `dndz` array.
+          perturbations (Perturbations): Perturbation backend providing a
+            compatible background cosmology.
+          dndz (np.ndarray): Normalized GW source distributions with shape
+            `(n_bins, n_z)`.
+          z (np.ndarray): Evenly sampled, non-zero redshift grid with shape
+            `(n_z,)` corresponding to the last axis of `dndz`.
           gw_bias_model (str): A string specifying the model used to describe
             the GW source bias.
-          nuisance_params (dict): A dictionary containing additional parameters
-            that are not directly related to the cosmological model but may
-            affect the GW observations.
+          nuisance_params (dict): Redshift-shift and width parameters for every
+            bin, plus parameters for the selected GW bias model.
         """
         if 0.0 in z:
             raise ValueError(
@@ -146,12 +145,11 @@ class GWNumberCountsTracer:
         $$
 
         Parameters:
-          z (numpy.ndarray|float): Redshift at which to evaluate distribution
-            (array of `float` or `float`)
+          z (numpy.ndarray): Redshift grid at which to evaluate the window.
 
         Returns:
-          window_number_counts (np.ndarray): Window function for angular GW
-            number counts
+          window_number_counts (np.ndarray): Angular GW number-count windows
+            with shape `(n_bins, n_z)`.
         """
 
         def per_bin_case():
@@ -189,10 +187,11 @@ class GWNumberCountsTracer:
         Compute the angular GW number-count window function.
 
         Parameters:
-          z (float): Redshift at which window kernel is being evaluated
+          z (np.ndarray): Redshift grid at which the window is evaluated.
 
         Returns:
-          window (np.ndarray):
+          window (np.ndarray): Number-count windows with shape
+            `(n_bins, n_z)`.
         """
         return self.get_window_number_counts(z)
 
@@ -211,15 +210,14 @@ class GWWeakLensingTracer:
         Initialize the class instance.
 
         Parameters:
-          perturbations (Perturbations): An object from NonLinearPerturbations class
-          dndz (np.ndarray): A n-dimensional array representing the number density
-            distribution of GW sources as a function of redshift.
-            It is expected to be normalised.
-          z (np.ndarray): A 1-dimensional array representing the redshift values
-            corresponding to the `dndz` array.
-          nuisance_params (dict): A dictionary containing additional parameters
-            that are not directly related to the cosmological model but may
-            affect the GW observations.
+          perturbations (Perturbations): Perturbation backend providing a
+            compatible background cosmology.
+          dndz (np.ndarray): Normalized GW source distributions with shape
+            `(n_bins, n_z)`.
+          z (np.ndarray): Evenly sampled, non-zero redshift grid with shape
+            `(n_z,)` corresponding to the last axis of `dndz`.
+          nuisance_params (dict): Redshift-shift and width parameters for every
+            bin.
         """
         if 0.0 in z:
             raise ValueError(
@@ -287,8 +285,7 @@ class GWWeakLensingTracer:
         - Assumes `z` is evenly spaced; spacing is inferred as `z[1] - z[0]`.
         - Uses a precomputed Simpson rule weight matrix (`cached_stacked_simpson`)
           for integration.
-        - `self.dndz` is expected to have shape (N_bins, len(z)) and be
-          normalized.
+        - `self.dndz_shifted` has shape (N_bins, len(z)) and is normalized.
         - Efficiency is evaluated using `np.einsum`.
         """
         dz = z[1] - z[0]
@@ -321,8 +318,8 @@ class GWWeakLensingTracer:
             `float`).
 
         Returns:
-          (numpy.ndarray): 1-D Numpy array of GW weak-lensing kernel values for
-            specified bin at specified scale for the redshifts defined in z
+          (numpy.ndarray): GW weak-lensing windows with shape
+            `(n_bins, n_z)`.
         """
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (
@@ -341,9 +338,10 @@ class GWWeakLensingTracer:
         Compute the angular GW weak-lensing window function.
 
         Parameters:
-          z (float): Redshift at which window kernel is being evaluated
+          z (np.ndarray): Redshift grid at which the window is evaluated.
 
         Returns:
-          window (np.ndarray):
+          window (np.ndarray): GW weak-lensing windows with shape
+            `(n_bins, n_z)`.
         """
         return self.get_window_lensing(z)

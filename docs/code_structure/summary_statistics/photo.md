@@ -37,9 +37,7 @@ two_point = AngularTwoPoint(tracer1=tracer1, tracer2=tracer2)
 ells = np.logspace(1, 3, 20)  # ℓ from 10 to 1000
 C_ell = two_point.get_Cl(ells=ells, nl=0, ks=pert.k)
 
-# Results use cosmolib field/bin keys. Shear spectra store E/B components.
-shear_auto = C_ell[("SHE", "SHE", 1, 1)]
-print(f"C_ℓ at index 10: {shear_auto.array[0, 0, 10]:.2e}")
+print(f"C_ℓ at ℓ=100: {C_ell[0, 0, 10]:.2e}")
 ```
 
 **Cross-Correlations**:

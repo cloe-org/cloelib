@@ -12,21 +12,19 @@ This module addresses:
 
 - Window functions for weak lensing surveys and CMB lensing
 - Galaxy bias modeling and corrections
-- Gravitational-wave source number counts and luminosity-distance weak lensing
+- Gravitational-wave source number counts and weak lensing
 - Redshift-space power spectra P(k, μ)
 
-## Observable Interfaces
+## Two Flavors of Observables
 
-**cloelib** supports projected angular observables through the window interface
-consumed by `AngularTwoPoint`, while the `SpectroPower` protocol covers
-three-dimensional spectroscopic observables.
+**cloelib** has two types of observable protocols, each serving different purposes:
 
-### **Projected Angular Observables**
+### **Tracer Protocol**
 
-For projected observables such as angular number counts and weak lensing:
+For photometric and gravitational-wave observables
 
-- [Photometric observables](photo.md)
-- [Gravitational-wave observables](gw.md)
+- [Learn more about photometric tracers](photo.md)
+- [Learn more about gravitational-wave tracers](gw.md)
 
 ### **SpectroPower Protocol**
 

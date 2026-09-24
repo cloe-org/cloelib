@@ -22,7 +22,7 @@ intrinsic-alignment options - lives in this one module:
   `fastpt.FASTPT.IA_ta`/`.IA_tt`/`.IA_mix` (the `fast-pt` PyPI package - an
   optional dependency, `pip install cloelib[fastpt]`) on the linear matter
   power spectrum. The same three FAST-PT calls, kernel names, and
-  `c1**2*Pdd + 2*c1*c1d*D**4*(a00e+c00e) + ...` assembly production CLOE
+  `c1**2*Plin + 2*c1*c1d*D**4*(a00e+c00e) + ...` assembly production CLOE
   used (github.com/cloe-org/CLOE, `cloe/non_linear/miscellanous.py`/
   `pLL_phot.py`) - verified directly against that source. `cloelib`'s own
   `pbjcosmo`-based PBJ interface (`spectro/PBJ_spectro.py`) has no IA/TATT
@@ -122,6 +122,17 @@ _BB_ONLY_KERNELS = (
 _GI_KERNELS = ("tatt_A_0_0E", "tatt_C_0_0E", "tatt_A_0_E2", "tatt_B_0_E2")
 _ALL_KERNELS = _EE_ONLY_KERNELS + _SHARED_KERNELS + _BB_ONLY_KERNELS
 
+#: The "tree-level" term's own power spectrum, C1(z)**2 * P(z,k) (II) /
+#: C1(z) * P(z,k) (GI) in `TATTContribution.get_effective_pk` - not one of
+#: the ten one-loop kernels above, but requested through the same
+#: `SpectrumRequest`/`SpectraBank` machinery so it's computed once and
+#: shared between the II and GI pairings. "Tree-level" means the *linear*
+#: matter power spectrum, by definition (the lowest-order term in
+#: perturbation theory) - using the tracer's own, typically nonlinear,
+#: P(k,z) here would be inconsistent with the one-loop kernels themselves
+#: (which are already built from the linear Pk - see `PBJTATTLoopComputer`).
+_LINEAR_MATTER_PK = "tatt_linear_matter_pk"
+
 
 def _is_known_linear_perturbations(perturbations) -> bool:
     """Whether `perturbations` is itself one of cloelib's own linear-only
@@ -160,10 +171,13 @@ class PBJTATTLoopComputer:
     k-grid doesn't change) instead of re-running FAST-PT per kernel name.
 
     Takes the *same* `perturbations` object you'd pass to `ShearTracer` -
-    typically nonlinear (a halo model/emulator backend, for the tree-level
-    P_dd term), but FAST-PT's one-loop integrals are only valid starting
-    from the linear power spectrum (the same distinction production CLOE
-    draws between `Pk_delta` and `Pk_halomodel_recipe`), so this class
+    typically nonlinear (a halo model/emulator backend), for convenience
+    (one object, not two to track and pass alongside the tracer's own
+    `perturbations`) - but every quantity this class actually hands FAST-PT
+    or `TATTContribution`'s tree-level term is *linear*: neither the
+    one-loop integrals nor the tree-level `C1**2*P(k,z)`/`C1*P(k,z)` term
+    are valid starting from anything else (the same distinction production
+    CLOE draws between `Pk_delta` and `Pk_halomodel_recipe`). So this class
     resolves the actual linear source itself: `perturbations.
     linearperturbations` if that attribute exists (every nonlinear backend
     that's built *from* a separate linear one sets it -
@@ -323,6 +337,16 @@ class PBJTATTLoopComputer:
         return kernels
 
     def compute(self, name: str):
+        if name == _LINEAR_MATTER_PK:
+
+            def _compute(matter_pk, ks, zs):
+                del matter_pk  # replaced, not scaled - see _LINEAR_MATTER_PK
+                return jnp.asarray(
+                    self.linear_perturbations.matter_power_spectrum(zs, ks)
+                )
+
+            return _compute
+
         def _compute(matter_pk, ks, zs):
             del matter_pk, zs  # pure k-kernel; z-dependence lives elsewhere
             return jnp.asarray(self._kernels_for(ks)[name])
@@ -366,16 +390,22 @@ class TATTContribution(IntrinsicAlignmentContribution):
         C1delta(z) = b_TA * C1(z)
         C2(z)      = 5*A2 * C_IA * Omega_m0 / D(z)**2 * ((1+z)/(1+z0))**eta2
 
-        P_II^EE(z,k) = C1(z)**2 * P_dd(z,k)
+        P_II^EE(z,k) = C1(z)**2 * P_lin(z,k)
                      + 2*C1(z)*C1delta(z)*D(z)**4 * [A_0_0E(k) + C_0_0E(k)]
                      + C1delta(z)**2 * D(z)**4 * A_0E_0E(k)
                      + C2(z)**2 * D(z)**4 * A_E2_E2(k)
                      + 2*C1(z)*C2(z)*D(z)**4 * [A_0_E2(k) + B_0_E2(k)]
                      + 2*C1delta(z)*C2(z)*D(z)**4 * D_0E_E2(k)
 
-        P_deltaI(z,k) = C1(z)*P_dd(z,k)
+        P_deltaI(z,k) = C1(z)*P_lin(z,k)
                       + C1delta(z)*D(z)**4 * [A_0_0E(k) + C_0_0E(k)]
                       + C2(z)*D(z)**4 * [A_0_E2(k) + B_0_E2(k)]
+
+    `P_lin` is the *linear* matter power spectrum - the tree-level term, by
+    definition, same as every one-loop kernel above (see `_LINEAR_MATTER_PK`
+    and `PBJTATTLoopComputer`'s docstring); using the tracer's own
+    (typically nonlinear) P(k,z) here would be inconsistent with the
+    one-loop terms it's added to.
 
     `C_IA` bundles the paper's `C_bar_1 * rho_crit` product (the standard
     IA literature convention; `ShearTracer.get_window_IA`'s NLA
@@ -485,11 +515,15 @@ class TATTContribution(IntrinsicAlignmentContribution):
     def get_spectrum_requests(self):
         return tuple(
             SpectrumRequest(name=name, compute=self._loop_computer.compute(name))
-            for name in _ALL_KERNELS
+            for name in _ALL_KERNELS + (_LINEAR_MATTER_PK,)
         )
 
     def get_requirements_for_interaction(self, other):
         """Drop the II-only (EE and BB) kernels unless `other` is IA too.
+
+        The tree-level linear-Pk request (`_LINEAR_MATTER_PK`) is kept for
+        both: GI needs it exactly as much as II does (both have a leading
+        `C1 * P_linear` / `C1**2 * P_linear` term).
 
         Mirrors `toy_cloelib.contributions.TATTModel.get_requirements_for_
         interaction`, which drops its analogous `pk_beta` term for the same
@@ -500,7 +534,11 @@ class TATTContribution(IntrinsicAlignmentContribution):
         """
         if isinstance(other, IntrinsicAlignmentContribution):
             return self.get_spectrum_requests()
-        return tuple(r for r in self.get_spectrum_requests() if r.name in _GI_KERNELS)
+        return tuple(
+            r
+            for r in self.get_spectrum_requests()
+            if r.name in _GI_KERNELS or r.name == _LINEAR_MATTER_PK
+        )
 
     def get_effective_pk(self, other, bank: SpectraBank):
         """P_II^EE(k,z) or P_deltaI(k,z), as appropriate.
@@ -523,12 +561,21 @@ class TATTContribution(IntrinsicAlignmentContribution):
         zs = bank.zs
         d4 = self._D4(zs)[:, None]
         c1_self = self._C1(zs)
-        matter_pk = bank.matter_pk
 
         def _kernel(name):
             return bank.get(
                 SpectrumRequest(name=name, compute=self._loop_computer.compute(name))
             )[None, :]
+
+        # Tree-level term: the *linear* matter Pk, not `bank.matter_pk`
+        # (typically nonlinear) - see `_LINEAR_MATTER_PK`. Shape (n_z, n_k),
+        # same as `bank.matter_pk` was, so it drops in directly below.
+        matter_pk = bank.get(
+            SpectrumRequest(
+                name=_LINEAR_MATTER_PK,
+                compute=self._loop_computer.compute(_LINEAR_MATTER_PK),
+            )
+        )
 
         if isinstance(other, IntrinsicAlignmentContribution):
             c1_other = other._C1(zs) if hasattr(other, "_C1") else c1_self

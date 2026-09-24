@@ -8,6 +8,7 @@ from cloelib.observables.cmb import CMBLensingTracer
 from cloelib.observables.photo.spectrum_engine import (
     build_spectra_bank,
     get_effective_pk,
+    get_pk_terms,
     needs_generalized_engine,
 )
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
@@ -44,6 +45,34 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray:
         (jax.numpy.ndarray): Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
     """
     return np.einsum("iz,jz,lz,z,z,z->lij", WT1, WT2, Pkl, 1 / H, 1 / chi2, weights)
+
+
+@jax.jit
+def Cl_integration_batched(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray:
+    """
+    Same as `Cl_integration`, batched (and summed) over an extra leading
+    "term" axis on `WT1`/`WT2`/`Pkl`.
+
+    Lets a caller with several *different* `(kernel1, kernel2, Pk)` triples
+    to sum into one Cl (e.g. `NonLinearGalaxyBiasContribution`'s several
+    `PkTerm`s per contribution pairing - see `spectrum_engine.PkTerm`)
+    fuse the whole sum into one `einsum` call instead of a Python loop over
+    `Cl_integration` - the sum over the term axis `t` falls out of
+    `einsum` for free (it appears in every input but not the output
+    subscripts, so it's contracted/summed exactly like `z` already is).
+
+    Parameters:
+        WT1 (jax.numpy.ndarray): Window function for the first tracer, shape (n_terms, n_bin1, len(z)).
+        WT2 (jax.numpy.ndarray): Window function for the second tracer, shape (n_terms, n_bin2, len(z)).
+        Pkl (jax.numpy.ndarray): Power spectrum interpolated on Limber grid, shape (n_terms, len(ells), len(z)).
+        H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
+        chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
+        weights (jax.numpy.ndarray): Array of weights used for the fixed nodes integration.
+
+    Returns:
+        (jax.numpy.ndarray): Angular power spectrum Cl with shape (len(ells), n_bin1, n_bin2), summed over the term axis.
+    """
+    return np.einsum("tiz,tjz,tlz,z,z,z->lij", WT1, WT2, Pkl, 1 / H, 1 / chi2, weights)
 
 
 @jax.jit
@@ -153,6 +182,19 @@ def Pkl_interp_signed(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
 
 Pkl_interp_signed_vmap = jax.jit(
     jax.vmap(Pkl_interp_signed, in_axes=(0, None, None, None, None))
+)
+
+# Batches `Pkl_interp_signed_vmap` over an extra leading "term" axis on
+# `Pk` - lets `_compute_cl_generalized` interpolate every `PkTerm.pk` for
+# one contribution pairing (e.g. `NonLinearGalaxyBiasContribution`'s up to
+# thirteen terms per pairing - see `spectrum_engine.PkTerm`) in one batched
+# XLA call instead of one Python-level `Pkl_interp_signed_vmap` call per
+# term. Purely a performance change - each term's own interpolation is
+# identical either way (`vmap` batches independent per-term work, it
+# doesn't combine terms' `Pk`s before interpolating), so this changes no
+# numerics, only how many dispatches it takes.
+Pkl_interp_signed_vmap_terms = jax.jit(
+    jax.vmap(Pkl_interp_signed_vmap, in_axes=(None, None, None, None, 0))
 )
 
 
@@ -713,7 +755,12 @@ class AngularTwoPoint:
         physics separation `toy_cloelib.engine.compute_angular_power_
         spectrum` uses, reusing cloelib's own existing jitted Limber
         kernels (`Pkl_interp_vmap`, `Cl_integration`) unchanged for each
-        pair's integral.
+        pair's integral. A pair whose bias amplitudes vary per tomographic
+        bin (e.g. `NonLinearGalaxyBiasContribution`) instead declares
+        `get_pk_terms` - several additive `(kernel1, kernel2, pk)` triples
+        rather than one shared pair (see `spectrum_engine.PkTerm`'s
+        docstring); checked first, per `(c1, c2)`, before falling back to
+        `get_effective_pk`.
 
         Does not support RSD (`PositionsTracer(..., include_rsd=True)`)
         paired with a generalized-engine-requiring contribution - that
@@ -756,6 +803,29 @@ class AngularTwoPoint:
 
         for c1 in contributions1:
             for c2 in contributions2:
+                terms = get_pk_terms(c1, c2, zs_calc, bank)
+                if terms is not None:
+                    # Per-bin-varying amplitudes (e.g.
+                    # `NonLinearGalaxyBiasContribution`): several additive
+                    # (kernel1, kernel2, pk) triples instead of one shared
+                    # pair - see `PkTerm`'s docstring. Stacked and batched
+                    # (`Pkl_interp_signed_vmap_terms`/`Cl_integration_
+                    # batched`) into one interpolation call and one summed
+                    # einsum per pairing, rather than looping
+                    # `Pkl_interp_signed_vmap`/`Cl_integration` once per
+                    # term - a pure performance change (see those
+                    # functions' docstrings), not a numerical one.
+                    kernel1_stack = np.stack([t.kernel1 for t in terms])
+                    kernel2_stack = np.stack([t.kernel2 for t in terms])
+                    pk_stack = np.stack([t.pk.T for t in terms])
+                    Pkl_stack = Pkl_interp_signed_vmap_terms(
+                        k_lz, zs_calc, ks, pert_zs, pk_stack
+                    )
+                    C_ell_calc = C_ell_calc + Cl_integration_batched(
+                        kernel1_stack, kernel2_stack, Pkl_stack, H, chi2, weights
+                    )
+                    continue
+
                 pk_eff = get_effective_pk(c1, c2, bank)
                 if pk_eff is None:
                     Pkl_pair = Pkl_interp_vmap(k_lz, zs_calc, ks, pert_zs, matter_pk.T)

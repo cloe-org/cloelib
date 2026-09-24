@@ -103,6 +103,16 @@ class _StubTATTLoopComputer:
         self.linear_perturbations = linear_perturbations
 
     def compute(self, name):
+        if name == "tatt_linear_matter_pk":
+            # No real linear/nonlinear distinction in this stub - pass
+            # through whatever Pk the caller supplied, so tests that check
+            # the exact "reduces to NLA form" identity stay meaningful.
+            def _compute(matter_pk, ks, zs):
+                del ks, zs
+                return matter_pk
+
+            return _compute
+
         del name  # same kernel shape regardless of which one is requested
 
         def _compute(matter_pk, ks, zs):
@@ -185,7 +195,9 @@ def test_unknown_ia_model_string_raises(cosmo_setup):
 
 
 def test_requirements_pruned_for_gi_vs_ii(cosmo_setup):
-    """TATT must request all 10 kernels for II, only the 4 GI ones for GI/gI.
+    """TATT must request all 10 kernels for II, only the 4 GI ones for GI/gI -
+    plus the tree-level linear-Pk request on both sides (needed by both the
+    II and GI tree-level terms alike).
 
     Mirrors toy_cloelib's TATT `pk_beta`-dropping test
     (`demo_syren_3x2pt.py`): the pruning is what makes the "avoid computing
@@ -208,8 +220,8 @@ def test_requirements_pruned_for_gi_vs_ii(cosmo_setup):
     ii_names = {r.name for r in tatt.get_requirements_for_interaction(tatt)}
     gi_names = {r.name for r in tatt.get_requirements_for_interaction(lensing)}
 
-    assert ii_names == set(_ALL_KERNELS)
-    assert gi_names == set(_GI_KERNELS)
+    assert ii_names == set(_ALL_KERNELS) | {"tatt_linear_matter_pk"}
+    assert gi_names == set(_GI_KERNELS) | {"tatt_linear_matter_pk"}
     assert gi_names < ii_names  # strictly fewer terms for GI than II
 
     contribs = tracer.get_contributions()  # (lensing, ia)
@@ -524,20 +536,31 @@ def test_pbj_tatt_reduces_to_nla_form_when_a2_and_bta_zero(
 
     ks = np.logspace(-3, 1, 20)
     pert_zs = perturbations.z
-    matter_pk = perturbations.matter_power_spectrum(pert_zs, ks)
+    # `bank.matter_pk` (nonlinear, from the tracer's own `perturbations`) is
+    # no longer what the tree-level term uses - it's the *linear* Pk (see
+    # `_LINEAR_MATTER_PK`), so that's what this reduction must be compared
+    # against, not `perturbations.matter_power_spectrum(...)`.
+    matter_pk_nonlinear = perturbations.matter_power_spectrum(pert_zs, ks)
+    matter_pk_linear = linear_perturbations.matter_power_spectrum(pert_zs, ks)
+    assert not np.allclose(matter_pk_linear, matter_pk_nonlinear), (
+        "test fixture's linear/nonlinear Pk aren't actually distinct - "
+        "this check would pass vacuously"
+    )
 
     from cloelib.observables.photo.spectrum_engine import SpectraBank
 
-    bank = SpectraBank(matter_pk, ks, pert_zs)
+    bank = SpectraBank(matter_pk_nonlinear, ks, pert_zs)
 
     p_ii = tatt.get_effective_pk(tatt, bank)
     p_di = tatt.get_effective_pk(tracer.lensing, bank)
 
     c1 = tatt._C1(pert_zs)[:, None]
     np.testing.assert_allclose(
-        np.asarray(p_ii), np.asarray(c1**2 * matter_pk), rtol=1e-10
+        np.asarray(p_ii), np.asarray(c1**2 * matter_pk_linear), rtol=1e-10
     )
-    np.testing.assert_allclose(np.asarray(p_di), np.asarray(c1 * matter_pk), rtol=1e-10)
+    np.testing.assert_allclose(
+        np.asarray(p_di), np.asarray(c1 * matter_pk_linear), rtol=1e-10
+    )
 
 
 @pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")

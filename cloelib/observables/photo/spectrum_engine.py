@@ -185,3 +185,66 @@ def compute_effective_pk(c1, c2, matter_pk, ks, zs):
     """
     bank = SpectraBank(matter_pk, ks, zs)
     return get_effective_pk(c1, c2, bank)
+
+
+@dataclass(frozen=True)
+class PkTerm:
+    """One additive term of a contribution-pair's Limber integrand:
+    `Cl += Cl_integration(kernel1, kernel2, pk, ...)`.
+
+    Generalizes `get_effective_pk` (a single `(compute_kernel, compute_
+    kernel, effective_pk)` triple per pairing) to a *sum* of triples with
+    their own, *different* kernels - needed whenever a contribution's bias
+    amplitudes vary per tomographic bin (e.g.
+    `NonLinearGalaxyBiasContribution`'s per-bin b1/b2/bs2/b3nl/bk2): its
+    P_gg(k,z) is a sum of terms like `0.5*(b1_i*b2_j + b1_j*b2_i)*Pd1d2(k)`,
+    which isn't expressible as one shared kernel pair times one shared
+    effective Pk (the standard `get_effective_pk` contract) because the
+    bin-dependence lives in *different bias-weighted kernels* per term, not
+    in one amplitude-free kernel times one Pk. Contributions whose
+    amplitudes are global (not per-bin), e.g. `TATTContribution`, have no
+    need for this and keep using `get_effective_pk`.
+
+    Attributes:
+      kernel1: window kernel for the first tracer, shape `(n_bin1, len(zs))` -
+        not necessarily this term's own contribution's `compute_kernel(z)`
+        output.
+      kernel2: window kernel for the second tracer, shape `(n_bin2, len(zs))` -
+        same caveat as `kernel1`.
+      pk: the power spectrum this term should be integrated against,
+        shape `(len(bank.zs), len(bank.ks))` - as `get_effective_pk`
+        returns, but scoped to just this one additive term.
+    """
+
+    kernel1: jnp.ndarray
+    kernel2: jnp.ndarray
+    pk: jnp.ndarray
+
+
+def get_pk_terms(c1, c2, zs, bank: SpectraBank):
+    """The `PkTerm`s for the pairing `(c1, c2)`, or `None`.
+
+    Tries `c1.get_pk_terms(c2, zs, bank)` first, then `c2.get_pk_terms(c1,
+    zs, bank)` - mirrors `get_effective_pk`'s own order-dependent
+    resolution (see its docstring), generalized to a list of terms instead
+    of one. A `Contribution.get_pk_terms(other, zs, bank)` implementation
+    must return its terms in `(self, other)` order regardless of which
+    tracer position it's called from - this resolver swaps `kernel1`/
+    `kernel2` back into `(c1, c2)` order when `c2` is the side that
+    actually defined the terms, so callers never need to know which side
+    supplied them.
+
+    `None` means neither side needs this - callers should fall back to
+    `get_effective_pk` (still `None` for a pairing needing neither).
+    """
+    getter1 = getattr(c1, "get_pk_terms", None)
+    if getter1 is not None:
+        terms = getter1(c2, zs, bank)
+        if terms is not None:
+            return terms
+    getter2 = getattr(c2, "get_pk_terms", None)
+    if getter2 is not None:
+        terms = getter2(c1, zs, bank)
+        if terms is not None:
+            return tuple(PkTerm(t.kernel2, t.kernel1, t.pk) for t in terms)
+    return None

@@ -53,6 +53,7 @@ emantis = ["emantis>=1.2.1"]
 pbjcosmo = ["pbjcosmo"]
 fastpt = ["fast-pt"]
 mochi_classy = ["mochi_classy @ git+https://github.com/mcataneo/mochi_class_public.git@mochi_classy"]
+ndgpemu = ["nDGPemu @ git+https://github.com/BartolomeoF/nDGPemu"]
 
 mgclassy = ["mgclassy==2.9.4.5"]
 

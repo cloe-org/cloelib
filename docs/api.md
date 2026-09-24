@@ -57,6 +57,13 @@ show_root_heading: true
 show_submodules: false
 heading_level: 3
 
+::: cloelib.cosmology.mochi_class_cosmology
+options:
+show_root_toc_entry: true
+show_root_heading: true
+show_submodules: false
+heading_level: 3
+
 ::: cloelib.cosmology.EE2_cosmology
 options:
 show_root_toc_entry: true
@@ -91,6 +98,41 @@ show_root_heading: true
 show_submodules: false
 heading_level: 3
 
+::: cloelib.observables.photo.shear
+options:
+show_root_toc_entry: true
+show_root_heading: true
+show_submodules: false
+heading_level: 3
+
+::: cloelib.observables.photo.positions
+options:
+show_root_toc_entry: true
+show_root_heading: true
+show_submodules: false
+heading_level: 3
+
+::: cloelib.observables.photo.tracer
+options:
+show_root_toc_entry: true
+show_root_heading: true
+show_submodules: false
+heading_level: 3
+
+::: cloelib.observables.photo.contributions
+options:
+show_root_toc_entry: true
+show_root_heading: true
+show_submodules: false
+heading_level: 3
+
+::: cloelib.observables.photo.spectrum_engine
+options:
+show_root_toc_entry: true
+show_root_heading: true
+show_submodules: false
+heading_level: 3
+
 ::: cloelib.observables.gw
 options:
 show_root_toc_entry: true
@@ -105,28 +147,28 @@ show_root_heading: true
 show_submodules: false
 heading_level: 3
 
-::: cloelib.observables.tracer
+::: cloelib.observables.spectro
 options:
 show_root_toc_entry: true
 show_root_heading: true
 show_submodules: false
 heading_level: 3
 
-::: cloelib.observables.CometEFT_spectro
+::: cloelib.observables.spectro.CometEFT_spectro
 options:
 show_root_toc_entry: true
 show_root_heading: true
 show_submodules: false
 heading_level: 3
 
-::: cloelib.observables.CometVDG_spectro
+::: cloelib.observables.spectro.CometVDG_spectro
 options:
 show_root_toc_entry: true
 show_root_heading: true
 show_submodules: false
 heading_level: 3
 
-::: cloelib.observables.PBJ_spectro
+::: cloelib.observables.spectro.PBJ_spectro
 options:
 show_root_toc_entry: true
 show_root_heading: true

@@ -23,11 +23,11 @@ $$
 The available `gw_bias_model` values are:
 
 - `per_bin`: a constant bias per tomographic bin, read from zero-based keys
-  such as `b1_GW_bin0` and `b1_GW_bin1`.
+  such as `b1_gw_bin0` and `b1_gw_bin1`.
 - `per_bin_int`: the same per-bin values interpolated as a function of the
   redshift at which each bin's source distribution peaks.
-- `poly`: a cubic bias in redshift, with coefficients `b1_GW_poly0` through
-  `b1_GW_poly3`.
+- `poly`: a cubic bias in redshift, with coefficients `b1_gw_poly0` through
+  `b1_gw_poly3`.
 
 Missing bias parameters default to `1.0`. This differs from the redshift-shift
 and width parameters, which must be supplied for every bin.

@@ -39,7 +39,7 @@ def test_gw_windows_and_angular_power_spectra():
     dndz /= np.trapezoid(dndz, z, axis=1)[:, None]
     perturbations = FakePerturbations(z)
     nuisance_gw = {
-        "b1_GW_bin0": 1.0,
+        "b1_gw_bin0": 1.7,
         "dz_gw_1": 0.0,
         "width_gw_1": 1.0,
     }

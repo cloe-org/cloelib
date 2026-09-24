@@ -123,18 +123,17 @@ class GWWeakLensingTracer:
             W_{i}^{\kappa}(z) =
             \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
             \Omega_{{\rm m},0} (1 + z)
-            f_K\left[\tilde{r}(z)\right]
+            \chi(z)
             \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm GW}(z^{\prime})
-            \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
+            \frac{\chi(z^{\prime}) - \chi(z)}
+            {\chi(z^{\prime})}}\\
         $$
 
         Parameters:
           z (numpy.ndarray): Redshift at which weight is evaluated (`float` type).
 
         Returns:
-          (numpy.ndarray): 1-D Numpy array of convergence kernel values for specified bin
-            at specified scale for the redshifts defined in z
+          (numpy.ndarray): Numpy array of convergence kernel values of shape (n_bins, n_z)
         """
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (

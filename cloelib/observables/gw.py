@@ -1,6 +1,7 @@
 """
-Module with two classes for gravitational-wave observables: GW number counts and
-GW weak lensing.
+Module with two classes for each GW observable tracer type: number counts and weak lensing.
+
+Both classes are compatible with the Tracer protocol.
 """
 
 # cloelib imports
@@ -20,8 +21,149 @@ import jax.lax as lx
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 
+class GWWeakLensingTracer:
+    """Class for the kernel for GW weak lensing."""
+
+    def __init__(
+        self,
+        perturbations: Perturbations,
+        dndz: np.ndarray,
+        z: np.ndarray,
+        nuisance_params: dict,
+    ):
+        r"""
+        Initialize the class instance.
+
+        Parameters:
+          perturbations (Perturbations): Perturbation backend providing a
+            compatible background cosmology.
+          dndz (np.ndarray): A n-dimensional array representing the number density distribution of GW sources as a function of redshift, with shape
+            `(n_bins, n_z)`. It is expected to be normalised.
+          z (np.ndarray): A 1 dimensional array representing the evenly sampled, non-zero redshift grid with shape
+            `(n_z,)` corresponding to the `dndz` array.
+          nuisance_params (dict): Redshift-shift and width parameters for every bin.
+        """
+        if 0.0 in z:
+            raise ValueError(
+                "One of the z array elements is equal to zero, breaking Limber integration."
+            )
+        self.perturbations = perturbations
+        self.background = self.perturbations.background
+        self.z = z
+        self.nuisance_params = nuisance_params
+        # This is to add the necessary prefactor to GW-WL, while avoiding it in GW-NC
+        self.gw_prefact_toggle = 1
+        self.dz_gw_i = [
+            self.nuisance_params[f"dz_gw_{i + 1}"] for i in range(dndz.shape[0])
+        ]
+        self.width_gw_i = [
+            self.nuisance_params[f"width_gw_{i + 1}"] for i in range(dndz.shape[0])
+        ]
+        self.n_z_bins = dndz.shape[0]
+        self.dndz = dndz
+        # Correct dndz for width_gw
+        self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_gw_i)
+        # Correct dndz_stretched for dz_gw
+        self.dndz_shifted = shift_dndz_jax(self.dndz_stretched, z, self.dz_gw_i)
+
+    def get_lensing_efficiency_bin(self, z, bin_idx):
+        """Compute the GW lensing efficiency in a redshift bin."""
+        interpolator = interpax.Akima1DInterpolator(
+            self.z, self.dndz_shifted[bin_idx, :]
+        )
+        x = np.linspace(0.0, 4, 200)
+        y = self.background.comoving_distance(x)
+        rx_interp = interpax.Akima1DInterpolator(x, y)
+        f1 = jax.jit(lambda x: interpolator(x))
+        f2 = jax.jit(lambda x: interpolator(x) / rx_interp(x))
+        integral_1 = simps(f1, z, 3.0)
+        integral_2 = simps(f2, z, 3.0)
+        efficiency = integral_1 - integral_2 * self.background.comoving_distance(z)
+        return efficiency
+
+    def get_lensing_efficiency(self, z) -> np.ndarray:
+        r"""
+        Compute the GW lensing efficiency kernel for each redshift bin.
+
+        This function calculates the geometric lensing kernel W(χ), which weights the contribution
+        of matter at different redshifts to the weak lensing signal, for a given redshift grid `z`.
+
+        Parameters:
+          z (np.ndarray): 1D array of redshift values (must be evenly spaced). Used to compute comoving distances
+            and define integration domain.
+
+        Returns:
+          (np.ndarray): 2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
+            for each redshift bin over the evaluation grid.
+
+        Notes
+        -----
+        - Assumes `z` is evenly spaced; spacing is inferred as `z[1] - z[0]`.
+        - Uses a precomputed Simpson rule weight matrix (`cached_stacked_simpson`) for integration.
+        - `self.dndz_shifted` is expected to have shape (N_bins, len(z)) and be normalized.
+        - Efficiency is evaluated using `np.einsum`.
+        """
+        dz = z[1] - z[0]  # assuming equispaced!
+        rz = self.background.comoving_distance(z)
+        rzrz = 1 - np.outer(rz, 1 / rz)
+        w_matrix = cached_stacked_simpson(len(z))
+        result = np.einsum("ik, jk, jk->ij", self.dndz_shifted, rzrz, w_matrix) * dz
+        return result
+
+    def get_window_lensing(self, z) -> np.ndarray:
+        r"""GW weak-lensing convergence kernel.
+
+        Calculates the GW weak-lensing kernel for a given tomographic bin
+        distribution. The underlying geometry is the scalar convergence
+        kernel. The observable-dependent harmonic response is applied in
+        `AngularTwoPoint`. There is no magnification bias,
+        intrinsic alignment, or multiplicative shear factor in this tracer.
+
+        $$
+            W_{i}^{\kappa}(z) =
+            \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
+            \Omega_{{\rm m},0} (1 + z)
+            f_K\left[\tilde{r}(z)\right]
+            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm GW}(z^{\prime})
+            \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
+            {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
+        $$
+
+        Parameters:
+          z (numpy.ndarray): Redshift at which weight is evaluated (`float` type).
+
+        Returns:
+          (numpy.ndarray): 1-D Numpy array of convergence kernel values for specified bin
+            at specified scale for the redshifts defined in z
+        """
+        Omega_m0 = self.background.Omega_m(0.0)
+        factor = (
+            3
+            / 2
+            * (self.background.H0 / c_0) ** 2
+            * Omega_m0
+            * (1 + z)
+            * self.background.comoving_distance(z)
+        )
+        efficiency = self.get_lensing_efficiency(z)
+        return np.einsum("ij, j->ij", efficiency, factor)
+
+    def get_window(self, z) -> np.ndarray:
+        """
+        Compute the angular GW weak-lensing window function.
+
+        Parameters:
+          z (np.ndarray): Redshift grid at which the window kernel is being evaluated.
+
+        Returns:
+          window (np.ndarray): GW weak-lensing windows with shape
+            `(n_bins, n_z)`.
+        """
+        return self.get_window_lensing(z)
+
+
 class GWNumberCountsTracer:
-    """Class to define the kernel for angular GW number counts."""
+    """Class for the kernel for GW Number Counts."""
 
     def __init__(
         self,
@@ -37,8 +179,8 @@ class GWNumberCountsTracer:
         Parameters:
           perturbations (Perturbations): Perturbation backend providing a
             compatible background cosmology.
-          dndz (np.ndarray): Normalized GW source distributions with shape
-            `(n_bins, n_z)`.
+          dndz (np.ndarray): A n-dimensional array representing the number density distribution of GW sources as a function of redshift, with shape
+            `(n_bins, n_z)`. It is expected to be normalised.
           z (np.ndarray): Evenly sampled, non-zero redshift grid with shape
             `(n_z,)` corresponding to the last axis of `dndz`.
           gw_bias_model (str): A string specifying the model used to describe
@@ -50,22 +192,13 @@ class GWNumberCountsTracer:
             raise ValueError(
                 "One of the z array elements is equal to zero, breaking Limber integration."
             )
-        if dndz.ndim != 2:
-            raise ValueError("dndz must have shape (n_bins, n_z).")
-        if dndz.shape[1] != z.shape[0]:
-            raise ValueError("The last dimension of dndz must match the z grid.")
-        if gw_bias_model not in ("per_bin", "per_bin_int", "poly"):
-            raise ValueError(
-                "gw_bias_model must be 'per_bin', 'per_bin_int', or 'poly'."
-            )
-        if dndz.shape[0] > z.shape[0]:
-            raise ValueError("The number of tomographic bins cannot exceed len(z).")
-
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z
         # GW number counts are scalar, like galaxy positions.
         self.prefact_toggle = 0
+        self.gw_prefact_toggle = 0
+
         self.nuisance_params = nuisance_params
         self.dz_gw_i = [
             self.nuisance_params[f"dz_gw_{i + 1}"] for i in range(dndz.shape[0])
@@ -85,18 +218,17 @@ class GWNumberCountsTracer:
         def per_bin_case():
             bias_array = np.asarray(
                 [
-                    nuisance_params.get("b1_GW_bin%d" % bin, 1.0)
+                    nuisance_params.get("b1_gw_bin%d" % bin, 1.0)
                     for bin in range(self.n_z_bins)
                 ]
             )
-            # lax requires the same size for all cases, so pad here and use
-            # only the first n_z_bins values later.
+            # lax required same size for all cases, so padding here and will only use first n_z_bins values later
             return np.pad(bias_array, (0, self.z.shape[0] - self.n_z_bins))
 
         def per_bin_int_case():
             bias_array = np.asarray(
                 [
-                    nuisance_params.get("b1_GW_bin%d" % bin, 1.0)
+                    nuisance_params.get("b1_gw_bin%d" % bin, 1.0)
                     for bin in range(self.n_z_bins)
                 ]
             )
@@ -110,7 +242,7 @@ class GWNumberCountsTracer:
             poly_order = 3
             bias_array = np.asarray(
                 [
-                    nuisance_params.get("b1_GW_poly%d" % bin, 1.0)
+                    nuisance_params.get("b1_gw_poly%d" % bin, 1.0)
                     for bin in range(poly_order + 1)
                 ]
             )
@@ -194,154 +326,3 @@ class GWNumberCountsTracer:
             `(n_bins, n_z)`.
         """
         return self.get_window_number_counts(z)
-
-
-class GWWeakLensingTracer:
-    """Class for the kernel for GW weak lensing."""
-
-    def __init__(
-        self,
-        perturbations: Perturbations,
-        dndz: np.ndarray,
-        z: np.ndarray,
-        nuisance_params: dict,
-    ):
-        r"""
-        Initialize the class instance.
-
-        Parameters:
-          perturbations (Perturbations): Perturbation backend providing a
-            compatible background cosmology.
-          dndz (np.ndarray): Normalized GW source distributions with shape
-            `(n_bins, n_z)`.
-          z (np.ndarray): Evenly sampled, non-zero redshift grid with shape
-            `(n_z,)` corresponding to the last axis of `dndz`.
-          nuisance_params (dict): Redshift-shift and width parameters for every
-            bin.
-        """
-        if 0.0 in z:
-            raise ValueError(
-                "One of the z array elements is equal to zero, breaking Limber integration."
-            )
-        if dndz.ndim != 2:
-            raise ValueError("dndz must have shape (n_bins, n_z).")
-        if dndz.shape[1] != z.shape[0]:
-            raise ValueError("The last dimension of dndz must match the z grid.")
-
-        self.perturbations = perturbations
-        self.background = self.perturbations.background
-        self.z = z
-        self.nuisance_params = nuisance_params
-        # GW convergence is scalar, unlike spin-2 galaxy shear.
-        self.prefact_toggle = 0
-        self.gw_prefact_toggle = 1
-        self.dz_gw_i = [
-            self.nuisance_params[f"dz_gw_{i + 1}"] for i in range(dndz.shape[0])
-        ]
-        self.width_gw_i = [
-            self.nuisance_params[f"width_gw_{i + 1}"] for i in range(dndz.shape[0])
-        ]
-        self.n_z_bins = dndz.shape[0]
-        self.dndz = dndz
-        # Correct dndz for width_gw.
-        self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_gw_i)
-        # Correct dndz_stretched for dz_gw.
-        self.dndz_shifted = shift_dndz_jax(self.dndz_stretched, z, self.dz_gw_i)
-
-    def get_lensing_efficiency_bin(self, z, bin_idx):
-        """Compute the GW lensing efficiency in a redshift bin."""
-        interpolator = interpax.Akima1DInterpolator(
-            self.z, self.dndz_shifted[bin_idx, :]
-        )
-        x = np.linspace(0.0, 4, 200)
-        y = self.background.comoving_distance(x)
-        rx_interp = interpax.Akima1DInterpolator(x, y)
-        f1 = jax.jit(lambda x: interpolator(x))
-        f2 = jax.jit(lambda x: interpolator(x) / rx_interp(x))
-        integral_1 = simps(f1, z, 3.0)
-        integral_2 = simps(f2, z, 3.0)
-        efficiency = integral_1 - integral_2 * self.background.comoving_distance(z)
-        return efficiency
-
-    def get_lensing_efficiency(self, z) -> np.ndarray:
-        r"""
-        Compute the GW lensing efficiency kernel for each redshift bin.
-
-        This function calculates the geometric convergence kernel for a given
-        redshift grid ``z``. The observable-dependent response is applied in
-        :meth:`get_window_lensing`.
-
-        Parameters:
-          z (np.ndarray): 1D array of redshift values (must be evenly spaced).
-            Used to compute comoving distances and define integration domain.
-
-        Returns:
-          (np.ndarray): 2D array of shape (N_bins, len(z)) representing the
-            lensing efficiency kernel for each GW redshift bin over the
-            evaluation grid.
-
-        Notes
-        -----
-        - Assumes `z` is evenly spaced; spacing is inferred as `z[1] - z[0]`.
-        - Uses a precomputed Simpson rule weight matrix (`cached_stacked_simpson`)
-          for integration.
-        - `self.dndz_shifted` has shape (N_bins, len(z)) and is normalized.
-        - Efficiency is evaluated using `np.einsum`.
-        """
-        dz = z[1] - z[0]
-        rz = self.background.comoving_distance(z)
-        rzrz = 1 - np.outer(rz, 1 / rz)
-        w_matrix = cached_stacked_simpson(len(z))
-        return np.einsum("ik, jk, jk->ij", self.dndz_shifted, rzrz, w_matrix) * dz
-
-    def get_window_lensing(self, z) -> np.ndarray:
-        r"""GW weak-lensing convergence kernel.
-
-        Calculates the GW weak-lensing kernel for a given tomographic bin
-        distribution. The underlying geometry is the scalar convergence
-        kernel. The observable-dependent harmonic response is applied in
-        `AngularTwoPoint`. There is no galaxy magnification-bias,
-        intrinsic-alignment, or multiplicative-shear factor in this tracer.
-
-        $$
-            W_i^{\rm GW-WL}(z) =
-            \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
-            \Omega_{{\rm m},0} (1 + z)
-            f_K\left[\tilde{r}(z)\right]
-            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm GW}(z^{\prime})
-            \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
-        $$
-
-        Parameters:
-          z (numpy.ndarray): Redshift at which weight is evaluated (array of
-            `float`).
-
-        Returns:
-          (numpy.ndarray): GW weak-lensing windows with shape
-            `(n_bins, n_z)`.
-        """
-        Omega_m0 = self.background.Omega_m(0.0)
-        factor = (
-            3
-            / 2
-            * (self.background.H0 / c_0) ** 2
-            * Omega_m0
-            * (1 + z)
-            * self.background.comoving_distance(z)
-        )
-        efficiency = self.get_lensing_efficiency(z)
-        return np.einsum("ij, j->ij", efficiency, factor)
-
-    def get_window(self, z) -> np.ndarray:
-        """
-        Compute the angular GW weak-lensing window function.
-
-        Parameters:
-          z (np.ndarray): Redshift grid at which the window is evaluated.
-
-        Returns:
-          window (np.ndarray): GW weak-lensing windows with shape
-            `(n_bins, n_z)`.
-        """
-        return self.get_window_lensing(z)

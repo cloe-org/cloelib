@@ -505,7 +505,7 @@ class AngularTwoPoint:
         gw_prefactor = 2.0 * ells * (ells + 1.0) / (ells + 0.5) ** 2
 
         def tracer_prefactor(tracer):
-            shear_toggle = tracer.prefact_toggle
+            shear_toggle = getattr(tracer, "prefact_toggle", 0)
             gw_toggle = getattr(tracer, "gw_prefact_toggle", 0)
             return (
                 1.0

@@ -36,8 +36,8 @@ and width parameters, which must be supplied for every bin.
 from cloelib.observables.gw import GWNumberCountsTracer
 
 gw_nuisance = {
-    "b1_GW_bin0": 1.5,
-    "b1_GW_bin1": 1.8,
+    "b1_gw_bin0": 1.5,
+    "b1_gw_bin1": 1.8,
     "dz_gw_1": 0.0,
     "dz_gw_2": 0.0,
     "width_gw_1": 1.0,

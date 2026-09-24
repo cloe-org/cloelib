@@ -36,7 +36,7 @@ from typing import Optional
 ZENODO_URL = "https://zenodo.org/records/19678842/files"
 
 
-def emulator_data(filename: str, zenodo_url: str = None) -> str:
+def emulator_data(filename: str, zenodo_url: Optional[str] = None) -> str:
     """Download the emulator data file if it does not exist.
 
     Parameters

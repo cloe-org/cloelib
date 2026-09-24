@@ -1173,6 +1173,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cloelib.cosmology.cosmology.WithWavenumberGrid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;WithWavenumberGrid
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;WithLinearSpectrumGrid
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1671,6 +1693,17 @@
   
     <nav class="md-nav" aria-label=" EE2_cosmology">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;LinearPerturbationsWithK
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations" class="md-nav__link">
@@ -3060,6 +3093,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cloelib.cosmology.cosmology.WithWavenumberGrid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;WithWavenumberGrid
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;WithLinearSpectrumGrid
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3558,6 +3613,17 @@
   
     <nav class="md-nav" aria-label=" EE2_cosmology">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;LinearPerturbationsWithK
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations" class="md-nav__link">
@@ -4798,12 +4864,277 @@ Core structure enables defining Background &amp; Perturbation models.</p>
 
 
 
+<h4 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">LinearPerturbationsWithK</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK" id="mermaid-link-cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK"></a>
+                  <a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations" id="mermaid-link-cloelib.cosmology.cosmology.Perturbations"></a>
+                  <a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithWavenumberGrid" id="mermaid-link-cloelib.cosmology.cosmology.WithWavenumberGrid"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK">
+              flowchart TD
+              cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK[LinearPerturbationsWithK]
+              cloelib.cosmology.cosmology.Perturbations[Perturbations]
+              cloelib.cosmology.cosmology.WithWavenumberGrid[WithWavenumberGrid]
+
+                              cloelib.cosmology.cosmology.Perturbations --> cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK
+                
+                cloelib.cosmology.cosmology.WithWavenumberGrid --> cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK
+                
+
+
+              click cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK href "" "cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK"
+              click cloelib.cosmology.cosmology.Perturbations href "" "cloelib.cosmology.cosmology.Perturbations"
+              click cloelib.cosmology.cosmology.WithWavenumberGrid href "" "cloelib.cosmology.cosmology.WithWavenumberGrid"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>A <code>Perturbations</code> implementation that also exposes its <code>.k</code> grid.</p>
+<p><code>EE2NonLinearPerturbations</code> needs both the full <code>Perturbations</code>
+interface (to call <code>matter_power_spectrum</code>/<code>growth_factor</code>/etc. on its
+<code>linearperturbations</code>) and the wavenumber grid that instance was built
+on, which <code>Perturbations</code> deliberately omits.</p>
+
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="#api-reference">API Reference</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology.EE2_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;EE2_cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;EE2NonLinearPerturbations</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.k" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">k</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.k" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">k</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Wavenumber grid in 1/Mpc.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.background" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">background</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.background" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">background</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Store background obj.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for given redshifts and wavenumbers.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_rate</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth rate for given redshifts and wavenumbers.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve the matter power spectrum.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieves matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma8_0</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve sigma8 at z=0.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h4 id="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">EE2NonLinearPerturbations</span>
 
 
 <a href="#cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">EE2NonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">EE2NonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK">LinearPerturbationsWithK</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5414,7 +5745,7 @@ ks : array_like
 
 
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">HMemuNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">HMemuNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid">WithLinearSpectrumGrid</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5786,7 +6117,7 @@ ks : array_like
 
 
 <a href="#cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">MGemuNonlinearBoost</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(gravity_model)">gravity_model</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(mgpars)">mgpars</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(high_z_policy)">high_z_policy</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">'taper'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(z_decay)">z_decay</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">MGemuNonlinearBoost</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithWavenumberGrid">WithWavenumberGrid</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(gravity_model)">gravity_model</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(mgpars)">mgpars</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(high_z_policy)">high_z_policy</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">'taper'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost(z_decay)">z_decay</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5803,8 +6134,9 @@ ks : array_like
 
 
 <details class="linearperturbations-" open>
-  <summary>Perturbations</summary>
-  <p>A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline.</p>
+  <summary>WithWavenumberGrid</summary>
+  <p>A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline;
+only its <code>.k</code> wavenumber grid is used here.</p>
 </details>
 
 <details class="zs-" open>
@@ -6108,7 +6440,7 @@ the required format.</p>
 
 
 <a href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">TabulatedNonlinearBoost</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(boost_file)">boost_file</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(z_cols)">z_cols</span></span><span class="p">:</span> <span class="n"><span title="typing.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">],</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(high_z_policy)">high_z_policy</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">'taper'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(z_decay)">z_decay</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">TabulatedNonlinearBoost</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithWavenumberGrid">WithWavenumberGrid</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(boost_file)">boost_file</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(z_cols)">z_cols</span></span><span class="p">:</span> <span class="n"><span title="typing.Sequence">Sequence</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">],</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(high_z_policy)">high_z_policy</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">'taper'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost(z_decay)">z_decay</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6131,8 +6463,9 @@ the required format.</p>
 
 
 <details class="linearperturbations-" open>
-  <summary>Perturbations</summary>
-  <p>A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline.</p>
+  <summary>WithWavenumberGrid</summary>
+  <p>A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline;
+only its <code>.k</code> wavenumber grid is used here.</p>
 </details>
 
 <details class="zs-" open>
@@ -6909,7 +7242,7 @@ ks : array_like or None
 
 
 <a href="#cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">BACCOemuNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(nonlinear_model_name)">nonlinear_model_name</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="s1">'Arico2023'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(baryonic_boost)">baryonic_boost</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(baryonic_model_name)">baryonic_model_name</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="s1">'Burger2025'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M_c)">M_c</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(eta)">eta</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(beta)">beta</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M1_z0_cen)">M1_z0_cen</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(theta_out)">theta_out</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(theta_inn)">theta_inn</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M_inn)">M_inn</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">BACCOemuNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(nonlinear_model_name)">nonlinear_model_name</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">'Arico2023'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(baryonic_boost)">baryonic_boost</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(baryonic_model_name)">baryonic_model_name</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">'Burger2025'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M_c)">M_c</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(eta)">eta</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(beta)">beta</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M1_z0_cen)">M1_z0_cen</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(theta_out)">theta_out</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(theta_inn)">theta_inn</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M_inn)">M_inn</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -10210,44 +10543,12 @@ emulator-based NonLinPerturbations classes).</p>
       </li>
       <li class="doc doc-backlink">
             <span class="doc doc-backlink-crumb">
-      <a href="#cloelib.cosmology.jax_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;jax_cosmology</a>
-  </span>
-
-            <ul class="doc doc-backlink-list">
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb last">
-      <a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;JAXLinearPerturbations</a>
-  </span>
-
-      </li>
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb last">
-      <a href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;JAXNonLinearPerturbations</a>
-  </span>
-
-      </li>
-  </ul>
-
-      </li>
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb">
       <a href="#cloelib.cosmology.mochi_class_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;mochi_class_cosmology</a>
   </span>
 
-            <ul class="doc doc-backlink-list">
-      <li class="doc doc-backlink">
             <span class="doc doc-backlink-crumb last">
       <a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;mochiCLASSLinearPerturbations</a>
   </span>
-
-      </li>
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb last">
-      <a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;mochiCLASSNonLinearPerturbations</a>
-  </span>
-
-      </li>
-  </ul>
 
       </li>
   </ul>
@@ -10832,12 +11133,16 @@ emulator-based NonLinPerturbations classes).</p>
 
 
 <a href="#cloelib.cosmology.cosmology.Background.Omega_m" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_m</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmology.Background.Omega_m(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_m</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmology.Background.Omega_m(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Compute the matter density as a function of redshift.</p>
+<p>A bare Python float is also accepted for a single redshift (e.g.
+<code>Omega_m(0.0)</code> to get Omega_m0), matching the convention used
+throughout cloelib's observables code; implementations return a
+scalar in that case.</p>
 
           
 
@@ -11025,26 +11330,6 @@ they exist.</p>
   </span>
 
             <ul class="doc doc-backlink-list">
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb">
-      <a href="#cloelib.cosmology.EE2_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;EE2_cosmology</a>
-  </span>
-
-            <span class="doc doc-backlink-crumb last">
-      <a href="#cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;EE2NonLinearPerturbations</a>
-  </span>
-
-      </li>
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb">
-      <a href="#cloelib.cosmology.HMcode2020Emu_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;HMcode2020Emu_cosmology</a>
-  </span>
-
-            <span class="doc doc-backlink-crumb last">
-      <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;HMemuNonLinearPerturbations</a>
-  </span>
-
-      </li>
       <li class="doc doc-backlink">
             <span class="doc doc-backlink-crumb">
       <a href="#cloelib.cosmology.baccoemu_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;baccoemu_cosmology</a>
@@ -11300,6 +11585,314 @@ they exist.</p>
     </div>
 
 </div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="cloelib.cosmology.cosmology.WithWavenumberGrid" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">WithWavenumberGrid</span>
+
+
+<a href="#cloelib.cosmology.cosmology.WithWavenumberGrid" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithWavenumberGrid" id="mermaid-link-cloelib.cosmology.cosmology.WithWavenumberGrid"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.cosmology.cosmology.WithWavenumberGrid">
+              flowchart TD
+              cloelib.cosmology.cosmology.WithWavenumberGrid[WithWavenumberGrid]
+
+              
+
+              click cloelib.cosmology.cosmology.WithWavenumberGrid href "" "cloelib.cosmology.cosmology.WithWavenumberGrid"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.cosmology.cosmology.WithWavenumberGrid');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Structural protocol for a <code>linearperturbations</code>-like object exposing a <code>k</code> grid.</p>
+<p><code>.k</code> is deliberately not part of the <code>Perturbations</code> protocol (see its
+docstring). Boost-style implementations that need the wavenumber grid
+their <code>linearperturbations</code> argument was built on (e.g.
+<code>EE2NonLinearPerturbations</code>, <code>MGemuNonlinearBoost</code>,
+<code>TabulatedNonlinearBoost</code>) type that argument against this narrower
+protocol instead of the full <code>Perturbations</code>, since not every
+<code>Perturbations</code> implementation sets <code>.k</code>.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.cosmology.WithWavenumberGrid.k" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">k</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.cosmology.WithWavenumberGrid.k" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">k</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Wavenumber grid in 1/Mpc.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="cloelib.cosmology.cosmology.WithLinearSpectrumGrid" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">WithLinearSpectrumGrid</span>
+
+
+<a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid" id="mermaid-link-cloelib.cosmology.cosmology.WithLinearSpectrumGrid"></a>
+                  <a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithWavenumberGrid" id="mermaid-link-cloelib.cosmology.cosmology.WithWavenumberGrid"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.cosmology.cosmology.WithLinearSpectrumGrid">
+              flowchart TD
+              cloelib.cosmology.cosmology.WithLinearSpectrumGrid[WithLinearSpectrumGrid]
+              cloelib.cosmology.cosmology.WithWavenumberGrid[WithWavenumberGrid]
+
+                              cloelib.cosmology.cosmology.WithWavenumberGrid --> cloelib.cosmology.cosmology.WithLinearSpectrumGrid
+                
+
+
+              click cloelib.cosmology.cosmology.WithLinearSpectrumGrid href "" "cloelib.cosmology.cosmology.WithLinearSpectrumGrid"
+              click cloelib.cosmology.cosmology.WithWavenumberGrid href "" "cloelib.cosmology.cosmology.WithWavenumberGrid"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.cosmology.cosmology.WithLinearSpectrumGrid');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Structural protocol for a <code>linearperturbations</code> exposing cached P(k, z) grids.</p>
+<p>Used by implementations (e.g. <code>HMemuNonLinearPerturbations</code>) that stitch
+a cached low-k linear tail onto a high-k nonlinear/emulated spectrum,
+and so need direct array access to the grid <code>linearperturbations</code> was
+built on rather than going through <code>matter_power_spectrum</code>/
+<code>matter_power_spectrum_cb</code>. <code>.z</code>/<code>.Pk</code>/<code>.Pk_cb</code> are, like <code>.k</code>,
+deliberately not part of the <code>Perturbations</code> protocol.</p>
+
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="#api-reference">API Reference</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology.HMcode2020Emu_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;HMcode2020Emu_cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;HMemuNonLinearPerturbations</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.cosmology.WithLinearSpectrumGrid.z" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">z</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid.z" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">z</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Redshift grid the linear spectrum was computed on.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.cosmology.WithLinearSpectrumGrid.Pk" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">Pk</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid.Pk" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">Pk</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Cached linear total-matter power spectrum on the (z, k) grid.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.cosmology.WithLinearSpectrumGrid.Pk_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">Pk_cb</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid.Pk_cb" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">Pk_cb</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Cached linear cdm+baryon power spectrum on the (z, k) grid.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.cosmology.WithLinearSpectrumGrid.k" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">k</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid.k" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">k</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Wavenumber grid in 1/Mpc.</p>
+
+          
+    </div>
+
+</div>
+
+
+
 
 
 
@@ -13225,7 +13818,7 @@ logT_AGN in [7.3,   8.5]  (nonlinear and sigma8/fsigma8 emulators only)</p>
 
 
 <a href="#cloelib.cosmology.cosmopower_jax_cosmology.emulator_data" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">emulator_data</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data(filename)">filename</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data(zenodo_url)">zenodo_url</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">emulator_data</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data(filename)">filename</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data(zenodo_url)">zenodo_url</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15166,6 +15759,44 @@ If not provided, it will be inferred from N_mnu such that N_eff = 3.044.</p>
           
 
 
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="#api-reference">API Reference</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology.jax_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;jax_cosmology</a>
+  </span>
+
+            <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb last">
+      <a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;JAXLinearPerturbations</a>
+  </span>
+
+      </li>
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb last">
+      <a href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;JAXNonLinearPerturbations</a>
+  </span>
+
+      </li>
+  </ul>
+
+      </li>
+  </ul>
+
+  </div>
+
+
+
 
 
 
@@ -15745,7 +16376,7 @@ all call this as <code>Omega_m(0.0)</code>.</p>
 
 
 <a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">JAXLinearPerturbations</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">JAXLinearPerturbations</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXBackground">JAXBackground</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15760,10 +16391,14 @@ all call this as <code>Omega_m(0.0)</code>.</p>
     <ul>
         <li class="doc-section-item field-body">
 <h5 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations(background)" class="doc doc-heading doc-heading-parameter">              <b><code>background</code></b>
-<a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations(background)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></code>)
+<a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations(background)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXBackground">JAXBackground</a></code>)
           –
           <div class="doc-md-description">
-            <p>A Background instance.</p>
+            <p>A JAX background instance. Must be a
+<code>JAXBackground</code> (not just any <code>Background</code>) since the growth
+ODE solved here relies on JAX-specific helpers
+(<code>Omega_m_a</code>, <code>Omega_de_a</code>, <code>w_a</code>) that aren't part of the
+general <code>Background</code> protocol.</p>
           </div>
         </li>
     </ul>
@@ -16014,7 +16649,7 @@ formulae of :cite:<code>1998:EisensteinHu</code></p>
 
 
 <a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16099,7 +16734,7 @@ formulae of :cite:<code>1998:EisensteinHu</code></p>
 
 
 <a href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">JAXNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">JAXNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXBackground">JAXBackground</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17904,6 +18539,33 @@ If not provided, it will be inferred from N_mnu such that N_eff = 3.044.</p>
           
 
 
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="#api-reference">API Reference</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology.mochi_class_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;mochi_class_cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;mochiCLASSNonLinearPerturbations</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
+
+
 
 
 
@@ -18685,7 +19347,7 @@ field, and even if 'output' was not passed or left blank.</p>
 
 
 <a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">mochiCLASSNonLinearPerturbations</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(linearperturbations)">linearperturbations</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="object">object</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(redshifts)">redshifts</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(nonlinear_model)">nonlinear_model</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(hmcode_version)">hmcode_version</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(log10TAGN)">log10TAGN</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">mochiCLASSNonLinearPerturbations</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSBackground">mochiCLASSBackground</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(linearperturbations)">linearperturbations</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="object">object</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(redshifts)">redshifts</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(nonlinear_model)">nonlinear_model</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(hmcode_version)">hmcode_version</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(log10TAGN)">log10TAGN</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18700,7 +19362,7 @@ field, and even if 'output' was not passed or left blank.</p>
     <ul>
         <li class="doc-section-item field-body">
 <h5 id="cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(background)" class="doc doc-heading doc-heading-parameter">              <b><code>background</code></b>
-<a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(background)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></code>)
+<a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(background)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSBackground">mochiCLASSBackground</a></code>)
           –
           <div class="doc-md-description">
             <p>Background cosmology object.</p>
@@ -19260,44 +19922,12 @@ members: false</p>
       </li>
       <li class="doc doc-backlink">
             <span class="doc doc-backlink-crumb">
-      <a href="#cloelib.cosmology.jax_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;jax_cosmology</a>
-  </span>
-
-            <ul class="doc doc-backlink-list">
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb last">
-      <a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;JAXLinearPerturbations</a>
-  </span>
-
-      </li>
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb last">
-      <a href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;JAXNonLinearPerturbations</a>
-  </span>
-
-      </li>
-  </ul>
-
-      </li>
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb">
       <a href="#cloelib.cosmology.mochi_class_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;mochi_class_cosmology</a>
   </span>
 
-            <ul class="doc doc-backlink-list">
-      <li class="doc doc-backlink">
             <span class="doc doc-backlink-crumb last">
       <a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;mochiCLASSLinearPerturbations</a>
   </span>
-
-      </li>
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb last">
-      <a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;mochiCLASSNonLinearPerturbations</a>
-  </span>
-
-      </li>
-  </ul>
 
       </li>
   </ul>
@@ -19882,12 +20512,16 @@ members: false</p>
 
 
 <a href="#cloelib.cosmology.cosmology.Background.Omega_m" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_m</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmology.Background.Omega_m(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_m</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmology.Background.Omega_m(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Compute the matter density as a function of redshift.</p>
+<p>A bare Python float is also accepted for a single redshift (e.g.
+<code>Omega_m(0.0)</code> to get Omega_m0), matching the convention used
+throughout cloelib's observables code; implementations return a
+scalar in that case.</p>
 
           
 
@@ -20075,26 +20709,6 @@ they exist.</p>
   </span>
 
             <ul class="doc doc-backlink-list">
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb">
-      <a href="#cloelib.cosmology.EE2_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;EE2_cosmology</a>
-  </span>
-
-            <span class="doc doc-backlink-crumb last">
-      <a href="#cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;EE2NonLinearPerturbations</a>
-  </span>
-
-      </li>
-      <li class="doc doc-backlink">
-            <span class="doc doc-backlink-crumb">
-      <a href="#cloelib.cosmology.HMcode2020Emu_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;HMcode2020Emu_cosmology</a>
-  </span>
-
-            <span class="doc doc-backlink-crumb last">
-      <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;HMemuNonLinearPerturbations</a>
-  </span>
-
-      </li>
       <li class="doc doc-backlink">
             <span class="doc doc-backlink-crumb">
       <a href="#cloelib.cosmology.baccoemu_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;baccoemu_cosmology</a>
@@ -20350,6 +20964,314 @@ they exist.</p>
     </div>
 
 </div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="cloelib.cosmology.cosmology.WithWavenumberGrid" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">WithWavenumberGrid</span>
+
+
+<a href="#cloelib.cosmology.cosmology.WithWavenumberGrid" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithWavenumberGrid" id="mermaid-link-cloelib.cosmology.cosmology.WithWavenumberGrid"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.cosmology.cosmology.WithWavenumberGrid">
+              flowchart TD
+              cloelib.cosmology.cosmology.WithWavenumberGrid[WithWavenumberGrid]
+
+              
+
+              click cloelib.cosmology.cosmology.WithWavenumberGrid href "" "cloelib.cosmology.cosmology.WithWavenumberGrid"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.cosmology.cosmology.WithWavenumberGrid');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Structural protocol for a <code>linearperturbations</code>-like object exposing a <code>k</code> grid.</p>
+<p><code>.k</code> is deliberately not part of the <code>Perturbations</code> protocol (see its
+docstring). Boost-style implementations that need the wavenumber grid
+their <code>linearperturbations</code> argument was built on (e.g.
+<code>EE2NonLinearPerturbations</code>, <code>MGemuNonlinearBoost</code>,
+<code>TabulatedNonlinearBoost</code>) type that argument against this narrower
+protocol instead of the full <code>Perturbations</code>, since not every
+<code>Perturbations</code> implementation sets <code>.k</code>.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="cloelib.cosmology.cosmology.WithWavenumberGrid.k" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">k</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.cosmology.WithWavenumberGrid.k" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">k</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Wavenumber grid in 1/Mpc.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="cloelib.cosmology.cosmology.WithLinearSpectrumGrid" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">WithLinearSpectrumGrid</span>
+
+
+<a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid" id="mermaid-link-cloelib.cosmology.cosmology.WithLinearSpectrumGrid"></a>
+                  <a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithWavenumberGrid" id="mermaid-link-cloelib.cosmology.cosmology.WithWavenumberGrid"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.cosmology.cosmology.WithLinearSpectrumGrid">
+              flowchart TD
+              cloelib.cosmology.cosmology.WithLinearSpectrumGrid[WithLinearSpectrumGrid]
+              cloelib.cosmology.cosmology.WithWavenumberGrid[WithWavenumberGrid]
+
+                              cloelib.cosmology.cosmology.WithWavenumberGrid --> cloelib.cosmology.cosmology.WithLinearSpectrumGrid
+                
+
+
+              click cloelib.cosmology.cosmology.WithLinearSpectrumGrid href "" "cloelib.cosmology.cosmology.WithLinearSpectrumGrid"
+              click cloelib.cosmology.cosmology.WithWavenumberGrid href "" "cloelib.cosmology.cosmology.WithWavenumberGrid"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.cosmology.cosmology.WithLinearSpectrumGrid');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Structural protocol for a <code>linearperturbations</code> exposing cached P(k, z) grids.</p>
+<p>Used by implementations (e.g. <code>HMemuNonLinearPerturbations</code>) that stitch
+a cached low-k linear tail onto a high-k nonlinear/emulated spectrum,
+and so need direct array access to the grid <code>linearperturbations</code> was
+built on rather than going through <code>matter_power_spectrum</code>/
+<code>matter_power_spectrum_cb</code>. <code>.z</code>/<code>.Pk</code>/<code>.Pk_cb</code> are, like <code>.k</code>,
+deliberately not part of the <code>Perturbations</code> protocol.</p>
+
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="#api-reference">API Reference</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology.HMcode2020Emu_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;HMcode2020Emu_cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;HMemuNonLinearPerturbations</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="cloelib.cosmology.cosmology.WithLinearSpectrumGrid.z" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">z</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid.z" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">z</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Redshift grid the linear spectrum was computed on.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="cloelib.cosmology.cosmology.WithLinearSpectrumGrid.Pk" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">Pk</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid.Pk" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">Pk</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Cached linear total-matter power spectrum on the (z, k) grid.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="cloelib.cosmology.cosmology.WithLinearSpectrumGrid.Pk_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">Pk_cb</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid.Pk_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">Pk_cb</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Cached linear cdm+baryon power spectrum on the (z, k) grid.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="cloelib.cosmology.cosmology.WithLinearSpectrumGrid.k" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">k</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid.k" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">k</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Wavenumber grid in 1/Mpc.</p>
+
+          
+    </div>
+
+</div>
+
+
+
 
 
 
@@ -23402,6 +24324,44 @@ If not provided, it will be inferred from N_mnu such that N_eff = 3.044.</p>
           
 
 
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="#api-reference">API Reference</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology.jax_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;jax_cosmology</a>
+  </span>
+
+            <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb last">
+      <a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;JAXLinearPerturbations</a>
+  </span>
+
+      </li>
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb last">
+      <a href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;JAXNonLinearPerturbations</a>
+  </span>
+
+      </li>
+  </ul>
+
+      </li>
+  </ul>
+
+  </div>
+
+
+
 
 
 
@@ -23981,7 +24941,7 @@ all call this as <code>Omega_m(0.0)</code>.</p>
 
 
 <a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">JAXLinearPerturbations</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">JAXLinearPerturbations</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXBackground">JAXBackground</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -23996,10 +24956,14 @@ all call this as <code>Omega_m(0.0)</code>.</p>
     <ul>
         <li class="doc-section-item field-body">
 <h4 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations(background)" class="doc doc-heading doc-heading-parameter">              <b><code>background</code></b>
-<a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations(background)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></code>)
+<a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations(background)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXBackground">JAXBackground</a></code>)
           –
           <div class="doc-md-description">
-            <p>A Background instance.</p>
+            <p>A JAX background instance. Must be a
+<code>JAXBackground</code> (not just any <code>Background</code>) since the growth
+ODE solved here relies on JAX-specific helpers
+(<code>Omega_m_a</code>, <code>Omega_de_a</code>, <code>w_a</code>) that aren't part of the
+general <code>Background</code> protocol.</p>
           </div>
         </li>
     </ul>
@@ -24250,7 +25214,7 @@ formulae of :cite:<code>1998:EisensteinHu</code></p>
 
 
 <a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">],</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(hubble_units)">hubble_units</span></span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum(k_hunit)">k_hunit</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -24335,7 +25299,7 @@ formulae of :cite:<code>1998:EisensteinHu</code></p>
 
 
 <a href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">JAXNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">JAXNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXBackground">JAXBackground</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -26804,7 +27768,7 @@ logT_AGN in [7.3,   8.5]  (nonlinear and sigma8/fsigma8 emulators only)</p>
 
 
 <a href="#cloelib.cosmology.cosmopower_jax_cosmology.emulator_data" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">emulator_data</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data(filename)">filename</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data(zenodo_url)">zenodo_url</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">emulator_data</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data(filename)">filename</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmopower_jax_cosmology.emulator_data(zenodo_url)">zenodo_url</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -27308,7 +28272,7 @@ heading_level: 3</p>
 
 
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">HMemuNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">HMemuNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithLinearSpectrumGrid">WithLinearSpectrumGrid</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations(log10TAGN)">log10TAGN</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -27837,6 +28801,33 @@ If not provided, it will be inferred from N_mnu such that N_eff = 3.044.</p>
     </ul>
 
           
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="#api-reference">API Reference</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology.mochi_class_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;mochi_class_cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;mochiCLASSNonLinearPerturbations</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
 
 
 
@@ -28620,7 +29611,7 @@ field, and even if 'output' was not passed or left blank.</p>
 
 
 <a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">mochiCLASSNonLinearPerturbations</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(linearperturbations)">linearperturbations</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="object">object</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(redshifts)">redshifts</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(nonlinear_model)">nonlinear_model</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(hmcode_version)">hmcode_version</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(log10TAGN)">log10TAGN</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">mochiCLASSNonLinearPerturbations</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(background)">background</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSBackground">mochiCLASSBackground</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(linearperturbations)">linearperturbations</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="object">object</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(redshifts)">redshifts</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(nonlinear_model)">nonlinear_model</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(hmcode_version)">hmcode_version</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(log10TAGN)">log10TAGN</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -28635,7 +29626,7 @@ field, and even if 'output' was not passed or left blank.</p>
     <ul>
         <li class="doc-section-item field-body">
 <h4 id="cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(background)" class="doc doc-heading doc-heading-parameter">              <b><code>background</code></b>
-<a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(background)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></code>)
+<a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(background)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSBackground">mochiCLASSBackground</a></code>)
           –
           <div class="doc-md-description">
             <p>Background cosmology object.</p>
@@ -29019,12 +30010,277 @@ heading_level: 3</p>
 
 
 
+<h3 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">LinearPerturbationsWithK</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK" id="mermaid-link-cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK"></a>
+                  <a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations" id="mermaid-link-cloelib.cosmology.cosmology.Perturbations"></a>
+                  <a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.WithWavenumberGrid" id="mermaid-link-cloelib.cosmology.cosmology.WithWavenumberGrid"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK">
+              flowchart TD
+              cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK[LinearPerturbationsWithK]
+              cloelib.cosmology.cosmology.Perturbations[Perturbations]
+              cloelib.cosmology.cosmology.WithWavenumberGrid[WithWavenumberGrid]
+
+                              cloelib.cosmology.cosmology.Perturbations --> cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK
+                
+                cloelib.cosmology.cosmology.WithWavenumberGrid --> cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK
+                
+
+
+              click cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK href "" "cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK"
+              click cloelib.cosmology.cosmology.Perturbations href "" "cloelib.cosmology.cosmology.Perturbations"
+              click cloelib.cosmology.cosmology.WithWavenumberGrid href "" "cloelib.cosmology.cosmology.WithWavenumberGrid"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>A <code>Perturbations</code> implementation that also exposes its <code>.k</code> grid.</p>
+<p><code>EE2NonLinearPerturbations</code> needs both the full <code>Perturbations</code>
+interface (to call <code>matter_power_spectrum</code>/<code>growth_factor</code>/etc. on its
+<code>linearperturbations</code>) and the wavenumber grid that instance was built
+on, which <code>Perturbations</code> deliberately omits.</p>
+
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="#api-reference">API Reference</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#cloelib.cosmology.EE2_cosmology"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;EE2_cosmology</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;EE2NonLinearPerturbations</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.k" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">k</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.k" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">k</span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Wavenumber grid in 1/Mpc.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.background" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">background</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.background" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">background</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Store background obj.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_factor</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth factor for given redshifts and wavenumbers.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">growth_rate</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the growth rate for given redshifts and wavenumbers.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve the matter power spectrum.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum_cb(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.matter_power_spectrum_cb(ks)">ks</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieves matter power spectrum of cold dark matter + baryons (no neutrinos).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma8_0</span>
+
+
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma8_0</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve sigma8 at z=0.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h3 id="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">EE2NonLinearPerturbations</span>
 
 
 <a href="#cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">EE2NonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">EE2NonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK">LinearPerturbationsWithK</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.EE2NonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -29747,7 +31003,7 @@ heading_level: 3</p>
 
 
 <a href="#cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">BACCOemuNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(nonlinear_model_name)">nonlinear_model_name</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="s1">'Arico2023'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(baryonic_boost)">baryonic_boost</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(baryonic_model_name)">baryonic_model_name</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="s1">'Burger2025'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M_c)">M_c</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(eta)">eta</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(beta)">beta</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M1_z0_cen)">M1_z0_cen</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(theta_out)">theta_out</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(theta_inn)">theta_inn</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M_inn)">M_inn</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">BACCOemuNonLinearPerturbations</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(background)">background</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Background">Background</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(linearperturbations)">linearperturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(redshifts)">redshifts</span></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(nonlinear_model_name)">nonlinear_model_name</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">'Arico2023'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(baryonic_boost)">baryonic_boost</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(baryonic_model_name)">baryonic_model_name</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">'Burger2025'</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M_c)">M_c</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(eta)">eta</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(beta)">beta</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M1_z0_cen)">M1_z0_cen</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(theta_out)">theta_out</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(theta_inn)">theta_inn</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.baccoemu_cosmology.BACCOemuNonLinearPerturbations(M_inn)">M_inn</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

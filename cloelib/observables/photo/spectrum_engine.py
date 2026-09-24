@@ -157,3 +157,31 @@ def get_effective_pk(c1, c2, bank: SpectraBank):
             if pk is not None:
                 return pk
     return None
+
+
+def compute_effective_pk(c1, c2, matter_pk, ks, zs):
+    """One-call convenience wrapper: `get_effective_pk` for a pairing that
+    doesn't already have a `SpectraBank` lying around.
+
+    `AngularTwoPoint._compute_cl_generalized` builds a `SpectraBank` and
+    calls `get_effective_pk` per contribution pair as part of computing a
+    full `Cl`, but that bank is a local variable, not something callers can
+    get at directly - anyone who wants just the effective P(k,z) itself
+    (e.g. to plot or validate it, without integrating a full `Cl`) would
+    otherwise have to reconstruct a `SpectraBank` by hand. This does that
+    reconstruction for you, in one call:
+
+    ```python
+    P_II = compute_effective_pk(tracer.ia, tracer.ia, matter_pk, ks, zs)
+    P_deltaI = compute_effective_pk(tracer.ia, tracer.lensing, matter_pk, ks, zs)
+    ```
+
+    `matter_pk` must already be evaluated on `(zs, ks)` (e.g.
+    `perturbations.matter_power_spectrum(zs, ks)`) - this doesn't compute
+    it for you, since which `perturbations` object to use is caller
+    context this function has no way to guess. Returns `None` for any
+    pairing with nothing special to say (e.g. two plain, non-IA
+    contributions) - same as `get_effective_pk`.
+    """
+    bank = SpectraBank(matter_pk, ks, zs)
+    return get_effective_pk(c1, c2, bank)

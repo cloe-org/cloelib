@@ -55,7 +55,11 @@ from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
     Contribution,
 )
-from cloelib.observables.photo.spectrum_engine import SpectraBank, SpectrumRequest
+from cloelib.observables.photo.spectrum_engine import (
+    SpectraBank,
+    SpectrumRequest,
+    compute_effective_pk,
+)
 
 # General imports
 import jax.numpy as np  # type: ignore
@@ -119,6 +123,29 @@ _GI_KERNELS = ("tatt_A_0_0E", "tatt_C_0_0E", "tatt_A_0_E2", "tatt_B_0_E2")
 _ALL_KERNELS = _EE_ONLY_KERNELS + _SHARED_KERNELS + _BB_ONLY_KERNELS
 
 
+def _is_known_linear_perturbations(perturbations) -> bool:
+    """Whether `perturbations` is itself one of cloelib's own linear-only
+    backends (`HMemuLinearPerturbations`, `CAMBLinearPerturbations`, ...).
+
+    Identified by cloelib's own `*LinearPerturbations` naming convention
+    (consistently followed across every cosmology backend module) rather
+    than an `isinstance` check against every concrete class: several
+    backends (CAMB, CLASS, BACCOemu, MGCLASS, mochi_class, hi_class, ...)
+    are optional dependencies, so importing all of them here just to check
+    would make this module require every optional extra. Used only as the
+    fallback when `perturbations` has no `.linearperturbations` attribute
+    of its own - see `PBJTATTLoopComputer.__init__`.
+
+    Deliberately not a plain `.endswith("LinearPerturbations")`: a
+    `*NonLinearPerturbations` class name (e.g. `CAMBNonLinearPerturbations`)
+    also ends with that suffix (`"NonLinearPerturbations"` itself ends with
+    `"LinearPerturbations"`) - excluding any name containing `"NonLinear"`
+    is what actually distinguishes the two conventions.
+    """
+    name = type(perturbations).__name__
+    return name.endswith("LinearPerturbations") and "NonLinear" not in name
+
+
 class PBJTATTLoopComputer:
     r"""FAST-PT-backed computer for the ten TATT one-loop kernels.
 
@@ -142,16 +169,25 @@ class PBJTATTLoopComputer:
     that's built *from* a separate linear one sets it -
     `HMemuNonLinearPerturbations`, `EE2NonLinearPerturbations`,
     `BACCOemuNonLinearPerturbations`, `EmantisFofrNonLinearPerturbations`,
-    `JAXNonLinearPerturbations`), else `perturbations` itself (assumed
-    already linear - true if you pass a `*LinearPerturbations` object
-    directly). No separate linear-perturbations variable to track and pass
-    alongside the tracer's own `perturbations`.
+    `JAXNonLinearPerturbations`), else `perturbations` itself *if and only
+    if* it's itself a recognized `*LinearPerturbations` backend (see
+    `_is_known_linear_perturbations`) - raises `ValueError` otherwise (PR
+    #569 review): the absence of a `.linearperturbations` attribute does
+    not by itself mean the object passed in *is* linear, and silently
+    treating an unrecognized nonlinear backend as linear would be a
+    physical error, not a numerical one (FAST-PT would still return
+    finite-looking, wrong spectra) - the kind that shouldn't fail silently.
+    `CAMBNonLinearPerturbations` is the concrete case this currently
+    excludes: it does not set `.linearperturbations` (its own
+    `matter_power_spectrum` is always nonlinear), so it now raises here
+    instead of being misused - pass `CAMBLinearPerturbations` directly
+    instead.
 
-    Known gap: `CAMBNonLinearPerturbations` does not (yet) set
-    `.linearperturbations`, and its own `matter_power_spectrum` is always
-    nonlinear - passing one here silently uses the *nonlinear* Pk as
-    FAST-PT input instead of raising, which is physically wrong. Not
-    fixed here; flagged rather than guessed at.
+    TODO (PR #569 review): standardize access to the corresponding linear
+    perturbations object across nonlinear cosmology backends (e.g. also
+    wiring it up for `CAMBNonLinearPerturbations`), so PT-based observables
+    can retrieve a linear P(k,z) through one common interface instead of
+    this getattr-plus-name-check fallback.
 
     FAST-PT requires its input k-grid to be evenly log-spaced (an FFTLog
     requirement); `TATTContribution`'s own `ks` (whatever grid the calling
@@ -191,10 +227,25 @@ class PBJTATTLoopComputer:
             )
         self._fpt = fpt
         # See class docstring: use the nonlinear backend's own linear
-        # source if it has one, else assume `perturbations` is linear.
-        self.linear_perturbations = getattr(
-            perturbations, "linearperturbations", perturbations
-        )
+        # source if it has one; else, only accept `perturbations` itself if
+        # it's a recognized linear backend - fail loudly otherwise rather
+        # than silently treating an unrecognized object as linear.
+        linear = getattr(perturbations, "linearperturbations", None)
+        if linear is not None:
+            self.linear_perturbations = linear
+        elif _is_known_linear_perturbations(perturbations):
+            self.linear_perturbations = perturbations
+        else:
+            raise ValueError(
+                "PBJTATTLoopComputer requires a linear matter-power-"
+                f"spectrum source, but {type(perturbations).__name__!r} "
+                "exposes no `.linearperturbations` attribute and isn't "
+                "itself a recognized *LinearPerturbations backend. Pass a "
+                "linear perturbations object directly (e.g. "
+                "CAMBLinearPerturbations), or a nonlinear backend that "
+                "sets `.linearperturbations` (e.g. "
+                "HMemuNonLinearPerturbations)."
+            )
         self._cached_ks: Optional[_numpy.ndarray] = None
         self._cached_kernels: Optional[Dict[str, _numpy.ndarray]] = None
 
@@ -279,17 +330,32 @@ class PBJTATTLoopComputer:
         return _compute
 
 
-def _growth_factor_1d(perturbations, z):
+def _growth_factor_1d(perturbations, z, k_pivot_hmpc: float = 0.03):
     """D(z) as a 1D array, robust to backend-dependent `growth_factor` shape.
 
     Same handling `ShearTracer.get_window_IA` uses: some
     backends (e.g. CAMB) return D(z, k) with an explicit k-axis; others
     (the JAX backends) ignore `ks` and return a scale-independent D(z), and
     don't set a `.k` attribute at all.
+
+    When a k-axis is present, picks the tabulated k closest to a fixed
+    physical pivot scale (`k_pivot_hmpc`, in h/Mpc, converted to the
+    backend's own Mpc^-1 units via `background.h`) rather than a fixed
+    grid index - growth is mildly scale-dependent once neutrinos are
+    massive, and a fixed grid index (e.g. "index 1") silently drifts to a
+    different physical k, and hence a slightly different D(z), if the
+    tabulated k-grid's resolution or minimum changes. Matches CosmoSIS's
+    own growth-pivot convention in tatt_interface.py (its `k_h > 0.03`
+    cut), which otherwise disagrees with this one at the ~0.1% level for
+    m_nu > 0.
     """
     ks = getattr(perturbations, "k", None)
     d_raw = perturbations.growth_factor(z, ks)
-    return d_raw[:, 1] if getattr(d_raw, "ndim", 1) == 2 else d_raw
+    if getattr(d_raw, "ndim", 1) != 2:
+        return d_raw
+    k_pivot = k_pivot_hmpc * perturbations.background.h
+    pivot_idx = int(_numpy.argmin(_numpy.abs(_numpy.asarray(ks) - k_pivot)))
+    return d_raw[:, pivot_idx]
 
 
 class TATTContribution(IntrinsicAlignmentContribution):
@@ -389,7 +455,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
 
     def _C1(self, zs):
         omega_m0 = self._tracer.background.Omega_m(0.0)
-        d = _growth_factor_1d(self._tracer.perturbations, zs)
+        d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
         return (
             -self.A1
             * self.C_IA
@@ -400,7 +466,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
 
     def _C2(self, zs):
         omega_m0 = self._tracer.background.Omega_m(0.0)
-        d = _growth_factor_1d(self._tracer.perturbations, zs)
+        d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
         return (
             5
             * self.A2
@@ -414,7 +480,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
         return self.b_TA * self._C1(zs)
 
     def _D4(self, zs):
-        return _growth_factor_1d(self._tracer.perturbations, zs) ** 4
+        return _growth_factor_1d(self._loop_computer.linear_perturbations, zs) ** 4
 
     def get_spectrum_requests(self):
         return tuple(
@@ -578,6 +644,53 @@ class ShearTracer:
         if self.ia is None:
             return (self.lensing,)
         return (self.lensing, self.ia)
+
+    def get_ia_effective_spectra(
+        self,
+        ks: Optional[np.ndarray] = None,
+        zs: Optional[np.ndarray] = None,
+    ) -> Dict[str, np.ndarray]:
+        """The IA model's own effective power spectra - `P_II(k,z)` and
+        `P_deltaI(k,z)` - the same grids `AngularTwoPoint._compute_cl_
+        generalized` integrates internally, exposed directly for
+        inspection/plotting/validation (e.g. against an external code's own
+        tabulated TATT spectra) without building a `SpectraBank` by hand.
+
+        Only meaningful for an IA model that defines its own effective
+        spectra (currently `TATTContribution`) - raises `ValueError` for
+        `ia_model=None` (no IA contribution) or `ia_model="NLA"` (whose
+        P_II/P_deltaI share the matter Pk's k-shape by construction: the
+        amplitude is applied directly inside `get_window_IA`, not exposed
+        as a separate grid).
+
+        Args:
+          ks: wavenumber grid to evaluate on. Defaults to
+            `self.perturbations.k`.
+          zs: redshift grid to evaluate on. Defaults to
+            `self.perturbations.z`.
+
+        Returns:
+          dict: `{"II": P_II(k,z), "deltaI": P_deltaI(k,z)}`, each shape
+            `(len(zs), len(ks))`.
+        """
+        if self.ia is None or getattr(self.ia, "get_effective_pk", None) is None:
+            ia_name = type(self.ia).__name__ if self.ia is not None else None
+            raise ValueError(
+                "get_ia_effective_spectra() needs an IA model that defines "
+                "its own effective power spectra (currently ia_model="
+                f"'TATT'); this tracer's ia is {ia_name!r}, which has no "
+                "separate P_II/P_deltaI - either no IA contribution at "
+                "all, or NLA, whose IA amplitude is applied directly "
+                "inside get_window_IA rather than as a separate "
+                "effective-Pk grid."
+            )
+        ks = self.perturbations.k if ks is None else ks
+        zs = self.perturbations.z if zs is None else zs
+        matter_pk = self.perturbations.matter_power_spectrum(zs, ks)
+        return {
+            "II": compute_effective_pk(self.ia, self.ia, matter_pk, ks, zs),
+            "deltaI": compute_effective_pk(self.ia, self.lensing, matter_pk, ks, zs),
+        }
 
     def _build_ia_contribution(self, ia_model, nuisance_params, tatt_loop_computer):
         """Resolve the `ia_model` constructor argument into a Contribution.

@@ -88,9 +88,31 @@ class _StubTATTLoopComputer:
     tests that don't need `fast-pt` installed - not part of the public API,
     and not a claim of physical accuracy. Real kernels come from
     `PBJTATTLoopComputer` (see the `_FASTPT_INSTALLED`-gated tests below).
+
+    `linear_perturbations` is required because `TATTContribution._C1`/
+    `_C2`/`_D4` read growth off `self._loop_computer.linear_perturbations`
+    (matching what the real `PBJTATTLoopComputer` exposes), not off the
+    tracer's own `perturbations`. Tests here pass the *same* `perturbations`
+    object the tracer itself uses (from `cosmo_setup`) - not a separately
+    "correct" linear one - so that growth is computed identically on both
+    sides of the NLA-equivalence checks below; this is an architecture
+    stub, not a claim that `cosmo_setup`'s perturbations are linear.
     """
 
+    def __init__(self, linear_perturbations):
+        self.linear_perturbations = linear_perturbations
+
     def compute(self, name):
+        if name == "tatt_linear_matter_pk":
+            # No real linear/nonlinear distinction in this stub - pass
+            # through whatever Pk the caller supplied, so tests that check
+            # the exact "reduces to NLA form" identity stay meaningful.
+            def _compute(matter_pk, ks, zs):
+                del ks, zs
+                return matter_pk
+
+            return _compute
+
         del name  # same kernel shape regardless of which one is requested
 
         def _compute(matter_pk, ks, zs):
@@ -149,7 +171,7 @@ def test_ia_model_tatt_builds_tatt_contribution(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(1, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
     assert isinstance(tracer.ia, TATTContribution)
     assert isinstance(tracer.ia, IntrinsicAlignmentContribution)
@@ -173,7 +195,9 @@ def test_unknown_ia_model_string_raises(cosmo_setup):
 
 
 def test_requirements_pruned_for_gi_vs_ii(cosmo_setup):
-    """TATT must request all 10 kernels for II, only the 4 GI ones for GI/gI.
+    """TATT must request all 10 kernels for II, only the 4 GI ones for GI/gI -
+    plus the tree-level linear-Pk request on both sides (needed by both the
+    II and GI tree-level terms alike).
 
     Mirrors toy_cloelib's TATT `pk_beta`-dropping test
     (`demo_syren_3x2pt.py`): the pruning is what makes the "avoid computing
@@ -188,7 +212,7 @@ def test_requirements_pruned_for_gi_vs_ii(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(1, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
     tatt = tracer.ia
     lensing = tracer.lensing
@@ -196,8 +220,8 @@ def test_requirements_pruned_for_gi_vs_ii(cosmo_setup):
     ii_names = {r.name for r in tatt.get_requirements_for_interaction(tatt)}
     gi_names = {r.name for r in tatt.get_requirements_for_interaction(lensing)}
 
-    assert ii_names == set(_ALL_KERNELS)
-    assert gi_names == set(_GI_KERNELS)
+    assert ii_names == set(_ALL_KERNELS) | {"tatt_linear_matter_pk"}
+    assert gi_names == set(_GI_KERNELS) | {"tatt_linear_matter_pk"}
     assert gi_names < ii_names  # strictly fewer terms for GI than II
 
     contribs = tracer.get_contributions()  # (lensing, ia)
@@ -220,7 +244,7 @@ def test_tatt_reduces_to_nla_form_when_a2_and_bta_zero(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(1, A2IA=0.0, bTA=0.0),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
     tatt = tracer.ia
 
@@ -258,7 +282,7 @@ def test_generalized_cl_finite_and_correctly_shaped(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
     pos_tracer = PositionsTracer(
         perturbations=perturbations,
@@ -287,6 +311,78 @@ def test_generalized_cl_finite_and_correctly_shaped(cosmo_setup):
 
     assert she_she[("SHE", "SHE", 1, 1)].array.shape == (2, 2, len(ells))
     assert pos_she[("POS", "SHE", 1, 1)].array.shape == (2, len(ells))
+
+
+def test_multiplicative_shear_bias_applied_in_generalized_path(cosmo_setup):
+    """PR #569 review: the generalized engine (`_compute_cl_generalized`)
+    integrates each Contribution's raw `compute_kernel` directly, bypassing
+    `ShearTracer.get_window` - where `1 + m_bias` is applied in the legacy
+    path - entirely. It must apply that calibration itself instead.
+    Checked directly for both SHE-SHE (`1+m_i` on both sides) and POS-SHE
+    (`1+m_i` on the shear side only), with a *different* `m_i` per bin so a
+    bug that applied one bin's `m` to every bin (rather than each tracer's
+    own per-bin `m_bias`) would be caught too.
+    """
+    perturbations, z = cosmo_setup
+    n_z_bins = 2
+    dndz = np.ones((n_z_bins, len(z)))
+    dndz /= np.trapezoid(dndz, z, axis=1)[:, None]
+    ells = np.logspace(1.0, np.log10(200), 6)
+    ks = np.asarray(perturbations.k)
+
+    m = {1: 0.2, 2: -0.1}
+
+    def _she_tracer(with_bias):
+        m_kwargs = {
+            f"multiplicative_bias_{i}": (m[i] if with_bias else 0.0) for i in (1, 2)
+        }
+        return ShearTracer(
+            perturbations=perturbations,
+            dndz=dndz,
+            z=z,
+            nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.4, bTA=-0.83, **m_kwargs),
+            ia_model="TATT",
+            tatt_loop_computer=_StubTATTLoopComputer(perturbations),
+        )
+
+    pos_tracer = PositionsTracer(
+        perturbations=perturbations,
+        dndz=dndz,
+        z=z,
+        galaxy_bias_model="per_bin",
+        nuisance_params={
+            **{f"dz_pos_{i + 1}": 0.0 for i in range(n_z_bins)},
+            **{f"width_pos_{i + 1}": 1.0 for i in range(n_z_bins)},
+            **{f"magnification_bias_{i + 1}": 0.0 for i in range(n_z_bins)},
+            "b1_photo_bin0": 1.1,
+            "b1_photo_bin1": 1.4,
+        },
+    )
+
+    she_unbiased = _she_tracer(with_bias=False)
+    she_biased = _she_tracer(with_bias=True)
+
+    cl_she_she_unbiased = AngularTwoPoint(she_unbiased, she_unbiased).get_Cl(
+        ells, 0, ks
+    )
+    cl_she_she_biased = AngularTwoPoint(she_biased, she_biased).get_Cl(ells, 0, ks)
+    cl_pos_she_unbiased = AngularTwoPoint(pos_tracer, she_unbiased).get_Cl(ells, 0, ks)
+    cl_pos_she_biased = AngularTwoPoint(pos_tracer, she_biased).get_Cl(ells, 0, ks)
+
+    for i in (1, 2):
+        for j in (i, 2):
+            np.testing.assert_allclose(
+                np.asarray(cl_she_she_biased[("SHE", "SHE", i, j)].array),
+                np.asarray(cl_she_she_unbiased[("SHE", "SHE", i, j)].array)
+                * (1 + m[i])
+                * (1 + m[j]),
+                rtol=1e-6,
+            )
+        np.testing.assert_allclose(
+            np.asarray(cl_pos_she_biased[("POS", "SHE", i, i)].array),
+            np.asarray(cl_pos_she_unbiased[("POS", "SHE", i, i)].array) * (1 + m[i]),
+            rtol=1e-6,
+        )
 
 
 def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
@@ -334,7 +430,7 @@ def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.0),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
 
     cl_nla = AngularTwoPoint(nla_tracer, nla_tracer).get_Cl(ells, 0, ks)
@@ -359,7 +455,7 @@ def test_rsd_with_generalized_engine_raises_not_implemented(cosmo_setup):
         z=z,
         nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.4, bTA=-0.83),
         ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(),
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
     pos_tracer = PositionsTracer(
         perturbations=perturbations,
@@ -440,20 +536,31 @@ def test_pbj_tatt_reduces_to_nla_form_when_a2_and_bta_zero(
 
     ks = np.logspace(-3, 1, 20)
     pert_zs = perturbations.z
-    matter_pk = perturbations.matter_power_spectrum(pert_zs, ks)
+    # `bank.matter_pk` (nonlinear, from the tracer's own `perturbations`) is
+    # no longer what the tree-level term uses - it's the *linear* Pk (see
+    # `_LINEAR_MATTER_PK`), so that's what this reduction must be compared
+    # against, not `perturbations.matter_power_spectrum(...)`.
+    matter_pk_nonlinear = perturbations.matter_power_spectrum(pert_zs, ks)
+    matter_pk_linear = linear_perturbations.matter_power_spectrum(pert_zs, ks)
+    assert not np.allclose(matter_pk_linear, matter_pk_nonlinear), (
+        "test fixture's linear/nonlinear Pk aren't actually distinct - "
+        "this check would pass vacuously"
+    )
 
     from cloelib.observables.photo.spectrum_engine import SpectraBank
 
-    bank = SpectraBank(matter_pk, ks, pert_zs)
+    bank = SpectraBank(matter_pk_nonlinear, ks, pert_zs)
 
     p_ii = tatt.get_effective_pk(tatt, bank)
     p_di = tatt.get_effective_pk(tracer.lensing, bank)
 
     c1 = tatt._C1(pert_zs)[:, None]
     np.testing.assert_allclose(
-        np.asarray(p_ii), np.asarray(c1**2 * matter_pk), rtol=1e-10
+        np.asarray(p_ii), np.asarray(c1**2 * matter_pk_linear), rtol=1e-10
     )
-    np.testing.assert_allclose(np.asarray(p_di), np.asarray(c1 * matter_pk), rtol=1e-10)
+    np.testing.assert_allclose(
+        np.asarray(p_di), np.asarray(c1 * matter_pk_linear), rtol=1e-10
+    )
 
 
 @pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
@@ -519,19 +626,45 @@ def test_pbj_tatt_resolves_linear_source_from_nonlinear_perturbations(
     (every nonlinear backend built from a separate linear one sets it:
     `HMemuNonLinearPerturbations`, `EE2NonLinearPerturbations`,
     `BACCOemuNonLinearPerturbations`, `EmantisFofrNonLinearPerturbations`,
-    `JAXNonLinearPerturbations`), falling back to using the given object
-    directly when it has no such attribute (i.e. it's already linear).
-    Uses lightweight stand-ins rather than a real nonlinear backend so this
-    stays fast and independent of which cosmology backends happen to be
-    installed.
+    `JAXNonLinearPerturbations`), accepting the given object directly only
+    when it's itself a recognized `*LinearPerturbations` backend (i.e. it's
+    actually linear) - and must raise `ValueError` for anything else (PR
+    #569 review): a missing `.linearperturbations` attribute does not by
+    itself mean the object passed in is linear, so an unrecognized
+    nonlinear backend must fail loudly rather than be silently treated as
+    linear. Uses lightweight stand-ins rather than a real nonlinear backend
+    so this stays fast and independent of which cosmology backends happen
+    to be installed.
     """
 
     class _FakeNonLinear:
         def __init__(self, linear):
             self.linearperturbations = linear
 
+    class _FakeUnrecognizedNonLinear:
+        """No `.linearperturbations` and a name that doesn't end in
+        `LinearPerturbations` - e.g. `CAMBNonLinearPerturbations`, which
+        genuinely never sets `.linearperturbations` (see shear.py's
+        `_is_known_linear_perturbations` docstring)."""
+
     computer_with_nonlinear = PBJTATTLoopComputer(_FakeNonLinear(linear_perturbations))
     assert computer_with_nonlinear.linear_perturbations is linear_perturbations
 
     computer_with_linear_directly = PBJTATTLoopComputer(linear_perturbations)
     assert computer_with_linear_directly.linear_perturbations is linear_perturbations
+
+    with pytest.raises(ValueError, match="linear matter-power-spectrum source"):
+        PBJTATTLoopComputer(_FakeUnrecognizedNonLinear())
+
+
+@pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
+def test_pbj_tatt_rejects_camb_nonlinear_without_linear_source(cosmo_setup):
+    """The concrete case PR #569's review flagged: `CAMBNonLinearPerturbations`
+    never sets `.linearperturbations` (its own `matter_power_spectrum` is
+    always nonlinear - see camb_cosmology.py), so passing one here must
+    raise rather than silently feed FAST-PT the nonlinear Pk.
+    """
+    perturbations, _ = cosmo_setup  # cosmo_setup's own CAMBNonLinearPerturbations
+    assert not hasattr(perturbations, "linearperturbations")
+    with pytest.raises(ValueError, match="linear matter-power-spectrum source"):
+        PBJTATTLoopComputer(perturbations)

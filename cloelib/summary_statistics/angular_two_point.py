@@ -136,6 +136,15 @@ def Pkl_interp_signed(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
     untouched) for the always-positive legacy path.
 
     Parameters/Returns: as `Pkl_interp`.
+
+    TODO (PR #569 review): add dedicated tests for this function's
+    gradient behavior specifically (not just its forward values) - the
+    `sign(...)`/`clip(...)` machinery here is exactly the kind of
+    piecewise construct that can produce zero or discontinuous gradients
+    at a sign change or a clip boundary, and that risk hasn't been
+    checked directly yet (only indirectly, via the end-to-end TATT
+    differentiability tests in `test_get_cl_tensor.py`, which don't
+    target this function's own zero-crossing/edge behavior).
     """
     log_abs_pk = jax.numpy.log10(jax.numpy.abs(Pk) + 1e-300)
     sign_pk = jax.numpy.sign(Pk)
@@ -844,7 +853,21 @@ class AngularTwoPoint:
         prefactor_cell = (
             prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle
         ) * (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle)
-        return C_ell_calc * prefactor_cell[:, None, None]
+        C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
+
+        # Multiplicative shear calibration (PR #569 review): the legacy path
+        # applies `1 + m_bias` inside `ShearTracer.get_window` before the
+        # Limber integral; this path integrates each Contribution's raw
+        # `compute_kernel` directly, bypassing `get_window` (and its m_bias
+        # factor) entirely. `1 + m_bias` is a per-bin, z/k-independent
+        # scalar, so it factors cleanly out of the (bilinear) Limber
+        # integral onto the final per-bin-pair Cl tensor - applied here
+        # instead, once, rather than inside every Contribution.
+        # `PositionsTracer`/`CMBLensingTracer` have no `m_bias` of their own
+        # - `getattr(..., "m_bias", zeros)` leaves those sides unscaled.
+        m1 = 1.0 + np.asarray(getattr(self.tracer1, "m_bias", np.zeros(n_bin1)))
+        m2 = 1.0 + np.asarray(getattr(self.tracer2, "m_bias", np.zeros(n_bin2)))
+        return C_ell_calc * m1[None, :, None] * m2[None, None, :]
 
     def _package_cl(self, C_ell_calc, ells) -> dict:
         """Slice/reshape `C_ell_calc` into the cosmolib-format output dict.

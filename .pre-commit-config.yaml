@@ -23,16 +23,12 @@ repos:
         args: [--fix=lf]
       - id: trailing-whitespace
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1
+  - repo: local
     hooks:
-      - id: mypy
-        name: mypy
-        language_version: python3
-        pass_filenames: false # don't add staged files
-        args:
-          - "--config-file=mypy.ini"
-          - "cloelib/cosmology/cosmology.py"
-          - "cloelib/cosmology/camb_cosmology.py"
-          - "cloelib/cosmology/class_cosmology.py"
-          - "cloelib/cosmology/jax_cosmology.py"
+      - id: ty
+        name: ty
+        entry: ty check
+        language: python
+        additional_dependencies: ["ty==0.0.80"]
+        pass_filenames: false # scope is set by [tool.ty.src] in pyproject.toml
+        files: ^cloelib/cosmology/

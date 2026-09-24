@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using HMcode2020Emu."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, WithLinearSpectrumGrid
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.auxiliary.math_utils import ensure_z_zero_included
 
@@ -207,6 +207,18 @@ class HMemuLinearPerturbations:
 
         return self.fsigma8 / self.sigma8
 
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+        self.sigma8, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
+        return self.sigma8[0]
+
 
 class HMemuNonLinearPerturbations:
     """Class for non linear perturbations cosmology using HMemu,  compatibly with the Perturbations protocol."""
@@ -214,7 +226,7 @@ class HMemuNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Perturbations,
+        linearperturbations: WithLinearSpectrumGrid,
         redshifts: np.ndarray,
         log10TAGN: Optional[float] = None,
     ):
@@ -427,15 +439,9 @@ class HMemuNonLinearPerturbations:
         float
             The sigma8 value.
         """
-        self.params_hm_emu["z"] = np.insert(self.z, 0, 0.0)
-        max_len = len(self.params_hm_emu["z"])
-        for k, v in self.params_hm_emu.items():
-            if len(v) < max_len:
-                pad_size = max_len - len(v)
-                # Repeat last element to match length
-                self.params_hm_emu[k] = np.pad(v, (0, pad_size), mode="edge")
-        self.sigma8_0, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
-        return self.sigma8_0[0]
+
+        self.sigma8, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
+        return self.sigma8[0]
 
 
 def _set_neutrino_masses(background: Background) -> float:

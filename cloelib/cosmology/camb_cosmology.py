@@ -10,8 +10,8 @@ from typing import Optional, Union, Sequence
 
 # Cosmology imports
 try:
-    import camb  # type: ignore
-    from camb import model  # type: ignore
+    import camb
+    from camb import model
 except ImportError as e:
     raise ImportError("camb could not be imported.") from e
 

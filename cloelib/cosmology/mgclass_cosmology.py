@@ -16,7 +16,7 @@ import warnings
 
 # Cosmology imports
 try:
-    from mgclassy import Class  # type: ignore
+    from mgclassy import Class
 except ImportError as e:
     raise ImportError("mgclassy could not be imported.") from e
 
@@ -377,7 +377,6 @@ class MGCLASSLinearPerturbations:
         self.background = background
         self.z = redshifts
         self.kmax = 100
-        self.results = None  # Store MGCLASS results
 
         # Ensure MGCLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -426,7 +425,7 @@ class MGCLASSLinearPerturbations:
         """
         if hubble_units or k_hunit:
             raise ValueError("This MGCLASS method does not yet support h-units")
-        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
         # To match array convention of CAMB
         return self.Pk_linear
 
@@ -470,7 +469,7 @@ class MGCLASSLinearPerturbations:
             )
         else:
             self.Pk_cb_linear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_linear
@@ -519,7 +518,7 @@ class MGCLASSLinearPerturbations:
         return (
             -(1 + self.z)
             / D_z_k0[:, 0]
-            * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])  # type: ignore[union-attr]
+            * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])
         )
 
     def sigma8_0(self) -> float:
@@ -532,7 +531,7 @@ class MGCLASSLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()
 
 
 class MGCLASSNonLinearPerturbations:
@@ -643,7 +642,7 @@ class MGCLASSNonLinearPerturbations:
             )
         else:
             self.Pk_cb_nonlinear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_nonlinear
@@ -692,7 +691,7 @@ class MGCLASSNonLinearPerturbations:
         return (
             -(1 + self.z)
             / D_z_k0[:, 0]
-            * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])  # type: ignore[union-attr]
+            * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])
         )
 
     def sigma8_0(self) -> float:
@@ -705,4 +704,4 @@ class MGCLASSNonLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()

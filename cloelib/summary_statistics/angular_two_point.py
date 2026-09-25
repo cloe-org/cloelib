@@ -694,8 +694,7 @@ class AngularTwoPoint:
         return C_ell_calc
 
     def _angular_prefactor(self, ells):
-        """Product of field responses, shared by both integration engines.
-        """
+        """Product of field responses, shared by both integration engines."""
         shear_prefactor = (
             np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
             / (ells + 0.5) ** 2

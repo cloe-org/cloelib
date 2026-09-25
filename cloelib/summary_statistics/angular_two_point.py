@@ -648,24 +648,7 @@ class AngularTwoPoint:
         Pkl = self._matter_power_spectrum_limber_grid(
             zs_calc, ks, self.tracer1.perturbations.z, ells
         )
-        # Observable-dependent harmonic responses. The windows themselves
-        # retain their common scalar/geometric normalization.
-        shear_prefactor = (
-            np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
-            / (ells + 0.5) ** 2
-        )
-        gw_prefactor = 2.0 * ells * (ells + 1.0) / (ells + 0.5) ** 2
-
-        def tracer_prefactor(tracer):
-            shear_toggle = getattr(tracer, "prefact_toggle", 0)
-            gw_toggle = getattr(tracer, "gw_prefact_toggle", 0)
-            return (
-                1.0
-                + shear_toggle * (shear_prefactor - 1.0)
-                + gw_toggle * (gw_prefactor - 1.0)
-            )
-
-        prefactor_cell = tracer_prefactor(self.tracer1) * tracer_prefactor(self.tracer2)
+        prefactor_cell = self._angular_prefactor(ells)
         weights = simpsons_weights_jit(len(H))
 
         # C_ell_calc = (
@@ -709,6 +692,24 @@ class AngularTwoPoint:
         # Apply prefactor as before
         C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
         return C_ell_calc
+
+    def _angular_prefactor(self, ells):
+        """Product of field responses, shared by both integration engines.
+        """
+        shear_prefactor = (
+            np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
+            / (ells + 0.5) ** 2
+        )
+        gw_prefactor = 2.0 * ells * (ells + 1.0) / (ells + 0.5) ** 2
+
+        def tracer_prefactor(tracer):
+            return (
+                1.0
+                + getattr(tracer, "prefact_toggle", 0) * (shear_prefactor - 1.0)
+                + getattr(tracer, "gw_prefact_toggle", 0) * (gw_prefactor - 1.0)
+            )
+
+        return tracer_prefactor(self.tracer1) * tracer_prefactor(self.tracer2)
 
     def _compute_cl_generalized(self, ells, ks, contributions1, contributions2):
         """Cl via the per-contribution-pair engine (`spectrum_engine.py`).
@@ -785,13 +786,7 @@ class AngularTwoPoint:
 
         C_ell_calc = C_ell_calc * c_0 * dz
 
-        prefactor = (
-            np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
-            / (ells + 0.5) ** 2
-        )
-        prefactor_cell = (
-            prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle
-        ) * (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle)
+        prefactor_cell = self._angular_prefactor(ells)
         C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
 
         # Multiplicative shear calibration (PR #569 review): the legacy path

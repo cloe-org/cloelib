@@ -21,6 +21,20 @@ import jax.lax as lx
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 
+class _GWWindowContribution:
+    """Non-IA contribution using the tracer's existing radial window.
+
+    Angular responses are applied by AngularTwoPoint, not in this kernel.
+    TATT pairs this contribution with its matter-intrinsic spectrum.
+    """
+
+    def __init__(self, tracer):
+        self._tracer = tracer
+
+    def compute_kernel(self, z):
+        return self._tracer.get_window(z)
+
+
 class GWWeakLensingTracer:
     """Class for the kernel for GW weak lensing."""
 
@@ -52,6 +66,7 @@ class GWWeakLensingTracer:
         self.z = z
         self.nuisance_params = nuisance_params
         # This is to add the necessary prefactor to GW-WL, while avoiding it in GW-NC
+        self.prefact_toggle = 0
         self.gw_prefact_toggle = 1
         self.dz_gw_i = [
             self.nuisance_params[f"dz_gw_{i + 1}"] for i in range(dndz.shape[0])
@@ -65,6 +80,10 @@ class GWWeakLensingTracer:
         self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_gw_i)
         # Correct dndz_stretched for dz_gw
         self.dndz_shifted = shift_dndz_jax(self.dndz_stretched, z, self.dz_gw_i)
+
+    def get_contributions(self):
+        """Return the scalar radial contribution for the spectrum engine."""
+        return (_GWWindowContribution(self),)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
         """Compute the GW lensing efficiency in a redshift bin."""
@@ -262,6 +281,10 @@ class GWNumberCountsTracer:
         index = np.argwhere(conditions, size=1).squeeze()
 
         self.bias_array = [per_bin_case, per_bin_int_case, poly_case][index]()
+
+    def get_contributions(self):
+        """Return the scalar radial contribution for the spectrum engine."""
+        return (_GWWindowContribution(self),)
 
     def get_window_number_counts(self, z) -> np.ndarray:
         r"""GW number-count window function.

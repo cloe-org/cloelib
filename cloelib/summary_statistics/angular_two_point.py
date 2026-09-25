@@ -10,6 +10,7 @@ from cloelib.observables.photo.spectrum_engine import (
     get_effective_pk,
     needs_generalized_engine,
 )
+from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import simpsons_weights_jit
 from cloelib.profiling import profile_function
@@ -647,16 +648,7 @@ class AngularTwoPoint:
         Pkl = self._matter_power_spectrum_limber_grid(
             zs_calc, ks, self.tracer1.perturbations.z, ells
         )
-        # Added the prefactor here as this is where we have access to ells.
-        # There may be a more efficient way to do the multiplication
-        prefactor = (
-            np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
-            / (ells + 0.5) ** 2
-        )
-        # Did it this way to avoid an if statement, but would be good to know how necessary this is
-        prefactor_cell = (
-            prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle
-        ) * (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle)
+        prefactor_cell = self._angular_prefactor(ells)
         weights = simpsons_weights_jit(len(H))
 
         # C_ell_calc = (
@@ -700,6 +692,23 @@ class AngularTwoPoint:
         # Apply prefactor as before
         C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
         return C_ell_calc
+
+    def _angular_prefactor(self, ells):
+        """Product of field responses, shared by both integration engines."""
+        shear_prefactor = (
+            np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
+            / (ells + 0.5) ** 2
+        )
+        gw_prefactor = 2.0 * ells * (ells + 1.0) / (ells + 0.5) ** 2
+
+        def tracer_prefactor(tracer):
+            return (
+                1.0
+                + getattr(tracer, "prefact_toggle", 0) * (shear_prefactor - 1.0)
+                + getattr(tracer, "gw_prefact_toggle", 0) * (gw_prefactor - 1.0)
+            )
+
+        return tracer_prefactor(self.tracer1) * tracer_prefactor(self.tracer2)
 
     def _compute_cl_generalized(self, ells, ks, contributions1, contributions2):
         """Cl via the per-contribution-pair engine (`spectrum_engine.py`).
@@ -776,13 +785,7 @@ class AngularTwoPoint:
 
         C_ell_calc = C_ell_calc * c_0 * dz
 
-        prefactor = (
-            np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
-            / (ells + 0.5) ** 2
-        )
-        prefactor_cell = (
-            prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle
-        ) * (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle)
+        prefactor_cell = self._angular_prefactor(ells)
         C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
 
         # Multiplicative shear calibration (PR #569 review): the legacy path
@@ -834,13 +837,8 @@ class AngularTwoPoint:
             return {("POS", "POS", i, j): C[:, i - 1, j - 1]}
 
         def pos_she_rule(C, i, j):
-            block1 = C[:, i - 1, j - 1]
-            block2 = C[:, j - 1, i - 1]
-
-            return {
-                ("POS", "SHE", i, j): np.stack([block1, np.zeros_like(block1)]),
-                ("POS", "SHE", j, i): np.stack([block2, np.zeros_like(block2)]),
-            }
+            block = C[:, i - 1, j - 1]
+            return {("POS", "SHE", i, j): np.stack([block, np.zeros_like(block)])}
 
         def she_she_rule(C, i, j):
             block = C[:, i - 1, j - 1]
@@ -852,13 +850,34 @@ class AngularTwoPoint:
             return {("CMBL", "CMBL", i, j): C[:, i - 1, j - 1]}
 
         def cmbl_pos_rule(C, i, j):
-            a, b = sorted((i, j))
-            return {("CMBL", "POS", a, b): C[:, i - 1, j - 1]}
+            return {("CMBL", "POS", i, j): C[:, i - 1, j - 1]}
 
         def cmbl_she_rule(C, i, j):
             block = C[:, i - 1, j - 1]
-            a, b = sorted((i, j))
-            return {("CMBL", "SHE", a, b): np.stack([block, np.zeros_like(block)])}
+            return {("CMBL", "SHE", i, j): np.stack([block, np.zeros_like(block)])}
+
+        def gwnc_gwnc_rule(C, i, j):
+            return {("GWNC", "GWNC", i, j): C[:, i - 1, j - 1]}
+
+        def gwwl_gwwl_rule(C, i, j):
+            return {("GWWL", "GWWL", i, j): C[:, i - 1, j - 1]}
+
+        def gwnc_gwwl_rule(C, i, j):
+            return {("GWNC", "GWWL", i, j): C[:, i - 1, j - 1]}
+
+        def pos_gwnc_rule(C, i, j):
+            return {("POS", "GWNC", i, j): C[:, i - 1, j - 1]}
+
+        def pos_gwwl_rule(C, i, j):
+            return {("POS", "GWWL", i, j): C[:, i - 1, j - 1]}
+
+        def she_gwnc_rule(C, i, j):
+            block = C[:, i - 1, j - 1]
+            return {("SHE", "GWNC", i, j): np.stack([block, np.zeros_like(block)])}
+
+        def she_gwwl_rule(C, i, j):
+            block = C[:, i - 1, j - 1]
+            return {("SHE", "GWWL", i, j): np.stack([block, np.zeros_like(block)])}
 
         tracer_rules = {
             (PositionsTracer, PositionsTracer): pos_pos_rule,
@@ -867,12 +886,23 @@ class AngularTwoPoint:
             (CMBLensingTracer, PositionsTracer): cmbl_pos_rule,
             (CMBLensingTracer, ShearTracer): cmbl_she_rule,
             (CMBLensingTracer, CMBLensingTracer): cmbl_cmbl_rule,
+            (GWNumberCountsTracer, GWNumberCountsTracer): gwnc_gwnc_rule,
+            (GWWeakLensingTracer, GWWeakLensingTracer): gwwl_gwwl_rule,
+            (GWNumberCountsTracer, GWWeakLensingTracer): gwnc_gwwl_rule,
+            (PositionsTracer, GWNumberCountsTracer): pos_gwnc_rule,
+            (PositionsTracer, GWWeakLensingTracer): pos_gwwl_rule,
+            (ShearTracer, GWNumberCountsTracer): she_gwnc_rule,
+            (ShearTracer, GWWeakLensingTracer): she_gwwl_rule,
         }
 
-        # normalize the key so (A, B) and (B, A) are both supported
+        # Normalize the key so (A, B) and (B, A) are both supported. Keep
+        # track of the reversal because C_ell_calc retains the input tracer
+        # order on its two tomographic-bin axes.
         key = (type(self.tracer1), type(self.tracer2))
+        key_was_reversed = False
         if key not in tracer_rules and key[::-1] in tracer_rules:
             key = key[::-1]
+            key_was_reversed = True
 
         rule_fn = tracer_rules.get(key)
         if rule_fn is None:
@@ -880,17 +910,23 @@ class AngularTwoPoint:
                 f"No rule defined for tracers {type(self.tracer1)}, {type(self.tracer2)}"
             )
 
-        # Vectorized update of C_ell_out using dictionary comprehensions
-        a, b = sorted((n_bin1, n_bin2))
+        if key_was_reversed:
+            C_ell_for_rule = np.swapaxes(C_ell_calc, 1, 2)
+            n_rule_bin1, n_rule_bin2 = n_bin2, n_bin1
+        else:
+            C_ell_for_rule = C_ell_calc
+            n_rule_bin1, n_rule_bin2 = n_bin1, n_bin2
+
+        # Same-observable spectra are symmetric in their tomographic bins and
+        # retain the established upper-triangle output. Cross-observable
+        # spectra use the full Cartesian product; each rule emits one key in
+        # canonical tracer order.
+        symmetric_output = key[0] is key[1]
         C_ell_out = {
             k: v
-            for i in range(1, a + 1)
-            for j in range(i, b + 1)
-            for k, v in (
-                rule_fn(C_ell_calc, i, j)
-                if n_bin1 <= n_bin2
-                else rule_fn(C_ell_calc, j, i)
-            ).items()
+            for i in range(1, n_rule_bin1 + 1)
+            for j in range(i if symmetric_output else 1, n_rule_bin2 + 1)
+            for k, v in rule_fn(C_ell_for_rule, i, j).items()
         }
 
         # Use dictionary comprehension for cosmolib_Cls creation

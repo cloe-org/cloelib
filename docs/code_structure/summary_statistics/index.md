@@ -12,7 +12,8 @@ To see examples of usage, please check the example notebooks for observable comp
 
 This module computes final statistical quantities for likelihood evaluation, including:
 
-- $C_\ell$: Angular power spectra for photometric surveys, either full sky or convolved with the mask
+- $C_\ell$: Full sky angular power spectra for photometric and gravitational-wave surveys
+- pseudo $C_\ell$: Angular power spectra for photometric surveys, convolved with the mask
 - $\xi_+(\theta)$, $\xi_-(\theta)$, $w(\theta)$, $\gamma_T$, $\gamma_\times$: Angular two-point photometric correlation functions
 - COSEBIs: Complete Orthogonal Sets of E/B-Integrals for photometric surveys as in [Asgari et al., 2018.](https://arxiv.org/pdf/1201.2669)
 - $P_\ell(k)$: Legendre multipoles for spectroscopic surveys, either full sky or convolved with the mask
@@ -34,6 +35,7 @@ For expensive summary-statistic evaluations, prefer moderate redshift and wavenu
 ## Available Summary Statistics
 
 - [For Photometric Surveys (Using Tracers)](photo.md)
+- [For Gravitational-Wave Observables (Using Tracers)](gw.md)
 - [For Spectroscopic Surveys (Using SpectroPower)](spectro.md)
 
 ## Next Steps

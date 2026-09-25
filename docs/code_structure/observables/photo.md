@@ -1,4 +1,4 @@
-# Tracer Protocol (Photometric Observables)
+# Photometric Observables (Tracer Protocol)
 
 **Protocol Definition**: `cloelib.observables.photo.tracer.Tracer`
 
@@ -372,5 +372,6 @@ Ready to compute final statistics with your observables?
 - [Perturbations](../perturbations.md) – Review structure formation
 - [Background](../background.md) – Review the foundation
 - [API Reference](../../api.md) – Full technical details
-- [Back to Observables](index.md) – Review all oobservables
+- [Gravitational-Wave Observables](gw.md) – Compute windows for GW sources
+- [Back to Observables](index.md) – Review all observables
 - [Back to Overview](../index.md) – Review the architecture

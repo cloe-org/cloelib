@@ -12,6 +12,7 @@ This module addresses:
 
 - Window functions for weak lensing surveys and CMB lensing
 - Galaxy bias modeling and corrections
+- Gravitational-wave source number counts and weak lensing
 - Redshift-space power spectra P(k, μ)
 
 ## Two Flavors of Observables
@@ -20,9 +21,10 @@ This module addresses:
 
 ### **Tracer Protocol**
 
-For photometric observables (angular correlations, weak lensing)
+For photometric and gravitational-wave observables
 
-- [Learn more about Tracer Protocol](photo.md)
+- [Learn more about photometric tracers](photo.md)
+- [Learn more about gravitational-wave tracers](gw.md)
 
 ### **SpectroPower Protocol**
 

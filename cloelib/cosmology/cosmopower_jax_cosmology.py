@@ -3,22 +3,50 @@ This module provides CosmoPower-JAX-based emulators for linear and nonlinear mat
 
 Uses cosmopower_jax instead of tensorflow-based cosmopower for faster JAX-accelerated predictions.
 
-Supported models include:
-- w0waCDM with mass of the neutrino 0
-- w0waCDM with one massive neutrino
-- w0waCDM with 2 massive neutrinos
-- w0waCDM with three degenerate massive neutrinos
-- wCDM with mass of the neutrino 0
-- wCDM with one massive neutrino
-- wCDM with 2 massive neutrinos
-- wCDM with three massive neutrinos
-- LCDM with mass of the neutrinos 0
-- LCDM with one massive neutrino
-- LCDM with 2 massive neutrinos
-- LCDM with three massive neutrinos
+Supported cosmologies (Perturbations classes)
+---------------------------------------------
+Baseline dark-energy models, each covering neutrino configurations
+N_mnu = 0 (massless), 1 (one massive), 2 (two degenerate) and 3 (three degenerate):
+- LCDM        : ``CosmoPowerJAXLCDMPerturbations``
+- wCDM        : ``CosmoPowerJAXwCDMPerturbations``
+- w0waCDM     : ``CosmoPowerJAXw0waCDMPerturbations``
 
-- LCDM with curvature
-- LCDM with running of the spectral index
+Extended cosmologies, each provided with LCDM and w0waCDM dark-energy backgrounds
+and covering N_mnu = 0, 1 and 3:
+- curvature (free Omega_k) : ``CosmoPowerJAXCurvaturePerturbations`` (LCDM),
+                             ``CosmoPowerJAXw0waCurvaturePerturbations`` (w0waCDM)
+- running spectral index (free alpha_s ) : ``CosmoPowerJAXRunningIndexPerturbations`` (LCDM),
+                            ``CosmoPowerJAXw0waRunningIndexPerturbations`` (w0waCDM)
+
+Spectra (inner classes)
+-----------------------
+Every cosmology exposes:
+- ``Linear`` / ``LinearCB``       : linear total-matter P(k) and CDM+baryon P_cb(k)
+- ``NonLinear`` / ``NonLinearCB`` : nonlinear P(k) / P_cb(k)
+
+Nonlinear prescription
+----------------------
+The baseline models additionally offer a choice of nonlinear recipe, selected by
+which class is used:
+- HMcode2020 (default) : ``NonLinear`` / ``NonLinearCB`` -- includes baryonic
+  feedback via the ``log10TAGN`` parameter.
+- halofit (Takahashi 2012) : ``NonLinearHalofit`` / ``NonLinearHalofitCB`` --
+  dark-matter-only, no baryonic feedback (``log10TAGN`` is accepted for interface
+  compatibility but ignored). Available for LCDM, wCDM and w0waCDM.
+
+All emulators also provide ``sigma8``, ``fsigma8``, ``growth_factor(z, k)`` and
+``growth_rate()``. Emulator inputs are validated against ``CP_EMULATOR_BOUNDS``.
+
+Emulator data
+-------------
+Emulator ``.npz`` files are downloaded on demand from three Zenodo records
+(see ``ZENODO_RECORDS``):
+- HMcode emulators               : 10.5281/zenodo.22966883
+- halofit emulators              : 10.5281/zenodo.22966994
+- extended cosmologies (curvature / running) : 10.5281/zenodo.22967046
+
+The k-mode grid is read directly from each emulator (its ``.modes`` attribute),
+so different emulators may use different grids without any external k-mode file.
 """
 
 from cloelib.cosmology.cosmology import Background, Perturbations

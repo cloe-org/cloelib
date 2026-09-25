@@ -13,9 +13,9 @@ N_mnu = 0 (massless), 1 (one massive), 2 (two degenerate) and 3 (three degenerat
 
 Extended cosmologies, each provided with LCDM and w0waCDM dark-energy backgrounds
 and covering N_mnu = 0, 1 and 3:
-- curvature (free Omega_k) : ``CosmoPowerJAXCurvaturePerturbations`` (LCDM),
+- curvature (free Omega_k) : ``CosmoPowerJAXLCDMCurvaturePerturbations`` (LCDM),
                              ``CosmoPowerJAXw0waCurvaturePerturbations`` (w0waCDM)
-- running spectral index (free alpha_s ) : ``CosmoPowerJAXRunningIndexPerturbations`` (LCDM),
+- running spectral index (free alpha_s ) : ``CosmoPowerJAXLCDMRunningIndexPerturbations`` (LCDM),
                             ``CosmoPowerJAXw0waRunningIndexPerturbations`` (w0waCDM)
 
 Spectra (inner classes)
@@ -2499,7 +2499,7 @@ class CosmoPowerJAXLCDMPerturbations:
             return self.sigma8[0]
 
 
-class CosmoPowerJAXCurvaturePerturbations:
+class CosmoPowerJAXLCDMCurvaturePerturbations:
     """Class for LCDM+curvature cosmology perturbations using CosmoPower-JAX.
 
     Emulators cover spatial curvature Omega_k0.
@@ -3307,7 +3307,7 @@ class CosmoPowerJAXw0waCurvaturePerturbations:
             return self.sigma8[0]
 
 
-class CosmoPowerJAXRunningIndexPerturbations:
+class CosmoPowerJAXLCDMRunningIndexPerturbations:
     """Class for LCDM+running spectral index cosmology perturbations using CosmoPower-JAX.
 
     Emulators cover running spectral index alpha_s.

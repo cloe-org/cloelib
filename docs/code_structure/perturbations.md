@@ -466,6 +466,16 @@ nonlinear MG power spectrum is obtained by boosting a fast LCDM emulator
 - Scale-independent growth rate \(f(z)\) and \(\sigma_8\) from an internally-built
   linear MG \(P(k)\); GR limit recovered to machine precision (no regridding);
 - Mutable `MGParams` holder for injecting sampled \(\mu, \eta\) each likelihood call;
+- Emulators are **downloaded on first use from the extended-cosmologies Zenodo
+  record** and cached locally, mirroring `CosmoPowerJAXPerturbations` (no local
+  model directory needed);
+- **Redshift clamp**: the boost is queried only up to the top edge of the active
+  bin (single-bin) or the last bin (multi-bin); above it \(B = 1\) exactly. This
+  avoids the per-bin linear emulators extrapolating catastrophically beyond their
+  trained redshift range;
+- **Training-box enforcement**: inputs outside the emulator's training ranges
+  raise `ValueError` (the single-bin and multi-bin variants have different boxes;
+  see below);
 - Lazy, cached emulator loading for efficient MCMC / nested sampling.
 
 **Example**:
@@ -478,13 +488,29 @@ from cloelib.cosmology.mg_cosmopower_jax_cosmology import MGParams, mg_perturbat
 # single-bin (bin 4); use MGParams(mu=..., eta=...) with bin_index=None for multi-bin
 mg = MGParams(mu=1.0, eta=1.0, bin_index=4)
 Lin, NonLin = mg_perturbations(
-    mg, MODEL_DIR, baseline_linear=LCDM.Linear, baseline_nonlinear=LCDM.NonLinear
+    mg, baseline_linear=LCDM.Linear, baseline_nonlinear=LCDM.NonLinear
 )
 # in the sampling wrapper, before each loglike:  mg.mu, mg.eta = ...
 ```
 
 `binned_mg_perturbations` (single-bin) and `multibin_mg_perturbations` (multi-bin)
 are kept as aliases of `mg_perturbations` for backwards compatibility.
+
+**Emulator ranges** (enforced; predictions outside raise `ValueError`):
+
+| Parameter           | Single-bin  | Multi-bin   |
+| ------------------- | ----------- | ----------- |
+| \(\Omega_m\)        | 0.25–0.35   | 0.25–0.40   |
+| \(\Omega_b\)        | 0.040–0.055 | 0.040–0.055 |
+| \(h\)               | 0.65–0.73   | 0.65–0.75   |
+| \(n_s\)             | 0.95–1.00   | 0.80–1.20   |
+| \(\ln(10^{10}A_s)\) | 2.996–3.091 | 2.944–3.219 |
+| \(\mu\) (per bin)   | 0.9–1.1     | 0.9–1.1     |
+| \(\eta\) (per bin)  | 0.9–1.1     | 0.9–1.1     |
+| \(z\)               | 0.01–3      | 0–3         |
+
+The \(z\) upper edge is enforced (and handled by the redshift clamp); the lower
+edge is not, so \(z = 0\) remains available for the growth/\(\sigma_8\) normalisation.
 
 ### MGCLASSPerturbations
 

@@ -77,6 +77,8 @@ c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 def _unit_sigma(z):
     """Default MG lensing parameter Sigma(z) = 1 for GR / LCDM perturbations."""
     return np.ones_like(z)
+
+
 # Same convention: SPEED_OF_LIGHT is in m/s.
 _C_KM_S = SPEED_OF_LIGHT / 1000
 

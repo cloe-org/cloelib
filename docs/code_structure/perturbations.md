@@ -469,14 +469,6 @@ nonlinear MG power spectrum is obtained by boosting a fast LCDM emulator
 - Emulators are **downloaded on first use from the extended-cosmologies Zenodo
   record** and cached locally, mirroring `CosmoPowerJAXPerturbations` (no local
   model directory needed);
-- **Redshift clamp**: the boost is queried only up to the top edge of the active
-  bin (single-bin) or the last bin (multi-bin); above it \(B = 1\) exactly. This
-  avoids the per-bin linear emulators extrapolating catastrophically beyond their
-  trained redshift range;
-- **Training-box enforcement**: inputs outside the emulator's training ranges
-  raise `ValueError` (the single-bin and multi-bin variants have different boxes;
-  see below);
-- Lazy, cached emulator loading for efficient MCMC / nested sampling.
 
 **Example**:
 

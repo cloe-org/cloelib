@@ -33,6 +33,13 @@ k is in h/Mpc; lnAs = ln(1e10 * As); emulators are loaded with
 ``probe='custom_log'`` so ``predict()`` returns the boost directly. eta has NO
 nonlinear P(k) effect (it is not an NL input); it enters only via ``Sigma``.
 
+Redshift clamp: the emulators are queried only for z <= z_top, the upper
+edge of the active bin (single-bin) or of the last bin (multi-bin); above it
+B = 1 exactly. The per-bin linear emulators are trained only up to their own
+bin's upper edge and extrapolate catastrophically beyond it (bin 1: B ~ 10 at
+z = 3 at mu = eta = 1), which enters the IA kernel through ``growth_factor``
+and gave logL ~ -7e4 at the GR fiducial before the clamp (2026-09-18).
+
 Drop-in replacement for the ``LinPerturbations`` / ``NonLinPerturbations`` classes
 in ``cloelike`` (``EuclidLikelihood_photo_Cls``). Provides the modified lensing
 parameter ``Sigma(z) = mu(1 + eta)/2`` that ``photo.py`` applies to the WL kernel.
@@ -47,14 +54,14 @@ each ``loglike`` call. ``bin_index`` is fixed per run (as in the paper).
 
     # single-bin
     mg = MGParams(mu=1.0, eta=1.0, bin_index=4)
-    Lin, NonLin = mg_perturbations(mg, MODEL_DIR,
+    Lin, NonLin = mg_perturbations(mg,
                                    baseline_linear=LCDM.Linear,
                                    baseline_nonlinear=LCDM.NonLinear)
     # before each loglike:  mg.mu, mg.eta = param_dict["mu"], param_dict["eta"]
 
     # multi-bin
     mg = MGParams(mu=np.ones(5), eta=np.ones(5))          # bin_index=None
-    Lin, NonLin = mg_perturbations(mg, MODEL_DIR, LCDM.Linear, LCDM.NonLinear)
+    Lin, NonLin = mg_perturbations(mg, LCDM.Linear, LCDM.NonLinear)
     # before each loglike:
     #   mg.mu  = np.array([param_dict[f"mu{i}"]  for i in range(1, 6)])
     #   mg.eta = np.array([param_dict[f"eta{i}"] for i in range(1, 6)])
@@ -64,18 +71,50 @@ each ``loglike`` call. ``bin_index`` is fixed per run (as in the paper).
 compatibility; the mode is chosen by ``mg_params.bin_index`` in all cases.
 """
 
-import os
 import warnings
 import numpy as np
 from scipy import interpolate
 
-_trapz = np.trapezoid if hasattr(np, "trapezoid") else np.trapz  # numpy<2 compat
+_trapz = (
+    np.trapezoid if hasattr(np, "trapezoid") else np.trapz
+)  # numpy 2 removed np.trapz
+
+# Zenodo record hosting the parametrised-MG boost emulators (extended
+# cosmologies). Files are downloaded on first use and cached locally, mirroring
+# ``cosmopower_jax_cosmology``.
+MG_EMULATOR_ZENODO_URL = "https://zenodo.org/records/22967046/files"
 
 # Table 1 MG redshift bins: index -> (zmin, zmax)
 _BIN_EDGES = [(0.00, 0.43), (0.43, 0.91), (0.91, 1.47), (1.47, 2.15), (2.15, 3.00)]
 N_BINS = len(_BIN_EDGES)
 
 _EMU_CACHE = {}
+
+# Training-box ranges of the MG boost emulators. The single-bin and multi-bin
+# variants were trained over different ranges; inputs outside the relevant box
+# are rejected. (z: only the upper edge is enforced -- see ``_check_mg_bounds``.)
+MG_EMULATOR_BOUNDS = {
+    "single": {
+        "Omega_m": (0.25, 0.35),
+        "Omega_b": (0.040, 0.055),
+        "h": (0.65, 0.73),
+        "ns": (0.95, 1.00),
+        "lnAs": (2.996, 3.091),
+        "mu": (0.9, 1.1),
+        "eta": (0.9, 1.1),
+        "z": (0.01, 3.0),
+    },
+    "multi": {
+        "Omega_m": (0.25, 0.40),
+        "Omega_b": (0.040, 0.055),
+        "h": (0.65, 0.75),
+        "ns": (0.80, 1.20),
+        "lnAs": (2.944, 3.219),
+        "mu": (0.9, 1.1),
+        "eta": (0.9, 1.1),
+        "z": (0.0, 3.0),
+    },
+}
 
 
 def _emu_filename(branch, bin_index):
@@ -88,21 +127,20 @@ def _emu_filename(branch, bin_index):
     return f"mg-boost-{branch}-bin{int(bin_index)}.npz"
 
 
-def _load_emu(branch, model_dir, bin_index=None):
+def _load_emu(branch, bin_index=None):
     """Load (and cache) a CosmoPower-JAX boost emulator.
+
+    The emulator file is downloaded from the extended-cosmologies Zenodo record
+    on first use and cached locally, mirroring ``cosmopower_jax_cosmology``.
 
     branch : 'linear' | 'nonlinear'
     bin_index : int for the per-bin (single-bin) emulator, or None for multi-bin.
     """
-    key = (
-        branch,
-        bin_index if bin_index is None else int(bin_index),
-        os.path.abspath(model_dir),
-    )
+    key = (branch, bin_index if bin_index is None else int(bin_index))
     if key not in _EMU_CACHE:
-        fp = os.path.join(model_dir, _emu_filename(branch, bin_index))
-        if not os.path.exists(fp):
-            raise FileNotFoundError(f"MG emulator not found: {fp}")
+        from cloelib.cosmology.cosmopower_jax_cosmology import emulator_data
+
+        fp = emulator_data(_emu_filename(branch, bin_index), MG_EMULATOR_ZENODO_URL)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning)
             from cosmopower_jax.cosmopower_jax import CosmoPowerJAX
@@ -114,7 +152,52 @@ def _load_emu(branch, model_dir, bin_index=None):
     return _EMU_CACHE[key]
 
 
-def _boost_spline(emu, background, mu, eta, z):
+def _z_top(bin_index):
+    """Highest redshift at which the MG modification is active.
+
+    Above it the boost is identically 1 (the modification has not started
+    yet), so the emulator must NOT be queried there: the per-bin *linear*
+    emulators are trained only up to the top of their own bin and extrapolate
+    wildly beyond it (bin 1 returns B ~ 10 at z = 3 even at mu = eta = 1),
+    which wrecks the IA growth factor in ``photo.py``.
+    """
+    if bin_index is None:
+        return _BIN_EDGES[-1][1]
+    return _BIN_EDGES[bin_index][1]
+
+
+def _check_mg_bounds(emu, background, mu, eta, z):
+    """Reject inputs outside the MG boost emulator's training box.
+
+    The single-bin and multi-bin emulators have different ranges; the variant is
+    detected from ``emu.parameters`` (single-bin emulators expose a scalar
+    ``'mu'``), matching ``_boost_spline``. ``mu``/``eta`` may be scalars
+    (single-bin) or length-N arrays (multi-bin) -- every component is checked.
+    The z *lower* bound is not enforced: z=0 is required for the growth/sigma8
+    normalisation, and the redshift clamp already caps the upper end.
+    """
+    variant = "single" if "mu" in emu.parameters else "multi"
+    box = MG_EMULATOR_BOUNDS[variant]
+    cosmo = {
+        "Omega_m": background.Omega_cdm0 + background.Omega_b0,
+        "Omega_b": background.Omega_b0,
+        "h": background.H0 / 100.0,
+        "ns": background.ns,
+        "lnAs": np.log(background.As * 1e10),
+    }
+    checks = list(cosmo.items()) + [("mu", mu), ("eta", eta), ("z", z)]
+    for name, value in checks:
+        low, high = box[name]
+        values = np.atleast_1d(np.asarray(value, dtype=float))
+        below = False if name == "z" else values.min() < low
+        if below or values.max() > high:
+            raise ValueError(
+                f"MG emulator parameter {name} out of {variant}-bin "
+                f"training range [{low}, {high}]."
+            )
+
+
+def _boost_spline(emu, background, mu, eta, z, z_top=None):
     """Build a RectBivariateSpline B(z, k) from a boost emulator.
 
     Handles both the single-bin emulators (scalar ``mu``/``eta`` -> parameter
@@ -125,10 +208,30 @@ def _boost_spline(emu, background, mu, eta, z):
 
     The emulator k-grid is padded with constant edge values so the spline does
     *constant* (not divergent) extrapolation in k outside the trained range.
+    In z the emulator is only evaluated for ``z <= z_top``; above it B = 1
+    exactly (see ``_z_top``). ``z_top=None`` disables the clamp.
     """
     z = np.atleast_1d(np.asarray(z, dtype=float))
     mu = np.atleast_1d(np.asarray(mu, dtype=float))
     eta = np.atleast_1d(np.asarray(eta, dtype=float))
+    if z_top is not None:
+        # Enforce the training box on the top-level call (the internal recursion
+        # below re-enters with z_top=None on a sub-grid, so it runs once).
+        _check_mg_bounds(emu, background, mu, eta, z)
+        # Query the network only where the boost is nontrivial (z <= z_top)
+        # and fill B = 1 above; keep the full z grid so the spline knots stay
+        # strictly increasing.
+        active = z <= z_top
+        k = np.asarray(emu.modes, dtype=float)
+        k_pad = np.concatenate(([k[0] * 1e-3], k, [k[-1] * 1e3]))
+        boost_pad = np.ones((z.size, k_pad.size))
+        if active.any():
+            z_q = z[active]
+            if z_q.size == 1:  # spline needs >= 2 z-knots: evaluate on a pair
+                z_q = np.array([z_q[0], z_q[0] + 1e-3])
+            spl_in = _boost_spline(emu, background, mu, eta, z_q, z_top=None)
+            boost_pad[active] = spl_in(z[active], k_pad)
+        return interpolate.RectBivariateSpline(z, k_pad, boost_pad, kx=1, ky=1)
 
     src = {
         "Omega_m": background.Omega_cdm0 + background.Omega_b0,
@@ -204,14 +307,14 @@ def _sigma_of_z(zs, mu, eta, bin_index):
     return sigma
 
 
-def mg_perturbations(mg_params, model_dir, baseline_linear, baseline_nonlinear):
+def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear):
     """Build cloelib-compatible (Linear, NonLinear) MG perturbation classes.
 
     The single-bin vs multi-bin mode is chosen by ``mg_params.bin_index``
-    (int -> single-bin, None -> multi-bin).
+    (int -> single-bin, None -> multi-bin). The boost emulators are downloaded
+    from Zenodo on first use and cached locally.
 
     mg_params : MGParams                 read at every instantiation (sampled mu/eta)
-    model_dir : str                      directory holding the mg-boost-*.npz files
     baseline_linear / baseline_nonlinear : LCDM perturbation classes, e.g.
         CosmoPowerJAXLCDMPerturbations.Linear / .NonLinear
     """
@@ -227,11 +330,12 @@ def mg_perturbations(mg_params, model_dir, baseline_linear, baseline_nonlinear):
             self.mu, self.eta = mg_params.mu, mg_params.eta
             self._base = baseline_linear(background, self.z)
             self._boost = _boost_spline(
-                _load_emu("linear", model_dir, self.bin_index),
+                _load_emu("linear", self.bin_index),
                 background,
                 self.mu,
                 self.eta,
                 self.z,
+                z_top=_z_top(self.bin_index),
             )
             self.k = np.asarray(self._base.k)  # baseline (wide) grid
 
@@ -268,19 +372,22 @@ def mg_perturbations(mg_params, model_dir, baseline_linear, baseline_nonlinear):
                 background, base_lin, self.z, log10TAGN=log10TAGN
             )
             self._base_lin = base_lin
+            z_top = _z_top(self.bin_index)
             self._boost_nl = _boost_spline(
-                _load_emu("nonlinear", model_dir, self.bin_index),
+                _load_emu("nonlinear", self.bin_index),
                 background,
                 self.mu,
                 self.eta,
                 self.z,
+                z_top=z_top,
             )
             self._boost_lin = _boost_spline(
-                _load_emu("linear", model_dir, self.bin_index),
+                _load_emu("linear", self.bin_index),
                 background,
                 self.mu,
                 self.eta,
                 self.z,
+                z_top=z_top,
             )
             self.k = np.asarray(self._base_nl.k)  # wide grid -> full Limber support
 

@@ -417,9 +417,8 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear):
             interpolates it onto the requested grid for the GCph RSD term.
             """
             k_ref = 0.05  # h/Mpc, linear & sub-horizon
-            D = np.sqrt(
-                self._pk_lin(self.z, k_ref).flatten() / float(self._pk_lin(0.0, k_ref))
-            )
+            pk_lin_ref_0 = np.ravel(self._pk_lin(0.0, k_ref))[0]
+            D = np.sqrt(self._pk_lin(self.z, k_ref).flatten() / pk_lin_ref_0)
             return -(1.0 + self.z) * np.gradient(np.log(D), self.z)
 
         def sigma8_0(self):

@@ -17,8 +17,8 @@ other `Tracer` implementations.
 
 The following GW auto- and cross-correlations are supported:
 
-| Tracers                             | Output key prefix    | Spectrum array shape |
-| ----------------------------------- | -------------------- | -------------------- |
+| Tracers                             | Output key prefix  | Spectrum array shape |
+| ----------------------------------- | ------------------ | -------------------- |
 | GW number counts × GW number counts | `("GWNC", "GWNC")` | `(n_ell,)`           |
 | GW weak lensing × GW weak lensing   | `("GWWL", "GWWL")` | `(n_ell,)`           |
 | GW number counts × GW weak lensing  | `("GWNC", "GWWL")` | `(n_ell,)`           |
@@ -82,9 +82,9 @@ squared in a GWWL auto-spectrum. The radial window retains the standard
 $3\Omega_{\mathrm{m},0}H_0^2/(2c^2)$ normalization.
 
 !!! note
-    GW tracers are supported by the unmasked Limber `get_Cl` calculation. The
-    current `get_pseudo_Cl` mixing-matrix path supports photometric `POS` and
-    `SHE` pairs only.
+GW tracers are supported by the unmasked Limber `get_Cl` calculation. The
+current `get_pseudo_Cl` mixing-matrix path supports photometric `POS` and
+`SHE` pairs only.
 
 ## Next Steps
 

@@ -1,17 +1,24 @@
 # Gravitational-Wave Summary Statistics
 
-Gravitational-wave (GW) tracers use the same `AngularTwoPoint` Limber
-integration as photometric tracers. `GWNumberCountsTracer` represents angular
-source number counts (`GWNC`), while `GWWeakLensingTracer` represents weak
-lensing of GW luminosity distances (`GWWL`).
+`AngularTwoPoint` computes Limber angular power spectra from
+`GWNumberCountsTracer` and `GWWeakLensingTracer` in the same way it consumes
+other `Tracer` implementations.
 
 ## Angular Power Spectra
 
-`AngularTwoPoint.get_Cl(ells, nl, ks)` supports the following GW auto- and
-cross-correlations:
+**Location**: `cloelib/summary_statistics/angular_two_point.py`
 
-| Tracers                             | Output key prefix  | Spectrum array shape |
-| ----------------------------------- | ------------------ | -------------------- |
+**What it does**:
+
+- Takes two compatible tracer objects
+- Integrates their radial windows against the matter power spectrum
+- Applies the angular response associated with each field
+- Returns one `cosmolib.AngularPowerSpectrum` per tomographic bin pair
+
+The following GW auto- and cross-correlations are supported:
+
+| Tracers                             | Output key prefix    | Spectrum array shape |
+| ----------------------------------- | -------------------- | -------------------- |
 | GW number counts × GW number counts | `("GWNC", "GWNC")` | `(n_ell,)`           |
 | GW weak lensing × GW weak lensing   | `("GWWL", "GWWL")` | `(n_ell,)`           |
 | GW number counts × GW weak lensing  | `("GWNC", "GWWL")` | `(n_ell,)`           |
@@ -20,78 +27,68 @@ cross-correlations:
 | Galaxy shear × GW number counts     | `("SHE", "GWNC")`  | `(2, n_ell)`         |
 | Galaxy shear × GW weak lensing      | `("SHE", "GWWL")`  | `(2, n_ell)`         |
 
-The complete dictionary key also contains the one-based tomographic bin
-indices, for example `("GWNC", "GWWL", 1, 2)`. Each value is a cosmolib
-`AngularPowerSpectrum`. Correlations involving galaxy shear reserve a second
-component for the B-mode and currently fill it with zeros.
-
-Auto-spectra contain the upper triangle of tomographic bin pairs. Spectra
-between different observables contain the full Cartesian product. Reversing
-the input tracer order does not change the canonical output-key order shown in
+Complete dictionary keys also contain one-based tomographic bin indices. For
+example, `("GWNC", "GWWL", 1, 1)` selects the first number-count bin crossed
+with the first weak-lensing bin. Same-observable spectra contain the upper
+triangle of bin pairs; different-observable spectra contain the full Cartesian
+product. Reversing the two input tracers preserves the canonical key order in
 the table.
 
-The `nl` argument is currently reserved and is set to zero here.
+## Example
+
+Run the shared setup and both tracer examples on the
+[GW observables page](../observables/gw.md) first. The variables used here are
+the same: `perturbations`, `gw_number_counts`, and `gw_weak_lensing`.
 
 ```python
-import jax.numpy as jnp
+import numpy as np
 
-from cloelib.observables.gw import (
-    GWNumberCountsTracer,
-    GWWeakLensingTracer,
-)
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 
-gw_number_counts = GWNumberCountsTracer(...)
-gw_weak_lensing = GWWeakLensingTracer(...)
+ells = np.geomspace(10.0, 1000.0, 20)
+ks = perturbations.k
 
-ells = jnp.geomspace(10.0, 1000.0, 30)
-ks = gw_number_counts.perturbations.k
+gwnc_auto = AngularTwoPoint(
+    gw_number_counts, gw_number_counts
+).get_Cl(ells, nl=0, ks=ks)
 
-gwnc_auto = AngularTwoPoint(gw_number_counts, gw_number_counts).get_Cl(
-    ells, nl=0, ks=ks
-)
-gwwl_auto = AngularTwoPoint(gw_weak_lensing, gw_weak_lensing).get_Cl(
-    ells, nl=0, ks=ks
-)
-gwnc_gwwl = AngularTwoPoint(gw_number_counts, gw_weak_lensing).get_Cl(
-    ells, nl=0, ks=ks
-)
+gwwl_auto = AngularTwoPoint(
+    gw_weak_lensing, gw_weak_lensing
+).get_Cl(ells, nl=0, ks=ks)
 
-spectrum = gwnc_gwwl[("GWNC", "GWWL", 1, 1)]
-print(spectrum.array)
+gwnc_gwwl = AngularTwoPoint(
+    gw_number_counts, gw_weak_lensing
+).get_Cl(ells, nl=0, ks=ks)
+
+cross_spectrum = gwnc_gwwl[("GWNC", "GWWL", 1, 1)]
+assert cross_spectrum.array.shape == (len(ells),)
 ```
 
-For cross-correlations with photometric tracers, use the same interface:
-
-```python
-pos_gwnc = AngularTwoPoint(pos_tracer, gw_number_counts).get_Cl(ells, 0, ks)
-pos_gwwl = AngularTwoPoint(pos_tracer, gw_weak_lensing).get_Cl(ells, 0, ks)
-shear_gwnc = AngularTwoPoint(shear_tracer, gw_number_counts).get_Cl(ells, 0, ks)
-shear_gwwl = AngularTwoPoint(shear_tracer, gw_weak_lensing).get_Cl(ells, 0, ks)
-```
+The `nl` argument is currently reserved and is set to zero in this example.
+These calculations return signal spectra without adding a noise model.
 
 ## GW Weak-Lensing Response
 
-The `GWWeakLensingTracer` window contains the scalar convergence geometry.
-For every GWWL field in a power spectrum, `AngularTwoPoint` additionally
-applies
+The `GWWeakLensingTracer` radial window contains the scalar convergence
+geometry. For each GWWL field, `AngularTwoPoint` applies
 
 $$
 R_\ell^{\mathrm{GWWL}} =
-\frac{2\ell(\ell+1)}{(\ell+1/2)^2}.
+\frac{\ell(\ell+1)}{(\ell+1/2)^2}.
 $$
 
-The factor therefore appears once in a cross-spectrum containing one GWWL
-field and twice in a GWWL auto-spectrum.
+This response appears once in a spectrum containing one GWWL field and is
+squared in a GWWL auto-spectrum. The radial window retains the standard
+$3\Omega_{\mathrm{m},0}H_0^2/(2c^2)$ normalization.
 
 !!! note
-GW tracers are supported by the unmasked Limber `get_Cl` calculation. The
-current `get_pseudo_Cl` mixing-matrix path supports photometric `POS` and
-`SHE` pairs only.
+    GW tracers are supported by the unmasked Limber `get_Cl` calculation. The
+    current `get_pseudo_Cl` mixing-matrix path supports photometric `POS` and
+    `SHE` pairs only.
 
 ## Next Steps
 
-- [Gravitational-Wave Observables](../observables/gw.md) – Configure the GW tracers
-- [Photometric Summary Statistics](photo.md) – Compute galaxy angular statistics
+- [Gravitational-Wave Observables](../observables/gw.md) – Construct the GW tracers
+- [Photometric Summary Statistics](photo.md) – Review galaxy angular statistics
 - [API Reference](../../api.md) – Full technical documentation
 - [Back to Summary Statistics](index.md) – Review all summary statistics

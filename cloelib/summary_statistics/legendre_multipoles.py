@@ -2,7 +2,7 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
-from cloelib.observables.spectro import SpectroPower
+from cloelib.observables.spectro.spectro import SpectroPower
 from cloelib.summary_statistics.APDistortion import APDistortion
 from cloelib.auxiliary.math_utils import legendre
 from cloelib.auxiliary.fftlog import fftlog
@@ -574,10 +574,10 @@ class LegendreMultipoles:
         s: np.ndarray,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5.0,
+        logkmin: Optional[float] = -6.0,
         logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
-        kcut: Optional[float] = 0.4,
+        kcut: Optional[float] = 2.0,
         pow: Optional[float] = 2.0,
         format_type: Optional[str] = None,
     ) -> dict:
@@ -637,10 +637,10 @@ class LegendreMultipoles:
         s: np.ndarray,
         mu: np.ndarray,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5.0,
+        logkmin: Optional[float] = -6.0,
         logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
-        kcut: Optional[float] = 0.4,
+        kcut: Optional[float] = 2.0,
         pow: Optional[float] = 2.0,
         format_type: Optional[str] = None,
     ) -> dict:
@@ -691,10 +691,10 @@ class LegendreMultipoles:
         term_list: list,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5.0,
+        logkmin: Optional[float] = -6.0,
         logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
-        kcut: Optional[float] = 0.4,
+        kcut: Optional[float] = 2.0,
         pow: Optional[float] = 2.0,
     ) -> dict:
         r"""Two-point correlation function Legendre multipoles of specified terms.

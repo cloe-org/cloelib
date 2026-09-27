@@ -12,7 +12,7 @@ import warnings
 
 # Cosmology imports
 try:
-    from hiclassy import HiClass  # type: ignore
+    from hiclassy import HiClass
 except ImportError as e:
     raise ImportError("hiclassy could not be imported.") from e
 
@@ -359,7 +359,6 @@ class hi_classLinearPerturbations:
         self.background = background
         self.z = redshifts
         self.kmax = 100
-        self.results = None  # Store hi_class results
 
         # Ensure hi_class is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -407,7 +406,7 @@ class hi_classLinearPerturbations:
         """
         if hubble_units or k_hunit:
             raise ValueError("This hi_class method does not yet support h-units")
-        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
         # To match array convention of CAMB
         return self.Pk_linear
 
@@ -451,7 +450,7 @@ class hi_classLinearPerturbations:
             )
         else:
             self.Pk_cb_linear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_linear
@@ -497,7 +496,7 @@ class hi_classLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]
 
         return np.array(arr)
 
@@ -511,7 +510,7 @@ class hi_classLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()
 
 
 class hi_classNonLinearPerturbations:
@@ -630,7 +629,7 @@ class hi_classNonLinearPerturbations:
             )
         else:
             self.Pk_cb_nonlinear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_nonlinear
@@ -676,7 +675,7 @@ class hi_classNonLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]
 
         return np.array(arr)
 
@@ -690,4 +689,4 @@ class hi_classNonLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()

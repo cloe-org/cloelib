@@ -19,6 +19,34 @@ class Tracer(Protocol):
         """Store perturbations obj."""
         ...
 
+    @property
+    def n_z_bins(self) -> int:
+        """Number of tomographic redshift bins carried by this tracer.
+
+        Not used by the tracer itself, but required by
+        `AngularTwoPoint.get_Cl` to size its output. Declared here so it is
+        part of the documented contract rather than an implicit assumption.
+        """
+        ...
+
+    @property
+    def z(self) -> T:
+        """Redshift grid this tracer was built on.
+
+        Required by `AngularTwoPoint.get_Cl`, which reads `tracer1.z` as the
+        integration grid for the Limber integral.
+        """
+        ...
+
+    @property
+    def prefact_toggle(self) -> int:
+        """Whether the spin-2-to-convergence Limber prefactor applies (1) or not (0).
+
+        Required by `AngularTwoPoint.get_Cl`. `ShearTracer`/`CMBLensingTracer`
+        set this to 1, `PositionsTracer` to 0.
+        """
+        ...
+
     def _window_integrand(self, z: T, zprime: T) -> T:
         """
         Window integrand method.

@@ -113,8 +113,14 @@ nav:
       - Overview: code_structure/index.md
       - Background: code_structure/background.md
       - Perturbations: code_structure/perturbations.md
-      - Observables: code_structure/observables/index.md
-      - Summary Statistics: code_structure/summary_statistics/index.md
+      - Observables:
+          - Overview: code_structure/observables/index.md
+          - Tracer Protocol (Photometric): code_structure/observables/photo.md
+          - SpectroPower Protocol (Spectroscopic): code_structure/observables/spectro.md
+      - Summary Statistics:
+          - Overview: code_structure/summary_statistics/index.md
+          - Photometric Summary Statistics: code_structure/summary_statistics/photo.md
+          - Spectroscopic Summary Statistics: code_structure/summary_statistics/spectro.md
   - Contributing: contributing.md
   - API Reference: api.md
 

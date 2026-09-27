@@ -17,7 +17,7 @@ Compute multipoles $P_\ell(k)$ from 2D power spectrum $P(k, \mu)$.
 
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground
-from cloelib.observables.CometEFT_spectro import CometEFT_spectro
+from cloelib.observables.spectro.CometEFT_spectro import CometEFT_spectro
 from cloelib.summary_statistics.legendre_multipoles import LegendreMultipoles
 
 bg = CAMBBackground(H0=67.5, ...)

@@ -9,7 +9,7 @@ the required format.
 """
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, WithWavenumberGrid
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 
@@ -33,8 +33,9 @@ class TabulatedNonlinearBoost:
         A cosmological background instance containing parameters such as
         Omega_b0, Omega_cdm0, H0, ns, mnu, w0, and wa. Note w0 and wa are assumed to be LCDM values for some modified gravity models.
 
-    linearperturbations : Perturbations
-        A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline.
+    linearperturbations : WithWavenumberGrid
+        A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline;
+        only its `.k` wavenumber grid is used here.
 
     zs : np.ndarray
         Array of redshifts at which to compute the MG corrections.
@@ -65,7 +66,7 @@ class TabulatedNonlinearBoost:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Perturbations,
+        linearperturbations: WithWavenumberGrid,
         zs: np.ndarray,
         boost_file: str,
         z_cols: Sequence[float],
@@ -85,16 +86,16 @@ class TabulatedNonlinearBoost:
         ktab = data[:, 0]
         boost_kz = data[:, 1:]  # shape (Nk, Nsnap)
 
-        z_cols = np.asarray(z_cols, dtype=float)
-        if boost_kz.shape[1] != len(z_cols):
+        z_cols_arr = np.asarray(z_cols, dtype=float)
+        if boost_kz.shape[1] != len(z_cols_arr):
             raise ValueError(
                 f"Number of boost columns ({boost_kz.shape[1]}) does not match "
-                f"length of z_cols ({len(z_cols)})."
+                f"length of z_cols ({len(z_cols_arr)})."
             )
 
         # Ensure z is sorted ascending and reorder boost columns accordingly
-        sort_idx = np.argsort(z_cols)
-        z_sorted = z_cols[sort_idx]
+        sort_idx = np.argsort(z_cols_arr)
+        z_sorted = z_cols_arr[sort_idx]
         boost_zk = boost_kz[
             :, sort_idx
         ].T  # -> shape (Nz, Nk) as RectBivariateSpline expects
@@ -345,9 +346,10 @@ class TabulatedBoostedPerturbations:
 
         # Case B: linear-growth estimate from boost at large scales
         # pick a default large-scale k: prefer the smallest available k-grid if we have one
-        if getattr(self, "k", None) is not None and len(self.k) > 0:
+        self_k = getattr(self, "k", None)
+        if self_k is not None and len(self_k) > 0:
             k_lin = float(
-                np.min(self.k)
+                np.min(self_k)
             )  # typically the safest large-scale mode available
         else:
             k_lin = 2e-2  # [1/Mpc] fallback default; adjust if your units differ

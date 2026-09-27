@@ -1,14 +1,14 @@
 """Implementation of Background and Perturbation cosmology using EuclidEmulator2."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, Perturbations, WithWavenumberGrid
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
 
 # General imports
 import numpy as np
-from typing import Sequence
+from typing import Protocol, Sequence, runtime_checkable
 
 # Cosmology imports
 try:
@@ -20,13 +20,24 @@ except ImportError:
     raise ImportError("EuclidEmulator2 could not be imported or initialised.")
 
 
+@runtime_checkable
+class LinearPerturbationsWithK(Perturbations, WithWavenumberGrid, Protocol):
+    """A `Perturbations` implementation that also exposes its `.k` grid.
+
+    `EE2NonLinearPerturbations` needs both the full `Perturbations`
+    interface (to call `matter_power_spectrum`/`growth_factor`/etc. on its
+    `linearperturbations`) and the wavenumber grid that instance was built
+    on, which `Perturbations` deliberately omits.
+    """
+
+
 class EE2NonLinearPerturbations:
     """Class for nonlinear perturbations using EE2, compatible with the Perturbations protocol."""
 
     def __init__(
         self,
         background: Background,
-        linearperturbations: Perturbations,
+        linearperturbations: LinearPerturbationsWithK,
         redshifts: np.ndarray,
     ):
         """Initialize the EE2NonLinearPerturbations instance."""

@@ -699,13 +699,13 @@ class AngularTwoPoint:
             np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
             / (ells + 0.5) ** 2
         )
-        gw_prefactor = 2.0 * ells * (ells + 1.0) / (ells + 0.5) ** 2
+        gw_wl_prefactor = ells * (ells + 1.0) / (ells + 0.5) ** 2
 
         def tracer_prefactor(tracer):
             return (
                 1.0
                 + getattr(tracer, "prefact_toggle", 0) * (shear_prefactor - 1.0)
-                + getattr(tracer, "gw_prefact_toggle", 0) * (gw_prefactor - 1.0)
+                + getattr(tracer, "gw_prefact_toggle", 0) * (gw_wl_prefactor - 1.0)
             )
 
         return tracer_prefactor(self.tracer1) * tracer_prefactor(self.tracer2)

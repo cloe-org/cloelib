@@ -25,7 +25,7 @@ class _GWWindowContribution:
     """Non-IA contribution using the tracer's existing radial window.
 
     Angular responses are applied by AngularTwoPoint, not in this kernel.
-    TATT pairs this contribution with its matter-intrinsic spectrum.
+    The spectrum engine selects the appropriate spectrum for each pairing.
     """
 
     def __init__(self, tracer):
@@ -149,7 +149,7 @@ class GWWeakLensingTracer:
         $$
 
         Parameters:
-          z (numpy.ndarray): Redshift at which weight is evaluated (`float` type).
+          z (numpy.ndarray): One-dimensional redshift grid matching the source distributions.
 
         Returns:
           (numpy.ndarray): Numpy array of convergence kernel values of shape (n_bins, n_z)

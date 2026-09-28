@@ -5,7 +5,6 @@ from cloelib.cosmology.cosmology import (
     Background,
     BaryonBoostMixin,
     WithLinearSpectrumGrid,
-    with_baryon_boost,
 )
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.auxiliary.math_utils import ensure_z_zero_included
@@ -626,21 +625,3 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
                 self._baryon_ratio_interp(zs, np.log(ks[in_range]))
             )
         return result
-
-
-#: Convenience alias: HMcode2020emu nonlinear perturbations with the HMcode2020
-#: baryonic-boost mixin pre-composed via
-#: :func:`~cloelib.cosmology.cosmology.with_baryon_boost`.  Mirrors
-#: ``BACCOemuNonLinearBaryonicPerturbations`` and
-#: ``CAMBNonLinearFLAMINGOBaryonicPerturbations``.
-#:
-#: Leave the base ``log10TAGN`` unset and pass it through ``baryon_kwargs``, since
-#: the base class applies its own boost when given ``log10TAGN`` directly::
-#:
-#:     pert = HMemuNonLinearBaryonicPerturbations(
-#:         background, linear_pert, redshifts,
-#:         baryon_kwargs=dict(log10TAGN=7.8),
-#:     )
-HMemuNonLinearBaryonicPerturbations = with_baryon_boost(
-    HMemuNonLinearPerturbations, HMcode2020BaryonBoostMixin
-)

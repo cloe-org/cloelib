@@ -72,14 +72,19 @@ class FlamingoBaryonBoostMixin(BaryonBoostMixin):
 
     def __init__(
         self,
-        fgas_sigma: float = 0.0,
-        Mstar_sigma: float = 0.0,
-        jet_fraction: float = 0.0,
+        fgas_sigma: float,
+        Mstar_sigma: float,
+        jet_fraction: float,
     ) -> None:
         """Initialise the FLAMINGO mixin attributes.
 
         Call this **after** the base NonLinear perturbations ``__init__``
         so that ``self.background`` is already set.
+
+        The three parameters are required and carry no defaults. Every value is
+        physically valid here, so a default would silently stand in for a real
+        choice instead of raising, and would present one feedback scenario as
+        "the FLAMINGO prediction".
 
         Parameters
         ----------

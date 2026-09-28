@@ -575,22 +575,21 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         BACCOemu boost on top of a *different* nonlinear backend.
     """
 
-    #: All supplied by the nonlinear perturbations class this mixin is composed
-    #: with. `params_emu` and `emu` are BACCOemu-specific, so this mixin can only
-    #: be composed onto a `BACCOemuNonLinearPerturbations`.
+    #: Both supplied by the nonlinear perturbations class this mixin is composed with.
     background: Background
     params_emu: dict
-    emu: Any
 
     def __init__(
         self,
-        M_c: float = 0.0,
-        eta: float = 0.0,
-        beta: float = 0.0,
-        M1_z0_cen: float = 0.0,
+        M_c: Optional[float],
+        eta: Optional[float],
+        beta: Optional[float],
+        M1_z0_cen: Optional[float],
+        theta_inn: Optional[float],
+        nonlinear_model_name: str = "Arico2023",
+        baryonic_model_name: str = "Burger2025",
         theta_out: Optional[float] = None,
         M_inn: Optional[float] = None,
-        theta_inn: float = 0.0,
     ) -> None:
         """Initialise the BACCOemu baryon-ratio spline.
 
@@ -600,20 +599,27 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         Call this **after** ``NonLinearPerturbations.__init__`` so
         that ``self.params_emu`` and ``self.background`` are set.
 
-        The emulator is the one the base class already built (``self.emu``), so
-        the model is chosen once, through ``BACCOemuNonLinearPerturbations``'s own
-        ``nonlinear_model_name`` and ``baryonic_model_name``. Selecting it again
-        here would let the boost come from a different model than the spectrum it
-        multiplies.
+        The mixin selects its own BACCOemu instance rather than reusing the base
+        class's, so the BACCOemu baryonic boost can be applied on top of a
+        different nonlinear prescription.
 
-        Which baryonification parameters are meaningful depends on that model:
-        ``Arico2021`` takes all seven, while ``Burger2025`` takes only ``M_c``,
-        ``eta``, ``beta``, ``M1_z0_cen`` and ``theta_inn`` and ignores the rest.
+        The baryonification parameters carry **no default values**: BACCOemu
+        provides none, and picking some here would present one arbitrary choice as
+        "the BACCOemu prediction". ``theta_out`` and ``M_inn`` are the exception —
+        they exist only in the ``Arico2021`` model and are ignored by
+        ``Burger2025``, so they default to ``None``.
 
         Parameters
         ----------
-        M_c, eta, beta, M1_z0_cen, theta_out, theta_inn, M_inn:
-            Optional baryonification parameters.  ``None`` uses the model defaults.
+        M_c, eta, beta, M1_z0_cen, theta_inn:
+            Baryonification parameters. Required; BACCOemu has no defaults for them.
+        nonlinear_model_name:
+            BACCOemu nonlinear model used to select the emulator instance,
+            e.g. ``"Arico2023"`` or ``"Angulo2021"``.
+        baryonic_model_name:
+            BACCOemu baryonic model, e.g. ``"Burger2025"`` or ``"Arico2021"``.
+        theta_out, M_inn:
+            Used only by ``Arico2021``; leave at ``None`` for ``Burger2025``.
         """
         if "M_c" in self.params_emu:
             raise ValueError(
@@ -624,10 +630,12 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
                 "and pass the baryonification parameters to this mixin instead, or "
                 "drop the mixin and use the base class on its own."
             )
-        # BACCOemu was trained with the boost factor, so one call to the
-        # emulator the base class already holds is enough -- no second
-        # evaluation, and no risk of picking a different model than the base.
-        baryon_emu = self.emu
+        # BACCOemu was trained with the boost factor, so a single
+        # `get_baryonic_boost` call is enough -- no separate DMO and baryonic
+        # spectra. The emulator is selected here rather than taken from the base
+        # class, so this mixin also works on top of a non-BACCOemu nonlinear
+        # prescription.
+        baryon_emu = emu[nonlinear_model_name][baryonic_model_name]
         z_emu = 1.0 / self.params_emu["expfactor"] - 1.0
         baryonic_params = {
             k: v

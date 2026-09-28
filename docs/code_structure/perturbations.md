@@ -574,6 +574,15 @@ pert = BACCOemuFLAMINGO(
 
 The resulting object is fully `Perturbations`-compatible and can be passed directly to any `cloelib` tracer or likelihood.
 
+!!! warning "Total vs. cold matter boost"
+The same suppression $B(k,z)$ is applied to `matter_power_spectrum` and to
+`matter_power_spectrum_cb`. The backends do not all define the response the same
+way — FLAMINGO's is $(b + \mathrm{cdm} + \nu)/(\mathrm{cdm} + \nu)$ while
+BACCOemu's is the cold $(b + \mathrm{cdm})/(\mathrm{cdm} + \nu)$ — and one could
+refine this by adding the neutrino contribution at linear order. The difference is
+~$10^{-5}$ even for $m_\nu = 0.4$ eV, and FLAMINGO simulations show total and cold
+boosts to be equivalent at that level, so `cloelib` treats them as the same.
+
 !!! note "Return shape"
 All `matter_power_spectrum` methods (including baryonic ones) return shape `(n_k,)` for single-redshift inputs and `(n_z, n_k)` for multi-redshift inputs via `.squeeze()`.
 

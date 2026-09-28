@@ -347,6 +347,14 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
             ).squeeze()
 
         def matter_power_spectrum_cb(self, zs, ks, **kwargs):
+            # The cdm+baryon spectrum is given the *same* boost as total matter.
+            # The backends differ slightly in what they predict -- FLAMINGO's
+            # response is (b + cdm + nu) / (cdm + nu), BACCOemu's is the cold
+            # (b + cdm) / (cdm + nu) -- and one could refine this by adding the
+            # neutrino contribution at linear order, as BACCOemu does for its
+            # nonlinear boost. In practice the difference is ~1e-5 even for
+            # mnu = 0.4 eV, and FLAMINGO simulations show total and cold boosts
+            # to be equivalent at that level, so the same boost is used for both.
             pk = NonLinearClass.matter_power_spectrum_cb(self, zs, ks, **kwargs)
             return (
                 pk

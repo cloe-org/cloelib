@@ -8,7 +8,7 @@ from scipy import interpolate
 
 # General imports
 import numpy as np
-from typing import Optional
+from typing import Any, Optional
 
 # Cosmology imports
 try:
@@ -16,7 +16,10 @@ try:
 except ImportError:
     raise ImportError("BACCOemu could not be imported")
 
-emu = {}
+# Heterogeneous registry: `emu["linear"]` is a `Matter_powerspectrum` instance,
+# while `emu[nonlinear_model][baryonic_model]` nests one level deeper. Typed
+# as `Any` since the shape isn't uniform enough for a single `dict[str, X]`.
+emu: dict[str, Any] = {}
 emu["linear"] = baccoemu.Matter_powerspectrum(
     verbose=False, nonlinear_boost=False, baryonic_boost=False
 )
@@ -276,9 +279,9 @@ class BACCOemuNonLinearPerturbations:
         background: Background,
         linearperturbations: Perturbations,
         redshifts: np.ndarray,
-        nonlinear_model_name: Optional[str] = "Arico2023",
+        nonlinear_model_name: str = "Arico2023",
         baryonic_boost: Optional[str] = None,
-        baryonic_model_name: Optional[str] = "Burger2025",
+        baryonic_model_name: str = "Burger2025",
         M_c: Optional[float] = None,
         eta: Optional[float] = None,
         beta: Optional[float] = None,

@@ -6,7 +6,7 @@ on:
       - main
 env:
   ENV_NAME: cloe-org-env
-  ENV_FILE: cloe-org-environments/environments/cloe-org-env-linux-v2026.1.yaml
+  ENV_FILE: cloe-org-environments/environments/cloe-org-env-linux-v2026.2.yaml
 jobs:
   style:
     name: Style (pre-commit)
@@ -35,6 +35,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: cloe-org/cloe-org-environments
+          ref: 2026.2
           path: cloe-org-environments
       - name: Setup Mambaforge
         uses: conda-incubator/setup-miniconda@v3
@@ -44,10 +45,35 @@ jobs:
           activate-environment: ${{ env.ENV_NAME }}
           environment-file: ${{ env.ENV_FILE }}
           use-mamba: true
+      - name: Prepare MOCHI compiler aliases
+        run: |
+          ENV_PREFIX=$(mamba run -n "$ENV_NAME" python -c 'import sys; print(sys.prefix)')
+          TOOLCHAIN_DIR="$RUNNER_TEMP/mochi-toolchain"
+          mkdir -p "$TOOLCHAIN_DIR"
+          ln -s "$ENV_PREFIX/bin/gcc" "$TOOLCHAIN_DIR/gcc-15"
+          ln -s "$ENV_PREFIX/bin/g++" "$TOOLCHAIN_DIR/g++-15"
+          echo "$TOOLCHAIN_DIR" >> "$GITHUB_PATH"
+          echo "CC=$ENV_PREFIX/bin/gcc" >> "$GITHUB_ENV"
+          echo "CXX=$ENV_PREFIX/bin/g++" >> "$GITHUB_ENV"
       - name: Install cloelib and extras from pyproject.toml
         run: |
-          mamba run -n $ENV_NAME python -m pip install --upgrade pip
-          mamba run -n $ENV_NAME python -m pip install ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy]"
+          # MGCLASS 2.9.4.5 contains legacy C declarations. Use the system
+          # compiler (GNU C17) while retaining the Mamba environment's Python.
+          ENV_PREFIX="$(mamba run -n "$ENV_NAME" python -c 'import sys; print(sys.prefix)')"
+          TOOLCHAIN_DIR="$RUNNER_TEMP/mgclass-toolchain"
+          mkdir -p "$TOOLCHAIN_DIR"
+          cat > "$TOOLCHAIN_DIR/gcc" <<'EOF'
+          #!/bin/sh
+          exec /usr/bin/gcc -std=gnu17 "$@"
+          EOF
+          chmod +x "$TOOLCHAIN_DIR/gcc"
+          export PATH="$TOOLCHAIN_DIR:/usr/bin:/bin:${ENV_PREFIX}/bin:${PATH}"
+          export PKG_CONFIG_PATH="${ENV_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+          env PATH="$PATH" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
+            "${ENV_PREFIX}/bin/python" -m pip install --upgrade pip
+          env PATH="$PATH" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
+            "${ENV_PREFIX}/bin/python" -m pip install \
+            ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy,mgclassy,mochi_classy]"
       - name: Run tests
         run: mamba run -n $ENV_NAME python -m pytest
   build:

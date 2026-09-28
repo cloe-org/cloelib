@@ -101,6 +101,15 @@ class FlamingoBaryonBoostMixin(BaryonBoostMixin):
     # internal helpers
     # ------------------------------------------------------------------
 
+    @property
+    def baryon_k_range(self) -> tuple[float, float]:
+        """Wavenumbers in 1/Mpc over which ``baryonic_suppression`` is emulated.
+
+        Above the upper bound the response is clamped to its value at the
+        maximum trained wavenumber.
+        """
+        return (0.0, _K_MAX_TRAINED * self.background.h)
+
     def _k_to_hMpc(self, ks: np.ndarray, k_hunit: bool) -> np.ndarray:
         """Return ks in h/Mpc (convert from 1/Mpc when k_hunit is False)."""
         if k_hunit:

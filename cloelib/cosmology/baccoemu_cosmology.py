@@ -627,9 +627,39 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
             **{**self.params_emu, **baryonic_params}
         )
         k_phys = k_baryon * self.background.h  # h/Mpc -> 1/Mpc
-        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
-            z_emu, k_phys, boost, kx=1, ky=1
+        # Native support of the BACCOemu baryonic boost, in 1/Mpc. It is much
+        # narrower in k than the FLAMINGO and HMcode2020 responses (it stops
+        # around 17.7 h/Mpc), so it is recorded and exposed rather than left
+        # implicit.
+        self._baryon_k_range = (float(k_phys[0]), float(k_phys[-1]))
+
+        # `RectBivariateSpline` holds its boundary value outside the knot span
+        # instead of extrapolating, which turns B(k) into a flat, unphysical
+        # tail beyond the emulator range. Extend the boost with a power law
+        # first, and interpolate in log k, following `EE2NonLinearPerturbations`.
+        k_out, z_out, boost_out = extend_spectra(
+            k_phys,
+            z_emu,
+            np.asarray(boost),
+            flag_range=True,
+            option_wavenumber="power_law",
+            option_redshift="power_law",
+            extrap_z=z_emu,
+            option_cosmo="const",
+            ns=self.background.ns,
         )
+        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
+            z_out, np.log(k_out), boost_out, kx=1, ky=1
+        )
+
+    @property
+    def baryon_k_range(self) -> tuple[float, float]:
+        """Wavenumbers in 1/Mpc over which ``baryonic_suppression`` is emulated.
+
+        Outside this range the returned suppression comes from the power-law
+        extrapolation applied at construction, not from the emulator itself.
+        """
+        return self._baryon_k_range
 
     def baryonic_suppression(self, zs, ks, k_hunit: bool = False) -> np.ndarray:
         """Return B(z, k) = P_baryon(z, k) / P_dmo(z, k).
@@ -652,7 +682,8 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         ks = np.atleast_1d(ks)
         if k_hunit:
             ks = ks * self.background.h
-        return self._baryon_ratio_interp(zs, ks)
+        # The spline is built on log k (see __init__).
+        return self._baryon_ratio_interp(zs, np.log(ks))
 
 
 #: Convenience alias: BACCOemu nonlinear perturbations with the BACCOemu baryonic-boost

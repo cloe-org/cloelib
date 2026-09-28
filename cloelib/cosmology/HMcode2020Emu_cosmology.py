@@ -566,9 +566,20 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
             HM2020_emu.emulator["nonlinear"]["k"] * self.background.h
         )  # h/Mpc -> 1/Mpc
         self._baryon_k_nl_min = k_nl_phys[0]
+        # Interpolated in log k, as elsewhere in cloelib.
         self._baryon_ratio_interp = interpolate.RectBivariateSpline(
-            z_emu, k_nl_phys, ratio, kx=1, ky=1
+            z_emu, np.log(k_nl_phys), ratio, kx=1, ky=1
         )
+        self._baryon_k_range = (float(k_nl_phys[0]), float(k_nl_phys[-1]))
+
+    @property
+    def baryon_k_range(self) -> tuple[float, float]:
+        """Wavenumbers in 1/Mpc over which ``baryonic_suppression`` is emulated.
+
+        Below the range the suppression is set to 1; above it the spline holds
+        its boundary value rather than extrapolating.
+        """
+        return self._baryon_k_range
 
     def baryonic_suppression(self, zs, ks, k_hunit: bool = False) -> np.ndarray:
         """Return B(z, k) = P_baryon(z, k) / P_dmo(z, k).
@@ -595,7 +606,7 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
         result = np.ones((len(zs), len(ks)))
         in_range = ks >= self._baryon_k_nl_min
         if np.any(in_range):
-            result[:, in_range] = self._baryon_ratio_interp(zs, ks[in_range])
+            result[:, in_range] = self._baryon_ratio_interp(zs, np.log(ks[in_range]))
         return result
 
 

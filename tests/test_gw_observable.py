@@ -3,6 +3,9 @@
 import numpy as np
 
 from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
+from cloelib.observables.gw.number_counts import GWSourceBiasContribution
+from cloelib.observables.gw.weak_lensing import GWWeakLensingContribution
+from cloelib.observables.photo.tracer import Tracer
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 
 
@@ -33,6 +36,11 @@ class FakePerturbations:
         return 1.0 / (1.0 + z[:, None]) ** 2 / (1.0 + k[None, :] ** 2)
 
 
+def _tracer_contract(tracer: Tracer) -> Tracer:
+    """Type-check GW tracers against the shared structural protocol."""
+    return tracer
+
+
 def test_gw_windows_and_angular_power_spectra():
     z = np.linspace(0.1, 1.1, 21)
     dndz = np.ones((1, len(z)))
@@ -56,6 +64,25 @@ def test_gw_windows_and_angular_power_spectra():
         dndz=dndz,
         z=z,
         nuisance_params=nuisance_gw,
+    )
+
+    _tracer_contract(gw_number_counts)
+    _tracer_contract(gw_weak_lensing)
+
+    contributions = gw_number_counts.get_contributions()
+    assert contributions == (gw_number_counts.bias,)
+    assert isinstance(contributions[0], GWSourceBiasContribution)
+    np.testing.assert_array_equal(
+        np.asarray(contributions[0].compute_kernel(z)),
+        np.asarray(gw_number_counts.get_window_number_counts(z)),
+    )
+
+    contributions = gw_weak_lensing.get_contributions()
+    assert contributions == (gw_weak_lensing.lensing,)
+    assert isinstance(contributions[0], GWWeakLensingContribution)
+    np.testing.assert_array_equal(
+        np.asarray(contributions[0].compute_kernel(z)),
+        np.asarray(gw_weak_lensing.get_window_lensing(z)),
     )
 
     window_number_counts = np.asarray(gw_number_counts.get_window(z))

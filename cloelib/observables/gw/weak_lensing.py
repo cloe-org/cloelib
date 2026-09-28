@@ -1,4 +1,8 @@
-"""GW weak-lensing tracer and its radial-window contribution."""
+"""GW weak-lensing tracer: `GWWeakLensingTracer` and its Contributions.
+
+Compatible with the Tracer protocol. Counterpart to `gw.number_counts`, which
+holds `GWNumberCountsTracer`.
+"""
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
@@ -7,30 +11,26 @@ from cloelib.auxiliary.math_utils import cached_stacked_simpson, simps
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 
 # General imports
-import jax.numpy as np  # type: ignore
-import jax  # type: ignore
-import interpax  # type: ignore
+import jax.numpy as np
+import jax
+import interpax
 
 # UNITS
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 
-class _GWWeakLensingContribution:
-    """Scalar GW weak-lensing radial contribution.
+class GWWeakLensingContribution:
+    """Weak-lensing convergence kernel term of `GWWeakLensingTracer.get_window()`."""
 
-    Angular responses are applied by AngularTwoPoint, not in this kernel.
-    The spectrum engine selects the appropriate spectrum for each pairing.
-    """
-
-    def __init__(self, tracer):
+    def __init__(self, tracer: "GWWeakLensingTracer") -> None:
         self._tracer = tracer
 
     def compute_kernel(self, z):
-        return self._tracer.get_window(z)
+        return self._tracer.get_window_lensing(z)
 
 
 class GWWeakLensingTracer:
-    """Class for the kernel for GW weak lensing."""
+    """Tracer for GW weak lensing."""
 
     def __init__(
         self,
@@ -59,7 +59,8 @@ class GWWeakLensingTracer:
         self.background = self.perturbations.background
         self.z = z
         self.nuisance_params = nuisance_params
-        # This is to add the necessary prefactor to GW-WL, while avoiding it in GW-NC
+        # The radial kernel is scalar convergence, so only the GW
+        # weak-lensing field response applies in AngularTwoPoint.
         self.prefact_toggle = 0
         self.gw_prefact_toggle = 1
         self.dz_gw_i = [
@@ -75,9 +76,15 @@ class GWWeakLensingTracer:
         # Correct dndz_stretched for dz_gw
         self.dndz_shifted = shift_dndz_jax(self.dndz_stretched, z, self.dz_gw_i)
 
+        self.lensing = GWWeakLensingContribution(self)
+
     def get_contributions(self):
-        """Return the scalar radial contribution for the spectrum engine."""
-        return (_GWWeakLensingContribution(self),)
+        """Return this tracer's window as its separable Contribution terms.
+
+        Returns:
+          contributions (tuple): `(self.lensing,)`.
+        """
+        return (self.lensing,)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
         """Compute the GW lensing efficiency in a redshift bin."""
@@ -171,4 +178,5 @@ class GWWeakLensingTracer:
           window (np.ndarray): GW weak-lensing windows with shape
             `(n_bins, n_z)`.
         """
-        return self.get_window_lensing(z)
+        total_window = sum(c.compute_kernel(z) for c in self.get_contributions())
+        return total_window

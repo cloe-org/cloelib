@@ -1,4 +1,8 @@
-"""GW number-count tracer and its radial-window contribution."""
+"""GW number-count tracer: `GWNumberCountsTracer` and its Contributions.
+
+Compatible with the Tracer protocol. Counterpart to `gw.weak_lensing`, which
+holds `GWWeakLensingTracer`.
+"""
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
@@ -6,27 +10,31 @@ from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 
 # General imports
-import jax  # type: ignore
-import jax.numpy as np  # type: ignore
-import interpax  # type: ignore
+import jax
+import jax.numpy as np
+import interpax
 import jax.lax as lx
 
 # UNITS
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 
-class _GWNumberCountsContribution:
-    """Scalar GW number-count radial contribution."""
+class GWSourceBiasContribution:
+    """Source-bias-weighted kernel term of `GWNumberCountsTracer.get_window()`.
 
-    def __init__(self, tracer):
+    Currently one of the three linear-bias models selected by
+    `gw_bias_model` (`GWNumberCountsTracer.get_window_number_counts`).
+    """
+
+    def __init__(self, tracer: "GWNumberCountsTracer") -> None:
         self._tracer = tracer
 
     def compute_kernel(self, z):
-        return self._tracer.get_window(z)
+        return self._tracer.get_window_number_counts(z)
 
 
 class GWNumberCountsTracer:
-    """Class for the kernel for GW Number Counts."""
+    """Tracer for the angular number density of GW sources."""
 
     def __init__(
         self,
@@ -58,7 +66,8 @@ class GWNumberCountsTracer:
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z
-        # GW number counts are scalar, like galaxy positions.
+        # AngularTwoPoint field responses: scalar number counts need neither
+        # the spin-2 shear response nor the GW weak-lensing response.
         self.prefact_toggle = 0
         self.gw_prefact_toggle = 0
 
@@ -126,10 +135,17 @@ class GWNumberCountsTracer:
         index = np.argwhere(conditions, size=1).squeeze()
 
         self.bias_array = [per_bin_case, per_bin_int_case, poly_case][index]()
+        self.bias = GWSourceBiasContribution(self)
 
     def get_contributions(self):
-        """Return the scalar radial contribution for the spectrum engine."""
-        return (_GWNumberCountsContribution(self),)
+        """Return this tracer's window as its separable Contribution terms.
+
+        The contribution currently delegates to `get_window_number_counts`.
+
+        Returns:
+          contributions (tuple): `(self.bias,)`.
+        """
+        return (self.bias,)
 
     def get_window_number_counts(self, z) -> np.ndarray:
         r"""GW number-count window function.
@@ -192,4 +208,5 @@ class GWNumberCountsTracer:
           window (np.ndarray): Number-count windows with shape
             `(n_bins, n_z)`.
         """
-        return self.get_window_number_counts(z)
+        total_window = sum(c.compute_kernel(z) for c in self.get_contributions())
+        return total_window

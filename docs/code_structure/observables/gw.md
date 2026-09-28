@@ -1,9 +1,38 @@
 # Gravitational-Wave Observables
 
 Gravitational-wave (GW) tracers describe the radial windows used for angular
-GW number counts and weak lensing. They are grouped in the
-`cloelib.observables.gw` and provide the
-`get_window(z)` interface consumed by `AngularTwoPoint`.
+GW number counts and weak lensing. They live in `cloelib.observables.gw` and
+implement the `cloelib.observables.photo.tracer.Tracer` protocol consumed by
+`AngularTwoPoint`.
+
+**Protocol Definition**: `cloelib.observables.photo.tracer.Tracer`
+
+## Required Properties
+
+Like the photometric tracers, both GW tracers provide:
+
+- **`perturbations`**: Perturbations object used for the matter power spectrum
+  and background quantities
+- **`n_z_bins`**: Number of tomographic redshift bins
+- **`z`**: Redshift grid used for the Limber integral
+- **`prefact_toggle`**: Standard Tracer field-response toggle; it is `0` for
+  both GW tracers because neither is a spin-2 shear field
+
+## Required Methods
+
+### `get_window(z)`
+
+Compute the radial window on a redshift grid. The result has shape
+`(n_bins, n_z)`.
+
+## GW-Specific Angular Response
+
+GW tracers also define **`gw_prefact_toggle`**. It is `1` for
+`GWWeakLensingTracer`, which requires the scalar-convergence response
+$\ell(\ell+1)/(\ell+1/2)^2$, and `0` for `GWNumberCountsTracer`.
+This GW-specific attribute remains outside the shared `Tracer` protocol, so
+existing tracer implementations remain compatible. `AngularTwoPoint` treats a
+missing `gw_prefact_toggle` as `0`.
 
 Both tracers require an evenly spaced, strictly increasing redshift grid that
 does not contain zero. The normalized source distribution must have shape
@@ -11,7 +40,7 @@ does not contain zero. The normalized source distribution must have shape
 width nuisance parameters use one-based bin numbers, such as `dz_gw_1` and
 `width_gw_1`.
 
-## Shared example setup
+## Shared Example Setup
 
 The examples below use one source bin and a linear CAMB matter power spectrum.
 Install cloelib with its `camb` extra, then run the blocks in order.
@@ -50,7 +79,9 @@ gw_nuisance = {
 }
 ```
 
-## GWNumberCountsTracer
+## Existing Tracer Implementations
+
+### GWNumberCountsTracer
 
 `GWNumberCountsTracer` represents angular fluctuations in the number density
 of GW sources.
@@ -100,7 +131,7 @@ number_count_window = gw_number_counts.get_window(z)
 assert number_count_window.shape == (1, len(z))
 ```
 
-## GWWeakLensingTracer
+### GWWeakLensingTracer
 
 `GWWeakLensingTracer` represents the scalar convergence contribution to GW
 luminosity-distance fluctuations.
@@ -151,6 +182,7 @@ Use these tracers with `AngularTwoPoint` as shown in the
 ## Next Steps
 
 - [Gravitational-Wave Summary Statistics](../summary_statistics/gw.md) – Compute angular power spectra
+- [Tracer Extension Guide](photo.md#adding-your-own-tracer) – Implement another `Tracer`
 - [Photometric Observables](photo.md) – Review the photometric tracer implementations
 - [API Reference](../../api.md) – Full class and method details
 - [Back to Observables](index.md) – Review all observable interfaces

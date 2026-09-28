@@ -133,8 +133,8 @@ assert number_count_window.shape == (1, len(z))
 
 ### GWWeakLensingTracer
 
-`GWWeakLensingTracer` represents the scalar convergence contribution to GW
-luminosity-distance fluctuations.
+`GWWeakLensingTracer` represents weak-lensing convergence inferred from GW
+sources.
 
 **Location**: `cloelib/observables/gw/weak_lensing.py`
 

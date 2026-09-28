@@ -30,7 +30,7 @@ class GWWeakLensingContribution:
 
 
 class GWWeakLensingTracer:
-    """Tracer for GW weak lensing."""
+    """Tracer for weak-lensing convergence inferred from GW sources."""
 
     def __init__(
         self,

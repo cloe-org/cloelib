@@ -148,7 +148,7 @@ class PositionsTracer:
         galaxy_bias_model: str,
         nuisance_params: dict,
         include_rsd: bool = False,
-        use_Pcb: bool = False,
+        use_Pcb: bool = True,
     ):
         r"""
         Initialize the class instance.

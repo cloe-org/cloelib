@@ -563,16 +563,27 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         ``__init__`` must be called **after** the base NonLinear ``__init__``
         because it reads ``self.params_emu`` and ``self.background`` which are
         set there.
+
+    .. warning::
+        ``BACCOemuNonLinearPerturbations`` composed with this mixin does **not**
+        reproduce ``BACCOemuNonLinearPerturbations(baryonic_boost=...)`` exactly.
+        The two differ outside the baryonic emulator's k range, because this
+        mixin extends the boost with its own power law (see ``__init__``) while
+        the native path leaves the extension to BACCOemu. Inside the emulated
+        range they agree to ~1e-4. Prefer the native argument when the nonlinear
+        and baryonic backends are both BACCOemu; this mixin exists to put the
+        BACCOemu boost on top of a *different* nonlinear backend.
     """
 
-    #: Both supplied by the nonlinear perturbations class this mixin is composed with.
+    #: All supplied by the nonlinear perturbations class this mixin is composed
+    #: with. `params_emu` and `emu` are BACCOemu-specific, so this mixin can only
+    #: be composed onto a `BACCOemuNonLinearPerturbations`.
     background: Background
     params_emu: dict
+    emu: Any
 
     def __init__(
         self,
-        nonlinear_model_name: str = "Arico2023",
-        baryonic_model_name: str = "Burger2025",
         M_c: float = 0.0,
         eta: float = 0.0,
         beta: float = 0.0,
@@ -589,13 +600,18 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         Call this **after** ``NonLinearPerturbations.__init__`` so
         that ``self.params_emu`` and ``self.background`` are set.
 
+        The emulator is the one the base class already built (``self.emu``), so
+        the model is chosen once, through ``BACCOemuNonLinearPerturbations``'s own
+        ``nonlinear_model_name`` and ``baryonic_model_name``. Selecting it again
+        here would let the boost come from a different model than the spectrum it
+        multiplies.
+
+        Which baryonification parameters are meaningful depends on that model:
+        ``Arico2021`` takes all seven, while ``Burger2025`` takes only ``M_c``,
+        ``eta``, ``beta``, ``M1_z0_cen`` and ``theta_inn`` and ignores the rest.
+
         Parameters
         ----------
-        nonlinear_model_name:
-            BACCOemu nonlinear model used to select the emulator instance,
-            e.g. ``"Arico2023"`` or ``"Angulo2021"``.
-        baryonic_model_name:
-            BACCOemu baryonic model, e.g. ``"Burger2025"`` or ``"Arico2021"``.
         M_c, eta, beta, M1_z0_cen, theta_out, theta_inn, M_inn:
             Optional baryonification parameters.  ``None`` uses the model defaults.
         """
@@ -608,7 +624,10 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
                 "and pass the baryonification parameters to this mixin instead, or "
                 "drop the mixin and use the base class on its own."
             )
-        baryon_emu = emu[nonlinear_model_name][baryonic_model_name]
+        # BACCOemu was trained with the boost factor, so one call to the
+        # emulator the base class already holds is enough -- no second
+        # evaluation, and no risk of picking a different model than the base.
+        baryon_emu = self.emu
         z_emu = 1.0 / self.params_emu["expfactor"] - 1.0
         baryonic_params = {
             k: v
@@ -648,8 +667,10 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
             option_cosmo="const",
             ns=self.background.ns,
         )
+        # Interpolated log-log: log B against log k. Splining the raw ratio in
+        # linear k was the source of the unphysical extrapolation.
         self._baryon_ratio_interp = interpolate.RectBivariateSpline(
-            z_out, np.log(k_out), boost_out, kx=1, ky=1
+            z_out, np.log(k_out), np.log(boost_out), kx=1, ky=1
         )
 
     @property
@@ -682,8 +703,8 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         ks = np.atleast_1d(ks)
         if k_hunit:
             ks = ks * self.background.h
-        # The spline is built on log k (see __init__).
-        return self._baryon_ratio_interp(zs, np.log(ks))
+        # The spline holds log B against log k (see __init__).
+        return np.exp(self._baryon_ratio_interp(zs, np.log(ks)))
 
 
 #: Convenience alias: BACCOemu nonlinear perturbations with the BACCOemu baryonic-boost

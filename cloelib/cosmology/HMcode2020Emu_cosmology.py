@@ -566,11 +566,27 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
             HM2020_emu.emulator["nonlinear"]["k"] * self.background.h
         )  # h/Mpc -> 1/Mpc
         self._baryon_k_nl_min = k_nl_phys[0]
-        # Interpolated in log k, as elsewhere in cloelib.
-        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
-            z_emu, np.log(k_nl_phys), ratio, kx=1, ky=1
-        )
         self._baryon_k_range = (float(k_nl_phys[0]), float(k_nl_phys[-1]))
+
+        # Extend with a power law before interpolating, and interpolate in
+        # log k, as `EE2NonLinearPerturbations` does for the nonlinear boost.
+        # Without this the spline holds its boundary value outside the emulator
+        # range, giving an unphysical flat tail.
+        k_out, z_out, ratio_out = extend_spectra(
+            k_nl_phys,
+            z_emu,
+            ratio,
+            flag_range=True,
+            option_wavenumber="power_law",
+            option_redshift="power_law",
+            extrap_z=z_emu,
+            option_cosmo="const",
+            ns=self.background.ns,
+        )
+        # Interpolated log-log: log B against log k.
+        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
+            z_out, np.log(k_out), np.log(ratio_out), kx=1, ky=1
+        )
 
     @property
     def baryon_k_range(self) -> tuple[float, float]:
@@ -606,7 +622,9 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
         result = np.ones((len(zs), len(ks)))
         in_range = ks >= self._baryon_k_nl_min
         if np.any(in_range):
-            result[:, in_range] = self._baryon_ratio_interp(zs, np.log(ks[in_range]))
+            result[:, in_range] = np.exp(
+                self._baryon_ratio_interp(zs, np.log(ks[in_range]))
+            )
         return result
 
 

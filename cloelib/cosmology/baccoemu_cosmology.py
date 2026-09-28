@@ -13,7 +13,7 @@ from scipy import interpolate
 
 # General imports
 import numpy as np
-from typing import Optional
+from typing import Any, Optional
 
 # Cosmology imports
 try:
@@ -21,7 +21,10 @@ try:
 except ImportError:
     raise ImportError("BACCOemu could not be imported")
 
-emu = {}
+# Heterogeneous registry: `emu["linear"]` is a `Matter_powerspectrum` instance,
+# while `emu[nonlinear_model][baryonic_model]` nests one level deeper. Typed
+# as `Any` since the shape isn't uniform enough for a single `dict[str, X]`.
+emu: dict[str, Any] = {}
 emu["linear"] = baccoemu.Matter_powerspectrum(
     verbose=False, nonlinear_boost=False, baryonic_boost=False
 )
@@ -281,9 +284,9 @@ class BACCOemuNonLinearPerturbations:
         background: Background,
         linearperturbations: Perturbations,
         redshifts: np.ndarray,
-        nonlinear_model_name: Optional[str] = "Arico2023",
+        nonlinear_model_name: str = "Arico2023",
         baryonic_boost: Optional[str] = None,
-        baryonic_model_name: Optional[str] = "Burger2025",
+        baryonic_model_name: str = "Burger2025",
         M_c: Optional[float] = None,
         eta: Optional[float] = None,
         beta: Optional[float] = None,
@@ -562,6 +565,10 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         set there.
     """
 
+    #: Both supplied by the nonlinear perturbations class this mixin is composed with.
+    background: Background
+    params_emu: dict
+
     def __init__(
         self,
         nonlinear_model_name: str = "Arico2023",
@@ -592,6 +599,15 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         M_c, eta, beta, M1_z0_cen, theta_out, theta_inn, M_inn:
             Optional baryonification parameters.  ``None`` uses the model defaults.
         """
+        if "M_c" in self.params_emu:
+            raise ValueError(
+                "The base BACCOemuNonLinearPerturbations was built with "
+                "baryonic_boost set, so its matter_power_spectrum already includes "
+                "the BACCOemu baryonic boost. Composing BACCOemuBaryonBoostMixin on "
+                "top would apply it twice. Build the base with baryonic_boost=None "
+                "and pass the baryonification parameters to this mixin instead, or "
+                "drop the mixin and use the base class on its own."
+            )
         baryon_emu = emu[nonlinear_model_name][baryonic_model_name]
         z_emu = 1.0 / self.params_emu["expfactor"] - 1.0
         baryonic_params = {

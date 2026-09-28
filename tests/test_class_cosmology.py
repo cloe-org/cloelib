@@ -25,6 +25,7 @@ def class_background_instance(scope="module"):
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        alpha_s=0.0,
         mnu=0.0,
         w0=-1.0,
         wa=0.0,
@@ -62,7 +63,8 @@ def test_class_background_required_attributes(class_background_instance):
     attributes_found = {
         name
         for name, value in contents
-        if not callable(value) and not name.startswith("_")
+        if (not callable(value) or (callable(value) and isinstance(value, float)))
+        and not name.startswith("_")
     }
     assert attributes_required <= attributes_found
 
@@ -339,7 +341,10 @@ def class_perturbation_instances(class_background_instance, zs, scope="module"):
         background=class_background_instance, redshifts=zs
     )
     class_non = CLASSNonLinearPerturbations(
-        background=class_background_instance, redshifts=zs, nonlinear_model="halofit"
+        background=class_background_instance,
+        linearperturbations=None,
+        redshifts=zs,
+        nonlinear_model="halofit",
     )
     return {"Linear": class_lin, "NonLinear": class_non}
 
@@ -401,7 +406,10 @@ def test_class_sigma8_consistency_linear_vs_nonlinear(class_background_instance,
         background=class_background_instance, redshifts=zs
     )
     class_non = CLASSNonLinearPerturbations(
-        background=class_background_instance, redshifts=zs, nonlinear_model="halofit"
+        background=class_background_instance,
+        linearperturbations=None,
+        redshifts=zs,
+        nonlinear_model="halofit",
     )
     assert np.abs(class_lin.sigma8_0() - class_non.sigma8_0()) < 1e-3
 
@@ -555,7 +563,7 @@ def class_nonlin_perturb_instance(class_background_instance):
 
     # ----- instantiate perturbations ---------------------------------
     pert = CLASSNonLinearPerturbations(
-        background=class_background_instance, redshifts=zs
+        background=class_background_instance, linearperturbations=None, redshifts=zs
     )
 
     return pert
@@ -578,7 +586,7 @@ def class_nonlin_perturb_instance_nu(class_background_instance):
     class_background_instance.interface_args["CLASSparams"]["m_ncdm"] = 0.2
     # ----- instantiate perturbations ---------------------------------
     pert = CLASSNonLinearPerturbations(
-        background=class_background_instance, redshifts=zs
+        background=class_background_instance, linearperturbations=None, redshifts=zs
     )
 
     return pert

@@ -20,6 +20,7 @@ class CometEFT_SpectroPower:
     r"""Class to retrieve $P(k,\mu)$ (including RSD) with the EFT model from COMET."""
 
     NLcode = "COMET"
+    RSDmodel = "EFTofLSS"
 
     def __init__(self, background: Background, RSD_parameters: dict, redshift: float):
         r"""Class constructor.

@@ -272,6 +272,20 @@ def test_jax_omega_m(jax_background_instance, zs):
     assert len(result) == len(zs)
 
 
+def test_jax_omega_m_accepts_bare_scalar(jax_background_instance):
+    """Regression test: `ShearTracer.get_window_lensing`/`get_window_IA`/
+    `get_window_magnification` all call `background.Omega_m(0.0)` - a bare
+    Python float, not an array. `Omega_m` used to be a Python list
+    comprehension (`[... for z in zs]`), which raises `TypeError: 'float'
+    object is not iterable` on that call - the only cosmology backend gap
+    that stood between `AngularTwoPoint.get_Cl` and a pure-JAX pipeline.
+    """
+    result = jax_background_instance.Omega_m(0.0)
+    assert jnp.isfinite(result)
+    array_result = jax_background_instance.Omega_m(jnp.array([0.0]))
+    assert jnp.allclose(result, array_result[0])
+
+
 def test_jax_omega_b(jax_background_instance, zs):
     """Test Omega_b.
 

@@ -25,7 +25,11 @@ Implementation of baryon correction of the matter power spectrum from FlamingoBa
 import numpy as np
 
 # Cosmology imports
-from cloelib.cosmology.cosmology import BaryonBoostMixin, with_baryon_boost
+from cloelib.cosmology.cosmology import (
+    Background,
+    BaryonBoostMixin,
+    with_baryon_boost,
+)
 from cloelib.cosmology.camb_cosmology import CAMBNonLinearPerturbations
 
 try:
@@ -58,6 +62,9 @@ class FlamingoBaryonBoostMixin(BaryonBoostMixin):
     Or use the :func:`~cloelib.cosmology.cosmology.with_baryon_boost` factory for
     zero-boilerplate class creation.
     """
+
+    #: Supplied by the nonlinear perturbations class this mixin is composed with.
+    background: Background
 
     # ------------------------------------------------------------------
     # Initialiser
@@ -194,6 +201,7 @@ class FlamingoBaryonBoostMixin(BaryonBoostMixin):
 #:
 #:     pert = CAMBNonLinearFLAMINGOBaryonicPerturbations(
 #:         background=bg,
+#:         linearperturbations=lin_pert,
 #:         redshifts=zs,
 #:         baryon_kwargs=dict(fgas_sigma=0.0, Mstar_sigma=0.0, jet_fraction=0.0),
 #:     )

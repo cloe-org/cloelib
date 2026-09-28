@@ -26,6 +26,7 @@ def camb_background_instance(scope="module"):
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        alpha_s=0.0,
         mnu=0.0,
         w0=-1.0,
         wa=0.0,
@@ -159,6 +160,7 @@ def test_camb_set_neutrino_parameters_degenerate():
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        alpha_s=0.0,
         mnu=0.3,
         w0=-1,
         wa=0,
@@ -181,6 +183,7 @@ def test_camb_set_neutrino_parameters_non_degenerate():
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        alpha_s=0.0,
         mnu=np.array([0.05, 0.03]),
         w0=-1,
         wa=0,
@@ -204,6 +207,7 @@ def test_camb_set_neutrino_parameters_zero():
         Omega_k0=0.0,
         As=2e-9,
         ns=0.96,
+        alpha_s=0.0,
         mnu=0.0,
         w0=-1,
         wa=0,
@@ -227,6 +231,7 @@ def test_camb_set_neutrino_parameters_wrong_length():
             Omega_k0=0.0,
             As=2e-9,
             ns=0.96,
+            alpha_s=0.0,
             mnu=[0.02, 0.04],
             w0=-1,
             wa=0,
@@ -245,6 +250,7 @@ def test_camb_set_neutrino_parameters_wrong_type():
             Omega_k0=0.0,
             As=2e-9,
             ns=0.96,
+            alpha_s=0.0,
             mnu=None,
             w0=-1,
             wa=0,
@@ -339,7 +345,10 @@ def camb_perturbation_instances(camb_background_instance, zs, scope="module"):
         background=camb_background_instance, redshifts=zs
     )
     camb_non = CAMBNonLinearPerturbations(
-        background=camb_background_instance, redshifts=zs, nonlinear_model="mead2016"
+        background=camb_background_instance,
+        linearperturbations=None,
+        redshifts=zs,
+        nonlinear_model="mead2016",
     )
     return {"Linear": camb_lin, "NonLinear": camb_non}
 
@@ -416,7 +425,7 @@ def test_camb_nonlinear_perturbations_z_zero_automatic_inclusion(
     user_redshifts = np.array([0.5, 1.0, 1.5, 2.0])
 
     nonlinear_pert = CAMBNonLinearPerturbations(
-        camb_background_instance, user_redshifts, nonlinear_model="mead2016"
+        camb_background_instance, None, user_redshifts, nonlinear_model="mead2016"
     )
 
     # Check that z=0 was automatically added to internal array
@@ -449,7 +458,7 @@ def test_camb_sigma8_consistency_linear_vs_nonlinear(camb_background_instance):
 
     linear_pert = CAMBLinearPerturbations(camb_background_instance, user_redshifts)
     nonlinear_pert = CAMBNonLinearPerturbations(
-        camb_background_instance, user_redshifts, nonlinear_model="mead2016"
+        camb_background_instance, None, user_redshifts, nonlinear_model="mead2016"
     )
 
     # Both should compute sigma8_0
@@ -471,6 +480,7 @@ def test_matter_power_spectrum_cb():
         w0=-1.0,
         wa=0.0,
         ns=0.96,
+        alpha_s=0.0,
         mnu=0.1,
         As=2e-9,
         gamma_MG=0.0,
@@ -485,7 +495,7 @@ def test_matter_power_spectrum_cb():
 
     # non-linear
     perturbations_nl = CAMBNonLinearPerturbations(
-        background, np.linspace(0.0, 2.0, 100)
+        background, None, np.linspace(0.0, 2.0, 100)
     )
     assert_allclose(
         perturbations_nl.matter_power_spectrum(0, 1), 736.010737, rtol=1.0e-03
@@ -493,3 +503,49 @@ def test_matter_power_spectrum_cb():
     assert_allclose(
         perturbations_nl.matter_power_spectrum_cb(0, 1), 747.017036, rtol=1.0e-03
     )
+
+
+def test_camb_background_running_spectral_index():
+    """Test that CAMBBackground initializes and runs correctly with non-zero alpha_s."""
+    bg = CAMBBackground(
+        H0=67.7,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        alpha_s=0.02,
+        mnu=0.0,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+        N_mnu=0,
+    )
+
+    assert bg.alpha_s == 0.02
+
+    zs = np.linspace(0.0, 2.0, 20)
+    lin = CAMBLinearPerturbations(bg, zs)
+
+    # Power spectrum should be positive and finite
+    pk = lin.matter_power_spectrum(0.0, 1.0)
+    assert pk > 0
+    assert np.isfinite(pk)
+
+    # sigma8 should differ from alpha_s=0 case (running modifies P(k))
+    bg0 = CAMBBackground(
+        H0=67.7,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        alpha_s=0.0,
+        mnu=0.0,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+        N_mnu=0,
+    )
+    lin0 = CAMBLinearPerturbations(bg0, zs)
+    assert lin.sigma8_0() != lin0.sigma8_0()

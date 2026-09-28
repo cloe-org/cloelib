@@ -24,13 +24,13 @@ pip install .
 4. **Add optional dependencies** – Enhance with external codes and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,FlamingoBaryonResponseEmulator]
+pip install .[camb,classy,hmcode2020emu,comet-emu,pbjcosmo,pylevin,mpmath,tensorflow,pyinstrument,react,mgclassy,baccoemu,FlamingoBaryonResponseEmulator]
 ```
 
 > **Note:** Some shells require quoting the argument when brackets are present:
 >
 > ```sh
-> pip install ".[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,FlamingoBaryonResponseEmulator]"
+> pip install ".[camb,classy,hmcode2020emu,comet-emu,pbjcosmo,pylevin,mpmath,tensorflow,pyinstrument,react,mgclassy,baccoemu,FlamingoBaryonResponseEmulator]"
 > ```
 
 The installation is now complete.
@@ -42,6 +42,7 @@ Several optional dependencies enhance **cloelib** capabilities:
 - **`pyinstrument`** – Time profiling for performance optimization
 - **`pylevin`**, **`mpmath`** – Required for specific observational probes (e.g., COSEBIs)
 - **`tensorflow`** – Needed for certain emulator backends (e.g., `HMCode2020emu`)
+- **`react`** – Installs [`MGEmu`](https://github.com/nebblu/MGEmus.git) plus the TensorFlow support needed by the ReACT modified-gravity boost module
 - **`baccoemu`** – Required for BACCOemu nonlinear and baryonic perturbations
 - **`FlamingoBaryonResponseEmulator`** – Required for FLAMINGO baryonic suppression
 

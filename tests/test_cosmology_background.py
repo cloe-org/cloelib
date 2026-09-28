@@ -48,11 +48,13 @@ def test_background_required_attributes():
         "Omega_cdm0",
         "H0",
         "ns",
+        "alpha_s",
         "N_ur",
         "N_mnu",
         "N_eff",
         "interface_args",
         "rdrag",
+        "z_star",
     }
     assert attributes_required == attributes_found
 
@@ -72,6 +74,7 @@ def test_derived_cosmology():
         As=2e-9,
         gamma_MG=0.0,
         N_mnu=1,
+        alpha_s=0.0,
     )
 
     _z_test = np.zeros(1)
@@ -101,6 +104,7 @@ def test_Omega_cb():
         w0=-1.0,
         wa=0.0,
         ns=0.96,
+        alpha_s=0.0,
         mnu=0.1,
         As=2e-9,
         gamma_MG=0.0,

@@ -8,6 +8,8 @@ if HAS_COSMOPOWER_JAX:
         CosmoPowerJAXw0waCDMPerturbations as w0waCDM,
         CosmoPowerJAXwCDMPerturbations as wCDM,
         CosmoPowerJAXLCDMPerturbations as LCDM,
+        CosmoPowerJAXCurvaturePerturbations as Curvature,
+        CosmoPowerJAXRunningIndexPerturbations as RunningIndex,
     )
 else:
     pytest.skip(
@@ -36,7 +38,19 @@ log10TAGN = 7.8  # AGN feedback parameter
 
 class DummyBackground:
     def __init__(
-        self, H0, Omega_b0, Omega_cdm0, Omega_k0, As, ns, mnu, N_mnu, w0, wa, gamma_MG
+        self,
+        H0,
+        Omega_b0,
+        Omega_cdm0,
+        Omega_k0,
+        As,
+        ns,
+        mnu,
+        N_mnu,
+        w0,
+        wa,
+        gamma_MG,
+        alpha_s=0.0,
     ):
         self.H0 = H0
         self.h = H0 / 100.0
@@ -50,6 +64,7 @@ class DummyBackground:
         self.wa = wa
         self.gamma_MG = gamma_MG
         self.N_mnu = N_mnu
+        self.alpha_s = alpha_s
         self._interface_args = {}
 
     def Omega_b(self, zs):
@@ -242,6 +257,97 @@ def background_lcdm_3degen():
         w0=-1.0,
         wa=0.0,
         gamma_MG=0.0,
+    )
+
+
+@pytest.fixture
+def background_w0wa_2degen():
+    """Background for w0waCDM tests with 2 degenerate neutrinos"""
+    return DummyBackground(
+        H0=H0,
+        Omega_b0=Omega_b0,
+        Omega_cdm0=Omega_cdm0,
+        Omega_k0=Omega_k0,
+        As=As,
+        ns=ns,
+        mnu=0.06,
+        N_mnu=2,
+        w0=w0,
+        wa=wa,
+        gamma_MG=0.0,
+    )
+
+
+@pytest.fixture
+def background_wcdm_2degen():
+    """Background for wCDM tests with 2 degenerate neutrinos"""
+    return DummyBackground(
+        H0=H0,
+        Omega_b0=Omega_b0,
+        Omega_cdm0=Omega_cdm0,
+        Omega_k0=Omega_k0,
+        As=As,
+        ns=ns,
+        mnu=0.06,
+        N_mnu=2,
+        w0=-0.9,
+        wa=0.0,
+        gamma_MG=0.0,
+    )
+
+
+@pytest.fixture
+def background_lcdm_2degen():
+    """Background for LCDM tests with 2 degenerate neutrinos"""
+    return DummyBackground(
+        H0=H0,
+        Omega_b0=Omega_b0,
+        Omega_cdm0=Omega_cdm0,
+        Omega_k0=Omega_k0,
+        As=As,
+        ns=ns,
+        mnu=0.06,
+        N_mnu=2,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+    )
+
+
+@pytest.fixture
+def background_curvature():
+    """Background for curvature tests (LCDM + non-zero Omega_k0)"""
+    return DummyBackground(
+        H0=H0,
+        Omega_b0=Omega_b0,
+        Omega_cdm0=Omega_cdm0,
+        Omega_k0=0.02,
+        As=As,
+        ns=ns,
+        mnu=0.06,
+        N_mnu=1,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+    )
+
+
+@pytest.fixture
+def background_running():
+    """Background for running spectral index tests (LCDM + alpha_s)"""
+    return DummyBackground(
+        H0=H0,
+        Omega_b0=Omega_b0,
+        Omega_cdm0=Omega_cdm0,
+        Omega_k0=0.0,
+        As=As,
+        ns=ns,
+        mnu=0.06,
+        N_mnu=1,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+        alpha_s=0.01,
     )
 
 
@@ -883,7 +989,7 @@ def test_non_flat_geometry():
 
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_unsupported_neutrino_configuration():
-    """Test that unsupported N_mnu raises ValueError"""
+    """Test that unsupported N_mnu (e.g. 4) raises ValueError"""
     bad_nu_background = DummyBackground(
         H0=H0,
         Omega_b0=Omega_b0,
@@ -892,7 +998,7 @@ def test_unsupported_neutrino_configuration():
         As=As,
         ns=ns,
         mnu=0.06,
-        N_mnu=2,
+        N_mnu=4,
         w0=w0,
         wa=wa,
         gamma_MG=0.0,
@@ -1127,6 +1233,93 @@ def test_lcdm_nonlinear_3degen(background_lcdm_3degen, z_array, k_array):
     assert np.all(pk_nl > 0)
 
 
+# ============= 2-Degen Neutrino Tests =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_w0wa_linear_2degen(background_w0wa_2degen, z_array, k_array):
+    """Test w0waCDM linear with 2 degenerate neutrinos"""
+    emulator = w0waCDM.Linear(background=background_w0wa_2degen, redshifts=z_array)
+
+    pk = emulator.matter_power_spectrum(z_array[0], k_array)[0, :]
+
+    assert np.all(pk > 0)
+    assert np.all(np.isfinite(pk))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_w0wa_nonlinear_2degen(background_w0wa_2degen, z_array, k_array):
+    """Test w0waCDM nonlinear with 2 degenerate neutrinos"""
+    linear = w0waCDM.Linear(background=background_w0wa_2degen, redshifts=z_array)
+    nonlinear = w0waCDM.NonLinear(
+        background=background_w0wa_2degen,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_nl > 0)
+    assert np.all(np.isfinite(pk_nl))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_wcdm_linear_2degen(background_wcdm_2degen, z_array, k_array):
+    """Test wCDM linear with 2 degenerate neutrinos"""
+    emulator = wCDM.Linear(background=background_wcdm_2degen, redshifts=z_array)
+
+    pk = emulator.matter_power_spectrum(z_array[0], k_array)[0, :]
+
+    assert np.all(pk > 0)
+    assert np.all(np.isfinite(pk))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_wcdm_nonlinear_2degen(background_wcdm_2degen, z_array, k_array):
+    """Test wCDM nonlinear with 2 degenerate neutrinos"""
+    linear = wCDM.Linear(background=background_wcdm_2degen, redshifts=z_array)
+    nonlinear = wCDM.NonLinear(
+        background=background_wcdm_2degen,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_nl > 0)
+    assert np.all(np.isfinite(pk_nl))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_lcdm_linear_2degen(background_lcdm_2degen, z_array, k_array):
+    """Test LCDM linear with 2 degenerate neutrinos"""
+    emulator = LCDM.Linear(background=background_lcdm_2degen, redshifts=z_array)
+
+    pk = emulator.matter_power_spectrum(z_array[0], k_array)[0, :]
+
+    assert np.all(pk > 0)
+    assert np.all(np.isfinite(pk))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_lcdm_nonlinear_2degen(background_lcdm_2degen, z_array, k_array):
+    """Test LCDM nonlinear with 2 degenerate neutrinos"""
+    linear = LCDM.Linear(background=background_lcdm_2degen, redshifts=z_array)
+    nonlinear = LCDM.NonLinear(
+        background=background_lcdm_2degen,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_nl > 0)
+    assert np.all(np.isfinite(pk_nl))
+
+
 # ============= log10TAGN Bounds Tests =============
 
 
@@ -1156,3 +1349,211 @@ def test_log10TAGN_above_bounds(background_w0wa, z_array):
             redshifts=z_array,
             log10TAGN=9.0,  # Above 8.5 bound
         )
+
+
+# ============= Curvature Tests =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_curvature_linear_initialization(background_curvature, z_array):
+    """Test LCDM+curvature linear emulator initializes correctly"""
+    emulator = Curvature.Linear(background=background_curvature, redshifts=z_array)
+
+    assert hasattr(emulator, "Pk_int")
+    assert hasattr(emulator, "k")
+    assert hasattr(emulator, "z")
+    assert hasattr(emulator, "sigma8")
+    assert hasattr(emulator, "fsigma8")
+    assert emulator.k_min > 0
+    assert emulator.k_max > emulator.k_min
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_curvature_linear_power_spectrum(background_curvature, z_array, k_array):
+    """Test LCDM+curvature linear power spectrum output"""
+    emulator = Curvature.Linear(background=background_curvature, redshifts=z_array)
+
+    pk = emulator.matter_power_spectrum(z_array[0], k_array)[0, :]
+
+    assert isinstance(pk, np.ndarray)
+    assert pk.shape[0] == len(k_array)
+    assert np.all(pk > 0)
+    assert np.all(np.isfinite(pk))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_curvature_linear_redshift_evolution(background_curvature, z_array, k_array):
+    """Test LCDM+curvature power spectrum decreases with redshift"""
+    emulator = Curvature.Linear(background=background_curvature, redshifts=z_array)
+
+    pk_z0 = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_z2 = emulator.matter_power_spectrum(2.0, k_array)[0, :]
+
+    assert np.all(pk_z0 > pk_z2)
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_curvature_nonlinear(background_curvature, z_array, k_array):
+    """Test LCDM+curvature nonlinear emulator"""
+    linear = Curvature.Linear(background=background_curvature, redshifts=z_array)
+    nonlinear = Curvature.NonLinear(
+        background=background_curvature,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_nl > 0)
+    assert np.all(np.isfinite(pk_nl))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_curvature_nonlinear_exceeds_linear(background_curvature, z_array, k_array):
+    """Test nonlinear P(k) exceeds linear at small scales for curvature model"""
+    linear = Curvature.Linear(background=background_curvature, redshifts=z_array)
+    nonlinear = Curvature.NonLinear(
+        background=background_curvature,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    k_small = k_array[k_array > 0.5]
+    pk_lin = linear.matter_power_spectrum(0.0, k_small)[0, :]
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_small)[0, :]
+
+    assert np.any(pk_nl > pk_lin)
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_curvature_linear_pcb(background_curvature, z_array, k_array):
+    """Test LCDM+curvature linear P_cb emulator"""
+    emulator = Curvature.LinearCB(background=background_curvature, redshifts=z_array)
+
+    pk = emulator.matter_power_spectrum(z_array[0], k_array)[0, :]
+
+    assert np.all(pk > 0)
+    assert np.all(np.isfinite(pk))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_curvature_nonlinear_pcb(background_curvature, z_array, k_array):
+    """Test LCDM+curvature nonlinear P_cb emulator"""
+    linear = Curvature.LinearCB(background=background_curvature, redshifts=z_array)
+    nonlinear = Curvature.NonLinearCB(
+        background=background_curvature,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk > 0)
+    assert np.all(np.isfinite(pk))
+
+
+# ============= Running Spectral Index Tests =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_running_linear_initialization(background_running, z_array):
+    """Test LCDM+running spectral index linear emulator initializes correctly"""
+    emulator = RunningIndex.Linear(background=background_running, redshifts=z_array)
+
+    assert hasattr(emulator, "Pk_int")
+    assert hasattr(emulator, "k")
+    assert hasattr(emulator, "z")
+    assert hasattr(emulator, "sigma8")
+    assert hasattr(emulator, "fsigma8")
+    assert emulator.k_min > 0
+    assert emulator.k_max > emulator.k_min
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_running_linear_power_spectrum(background_running, z_array, k_array):
+    """Test LCDM+running spectral index linear power spectrum output"""
+    emulator = RunningIndex.Linear(background=background_running, redshifts=z_array)
+
+    pk = emulator.matter_power_spectrum(z_array[0], k_array)[0, :]
+
+    assert isinstance(pk, np.ndarray)
+    assert pk.shape[0] == len(k_array)
+    assert np.all(pk > 0)
+    assert np.all(np.isfinite(pk))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_running_linear_redshift_evolution(background_running, z_array, k_array):
+    """Test LCDM+running spectral index power spectrum decreases with redshift"""
+    emulator = RunningIndex.Linear(background=background_running, redshifts=z_array)
+
+    pk_z0 = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_z2 = emulator.matter_power_spectrum(2.0, k_array)[0, :]
+
+    assert np.all(pk_z0 > pk_z2)
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_running_nonlinear(background_running, z_array, k_array):
+    """Test LCDM+running spectral index nonlinear emulator"""
+    linear = RunningIndex.Linear(background=background_running, redshifts=z_array)
+    nonlinear = RunningIndex.NonLinear(
+        background=background_running,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk_nl > 0)
+    assert np.all(np.isfinite(pk_nl))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_running_nonlinear_exceeds_linear(background_running, z_array, k_array):
+    """Test nonlinear P(k) exceeds linear at small scales for running index model"""
+    linear = RunningIndex.Linear(background=background_running, redshifts=z_array)
+    nonlinear = RunningIndex.NonLinear(
+        background=background_running,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    k_small = k_array[k_array > 0.5]
+    pk_lin = linear.matter_power_spectrum(0.0, k_small)[0, :]
+    pk_nl = nonlinear.matter_power_spectrum(0.0, k_small)[0, :]
+
+    assert np.any(pk_nl > pk_lin)
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_running_linear_pcb(background_running, z_array, k_array):
+    """Test LCDM+running spectral index linear P_cb emulator"""
+    emulator = RunningIndex.LinearCB(background=background_running, redshifts=z_array)
+
+    pk = emulator.matter_power_spectrum(z_array[0], k_array)[0, :]
+
+    assert np.all(pk > 0)
+    assert np.all(np.isfinite(pk))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_running_nonlinear_pcb(background_running, z_array, k_array):
+    """Test LCDM+running spectral index nonlinear P_cb emulator"""
+    linear = RunningIndex.LinearCB(background=background_running, redshifts=z_array)
+    nonlinear = RunningIndex.NonLinearCB(
+        background=background_running,
+        linearperturbations=linear,
+        redshifts=z_array,
+        log10TAGN=log10TAGN,
+    )
+
+    pk = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+
+    assert np.all(pk > 0)
+    assert np.all(np.isfinite(pk))

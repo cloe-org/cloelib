@@ -30,6 +30,7 @@ def camb_background_instance(scope="module"):
         wa=0.0,
         gamma_MG=0.0,
         N_mnu=0,
+        alpha_s=0.0,
     )
     return camb_instance
 

@@ -1,9 +1,9 @@
 # Gravitational-Wave Observables
 
 Gravitational-wave (GW) tracers describe the radial windows used for angular
-GW number counts and weak lensing. Both implementations live in
-`cloelib/observables/gw.py` and provide the `get_window(z)` interface consumed
-by `AngularTwoPoint`.
+GW number counts and weak lensing. They are grouped in the
+`cloelib.observables.gw` and provide the
+`get_window(z)` interface consumed by `AngularTwoPoint`.
 
 Both tracers require an evenly spaced, strictly increasing redshift grid that
 does not contain zero. The normalized source distribution must have shape
@@ -55,6 +55,8 @@ gw_nuisance = {
 `GWNumberCountsTracer` represents angular fluctuations in the number density
 of GW sources.
 
+**Location**: `cloelib/observables/gw/number_counts.py`
+
 **What it does**:
 
 - Computes the source-density window $W_i^{\mathrm{GWNC}}(z)$
@@ -102,6 +104,8 @@ assert number_count_window.shape == (1, len(z))
 
 `GWWeakLensingTracer` represents the scalar convergence contribution to GW
 luminosity-distance fluctuations.
+
+**Location**: `cloelib/observables/gw/weak_lensing.py`
 
 **What it does**:
 

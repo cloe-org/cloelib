@@ -16,6 +16,37 @@ import jax.numpy as np  # type: ignore
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 
+class CMBLensingContribution:
+    """CMB-lensing convergence kernel term of `CMBLensingTracer.get_window()`.
+
+    Lets `CMBLensingTracer` participate in the generalized
+    per-contribution-pair spectrum engine
+    (`cloelib.observables.photo.spectrum_engine`) whenever it's paired with
+    a contribution that itself declares extra `SpectrumRequest`s (e.g.
+    `NonLinearGalaxyBiasContribution`, `TATTContribution`). Without this,
+    `getattr(tracer, "get_contributions", lambda: ())()` returns an empty
+    tuple for `CMBLensingTracer`, which silently disables the generalized
+    engine for any pairing involving CMB lensing (an empty
+    `contributions2` means `spectrum_engine.needs_generalized_engine`'s
+    `for c2 in contributions2` loop never runs) - falling back to the
+    legacy path's plain `get_window`/matter-Pk integral even when the other
+    side needs its own effective P(k,z) (e.g. `NonLinearGalaxyBiasContribution`'s
+    amplitude-free kernel, which relies on `get_effective_pk` to supply the
+    bias amplitude at all). Carries no `get_spectrum_requests` of its own -
+    CMB lensing needs nothing beyond the plain matter Pk (or, paired with a
+    density contribution, that contribution's own galaxy-matter cross
+    spectrum) - so pairing CMB lensing with anything that itself declares
+    no extra requests still takes the untouched legacy path, exactly as
+    before this class existed.
+    """
+
+    def __init__(self, tracer: "CMBLensingTracer") -> None:
+        self._tracer = tracer
+
+    def compute_kernel(self, z):
+        return self._tracer.get_window(z)
+
+
 class CMBLensingTracer:
     """Class for the kernel for CMB Lensing convergence."""
 
@@ -44,6 +75,15 @@ class CMBLensingTracer:
         self.n_z_bins = 1
         # This is to add the necessary prefactor to shear
         self.prefact_toggle = 0
+        self.convergence = CMBLensingContribution(self)
+
+    def get_contributions(self):
+        """Return this tracer's window as its separable Contribution terms.
+
+        Returns:
+          contributions (tuple): `(self.convergence,)`.
+        """
+        return (self.convergence,)
 
     def get_window(self, z):
         r"""Compute the Window.

@@ -12,7 +12,7 @@ import warnings
 
 # Cosmology imports
 try:
-    from classy import Class  # type: ignore
+    from classy import Class
 except ImportError as e:
     raise ImportError("classy could not be imported.") from e
 
@@ -300,7 +300,6 @@ class CLASSLinearPerturbations:
         self.background = background
         self.z = redshifts
         self.kmax = 100
-        self.results = None  # Store CLASS results
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -338,7 +337,7 @@ class CLASSLinearPerturbations:
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
         # To match array convention of CAMB
         return self.Pk_linear
 
@@ -382,7 +381,7 @@ class CLASSLinearPerturbations:
             )
         else:
             self.Pk_cb_linear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_linear
@@ -419,7 +418,7 @@ class CLASSLinearPerturbations:
         Returns:
             (np.ndarray): Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -432,7 +431,7 @@ class CLASSLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()
 
 
 class CLASSNonLinearPerturbations:
@@ -545,7 +544,7 @@ class CLASSNonLinearPerturbations:
             )
         else:
             self.Pk_cb_nonlinear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_nonlinear
@@ -582,7 +581,7 @@ class CLASSNonLinearPerturbations:
         Returns:
             (np.ndarray): Scale-independent growth rate f(z)
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -595,4 +594,4 @@ class CLASSNonLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()

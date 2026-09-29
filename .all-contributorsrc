@@ -528,7 +528,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/42518815?v=4",
       "profile": "http://www.matthieuschaller.com",
       "contributions": [
-        "ideas"
+        "ideas",
+        "mentoring"
       ]
     },
     {
@@ -647,7 +648,8 @@
       "profile": "https://github.com/chiaradeleo1",
       "contributions": [
         "review",
-        "mentoring"
+        "mentoring",
+        "bug"
       ]
     },
     {
@@ -666,6 +668,16 @@
       "profile": "https://github.com/ptallada",
       "contributions": [
         "ideas",
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "lshuns",
+      "name": "Shun-Sheng Li",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41175095?v=4",
+      "profile": "https://lshuns.github.io/",
+      "contributions": [
         "code",
         "bug"
       ]

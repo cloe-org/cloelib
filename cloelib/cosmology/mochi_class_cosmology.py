@@ -16,7 +16,7 @@ np.set_printoptions(threshold=sys.maxsize)
 # Cosmology imports (make sure it's the version of mochi_class that's being imported not the standard CLASS!)
 try:
     import mochi_classy
-    from mochi_classy import Class  # type: ignore
+    from mochi_classy import Class
 
     print(f"Loaded mochi_classy from {mochi_classy.__file__}")
 except ImportError as e:
@@ -535,7 +535,6 @@ class mochiCLASSLinearPerturbations:
         self.background = background
         self.z = redshifts
         self.kmax = 100
-        self.results = None  # Store CLASS results
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -590,7 +589,7 @@ class mochiCLASSLinearPerturbations:
         # ks /= self.background.h
         self.Pk_linear = np.array(
             [[self.results.pk_lin(ki, zi) for ki in ks] for zi in zs]
-        )  # type: ignore[union-attr]
+        )
         # To match array convention of CAMB
         return self.Pk_linear  # * (self.background.h) ** 3
 
@@ -634,7 +633,7 @@ class mochiCLASSLinearPerturbations:
             )
         else:
             self.Pk_cb_linear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_linear
@@ -681,7 +680,7 @@ class mochiCLASSLinearPerturbations:
         np.ndarray
             Scale-dependent growth rate f(z)
         """
-        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -707,7 +706,7 @@ class mochiCLASSNonLinearPerturbations:
 
     def __init__(
         self,
-        background: Background,
+        background: mochiCLASSBackground,
         linearperturbations: Optional[object],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
@@ -830,7 +829,7 @@ class mochiCLASSNonLinearPerturbations:
             )
         else:
             self.Pk_cb_nonlinear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_nonlinear
@@ -872,7 +871,7 @@ class mochiCLASSNonLinearPerturbations:
         np.ndarray
             Scale-dependent growth rate f(z)
         """
-        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -885,4 +884,4 @@ class mochiCLASSNonLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()

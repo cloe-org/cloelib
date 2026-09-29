@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using HMcode2020Emu."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, WithLinearSpectrumGrid
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.auxiliary.math_utils import ensure_z_zero_included
 
@@ -226,7 +226,7 @@ class HMemuNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Perturbations,
+        linearperturbations: WithLinearSpectrumGrid,
         redshifts: np.ndarray,
         log10TAGN: Optional[float] = None,
     ):
@@ -237,6 +237,14 @@ class HMemuNonLinearPerturbations:
 
         self.z = ensure_z_zero_included(redshifts[redshifts <= redshift_max])
         self.background = background
+        # Retained so downstream consumers that need the *linear* Pk (e.g.
+        # a perturbation-theory backend, which is only valid starting from
+        # linear input) can get back to it from a tracer's own (nonlinear)
+        # `perturbations` without the caller separately tracking both
+        # objects - same attribute name/pattern already used by
+        # `EE2NonLinearPerturbations`, `BACCOemuNonLinearPerturbations`,
+        # `EmantisFofrNonLinearPerturbations`, and `JAXNonLinearPerturbations`.
+        self.linearperturbations = linearperturbations
 
         self.params_hm_emu = {
             "omega_cdm": self.background.Omega_cdm0,

@@ -683,6 +683,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../observables/gw/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tracer Protocol (Gravitational-Wave)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../observables/spectro/" class="md-nav__link">
         
   
@@ -914,6 +942,34 @@
     
   
     Photometric Summary Statistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="gw/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gravitational-Wave Summary Statistics
   
 
     
@@ -1182,7 +1238,8 @@
 <p><strong>Location</strong>: <code>cloelib/summary_statistics/</code></p>
 <p>This module computes final statistical quantities for likelihood evaluation, including:</p>
 <ul>
-<li><span class="arithmatex">\(C_\ell\)</span>: Angular power spectra for photometric surveys, either full sky or convolved with the mask</li>
+<li><span class="arithmatex">\(C_\ell\)</span>: Full sky angular power spectra for photometric and gravitational-wave surveys</li>
+<li>pseudo <span class="arithmatex">\(C_\ell\)</span>: Angular power spectra for photometric surveys, convolved with the mask</li>
 <li><span class="arithmatex">\(\xi_+(\theta)\)</span>, <span class="arithmatex">\(\xi_-(\theta)\)</span>, <span class="arithmatex">\(w(\theta)\)</span>, <span class="arithmatex">\(\gamma_T\)</span>, <span class="arithmatex">\(\gamma_\times\)</span>: Angular two-point photometric correlation functions</li>
 <li>COSEBIs: Complete Orthogonal Sets of E/B-Integrals for photometric surveys as in <a href="https://arxiv.org/pdf/1201.2669">Asgari et al., 2018.</a></li>
 <li><span class="arithmatex">\(P_\ell(k)\)</span>: Legendre multipoles for spectroscopic surveys, either full sky or convolved with the mask</li>
@@ -1198,6 +1255,7 @@
 <h2 id="available-summary-statistics">Available Summary Statistics<a class="headerlink" href="#available-summary-statistics" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="photo/">For Photometric Surveys (Using Tracers)</a></li>
+<li><a href="gw/">For Gravitational-Wave Observables (Using Tracers)</a></li>
 <li><a href="spectro/">For Spectroscopic Surveys (Using SpectroPower)</a></li>
 </ul>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>

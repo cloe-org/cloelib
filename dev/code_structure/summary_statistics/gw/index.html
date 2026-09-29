@@ -12,13 +12,13 @@
         <meta name="author" content="cloe-org">
       
       
-        <link rel="canonical" href="https://cloe-org.github.io/cloelib/dev/dev/code_structure/summary_statistics/photo/">
+        <link rel="canonical" href="https://cloe-org.github.io/cloelib/dev/dev/code_structure/summary_statistics/gw/">
       
       
-        <link rel="prev" href="../">
+        <link rel="prev" href="../photo/">
       
       
-        <link rel="next" href="../gw/">
+        <link rel="next" href="../spectro/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Photometric Summary Statistics - cloelib</title>
+        <title>Gravitational-Wave Summary Statistics - cloelib</title>
       
     
     
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#photometric-surveys-summary-statistics-using-tracers" class="md-skip">
+        <a href="#gravitational-wave-summary-statistics" class="md-skip">
           Skip to content
         </a>
       
@@ -122,7 +122,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Photometric Summary Statistics
+              Gravitational-Wave Summary Statistics
             
           </span>
         </div>
@@ -829,6 +829,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../photo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Photometric Summary Statistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -848,7 +876,7 @@
   <span class="md-ellipsis">
     
   
-    Photometric Summary Statistics
+    Gravitational-Wave Summary Statistics
   
 
     
@@ -866,7 +894,7 @@
   <span class="md-ellipsis">
     
   
-    Photometric Summary Statistics
+    Gravitational-Wave Summary Statistics
   
 
     
@@ -892,10 +920,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#angulartwopoint" class="md-nav__link">
+  <a href="#angular-power-spectra" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AngularTwoPoint
+        Angular Power Spectra
       
     </span>
   </a>
@@ -903,10 +931,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#angularcorrelationfunction" class="md-nav__link">
+  <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AngularCorrelationFunction
+        Example
       
     </span>
   </a>
@@ -914,10 +942,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#angularcorrelationfunctionwigner" class="md-nav__link">
+  <a href="#gw-weak-lensing-response" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AngularCorrelationFunctionWigner
+        GW Weak-Lensing Response
       
     </span>
   </a>
@@ -939,34 +967,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../gw/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gravitational-Wave Summary Statistics
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1096,10 +1096,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#angulartwopoint" class="md-nav__link">
+  <a href="#angular-power-spectra" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AngularTwoPoint
+        Angular Power Spectra
       
     </span>
   </a>
@@ -1107,10 +1107,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#angularcorrelationfunction" class="md-nav__link">
+  <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AngularCorrelationFunction
+        Example
       
     </span>
   </a>
@@ -1118,10 +1118,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#angularcorrelationfunctionwigner" class="md-nav__link">
+  <a href="#gw-weak-lensing-response" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AngularCorrelationFunctionWigner
+        GW Weak-Lensing Response
       
     </span>
   </a>
@@ -1208,117 +1208,122 @@
   
 
 
-<h1 id="photometric-surveys-summary-statistics-using-tracers">Photometric Surveys Summary Statistics (Using Tracers)<a class="headerlink" href="#photometric-surveys-summary-statistics-using-tracers" title="Permanent link">&para;</a></h1>
-<h2 id="angulartwopoint">AngularTwoPoint<a class="headerlink" href="#angulartwopoint" title="Permanent link">&para;</a></h2>
-<p>Compute angular power spectra <span class="arithmatex">\(C_\ell\)</span>, pseudo-<span class="arithmatex">\(C_\ell\)</span> and COSEBIs from two tracers.</p>
+<h1 id="gravitational-wave-summary-statistics">Gravitational-Wave Summary Statistics<a class="headerlink" href="#gravitational-wave-summary-statistics" title="Permanent link">&para;</a></h1>
+<p><code>AngularTwoPoint</code> computes Limber angular power spectra from
+<code>GWNumberCountsTracer</code> and <code>GWWeakLensingTracer</code> in the same way it consumes
+other <code>Tracer</code> implementations.</p>
+<h2 id="angular-power-spectra">Angular Power Spectra<a class="headerlink" href="#angular-power-spectra" title="Permanent link">&para;</a></h2>
 <p><strong>Location</strong>: <code>cloelib/summary_statistics/angular_two_point.py</code></p>
 <p><strong>What it does</strong>:</p>
 <ul>
-<li>Takes two <code>Tracer</code> objects</li>
-<li>Integrates over redshift using the Limber approximation with advanced vectorisation across tomographic bins</li>
+<li>Takes two compatible tracer objects</li>
+<li>Integrates their radial windows against the matter power spectrum</li>
+<li>Applies the angular response associated with each field</li>
+<li>Returns one <code>cosmolib.AngularPowerSpectrum</code> per tomographic bin pair</li>
 </ul>
-<p><strong>Example</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.camb_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">CAMBBackground</span><span class="p">,</span> <span class="n">CAMBPerturbations</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.observables.photo</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShearTracer</span><span class="p">,</span> <span class="n">PositionsTracer</span>
+<p>The following GW auto- and cross-correlations are supported:</p>
+<table>
+<thead>
+<tr>
+<th>Tracers</th>
+<th>Output key prefix</th>
+<th>Spectrum array shape</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GW number counts × GW number counts</td>
+<td><code>("GWNC", "GWNC")</code></td>
+<td><code>(n_ell,)</code></td>
+</tr>
+<tr>
+<td>GW weak lensing × GW weak lensing</td>
+<td><code>("GWWL", "GWWL")</code></td>
+<td><code>(n_ell,)</code></td>
+</tr>
+<tr>
+<td>GW number counts × GW weak lensing</td>
+<td><code>("GWNC", "GWWL")</code></td>
+<td><code>(n_ell,)</code></td>
+</tr>
+<tr>
+<td>Galaxy positions × GW number counts</td>
+<td><code>("POS", "GWNC")</code></td>
+<td><code>(n_ell,)</code></td>
+</tr>
+<tr>
+<td>Galaxy positions × GW weak lensing</td>
+<td><code>("POS", "GWWL")</code></td>
+<td><code>(n_ell,)</code></td>
+</tr>
+<tr>
+<td>Galaxy shear × GW number counts</td>
+<td><code>("SHE", "GWNC")</code></td>
+<td><code>(2, n_ell)</code></td>
+</tr>
+<tr>
+<td>Galaxy shear × GW weak lensing</td>
+<td><code>("SHE", "GWWL")</code></td>
+<td><code>(2, n_ell)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Complete dictionary keys also contain one-based tomographic bin indices. For
+example, <code>("GWNC", "GWWL", 1, 1)</code> selects the first number-count bin crossed
+with the first weak-lensing bin. Same-observable spectra contain the upper
+triangle of bin pairs; different-observable spectra contain the full Cartesian
+product. Reversing the two input tracers preserves the canonical key order in
+the table.</p>
+<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
+<p>Run the shared setup and both tracer examples on the
+<a href="../../observables/gw/">GW observables page</a> first. The variables used here are
+the same: <code>perturbations</code>, <code>gw_number_counts</code>, and <code>gw_weak_lensing</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.summary_statistics.angular_two_point</span><span class="w"> </span><span class="kn">import</span> <span class="n">AngularTwoPoint</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Set up cosmology</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">bg</span> <span class="o">=</span> <span class="n">CAMBBackground</span><span class="p">(</span><span class="n">H0</span><span class="o">=</span><span class="mf">67.5</span><span class="p">,</span> <span class="n">Omega_b0</span><span class="o">=</span><span class="mf">0.0492</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">pert</span> <span class="o">=</span> <span class="n">CAMBPerturbations</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">)</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Create tracers</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">dndz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">z</span> <span class="o">-</span> <span class="mf">0.7</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.3</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">dndz</span> <span class="o">=</span> <span class="n">dndz</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">dndz</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">tracer1</span> <span class="o">=</span> <span class="n">ShearTracer</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="n">pert</span><span class="p">,</span> <span class="n">dndz</span><span class="o">=</span><span class="n">dndz</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:],</span> <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">nuisance_params</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">tracer2</span> <span class="o">=</span> <span class="n">ShearTracer</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="n">pert</span><span class="p">,</span> <span class="n">dndz</span><span class="o">=</span><span class="n">dndz</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:],</span> <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">nuisance_params</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="c1"># Compute angular power spectrum</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="n">two_point</span> <span class="o">=</span> <span class="n">AngularTwoPoint</span><span class="p">(</span><span class="n">tracer1</span><span class="o">=</span><span class="n">tracer1</span><span class="p">,</span> <span class="n">tracer2</span><span class="o">=</span><span class="n">tracer2</span><span class="p">)</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="n">ells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>  <span class="c1"># ℓ from 10 to 1000</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="n">C_ell</span> <span class="o">=</span> <span class="n">two_point</span><span class="o">.</span><span class="n">get_Cl</span><span class="p">(</span><span class="n">ells</span><span class="o">=</span><span class="n">ells</span><span class="p">,</span> <span class="n">nl</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ks</span><span class="o">=</span><span class="n">pert</span><span class="o">.</span><span class="n">k</span><span class="p">)</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"C_ℓ at ℓ=100: </span><span class="si">{</span><span class="n">C_ell</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">]</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">ells</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">geomspace</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">1000.0</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">ks</span> <span class="o">=</span> <span class="n">perturbations</span><span class="o">.</span><span class="n">k</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">gwnc_auto</span> <span class="o">=</span> <span class="n">AngularTwoPoint</span><span class="p">(</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">gw_number_counts</span><span class="p">,</span> <span class="n">gw_number_counts</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">)</span><span class="o">.</span><span class="n">get_Cl</span><span class="p">(</span><span class="n">ells</span><span class="p">,</span> <span class="n">nl</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ks</span><span class="o">=</span><span class="n">ks</span><span class="p">)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">gwwl_auto</span> <span class="o">=</span> <span class="n">AngularTwoPoint</span><span class="p">(</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">gw_weak_lensing</span><span class="p">,</span> <span class="n">gw_weak_lensing</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="p">)</span><span class="o">.</span><span class="n">get_Cl</span><span class="p">(</span><span class="n">ells</span><span class="p">,</span> <span class="n">nl</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ks</span><span class="o">=</span><span class="n">ks</span><span class="p">)</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">gwnc_gwwl</span> <span class="o">=</span> <span class="n">AngularTwoPoint</span><span class="p">(</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="n">gw_number_counts</span><span class="p">,</span> <span class="n">gw_weak_lensing</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="p">)</span><span class="o">.</span><span class="n">get_Cl</span><span class="p">(</span><span class="n">ells</span><span class="p">,</span> <span class="n">nl</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ks</span><span class="o">=</span><span class="n">ks</span><span class="p">)</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">cross_spectrum</span> <span class="o">=</span> <span class="n">gwnc_gwwl</span><span class="p">[(</span><span class="s2">"GWNC"</span><span class="p">,</span> <span class="s2">"GWWL"</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="k">assert</span> <span class="n">cross_spectrum</span><span class="o">.</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ells</span><span class="p">),)</span>
 </code></pre></div>
-<p><strong>Cross-Correlations</strong>:</p>
-<p>You can correlate different tracers to calculate different statistics:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Shear-shear (cosmic shear)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">shear_tracer</span> <span class="o">=</span> <span class="n">ShearTracer</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">C_shear_shear</span> <span class="o">=</span> <span class="n">AngularTwoPoint</span><span class="p">(</span><span class="n">shear_tracer</span><span class="p">,</span> <span class="n">shear_tracer</span><span class="p">)</span><span class="o">.</span><span class="n">get_Cl</span><span class="p">(</span><span class="n">ells</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">pert</span><span class="o">.</span><span class="n">k</span><span class="p">)</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Position-position (galaxy clustering)</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">pos_tracer</span> <span class="o">=</span> <span class="n">PositionsTracer</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">C_gg</span> <span class="o">=</span> <span class="n">AngularTwoPoint</span><span class="p">(</span><span class="n">pos_tracer</span><span class="p">,</span> <span class="n">pos_tracer</span><span class="p">)</span><span class="o">.</span><span class="n">get_Cl</span><span class="p">(</span><span class="n">ells</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">pert</span><span class="o">.</span><span class="n">k</span><span class="p">)</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># Shear-position (galaxy-galaxy lensing)</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">C_g_shear</span> <span class="o">=</span> <span class="n">AngularTwoPoint</span><span class="p">(</span><span class="n">pos_tracer</span><span class="p">,</span> <span class="n">shear_tracer</span><span class="p">)</span><span class="o">.</span><span class="n">get_Cl</span><span class="p">(</span><span class="n">ells</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">pert</span><span class="o">.</span><span class="n">k</span><span class="p">)</span>
-</code></pre></div>
-<p><strong>Tomographic Bins</strong>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Multiple redshift bins</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">dndz_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">z</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">z</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.3</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="n">z</span> <span class="o">-</span> <span class="mf">1.5</span><span class="p">)</span> <span class="o">/</span> <span class="mf">0.4</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">])</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1"># Normalise! cloelib will always expect the n(z) normalised</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">dndz_bins</span> <span class="o">=</span> <span class="n">dndz_bins</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">dndz_bins</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">tracer</span> <span class="o">=</span> <span class="n">ShearTracer</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="n">pert</span><span class="p">,</span> <span class="n">dndz</span><span class="o">=</span><span class="n">dndz_bins</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># Auto and cross-correlations</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="n">two_point</span> <span class="o">=</span> <span class="n">AngularTwoPoint</span><span class="p">(</span><span class="n">tracer</span><span class="p">,</span> <span class="n">tracer</span><span class="p">)</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="n">C_ell</span> <span class="o">=</span> <span class="n">two_point</span><span class="o">.</span><span class="n">get_Cl</span><span class="p">(</span><span class="n">ells</span><span class="p">,</span> <span class="n">nl</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ks</span><span class="o">=</span><span class="n">pert</span><span class="o">.</span><span class="n">k</span><span class="p">)</span>
-</code></pre></div>
-<p><strong>COSEBIs</strong>:
-Complete Orthogonal Sets of E/B-Integrals are specialized statistics for cosmic shear.
-They are available both as methods of <code>AngularTwoPoint</code> (which injects a software provenance tag automatically) and as <strong>standalone module-level functions</strong> that can be used without instantiating the class, useful when <span class="arithmatex">\(C_\ell\)</span> or <span class="arithmatex">\(\xi(\pm)\)</span> are already computed, even from real or simulated measurements.</p>
-<p><strong>Standalone functions</strong> (no tracers required):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.summary_statistics.angular_two_point</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">get_cosebis_from_cl</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">get_cosebis_from_2pcf</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="p">)</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># From angular power spectra</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">cosebis</span> <span class="o">=</span> <span class="n">get_cosebis_from_cl</span><span class="p">(</span><span class="n">cells</span><span class="p">,</span> <span class="n">ells</span><span class="p">,</span> <span class="n">w_ell</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="c1"># From two-point correlation functions</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">cosebis</span> <span class="o">=</span> <span class="n">get_cosebis_from_2pcf</span><span class="p">(</span><span class="n">twopcf</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">T_plus</span><span class="p">,</span> <span class="n">T_minus</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span>
-</code></pre></div>
-<p><strong>Class method</strong> (<code>get_cosebis</code> — computes <span class="arithmatex">\(C_\ell\)</span> internally, software provenance tag included automatically):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">two_point</span> <span class="o">=</span> <span class="n">AngularTwoPoint</span><span class="p">(</span><span class="n">tracer1</span><span class="p">,</span> <span class="n">tracer2</span><span class="p">)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">cosebis</span> <span class="o">=</span> <span class="n">two_point</span><span class="o">.</span><span class="n">get_cosebis</span><span class="p">(</span><span class="n">ells</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="n">w_ell</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span>
-</code></pre></div>
+<p>The <code>nl</code> argument is currently reserved and is set to zero in this example.
+These calculations return signal spectra without adding a noise model.</p>
+<h2 id="gw-weak-lensing-response">GW Weak-Lensing Response<a class="headerlink" href="#gw-weak-lensing-response" title="Permanent link">&para;</a></h2>
+<p>The <code>GWWeakLensingTracer</code> radial window contains the scalar convergence
+geometry. For each GWWL field, <code>AngularTwoPoint</code> applies</p>
+<div class="arithmatex">\[
+R_\ell^{\mathrm{GWWL}} =
+\frac{\ell(\ell+1)}{(\ell+1/2)^2}.
+\]</div>
+<p>This response appears once in a spectrum containing one GWWL field and is
+squared in a GWWL auto-spectrum. The radial window retains the standard
+<span class="arithmatex">\(3\Omega_{\mathrm{m},0}H_0^2/(2c^2)\)</span> normalization.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 </div>
-<p>Only <code>get_cosebis</code> is available as a class method. <code>get_cosebis_from_2pcf</code> is standalone only — use it directly when <span class="arithmatex">\(\xi_\pm(\theta)\)</span> are already available.</p>
-<p>Both interfaces require optional dependencies (<code>pylevin</code>, <code>mpmath</code>). The COSEBIs kernels (<code>w_ell</code>, <code>T_plus</code>, <code>T_minus</code>) must be precomputed using helpers from <code>cloelib.auxiliary.cosebi_helpers</code>.</p>
-<h2 id="angularcorrelationfunction">AngularCorrelationFunction<a class="headerlink" href="#angularcorrelationfunction" title="Permanent link">&para;</a></h2>
-<p>Protocol to set up how to compute real-space angular correlation functions <span class="arithmatex">\(\xi(\theta)\)</span>.</p>
-<p><strong>Location</strong>: <code>cloelib/summary_statistics/angular_correlation_function.py</code></p>
-<h2 id="angularcorrelationfunctionwigner">AngularCorrelationFunctionWigner<a class="headerlink" href="#angularcorrelationfunctionwigner" title="Permanent link">&para;</a></h2>
-<p>Alternative implementation using Wigner 3j symbols for computing real-space angular correlation functions <span class="arithmatex">\(\xi(\theta)\)</span> from harmonic angular power spectra.</p>
-<p><strong>Location</strong>: <code>cloelib/summary_statistics/angular_correlation_function_wigner.py</code></p>
+<p>GW tracers are supported by the unmasked Limber <code>get_Cl</code> calculation. The
+current <code>get_pseudo_Cl</code> mixing-matrix path supports photometric <code>POS</code> and
+<code>SHE</code> pairs only.</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<p>The pipeline is now complete.
-From here:</p>
 <ul>
+<li><a href="../../observables/gw/">Gravitational-Wave Observables</a> – Construct the GW tracers</li>
+<li><a href="../photo/">Photometric Summary Statistics</a> – Review galaxy angular statistics</li>
 <li><a href="../../../api/">API Reference</a> – Full technical documentation</li>
-<li><a href="../gw/">Gravitational-Wave Summary Statistics</a> – Compute angular GW correlations</li>
-<li><a href="../../../contributing/">Contributing Guide</a> – General contribution guidelines</li>
-<li><a href="https://github.com/cloe-org/playground">Playground Examples</a> – Real usage examples</li>
 <li><a href="../">Back to Summary Statistics</a> – Review all summary statistics</li>
-<li><a href="../../">Back to Overview</a> – Review the architecture</li>
-</ul>
-<p>Or return to any component:</p>
-<ul>
-<li><a href="../../background/">Background</a></li>
-<li><a href="../../perturbations/">Perturbations</a></li>
-<li><a href="../../observables/">Observables</a></li>
 </ul>
 
 
@@ -1355,7 +1360,7 @@ From here:</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview">
+          <a href="../photo/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Photometric Summary Statistics">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1365,20 +1370,20 @@ From here:</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Overview
+                Photometric Summary Statistics
               </div>
             </div>
           </a>
         
         
           
-          <a href="../gw/" class="md-footer__link md-footer__link--next" aria-label="Next: Gravitational-Wave Summary Statistics">
+          <a href="../spectro/" class="md-footer__link md-footer__link--next" aria-label="Next: Spectroscopic Summary Statistics">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Gravitational-Wave Summary Statistics
+                Spectroscopic Summary Statistics
               </div>
             </div>
             <div class="md-footer__button md-icon">

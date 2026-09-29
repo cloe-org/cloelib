@@ -1879,6 +1879,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cloelib.observables.halos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;halos
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cloelib.observables.photo" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3964,6 +3975,17 @@
     <span class="md-ellipsis">
       
         <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;gw
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.observables.halos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;halos
       
     </span>
   </a>
@@ -33817,6 +33839,3464 @@ intrinsic alignment, or multiplicative shear factor in this tracer.</p>
           </div>
         </li>
     </ul>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="cloelib.observables.halos" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">halos</span>
+
+
+<a href="#cloelib.observables.halos" class="headerlink" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents ">
+
+        <p>Modules relative to galaxy clusters</p>
+
+          
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h4 id="cloelib.observables.halos.halo_abundance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">halo_abundance</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+          
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">CastroHaloAbundance</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CastroHaloAbundance</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance(halo_model_properties)">halo_model_properties</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties">HaloModelProperties</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance" id="mermaid-link-cloelib.observables.halos.halo_abundance.CastroHaloAbundance"></a>
+                  <a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase" id="mermaid-link-cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.observables.halos.halo_abundance.CastroHaloAbundance">
+              flowchart TD
+              cloelib.observables.halos.halo_abundance.CastroHaloAbundance[CastroHaloAbundance]
+              cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase[HaloAbundanceBase]
+
+                              cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase --> cloelib.observables.halos.halo_abundance.CastroHaloAbundance
+                
+
+
+              click cloelib.observables.halos.halo_abundance.CastroHaloAbundance href "" "cloelib.observables.halos.halo_abundance.CastroHaloAbundance"
+              click cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase href "" "cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.observables.halos.halo_abundance.CastroHaloAbundance');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Class implementing the Castro et al. mass abundance models.</p>
+<p>Castro et al. followed the cold dark matter
+prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514) and
+Castorina+13 (https://arxiv.org/pdf/1311.1212). That is, the halo mass function
+and halo bias do not include the massive neutrino contribution in the
+computation of mass variance, power spectrum, and overdensity.</p>
+
+        <p>Initialize the class with given perturbations and overdensity definition.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance--parameters" title="Permanent link">&para;</a></h6>
+<p>halo_model_properties : HaloModelProperties
+    An object from the <code>HaloModelProperties</code> class.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">sigma8_0</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">sigma8_0</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the <code>sigma_8</code> value at redshift <code>z=0</code>. If <code>sigma_8</code>
+is not set as a base parameter, it is computed from the power spectrum.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm_fsigmanu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm_fsigmanu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu(M)">M</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu(fsigmanu)">fsigmanu</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density with pre-computed
+halo mass function.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.
+fsigmanu: numpy.ndarray
+    Multiplicity function.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.window" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">window</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.window" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">window</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.window(k)">k</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.window(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Top-hat window and its derivative.</p>
+<p>Computes the top-hat window function and its derivative.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.window--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.window--parameters" title="Permanent link">&para;</a></h6>
+<p>k: numpy.ndarray
+       Wavenumber where W(kR) is evaluated.
+       Units: h Mpc^{-1}
+R: numpy.ndarray
+       Radius where W(kR) is evaluated.
+       Units: h^{-1} Mpc</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.window--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.window--returns" title="Permanent link">&para;</a></h6>
+<p>W: numpy.ndarray
+    W[i,j], where i is the wavenumber axis and j the radius axis
+dWdx: numpy.ndarray
+    dWdx[i,j], where i is the wavenumber axis and j the radius axis</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.radius_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">radius_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.radius_M" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">radius_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.radius_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Radius from a mass.</p>
+<p>Converts a mass into a radius. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.radius_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.radius_M--parameters" title="Permanent link">&para;</a></h6>
+<p>M: numpy.ndarray
+    Mass in h^{-1} Msun</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.radius_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.radius_M--returns" title="Permanent link">&para;</a></h6>
+<p>radius_M: array
+    Radius in h^{-1} Mpc</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_R" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_R</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_R" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_R</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_R(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_R(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and radius.</p>
+<p>Computes the rms at the radii requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_R--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_R--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+R: numpy.ndarray
+    Radius points in h^{-1} Mpc.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_R--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_R--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_R: numpy.ndarray
+    sigma_z_R[i,j], where i is the redshift axis and j the radius axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_M" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and mass.</p>
+<p>Computes the rms at the masses requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.sigma_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_M: numpy.ndarray
+    sigma_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.delta_c" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">delta_c</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.delta_c" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delta_c</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.delta_c(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Critical overdensity.</p>
+<p>Computes the critical overdensity at a given redshift
+following an approximation from Kitayama &amp; Suto (1999).
+The contribution from massive neutrinos is not included in the
+matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.delta_c--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.delta_c--parameters" title="Permanent link">&para;</a></h6>
+<p>z: float or np.ndarray
+    Redshift at which to evaluate the delta_c</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.delta_c--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.delta_c--returns" title="Permanent link">&para;</a></h6>
+<p>delta_c:  float or numpy.ndarray
+    Value of the critical overdensity a given redshift.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.nu_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">nu_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.nu_z_M" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">nu_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.nu_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.nu_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Peak height.</p>
+<p>Computes the critical overdensity over the rms,
+delta_c/sigma, at a given redshift and mass.
+The contribution from massive neutrinos is not included in the power
+spectrum and in the matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.nu_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.nu_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.nu_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.nu_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>nu_z_M: numpy.ndarray
+    nu_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dlns_dlnM" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dlns_dlnM</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dlns_dlnM" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dlns_dlnM</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dlns_dlnM(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dlns_dlnM(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the logarithmic rms.</p>
+<p>Computes the derivative of the ln rms
+with respect to the ln of mass
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dlns_dlnM--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dlns_dlnM--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dlns_dlnM--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dlns_dlnM--returns" title="Permanent link">&para;</a></h6>
+<p>dlns_dlnM: numpy.ndarray
+    dlns_dlnM[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.dn_dm--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.f_sigma_nu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">f_sigma_nu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.f_sigma_nu" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">f_sigma_nu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.f_sigma_nu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.f_sigma_nu(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computation of the multiplicity function.</p>
+<p>Computes the Castro et al. (2023) multiplicity function
+at the requested redshift and mass points. Valid only for
+virial overdensities.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.f_sigma_nu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.f_sigma_nu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.f_sigma_nu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.f_sigma_nu--returns" title="Permanent link">&para;</a></h6>
+<p>f_sigma_nu: numpy.ndarray
+    f_sigma_nu[i,j], where i is the redshift axis and j the mass axis</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.bias" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">bias</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.bias" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">bias</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.bias(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.bias(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computation of the halo bias.</p>
+<p>Computes the Castro et al. (2024) halo bias
+at the requested redshift and mass points. Valid only
+for virial overdensities.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.bias--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.bias--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points
+M: numpy.ndarray
+    Mass points in h^{-1} Msun</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.bias--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.bias--returns" title="Permanent link">&para;</a></h6>
+<p>bias: numpy.ndarray
+    bias[i,j], where i is the redshift axis and j the mass axis</p>
+<h6 id="cloelib.observables.halos.halo_abundance.CastroHaloAbundance.bias--notes">Notes<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.CastroHaloAbundance.bias--notes" title="Permanent link">&para;</a></h6>
+<p>If the mass array has less than 4 entries, this causes problem with the derivative</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.observables.halos.halo_abundance.HaloAbundance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">HaloAbundance</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundance" class="headerlink" title="Permanent link">&para;</a></h5>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_abundance.HaloAbundance" id="mermaid-link-cloelib.observables.halos.halo_abundance.HaloAbundance"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.observables.halos.halo_abundance.HaloAbundance">
+              flowchart TD
+              cloelib.observables.halos.halo_abundance.HaloAbundance[HaloAbundance]
+
+              
+
+              click cloelib.observables.halos.halo_abundance.HaloAbundance href "" "cloelib.observables.halos.halo_abundance.HaloAbundance"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.observables.halos.halo_abundance.HaloAbundance');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundance.f_sigma_nu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">f_sigma_nu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundance.f_sigma_nu" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">f_sigma_nu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundance.f_sigma_nu(z)">z</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundance.f_sigma_nu(M)">M</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the halo multiplicity function.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundance.bias" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">bias</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundance.bias" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">bias</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundance.bias(z)">z</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundance.bias(M)">M</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the halo bias.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">HaloAbundanceBase</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">HaloAbundanceBase</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase(halo_model_properties)">halo_model_properties</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties">HaloModelProperties</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Initialize the class with given perturbations and overdensity definition.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase--parameters" title="Permanent link">&para;</a></h6>
+<p>halo_model_properties : HaloModelProperties
+    An object from the <code>HaloModelProperties</code> class.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">sigma8_0</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">sigma8_0</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the <code>sigma_8</code> value at redshift <code>z=0</code>. If <code>sigma_8</code>
+is not set as a base parameter, it is computed from the power spectrum.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm_fsigmanu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm_fsigmanu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm_fsigmanu" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm_fsigmanu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm_fsigmanu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm_fsigmanu(M)">M</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm_fsigmanu(fsigmanu)">fsigmanu</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density with pre-computed
+halo mass function.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm_fsigmanu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm_fsigmanu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.
+fsigmanu: numpy.ndarray
+    Multiplicity function.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm_fsigmanu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm_fsigmanu--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.window" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">window</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.window" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">window</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.window(k)">k</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.window(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Top-hat window and its derivative.</p>
+<p>Computes the top-hat window function and its derivative.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.window--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.window--parameters" title="Permanent link">&para;</a></h6>
+<p>k: numpy.ndarray
+       Wavenumber where W(kR) is evaluated.
+       Units: h Mpc^{-1}
+R: numpy.ndarray
+       Radius where W(kR) is evaluated.
+       Units: h^{-1} Mpc</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.window--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.window--returns" title="Permanent link">&para;</a></h6>
+<p>W: numpy.ndarray
+    W[i,j], where i is the wavenumber axis and j the radius axis
+dWdx: numpy.ndarray
+    dWdx[i,j], where i is the wavenumber axis and j the radius axis</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.radius_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">radius_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.radius_M" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">radius_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.radius_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Radius from a mass.</p>
+<p>Converts a mass into a radius. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.radius_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.radius_M--parameters" title="Permanent link">&para;</a></h6>
+<p>M: numpy.ndarray
+    Mass in h^{-1} Msun</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.radius_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.radius_M--returns" title="Permanent link">&para;</a></h6>
+<p>radius_M: array
+    Radius in h^{-1} Mpc</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_R" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_R</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_R" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_R</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_R(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_R(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and radius.</p>
+<p>Computes the rms at the radii requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_R--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_R--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+R: numpy.ndarray
+    Radius points in h^{-1} Mpc.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_R--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_R--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_R: numpy.ndarray
+    sigma_z_R[i,j], where i is the redshift axis and j the radius axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_M" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and mass.</p>
+<p>Computes the rms at the masses requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.sigma_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_M: numpy.ndarray
+    sigma_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.delta_c" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">delta_c</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.delta_c" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delta_c</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.delta_c(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Critical overdensity.</p>
+<p>Computes the critical overdensity at a given redshift
+following an approximation from Kitayama &amp; Suto (1999).
+The contribution from massive neutrinos is not included in the
+matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.delta_c--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.delta_c--parameters" title="Permanent link">&para;</a></h6>
+<p>z: float or np.ndarray
+    Redshift at which to evaluate the delta_c</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.delta_c--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.delta_c--returns" title="Permanent link">&para;</a></h6>
+<p>delta_c:  float or numpy.ndarray
+    Value of the critical overdensity a given redshift.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.nu_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">nu_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.nu_z_M" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">nu_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.nu_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.nu_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Peak height.</p>
+<p>Computes the critical overdensity over the rms,
+delta_c/sigma, at a given redshift and mass.
+The contribution from massive neutrinos is not included in the power
+spectrum and in the matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.nu_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.nu_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.nu_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.nu_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>nu_z_M: numpy.ndarray
+    nu_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dlns_dlnM" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dlns_dlnM</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dlns_dlnM" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dlns_dlnM</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dlns_dlnM(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dlns_dlnM(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the logarithmic rms.</p>
+<p>Computes the derivative of the ln rms
+with respect to the ln of mass
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dlns_dlnM--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dlns_dlnM--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dlns_dlnM--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dlns_dlnM--returns" title="Permanent link">&para;</a></h6>
+<p>dlns_dlnM: numpy.ndarray
+    dlns_dlnM[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.dn_dm--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.f_sigma_nu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">f_sigma_nu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.f_sigma_nu" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">f_sigma_nu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.f_sigma_nu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.f_sigma_nu(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computation of the multiplicity function.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.f_sigma_nu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.f_sigma_nu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.HaloAbundanceBase.f_sigma_nu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.HaloAbundanceBase.f_sigma_nu--returns" title="Permanent link">&para;</a></h6>
+<p>f_sigma_nu: numpy.ndarray
+    f_sigma_nu[i,j], where i is the redshift axis and j the mass axis</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">TinkerHaloAbundance</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">TinkerHaloAbundance</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance(halo_model_properties)">halo_model_properties</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties">HaloModelProperties</a></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance(overdensity_type)">overdensity_type</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">'vir'</span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance(overdensity)">overdensity</span></span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">200</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance" id="mermaid-link-cloelib.observables.halos.halo_abundance.TinkerHaloAbundance"></a>
+                  <a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase" id="mermaid-link-cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.observables.halos.halo_abundance.TinkerHaloAbundance">
+              flowchart TD
+              cloelib.observables.halos.halo_abundance.TinkerHaloAbundance[TinkerHaloAbundance]
+              cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase[HaloAbundanceBase]
+
+                              cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase --> cloelib.observables.halos.halo_abundance.TinkerHaloAbundance
+                
+
+
+              click cloelib.observables.halos.halo_abundance.TinkerHaloAbundance href "" "cloelib.observables.halos.halo_abundance.TinkerHaloAbundance"
+              click cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase href "" "cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.observables.halos.halo_abundance.TinkerHaloAbundance');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Class implementing the Tinker et al. mass abundance models.</p>
+<p>Following the cold dark matter
+prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514) and
+Castorina+13 (https://arxiv.org/pdf/1311.1212), the halo mass function
+and halo bias do not include the massive neutrino contribution in the
+computation of mass variance, power spectrum, and overdensity.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">sigma8_0</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">sigma8_0</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the <code>sigma_8</code> value at redshift <code>z=0</code>. If <code>sigma_8</code>
+is not set as a base parameter, it is computed from the power spectrum.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm_fsigmanu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm_fsigmanu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu(M)">M</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu(fsigmanu)">fsigmanu</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density with pre-computed
+halo mass function.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.
+fsigmanu: numpy.ndarray
+    Multiplicity function.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.window" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">window</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.window" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">window</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.window(k)">k</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.window(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Top-hat window and its derivative.</p>
+<p>Computes the top-hat window function and its derivative.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.window--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.window--parameters" title="Permanent link">&para;</a></h6>
+<p>k: numpy.ndarray
+       Wavenumber where W(kR) is evaluated.
+       Units: h Mpc^{-1}
+R: numpy.ndarray
+       Radius where W(kR) is evaluated.
+       Units: h^{-1} Mpc</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.window--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.window--returns" title="Permanent link">&para;</a></h6>
+<p>W: numpy.ndarray
+    W[i,j], where i is the wavenumber axis and j the radius axis
+dWdx: numpy.ndarray
+    dWdx[i,j], where i is the wavenumber axis and j the radius axis</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.radius_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">radius_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.radius_M" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">radius_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.radius_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Radius from a mass.</p>
+<p>Converts a mass into a radius. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.radius_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.radius_M--parameters" title="Permanent link">&para;</a></h6>
+<p>M: numpy.ndarray
+    Mass in h^{-1} Msun</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.radius_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.radius_M--returns" title="Permanent link">&para;</a></h6>
+<p>radius_M: array
+    Radius in h^{-1} Mpc</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_R" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_R</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_R" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_R</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_R(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_R(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and radius.</p>
+<p>Computes the rms at the radii requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_R--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_R--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+R: numpy.ndarray
+    Radius points in h^{-1} Mpc.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_R--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_R--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_R: numpy.ndarray
+    sigma_z_R[i,j], where i is the redshift axis and j the radius axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_M" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and mass.</p>
+<p>Computes the rms at the masses requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.sigma_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_M: numpy.ndarray
+    sigma_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.delta_c" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">delta_c</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.delta_c" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delta_c</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.delta_c(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Critical overdensity.</p>
+<p>Computes the critical overdensity at a given redshift
+following an approximation from Kitayama &amp; Suto (1999).
+The contribution from massive neutrinos is not included in the
+matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.delta_c--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.delta_c--parameters" title="Permanent link">&para;</a></h6>
+<p>z: float or np.ndarray
+    Redshift at which to evaluate the delta_c</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.delta_c--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.delta_c--returns" title="Permanent link">&para;</a></h6>
+<p>delta_c:  float or numpy.ndarray
+    Value of the critical overdensity a given redshift.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.nu_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">nu_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.nu_z_M" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">nu_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.nu_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.nu_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Peak height.</p>
+<p>Computes the critical overdensity over the rms,
+delta_c/sigma, at a given redshift and mass.
+The contribution from massive neutrinos is not included in the power
+spectrum and in the matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.nu_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.nu_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.nu_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.nu_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>nu_z_M: numpy.ndarray
+    nu_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dlns_dlnM" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dlns_dlnM</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dlns_dlnM" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dlns_dlnM</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dlns_dlnM(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dlns_dlnM(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the logarithmic rms.</p>
+<p>Computes the derivative of the ln rms
+with respect to the ln of mass
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dlns_dlnM--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dlns_dlnM--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dlns_dlnM--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dlns_dlnM--returns" title="Permanent link">&para;</a></h6>
+<p>dlns_dlnM: numpy.ndarray
+    dlns_dlnM[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.dn_dm--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.f_sigma_nu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">f_sigma_nu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.f_sigma_nu" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">f_sigma_nu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.f_sigma_nu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.f_sigma_nu(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computation of the multiplicity function.</p>
+<p>Computes the Tinker et al. (2008) multiplicity function
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.f_sigma_nu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.f_sigma_nu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.f_sigma_nu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.f_sigma_nu--returns" title="Permanent link">&para;</a></h6>
+<p>f_sigma_nu: numpy.ndarray
+    f_sigma_nu[i,j], where i is the redshift axis and j the mass axis</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.bias" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">bias</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.bias" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">bias</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.bias(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.bias(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computation of the halo bias.</p>
+<p>Computes the Tinker et al. (2010) halo bias
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.bias--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.bias--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points
+M: numpy.ndarray
+    Mass points in h^{-1} Msun</p>
+<h6 id="cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.bias--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.TinkerHaloAbundance.bias--returns" title="Permanent link">&para;</a></h6>
+<p>bias: numpy.ndarray
+    bias[i,j], where i is the redshift axis and j the mass axis</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h5 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">castro_halo_abundance</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+          
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">CastroHaloAbundance</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CastroHaloAbundance</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance(halo_model_properties)">halo_model_properties</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties">HaloModelProperties</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance" id="mermaid-link-cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance"></a>
+                  <a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase" id="mermaid-link-cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance">
+              flowchart TD
+              cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance[CastroHaloAbundance]
+              cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase[HaloAbundanceBase]
+
+                              cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase --> cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance
+                
+
+
+              click cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance href "" "cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance"
+              click cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase href "" "cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Class implementing the Castro et al. mass abundance models.</p>
+<p>Castro et al. followed the cold dark matter
+prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514) and
+Castorina+13 (https://arxiv.org/pdf/1311.1212). That is, the halo mass function
+and halo bias do not include the massive neutrino contribution in the
+computation of mass variance, power spectrum, and overdensity.</p>
+
+        <p>Initialize the class with given perturbations and overdensity definition.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance--parameters" title="Permanent link">&para;</a></h6>
+<p>halo_model_properties : HaloModelProperties
+    An object from the <code>HaloModelProperties</code> class.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">sigma8_0</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">sigma8_0</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the <code>sigma_8</code> value at redshift <code>z=0</code>. If <code>sigma_8</code>
+is not set as a base parameter, it is computed from the power spectrum.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.f_sigma_nu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">f_sigma_nu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.f_sigma_nu" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">f_sigma_nu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.f_sigma_nu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.f_sigma_nu(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computation of the multiplicity function.</p>
+<p>Computes the Castro et al. (2023) multiplicity function
+at the requested redshift and mass points. Valid only for
+virial overdensities.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.f_sigma_nu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.f_sigma_nu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.f_sigma_nu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.f_sigma_nu--returns" title="Permanent link">&para;</a></h6>
+<p>f_sigma_nu: numpy.ndarray
+    f_sigma_nu[i,j], where i is the redshift axis and j the mass axis</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.bias" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">bias</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.bias" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">bias</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.bias(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.bias(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computation of the halo bias.</p>
+<p>Computes the Castro et al. (2024) halo bias
+at the requested redshift and mass points. Valid only
+for virial overdensities.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.bias--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.bias--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points
+M: numpy.ndarray
+    Mass points in h^{-1} Msun</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.bias--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.bias--returns" title="Permanent link">&para;</a></h6>
+<p>bias: numpy.ndarray
+    bias[i,j], where i is the redshift axis and j the mass axis</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.bias--notes">Notes<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.bias--notes" title="Permanent link">&para;</a></h6>
+<p>If the mass array has less than 4 entries, this causes problem with the derivative</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm_fsigmanu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm_fsigmanu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu(M)">M</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu(fsigmanu)">fsigmanu</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density with pre-computed
+halo mass function.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.
+fsigmanu: numpy.ndarray
+    Multiplicity function.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm_fsigmanu--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.window" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">window</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.window" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">window</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.window(k)">k</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.window(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Top-hat window and its derivative.</p>
+<p>Computes the top-hat window function and its derivative.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.window--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.window--parameters" title="Permanent link">&para;</a></h6>
+<p>k: numpy.ndarray
+       Wavenumber where W(kR) is evaluated.
+       Units: h Mpc^{-1}
+R: numpy.ndarray
+       Radius where W(kR) is evaluated.
+       Units: h^{-1} Mpc</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.window--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.window--returns" title="Permanent link">&para;</a></h6>
+<p>W: numpy.ndarray
+    W[i,j], where i is the wavenumber axis and j the radius axis
+dWdx: numpy.ndarray
+    dWdx[i,j], where i is the wavenumber axis and j the radius axis</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.radius_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">radius_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.radius_M" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">radius_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.radius_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Radius from a mass.</p>
+<p>Converts a mass into a radius. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.radius_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.radius_M--parameters" title="Permanent link">&para;</a></h6>
+<p>M: numpy.ndarray
+    Mass in h^{-1} Msun</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.radius_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.radius_M--returns" title="Permanent link">&para;</a></h6>
+<p>radius_M: array
+    Radius in h^{-1} Mpc</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_R" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_R</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_R" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_R</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_R(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_R(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and radius.</p>
+<p>Computes the rms at the radii requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_R--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_R--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+R: numpy.ndarray
+    Radius points in h^{-1} Mpc.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_R--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_R--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_R: numpy.ndarray
+    sigma_z_R[i,j], where i is the redshift axis and j the radius axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_M" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and mass.</p>
+<p>Computes the rms at the masses requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.sigma_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_M: numpy.ndarray
+    sigma_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.delta_c" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">delta_c</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.delta_c" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delta_c</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.delta_c(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Critical overdensity.</p>
+<p>Computes the critical overdensity at a given redshift
+following an approximation from Kitayama &amp; Suto (1999).
+The contribution from massive neutrinos is not included in the
+matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.delta_c--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.delta_c--parameters" title="Permanent link">&para;</a></h6>
+<p>z: float or np.ndarray
+    Redshift at which to evaluate the delta_c</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.delta_c--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.delta_c--returns" title="Permanent link">&para;</a></h6>
+<p>delta_c:  float or numpy.ndarray
+    Value of the critical overdensity a given redshift.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.nu_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">nu_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.nu_z_M" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">nu_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.nu_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.nu_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Peak height.</p>
+<p>Computes the critical overdensity over the rms,
+delta_c/sigma, at a given redshift and mass.
+The contribution from massive neutrinos is not included in the power
+spectrum and in the matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.nu_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.nu_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.nu_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.nu_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>nu_z_M: numpy.ndarray
+    nu_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dlns_dlnM" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dlns_dlnM</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dlns_dlnM" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dlns_dlnM</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dlns_dlnM(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dlns_dlnM(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the logarithmic rms.</p>
+<p>Computes the derivative of the ln rms
+with respect to the ln of mass
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dlns_dlnM--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dlns_dlnM--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dlns_dlnM--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dlns_dlnM--returns" title="Permanent link">&para;</a></h6>
+<p>dlns_dlnM: numpy.ndarray
+    dlns_dlnM[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.castro_halo_abundance.CastroHaloAbundance.dn_dm--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h5 id="cloelib.observables.halos.halo_abundance.halo_abundance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">halo_abundance</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+        <ul>
+<li>Introducing a protocol for the halo statistics part that we might have many versions of it.</li>
+</ul>
+
+          
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">HaloAbundance</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance" class="headerlink" title="Permanent link">&para;</a></h6>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance" id="mermaid-link-cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance">
+              flowchart TD
+              cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance[HaloAbundance]
+
+              
+
+              click cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance href "" "cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance.f_sigma_nu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">f_sigma_nu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance.f_sigma_nu" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">f_sigma_nu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance.f_sigma_nu(z)">z</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance.f_sigma_nu(M)">M</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the halo multiplicity function.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance.bias" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">bias</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance.bias" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">bias</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance.bias(z)">z</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance.bias(M)">M</span></span><span class="p">:</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance.T">T</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the halo bias.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h5 id="cloelib.observables.halos.halo_abundance.halo_abundance_base" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">halo_abundance_base</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+          
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">HaloAbundanceBase</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">HaloAbundanceBase</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase(halo_model_properties)">halo_model_properties</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties">HaloModelProperties</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Initialize the class with given perturbations and overdensity definition.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase--parameters" title="Permanent link">&para;</a></h6>
+<p>halo_model_properties : HaloModelProperties
+    An object from the <code>HaloModelProperties</code> class.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">sigma8_0</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">sigma8_0</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the <code>sigma_8</code> value at redshift <code>z=0</code>. If <code>sigma_8</code>
+is not set as a base parameter, it is computed from the power spectrum.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm_fsigmanu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm_fsigmanu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm_fsigmanu" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm_fsigmanu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm_fsigmanu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm_fsigmanu(M)">M</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm_fsigmanu(fsigmanu)">fsigmanu</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density with pre-computed
+halo mass function.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm_fsigmanu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm_fsigmanu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.
+fsigmanu: numpy.ndarray
+    Multiplicity function.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm_fsigmanu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm_fsigmanu--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.window" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">window</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.window" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">window</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.window(k)">k</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.window(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Top-hat window and its derivative.</p>
+<p>Computes the top-hat window function and its derivative.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.window--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.window--parameters" title="Permanent link">&para;</a></h6>
+<p>k: numpy.ndarray
+       Wavenumber where W(kR) is evaluated.
+       Units: h Mpc^{-1}
+R: numpy.ndarray
+       Radius where W(kR) is evaluated.
+       Units: h^{-1} Mpc</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.window--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.window--returns" title="Permanent link">&para;</a></h6>
+<p>W: numpy.ndarray
+    W[i,j], where i is the wavenumber axis and j the radius axis
+dWdx: numpy.ndarray
+    dWdx[i,j], where i is the wavenumber axis and j the radius axis</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.radius_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">radius_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.radius_M" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">radius_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.radius_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Radius from a mass.</p>
+<p>Converts a mass into a radius. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.radius_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.radius_M--parameters" title="Permanent link">&para;</a></h6>
+<p>M: numpy.ndarray
+    Mass in h^{-1} Msun</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.radius_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.radius_M--returns" title="Permanent link">&para;</a></h6>
+<p>radius_M: array
+    Radius in h^{-1} Mpc</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_R" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_R</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_R" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_R</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_R(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_R(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and radius.</p>
+<p>Computes the rms at the radii requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_R--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_R--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+R: numpy.ndarray
+    Radius points in h^{-1} Mpc.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_R--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_R--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_R: numpy.ndarray
+    sigma_z_R[i,j], where i is the redshift axis and j the radius axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_M" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and mass.</p>
+<p>Computes the rms at the masses requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.sigma_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_M: numpy.ndarray
+    sigma_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.delta_c" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">delta_c</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.delta_c" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delta_c</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.delta_c(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Critical overdensity.</p>
+<p>Computes the critical overdensity at a given redshift
+following an approximation from Kitayama &amp; Suto (1999).
+The contribution from massive neutrinos is not included in the
+matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.delta_c--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.delta_c--parameters" title="Permanent link">&para;</a></h6>
+<p>z: float or np.ndarray
+    Redshift at which to evaluate the delta_c</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.delta_c--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.delta_c--returns" title="Permanent link">&para;</a></h6>
+<p>delta_c:  float or numpy.ndarray
+    Value of the critical overdensity a given redshift.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.nu_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">nu_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.nu_z_M" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">nu_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.nu_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.nu_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Peak height.</p>
+<p>Computes the critical overdensity over the rms,
+delta_c/sigma, at a given redshift and mass.
+The contribution from massive neutrinos is not included in the power
+spectrum and in the matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.nu_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.nu_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.nu_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.nu_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>nu_z_M: numpy.ndarray
+    nu_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dlns_dlnM" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dlns_dlnM</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dlns_dlnM" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dlns_dlnM</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dlns_dlnM(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dlns_dlnM(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the logarithmic rms.</p>
+<p>Computes the derivative of the ln rms
+with respect to the ln of mass
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dlns_dlnM--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dlns_dlnM--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dlns_dlnM--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dlns_dlnM--returns" title="Permanent link">&para;</a></h6>
+<p>dlns_dlnM: numpy.ndarray
+    dlns_dlnM[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.dn_dm--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.f_sigma_nu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">f_sigma_nu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.f_sigma_nu" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">f_sigma_nu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.f_sigma_nu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.f_sigma_nu(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computation of the multiplicity function.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.f_sigma_nu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.f_sigma_nu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.f_sigma_nu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase.f_sigma_nu--returns" title="Permanent link">&para;</a></h6>
+<p>f_sigma_nu: numpy.ndarray
+    f_sigma_nu[i,j], where i is the redshift axis and j the mass axis</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h5 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">tinker_halo_abundance</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance" class="headerlink" title="Permanent link">&para;</a></h5>
+
+    <div class="doc doc-contents ">
+
+          
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">TinkerHaloAbundance</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">TinkerHaloAbundance</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance(halo_model_properties)">halo_model_properties</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties">HaloModelProperties</a></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance(overdensity_type)">overdensity_type</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">'vir'</span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance(overdensity)">overdensity</span></span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">200</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance" id="mermaid-link-cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance"></a>
+                  <a class="autorefs autorefs-internal" href="#cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase" id="mermaid-link-cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance">
+              flowchart TD
+              cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance[TinkerHaloAbundance]
+              cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase[HaloAbundanceBase]
+
+                              cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase --> cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance
+                
+
+
+              click cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance href "" "cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance"
+              click cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase href "" "cloelib.observables.halos.halo_abundance.halo_abundance_base.HaloAbundanceBase"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Class implementing the Tinker et al. mass abundance models.</p>
+<p>Following the cold dark matter
+prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514) and
+Castorina+13 (https://arxiv.org/pdf/1311.1212), the halo mass function
+and halo bias do not include the massive neutrino contribution in the
+computation of mass variance, power spectrum, and overdensity.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma8_0" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">sigma8_0</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma8_0" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">sigma8_0</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the <code>sigma_8</code> value at redshift <code>z=0</code>. If <code>sigma_8</code>
+is not set as a base parameter, it is computed from the power spectrum.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.f_sigma_nu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">f_sigma_nu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.f_sigma_nu" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">f_sigma_nu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.f_sigma_nu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.f_sigma_nu(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computation of the multiplicity function.</p>
+<p>Computes the Tinker et al. (2008) multiplicity function
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.f_sigma_nu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.f_sigma_nu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.f_sigma_nu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.f_sigma_nu--returns" title="Permanent link">&para;</a></h6>
+<p>f_sigma_nu: numpy.ndarray
+    f_sigma_nu[i,j], where i is the redshift axis and j the mass axis</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.bias" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">bias</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.bias" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">bias</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.bias(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.bias(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computation of the halo bias.</p>
+<p>Computes the Tinker et al. (2010) halo bias
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.bias--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.bias--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points
+M: numpy.ndarray
+    Mass points in h^{-1} Msun</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.bias--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.bias--returns" title="Permanent link">&para;</a></h6>
+<p>bias: numpy.ndarray
+    bias[i,j], where i is the redshift axis and j the mass axis</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm_fsigmanu</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm_fsigmanu</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu(M)">M</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu(fsigmanu)">fsigmanu</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density with pre-computed
+halo mass function.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.
+fsigmanu: numpy.ndarray
+    Multiplicity function.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm_fsigmanu--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.window" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">window</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.window" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">window</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.window(k)">k</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.window(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Top-hat window and its derivative.</p>
+<p>Computes the top-hat window function and its derivative.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.window--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.window--parameters" title="Permanent link">&para;</a></h6>
+<p>k: numpy.ndarray
+       Wavenumber where W(kR) is evaluated.
+       Units: h Mpc^{-1}
+R: numpy.ndarray
+       Radius where W(kR) is evaluated.
+       Units: h^{-1} Mpc</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.window--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.window--returns" title="Permanent link">&para;</a></h6>
+<p>W: numpy.ndarray
+    W[i,j], where i is the wavenumber axis and j the radius axis
+dWdx: numpy.ndarray
+    dWdx[i,j], where i is the wavenumber axis and j the radius axis</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.radius_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">radius_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.radius_M" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">radius_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.radius_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Radius from a mass.</p>
+<p>Converts a mass into a radius. This implementation follows
+the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.radius_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.radius_M--parameters" title="Permanent link">&para;</a></h6>
+<p>M: numpy.ndarray
+    Mass in h^{-1} Msun</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.radius_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.radius_M--returns" title="Permanent link">&para;</a></h6>
+<p>radius_M: array
+    Radius in h^{-1} Mpc</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_R" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_R</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_R" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_R</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_R(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_R(R)">R</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and radius.</p>
+<p>Computes the rms at the radii requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_R--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_R--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+R: numpy.ndarray
+    Radius points in h^{-1} Mpc.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_R--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_R--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_R: numpy.ndarray
+    sigma_z_R[i,j], where i is the redshift axis and j the radius axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">sigma_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_M" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">sigma_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Standard deviation of perturbations given a redshift and mass.</p>
+<p>Computes the rms at the masses requested from
+the table given by the Boltzman code.
+The contribution from massive neutrinos is not included in the power
+spectrum.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.sigma_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>sigma_z_M: numpy.ndarray
+    sigma_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.delta_c" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">delta_c</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.delta_c" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">delta_c</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.delta_c(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Critical overdensity.</p>
+<p>Computes the critical overdensity at a given redshift
+following an approximation from Kitayama &amp; Suto (1999).
+The contribution from massive neutrinos is not included in the
+matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.delta_c--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.delta_c--parameters" title="Permanent link">&para;</a></h6>
+<p>z: float or np.ndarray
+    Redshift at which to evaluate the delta_c</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.delta_c--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.delta_c--returns" title="Permanent link">&para;</a></h6>
+<p>delta_c:  float or numpy.ndarray
+    Value of the critical overdensity a given redshift.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.nu_z_M" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">nu_z_M</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.nu_z_M" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">nu_z_M</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.nu_z_M(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.nu_z_M(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Peak height.</p>
+<p>Computes the critical overdensity over the rms,
+delta_c/sigma, at a given redshift and mass.
+The contribution from massive neutrinos is not included in the power
+spectrum and in the matter density parameter.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.nu_z_M--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.nu_z_M--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.nu_z_M--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.nu_z_M--returns" title="Permanent link">&para;</a></h6>
+<p>nu_z_M: numpy.ndarray
+    nu_z_M[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dlns_dlnM" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dlns_dlnM</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dlns_dlnM" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dlns_dlnM</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dlns_dlnM(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dlns_dlnM(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the logarithmic rms.</p>
+<p>Computes the derivative of the ln rms
+with respect to the ln of mass
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dlns_dlnM--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dlns_dlnM--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dlns_dlnM--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dlns_dlnM--returns" title="Permanent link">&para;</a></h6>
+<p>dlns_dlnM: numpy.ndarray
+    dlns_dlnM[i,j], where i is the redshift axis and j the mass axis.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h7 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">dn_dm</span>
+
+
+<a href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm" class="headerlink" title="Permanent link">&para;</a></h7>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dn_dm</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm(M)">M</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Derivative of the number density.</p>
+<p>Computes the derivative of the number density
+at the requested redshift and mass points.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm--parameters" title="Permanent link">&para;</a></h6>
+<p>z: numpy.ndarray
+    Redshift points.
+M: numpy.ndarray
+    Mass points in h^{-1} Msun.</p>
+<h6 id="cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_abundance.tinker_halo_abundance.TinkerHaloAbundance.dn_dm--returns" title="Permanent link">&para;</a></h6>
+<p>dn_dm: numpy.ndarray
+    dn_dm[i,j], where i is the redshift axis and j the mass axis.
+    Units: h^4 Mpc^{-3} Ms^{-1}.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h4 id="cloelib.observables.halos.halo_model_properties" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">halo_model_properties</span>
+
+
+<a href="#cloelib.observables.halos.halo_model_properties" class="headerlink" title="Permanent link">&para;</a></h4>
+
+    <div class="doc doc-contents ">
+
+          
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">HaloModelProperties</span>
+
+
+<a href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">HaloModelProperties</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties(perturbations)">perturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties(interpolate_pk)">interpolate_pk</span></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties(interpolate_da)">interpolate_da</span></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties(z)">z</span></span><span class="o">=</span><span class="n"><span title="numpy.linspace">linspace</span></span><span class="p">(</span><span class="mf">1e-05</span><span class="p">,</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="mf">1e-05</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties(k)">k</span></span><span class="o">=</span><span class="n"><span title="numpy.geomspace">geomspace</span></span><span class="p">(</span><span class="mf">0.0001</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">500</span><span class="p">))</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Initialize the class with given perturbations and overdensity definition.
+If requested, cosmological functions (e.g., the matter power spectrum)
+are interpolated.</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties--parameters" title="Permanent link">&para;</a></h6>
+<p>perturbations : Perturbations
+    An object from the <code>LinearPerturbations</code> class containing cosmological
+    perturbation data (e.g., power spectrum, growth function).
+interpolate_pk : bool, optional
+    If true, the class interpolates the matter power spectrum.
+    A default interpolation is set when class is instanciated with
+    interpolate_pk=True. For a more customized interpolation, check
+    the set_matter_power_spectrum_interpolation function.
+interpolate_da : bool, optional
+    If true, the class interpolates the angular diameter distance.
+    A default interpolation is set when class is instanciated with
+    interpolate_da=True. For a more customized interpolation, check
+    the set_angular_diameter_distance_interpolation function.</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties--notes">Notes<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties--notes" title="Permanent link">&para;</a></h6>
+<p>In the current implementation, the matter power spectrum never includes
+the contribution of massive neutrinos. Halo mass function, halo bias, and
+2-halo profile models implemented in this subpackage require
+cold dark matter + baryons (no neutrinos) power spectra.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.background" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">background</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.background" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">background</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Returns the Background class instance</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.angular_diameter_distance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">angular_diameter_distance</span>
+
+
+<a href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.angular_diameter_distance" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">angular_diameter_distance</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.angular_diameter_distance(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the angular diameter distance as a function of redshift.</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.angular_diameter_distance--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.angular_diameter_distance--parameters" title="Permanent link">&para;</a></h6>
+<p>z : np.ndarray
+    Array of redshifts.</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.angular_diameter_distance--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.angular_diameter_distance--returns" title="Permanent link">&para;</a></h6>
+<p>np.ndarray
+    Angular diameter distance values.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.matter_power_spectrum_cb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">matter_power_spectrum_cb</span>
+
+
+<a href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.matter_power_spectrum_cb" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.matter_power_spectrum_cb(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.matter_power_spectrum_cb(k)">k</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Computes the non interpolated matter power spectrum.</p>
+<p>This function computes the cold dark matter + baryons power spectrum,
+not including the massive neutrino contribution.</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.matter_power_spectrum_cb--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.matter_power_spectrum_cb--parameters" title="Permanent link">&para;</a></h6>
+<p>z: float or np.ndarray
+    Redshift.
+k: float or np.ndarray
+    Wavenumber where W(kR) is evaluated.
+    Units: h Mpc^{-1}</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
+<p>float or np.ndarray
+    Matter power spectrum.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.set_matter_power_spectrum_interpolation" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">set_matter_power_spectrum_interpolation</span>
+
+
+<a href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.set_matter_power_spectrum_interpolation" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">set_matter_power_spectrum_interpolation</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.set_matter_power_spectrum_interpolation(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.set_matter_power_spectrum_interpolation(k)">k</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create internal interpolation of matter power spectrum.</p>
+<p>This function interpolates the cold dark matter + baryons power spectrum,
+not including the massive neutrino contribution.</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.set_matter_power_spectrum_interpolation--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.set_matter_power_spectrum_interpolation--parameters" title="Permanent link">&para;</a></h6>
+<p>z: float or np.ndarray
+    Redshift.
+k: float or np.ndarray
+    Wavenumber where W(kR) is evaluated.
+    Units: h Mpc^{-1}</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.set_angular_diameter_distance_interpolation" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">set_angular_diameter_distance_interpolation</span>
+
+
+<a href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.set_angular_diameter_distance_interpolation" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">set_angular_diameter_distance_interpolation</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.set_angular_diameter_distance_interpolation(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Create internal interpolation of angular diameter distance.</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.set_angular_diameter_distance_interpolation--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.set_angular_diameter_distance_interpolation--parameters" title="Permanent link">&para;</a></h6>
+<p>z: float or np.ndarray
+    Redshift.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.surface_mass_density_2h" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">surface_mass_density_2h</span>
+
+
+<a href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.surface_mass_density_2h" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">surface_mass_density_2h</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.surface_mass_density_2h(R)">R</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.surface_mass_density_2h(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.surface_mass_density_2h(radius_units)">radius_units</span></span><span class="o">=</span><span class="s1">'Mpc/h'</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Surface 2-halo matter density profile.</p>
+<p>Computes the cosmological unbiased surface 2-halo density profile at radius R.</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.surface_mass_density_2h--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.surface_mass_density_2h--parameters" title="Permanent link">&para;</a></h6>
+<p>R: np.ndarray
+    Radial points (units : Mpc / h)
+z: np.ndarray
+    Redshift.
+radius_units: str
+    Unit for the input radius. Accepted values are:
+    "Mpc/h", "radians", "degrees", "arcmin", "arcsec".</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.surface_mass_density_2h--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.surface_mass_density_2h--returns" title="Permanent link">&para;</a></h6>
+<p>Sigma: np.ndarray
+    2-halo surface mass density profile (units : h * Msun / pc**2).
+    Shape: (z.size, R.size).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.excess_surface_mass_density_2h" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">excess_surface_mass_density_2h</span>
+
+
+<a href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.excess_surface_mass_density_2h" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">excess_surface_mass_density_2h</span><span class="p">(</span><span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.excess_surface_mass_density_2h(R)">R</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.excess_surface_mass_density_2h(z)">z</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.halos.halo_model_properties.HaloModelProperties.excess_surface_mass_density_2h(radius_units)">radius_units</span></span><span class="o">=</span><span class="s1">'Mpc/h'</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Excess surface 2-halo matter density profile.</p>
+<p>Computes the cosmological unbiased excess surface 2-halo
+density profile at radius R.</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.excess_surface_mass_density_2h--parameters">Parameters<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.excess_surface_mass_density_2h--parameters" title="Permanent link">&para;</a></h6>
+<p>R: np.ndarray
+    Radial points (units : Mpc / h)
+z: np.ndarray
+    Redshift.
+radius_units: str
+    Unit for the input radius. Accepted values are:
+    "Mpc/h", "radians", "degrees", "arcmin", "arcsec".</p>
+<h6 id="cloelib.observables.halos.halo_model_properties.HaloModelProperties.excess_surface_mass_density_2h--returns">Returns<a class="headerlink" href="#cloelib.observables.halos.halo_model_properties.HaloModelProperties.excess_surface_mass_density_2h--returns" title="Permanent link">&para;</a></h6>
+<p>DeltaSigma: np.ndarray
+    2-halo surface mass density profile (units : h * Msun / pc**2).
+    Shape: (z.size, R.size).</p>
 
           
 

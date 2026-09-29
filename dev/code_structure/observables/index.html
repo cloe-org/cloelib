@@ -700,41 +700,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#two-flavors-of-observables" class="md-nav__link">
+  <a href="#different-flavors-of-observables" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Two Flavors of Observables
+        Different Flavors of Observables
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Two Flavors of Observables">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#tracer-protocol" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tracer Protocol
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#spectropower-protocol" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        SpectroPower Protocol
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1124,41 +1096,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#two-flavors-of-observables" class="md-nav__link">
+  <a href="#different-flavors-of-observables" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Two Flavors of Observables
+        Different Flavors of Observables
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Two Flavors of Observables">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#tracer-protocol" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tracer Protocol
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#spectropower-protocol" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        SpectroPower Protocol
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1246,26 +1190,27 @@
 <p>The <strong>Observables</strong> module connects theoretical predictions to observational measurements.</p>
 <p>This module handles the transformation from theoretical quantities to observable measurements, accounting for survey-specific effects.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>This module computes survey-specific quantities including selection functions, window functions, and bias parameters that distinguish real observations from idealized theoretical predictions.</p>
+<p>This module computes survey-specific large scale structure (selection functions, window functions, and bias parameters) and galaxy cluster (halo mass function) quantities that distinguish real observations from idealized theoretical predictions.</p>
 <p>This module addresses:</p>
 <ul>
 <li>Window functions for weak lensing surveys and CMB lensing</li>
 <li>Galaxy bias modeling and corrections</li>
 <li>Gravitational-wave source number counts and weak lensing</li>
 <li>Redshift-space power spectra P(k, μ)</li>
+<li>Halo mass function</li>
 </ul>
-<h2 id="two-flavors-of-observables">Two Flavors of Observables<a class="headerlink" href="#two-flavors-of-observables" title="Permanent link">&para;</a></h2>
-<p><strong>cloelib</strong> has two types of observable protocols, each serving different purposes:</p>
-<h3 id="tracer-protocol"><strong>Tracer Protocol</strong><a class="headerlink" href="#tracer-protocol" title="Permanent link">&para;</a></h3>
-<p>For photometric and gravitational-wave observables</p>
+<h2 id="different-flavors-of-observables">Different Flavors of Observables<a class="headerlink" href="#different-flavors-of-observables" title="Permanent link">&para;</a></h2>
+<p><strong>cloelib</strong> has different types of observable protocols, each serving different purposes for:</p>
 <ul>
-<li><a href="photo/">Learn more about photometric tracers</a></li>
-<li><a href="gw/">Learn more about gravitational-wave tracers</a></li>
+<li>Large Scale Structure</li>
+<li><strong>Tracer Protocol</strong>: For photometric and gravitational-wave observables<ul>
+<li><a href="photo/">Photometric tracers</a></li>
+<li><a href="gw/">Gravitational-wave tracers</a></li>
 </ul>
-<h3 id="spectropower-protocol"><strong>SpectroPower Protocol</strong><a class="headerlink" href="#spectropower-protocol" title="Permanent link">&para;</a></h3>
-<p>For spectroscopic observables (3D clustering, redshift-space distortions)</p>
-<ul>
-<li><a href="spectro/">Learn more about SpectroPower Protocol</a></li>
+</li>
+<li><a href="spectro/"><strong>SpectroPower Protocol</strong></a>: For spectroscopic observables (3D clustering, redshift-space distortions).</li>
+<li>Galaxy Clusters</li>
+<li><a href="halo_abundance/"><strong>HaloAbundance Protocol</strong></a>: For halo mass function and halo bias.</li>
 </ul>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <p>Ready to compute final statistics with your observables?</p>

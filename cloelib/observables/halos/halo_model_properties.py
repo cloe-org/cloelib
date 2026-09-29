@@ -186,7 +186,7 @@ class HaloModelProperties:
         """
         _kwargs = {}
         if isinstance(
-            self.perturbations.matter_power_spectrum_cb,
+            self.perturbations,
             _COSMOLOGY_TYPES_WITH_UNITS,
         ):
             _kwargs = {

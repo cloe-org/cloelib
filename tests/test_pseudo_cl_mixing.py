@@ -117,6 +117,45 @@ def test_pos_she(tracer1, tracer2):
     np.testing.assert_allclose(B_out, [30.0, 50.0])  # [10 + 20, 20 + 30]
 
 
+@pytest.mark.parametrize(
+    "tracer1, n_bins1, tracer2, n_bins2",
+    [
+        (PositionsTracer, 2, ShearTracer, 3),
+        (ShearTracer, 3, PositionsTracer, 2),
+    ],
+    ids=["POS-SHE", "SHE-POS"],
+)
+def test_pos_she_different_number_of_bins(tracer1, n_bins1, tracer2, n_bins2):
+    # 2 POS bins and 3 SHE bins give 2 x 3 = 6 pairs, always named
+    # ("POS", "SHE", POS bin, SHE bin), whatever the order of the tracers.
+    # Each pair gets the same Cl but a different multiple of SUM_NEIGHBOURS,
+    # so we can check that every pair is computed with its own matrix.
+    E = [1.0, 2.0, 3.0]
+    B = [10.0, 20.0, 30.0]
+    factor = {
+        (1, 1): 1, (1, 2): 2, (1, 3): 3,
+        (2, 1): 4, (2, 2): 5, (2, 3): 6,
+    }  # fmt: skip
+    fake_cls = {("POS", "SHE", i, j): [E, B] for (i, j) in factor}
+    mixing_matrices = {
+        ("POS", "SHE", i, j): f * SUM_NEIGHBOURS for (i, j), f in factor.items()
+    }
+
+    result = compute_pseudo_cl(
+        make_tracer(tracer1, n_bins1),
+        make_tracer(tracer2, n_bins2),
+        fake_cls,
+        mixing_matrices,
+    )
+
+    # Exactly the 6 pairs, no pair missing and none extra.
+    assert set(result) == set(fake_cls)
+    for (i, j), f in factor.items():
+        E_out, B_out = result[("POS", "SHE", i, j)].array
+        np.testing.assert_allclose(E_out, [f * 3.0, f * 5.0])
+        np.testing.assert_allclose(B_out, [f * 30.0, f * 50.0])
+
+
 # SHE-SHE: one test per output component (EE, BB, EB, BE), so a failing test
 # tells you directly which multiplication is wrong.
 #

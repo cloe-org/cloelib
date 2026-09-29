@@ -289,9 +289,9 @@ class PBJTATTLoopComputer:
 
         # Backend-dependent return shape for a length-1 `zs` (same class of
         # inconsistency `_growth_factor_1d` already works around for
-        # `growth_factor`): CAMB's `matter_power_spectrum` keeps an
-        # explicit (1, n_k) z-axis, HMemu's `.squeeze()`s it away to (n_k,).
-        # `reshape(-1)` normalizes either to the flat (n_k,) FAST-PT needs.
+        # `growth_factor`): most backends keep an explicit (1, n_k) z-axis,
+        # but not all are guaranteed to. `reshape(-1)` normalizes either to
+        # the flat (n_k,) FAST-PT needs.
         p_lin_z0 = _numpy.reshape(
             _numpy.asarray(
                 self.linear_perturbations.matter_power_spectrum(
@@ -777,16 +777,6 @@ class ShearTracer:
         """
         Omega_m0 = self.background.Omega_m(0.0)
         Hz = self.perturbations.background.hubble_parameter(z)
-        # `growth_factor` is backend-dependent: some backends (e.g. CAMB)
-        # return D(z, k) with an explicit k-axis; others (e.g. the JAX
-        # backends) ignore `ks` entirely and return a scale-independent
-        # D(z), and don't set a `.k` attribute at all. NLA treats growth as
-        # ~scale-independent, so when a k-axis is present we pick a single
-        # representative column (unchanged from the historical behavior);
-        # when it isn't, the backend's own 1D D(z) is used directly.
-        # TODO discuss whether we want growth factor to output a 1D or a 2D array
-        # `Any`: backends without a `.k` grid accept `ks=None`, which the
-        # `Perturbations` protocol's `growth_factor(zs, ks)` doesn't express.
         ks: Any = getattr(self.perturbations, "k", None)
         Dz_raw = self.perturbations.growth_factor(z, ks)
         Dz = Dz_raw[:, 1] if getattr(Dz_raw, "ndim", 1) == 2 else Dz_raw

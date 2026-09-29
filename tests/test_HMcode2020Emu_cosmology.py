@@ -103,7 +103,7 @@ def test_hmemu_growth_factor_normalised_at_z0(hmemu_perturbation_instance, key, 
     D0 = perturbations.growth_factor(np.array([0.0]), ks)
     np.testing.assert_allclose(D0, 1.0, rtol=1e-12)
     D = perturbations.growth_factor(np.array([0.0, 1.0, 2.0]), np.array([1e-3]))
-    assert np.all(np.diff(D.squeeze()) < 0)
+    assert np.all(np.diff(D[:, 0]) < 0)
 
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
@@ -119,10 +119,38 @@ def test_hmemu_growth_rate(hmemu_perturbation_instance, camb_background_instance
     """Test that the growth rate is close to the Omega_m(z)^0.55 approximation."""
     perturbations = hmemu_perturbation_instance[key]
     f = perturbations.growth_rate()
-    assert f.shape == perturbations.params_hm_emu["z"].shape
-    z = perturbations.params_hm_emu["z"]
-    Om_z = camb_background_instance.Omega_m(z)
+    assert f.shape == perturbations.z.shape
+    Om_z = camb_background_instance.Omega_m(perturbations.z)
     np.testing.assert_allclose(f, Om_z**0.55, rtol=2e-2)
+
+
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_hmemu_growth_rate_at_requested_redshifts(hmemu_perturbation_instance, key, ks):
+    """Test that growth_rate follows the protocol's optional (zs, ks) signature."""
+    perturbations = hmemu_perturbation_instance[key]
+    z_grid = perturbations.z
+    np.testing.assert_allclose(
+        perturbations.growth_rate(z_grid), perturbations.growth_rate()
+    )
+    zs = np.array([0.3, 1.7, 5.0])
+    f = perturbations.growth_rate(zs)
+    assert f.shape == (len(zs),)
+    assert np.all((f > 0) & (f <= 1))
+    f_zk = perturbations.growth_rate(zs, ks)
+    assert f_zk.shape == (len(zs), len(ks))
+    np.testing.assert_allclose(f_zk, np.tile(f[:, None], (1, len(ks))))
+
+
+@pytest.mark.parametrize(
+    "method", ["matter_power_spectrum", "matter_power_spectrum_cb", "growth_factor"]
+)
+@pytest.mark.parametrize("key", ["Linear", "NonLinear"])
+def test_hmemu_single_redshift_keeps_z_axis(
+    hmemu_perturbation_instance, key, method, ks
+):
+    """Test that a length-1 redshift array returns (1, nk), as for CAMB."""
+    result = getattr(hmemu_perturbation_instance[key], method)(np.array([0.5]), ks)
+    assert result.shape == (1, len(ks))
 
 
 def test_hmemu_linear_matches_camb(hmemu_perturbation_instance, camb_linear_instance):
@@ -158,17 +186,14 @@ def test_hmemu_nonlinear_matches_linear_on_large_scales(hmemu_perturbation_insta
     nonlin = hmemu_perturbation_instance["NonLinear"]
     z = np.array([0.0])
     k_low = np.logspace(-3, -2.5, 5)
-    # The linear class squeezes single-redshift output while the nonlinear
-    # class does not, so compare squeezed arrays.
     np.testing.assert_allclose(
-        np.squeeze(nonlin.matter_power_spectrum(z, k_low)),
-        np.squeeze(lin.matter_power_spectrum(z, k_low)),
+        nonlin.matter_power_spectrum(z, k_low),
+        lin.matter_power_spectrum(z, k_low),
         rtol=1e-3,
     )
     k_high = np.array([1.0, 3.0])
     assert np.all(
-        np.squeeze(nonlin.matter_power_spectrum(z, k_high))
-        > np.squeeze(lin.matter_power_spectrum(z, k_high))
+        nonlin.matter_power_spectrum(z, k_high) > lin.matter_power_spectrum(z, k_high)
     )
 
 

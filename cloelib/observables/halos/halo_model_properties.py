@@ -23,10 +23,12 @@ from cloelib.cosmology.mochi_class_cosmology import (
     mochiCLASSLinearPerturbations,
     mochiCLASSNonLinearPerturbations,
 )
-from cloelib.cosmology.HMcode2020Emu_cosmology import (
-    HMemuLinearPerturbations,
-    HMemuNonLinearPerturbations,
-)
+
+# to be uncommented when the error with HMcode2020Emu_cosmology is fixed
+# from cloelib.cosmology.HMcode2020Emu_cosmology import (
+#    HMemuLinearPerturbations,
+#    HMemuNonLinearPerturbations,
+# )
 from cloelib.cosmology.hi_class_cosmology import (
     hi_classLinearPerturbations,
     hi_classNonLinearPerturbations,
@@ -179,8 +181,8 @@ class HaloModelProperties:
                 JAXNonLinearPerturbations,
                 mochiCLASSLinearPerturbations,
                 mochiCLASSNonLinearPerturbations,
-                HMemuLinearPerturbations,
-                HMemuNonLinearPerturbations,
+                # HMemuLinearPerturbations,
+                # HMemuNonLinearPerturbations,
                 hi_classLinearPerturbations,
                 hi_classNonLinearPerturbations,
                 MGCLASSLinearPerturbations,

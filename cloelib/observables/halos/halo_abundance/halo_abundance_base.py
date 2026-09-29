@@ -318,3 +318,21 @@ class HaloAbundanceBase:
             Units: h^4 Mpc^{-3} Ms^{-1}.
         """
         return self.dn_dm_fsigmanu(z, M, self.f_sigma_nu(z, M))
+
+    def f_sigma_nu(self, z, M):
+        r"""
+        Computation of the multiplicity function.
+
+        Parameters
+        ----------
+        z: numpy.ndarray
+            Redshift points.
+        M: numpy.ndarray
+            Mass points in h^{-1} Msun.
+
+        Returns
+        -------
+        f_sigma_nu: numpy.ndarray
+            f_sigma_nu[i,j], where i is the redshift axis and j the mass axis
+        """
+        raise NotImplementedError("Function not implemented in base function")

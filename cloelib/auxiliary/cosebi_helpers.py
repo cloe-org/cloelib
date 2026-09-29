@@ -276,7 +276,9 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
     -------
     dict
         Keys ``1..Nmax`` map to 1-D arrays of length ``len(ells)``;
-        key ``"metadata"`` holds ``{"THMIN": tmin, "THMAX": tmax}``.
+        key ``"metadata"`` holds ``{"THMIN": tmin, "THMAX": tmax}`` in radians
+        (the unit of `thetagrid`). The COSEBI outputs built from these kernels
+        store ``thmin``/``thmax`` in arcmin.
     """
     print("start calculating roots and norms:")
 

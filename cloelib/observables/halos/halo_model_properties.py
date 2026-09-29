@@ -109,19 +109,29 @@ class HaloModelProperties:
         r"""Returns the Background class instance"""
         return self.perturbations.background
 
-    @property
-    def interpolate_da(self):
-        r"""If true, class uses interpolation for angular diameter distance computation."""
-        return self.__interpolate_da
+    def angular_diameter_distance(self, z):
+        """
+        Return the angular diameter distance as a function of redshift.
 
-    @interpolate_da.setter
-    def interpolate_da(self, interpolate_da):
-        """If true, makes class uses interpolation for angular diameter distance computation."""
-        if interpolate_da:
-            self.angular_diameter_distance = self.da_interp
+        Parameters
+        ----------
+        z : np.ndarray
+            Array of redshifts.
+
+        Returns
+        -------
+        np.ndarray
+            Angular diameter distance values.
+        """
+        if self.interpolate_da:
+            _angular_diameter_distance_func = self.da_interp
         else:
-            self.angular_diameter_distance = self.background.angular_diameter_distance
-        self.__interpolate_da = interpolate_da
+            _angular_diameter_distance_func = self.background.angular_diameter_distance
+        if _angular_diameter_distance_func is None:
+            raise ValueError(
+                "Cosmology not instanciated, matter power spectrum function is None!"
+            )
+        return _angular_diameter_distance_func(z)
 
     def matter_power_spectrum_cb(self, z, k):
         r"""Computes the non interpolated matter power spectrum.

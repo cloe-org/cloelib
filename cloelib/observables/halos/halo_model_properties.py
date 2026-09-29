@@ -2,6 +2,7 @@ import numpy as np
 from scipy import interpolate
 from scipy.integrate import quad_vec
 from scipy.special import j0, j1
+import importlib
 
 from cloelib.auxiliary.halo_helpers import convert_distance
 
@@ -9,61 +10,50 @@ from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.cosmology import Perturbations
 
 # Get classes for verification of units argument
-from cloelib.cosmology.class_cosmology import (
-    CLASSLinearPerturbations,
-    CLASSNonLinearPerturbations,
-)
-from cloelib.cosmology.camb_cosmology import (
-    CAMBLinearPerturbations,
-    CAMBNonLinearPerturbations,
-)
-from cloelib.cosmology.jax_cosmology import (
-    JAXLinearPerturbations,
-    JAXNonLinearPerturbations,
-)
-from cloelib.cosmology.mochi_class_cosmology import (
-    mochiCLASSLinearPerturbations,
-    mochiCLASSNonLinearPerturbations,
-)
 
-from cloelib.cosmology.hi_class_cosmology import (
-    hi_classLinearPerturbations,
-    hi_classNonLinearPerturbations,
-)
-from cloelib.cosmology.mgclass_cosmology import (
-    MGCLASSLinearPerturbations,
-    MGCLASSNonLinearPerturbations,
-)
+modules_and_functions = {
+    "cloelib.cosmology.class_cosmology": (
+        "CLASSLinearPerturbations",
+        "CLASSNonLinearPerturbations",
+    ),
+    "cloelib.cosmology.camb_cosmology": (
+        "CAMBLinearPerturbations",
+        "CAMBNonLinearPerturbations",
+    ),
+    "cloelib.cosmology.jax_cosmology": (
+        "JAXLinearPerturbations",
+        "JAXNonLinearPerturbations",
+    ),
+    "cloelib.cosmology.HMcode2020Emu_cosmology": (
+        "HMemuLinearPerturbations",
+        "HMemuNonLinearPerturbations",
+    ),
+    "cloelib.cosmology.mochi_class_cosmology": (
+        "mochiCLASSLinearPerturbations",
+        "mochiCLASSNonLinearPerturbations",
+    ),
+    "cloelib.cosmology.hi_class_cosmology": (
+        "hi_classLinearPerturbations",
+        "hi_classNonLinearPerturbations",
+    ),
+    "cloelib.cosmology.mgclass_cosmology": (
+        "MGCLASSLinearPerturbations",
+        "MGCLASSNonLinearPerturbations",
+    ),
+}
 
-_COSMOLOGY_TYPES_WITH_UNITS = (
-    CLASSLinearPerturbations,
-    CLASSNonLinearPerturbations,
-    CAMBLinearPerturbations,
-    CAMBNonLinearPerturbations,
-    JAXLinearPerturbations,
-    JAXNonLinearPerturbations,
-    mochiCLASSLinearPerturbations,
-    mochiCLASSNonLinearPerturbations,
-    hi_classLinearPerturbations,
-    hi_classNonLinearPerturbations,
-    MGCLASSLinearPerturbations,
-    MGCLASSNonLinearPerturbations,
-)
+_COSMOLOGY_TYPES_WITH_UNITS = ()
+for module_name, cosmo_classes in modules_and_functions.items():
+    try:
+        module = importlib.import_module(module_name)
 
-
-try:
-    from cloelib.cosmology.HMcode2020Emu_cosmology import (
-        HMemuLinearPerturbations,
-        HMemuNonLinearPerturbations,
-    )
-
-    _COSMOLOGY_TYPES_WITH_UNITS = (
-        *_COSMOLOGY_TYPES_WITH_UNITS,
-        HMemuLinearPerturbations,
-        HMemuNonLinearPerturbations,
-    )
-except ImportError:
-    pass
+        for cosmo_class in cosmo_classes:
+            _COSMOLOGY_TYPES_WITH_UNITS = (
+                *_COSMOLOGY_TYPES_WITH_UNITS,
+                getattr(module, cosmo_class),
+            )
+    except ImportError:
+        pass
 
 
 def _bessel_j2(x):

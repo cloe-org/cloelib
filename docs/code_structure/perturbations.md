@@ -356,6 +356,8 @@ Fast JAX-based emulator for linear and nonlinear power spectra using [cosmopower
 - Linear and nonlinear P(k) and P_cb(k)
 - σ₈(z), fσ₈(z), growth factor D(z,k), growth rate f(z)
 - Emulator files downloaded automatically from Zenodo on first use
+- Artifacts stored under `CLOELIB_CACHE_DIR`, then `XDG_CACHE_HOME/cloelib`,
+  falling back to `~/.cache/cloelib`
 
 #### Available classes
 

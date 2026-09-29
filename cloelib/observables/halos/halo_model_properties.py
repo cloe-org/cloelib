@@ -3,6 +3,8 @@ from scipy import interpolate
 from scipy.integrate import quad_vec
 from scipy.special import j0, j1
 
+from cloelib.auxiliary.halo_helpers import convert_distance
+
 from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.cosmology import Perturbations
 
@@ -24,11 +26,6 @@ from cloelib.cosmology.mochi_class_cosmology import (
     mochiCLASSNonLinearPerturbations,
 )
 
-# to be uncommented when the error with HMcode2020Emu_cosmology is fixed
-# from cloelib.cosmology.HMcode2020Emu_cosmology import (
-#    HMemuLinearPerturbations,
-#    HMemuNonLinearPerturbations,
-# )
 from cloelib.cosmology.hi_class_cosmology import (
     hi_classLinearPerturbations,
     hi_classNonLinearPerturbations,
@@ -38,7 +35,35 @@ from cloelib.cosmology.mgclass_cosmology import (
     MGCLASSNonLinearPerturbations,
 )
 
-from cloelib.auxiliary.halo_helpers import convert_distance
+_COSMOLOGY_TYPES_WITH_UNITS = (
+    CLASSLinearPerturbations,
+    CLASSNonLinearPerturbations,
+    CAMBLinearPerturbations,
+    CAMBNonLinearPerturbations,
+    JAXLinearPerturbations,
+    JAXNonLinearPerturbations,
+    mochiCLASSLinearPerturbations,
+    mochiCLASSNonLinearPerturbations,
+    hi_classLinearPerturbations,
+    hi_classNonLinearPerturbations,
+    MGCLASSLinearPerturbations,
+    MGCLASSNonLinearPerturbations,
+)
+
+
+try:
+    from cloelib.cosmology.HMcode2020Emu_cosmology import (
+        HMemuLinearPerturbations,
+        HMemuNonLinearPerturbations,
+    )
+
+    _COSMOLOGY_TYPES_WITH_UNITS = (
+        *_COSMOLOGY_TYPES_WITH_UNITS,
+        HMemuLinearPerturbations,
+        HMemuNonLinearPerturbations,
+    )
+except ImportError:
+    pass
 
 
 def _bessel_j2(x):
@@ -172,22 +197,7 @@ class HaloModelProperties:
         _kwargs = {}
         if isinstance(
             self.perturbations.matter_power_spectrum_cb,
-            (
-                CLASSLinearPerturbations,
-                CLASSNonLinearPerturbations,
-                CAMBLinearPerturbations,
-                CAMBNonLinearPerturbations,
-                JAXLinearPerturbations,
-                JAXNonLinearPerturbations,
-                mochiCLASSLinearPerturbations,
-                mochiCLASSNonLinearPerturbations,
-                # HMemuLinearPerturbations,
-                # HMemuNonLinearPerturbations,
-                hi_classLinearPerturbations,
-                hi_classNonLinearPerturbations,
-                MGCLASSLinearPerturbations,
-                MGCLASSNonLinearPerturbations,
-            ),
+            _COSMOLOGY_TYPES_WITH_UNITS,
         ):
             _kwargs = {
                 "hubble_units": True,

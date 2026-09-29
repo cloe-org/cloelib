@@ -6,14 +6,11 @@ Both classes are compatible with the Tracer protocol.
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.cosmology.Weyl_cosmology import (
-    WeylNonLinearPerturbations,
-    WeylLinearPerturbations,
-)
-from cloelib.observables.photo import PositionsTracer, get_photo_rsd
+from cloelib.cosmology import Perturbations
+from cloelib.observables.photo.positions import PositionsTracer, get_photo_rsd
 
 # General imports
-import jax.numpy as np  # type: ignore
+import jax.numpy as np
 
 
 # UNITS
@@ -27,8 +24,7 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
 
     def __init__(
         self,
-        perturbations: WeylNonLinearPerturbations
-        | WeylLinearPerturbations,  # Note: We require this to be an instance of WeylNonLinearPerturbations (WeylLinearPerturbations also permitted should only linear scales be used)
+        perturbations: Perturbations,  # Note: We require this to be only an instance of Perturbations, but we will check that it has the required attributes for Weyl calculations
         dndz: np.ndarray,
         z: np.ndarray,
         nuisance_params: dict,
@@ -45,16 +41,38 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
         )
 
         # Defines z_ini
-        self.z_ini = self.perturbations.z_ini  # We can directly access z_ini from the Weyl_Perturbations instance, which is set at initialization of that class.
+        if hasattr(self.perturbations, "z_ini"):
+            self.z_ini = self.perturbations.z_ini
+        else:
+            raise AttributeError(
+                "The perturbations object must have a 'z_ini' attribute for Weyl calculations. "
+                "Please ensure that the perturbations object is an instance of WeylNonLinearPerturbations or WeylLinearPerturbations."
+            )
 
         # Get sigma8 at z_ini
-        self.sigma8_ini = self.perturbations.sigma8_zini()
+        sigma8_zini = getattr(self.perturbations, "sigma8_zini", None)
+        if callable(sigma8_zini):
+            self.sigma8_ini = sigma8_zini()
+        else:
+            raise AttributeError(
+                "The perturbations object must have a callable 'sigma8_zini' method "
+                "for Weyl calculations. Please ensure that the perturbations object "
+                "is an instance of WeylNonLinearPerturbations or WeylLinearPerturbations."
+            )
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z))
         bias_vals = np.asarray(
             [nuisance_params["bhat_bin%d" % bin] for bin in range(self.n_z_bins)]
         )
         self.bias_array = np.pad(bias_vals, (0, self.z.shape[0] - self.n_z_bins))
+
+    def growth_since_zini(self, z) -> np.ndarray:
+        """New function to account for the growth (in GR) since z_ini"""
+        k = np.array([0.1])
+        growth = np.squeeze(self.perturbations.growth_factor(z, k)) / np.squeeze(
+            self.perturbations.growth_factor(np.array([self.z_ini]), k)
+        )
+        return growth
 
     def get_window_positions(self, z) -> np.ndarray:
         """Weyl GC positions window: uses bhat and divides by sigma8_ini (single power)."""
@@ -74,13 +92,13 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
     def get_window_rsd(self, ells, H, f, chi) -> np.ndarray:
         """Weyl GC RSD window: multiply by growth_factor (normalized to z_ini) once."""
         # S_i(z) = H(z) f(z) n_i(z) / c
-        growth_factor = self.perturbations.growth_since_zini(self.z)
+        growth_factor = self.growth_since_zini(self.z)
         S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted * growth_factor
         return get_photo_rsd(ells, chi, S)
 
     def get_window_magnification(self, z):
         """Weyl GC magnification: multiply by growth_factor (normalized to z_ini) once."""
-        growth_factor = self.perturbations.growth_since_zini(z)
+        growth_factor = self.growth_since_zini(z)
 
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (
@@ -106,8 +124,7 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
 
     def __init__(
         self,
-        perturbations: WeylNonLinearPerturbations
-        | WeylLinearPerturbations,  # Note: We require this to be an instance of WeylNonLinearPerturbations (WeylLinearPerturbations also permitted should only linear scales be used)
+        perturbations: Perturbations,  # Note: We require this to be an instance of Perturbations, but we will check that it has the required attributes for Weyl calculations
         dndz: np.ndarray,
         z: np.ndarray,
         nuisance_params: dict,
@@ -128,10 +145,24 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         self.Jhat_params = Jhat_params
 
         # Defines z_ini
-        self.z_ini = self.perturbations.z_ini  # We can directly access z_ini from the Weyl_Perturbations instance, which is set at initialization of that class.
+        if hasattr(self.perturbations, "z_ini"):
+            self.z_ini = self.perturbations.z_ini
+        else:
+            raise AttributeError(
+                "The perturbations object must have a 'z_ini' attribute for Weyl calculations. "
+                "Please ensure that the perturbations object is an instance of WeylNonLinearPerturbations or WeylLinearPerturbations."
+            )
 
         # Get sigma8 at z_ini
-        self.sigma8_ini = self.perturbations.sigma8_zini()
+        sigma8_zini = getattr(self.perturbations, "sigma8_zini", None)
+        if callable(sigma8_zini):
+            self.sigma8_ini = sigma8_zini()
+        else:
+            raise AttributeError(
+                "The perturbations object must have a callable 'sigma8_zini' method "
+                "for Weyl calculations. Please ensure that the perturbations object "
+                "is an instance of WeylNonLinearPerturbations or WeylLinearPerturbations."
+            )
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z) in your scheme)
         bias_vals = np.asarray(
@@ -145,6 +176,14 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
             [Jhat_params["Jhat_bin%d" % bin] for bin in range(self.n_z_bins)]
         )
         self.Jhat_array = np.pad(jhat_vals, (0, self.z.shape[0] - self.n_z_bins))
+
+    def growth_since_zini(self, z) -> np.ndarray:
+        """New function to account for the growth (in GR) since z_ini"""
+        k = np.array([0.1])
+        growth = np.squeeze(self.perturbations.growth_factor(z, k)) / np.squeeze(
+            self.perturbations.growth_factor(np.array([self.z_ini]), k)
+        )
+        return growth
 
     def get_window_positions(self, z) -> np.ndarray:
         """Weyl-modified positions window: multiplies by Jhat and by bhat; removes Omega_m^{-1}(z) factor;
@@ -167,14 +206,14 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
     def get_window_rsd(self, ells, H, f, chi) -> np.ndarray:
         """Weyl GC RSD window: multiply by growth_factor (normalized to z_ini) once."""
         # S_i(z) = H(z) f(z) n_i(z) / c
-        growth_factor = self.perturbations.growth_since_zini(self.z)
+        growth_factor = self.growth_since_zini(self.z)
         S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted * growth_factor**2
         return get_photo_rsd(ells, chi, S)
 
     def get_window_magnification(self, z):
         """Override magnification window: include growth factor squared (Weyl-specific)."""
         # Weyl project: added growth factor normalized to its value at z_ini
-        growth_factor = self.perturbations.growth_since_zini(z)
+        growth_factor = self.growth_since_zini(z)
 
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (

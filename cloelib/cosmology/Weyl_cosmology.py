@@ -31,10 +31,25 @@ class WeylLinearPerturbations:
         self.linearperturbations = linearperturbations
         self.z_ini = float(z_ini)
         self.z = redshifts  # Note: These are the redshifts at which the Weyl potential measurement will be performed.
-        self.k = self.linearperturbations.k
+
+        # Check that linearperturbations provides the required attribute 'k'
+        if hasattr(self.linearperturbations, "k"):
+            self.k = self.linearperturbations.k
+        else:
+            raise AttributeError(
+                "linearperturbations does not provide the required attribute 'k'."
+            )
+
+        # Check that linearperturbations provides the source redshifts
+        if hasattr(self.linearperturbations, "z"):
+            self.z_source = self.linearperturbations.z
+        else:
+            raise AttributeError(
+                "linearperturbations does not provide the required attribute 'z'."
+            )
 
         # Check that z_ini is smaller or equal to the maximum redshift in linearperturbations.z, otherwise print error
-        z_max = np.max(self.linearperturbations.z)
+        z_max = np.max(self.z_source)
         if z_max < self.z_ini:
             raise ValueError(
                 f"z_ini={self.z_ini} is larger than the maximum available redshift "
@@ -55,8 +70,8 @@ class WeylLinearPerturbations:
             self.z
         )  # These are the redshifts at which the Weyl potential measurement will be performed, and at which the growth rate will be calculated for the RSD contribution to Cell.
         z_source = np.asarray(
-            self.linearperturbations.z
-        )  # These are the redshifts at which the growth rate is calculated in the nonlinearperturbations object.
+            self.z_source
+        )  # These are the redshifts at which the growth rate is calculated in the linearperturbations object.
 
         # Build pairwise comparison matrix
         matches = np.isclose(z_target[:, None], z_source[None, :], rtol=0.0, atol=1e-12)
@@ -105,16 +120,28 @@ class WeylNonLinearPerturbations:
         nonlinearperturbations: Perturbations,
         linearperturbations: WeylLinearPerturbations,  # Needs to be a WeylLinearPerturbations instance for compatibility with the TATT model.
         redshifts: T,
-        z_ini: float,
+        z_ini: float,  # Should this be taken over from linearperturbations instead?
     ):
         self.linearperturbations = linearperturbations
         self.nonlinearperturbations = nonlinearperturbations
         self.z = redshifts  # Note: These are the redshifts at which the Weyl potential measurement will be performed.
         self.z_ini = float(z_ini)
-        self.k = self.nonlinearperturbations.k
 
+        if hasattr(self.nonlinearperturbations, "k"):
+            self.k = self.nonlinearperturbations.k
+        else:
+            raise AttributeError(
+                "nonlinearperturbations does not provide the required attribute 'k'."
+            )
+
+        if hasattr(self.nonlinearperturbations, "z"):
+            self.z_source = self.nonlinearperturbations.z
+        else:
+            raise AttributeError(
+                "nonlinearperturbations does not provide the required attribute 'z'."
+            )
         # Check that z_ini is smaller or equal to the maximum redshift in nonlinearperturbations.z, otherwise print error
-        z_max = np.max(self.nonlinearperturbations.z)
+        z_max = np.max(self.z_source)
         if z_max < self.z_ini:
             raise ValueError(
                 f"z_ini={self.z_ini} is larger than the maximum available redshift "
@@ -141,7 +168,7 @@ class WeylNonLinearPerturbations:
             self.z
         )  # These are the redshifts at which the Weyl potential measurement will be performed, and at which the growth rate will be calculated for the RSD contribution to Cell.
         z_source = np.asarray(
-            self.nonlinearperturbations.z
+            self.z_source
         )  # These are the redshifts at which the growth rate is calculated in the nonlinearperturbations object.
 
         # Build pairwise comparison matrix
@@ -232,10 +259,3 @@ class WeylNonLinearPerturbations:
         )  # this is already normalized to 1 at z=0
         sigma8_zini = self.sigma8_0() * D_zini
         return sigma8_zini
-
-    def growth_since_zini(self, z) -> np.ndarray:
-        """New function to account for the growth (in GR) since z_ini"""
-        growth = np.squeeze(self.growth_factor(z, self.k[:1])) / np.squeeze(
-            self.growth_factor(np.array([self.z_ini]), self.k[:1])
-        )
-        return growth

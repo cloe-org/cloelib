@@ -11,9 +11,9 @@ from cloelib.auxiliary.math_utils import cached_stacked_simpson
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 
 # General imports
-import jax.numpy as np  # type: ignore
-import jax  # type: ignore
-import interpax  # type: ignore
+import jax.numpy as np
+import jax
+import interpax
 import jax.lax as lx
 
 

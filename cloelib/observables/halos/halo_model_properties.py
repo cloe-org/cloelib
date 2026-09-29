@@ -6,6 +6,36 @@ from scipy.special import j0, j1
 from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.cosmology import Perturbations
 
+# Get classes for verification of units argument
+from cloelib.cosmology.class_cosmology import (
+    CLASSLinearPerturbations,
+    CLASSNonLinearPerturbations,
+)
+from cloelib.cosmology.camb_cosmology import (
+    CAMBLinearPerturbations,
+    CAMBNonLinearPerturbations,
+)
+from cloelib.cosmology.jax_cosmology import (
+    JAXLinearPerturbations,
+    JAXNonLinearPerturbations,
+)
+from cloelib.cosmology.mochi_class_cosmology import (
+    mochiCLASSLinearPerturbations,
+    mochiCLASSNonLinearPerturbations,
+)
+from cloelib.cosmology.HMcode2020Emu_cosmology import (
+    HMemuLinearPerturbations,
+    HMemuNonLinearPerturbations,
+)
+from cloelib.cosmology.hi_class_cosmology import (
+    hi_classLinearPerturbations,
+    hi_classNonLinearPerturbations,
+)
+from cloelib.cosmology.mgclass_cosmology import (
+    MGCLASSLinearPerturbations,
+    MGCLASSNonLinearPerturbations,
+)
+
 from cloelib.auxiliary.halo_helpers import convert_distance
 
 
@@ -80,23 +110,9 @@ class HaloModelProperties:
         return self.perturbations.background
 
     @property
-    def interpolate_pk(self):
-        r"""If true, class uses interpolation for matter power spectrum computation."""
-        return self.__interpolate_pk
-
-    @property
     def interpolate_da(self):
         r"""If true, class uses interpolation for angular diameter distance computation."""
         return self.__interpolate_da
-
-    @interpolate_pk.setter
-    def interpolate_pk(self, interpolate_pk):
-        """If true, makes class uses interpolation for matter power spectrum computation."""
-        if interpolate_pk:
-            self.matter_power_spectrum_cb = self.Pk_interp_cb
-        else:
-            self.matter_power_spectrum_cb = self._matter_power_spectrum_cb_exact
-        self.__interpolate_pk = interpolate_pk
 
     @interpolate_da.setter
     def interpolate_da(self, interpolate_da):
@@ -107,7 +123,7 @@ class HaloModelProperties:
             self.angular_diameter_distance = self.background.angular_diameter_distance
         self.__interpolate_da = interpolate_da
 
-    def _matter_power_spectrum_cb_exact(self, z, k):
+    def matter_power_spectrum_cb(self, z, k):
         r"""Computes the non interpolated matter power spectrum.
 
         This function computes the cold dark matter + baryons power spectrum,
@@ -126,12 +142,46 @@ class HaloModelProperties:
         float or np.ndarray
             Matter power spectrum.
         """
-        return self.perturbations.matter_power_spectrum_cb(
-            z,
-            k,
-            hubble_units=True,
-            k_hunit=True,
-        )
+        if self.interpolate_pk:
+            _matter_power_spectrum_cb_func = self.Pk_interp_cb
+        else:
+            _matter_power_spectrum_cb_func = self._matter_power_spectrum_cb_exact
+        if _matter_power_spectrum_cb_func is None:
+            raise ValueError(
+                "Cosmology not instanciated, matter power spectrum function is None!"
+            )
+        return _matter_power_spectrum_cb_func(z, k)
+
+    def _matter_power_spectrum_cb_exact(self, z, k):
+        r"""Computes the non interpolated matter power spectrum.
+
+        Just as wrapper of self.perturbations.matter_power_spectrum_cb
+        """
+        _kwargs = {}
+        if isinstance(
+            self.perturbations.matter_power_spectrum_cb,
+            (
+                CLASSLinearPerturbations,
+                CLASSNonLinearPerturbations,
+                CAMBLinearPerturbations,
+                CAMBNonLinearPerturbations,
+                JAXLinearPerturbations,
+                JAXNonLinearPerturbations,
+                mochiCLASSLinearPerturbations,
+                mochiCLASSNonLinearPerturbations,
+                HMemuLinearPerturbations,
+                HMemuNonLinearPerturbations,
+                hi_classLinearPerturbations,
+                hi_classNonLinearPerturbations,
+                MGCLASSLinearPerturbations,
+                MGCLASSNonLinearPerturbations,
+            ),
+        ):
+            _kwargs = {
+                "hubble_units": True,
+                "k_hunit": True,
+            }
+        return self.perturbations.matter_power_spectrum_cb(z, k, **_kwargs)
 
     def set_matter_power_spectrum_interpolation(self, z, k):
         r"""Create internal interpolation of matter power spectrum.

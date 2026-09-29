@@ -974,17 +974,6 @@ class AngularTwoPoint:
         n_bin = self.tracer1.n_z_bins
         C_ell_out = {}
 
-        # Helper for POS-SHE symmetry
-        def fill_pos_she(i, j):
-            for a, b in [(i, j), (j, i)]:
-                arr = np.zeros((2, mixing_matrix[("POS", "SHE", a, b)].ell.shape[0]))
-                for idx in [0, 1]:
-                    arr = arr.at[idx].set(
-                        mixing_matrix[("POS", "SHE", a, b)].array
-                        @ C_ell_calc[("POS", "SHE", a, b)].array[idx]
-                    )
-                C_ell_out[("POS", "SHE", a, b)] = arr
-
         # Main logic for each tracer combination
         if tracer_types == (PositionsTracer, PositionsTracer):
             for i in range(1, n_bin + 1):
@@ -996,9 +985,22 @@ class AngularTwoPoint:
             (PositionsTracer, ShearTracer),
             (ShearTracer, PositionsTracer),
         ]:
-            for i in range(1, n_bin + 1):
-                for j in range(i, n_bin + 1):
-                    fill_pos_she(i, j)
+            # Cross-correlation: every (POS bin, SHE bin) pair, and the two
+            # tracers can have a different number of bins.
+            if tracer_types[0] is PositionsTracer:
+                n_pos, n_she = self.tracer1.n_z_bins, self.tracer2.n_z_bins
+            else:
+                n_pos, n_she = self.tracer2.n_z_bins, self.tracer1.n_z_bins
+            for i in range(1, n_pos + 1):
+                for j in range(1, n_she + 1):
+                    key = ("POS", "SHE", i, j)
+                    # The same mixing matrix acts on the E and the B part.
+                    C_ell_out[key] = np.stack(
+                        [
+                            mixing_matrix[key].array @ C_ell_calc[key].array[0],
+                            mixing_matrix[key].array @ C_ell_calc[key].array[1],
+                        ]
+                    )
 
         elif tracer_types == (ShearTracer, ShearTracer):
             for i in range(1, n_bin + 1):

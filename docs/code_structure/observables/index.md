@@ -20,7 +20,6 @@ This module addresses:
 
 **cloelib** has different types of observable protocols, each serving different purposes for:
 
-<<<<<<< HEAD
 - Large Scale Structure
   - **Tracer Protocol**: For photometric and gravitational-wave observables
     - [Photometric tracers](photo.md)

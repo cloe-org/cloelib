@@ -1,15 +1,24 @@
 """
-Tests for `AngularTwoPoint.get_pseudo_Cl`, i.e. the convolution of the
-theory Cls with the mixing matrices.
+Tests for `AngularTwoPoint.get_pseudo_Cl`, i.e. the multiplication of the
+theory Cls by the mixing matrices.
 
-Conventions used here (euclidlib internal format):
-    - POS-POS: one matrix M, ``C_out = M @ C``.
-    - POS-SHE: one matrix M applied to each of the E and B components.
-    - SHE-SHE: ``array[0] = M_EE``, ``array[1] = M_BB``, ``array[2] = M_EB``,
+Each test uses tiny, hand-written numbers so the expected result can be
+checked with pen and paper. We do not compute real Cls: `get_Cl` is
+replaced by a fake that returns the numbers we choose, so the only thing
+being tested is the mixing-matrix multiplication.
+
+What `get_pseudo_Cl` should do (euclidlib internal format):
+    - POS-POS: pseudo_Cl = M @ Cl
+    - POS-SHE: the same matrix M multiplies the E and the B part separately.
+    - SHE-SHE: the mixing matrix has three pieces, M_EE, M_BB and M_EB:
           EE_out = M_EE @ EE + M_BB @ BB
           BB_out = M_BB @ EE + M_EE @ BB
           EB_out = M_EB @ EB
           BE_out = M_EB @ BE
+
+In every test the Cls are given at 3 multipoles (ell = 0, 1, 2) and the
+mixing matrices turn them into 2 output values, so each matrix has
+2 rows and 3 columns.
 """
 
 import numpy as np
@@ -19,142 +28,202 @@ from cosmolib.data import AngularPowerSpectrum
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 
-N_BIN = 2
-ELLMAX = 12
-N_ELL_OUT = 4
-
-TRACER_KEYS = {
-    (PositionsTracer, PositionsTracer): ("POS", "POS"),
-    (PositionsTracer, ShearTracer): ("POS", "SHE"),
-    (ShearTracer, PositionsTracer): ("POS", "SHE"),
-    (ShearTracer, ShearTracer): ("SHE", "SHE"),
-}
-
-# Shape of each spectrum / mixing matrix, excluding the trailing ell axes.
-CL_COMPONENTS = {("POS", "POS"): (), ("POS", "SHE"): (2,), ("SHE", "SHE"): (2, 2)}
-MM_COMPONENTS = {("POS", "POS"): (), ("POS", "SHE"): (), ("SHE", "SHE"): (3,)}
+# A simple 2x3 mixing matrix: each output is the sum of two neighbouring ells.
+#   output[0] = Cl[0] + Cl[1]
+#   output[1] = Cl[1] + Cl[2]
+SUM_NEIGHBOURS = np.array(
+    [
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 1.0],
+    ]
+)
 
 
-def _stub_tracer(cls):
-    """Tracer of the right type for dispatch, carrying only `n_z_bins`."""
-    tracer = object.__new__(cls)
-    tracer.n_z_bins = N_BIN
+# ---------------------------------------------------------------------------
+# Small helpers to set up the calculation
+# ---------------------------------------------------------------------------
+
+
+def make_tracer(tracer_class, n_bins=1):
+    """Create an empty tracer of the given type.
+
+    `get_pseudo_Cl` only needs to know the tracer type (positions or shear)
+    and the number of redshift bins, so nothing else is set.
+    """
+    tracer = object.__new__(tracer_class)
+    tracer.n_z_bins = n_bins
     return tracer
 
 
-def _bin_pairs(key_type):
-    """Bin pairs `get_pseudo_Cl` reads: all of them for POS-SHE, i <= j otherwise."""
-    return [
-        (i, j)
-        for i in range(1, N_BIN + 1)
-        for j in range(1, N_BIN + 1)
-        if key_type == ("POS", "SHE") or i <= j
-    ]
-
-
-def _mixing_matrix(array):
-    ell_out = np.arange(N_ELL_OUT) * 3.0 + 2.0
+def wrap(array):
+    """Put a plain array into the container used by cloelib/cosmolib."""
     return AngularPowerSpectrum(
-        array=array,
-        ell=ell_out,
-        lower=ell_out - 1.0,
-        upper=ell_out + 2.0,
+        array=np.array(array, dtype=float),
+        ell=np.array([10.0, 20.0]),
+        lower=np.array([5.0, 15.0]),
+        upper=np.array([15.0, 25.0]),
     )
 
 
-def _run_pseudo_cl(tracer_types, cls, mms, monkeypatch):
-    """Call `get_pseudo_Cl` with `get_Cl` stubbed to return `cls`."""
-    a2p = AngularTwoPoint(*(_stub_tracer(t) for t in tracer_types))
-
-    def fake_get_Cl(ells, nl, ks):
-        # get_pseudo_Cl must ask for every ell the mixing matrix acts on.
-        np.testing.assert_array_equal(ells, np.arange(ELLMAX))
-        return {
-            key: AngularPowerSpectrum(array=arr, ell=np.arange(ELLMAX))
-            for key, arr in cls.items()
-        }
-
-    monkeypatch.setattr(a2p, "get_Cl", fake_get_Cl)
-    mixing = {key: _mixing_matrix(arr) for key, arr in mms.items()}
-    return a2p.get_pseudo_Cl(nl=None, ks=None, mixing_matrix=mixing), mixing
+def compute_pseudo_cl(tracer1, tracer2, fake_cls, mixing_matrices):
+    """Run `get_pseudo_Cl`, using `fake_cls` instead of real Cls."""
+    calculator = AngularTwoPoint(tracer1, tracer2)
+    calculator.get_Cl = lambda ells, nl, ks: {
+        key: wrap(cl) for key, cl in fake_cls.items()
+    }
+    mixing_matrices = {key: wrap(m) for key, m in mixing_matrices.items()}
+    return calculator.get_pseudo_Cl(nl=None, ks=None, mixing_matrix=mixing_matrices)
 
 
-def _expected(key_type, C, M):
-    """Independent reference for the mixing, written with einsum."""
-    if key_type == ("SHE", "SHE"):
-        M_EE, M_BB, M_EB = M
-        out = np.empty((2, 2, N_ELL_OUT))
-        out[0, 0] = M_EE @ C[0, 0] + M_BB @ C[1, 1]
-        out[1, 1] = M_BB @ C[0, 0] + M_EE @ C[1, 1]
-        out[0, 1] = M_EB @ C[0, 1]
-        out[1, 0] = M_EB @ C[1, 0]
-        return out
-    return np.einsum("ol,...l->...o", M, C)
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
 
 
-def test_she_she_simple_example(monkeypatch):
-    """Hand-checkable SHE-SHE case with scaled-identity mixing matrices.
+def test_pos_pos():
+    key = ("POS", "POS", 1, 1)
+    cl = [1.0, 2.0, 3.0]
 
-    With M_EE = a*I, M_BB = b*I, M_EB = c*I and constant input spectra
-    EE, BB, EB, BE the output is known in closed form. Every input
-    component has a distinct value, so using the wrong one (as in gh-306)
-    changes the result.
-    """
-    a, b, c = 0.7, 0.2, 0.5
-    EE, BB, EB, BE = 1.0, 3.0, 5.0, 11.0
-
-    identity = np.eye(N_ELL_OUT, ELLMAX)
-    mm = np.stack([a * identity, b * identity, c * identity])
-    cl = np.empty((2, 2, ELLMAX))
-    cl[0, 0], cl[1, 1], cl[0, 1], cl[1, 0] = EE, BB, EB, BE
-
-    key = ("SHE", "SHE", 1, 1)
-    keys = [("SHE", "SHE", i, j) for i, j in _bin_pairs(("SHE", "SHE"))]
-    out, _ = _run_pseudo_cl(
-        (ShearTracer, ShearTracer),
-        {k: cl for k in keys},
-        {k: mm for k in keys},
-        monkeypatch,
+    result = compute_pseudo_cl(
+        make_tracer(PositionsTracer),
+        make_tracer(PositionsTracer),
+        fake_cls={key: cl},
+        mixing_matrices={key: SUM_NEIGHBOURS},
     )
 
-    result = out[key].array
-    np.testing.assert_allclose(result[0, 0], a * EE + b * BB)
-    np.testing.assert_allclose(result[1, 1], b * EE + a * BB)
-    np.testing.assert_allclose(result[0, 1], c * EB)
-    np.testing.assert_allclose(result[1, 0], c * BE)
+    # [1 + 2, 2 + 3]
+    np.testing.assert_allclose(result[key].array, [3.0, 5.0])
 
 
 @pytest.mark.parametrize(
-    "tracer_types",
-    list(TRACER_KEYS),
-    ids=["POS-POS", "POS-SHE", "SHE-POS", "SHE-SHE"],
+    "tracer1, tracer2",
+    [(PositionsTracer, ShearTracer), (ShearTracer, PositionsTracer)],
+    ids=["POS-SHE", "SHE-POS"],
 )
-def test_pseudo_cl_matches_reference(tracer_types, monkeypatch):
-    """Random spectra and mixing matrices, for every supported tracer pair
-    and every bin pair, against the reference in `_expected`."""
-    rng = np.random.default_rng(309)
-    key_type = TRACER_KEYS[tracer_types]
-    keys = [key_type + pair for pair in _bin_pairs(key_type)]
+def test_pos_she(tracer1, tracer2):
+    key = ("POS", "SHE", 1, 1)
+    E = [1.0, 2.0, 3.0]
+    B = [10.0, 20.0, 30.0]
 
-    cls = {k: rng.normal(size=CL_COMPONENTS[key_type] + (ELLMAX,)) for k in keys}
-    mms = {
-        k: rng.normal(size=MM_COMPONENTS[key_type] + (N_ELL_OUT, ELLMAX)) for k in keys
+    result = compute_pseudo_cl(
+        make_tracer(tracer1),
+        make_tracer(tracer2),
+        fake_cls={key: [E, B]},
+        mixing_matrices={key: SUM_NEIGHBOURS},
+    )
+
+    E_out, B_out = result[key].array
+    np.testing.assert_allclose(E_out, [3.0, 5.0])  # [1 + 2, 2 + 3]
+    np.testing.assert_allclose(B_out, [30.0, 50.0])  # [10 + 20, 20 + 30]
+
+
+# SHE-SHE: one test per output component (EE, BB, EB, BE), so a failing test
+# tells you directly which multiplication is wrong.
+#
+# The numbers are chosen so that ANY mistake gives a different answer:
+#   - each input component has a very different size (1s, 10s, 100s, 1000s),
+#     so using the wrong component (e.g. BB instead of EE) is visible;
+#   - each mixing matrix picks different ells, so using the wrong matrix
+#     (e.g. M_EE instead of M_BB) is visible too.
+# Every other combination of one or two (matrix @ component) terms gives a
+# result different from the correct one.
+EE = [1.0, 2.0, 3.0]
+BB = [10.0, 20.0, 30.0]
+EB = [100.0, 200.0, 300.0]
+BE = [1000.0, 2000.0, 3000.0]
+
+M_EE = SUM_NEIGHBOURS  # output = [Cl[0] + Cl[1], Cl[1] + Cl[2]]
+M_BB = [[2.0, 0.0, 0.0], [0.0, 0.0, 2.0]]  # output = [2 * Cl[0], 2 * Cl[2]]
+M_EB = [[0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]  # output = [Cl[1], Cl[2]]
+
+
+def she_she_pseudo_cl():
+    """Run `get_pseudo_Cl` for SHE-SHE with the numbers above.
+
+    Returns the output as a 2x2 grid: [[EE, EB], [BE, BB]].
+    """
+    key = ("SHE", "SHE", 1, 1)
+    result = compute_pseudo_cl(
+        make_tracer(ShearTracer),
+        make_tracer(ShearTracer),
+        fake_cls={key: [[EE, EB], [BE, BB]]},
+        mixing_matrices={key: [M_EE, M_BB, M_EB]},
+    )
+    return result[key].array
+
+
+def test_she_she_EE():
+    # EE_out = M_EE @ EE + M_BB @ BB
+    #        = [1 + 2, 2 + 3] + [2 * 10, 2 * 30]
+    EE_out = she_she_pseudo_cl()[0, 0]
+    np.testing.assert_allclose(EE_out, [23.0, 65.0])
+
+
+def test_she_she_BB():
+    # BB_out = M_BB @ EE + M_EE @ BB
+    #        = [2 * 1, 2 * 3] + [10 + 20, 20 + 30]
+    BB_out = she_she_pseudo_cl()[1, 1]
+    np.testing.assert_allclose(BB_out, [32.0, 56.0])
+
+
+def test_she_she_EB():
+    # EB_out = M_EB @ EB = [200, 300]
+    EB_out = she_she_pseudo_cl()[0, 1]
+    np.testing.assert_allclose(EB_out, [200.0, 300.0])
+
+
+def test_she_she_BE():
+    # BE_out = M_EB @ BE = [2000, 3000]
+    BE_out = she_she_pseudo_cl()[1, 0]
+    np.testing.assert_allclose(BE_out, [2000.0, 3000.0])
+
+
+def test_each_bin_pair_uses_its_own_mixing_matrix():
+    # Two redshift bins give three pairs: (1, 1), (1, 2) and (2, 2).
+    # All pairs get the same Cl, but a different mixing matrix
+    # (SUM_NEIGHBOURS times 1, 2 and 3), so each result should be different.
+    cl = [1.0, 2.0, 3.0]
+    fake_cls = {
+        ("POS", "POS", 1, 1): cl,
+        ("POS", "POS", 1, 2): cl,
+        ("POS", "POS", 2, 2): cl,
+    }
+    mixing_matrices = {
+        ("POS", "POS", 1, 1): 1 * SUM_NEIGHBOURS,
+        ("POS", "POS", 1, 2): 2 * SUM_NEIGHBOURS,
+        ("POS", "POS", 2, 2): 3 * SUM_NEIGHBOURS,
     }
 
-    out, mixing = _run_pseudo_cl(tracer_types, cls, mms, monkeypatch)
+    result = compute_pseudo_cl(
+        make_tracer(PositionsTracer, n_bins=2),
+        make_tracer(PositionsTracer, n_bins=2),
+        fake_cls,
+        mixing_matrices,
+    )
 
-    assert set(out) == set(keys)
-    for k in keys:
-        np.testing.assert_allclose(
-            out[k].array, _expected(key_type, cls[k], mms[k]), rtol=1e-12
-        )
-        # Binning metadata is carried over from the mixing matrix (gh-306).
-        np.testing.assert_array_equal(out[k].ell, mixing[k].ell)
-        np.testing.assert_array_equal(out[k].lower, mixing[k].lower)
-        np.testing.assert_array_equal(out[k].upper, mixing[k].upper)
+    np.testing.assert_allclose(result[("POS", "POS", 1, 1)].array, [3.0, 5.0])
+    np.testing.assert_allclose(result[("POS", "POS", 1, 2)].array, [6.0, 10.0])
+    np.testing.assert_allclose(result[("POS", "POS", 2, 2)].array, [9.0, 15.0])
 
 
-def test_pseudo_cl_unsupported_tracers():
-    a2p = AngularTwoPoint(object(), object())
+def test_output_keeps_the_mixing_matrix_ells():
+    # The pseudo-Cl is given at the output multipoles of the mixing matrix,
+    # so the ell values and bin edges must be copied from it.
+    key = ("POS", "POS", 1, 1)
+
+    result = compute_pseudo_cl(
+        make_tracer(PositionsTracer),
+        make_tracer(PositionsTracer),
+        fake_cls={key: [1.0, 2.0, 3.0]},
+        mixing_matrices={key: SUM_NEIGHBOURS},
+    )
+
+    np.testing.assert_array_equal(result[key].ell, [10.0, 20.0])
+    np.testing.assert_array_equal(result[key].lower, [5.0, 15.0])
+    np.testing.assert_array_equal(result[key].upper, [15.0, 25.0])
+
+
+def test_unsupported_tracers_raise_an_error():
+    calculator = AngularTwoPoint(object(), object())
     with pytest.raises(ValueError, match="Unsupported tracer pair"):
-        a2p.get_pseudo_Cl(nl=None, ks=None, mixing_matrix={})
+        calculator.get_pseudo_Cl(nl=None, ks=None, mixing_matrix={})

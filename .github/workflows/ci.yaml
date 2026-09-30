@@ -73,7 +73,7 @@ jobs:
             "${ENV_PREFIX}/bin/python" -m pip install --upgrade pip
           env PATH="$PATH" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
             "${ENV_PREFIX}/bin/python" -m pip install \
-            ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy,mgclassy,mochi_classy]"
+            ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy,mgclassy,mochi_classy,ndgpemu]"
       - name: Run tests
         run: mamba run -n $ENV_NAME python -m pytest
   build:

@@ -58,6 +58,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | NA                                                            | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
 | NA                                                            | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
 | NA                                                            | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                         | NA                                                                 |
+| NA                                                            | [nDGPemu](https://github.com/BartolomeoF/nDGPemu)                             | NA                                                                 |
 
 <!-- --8<-- [end:supported-codes] -->
 
@@ -99,13 +100,13 @@ pip install .
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,mochi_classy]
+pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,mochi_classy,ndgpemu]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mochi_classy,mgclassy]"
+> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mochi_classy,mgclassy,ndpgemu]"
 > ```
 
 The `react` extra installs [`MGEmu`](https://github.com/nebblu/MGEmus.git) together with the TensorFlow support it needs for the ReACT modified-gravity boost module. If you only need that stack, `pip install ".[react,camb]"` is usually enough to get started.

@@ -55815,7 +55815,9 @@ if angular power spectra are already available.</p>
     Angular power spectra in cosmolib format.  All SHE-SHE bin pairs
     present in the dict are processed automatically.
 ells : jax.numpy.ndarray
-    Multipoles at which the integration is performed.
+    Multipoles at which the integration is performed. Any strictly
+    increasing grid is accepted (see <code>quadrature_weights</code>); it must be
+    fine enough to resolve the oscillations of the kernels.
 w_ell : dict
     Harmonic-space COSEBIs kernels.  Two layouts are accepted:</p>
 <div class="highlight"><pre><span></span><code>* **Global** — a single dict ``{n: array, ..., "metadata": {...}}``
@@ -55834,7 +55836,8 @@ software : str, optional
 <h6 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns" title="Permanent link">&para;</a></h6>
 <p>dict
     Dictionary keyed like the SHE-SHE entries of <code>cells</code> with <code>COSEBI</code>
-    values of shape <code>(2, 2, n_modes)</code>.</p>
+    values of shape <code>(2, 2, n_modes)</code>. <code>thmin</code>/<code>thmax</code> are in
+    arcmin, as in the Euclid LE3 products read by euclidlib.</p>
 
           
 
@@ -55858,24 +55861,36 @@ software : str, optional
         <p>Compute EE and BB COSEBIs for all SHE-SHE keys in <code>twopcf</code>.</p>
 <p>Can be used as a standalone function without instantiating <code>AngularTwoPoint</code>
 if two-point correlation functions are already available.</p>
+<p>Following Schneider, Eifler &amp; Krause (2010),</p>
+<p>.. math::</p>
+<div class="highlight"><pre><span></span><code>E_n = \frac{1}{2} \int d\theta\, \theta
+      [T_{+n}(\theta) \xi_+(\theta) + T_{-n}(\theta) \xi_-(\theta)],
+
+B_n = \frac{1}{2} \int d\theta\, \theta
+      [T_{+n}(\theta) \xi_+(\theta) - T_{-n}(\theta) \xi_-(\theta)].
+</code></pre></div>
 <h6 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--parameters" title="Permanent link">&para;</a></h6>
 <p>twopcf : dict
     Two-point correlation functions in cosmolib format.
     Keys should be tuples like <code>('SHE', 'SHE', i, j)</code>.
 theta : jax.numpy.ndarray
-    Angular scales in radians.
+    Angular scales in radians, spanning the COSEBI range
+    <code>[theta_min, theta_max]</code>.
 T_plus : array-like
-    Real-space T_+ kernel functions.
+    Real-space T_+ kernel functions evaluated on <code>theta</code> (without the
+    extra factor of theta), shape <code>(n_rows, len(theta))</code>.
 T_minus : array-like
-    Real-space T_- kernel functions.
+    Real-space T_- kernel functions evaluated on <code>theta</code>, same layout as
+    <code>T_plus</code>.
 ns : jax.numpy.ndarray
-    Mode indices selecting kernels from <code>T_plus</code>/<code>T_minus</code>.
+    Row indices selecting kernels from <code>T_plus</code>/<code>T_minus</code>.
 software : str, optional
     Software provenance tag stored in the output <code>COSEBI</code> objects.
     Defaults to <code>'get_cosebis_from_2pcf (cloelib)'</code>.</p>
 <h6 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--returns" title="Permanent link">&para;</a></h6>
 <p>dict
-    COSEBIs with EE and BB modes, keyed like <code>twopcf</code>.</p>
+    COSEBIs with EE and BB modes, keyed like <code>twopcf</code>. <code>thmin</code>/<code>thmax</code>
+    are in arcmin, as in the Euclid LE3 products read by euclidlib.</p>
 
           
 
@@ -57843,7 +57858,9 @@ if angular power spectra are already available.</p>
     Angular power spectra in cosmolib format.  All SHE-SHE bin pairs
     present in the dict are processed automatically.
 ells : jax.numpy.ndarray
-    Multipoles at which the integration is performed.
+    Multipoles at which the integration is performed. Any strictly
+    increasing grid is accepted (see <code>quadrature_weights</code>); it must be
+    fine enough to resolve the oscillations of the kernels.
 w_ell : dict
     Harmonic-space COSEBIs kernels.  Two layouts are accepted:</p>
 <div class="highlight"><pre><span></span><code>* **Global** — a single dict ``{n: array, ..., "metadata": {...}}``
@@ -57862,7 +57879,8 @@ software : str, optional
 <h5 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl--returns" title="Permanent link">&para;</a></h5>
 <p>dict
     Dictionary keyed like the SHE-SHE entries of <code>cells</code> with <code>COSEBI</code>
-    values of shape <code>(2, 2, n_modes)</code>.</p>
+    values of shape <code>(2, 2, n_modes)</code>. <code>thmin</code>/<code>thmax</code> are in
+    arcmin, as in the Euclid LE3 products read by euclidlib.</p>
 
           
 
@@ -57886,24 +57904,36 @@ software : str, optional
         <p>Compute EE and BB COSEBIs for all SHE-SHE keys in <code>twopcf</code>.</p>
 <p>Can be used as a standalone function without instantiating <code>AngularTwoPoint</code>
 if two-point correlation functions are already available.</p>
+<p>Following Schneider, Eifler &amp; Krause (2010),</p>
+<p>.. math::</p>
+<div class="highlight"><pre><span></span><code>E_n = \frac{1}{2} \int d\theta\, \theta
+      [T_{+n}(\theta) \xi_+(\theta) + T_{-n}(\theta) \xi_-(\theta)],
+
+B_n = \frac{1}{2} \int d\theta\, \theta
+      [T_{+n}(\theta) \xi_+(\theta) - T_{-n}(\theta) \xi_-(\theta)].
+</code></pre></div>
 <h5 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--parameters">Parameters<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--parameters" title="Permanent link">&para;</a></h5>
 <p>twopcf : dict
     Two-point correlation functions in cosmolib format.
     Keys should be tuples like <code>('SHE', 'SHE', i, j)</code>.
 theta : jax.numpy.ndarray
-    Angular scales in radians.
+    Angular scales in radians, spanning the COSEBI range
+    <code>[theta_min, theta_max]</code>.
 T_plus : array-like
-    Real-space T_+ kernel functions.
+    Real-space T_+ kernel functions evaluated on <code>theta</code> (without the
+    extra factor of theta), shape <code>(n_rows, len(theta))</code>.
 T_minus : array-like
-    Real-space T_- kernel functions.
+    Real-space T_- kernel functions evaluated on <code>theta</code>, same layout as
+    <code>T_plus</code>.
 ns : jax.numpy.ndarray
-    Mode indices selecting kernels from <code>T_plus</code>/<code>T_minus</code>.
+    Row indices selecting kernels from <code>T_plus</code>/<code>T_minus</code>.
 software : str, optional
     Software provenance tag stored in the output <code>COSEBI</code> objects.
     Defaults to <code>'get_cosebis_from_2pcf (cloelib)'</code>.</p>
 <h5 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--returns">Returns<a class="headerlink" href="#cloelib.summary_statistics.angular_two_point.get_cosebis_from_2pcf--returns" title="Permanent link">&para;</a></h5>
 <p>dict
-    COSEBIs with EE and BB modes, keyed like <code>twopcf</code>.</p>
+    COSEBIs with EE and BB modes, keyed like <code>twopcf</code>. <code>thmin</code>/<code>thmax</code>
+    are in arcmin, as in the Euclid LE3 products read by euclidlib.</p>
 
           
 

@@ -276,14 +276,14 @@ class TabulatedBoostedPerturbations:
         self.k = getattr(base_perturbations, "k", None)
         self.z = getattr(base_perturbations, "z", None)
 
-    def matter_power_spectrum(self, z, k):
+    def matter_power_spectrum(self, zs, ks):
         """Return the boosted nonlinear matter power spectrum.
 
         Parameters
         ----------
-        z : float or np.ndarray
+        zs : float or np.ndarray
             Redshift value or array of redshifts.
-        k : float or np.ndarray
+        ks : float or np.ndarray
             Wavenumber value or array of wavenumbers in 1/Mpc.
 
         Returns
@@ -293,8 +293,8 @@ class TabulatedBoostedPerturbations:
             inputs return a scalar, while array inputs return the corresponding
             one- or two-dimensional array.
         """
-        z = np.atleast_1d(z)
-        k = np.atleast_1d(k)
+        z = np.atleast_1d(zs)
+        k = np.atleast_1d(ks)
 
         # Get the unboosted spectrum from the base model
         P_base = self.base.matter_power_spectrum(z, k)
@@ -364,6 +364,15 @@ class TabulatedBoostedPerturbations:
         D_lin = np.sqrt(Bz / B0)
 
         return np.squeeze(D_lin)
+
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
+        """Return the linear growth rate of `base_lin_perturbations`.
+
+        The boost only modifies the nonlinear matter power spectrum, so the
+        growth rate is that of the underlying linear perturbations, see
+        `Perturbations.growth_rate`.
+        """
+        return self.base_lin.growth_rate(zs, ks)
 
     def sigma8_0(self) -> float:
         """Calculate the sigma8 value for the current cosmology."""

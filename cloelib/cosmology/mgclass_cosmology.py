@@ -1,7 +1,11 @@
 """Implementation of Background and Perturbation cosmology using MGCLASS, a patch to CLASS for modified gravity models."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import (
+    Background,
+    Perturbations,
+    growth_rate_on_redshifts,
+)
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
@@ -315,7 +319,7 @@ class MGCLASSBackground:
             )
         return Omegacb
 
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the matter density as a function of redshift.
 
@@ -325,11 +329,9 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        try:
-            Omegam = np.array([self.results.Om_m(z) for z in zs])
-        except TypeError:
-            Omegam = self.results.Om_m(zs)
-        return Omegam
+        if np.ndim(zs) == 0:
+            return self.results.Om_m(zs)
+        return np.array([self.results.Om_m(z) for z in np.asarray(zs)])
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -504,22 +506,34 @@ class MGCLASSLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
         Calculate the growth rate f(z).
+
+        Parameters
+        ----------
+        zs: Optional[np.ndarray]
+            Redshifts at which to evaluate the growth rate, interpolated on
+            `self.z`. Defaults to `self.z`.
+        ks: Optional[np.ndarray]
+            Wavenumbers used to broadcast the growth rate.
 
         Returns
         -------
         np.ndarray
-            Scale-independent growth rate f(z)
+            Scale-independent growth rate f(z), with shape (nz,) if ks is None
+            and (nz, nk) otherwise.
         """
         D_z_k0 = self.growth_factor(self.z, np.array([1.0e-2]))
 
-        return (
+        f_z = (
             -(1 + self.z)
             / D_z_k0[:, 0]
             * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])
         )
+        return growth_rate_on_redshifts(self.z, f_z, zs, ks)
 
     def sigma8_0(self) -> float:
         """
@@ -540,11 +554,20 @@ class MGCLASSNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Optional[object],
+        linearperturbations: Optional[Perturbations],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
     ):
-        """Initialize the MGCLASSNonLinearPerturbation instance."""
+        """Initialize the MGCLASSNonLinearPerturbation instance.
+
+        Args:
+            background: Background cosmology object.
+            linearperturbations: Linear perturbations object (unused by MGCLASS, which computes
+                nonlinear corrections internally; accepted for interface compatibility with
+                emulator-based NonLinPerturbations classes).
+            redshifts (np.ndarray): Array of redshifts for the calculations.
+            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
+        """
         self.background = background
         self.z = redshifts
         self.kmax = 100
@@ -677,22 +700,34 @@ class MGCLASSNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
         Calculate the growth rate f(z).
+
+        Parameters
+        ----------
+        zs: Optional[np.ndarray]
+            Redshifts at which to evaluate the growth rate, interpolated on
+            `self.z`. Defaults to `self.z`.
+        ks: Optional[np.ndarray]
+            Wavenumbers used to broadcast the growth rate.
 
         Returns
         -------
         np.ndarray
-            Scale-independent growth rate f(z)
+            Scale-independent growth rate f(z), with shape (nz,) if ks is None
+            and (nz, nk) otherwise.
         """
         D_z_k0 = self.growth_factor(self.z, np.array([1.0e-2]))
 
-        return (
+        f_z = (
             -(1 + self.z)
             / D_z_k0[:, 0]
             * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])
         )
+        return growth_rate_on_redshifts(self.z, f_z, zs, ks)
 
     def sigma8_0(self) -> float:
         """

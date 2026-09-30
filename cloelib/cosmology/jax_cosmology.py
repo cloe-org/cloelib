@@ -362,7 +362,9 @@ class JAXBackground:
 class JAXLinearPerturbations:
     """A wrapper for JAX linear perturbation calculations."""
 
-    def __init__(self, background: JAXBackground) -> None:
+    def __init__(
+        self, background: JAXBackground, redshifts: Optional[jnp.ndarray] = None
+    ) -> None:
         """
         Initialize the JAXLinearPerturbations class with a background instance.
 
@@ -372,8 +374,13 @@ class JAXLinearPerturbations:
                 ODE solved here relies on JAX-specific helpers
                 (`Omega_m_a`, `Omega_de_a`, `w_a`) that aren't part of the
                 general `Background` protocol.
+            redshifts (Optional[jnp.ndarray]): Default redshifts for `growth_rate`.
+                The JAX backend has no internal redshift grid and evaluates every
+                quantity at the requested redshifts, so this is optional and
+                accepted for interface compatibility with the other backends.
         """
         self.background = background
+        self._redshifts = redshifts
 
     def D_derivs(self, y, x):
         """Write documentation (TODO)."""
@@ -407,8 +414,27 @@ class JAXLinearPerturbations:
 
         return result
 
-    def growth_rate(self, zs: jnp.ndarray):
-        """Compute the growth rate."""
+    def growth_rate(
+        self, zs: Optional[jnp.ndarray] = None, ks: Optional[jnp.ndarray] = None
+    ) -> jnp.ndarray:
+        """Compute the scale-independent growth rate.
+
+        Args:
+            zs (Optional[jnp.ndarray]): Redshifts at which to evaluate the growth
+                rate. Defaults to the `redshifts` given at construction.
+            ks (Optional[jnp.ndarray]): Wavenumbers used to broadcast the growth rate.
+
+        Returns:
+            jnp.ndarray: The growth rate, with shape (nz,) if ks is None and
+            (nz, nk) otherwise.
+        """
+        if zs is None:
+            zs = self._redshifts
+        if zs is None:
+            raise ValueError(
+                "The JAX backend has no internal redshift grid: pass `zs`, or "
+                "`redshifts` when building the perturbations."
+            )
         atab = jnp.logspace(-3.0, 0.0, 256)
 
         a_s = a_z(zs)
@@ -425,7 +451,9 @@ class JAXLinearPerturbations:
         ftab = y[:, 1] / y1[-1] * atab / gtab
 
         result = interp(a_s, atab, ftab)
-        return result
+        if ks is None:
+            return result
+        return jnp.tile(jnp.atleast_1d(result)[:, None], (1, jnp.size(ks)))
 
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""
@@ -725,10 +753,30 @@ class JAXLinearPerturbations:
 class JAXNonLinearPerturbations:
     """Class for perturbations cosmology using JAX, inheriting from Cosmology parent class."""
 
-    def __init__(self, background: JAXBackground):
-        """Initialse the class instance."""
+    def __init__(
+        self,
+        background: JAXBackground,
+        linearperturbations: Optional[JAXLinearPerturbations] = None,
+        redshifts: Optional[jnp.ndarray] = None,
+    ):
+        """Initialse the class instance.
+
+        Args:
+            background (JAXBackground): A JAX background instance.
+            linearperturbations (Optional[JAXLinearPerturbations]): The linear
+                perturbations the halofit correction is applied to. Defaults to
+                `JAXLinearPerturbations(background, redshifts)`.
+            redshifts (Optional[jnp.ndarray]): Default redshifts for `growth_rate`,
+                see `JAXLinearPerturbations`.
+        """
         self.background = background
-        self.linearperturbations = JAXLinearPerturbations(background)
+        if linearperturbations is None:
+            linearperturbations = JAXLinearPerturbations(background, redshifts)
+        elif linearperturbations.background is not background:
+            raise ValueError(
+                "`linearperturbations` must be built on the same `background`."
+            )
+        self.linearperturbations = linearperturbations
 
     def growth_factor(
         self, zs: jnp.ndarray, ks: Optional[jnp.ndarray] = None
@@ -736,9 +784,11 @@ class JAXNonLinearPerturbations:
         """Return the linear growth factor."""
         return self.linearperturbations.growth_factor(zs, ks)
 
-    def growth_rate(self, zs: jnp.ndarray) -> jnp.ndarray:
-        """Return the linear growth rate."""
-        return self.linearperturbations.growth_rate(zs)
+    def growth_rate(
+        self, zs: Optional[jnp.ndarray] = None, ks: Optional[jnp.ndarray] = None
+    ) -> jnp.ndarray:
+        """Return the linear growth rate, see `JAXLinearPerturbations.growth_rate`."""
+        return self.linearperturbations.growth_rate(zs, ks)
 
     def _halofit_parameters(self, zs):
         """Compute the non linear scale, effective spectral index, spectral curvature."""

@@ -190,28 +190,9 @@ def _cosebi_einsum_perbin(kernel_array, ell_weight, cl_eb):
 
 
 def _growth_rate_on_grid(perturbations, zs_target):
-    # JAX-style backends; to be used for RSD calculation
-    try:
-        return perturbations.growth_rate(zs_target)
-    except TypeError:
-        pass
-
-    cache = getattr(perturbations, "_cloelib_growth_rate_cache", None)
-    if cache is None:
-        f_raw = perturbations.growth_rate()
-        z_raw = getattr(perturbations, "z", zs_target)
-        perturbations._cloelib_growth_rate_cache = (z_raw, f_raw)
-    else:
-        z_raw, f_raw = cache
-
-    # If grids match, return directly
-    try:
-        if (len(z_raw) == len(zs_target)) and (z_raw == zs_target).all():
-            return f_raw
-    except Exception:
-        pass
-
-    return np.interp(zs_target, z_raw, f_raw, left=f_raw[0], right=f_raw[-1])
+    # Growth rate for the RSD calculation. Every `Perturbations`
+    # implementation evaluates `growth_rate` at the requested redshifts.
+    return perturbations.growth_rate(zs_target)
 
 
 def _resolve_w_ell(w_ell, bin_key, ns):

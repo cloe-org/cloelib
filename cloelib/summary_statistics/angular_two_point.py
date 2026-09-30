@@ -458,6 +458,17 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
     return tomo_cosebis
 
 
+def _safe_sqrt(x):
+    """`sqrt` with a finite gradient at (and below) zero.
+
+    `jax.grad` of `sqrt(x)` is `inf` at `x = 0`, which turns into NaNs once
+    multiplied by a zero cotangent. The double-`where` keeps both the value
+    and the gradient finite where `x <= 0` (value and gradient set to 0).
+    """
+    positive = x > 0
+    return np.where(positive, np.sqrt(np.where(positive, x, 1.0)), 0.0)
+
+
 class AngularTwoPoint:
     """Two point asbtract class to compute two point functions."""
 
@@ -561,34 +572,31 @@ class AngularTwoPoint:
         chi = self.tracer1.perturbations.background.comoving_distance(z_l)
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
 
-        tracer_she = (
-            self.tracer1 if isinstance(self.tracer1, ShearTracer) else self.tracer2
+        # The cb side is the clustering tracer using Pcb, the other is matter.
+        uses_pcb1 = isinstance(self.tracer1, PositionsTracer) and getattr(
+            self.tracer1, "use_Pcb", False
         )
-        tracer_pos = (
-            self.tracer1 if isinstance(self.tracer1, PositionsTracer) else self.tracer2
+        tracer_pos, tracer_she = (
+            (self.tracer1, self.tracer2) if uses_pcb1 else (self.tracer2, self.tracer1)
         )
 
-        # This solution is a bit sketchy, but it works for now.
-        # The idea is to check if the tracer has non-linear perturbations or not.
-        # If it does, we use the non-linear matter power spectrum, otherwise we use the linear one.
-        try:  # Non linear perturbations
-            Pcb_nl = tracer_pos.perturbations.matter_power_spectrum_cb(zs, ks)
-            Pcb_l = (
-                tracer_pos.perturbations.linearperturbations.matter_power_spectrum_cb(
-                    zs, ks
-                )
+        # Non-linear perturbations wrap a `linearperturbations` instance, linear
+        # ones don't. This is a static Python check, so it should be fine for JAX's jit.
+        pert_pos = tracer_pos.perturbations
+        pert_she = tracer_she.perturbations
+        if hasattr(pert_pos, "linearperturbations"):
+            Pcb_nl = pert_pos.matter_power_spectrum_cb(zs, ks)
+            Pcb_l = pert_pos.linearperturbations.matter_power_spectrum_cb(zs, ks)
+            Pmm_l = pert_she.linearperturbations.matter_power_spectrum(zs, ks)
+            background = pert_pos.background
+            f_cb = np.squeeze(background.Omega_cb(0.0)) / np.squeeze(
+                background.Omega_m(0.0)
             )
-            Pmm_l = tracer_she.perturbations.linearperturbations.matter_power_spectrum(
-                zs, ks
-            )
-            f_cb = tracer_pos.perturbations.background.Omega_cb(
-                0
-            ) / tracer_pos.perturbations.background.Omega_m(0)
-            Pk = f_cb * (Pcb_nl - Pcb_l) + np.sqrt(Pcb_l * Pmm_l)
-        except AttributeError:  # Linear perturbations
-            Pcb_l = tracer_pos.perturbations.matter_power_spectrum_cb(zs, ks)
-            Pmm_l = tracer_she.perturbations.matter_power_spectrum(zs, ks)
-            Pk = np.sqrt(Pcb_l * Pmm_l)
+            Pk = f_cb * (Pcb_nl - Pcb_l) + _safe_sqrt(Pcb_l * Pmm_l)
+        else:
+            Pcb_l = pert_pos.matter_power_spectrum_cb(zs, ks)
+            Pmm_l = pert_she.matter_power_spectrum(zs, ks)
+            Pk = _safe_sqrt(Pcb_l * Pmm_l)
 
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
         return Pkl
@@ -730,8 +738,13 @@ class AngularTwoPoint:
             and getattr(self.tracer2, "use_Pcb", False)
         )
 
+        pcb_auto = all(
+            isinstance(t, PositionsTracer) and getattr(t, "use_Pcb", False)
+            for t in (self.tracer1, self.tracer2)
+        )
+
         if need_pcb:
-            if same_tracer:
+            if pcb_auto:
                 Pkl = self._cb_power_spectrum_limber_grid(
                     zs_calc, ks, self.tracer1.perturbations.z, ells
                 )

@@ -6101,12 +6101,40 @@ ks : array_like
 
 
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(zs)">zs</a></span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(ks)">ks</a></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Calculate the growth rate for given redshifts and wavenumbers.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="array_like">array_like</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Redshifts at which to calculate the growth rate.
+Defaults to the redshift grid of this instance.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="array_like">array_like</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumbers at which to calculate the growth rate.
+The HMcode2020Emu growth rate is scale independent, so these only
+set the shape of the output.</p>
+          </div>
+        </li>
+    </ul>
 
 
 <p><span class="doc-section-title">Returns:</span></p>
@@ -6115,7 +6143,8 @@ ks : array_like
               <code><span title="numpy.ndarray">ndarray</span></code>
           –
           <div class="doc-md-description">
-            <p>The growth rate as a function of redshift and wavenumber.</p>
+            <p>The growth rate, with shape (nz,) if ks is None
+and (nz, nk) otherwise.</p>
           </div>
         </li>
     </ul>
@@ -6432,12 +6461,40 @@ ks : array_like
 
 
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(zs)">zs</a></span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(ks)">ks</a></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Calculate the growth rate for given redshifts and wavenumbers.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="array_like">array_like</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Redshifts at which to calculate the growth rate.
+Defaults to the redshift grid of this instance.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="array_like">array_like</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumbers at which to calculate the growth rate.
+The HMcode2020Emu growth rate is scale independent, so these only
+set the shape of the output.</p>
+          </div>
+        </li>
+    </ul>
 
 
 <p><span class="doc-section-title">Returns:</span></p>
@@ -6446,7 +6503,8 @@ ks : array_like
               <code><span title="numpy.ndarray">ndarray</span></code>
           –
           <div class="doc-md-description">
-            <p>The growth rate as a function of redshift and wavenumber.</p>
+            <p>The growth rate, with shape (nz,) if ks is None
+and (nz, nk) otherwise.</p>
           </div>
         </li>
     </ul>
@@ -28682,12 +28740,40 @@ heading_level: 3</p>
 
 
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(zs)">zs</a></span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(ks)">ks</a></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Calculate the growth rate for given redshifts and wavenumbers.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(zs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="array_like">array_like</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Redshifts at which to calculate the growth rate.
+Defaults to the redshift grid of this instance.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuLinearPerturbations.growth_rate(ks)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="array_like">array_like</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumbers at which to calculate the growth rate.
+The HMcode2020Emu growth rate is scale independent, so these only
+set the shape of the output.</p>
+          </div>
+        </li>
+    </ul>
 
 
 <p><span class="doc-section-title">Returns:</span></p>
@@ -28696,7 +28782,8 @@ heading_level: 3</p>
               <code><span title="numpy.ndarray">ndarray</span></code>
           –
           <div class="doc-md-description">
-            <p>The growth rate as a function of redshift and wavenumber.</p>
+            <p>The growth rate, with shape (nz,) if ks is None
+and (nz, nk) otherwise.</p>
           </div>
         </li>
     </ul>
@@ -29013,12 +29100,40 @@ heading_level: 3</p>
 
 
 <a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(zs)">zs</a></span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(ks)">ks</a></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Calculate the growth rate for given redshifts and wavenumbers.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(zs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="array_like">array_like</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Redshifts at which to calculate the growth rate.
+Defaults to the redshift grid of this instance.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.HMcode2020Emu_cosmology.HMemuNonLinearPerturbations.growth_rate(ks)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="array_like">array_like</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumbers at which to calculate the growth rate.
+The HMcode2020Emu growth rate is scale independent, so these only
+set the shape of the output.</p>
+          </div>
+        </li>
+    </ul>
 
 
 <p><span class="doc-section-title">Returns:</span></p>
@@ -29027,7 +29142,8 @@ heading_level: 3</p>
               <code><span title="numpy.ndarray">ndarray</span></code>
           –
           <div class="doc-md-description">
-            <p>The growth rate as a function of redshift and wavenumber.</p>
+            <p>The growth rate, with shape (nz,) if ks is None
+and (nz, nk) otherwise.</p>
           </div>
         </li>
     </ul>

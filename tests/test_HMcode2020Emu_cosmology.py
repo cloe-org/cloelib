@@ -3,8 +3,6 @@
 import numpy as np
 import pytest
 
-pytest.importorskip("HMcode2020Emu")
-
 from cloelib.cosmology.cosmology import Perturbations  # noqa: E402
 from cloelib.cosmology.camb_cosmology import (  # noqa: E402
     CAMBBackground,

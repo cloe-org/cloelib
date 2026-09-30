@@ -214,7 +214,9 @@ class PBJNonlinearBiasLoopComputer:
     `PBJTATTLoopComputer` (`photo/shear.py`) uses, which this class mirrors
     closely; see that class's docstring for the rationale behind each of
     the shared choices below (linear-source resolution, log-uniform k-grid
-    construction, edge interpolation).
+    construction, edge interpolation). One difference: the FAST-PT grid here
+    has at least `_MIN_POINTS_PER_DECADE` points per decade rather than
+    just `len(ks)` points, since `sig3nl` in particular needs the resolution.
 
     Takes the *same* `perturbations` object you'd pass to `PositionsTracer` -
     typically nonlinear, so this class resolves the actual linear source
@@ -239,6 +241,12 @@ class PBJNonlinearBiasLoopComputer:
     _HIGH_EXTRAP = 3
     #: Same C_window as `PBJTATTLoopComputer`.
     _C_WINDOW = 0.75
+    #: Minimum density of the FAST-PT (FFTLog) grid, independent of `len(ks)`.
+    #: Tying it to `len(ks)` alone left CAMB's k-grid (~30 points per decade)
+    #: under-resolved: `sig3nl` scattered by ~0.8% of its peak around the BAO
+    #: scale, `Pd1d2`/`Pd1s2` by ~0.2%. At 100 per decade all seven kernels
+    #: are within 0.05% of a 200-per-decade FAST-PT run, for ~0.01 s extra.
+    _MIN_POINTS_PER_DECADE = 100
 
     def __init__(self, perturbations: Perturbations) -> None:
         try:
@@ -274,7 +282,12 @@ class PBJNonlinearBiasLoopComputer:
         # length; `ks_np` generally satisfies neither - see
         # `PBJTATTLoopComputer._kernels_for`'s docstring for why a
         # dedicated grid is built and interpolated back onto `ks_np`.
-        n_win = len(ks_np) + (len(ks_np) % 2)
+        # Its density is at least `_MIN_POINTS_PER_DECADE` (see there).
+        n_decades = _numpy.log10(ks_np.max() / ks_np.min())
+        n_win = max(
+            len(ks_np), int(_numpy.ceil(self._MIN_POINTS_PER_DECADE * n_decades))
+        )
+        n_win += n_win % 2
         k_win = _numpy.logspace(
             _numpy.log10(ks_np.min()), _numpy.log10(ks_np.max()), n_win
         )

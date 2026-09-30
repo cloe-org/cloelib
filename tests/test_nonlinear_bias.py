@@ -507,6 +507,41 @@ def test_pbj_nlbias_loop_computer_caches_across_kernel_names(linear_perturbation
 
 
 @pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
+def test_pbj_nlbias_loop_computer_resolves_coarse_k_grid(linear_perturbations):
+    """A coarse `ks` (~30 points per decade, like CAMB's own k-grid) must not
+    set the FAST-PT grid resolution: with `n_win = len(ks)` alone, `sig3nl`
+    scattered by ~0.8% of its peak around the BAO scale. Compared against a
+    200-per-decade FAST-PT run over the same k-range."""
+    import fastpt
+
+    computer = PBJNonlinearBiasLoopComputer(linear_perturbations)
+    ks = np.logspace(-4, 2, 180)
+    zs = np.linspace(0.0, 2.0, 5)
+    matter_pk = np.ones((len(zs), len(ks)))
+
+    k_ref = np.logspace(-4, 2, 1200)
+    p_lin = np.reshape(
+        np.asarray(linear_perturbations.matter_power_spectrum(np.array([0.0]), k_ref)),
+        (-1,),
+    )
+    reference = fastpt.FASTPT(
+        k_ref,
+        low_extrap=computer._LOW_EXTRAP,
+        high_extrap=computer._HIGH_EXTRAP,
+        n_pad=len(k_ref),
+    ).one_loop_dd_bias_b3nl(p_lin, P_window=None, C_window=computer._C_WINDOW)
+    # FAST-PT return order: (P_1loop, Ps, Pd1d2, Pd2d2, Pd1s2, Pd2s2, Ps2s2, sig4, sig3nl)
+    fastpt_index = {"nlbias_Pd1d2": 2, "nlbias_Pd1s2": 4, "nlbias_sig3nl": 8}
+
+    in_range = (ks > 1e-3) & (ks < 1.0)
+    for name, idx in fastpt_index.items():
+        values = np.asarray(computer.compute(name)(matter_pk, ks, zs))
+        ref = np.interp(np.log(ks), np.log(k_ref), reference[idx])
+        rel = np.abs(values - ref)[in_range] / np.max(np.abs(ref[in_range]))
+        assert np.max(rel) < 2e-3, f"{name}: max deviation {np.max(rel):.2e} of peak"
+
+
+@pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
 def test_pbj_nlbias_generalized_cl_finite_with_real_fastpt(
     cosmo_setup, linear_perturbations
 ):

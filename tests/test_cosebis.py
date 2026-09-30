@@ -14,10 +14,11 @@ from cloelib.summary_statistics.angular_two_point import (
 pytest.importorskip("pylevin")
 pytest.importorskip("mpmath")
 from cloelib.auxiliary.cosebi_helpers import (  # noqa: E402
+    get_T_plus_minus,
     get_W_ell,
     get_roots_and_norms,
+    tm,
     tp,
-    _tm_fast,
 )
 
 jax.config.update("jax_enable_x64", True)
@@ -56,13 +57,27 @@ def xi_and_kernels():
     xi_plus = j0(lt) @ weight
     xi_minus = jv(4, lt) @ weight
 
-    rn, nn, coeff_j = get_roots_and_norms(THETA[-1], THETA[0], N_MODES)
-    T_plus = np.zeros((N_MODES + 1, THETA.size))
-    T_minus = np.zeros_like(T_plus)
-    for n in range(1, N_MODES + 1):
-        T_plus[n] = [float(v) for v in tp(n, THETA, THETA[0], nn, rn)]
-        T_minus[n] = _tm_fast(n, THETA, THETA[0], nn, coeff_j)
+    T_plus, T_minus = get_T_plus_minus(THETA, N_MODES)
     return xi_plus, xi_minus, T_plus, T_minus
+
+
+def test_T_plus_minus_match_mpmath():
+    # Float64 Chebyshev kernels against the full-precision mpmath expressions
+    theta = np.radians(np.geomspace(0.5, 300.0, 50) / 60)
+    nmax = 15
+    T_plus, T_minus = get_T_plus_minus(theta, nmax)
+    assert T_plus.shape == T_minus.shape == (nmax + 1, theta.size)
+    np.testing.assert_array_equal(T_plus[0], 0)
+    rn, nn, coeff_j = get_roots_and_norms(theta[-1], theta[0], nmax)
+    for n in (1, 7, nmax):
+        ref_p = np.array([float(v) for v in tp(n, theta, theta[0], nn, rn)])
+        ref_m = np.array([float(v) for v in tm(n, theta, theta[0], nn, coeff_j)])
+        np.testing.assert_allclose(
+            T_plus[n], ref_p, rtol=0, atol=1e-12 * np.abs(ref_p).max()
+        )
+        np.testing.assert_allclose(
+            T_minus[n], ref_m, rtol=0, atol=1e-12 * np.abs(ref_m).max()
+        )
 
 
 def test_quadrature_weights():

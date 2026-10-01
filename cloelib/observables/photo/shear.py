@@ -1233,8 +1233,8 @@ class ShearTracer:
                     "P_II(k,z)/P_deltaI(k,z) to return "
                     f"(got bin_i={bin_i!r}, bin_j={bin_j!r})."
                 )
-            ks = self.perturbations.k if ks is None else ks
-            zs = self.perturbations.z if zs is None else zs
+            ks = getattr(self.perturbations, "k", None) if ks is None else ks
+            zs = getattr(self.perturbations, "z", None) if zs is None else zs
             matter_pk = self.perturbations.matter_power_spectrum(zs, ks)
             bank = SpectraBank(matter_pk, ks, zs)
             return _tatt_m_effective_pk_for_bin_pair(self.ia, bank, bin_i, bin_j)
@@ -1246,8 +1246,8 @@ class ShearTracer:
                 "per bin, so get_ia_effective_spectra() doesn't take "
                 f"bin_i/bin_j (got bin_i={bin_i!r}, bin_j={bin_j!r})."
             )
-        ks = self.perturbations.k if ks is None else ks
-        zs = self.perturbations.z if zs is None else zs
+        ks = getattr(self.perturbations, "k", None) if ks is None else ks
+        zs = getattr(self.perturbations, "z", None) if zs is None else zs
         matter_pk = self.perturbations.matter_power_spectrum(zs, ks)
         return {
             "II": compute_effective_pk(self.ia, self.ia, matter_pk, ks, zs),

@@ -341,6 +341,27 @@ class CAMBLinearPerturbations:
         self.k, _, self.Pk = self.results.get_linear_matter_power_spectrum(
             hubble_units=False, k_hunit=False
         )
+        self._pk_interpolators: dict = {}
+
+    def _linear_pk_interpolator(self, var: str, hubble_units: bool, k_hunit: bool):
+        """Linear P(k, z) interpolator from the CAMB results of `__init__` (cached).
+
+        Uses `self.results` - the run with `kmax = self.kmax` done at construction -
+        rather than the module-level `camb.get_matter_power_interpolator(params,
+        ...)`, which re-runs CAMB on every call with its default `kmax` (and with
+        whatever state the shared `CAMBparams` has by then).
+        """
+        key = (var, bool(hubble_units), bool(k_hunit))
+        if key not in self._pk_interpolators:
+            self._pk_interpolators[key] = self.results.get_matter_power_interpolator(
+                nonlinear=False,
+                extrap_kmax=self.kmax,
+                hubble_units=hubble_units,
+                k_hunit=k_hunit,
+                var1=var,
+                var2=var,
+            )
+        return self._pk_interpolators[key]
 
     def matter_power_spectrum(
         self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False
@@ -356,16 +377,9 @@ class CAMBLinearPerturbations:
         Returns:
             pk (numpy.ndarray): Linear matter power spectrum at the specified scale and redshift
         """
-        pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args["CAMBparams"],
-            nonlinear=False,
-            extrap_kmax=self.kmax,
-            hubble_units=hubble_units,
-            k_hunit=k_hunit,
-            var1="delta_tot",
-            var2="delta_tot",
-        ).P(zs, ks)
-        return pk_values
+        return self._linear_pk_interpolator("delta_tot", hubble_units, k_hunit).P(
+            zs, ks
+        )
 
     def matter_power_spectrum_cb(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -392,16 +406,9 @@ class CAMBLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args["CAMBparams"],
-            nonlinear=False,
-            extrap_kmax=self.kmax,
-            hubble_units=hubble_units,
-            k_hunit=k_hunit,
-            var1="delta_nonu",
-            var2="delta_nonu",
-        ).P(zs, ks)
-        return pk_values
+        return self._linear_pk_interpolator("delta_nonu", hubble_units, k_hunit).P(
+            zs, ks
+        )
 
     def growth_rate(self) -> np.ndarray:
         """

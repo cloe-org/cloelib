@@ -12,7 +12,7 @@ from cloelib.observables.photo.spectrum_engine import (
     needs_generalized_engine,
 )
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.math_utils import simpsons_weights_jit
+from cloelib.auxiliary.math_utils import simpsons_weights_avg, simpsons_weights_jit
 from cloelib.profiling import profile_function
 
 # General imports
@@ -699,7 +699,10 @@ class AngularTwoPoint:
         prefactor_cell = (
             prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle
         ) * (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle)
-        weights = simpsons_weights_jit(len(H))
+        # Redshift quadrature of the Limber integral: no alternating Simpson weights, so
+        # the result does not depend on the parity of the number of redshift nodes
+        # (see `simpsons_weights_avg`).
+        weights = simpsons_weights_avg(len(H))
 
         # C_ell_calc = (
         #    c_0
@@ -788,7 +791,10 @@ class AngularTwoPoint:
         )
         chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
         chi2 = chi**2
-        weights = simpsons_weights_jit(len(H))
+        # Redshift quadrature of the Limber integral: no alternating Simpson weights, so
+        # the result does not depend on the parity of the number of redshift nodes
+        # (see `simpsons_weights_avg`).
+        weights = simpsons_weights_avg(len(H))
 
         pert_zs = self.tracer1.perturbations.z
         matter_pk = self.tracer1.perturbations.matter_power_spectrum(pert_zs, ks)

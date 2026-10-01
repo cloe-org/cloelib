@@ -528,10 +528,12 @@ class MGCLASSLinearPerturbations:
         """
         D_z_k0 = self.growth_factor(self.z, np.array([1.0e-2]))
 
+        # Second-order differences also at the grid edges, where first-order
+        # ones bias f(z) by several per cent.
         f_z = (
             -(1 + self.z)
             / D_z_k0[:, 0]
-            * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])
+            * np.gradient(D_z_k0[:, 0], self.z, edge_order=2)
         )
         return growth_rate_on_redshifts(self.z, f_z, zs, ks)
 
@@ -722,10 +724,12 @@ class MGCLASSNonLinearPerturbations:
         """
         D_z_k0 = self.growth_factor(self.z, np.array([1.0e-2]))
 
+        # Second-order differences also at the grid edges, where first-order
+        # ones bias f(z) by several per cent.
         f_z = (
             -(1 + self.z)
             / D_z_k0[:, 0]
-            * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])
+            * np.gradient(D_z_k0[:, 0], self.z, edge_order=2)
         )
         return growth_rate_on_redshifts(self.z, f_z, zs, ks)
 

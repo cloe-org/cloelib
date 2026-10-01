@@ -195,28 +195,33 @@ def _jax():
     return lin, nonlin
 
 
-# name: (builder, module that must be importable, scale-dependent growth rate)
+# How `growth_rate` treats `ks`:
+SCALE_INDEPENDENT = "scale-independent"  # broadcast along k
+PIVOT_K = 1.0  # scale dependent, evaluated at this k [1/Mpc] if ks is None
+KS_REQUIRED = "ks required"  # scale dependent, ks must be given
+
+# name: (builder, module that must be importable, growth rate k-dependence)
 BACKENDS = {
-    "CAMB": (_camb, "camb", False),
-    "CLASS": (_class, "classy", False),
-    "hi_class": (_hi_class, "hiclassy", False),
-    "MGCLASS": (_mgclass, "mgclassy", False),
-    "mochi_class": (_mochi_class, "mochi_classy", False),
-    "HMcode2020Emu": (_hmemu, "HMcode2020Emu", False),
-    "BACCOemu": (_bacco, "baccoemu", True),
-    "EE2": (_ee2, "euclidemu2", False),
-    "JAX": (_jax, "jax", False),
+    "CAMB": (_camb, "camb", SCALE_INDEPENDENT),
+    "CLASS": (_class, "classy", SCALE_INDEPENDENT),
+    "hi_class": (_hi_class, "hiclassy", PIVOT_K),
+    "MGCLASS": (_mgclass, "mgclassy", SCALE_INDEPENDENT),
+    "mochi_class": (_mochi_class, "mochi_classy", PIVOT_K),
+    "HMcode2020Emu": (_hmemu, "HMcode2020Emu", SCALE_INDEPENDENT),
+    "BACCOemu": (_bacco, "baccoemu", KS_REQUIRED),
+    "EE2": (_ee2, "euclidemu2", SCALE_INDEPENDENT),
+    "JAX": (_jax, "jax", SCALE_INDEPENDENT),
 }
 
 
 @pytest.fixture(scope="module", params=list(BACKENDS))
 def backend(request):
     """Linear and nonlinear perturbations of each installed backend."""
-    builder, module, scale_dependent = BACKENDS[request.param]
+    builder, module, k_dependence = BACKENDS[request.param]
     if importlib.util.find_spec(module) is None:
         pytest.skip(f"{module} not installed")
     lin, nonlin = builder()
-    return {"Linear": lin, "NonLinear": nonlin, "scale_dependent": scale_dependent}
+    return {"Linear": lin, "NonLinear": nonlin, "k_dependence": k_dependence}
 
 
 def _grid(perturbations):
@@ -234,7 +239,7 @@ def test_implements_protocol(backend, key):
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])
 def test_growth_rate_default_grid(backend, key):
     """`growth_rate()` returns one value per redshift of its own grid."""
-    if backend["scale_dependent"]:
+    if backend["k_dependence"] == KS_REQUIRED:
         pytest.skip("scale-dependent growth rate requires ks")
     perturbations = backend[key]
     f = np.asarray(perturbations.growth_rate())
@@ -252,14 +257,18 @@ def test_growth_rate_at_requested_redshifts(backend, key):
     f_zk = np.asarray(perturbations.growth_rate(ZS, KS))
     assert f_zk.shape == (len(ZS), len(KS))
     assert np.all((f_zk > 0) & (f_zk <= 1))
-    if backend["scale_dependent"]:
+    if backend["k_dependence"] == KS_REQUIRED:
         with pytest.raises(ValueError, match="ks"):
             perturbations.growth_rate(ZS)
         return
     f = np.asarray(perturbations.growth_rate(ZS))
     assert f.shape == (len(ZS),)
-    # Scale-independent growth rates are broadcast along k.
-    np.testing.assert_allclose(f_zk[:, 0], f, rtol=1e-6)
+    if backend["k_dependence"] == SCALE_INDEPENDENT:
+        np.testing.assert_allclose(f_zk, np.tile(f[:, None], (1, len(KS))), rtol=1e-6)
+    else:
+        # Without ks, the scale-dependent growth rate at the pivot scale.
+        f_pivot = np.asarray(perturbations.growth_rate(ZS, np.array([PIVOT_K])))
+        np.testing.assert_allclose(f_pivot[:, 0], f, rtol=1e-6)
 
 
 @pytest.mark.parametrize("key", ["Linear", "NonLinear"])

@@ -179,8 +179,8 @@ _class_nl_none: NonLinearPerturbationsFactory[CLASSBackground, None] = (
     CLASSNonLinearPerturbations
 )
 
-# Known exceptions, each on a single line so that the ignore comment stays on
-# the line ty reports.
+# Known exceptions. Formatting is disabled below so that each ignore comment
+# stays on the line ty reports.
 CAMBNonLinearFactory = NonLinearPerturbationsFactory[
     CAMBBackground, CAMBLinearPerturbations
 ]
@@ -188,18 +188,14 @@ CLASSNonLinearFactory = NonLinearPerturbationsFactory[
     CLASSBackground, CLASSLinearPerturbations
 ]
 
+# fmt: off
 # HMcode2020Emu stitches the cached `Pk`/`Pk_cb` grid of its linear
 # perturbations (`WithLinearSpectrumGrid`), which CAMB's does not provide.
-_hmemu_on_camb: CAMBNonLinearFactory = (
-    HMemuNonLinearPerturbations  # ty: ignore[invalid-assignment]
-)
+_hmemu_on_camb: CAMBNonLinearFactory = HMemuNonLinearPerturbations  # ty: ignore[invalid-assignment]
 
 # mochi_class requires its own background.
-_mochi_on_class: CLASSNonLinearFactory = (
-    mochiCLASSNonLinearPerturbations  # ty: ignore[invalid-assignment]
-)
+_mochi_on_class: CLASSNonLinearFactory = mochiCLASSNonLinearPerturbations  # ty: ignore[invalid-assignment]
 
 # e-MANTIS also needs the LCDM nonlinear perturbations and fR0.
-_emantis_nl: CAMBNonLinearFactory = (
-    EmantisFofrNonLinearPerturbations  # ty: ignore[invalid-assignment]
-)
+_emantis_nl: CAMBNonLinearFactory = EmantisFofrNonLinearPerturbations  # ty: ignore[invalid-assignment]
+# fmt: on

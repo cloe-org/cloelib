@@ -717,8 +717,8 @@ class AngularTwoPoint:
 
         Does not support RSD (`PositionsTracer(..., include_rsd=True)`)
         paired with a generalized-engine-requiring contribution - that
-        combination isn't exercised by TATT and is left as a documented gap
-        rather than guessed at.
+        combination isn't exercised by TATT or TATT-M (both reach this
+        method) and is left as a documented gap rather than guessed at.
         """
         if (
             isinstance(self.tracer1, PositionsTracer)
@@ -729,8 +729,8 @@ class AngularTwoPoint:
         ):
             raise NotImplementedError(
                 "The generalized Cl engine (contributions declaring extra "
-                "SpectrumRequests, e.g. TATTContribution) does not support "
-                "PositionsTracer(include_rsd=True) yet."
+                "SpectrumRequests, e.g. TATTContribution/TATTMContribution) "
+                "does not support PositionsTracer(include_rsd=True) yet."
             )
 
         c_0 = SPEED_OF_LIGHT / 1000

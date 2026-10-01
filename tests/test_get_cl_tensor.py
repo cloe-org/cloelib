@@ -213,3 +213,42 @@ def test_get_cl_tensor_differentiable_tatt(grids):
     eps = 1e-4
     fd = (loss(0.40 + eps) - loss(0.40 - eps)) / (2 * eps)
     assert jnp.allclose(grad_A2IA, fd, rtol=1e-2)
+
+
+@pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
+def test_get_cl_tensor_differentiable_tatt_m(grids):
+    """Same check for TATT-M: differentiable w.r.t. its own per-bin
+    amplitude parameters (`alphaM`, `log10_Mh_1`) - same FAST-PT caveat
+    as `test_get_cl_tensor_differentiable_tatt` above (the one-loop kernels
+    are fixed multiplicative weights; the amplitude parameters that scale
+    them differentiate fine).
+    """
+    perturbations = _build_perturbations(grids["z_grid"], grids["ks"])
+    dndz = jnp.ones((1, len(grids["z_tracer"])))
+    dndz = dndz / jnp.trapezoid(dndz, grids["z_tracer"], axis=1)[:, None]
+
+    def loss(alpha_M, log10_mh_1):
+        tracer = ShearTracer(
+            perturbations=perturbations,
+            dndz=dndz,
+            z=grids["z_tracer"],
+            nuisance_params=_nuisance_shear(
+                alphaM=alpha_M,
+                betaM=0.5,
+                log10_Mh_1=log10_mh_1,
+                f_r_1=1.0,
+            ),
+            ia_model="TATT-M",
+            tatt_loop_computer=PBJTATTLoopComputer(perturbations),
+        )
+        two_point = AngularTwoPoint(tracer, tracer)
+        return jnp.sum(two_point.get_Cl_tensor(grids["ells"], 0, grids["ks"]))
+
+    val, grad_alpha = jax.value_and_grad(loss, argnums=0)(1.0, 13.5)
+    assert jnp.isfinite(val) and jnp.isfinite(grad_alpha) and grad_alpha != 0.0
+    grad_mh = jax.grad(loss, argnums=1)(1.0, 13.5)
+    assert jnp.isfinite(grad_mh) and grad_mh != 0.0
+
+    eps = 1e-4
+    fd_alpha = (loss(1.0 + eps, 13.5) - loss(1.0 - eps, 13.5)) / (2 * eps)
+    assert jnp.allclose(grad_alpha, fd_alpha, rtol=1e-2)

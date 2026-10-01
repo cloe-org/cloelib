@@ -25,6 +25,19 @@ class Contribution(Protocol):
       against, shape `(len(bank.zs), len(bank.ks))` (default: `None`,
       meaning "use the plain matter Pk", today's behavior for everything).
 
+    A fourth *optional* method, looked up the same `getattr(obj, name,
+    None)` way by `ShearTracer.get_contributions()` rather than here:
+
+    - `get_components() -> Sequence[Contribution]`: lets one Contribution
+      object stand in for several separable sub-terms, flattened into the
+      tracer's top-level contribution tuple instead of the object itself
+      (default, for anything not defining it: not called - the object is
+      used as-is). `photo.shear`'s `TATTMContribution` is the only user
+      today: its per-tomographic-bin IA amplitude can't be expressed as one
+      shared effective-Pk grid (see its docstring), so it exposes three
+      rank-1 sub-`Contribution`s instead, and relies on this hook to have
+      them summed into `get_Cl` like any other Contribution pair.
+
     `spectrum_engine.py` looks these up via `getattr(obj, name, None)`
     rather than requiring them here, so nothing below needs to change.
     """
@@ -36,9 +49,9 @@ class Contribution(Protocol):
 
 class IntrinsicAlignmentContribution:
     """Base class for every intrinsic-alignment model - the general "this is
-    an IA contribution" type. `NLAContribution` and `TATTContribution`
-    (`photo/shear.py`) are its two concrete models today; a future IA model
-    would be a third subclass here, not a fourth unrelated name.
+    an IA contribution" type. `NLAContribution`, `TATTContribution` and `TATTMContribution`
+    (`photo/shear.py`) are its three concrete models today; a future IA model
+    would be a fourth subclass here, not a fourth unrelated name.
 
     Lets a contribution ask "is the other side of this pairing also IA?" -
     e.g. TATT needs its II-only one-loop terms (Eq. 14 of Navarro-Gironés

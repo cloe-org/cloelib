@@ -469,6 +469,11 @@ def _safe_sqrt(x):
     return np.where(positive, np.sqrt(np.where(positive, x, 1.0)), 0.0)
 
 
+def _uses_pcb(tracer) -> bool:
+    """Whether `tracer` is a `PositionsTracer` built with `use_Pcb=True`."""
+    return isinstance(tracer, PositionsTracer) and getattr(tracer, "use_Pcb", False)
+
+
 class AngularTwoPoint:
     """Two point asbtract class to compute two point functions."""
 
@@ -571,13 +576,26 @@ class AngularTwoPoint:
         """
         chi = self.tracer1.perturbations.background.comoving_distance(z_l)
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
+        Pk = self._cbxmatter_power_spectrum(zs, ks)
+        Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
+        return Pkl
 
-        # The cb side is the clustering tracer using Pcb, the other is matter.
-        uses_pcb1 = isinstance(self.tracer1, PositionsTracer) and getattr(
-            self.tracer1, "use_Pcb", False
-        )
+    def _cbxmatter_power_spectrum(self, zs, ks) -> jax.numpy.ndarray:
+        """
+        cb cross matter power spectrum on the `(zs, ks)` grid.
+
+        Parameters:
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): cb cross matter power spectrum, shape `(len(zs), len(ks))`.
+        """
+
         tracer_pos, tracer_she = (
-            (self.tracer1, self.tracer2) if uses_pcb1 else (self.tracer2, self.tracer1)
+            (self.tracer1, self.tracer2)
+            if _uses_pcb(self.tracer1)
+            else (self.tracer2, self.tracer1)
         )
 
         # Non-linear perturbations wrap a `linearperturbations` instance, linear
@@ -592,14 +610,35 @@ class AngularTwoPoint:
             f_cb = np.squeeze(background.Omega_cb(0.0)) / np.squeeze(
                 background.Omega_m(0.0)
             )
-            Pk = f_cb * (Pcb_nl - Pcb_l) + _safe_sqrt(Pcb_l * Pmm_l)
-        else:
-            Pcb_l = pert_pos.matter_power_spectrum_cb(zs, ks)
-            Pmm_l = pert_she.matter_power_spectrum(zs, ks)
-            Pk = _safe_sqrt(Pcb_l * Pmm_l)
+            return f_cb * (Pcb_nl - Pcb_l) + _safe_sqrt(Pcb_l * Pmm_l)
 
-        Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
-        return Pkl
+        Pcb_l = pert_pos.matter_power_spectrum_cb(zs, ks)
+        Pmm_l = pert_she.matter_power_spectrum(zs, ks)
+        return _safe_sqrt(Pcb_l * Pmm_l)
+
+    def _pair_power_spectrum(self, zs, ks) -> jax.numpy.ndarray:
+        """
+        Base 3D power spectrum for this tracer pair on the `(zs, ks)` grid.
+
+        `P_cb` if both tracers are `PositionsTracer(use_Pcb=True)`, the
+        cb x matter cross spectrum if only one is, the matter `P_mm`
+        otherwise. The choice is made on static Python flags, so it is
+        resolved at trace time and is safe under `jax.jit`/`jax.grad`.
+
+        Parameters:
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): Power spectrum, shape `(len(zs), len(ks))`.
+        """
+        pcb1 = _uses_pcb(self.tracer1)
+        pcb2 = _uses_pcb(self.tracer2)
+        if pcb1 and pcb2:
+            return self.tracer1.perturbations.matter_power_spectrum_cb(zs, ks)
+        if pcb1 or pcb2:
+            return self._cbxmatter_power_spectrum(zs, ks)
+        return self.tracer1.perturbations.matter_power_spectrum(zs, ks)
 
     @profile_function
     def get_Cl_tensor(self, ells, nl, ks) -> jax.numpy.ndarray:
@@ -730,18 +769,8 @@ class AngularTwoPoint:
                 ):
                     WT2_rsd = self.tracer2.get_window_rsd(ells, H, f, chi)
 
-        need_pcb = (
-            isinstance(self.tracer1, PositionsTracer)
-            and getattr(self.tracer1, "use_Pcb", False)
-        ) or (
-            isinstance(self.tracer2, PositionsTracer)
-            and getattr(self.tracer2, "use_Pcb", False)
-        )
-
-        pcb_auto = all(
-            isinstance(t, PositionsTracer) and getattr(t, "use_Pcb", False)
-            for t in (self.tracer1, self.tracer2)
-        )
+        need_pcb = _uses_pcb(self.tracer1) or _uses_pcb(self.tracer2)
+        pcb_auto = _uses_pcb(self.tracer1) and _uses_pcb(self.tracer2)
 
         if need_pcb:
             if pcb_auto:
@@ -862,7 +891,8 @@ class AngularTwoPoint:
         weights = simpsons_weights_jit(len(H))
 
         pert_zs = self.tracer1.perturbations.z
-        matter_pk = self.tracer1.perturbations.matter_power_spectrum(pert_zs, ks)
+
+        matter_pk = self._pair_power_spectrum(pert_zs, ks)
         bank = build_spectra_bank(
             contributions1, contributions2, matter_pk, ks, pert_zs
         )

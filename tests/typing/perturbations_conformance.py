@@ -8,14 +8,20 @@ implementation drifts from its protocol, or if a constructor stops matching
 
 Known, intentional exceptions are marked with `# ty: ignore[invalid-assignment]`
 and a reason. The test enables `unused-ignore-comment`, so an exception that
-stops being one must have its ignore comment removed.
+stops being one must have its ignore comment removed. So that an ignore does
+not also hide unrelated drift, each exception is additionally checked against
+`Perturbations` without only the member it lacks (`PerturbationsWithoutCb`,
+`PerturbationsWithoutBackground`), with no ignore.
 """
+
+from typing import Optional, Protocol
 
 from cloelib.cosmology.cosmology import (
     Background,
     LinearPerturbationsFactory,
     NonLinearPerturbationsFactory,
     Perturbations,
+    T,
 )
 from cloelib.cosmology.camb_cosmology import (
     CAMBBackground,
@@ -59,7 +65,44 @@ from cloelib.cosmology.jax_cosmology import (
 )
 from cloelib.cosmology.ReACTEmu_cosmology import BoostedPerturbations
 from cloelib.cosmology.TabulatedBoost_cosmology import TabulatedBoostedPerturbations
-from cloelib.cosmology.cosmopower_jax_cosmology import CosmoPowerJAXLCDMPerturbations
+from cloelib.cosmology.cosmopower_jax_cosmology import (
+    CosmoPowerJAXCurvaturePerturbations,
+    CosmoPowerJAXLCDMPerturbations,
+    CosmoPowerJAXRunningIndexPerturbations,
+    CosmoPowerJAXw0waCDMPerturbations,
+    CosmoPowerJAXwCDMPerturbations,
+)
+
+
+# Copies of `Perturbations` without one member. Their member names are kept in
+# sync with `Perturbations` by `test_partial_protocols_match_perturbations`.
+class PerturbationsWithoutCb(Protocol):
+    """`Perturbations` without `matter_power_spectrum_cb`."""
+
+    @property
+    def background(self) -> Background: ...
+
+    def growth_factor(self, zs: T, ks: T) -> T: ...
+
+    def growth_rate(self, zs: Optional[T] = None, ks: Optional[T] = None) -> T: ...
+
+    def matter_power_spectrum(self, zs: T, ks: T) -> T: ...
+
+    def sigma8_0(self) -> float: ...
+
+
+class PerturbationsWithoutBackground(Protocol):
+    """`Perturbations` without `background`."""
+
+    def growth_factor(self, zs: T, ks: T) -> T: ...
+
+    def growth_rate(self, zs: Optional[T] = None, ks: Optional[T] = None) -> T: ...
+
+    def matter_power_spectrum(self, zs: T, ks: T) -> T: ...
+
+    def matter_power_spectrum_cb(self, zs: T, ks: T) -> T: ...
+
+    def sigma8_0(self) -> float: ...
 
 
 def backgrounds(
@@ -101,7 +144,6 @@ def perturbations(
     jax_nl: JAXNonLinearPerturbations,
     react: BoostedPerturbations,
     tabulated: TabulatedBoostedPerturbations,
-    cosmopower_lin: CosmoPowerJAXLCDMPerturbations.Linear,
 ) -> None:
     """Every perturbations class implements `Perturbations`."""
     _camb_lin: Perturbations = camb_lin
@@ -123,12 +165,63 @@ def perturbations(
     # Only through `JAXBackground`, see `backgrounds` above.
     _jax_lin: Perturbations = jax_lin  # ty: ignore[invalid-assignment]
     _jax_nl: Perturbations = jax_nl  # ty: ignore[invalid-assignment]
+    _jax_lin_partial: PerturbationsWithoutBackground = jax_lin
+    _jax_nl_partial: PerturbationsWithoutBackground = jax_nl
     # The boost wrappers do not provide `matter_power_spectrum_cb`.
     _react: Perturbations = react  # ty: ignore[invalid-assignment]
     _tabulated: Perturbations = tabulated  # ty: ignore[invalid-assignment]
-    # The CosmoPower-JAX backends split the total and cb spectra into separate
-    # classes (e.g. `Linear` and `LinearCB`), neither providing both.
-    _cosmopower_lin: Perturbations = cosmopower_lin  # ty: ignore[invalid-assignment]
+    _react_partial: PerturbationsWithoutCb = react
+    _tabulated_partial: PerturbationsWithoutCb = tabulated
+
+
+def cosmopower_perturbations(
+    w0wa_lin: CosmoPowerJAXw0waCDMPerturbations.Linear,
+    w0wa_lin_cb: CosmoPowerJAXw0waCDMPerturbations.LinearCB,
+    w0wa_nl: CosmoPowerJAXw0waCDMPerturbations.NonLinear,
+    w0wa_nl_cb: CosmoPowerJAXw0waCDMPerturbations.NonLinearCB,
+    wcdm_lin: CosmoPowerJAXwCDMPerturbations.Linear,
+    wcdm_lin_cb: CosmoPowerJAXwCDMPerturbations.LinearCB,
+    wcdm_nl: CosmoPowerJAXwCDMPerturbations.NonLinear,
+    wcdm_nl_cb: CosmoPowerJAXwCDMPerturbations.NonLinearCB,
+    lcdm_lin: CosmoPowerJAXLCDMPerturbations.Linear,
+    lcdm_lin_cb: CosmoPowerJAXLCDMPerturbations.LinearCB,
+    lcdm_nl: CosmoPowerJAXLCDMPerturbations.NonLinear,
+    lcdm_nl_cb: CosmoPowerJAXLCDMPerturbations.NonLinearCB,
+    curvature_lin: CosmoPowerJAXCurvaturePerturbations.Linear,
+    curvature_lin_cb: CosmoPowerJAXCurvaturePerturbations.LinearCB,
+    curvature_nl: CosmoPowerJAXCurvaturePerturbations.NonLinear,
+    curvature_nl_cb: CosmoPowerJAXCurvaturePerturbations.NonLinearCB,
+    running_lin: CosmoPowerJAXRunningIndexPerturbations.Linear,
+    running_lin_cb: CosmoPowerJAXRunningIndexPerturbations.LinearCB,
+    running_nl: CosmoPowerJAXRunningIndexPerturbations.NonLinear,
+    running_nl_cb: CosmoPowerJAXRunningIndexPerturbations.NonLinearCB,
+) -> None:
+    """The CosmoPower-JAX classes implement `Perturbations` except for the cb spectrum.
+
+    These backends split the total and cb spectra into separate classes (e.g.
+    `Linear` and `LinearCB`), neither providing `matter_power_spectrum_cb`.
+    """
+    _lcdm_lin: Perturbations = lcdm_lin  # ty: ignore[invalid-assignment]
+    _w0wa_lin: PerturbationsWithoutCb = w0wa_lin
+    _w0wa_lin_cb: PerturbationsWithoutCb = w0wa_lin_cb
+    _w0wa_nl: PerturbationsWithoutCb = w0wa_nl
+    _w0wa_nl_cb: PerturbationsWithoutCb = w0wa_nl_cb
+    _wcdm_lin: PerturbationsWithoutCb = wcdm_lin
+    _wcdm_lin_cb: PerturbationsWithoutCb = wcdm_lin_cb
+    _wcdm_nl: PerturbationsWithoutCb = wcdm_nl
+    _wcdm_nl_cb: PerturbationsWithoutCb = wcdm_nl_cb
+    _lcdm_lin_partial: PerturbationsWithoutCb = lcdm_lin
+    _lcdm_lin_cb: PerturbationsWithoutCb = lcdm_lin_cb
+    _lcdm_nl: PerturbationsWithoutCb = lcdm_nl
+    _lcdm_nl_cb: PerturbationsWithoutCb = lcdm_nl_cb
+    _curvature_lin: PerturbationsWithoutCb = curvature_lin
+    _curvature_lin_cb: PerturbationsWithoutCb = curvature_lin_cb
+    _curvature_nl: PerturbationsWithoutCb = curvature_nl
+    _curvature_nl_cb: PerturbationsWithoutCb = curvature_nl_cb
+    _running_lin: PerturbationsWithoutCb = running_lin
+    _running_lin_cb: PerturbationsWithoutCb = running_lin_cb
+    _running_nl: PerturbationsWithoutCb = running_nl
+    _running_nl_cb: PerturbationsWithoutCb = running_nl_cb
 
 
 # Linear constructors: `cls(background=..., redshifts=...)`.

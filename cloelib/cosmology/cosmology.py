@@ -190,7 +190,7 @@ class Perturbations(Protocol):
         """Retrieve the matter power spectrum."""
         ...
 
-    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+    def matter_power_spectrum_cb(self, zs: T, ks: T) -> T:
         """Retrieves matter power spectrum of cold dark matter + baryons (no neutrinos)."""
         ...
 

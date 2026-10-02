@@ -525,7 +525,18 @@ class MGCLASSLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z), with shape (nz,) if ks is None
             and (nz, nk) otherwise.
+
+        Raises
+        ------
+        ValueError
+            If the instance was built on fewer than 3 redshifts.
         """
+        if len(self.z) < 3:
+            raise ValueError(
+                "The MGCLASS growth rate is computed by finite differences on the "
+                "redshift grid, which needs at least 3 redshifts, got "
+                f"{len(self.z)}."
+            )
         D_z_k0 = self.growth_factor(self.z, np.array([1.0e-2]))
 
         # Second-order differences also at the grid edges, where first-order
@@ -721,7 +732,18 @@ class MGCLASSNonLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z), with shape (nz,) if ks is None
             and (nz, nk) otherwise.
+
+        Raises
+        ------
+        ValueError
+            If the instance was built on fewer than 3 redshifts.
         """
+        if len(self.z) < 3:
+            raise ValueError(
+                "The MGCLASS growth rate is computed by finite differences on the "
+                "redshift grid, which needs at least 3 redshifts, got "
+                f"{len(self.z)}."
+            )
         D_z_k0 = self.growth_factor(self.z, np.array([1.0e-2]))
 
         # Second-order differences also at the grid edges, where first-order

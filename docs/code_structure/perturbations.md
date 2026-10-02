@@ -72,6 +72,8 @@ Calculate the linear growth rate f(z) = d ln D / d ln a. Every implementation fo
 
 Scale-dependent implementations evaluate f(z, k) at the given `ks`. Without `ks`, hi_class and mochi_class use k = 1 Mpc⁻¹, while BACCOemu, which has no such default, raises a `ValueError`.
 
+MGCLASS computes the growth rate by finite differences on its redshift grid, so it needs to be built on at least 3 redshifts to provide it.
+
 #### `sigma8_0()`
 
 Compute σ₈ at redshift z=0.

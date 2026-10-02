@@ -767,9 +767,11 @@ class JAXNonLinearPerturbations:
                 perturbations the halofit correction is applied to. Defaults to
                 `JAXLinearPerturbations(background, redshifts)`.
             redshifts (Optional[jnp.ndarray]): Default redshifts for `growth_rate`,
-                see `JAXLinearPerturbations`.
+                see `JAXLinearPerturbations`. If not given, those of
+                `linearperturbations` are used.
         """
         self.background = background
+        self._redshifts = redshifts
         if linearperturbations is None:
             linearperturbations = JAXLinearPerturbations(background, redshifts)
         elif linearperturbations.background is not background:
@@ -787,7 +789,13 @@ class JAXNonLinearPerturbations:
     def growth_rate(
         self, zs: Optional[jnp.ndarray] = None, ks: Optional[jnp.ndarray] = None
     ) -> jnp.ndarray:
-        """Return the linear growth rate, see `JAXLinearPerturbations.growth_rate`."""
+        """Return the linear growth rate, see `JAXLinearPerturbations.growth_rate`.
+
+        Without `zs`, it is evaluated at the `redshifts` given at construction,
+        or else at those of `linearperturbations`.
+        """
+        if zs is None:
+            zs = self._redshifts
         return self.linearperturbations.growth_rate(zs, ks)
 
     def _halofit_parameters(self, zs):

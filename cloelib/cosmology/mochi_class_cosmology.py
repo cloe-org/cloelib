@@ -745,13 +745,18 @@ class mochiCLASSNonLinearPerturbations:
 
         Raises:
             ValueError: If `log10TAGN` is given with a nonlinear model or HMcode version
-                that ignores it.
+                that ignores it, or with `background.mg_stable_basis_on`.
         """
         self.background = background
         self.z = redshifts
         self.kmax = 100
 
         if log10TAGN is not None:
+            if background.mg_stable_basis_on:
+                raise ValueError(
+                    "log10TAGN is not supported with mg_stable_basis_on, for which "
+                    "mochi_class does not implement nonlinear corrections."
+                )
             if nonlinear_model is None:
                 nonlinear_model = "hmcode"
             if hmcode_version is None:

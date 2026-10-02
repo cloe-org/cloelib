@@ -7,10 +7,12 @@ dependency is not installed are skipped. The static counterpart of these
 checks, `tests/typing/perturbations_conformance.py`, is run through ty.
 """
 
+import ast
 import importlib.util
 import pathlib
 import subprocess
 import sys
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -386,6 +388,113 @@ def test_jax_nonlinear_uses_given_linear_perturbations():
         JAXNonLinearPerturbations(JAXBackground(**COSMO), lin)
     with pytest.raises(ValueError, match="redshift grid"):
         JAXNonLinearPerturbations(background).growth_rate()
+
+
+def test_jax_nonlinear_keeps_its_redshifts_with_given_linear_perturbations():
+    """The `redshifts` of JAXNonLinearPerturbations are its default grid, also
+    when its linear perturbations were built without any."""
+    from cloelib.cosmology.jax_cosmology import (
+        JAXBackground,
+        JAXLinearPerturbations,
+        JAXNonLinearPerturbations,
+    )
+
+    background = JAXBackground(**COSMO)
+    lin = JAXLinearPerturbations(background)
+    nonlin = JAXNonLinearPerturbations(background, lin, redshifts=ZS)
+    np.testing.assert_allclose(nonlin.growth_rate(), lin.growth_rate(ZS))
+    # Its own redshifts take precedence over those of the linear perturbations.
+    lin_with_z = JAXLinearPerturbations(background, redshifts=REDSHIFTS)
+    nonlin = JAXNonLinearPerturbations(background, lin_with_z, redshifts=ZS)
+    assert np.shape(nonlin.growth_rate()) == ZS.shape
+
+
+class _RecordingLinear:
+    """Linear perturbations stand-in recording the arguments of `growth_rate`."""
+
+    def __init__(self):
+        self.background = SimpleNamespace(Omega_k0=0.0)
+        self.calls = []
+
+    def growth_rate(self, zs=None, ks=None):
+        self.calls.append(zs)
+        return np.zeros(0 if zs is None else len(zs))
+
+
+@pytest.mark.parametrize("with_grid", [True, False])
+def test_boosted_perturbations_growth_rate_on_own_grid(with_grid):
+    """Without zs, the boosted wrapper uses the grid of its base perturbations."""
+    from cloelib.cosmology.TabulatedBoost_cosmology import (
+        TabulatedBoostedPerturbations,
+    )
+
+    lin = _RecordingLinear()
+    base = SimpleNamespace(background=lin.background)
+    if with_grid:
+        base.z = ZS
+    boosted = TabulatedBoostedPerturbations(lin, base, boost_interp=None)
+    boosted.growth_rate()
+    boosted.growth_rate(REDSHIFTS)
+    if with_grid:
+        np.testing.assert_array_equal(lin.calls[0], ZS)
+    else:
+        # No grid of its own: the linear perturbations use theirs.
+        assert lin.calls[0] is None
+    np.testing.assert_array_equal(lin.calls[1], REDSHIFTS)
+
+
+@pytest.mark.skipif(
+    importlib.util.find_spec("mgclassy") is None, reason="mgclassy not installed"
+)
+def test_mgclass_growth_rate_needs_three_redshifts():
+    """The MGCLASS finite-difference growth rate rejects grids that are too short."""
+    from cloelib.cosmology.mgclass_cosmology import (
+        MGCLASSLinearPerturbations,
+        MGCLASSNonLinearPerturbations,
+    )
+
+    for cls in (MGCLASSLinearPerturbations, MGCLASSNonLinearPerturbations):
+        with pytest.raises(ValueError, match="at least 3 redshifts"):
+            cls.growth_rate(SimpleNamespace(z=np.array([0.0, 1.0])))
+
+
+@pytest.mark.skipif(
+    importlib.util.find_spec("mochi_classy") is None,
+    reason="mochi_classy not installed",
+)
+def test_mochi_class_log10TAGN_with_stable_basis_raises():
+    """mochi_class has no nonlinear corrections with the stable MG basis, so
+    log10TAGN is rejected instead of being ignored."""
+    from cloelib.cosmology.mochi_class_cosmology import (
+        mochiCLASSNonLinearPerturbations,
+    )
+
+    background = SimpleNamespace(mg_stable_basis_on=True)
+    with pytest.raises(ValueError, match="mg_stable_basis_on"):
+        mochiCLASSNonLinearPerturbations(background, None, REDSHIFTS, log10TAGN=7.8)
+
+
+def test_partial_protocols_match_perturbations():
+    """The partial protocols of the ty checks lack exactly one `Perturbations` member."""
+    conformance = (
+        pathlib.Path(__file__).parent / "typing" / "perturbations_conformance.py"
+    )
+    members = {
+        node.name: {
+            item.name
+            for item in node.body
+            if isinstance(item, ast.FunctionDef) and not item.name.startswith("_")
+        }
+        for node in ast.parse(conformance.read_text()).body
+        if isinstance(node, ast.ClassDef)
+    }
+    protocol = {
+        name
+        for name, value in vars(Perturbations).items()
+        if not name.startswith("_") and (callable(value) or isinstance(value, property))
+    }
+    assert members["PerturbationsWithoutCb"] == protocol - {"matter_power_spectrum_cb"}
+    assert members["PerturbationsWithoutBackground"] == protocol - {"background"}
 
 
 @pytest.mark.skipif(importlib.util.find_spec("ty") is None, reason="ty not installed")

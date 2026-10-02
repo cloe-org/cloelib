@@ -370,9 +370,10 @@ class TabulatedBoostedPerturbations:
 
         The boost only modifies the nonlinear matter power spectrum, so the
         growth rate is that of the underlying linear perturbations, see
-        `Perturbations.growth_rate`.
+        `Perturbations.growth_rate`. Without `zs`, it is evaluated on `self.z`,
+        the redshift grid of `base_perturbations`, if that has one.
         """
-        return self.base_lin.growth_rate(zs, ks)
+        return self.base_lin.growth_rate(self.z if zs is None else zs, ks)
 
     def sigma8_0(self) -> float:
         """Calculate the sigma8 value for the current cosmology."""

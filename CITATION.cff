@@ -1,4 +1,4 @@
-# Maintainer names, ORCIDs, and affiliations follow paper/paper.md.
+# Maintainer metadata follows paper/paper.md, with Santiago Casas's additional affiliation.
 cff-version: 1.2.0
 message: "If you use cloelib in your research, please cite this software using the metadata below."
 type: software
@@ -19,7 +19,7 @@ authors:
   - family-names: Casas
     given-names: Santiago
     orcid: "https://orcid.org/0000-0002-4751-5138"
-    affiliation: "Scientific Information, German Aerospace Center (DLR), Germany"
+    affiliation: "Scientific Information, German Aerospace Center (DLR), Germany; TTK, RWTH Aachen University, Germany"
   - family-names: Moretti
     given-names: Chiara
     orcid: "https://orcid.org/0000-0003-3314-8936"

@@ -10,7 +10,7 @@
 """
 
 # General imports
-from typing import Protocol, Union, Sequence, TypeVar, Optional, runtime_checkable
+from typing import Any, Protocol, Union, Sequence, TypeVar, Optional, runtime_checkable
 
 import numpy as np
 import jax.numpy as jnp
@@ -234,3 +234,135 @@ class WithLinearSpectrumGrid(WithWavenumberGrid, Protocol):
     def Pk_cb(self) -> np.ndarray:
         """Cached linear cdm+baryon power spectrum on the (z, k) grid."""
         ...
+
+
+@runtime_checkable
+class BaryonBoostMixin(Protocol):
+    """Protocol for mixins that add a baryonic suppression factor.
+
+    Any class that provides ``baryonic_suppression`` satisfies this protocol,
+    regardless of inheritance.  Used for static type-checking only — never
+    instantiated directly.
+
+    Concrete implementations live in backend-specific files and are composed
+    into ``Perturbations`` subclasses to override ``matter_power_spectrum``::
+
+        class FlamingoBaryonBoostMixin(BaryonBoostMixin):
+            def baryonic_suppression(self, zs, ks, k_hunit=False): ...
+
+        class CAMBNonLinearFLAMINGOPerturbations(
+            FlamingoBaryonBoostMixin, CAMBNonLinearPerturbations
+        ):
+            def matter_power_spectrum(self, zs, ks, ...):
+                return super().matter_power_spectrum(...) * self.baryonic_suppression(...)
+    """
+
+    def baryonic_suppression(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+        """Return the multiplicative baryonic suppression factor P_hydro/P_DMO.
+
+        Parameters
+        ----------
+        zs:
+            Redshifts, shape (nz,).
+        ks:
+            Wavenumbers, shape (nk,).
+
+        Returns
+        -------
+        np.ndarray, shape (nz, nk)
+        """
+        ...
+
+
+def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
+    """Compose a nonlinear perturbations class with a baryonic-boost mixin.
+
+    Returns a new class that:
+
+    * Places ``BaryonMixinClass`` as the **left** parent (MRO priority).
+    * Wires ``__init__`` to call ``NonLinearClass.__init__`` first (so that
+      emulator state such as ``self.emu`` and ``self.params_*`` is available)
+      and then ``BaryonMixinClass.__init__`` with ``baryon_kwargs``.
+    * Overrides ``matter_power_spectrum`` and ``matter_power_spectrum_cb`` to
+      multiply P(k, z) by ``baryonic_suppression``.
+
+    Usage
+    -----
+    ::
+
+        from cloelib.cosmology.cosmology import with_baryon_boost
+        from cloelib.cosmology.baccoemu_cosmology import BACCOemuNonLinearPerturbations
+        from cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology import (
+            FlamingoBaryonBoostMixin,
+        )
+
+        BACCOemuFLAMINGO = with_baryon_boost(
+            BACCOemuNonLinearPerturbations, FlamingoBaryonBoostMixin
+        )
+        pert = BACCOemuFLAMINGO(
+            background, linear_pert, redshifts,
+            nonlinear_model_name="Arico2023",
+            baryon_kwargs=dict(fgas_sigma=0.0, Mstar_sigma=0.0, jet_fraction=0.0),
+        )
+
+    For HMcode2020::
+
+        BACCOemuHM = with_baryon_boost(
+            BACCOemuNonLinearPerturbations, HMcode2020BaryonBoostMixin
+        )
+        pert = BACCOemuHM(
+            background, linear_pert, redshifts,
+            baryon_kwargs=dict(log10TAGN=7.8),
+        )
+
+    Parameters
+    ----------
+    NonLinearClass:
+        A concrete nonlinear perturbations class (e.g.
+        ``BACCOemuNonLinearPerturbations``, ``CAMBNonLinearPerturbations``).
+    BaryonMixinClass:
+        A concrete :class:`BaryonBoostMixin` subclass (e.g.
+        ``FlamingoBaryonBoostMixin``, ``BACCOemuBaryonBoostMixin``,
+        ``HMcode2020BaryonBoostMixin``).
+
+    Returns
+    -------
+    type
+        A new class named
+        ``"{NonLinearClass.__name__}With{BaryonMixinClass.__name__}"``.
+    """
+
+    class Combined(BaryonMixinClass, NonLinearClass):
+        def __init__(self, *args, baryon_kwargs=None, **kwargs):
+            NonLinearClass.__init__(self, *args, **kwargs)
+            BaryonMixinClass.__init__(self, **(baryon_kwargs or {}))
+
+        def matter_power_spectrum(self, zs, ks, **kwargs):
+            pk = NonLinearClass.matter_power_spectrum(self, zs, ks, **kwargs)
+            return (
+                pk
+                * self.baryonic_suppression(
+                    zs, ks, k_hunit=kwargs.get("k_hunit", False)
+                )
+            ).squeeze()
+
+        def matter_power_spectrum_cb(self, zs, ks, **kwargs):
+            # The cdm+baryon spectrum is given the *same* boost as total matter.
+            # The backends differ slightly in what they predict -- FLAMINGO's
+            # response is (b + cdm + nu) / (cdm + nu), BACCOemu's is the cold
+            # (b + cdm) / (cdm + nu) -- and one could refine this by adding the
+            # neutrino contribution at linear order, as BACCOemu does for its
+            # nonlinear boost. In practice the difference is ~1e-5 even for
+            # mnu = 0.4 eV, and FLAMINGO simulations show total and cold boosts
+            # to be equivalent at that level, so the same boost is used for both.
+            pk = NonLinearClass.matter_power_spectrum_cb(self, zs, ks, **kwargs)
+            return (
+                pk
+                * self.baryonic_suppression(
+                    zs, ks, k_hunit=kwargs.get("k_hunit", False)
+                )
+            ).squeeze()
+
+    Combined.__name__ = f"{NonLinearClass.__name__}With{BaryonMixinClass.__name__}"
+    Combined.__qualname__ = Combined.__name__
+    return Combined

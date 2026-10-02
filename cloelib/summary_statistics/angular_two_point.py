@@ -484,6 +484,22 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
     return tomo_cosebis
 
 
+def _safe_sqrt(x):
+    """`sqrt` with a finite gradient at (and below) zero.
+
+    `jax.grad` of `sqrt(x)` is `inf` at `x = 0`, which turns into NaNs once
+    multiplied by a zero cotangent. The double-`where` keeps both the value
+    and the gradient finite where `x <= 0` (value and gradient set to 0).
+    """
+    positive = x > 0
+    return np.where(positive, np.sqrt(np.where(positive, x, 1.0)), 0.0)
+
+
+def _uses_pcb(tracer) -> bool:
+    """Whether `tracer` is a `PositionsTracer` built with `use_Pcb=True`."""
+    return isinstance(tracer, PositionsTracer) and getattr(tracer, "use_Pcb", False)
+
+
 class AngularTwoPoint:
     """Two point asbtract class to compute two point functions."""
 
@@ -541,6 +557,114 @@ class AngularTwoPoint:
         Pk = self.tracer1.perturbations.matter_power_spectrum(zs, ks)
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
         return Pkl
+
+    def _cb_power_spectrum_limber_grid(self, z_l, ks, zs, ells) -> jax.numpy.ndarray:
+        """
+        Prepare the cb power spectrum grid for Limber approximation.
+
+        It calculates the k values on the Limber grid using the comoving
+        distances and multipoles, then interpolates the cb power
+        spectrum accordingly.
+
+        Parameters:
+            z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
+            ells (jax.numpy.ndarray): Multipole moments for angular power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): Interpolated cb power spectrum on the Limber grid.
+        """
+        chi = self.tracer1.perturbations.background.comoving_distance(z_l)
+        k_lz = np.expand_dims((ells + 0.5), 1) / chi
+        Pk = self.tracer1.perturbations.matter_power_spectrum_cb(zs, ks)
+        Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
+        return Pkl
+
+    def _cbxmatter_power_spectrum_limber_grid(
+        self, z_l, ks, zs, ells
+    ) -> jax.numpy.ndarray:
+        """
+        Prepare the cb cross matter power spectrum grid for Limber approximation.
+
+        It calculates the k values on the Limber grid using the comoving
+        distances and multipoles, then interpolates the cb cross matter power
+        spectrum accordingly.
+
+        Parameters:
+            z_l (jax.numpy.ndarray): Redshift grid for Limber integration.
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
+            ells (jax.numpy.ndarray): Multipole moments for angular power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): Interpolated cb cross matter power spectrum on the Limber grid.
+        """
+        chi = self.tracer1.perturbations.background.comoving_distance(z_l)
+        k_lz = np.expand_dims((ells + 0.5), 1) / chi
+        Pk = self._cbxmatter_power_spectrum(zs, ks)
+        Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
+        return Pkl
+
+    def _cbxmatter_power_spectrum(self, zs, ks) -> jax.numpy.ndarray:
+        """
+        cb cross matter power spectrum on the `(zs, ks)` grid.
+
+        Parameters:
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): cb cross matter power spectrum, shape `(len(zs), len(ks))`.
+        """
+
+        tracer_pos, tracer_she = (
+            (self.tracer1, self.tracer2)
+            if _uses_pcb(self.tracer1)
+            else (self.tracer2, self.tracer1)
+        )
+
+        # Non-linear perturbations wrap a `linearperturbations` instance, linear
+        # ones don't. This is a static Python check, so it should be fine for JAX's jit.
+        pert_pos = tracer_pos.perturbations
+        pert_she = tracer_she.perturbations
+        if hasattr(pert_pos, "linearperturbations"):
+            Pcb_nl = pert_pos.matter_power_spectrum_cb(zs, ks)
+            Pcb_l = pert_pos.linearperturbations.matter_power_spectrum_cb(zs, ks)
+            Pmm_l = pert_she.linearperturbations.matter_power_spectrum(zs, ks)
+            background = pert_pos.background
+            f_cb = np.squeeze(background.Omega_cb(0.0)) / np.squeeze(
+                background.Omega_m(0.0)
+            )
+            return f_cb * (Pcb_nl - Pcb_l) + _safe_sqrt(Pcb_l * Pmm_l)
+
+        Pcb_l = pert_pos.matter_power_spectrum_cb(zs, ks)
+        Pmm_l = pert_she.matter_power_spectrum(zs, ks)
+        return _safe_sqrt(Pcb_l * Pmm_l)
+
+    def _pair_power_spectrum(self, zs, ks) -> jax.numpy.ndarray:
+        """
+        Base 3D power spectrum for this tracer pair on the `(zs, ks)` grid.
+
+        `P_cb` if both tracers are `PositionsTracer(use_Pcb=True)`, the
+        cb x matter cross spectrum if only one is, the matter `P_mm`
+        otherwise. The choice is made on static Python flags, so it is
+        resolved at trace time and is safe under `jax.jit`/`jax.grad`.
+
+        Parameters:
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+            zs (jax.numpy.ndarray): Redshift grid of the matter power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): Power spectrum, shape `(len(zs), len(ks))`.
+        """
+        pcb1 = _uses_pcb(self.tracer1)
+        pcb2 = _uses_pcb(self.tracer2)
+        if pcb1 and pcb2:
+            return self.tracer1.perturbations.matter_power_spectrum_cb(zs, ks)
+        if pcb1 or pcb2:
+            return self._cbxmatter_power_spectrum(zs, ks)
+        return self.tracer1.perturbations.matter_power_spectrum(zs, ks)
 
     @profile_function
     def get_Cl_tensor(self, ells, nl, ks) -> jax.numpy.ndarray:
@@ -671,9 +795,23 @@ class AngularTwoPoint:
                 ):
                     WT2_rsd = self.tracer2.get_window_rsd(ells, H, f, chi)
 
-        Pkl = self._matter_power_spectrum_limber_grid(
-            zs_calc, ks, self.tracer1.perturbations.z, ells
-        )
+        need_pcb = _uses_pcb(self.tracer1) or _uses_pcb(self.tracer2)
+        pcb_auto = _uses_pcb(self.tracer1) and _uses_pcb(self.tracer2)
+
+        if need_pcb:
+            if pcb_auto:
+                Pkl = self._cb_power_spectrum_limber_grid(
+                    zs_calc, ks, self.tracer1.perturbations.z, ells
+                )
+            else:
+                Pkl = self._cbxmatter_power_spectrum_limber_grid(
+                    zs_calc, ks, self.tracer1.perturbations.z, ells
+                )
+        else:
+            Pkl = self._matter_power_spectrum_limber_grid(
+                zs_calc, ks, self.tracer1.perturbations.z, ells
+            )
+
         prefactor_cell = self._angular_prefactor(ells)
         weights = simpsons_weights_jit(len(H))
 
@@ -779,7 +917,8 @@ class AngularTwoPoint:
         weights = simpsons_weights_jit(len(H))
 
         pert_zs = self.tracer1.perturbations.z
-        matter_pk = self.tracer1.perturbations.matter_power_spectrum(pert_zs, ks)
+
+        matter_pk = self._pair_power_spectrum(pert_zs, ks)
         bank = build_spectra_bank(
             contributions1, contributions2, matter_pk, ks, pert_zs
         )

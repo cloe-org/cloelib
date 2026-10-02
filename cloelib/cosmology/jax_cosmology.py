@@ -307,20 +307,15 @@ class JAXBackground:
         Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
 
         Args:
-            zs (jnp.ndarray): Array of redshifts.
+            zs (jnp.ndarray): Array of redshifts. A bare Python/JAX scalar
+                is also accepted (returns a scalar), as for `Omega_m`.
 
         Returns:
             jnp.ndarray: Matter density values (no neutrinos).
         """
+        zs = jnp.asarray(zs)
         _Omega_m_use = self.Omega_b0 + self.Omega_cdm0
-        return jnp.array(
-            [
-                (_Omega_m_use)
-                * (1 + z) ** 3
-                / (self.hubble_parameter(z) / self.H0) ** 2
-                for z in zs
-            ]
-        )
+        return _Omega_m_use * (1 + zs) ** 3 / (self.hubble_parameter(zs) / self.H0) ** 2
 
     def w_a(self, a):
         """Write documentation (TODO)."""

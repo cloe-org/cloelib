@@ -431,6 +431,53 @@ def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
     )
 
 
+def test_generalized_engine_uses_pcb_like_legacy(cosmo_setup):
+    """`PositionsTracer(use_Pcb=True)` x TATT-shear (generalized engine) must
+    reproduce `PositionsTracer(use_Pcb=True)` x NLA-shear (legacy path) in
+    the A2=b_TA=z0=0 limit, i.e. both engines must pick the same cb x matter
+    base spectrum - and that spectrum must actually differ from P_mm.
+    Same 5e-3 tolerance as `test_tatt_matches_legacy_nla_end_to_end_at_z0_zero`.
+    """
+    perturbations, z = cosmo_setup
+    n_z_bins = 2
+    dndz = np.ones((n_z_bins, len(z)))
+    dndz /= np.trapezoid(dndz, z, axis=1)[:, None]
+    ells = np.logspace(1.0, np.log10(200), 6)
+    ks = np.asarray(perturbations.k)
+    pos_nuisance = {
+        **{f"dz_pos_{i + 1}": 0.0 for i in range(n_z_bins)},
+        **{f"width_pos_{i + 1}": 1.0 for i in range(n_z_bins)},
+        **{f"magnification_bias_{i + 1}": 0.5 for i in range(n_z_bins)},
+    }
+
+    def cl(ia_model, use_Pcb):
+        pos = PositionsTracer(
+            perturbations, dndz, z, "per_bin", pos_nuisance, use_Pcb=use_Pcb
+        )
+        if ia_model == "TATT":
+            shear = ShearTracer(
+                perturbations=perturbations,
+                dndz=dndz,
+                z=z,
+                nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.0),
+                ia_model="TATT",
+                tatt_loop_computer=_StubTATTLoopComputer(perturbations),
+            )
+        else:
+            shear = ShearTracer(
+                perturbations=perturbations,
+                dndz=dndz,
+                z=z,
+                nuisance_params=_shear_nuisance(n_z_bins),
+                ia_model="NLA",
+            )
+        return np.asarray(AngularTwoPoint(pos, shear).get_Cl_tensor(ells, 0, ks))
+
+    cl_tatt_cb = cl("TATT", use_Pcb=True)
+    np.testing.assert_allclose(cl_tatt_cb, cl("NLA", use_Pcb=True), rtol=5e-3)
+    assert not np.allclose(cl_tatt_cb, cl("TATT", use_Pcb=False), rtol=1e-4, atol=0.0)
+
+
 def test_rsd_with_generalized_engine_raises_not_implemented(cosmo_setup):
     perturbations, z = cosmo_setup
     n_z_bins = 1

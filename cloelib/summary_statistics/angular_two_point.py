@@ -1,12 +1,18 @@
 """Module for angular two-point functions."""
 
 # cloelib imports
-from cloelib.observables.tracer import Tracer
+from cloelib.observables.photo.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
 from cloelib.observables.cmb import CMBLensingTracer
+from cloelib.observables.photo.spectrum_engine import (
+    build_spectra_bank,
+    get_effective_pk,
+    needs_generalized_engine,
+)
+from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.math_utils import simpsons_weights_jit
+from cloelib.auxiliary.math_utils import quadrature_weights, simpsons_weights_jit
 from cloelib.profiling import profile_function
 
 # General imports
@@ -75,6 +81,83 @@ Pkl_interp_vmap = jax.jit(jax.vmap(Pkl_interp, in_axes=(0, None, None, None, Non
 
 
 @jax.jit
+def Pkl_interp_signed(k_l, z_l, ks, zs, Pk) -> jax.numpy.ndarray:
+    """
+    Interpolate a possibly-negative effective power spectrum on a Limber grid.
+
+    `Pkl_interp` interpolates `log10(P)` in log-log `(log10(k), z)` space,
+    which assumes `P > 0` everywhere - true for the plain matter power
+    spectrum, but not for e.g. a matter-intrinsic (`GI`) effective spectrum,
+    which is generically signed (`C1(z)` in the TATT/NLA model carries a
+    minus sign - see `tatt.py`).
+
+    A first attempt at this interpolated `P` itself (not `log10(P)`)
+    linearly to sidestep `log10` of a negative number; that turned out to
+    be a real bug, not just a simplification - `P(k,z)` spans many orders
+    of magnitude across a log-spaced `k` grid, and interpax's akima
+    interpolation of the raw values across that range was wildly
+    inaccurate (verified: it produced results independent of the actual
+    effective-Pk terms, off by 5-6 orders of magnitude from the correct
+    C1**2 * P_dd limit). This keeps log-log accuracy for the *magnitude*
+    (`log10(|P|)`) and interpolates the sign separately, recombining
+    `sign(interpolated sign) * 10**(interpolated log10|P|)` - standard
+    practice for interpolating a signed, log-scale quantity.
+
+    Used by the generalized engine (`AngularTwoPoint._compute_cl_
+    generalized`) instead of `Pkl_interp`, which stays log-log (and
+    untouched) for the always-positive legacy path.
+
+    Parameters/Returns: as `Pkl_interp`.
+
+    TODO (PR #569 review): add dedicated tests for this function's
+    gradient behavior specifically (not just its forward values) - the
+    `sign(...)`/`clip(...)` machinery here is exactly the kind of
+    piecewise construct that can produce zero or discontinuous gradients
+    at a sign change or a clip boundary, and that risk hasn't been
+    checked directly yet (only indirectly, via the end-to-end TATT
+    differentiability tests in `test_get_cl_tensor.py`, which don't
+    target this function's own zero-crossing/edge behavior).
+    """
+    log_abs_pk = jax.numpy.log10(jax.numpy.abs(Pk) + 1e-300)
+    sign_pk = jax.numpy.sign(Pk)
+
+    log_ks = jax.numpy.log10(ks)
+    # A real (non-power-law) effective spectrum - e.g. TATT's one-loop
+    # kernels, which are steep and sign-changing near the edges of their
+    # k-grid, unlike the smooth matter Pk `Pkl_interp` extrapolates - has no
+    # well-defined asymptotic shape past its own grid to extrapolate at all:
+    # akima extrapolation there can send the *extrapolated* log-magnitude to
+    # +-hundreds at extreme Limber wavenumbers (k_l = (ell+0.5)/chi blows up
+    # as chi -> 0, i.e. the z ~ 0 edge of the redshift grid, at high ell),
+    # which `10**(...)` either overflows to +-inf (poisoning the whole Cl
+    # sum) or, if merely clipped after the fact, leaves an astronomically
+    # large-but-finite value that still dominates the sum - found via a
+    # genuine bad `Cl` from a real FAST-PT-backed `TATTContribution`
+    # (`PBJ_tatt.py`), not the smoother placeholder kernels, which never
+    # extrapolate steeply enough to trigger this. Clamping the query k to
+    # the grid's own domain before interpolating - constant (edge-value)
+    # behavior past the grid, standard practice for a function with no
+    # known extrapolation law - avoids extrapolating this kind of kernel at
+    # all; the clamped region only ever affects the physically negligible
+    # chi~0 edge (both the `dz` weight and the `1/chi**2` Limber prefactor
+    # already suppress it there), not genuine bulk grid values.
+    log_k = jax.numpy.clip(jax.numpy.log10(k_l), log_ks.min(), log_ks.max())
+
+    interp_log_abs = interpax.interp2d(
+        log_k, z_l, log_ks, zs, log_abs_pk, method="akima", extrap=True
+    )
+    interp_sign = interpax.interp2d(
+        log_k, z_l, log_ks, zs, sign_pk, method="akima", extrap=True
+    )
+    return jax.numpy.sign(interp_sign) * 10**interp_log_abs
+
+
+Pkl_interp_signed_vmap = jax.jit(
+    jax.vmap(Pkl_interp_signed, in_axes=(0, None, None, None, None))
+)
+
+
+@jax.jit
 def Cl_int_liz_jz(WT1l, WT2, Pkl, invH, invchi2, weights):
     # for window w/ RSD X window w/o RSD
     return np.einsum("liz,jz,lz,z,z,z->lij", WT1l, WT2, Pkl, invH, invchi2, weights)
@@ -131,6 +214,11 @@ def _growth_rate_on_grid(perturbations, zs_target):
     return np.interp(zs_target, z_raw, f_raw, left=f_raw[0], right=f_raw[-1])
 
 
+def _rad_to_arcmin(x):
+    """Convert an angle from radians to arcmin, the unit of Euclid COSEBI products."""
+    return float(x) * 180 * 60 / float(np.pi)
+
+
 def _resolve_w_ell(w_ell, bin_key, ns):
     """
     Return ``(kernel_array, thmin, thmax)`` for a given bin pair.
@@ -159,7 +247,9 @@ def _resolve_w_ell(w_ell, bin_key, ns):
     -------
     kernel_array : np.ndarray, shape ``(len(ns), n_ell)``
     thmin : float
+        Minimum angular scale of the kernels in radians (``metadata["THMIN"]``).
     thmax : float
+        Maximum angular scale of the kernels in radians (``metadata["THMAX"]``).
     """
     i, j = bin_key[2], bin_key[3]
     # Detect per-bin layout: values are dicts (not arrays)
@@ -195,7 +285,9 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
         Angular power spectra in cosmolib format.  All SHE-SHE bin pairs
         present in the dict are processed automatically.
     ells : jax.numpy.ndarray
-        Multipoles at which the integration is performed.
+        Multipoles at which the integration is performed. Any strictly
+        increasing grid is accepted (see ``quadrature_weights``); it must be
+        fine enough to resolve the oscillations of the kernels.
     w_ell : dict
         Harmonic-space COSEBIs kernels.  Two layouts are accepted:
 
@@ -216,7 +308,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     -------
     dict
         Dictionary keyed like the SHE-SHE entries of `cells` with `COSEBI`
-        values of shape ``(2, 2, n_modes)``.
+        values of shape ``(2, 2, n_modes)``. ``thmin``/``thmax`` are in
+        arcmin, as in the Euclid LE3 products read by euclidlib.
     """
     if software is None:
         software = "get_cosebis_from_cl (cloelib)"
@@ -226,7 +319,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     nmodes = int(np.max(ns))
     n_modes = ns.shape[0]
     # Pre-compute the ell weighting factor once: shape (n_ell,)
-    ell_weight = ells * simpsons_weights_jit(len(ells)) / (2 * np.pi)
+    # E_n = int dl l / (2 pi) C(l) W_n(l)
+    ell_weight = ells * quadrature_weights(ells) / (2 * np.pi)
 
     she_she = [
         (key, cl_map)
@@ -279,8 +373,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
                 array=arr_all[idx],
                 mode=ns,
                 nmodes=nmodes,
-                thmin=thmin,
-                thmax=thmax,
+                thmin=_rad_to_arcmin(thmin),
+                thmax=_rad_to_arcmin(thmax),
                 software=software,
             )
     else:
@@ -301,8 +395,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
                 array=arr,
                 mode=ns,
                 nmodes=nmodes,
-                thmin=thmin,
-                thmax=thmax,
+                thmin=_rad_to_arcmin(thmin),
+                thmax=_rad_to_arcmin(thmax),
                 software=software,
             )
 
@@ -316,19 +410,32 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
     Can be used as a standalone function without instantiating `AngularTwoPoint`
     if two-point correlation functions are already available.
 
+    Following Schneider, Eifler & Krause (2010),
+
+    .. math::
+
+        E_n = \\frac{1}{2} \\int d\\theta\\, \\theta
+              [T_{+n}(\\theta) \\xi_+(\\theta) + T_{-n}(\\theta) \\xi_-(\\theta)],
+
+        B_n = \\frac{1}{2} \\int d\\theta\\, \\theta
+              [T_{+n}(\\theta) \\xi_+(\\theta) - T_{-n}(\\theta) \\xi_-(\\theta)].
+
     Parameters
     ----------
     twopcf : dict
         Two-point correlation functions in cosmolib format.
         Keys should be tuples like ``('SHE', 'SHE', i, j)``.
     theta : jax.numpy.ndarray
-        Angular scales in radians.
+        Angular scales in radians, spanning the COSEBI range
+        ``[theta_min, theta_max]``.
     T_plus : array-like
-        Real-space T_+ kernel functions.
+        Real-space T_+ kernel functions evaluated on `theta` (without the
+        extra factor of theta), shape ``(n_rows, len(theta))``.
     T_minus : array-like
-        Real-space T_- kernel functions.
+        Real-space T_- kernel functions evaluated on `theta`, same layout as
+        `T_plus`.
     ns : jax.numpy.ndarray
-        Mode indices selecting kernels from `T_plus`/`T_minus`.
+        Row indices selecting kernels from `T_plus`/`T_minus`.
     software : str, optional
         Software provenance tag stored in the output `COSEBI` objects.
         Defaults to ``'get_cosebis_from_2pcf (cloelib)'``.
@@ -336,7 +443,8 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
     Returns
     -------
     dict
-        COSEBIs with EE and BB modes, keyed like `twopcf`.
+        COSEBIs with EE and BB modes, keyed like `twopcf`. ``thmin``/``thmax``
+        are in arcmin, as in the Euclid LE3 products read by euclidlib.
     """
     if software is None:
         software = "get_cosebis_from_2pcf (cloelib)"
@@ -344,21 +452,22 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
     T_minus = np.asarray(T_minus)
     ns = np.asarray(ns)
     tomo_cosebis = {}
+    # Shape (n_modes, n_theta): d theta * theta / 2 folded into the kernels
+    theta_weight = quadrature_weights(theta) * theta / 2
+    Tp_w = T_plus[ns] * theta_weight
+    Tm_w = T_minus[ns] * theta_weight
 
     for key, cf_map in twopcf.items():
-        if (key[0] == "SHE") & (key[1] == "SHE"):
+        if not (key[0] == "SHE" and key[1] == "SHE"):
             continue
 
         xi_plus = np.interp(theta, cf_map.theta, cf_map.array[0, 0])
         xi_minus = np.interp(theta, cf_map.theta, cf_map.array[1, 1])
 
-        def compute_cosebi(T_p, T_m):
-            weights = simpsons_weights_jit(len(theta))
-            ee = np.sum(xi_plus * T_p * weights) / np.pi
-            bb = np.sum(xi_minus * T_m * weights) / np.pi
-            return ee, bb
-
-        ee_vals, bb_vals = jax.vmap(compute_cosebi)(T_plus[ns], T_minus[ns])
+        plus = Tp_w @ xi_plus
+        minus = Tm_w @ xi_minus
+        ee_vals = plus + minus
+        bb_vals = plus - minus
 
         arr = np.zeros((2, 2, ns.shape[0]), dtype=np.float64)
         arr = arr.at[0, 0, :].set(ee_vals)
@@ -367,8 +476,8 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
             array=arr,
             mode=ns,
             nmodes=int(np.max(ns)),
-            thmin=np.min(theta),
-            thmax=np.max(theta),
+            thmin=_rad_to_arcmin(np.min(theta)),
+            thmax=_rad_to_arcmin(np.max(theta)),
             software=software,
         )
 
@@ -433,7 +542,97 @@ class AngularTwoPoint:
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk.T)
         return Pkl
 
+<<<<<<< HEAD
     def get_Cl_limber_vec(self, ells, nl, ks):
+=======
+    @profile_function
+    def get_Cl_tensor(self, ells, nl, ks) -> jax.numpy.ndarray:
+        """
+        Compute the angular power spectrum Cl using Limber approximation,
+        as a plain `jax.numpy.ndarray` - the exact same computation
+        `get_Cl` runs, without the final packaging step.
+
+        `get_Cl` itself is now also differentiable via `jax.grad`/
+        `jax.jacobian` (as of `cosmolib`'s
+        `26-fix-jax-clash-with-cloelib-photo-classes` fix: its
+        `AngularPowerSpectrum.__post_init__` used to unconditionally do
+        `np.asarray(self.array, dtype=float)` - a plain NumPy cast that
+        severs any `jax.grad` trace passing through it
+        (`TracerArrayConversionError`) - it now branches on `jax.Array`
+        and uses `jax.numpy.asarray` instead when the input is JAX's, so
+        it no longer breaks the trace). Prefer `get_Cl_tensor` over
+        `get_Cl` anyway when you don't need the packaged, per-pair-type
+        `dict`: it skips building that dict and the `AngularPowerSpectrum`
+        wrapper objects entirely, which is the more meaningful saving for
+        anything running under `jax.jit`/`jax.vmap`. The physics itself
+        (Limber integral, window functions, and - with the JAX-native
+        cosmology backend - the growth-factor ODE solve and halofit) was
+        always fully differentiable; confirmed against finite differences
+        in `playground/tutorials/observables/photo_autodiff.ipynb` and
+        `validation/photo_autodiff.ipynb`.
+
+        Parameters:
+            ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
+            nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): Angular power spectrum Cl for the given multipoles,
+            shape `(len(ells), n_bins1, n_bins2)` - `get_Cl`'s packaging
+            (`_package_cl`) builds its per-pair-type output (e.g. SHE-SHE's
+            2x2 E/B-mode block) from these same values, not a plain
+            reshape of this tensor; e.g. for a SHE-SHE pair,
+            `get_Cl(...)[("SHE","SHE",i,j)].array[0, 0]` (the EE block)
+            equals `get_Cl_tensor(...)[:, i-1, j-1]` exactly.
+        """
+        contributions1 = getattr(self.tracer1, "get_contributions", lambda: ())()
+        contributions2 = getattr(self.tracer2, "get_contributions", lambda: ())()
+
+        if needs_generalized_engine(contributions1, contributions2):
+            return self._compute_cl_generalized(
+                ells, ks, contributions1, contributions2
+            )
+        return self._compute_cl_legacy(ells, nl, ks)
+
+    @profile_function
+    def get_Cl(self, ells, nl, ks) -> dict:
+        """
+        Compute the angular power spectrum Cl using Limber approximation.
+
+        Combines the window functions of the tracers, interpolated matter power
+        spectrum, Hubble parameter, and comoving distances to calculate the
+        two-point angular statistics.
+
+        Differentiable via `jax.grad` (requires `cosmolib`'s
+        `26-fix-jax-clash-with-cloelib-photo-classes` fix; see
+        `get_Cl_tensor`'s docstring). `get_Cl_tensor` returns the same
+        computation without the packaging step, which is still cheaper for
+        code that doesn't need the packaged `dict`.
+
+        Parameters:
+            ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
+            nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
+            ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
+
+        Returns:
+            (jax.numpy.ndarray): Angular power spectrum Cl for the given multipoles.
+        """
+        C_ell_calc = self.get_Cl_tensor(ells, nl, ks)
+        self.C_ell_calc = C_ell_calc
+
+        return self._package_cl(C_ell_calc, ells)
+
+    def _compute_cl_legacy(self, ells, nl, ks):
+        """Fast path: one shared Pk grid, tracer-level windows.
+
+        Exercised whenever neither tracer's contributions declare any extra
+        `SpectrumRequest`s (`spectrum_engine.needs_generalized_engine` is
+        `False`) - every configuration that doesn't opt into a
+        generalized-engine-aware contribution (e.g. `ia_model="TATT"`).
+        Only the packaging at the end is shared with `_compute_cl_generalized`
+        (`_package_cl`); the Cl computation itself is fully independent.
+        """
+>>>>>>> origin
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
         dz = self.tracer1.z[1] - self.tracer1.z[0]
@@ -479,16 +678,7 @@ class AngularTwoPoint:
         Pkl = self._matter_power_spectrum_limber_grid(
             zs_calc, ks, self.tracer1.perturbations.z, ells
         )
-        # Added the prefactor here as this is where we have access to ells.
-        # There may be a more efficient way to do the multiplication
-        prefactor = (
-            np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
-            / (ells + 0.5) ** 2
-        )
-        # Did it this way to avoid an if statement, but would be good to know how necessary this is
-        prefactor_cell = (
-            prefactor * self.tracer1.prefact_toggle + 1 - self.tracer1.prefact_toggle
-        ) * (prefactor * self.tracer2.prefact_toggle + 1 - self.tracer2.prefact_toggle)
+        prefactor_cell = self._angular_prefactor(ells)
         weights = simpsons_weights_jit(len(H))
 
         # C_ell_calc = (
@@ -529,6 +719,7 @@ class AngularTwoPoint:
                 * dz
             )
 
+<<<<<<< HEAD
         return C_ell_calc * prefactor_cell[:, None, None]
 
     @profile_function
@@ -551,7 +742,127 @@ class AngularTwoPoint:
 
         C_ell_calc = self.get_Cl_limber_vec(ells, nl, ks)
         self.C_ell_calc = C_ell_calc
+=======
+        # Apply prefactor as before
+        C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
+        return C_ell_calc
+>>>>>>> origin
 
+    def _angular_prefactor(self, ells):
+        """Product of field responses, shared by both integration engines."""
+        shear_prefactor = (
+            np.sqrt((ells + 2.0) * (ells + 1.0) * ells * (ells - 1.0))
+            / (ells + 0.5) ** 2
+        )
+        gw_wl_prefactor = ells * (ells + 1.0) / (ells + 0.5) ** 2
+
+        def tracer_prefactor(tracer):
+            return (
+                1.0
+                + getattr(tracer, "prefact_toggle", 0) * (shear_prefactor - 1.0)
+                + getattr(tracer, "gw_prefact_toggle", 0) * (gw_wl_prefactor - 1.0)
+            )
+
+        return tracer_prefactor(self.tracer1) * tracer_prefactor(self.tracer2)
+
+    def _compute_cl_generalized(self, ells, ks, contributions1, contributions2):
+        """Cl via the per-contribution-pair engine (`spectrum_engine.py`).
+
+        Reached only when some contribution declares extra `SpectrumRequest`s
+        (e.g. `TATTContribution`). Sums `Cl_integration(W1, W2, Pkl_pair, ...)`
+        over every `(c1, c2)` in the Cartesian product of both tracers'
+        contributions, each pair using its own effective P(k,z)
+        (`spectrum_engine.get_effective_pk`, falling back to the plain
+        matter Pk when a pair has nothing special to say) - the same
+        physics separation `toy_cloelib.engine.compute_angular_power_
+        spectrum` uses, reusing cloelib's own existing jitted Limber
+        kernels (`Pkl_interp_vmap`, `Cl_integration`) unchanged for each
+        pair's integral.
+
+        Does not support RSD (`PositionsTracer(..., include_rsd=True)`)
+        paired with a generalized-engine-requiring contribution - that
+        combination isn't exercised by TATT and is left as a documented gap
+        rather than guessed at.
+        """
+        if (
+            isinstance(self.tracer1, PositionsTracer)
+            and getattr(self.tracer1, "include_rsd", False)
+        ) or (
+            isinstance(self.tracer2, PositionsTracer)
+            and getattr(self.tracer2, "include_rsd", False)
+        ):
+            raise NotImplementedError(
+                "The generalized Cl engine (contributions declaring extra "
+                "SpectrumRequests, e.g. TATTContribution) does not support "
+                "PositionsTracer(include_rsd=True) yet."
+            )
+
+        c_0 = SPEED_OF_LIGHT / 1000
+        zs_calc = self.tracer1.z
+        dz = self.tracer1.z[1] - self.tracer1.z[0]
+        H = self.tracer1.perturbations.background.hubble_parameter(
+            zs_calc, units="km/s/Mpc"
+        )
+        chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
+        chi2 = chi**2
+        weights = simpsons_weights_jit(len(H))
+
+        pert_zs = self.tracer1.perturbations.z
+        matter_pk = self.tracer1.perturbations.matter_power_spectrum(pert_zs, ks)
+        bank = build_spectra_bank(
+            contributions1, contributions2, matter_pk, ks, pert_zs
+        )
+
+        k_lz = np.expand_dims((ells + 0.5), 1) / chi
+        n_bin1 = self.tracer1.n_z_bins
+        n_bin2 = self.tracer2.n_z_bins
+        C_ell_calc = np.zeros((len(ells), n_bin1, n_bin2))
+
+        for c1 in contributions1:
+            for c2 in contributions2:
+                pk_eff = get_effective_pk(c1, c2, bank)
+                if pk_eff is None:
+                    Pkl_pair = Pkl_interp_vmap(k_lz, zs_calc, ks, pert_zs, matter_pk.T)
+                else:
+                    # Effective spectra (e.g. TATT's GI/II terms) are
+                    # generically signed - see `Pkl_interp_signed`'s
+                    # docstring - so they can't go through the log-log
+                    # `Pkl_interp` the always-positive matter Pk uses above.
+                    Pkl_pair = Pkl_interp_signed_vmap(
+                        k_lz, zs_calc, ks, pert_zs, pk_eff.T
+                    )
+
+                W1 = c1.compute_kernel(zs_calc)
+                W2 = c2.compute_kernel(zs_calc)
+                C_ell_calc = C_ell_calc + Cl_integration(
+                    W1, W2, Pkl_pair, H, chi2, weights
+                )
+
+        C_ell_calc = C_ell_calc * c_0 * dz
+
+        prefactor_cell = self._angular_prefactor(ells)
+        C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
+
+        # Multiplicative shear calibration (PR #569 review): the legacy path
+        # applies `1 + m_bias` inside `ShearTracer.get_window` before the
+        # Limber integral; this path integrates each Contribution's raw
+        # `compute_kernel` directly, bypassing `get_window` (and its m_bias
+        # factor) entirely. `1 + m_bias` is a per-bin, z/k-independent
+        # scalar, so it factors cleanly out of the (bilinear) Limber
+        # integral onto the final per-bin-pair Cl tensor - applied here
+        # instead, once, rather than inside every Contribution.
+        # `PositionsTracer`/`CMBLensingTracer` have no `m_bias` of their own
+        # - `getattr(..., "m_bias", zeros)` leaves those sides unscaled.
+        m1 = 1.0 + np.asarray(getattr(self.tracer1, "m_bias", np.zeros(n_bin1)))
+        m2 = 1.0 + np.asarray(getattr(self.tracer2, "m_bias", np.zeros(n_bin2)))
+        return C_ell_calc * m1[None, :, None] * m2[None, None, :]
+
+    def _package_cl(self, C_ell_calc, ells) -> dict:
+        """Slice/reshape `C_ell_calc` into the cosmolib-format output dict.
+
+        Shared, untouched packaging logic - identical regardless of which
+        computation produced `C_ell_calc`.
+        """
         n_bin1 = self.tracer1.n_z_bins
         n_bin2 = self.tracer2.n_z_bins
         C_ell_out = {}
@@ -581,13 +892,8 @@ class AngularTwoPoint:
             return {("POS", "POS", i, j): C[:, i - 1, j - 1]}
 
         def pos_she_rule(C, i, j):
-            block1 = C[:, i - 1, j - 1]
-            block2 = C[:, j - 1, i - 1]
-
-            return {
-                ("POS", "SHE", i, j): np.stack([block1, np.zeros_like(block1)]),
-                ("POS", "SHE", j, i): np.stack([block2, np.zeros_like(block2)]),
-            }
+            block = C[:, i - 1, j - 1]
+            return {("POS", "SHE", i, j): np.stack([block, np.zeros_like(block)])}
 
         def she_she_rule(C, i, j):
             block = C[:, i - 1, j - 1]
@@ -599,13 +905,34 @@ class AngularTwoPoint:
             return {("CMBL", "CMBL", i, j): C[:, i - 1, j - 1]}
 
         def cmbl_pos_rule(C, i, j):
-            a, b = sorted((i, j))
-            return {("CMBL", "POS", a, b): C[:, i - 1, j - 1]}
+            return {("CMBL", "POS", i, j): C[:, i - 1, j - 1]}
 
         def cmbl_she_rule(C, i, j):
             block = C[:, i - 1, j - 1]
-            a, b = sorted((i, j))
-            return {("CMBL", "SHE", a, b): np.stack([block, np.zeros_like(block)])}
+            return {("CMBL", "SHE", i, j): np.stack([block, np.zeros_like(block)])}
+
+        def gwnc_gwnc_rule(C, i, j):
+            return {("GWNC", "GWNC", i, j): C[:, i - 1, j - 1]}
+
+        def gwwl_gwwl_rule(C, i, j):
+            return {("GWWL", "GWWL", i, j): C[:, i - 1, j - 1]}
+
+        def gwnc_gwwl_rule(C, i, j):
+            return {("GWNC", "GWWL", i, j): C[:, i - 1, j - 1]}
+
+        def pos_gwnc_rule(C, i, j):
+            return {("POS", "GWNC", i, j): C[:, i - 1, j - 1]}
+
+        def pos_gwwl_rule(C, i, j):
+            return {("POS", "GWWL", i, j): C[:, i - 1, j - 1]}
+
+        def she_gwnc_rule(C, i, j):
+            block = C[:, i - 1, j - 1]
+            return {("SHE", "GWNC", i, j): np.stack([block, np.zeros_like(block)])}
+
+        def she_gwwl_rule(C, i, j):
+            block = C[:, i - 1, j - 1]
+            return {("SHE", "GWWL", i, j): np.stack([block, np.zeros_like(block)])}
 
         tracer_rules = {
             (PositionsTracer, PositionsTracer): pos_pos_rule,
@@ -614,12 +941,23 @@ class AngularTwoPoint:
             (CMBLensingTracer, PositionsTracer): cmbl_pos_rule,
             (CMBLensingTracer, ShearTracer): cmbl_she_rule,
             (CMBLensingTracer, CMBLensingTracer): cmbl_cmbl_rule,
+            (GWNumberCountsTracer, GWNumberCountsTracer): gwnc_gwnc_rule,
+            (GWWeakLensingTracer, GWWeakLensingTracer): gwwl_gwwl_rule,
+            (GWNumberCountsTracer, GWWeakLensingTracer): gwnc_gwwl_rule,
+            (PositionsTracer, GWNumberCountsTracer): pos_gwnc_rule,
+            (PositionsTracer, GWWeakLensingTracer): pos_gwwl_rule,
+            (ShearTracer, GWNumberCountsTracer): she_gwnc_rule,
+            (ShearTracer, GWWeakLensingTracer): she_gwwl_rule,
         }
 
-        # normalize the key so (A, B) and (B, A) are both supported
+        # Normalize the key so (A, B) and (B, A) are both supported. Keep
+        # track of the reversal because C_ell_calc retains the input tracer
+        # order on its two tomographic-bin axes.
         key = (type(self.tracer1), type(self.tracer2))
+        key_was_reversed = False
         if key not in tracer_rules and key[::-1] in tracer_rules:
             key = key[::-1]
+            key_was_reversed = True
 
         rule_fn = tracer_rules.get(key)
         if rule_fn is None:
@@ -627,17 +965,23 @@ class AngularTwoPoint:
                 f"No rule defined for tracers {type(self.tracer1)}, {type(self.tracer2)}"
             )
 
-        # Vectorized update of C_ell_out using dictionary comprehensions
-        a, b = sorted((n_bin1, n_bin2))
+        if key_was_reversed:
+            C_ell_for_rule = np.swapaxes(C_ell_calc, 1, 2)
+            n_rule_bin1, n_rule_bin2 = n_bin2, n_bin1
+        else:
+            C_ell_for_rule = C_ell_calc
+            n_rule_bin1, n_rule_bin2 = n_bin1, n_bin2
+
+        # Same-observable spectra are symmetric in their tomographic bins and
+        # retain the established upper-triangle output. Cross-observable
+        # spectra use the full Cartesian product; each rule emits one key in
+        # canonical tracer order.
+        symmetric_output = key[0] is key[1]
         C_ell_out = {
             k: v
-            for i in range(1, a + 1)
-            for j in range(i, b + 1)
-            for k, v in (
-                rule_fn(C_ell_calc, i, j)
-                if n_bin1 <= n_bin2
-                else rule_fn(C_ell_calc, j, i)
-            ).items()
+            for i in range(1, n_rule_bin1 + 1)
+            for j in range(i if symmetric_output else 1, n_rule_bin2 + 1)
+            for k, v in rule_fn(C_ell_for_rule, i, j).items()
         }
 
         # Use dictionary comprehension for cosmolib_Cls creation
@@ -685,17 +1029,6 @@ class AngularTwoPoint:
         n_bin = self.tracer1.n_z_bins
         C_ell_out = {}
 
-        # Helper for POS-SHE symmetry
-        def fill_pos_she(i, j):
-            for a, b in [(i, j), (j, i)]:
-                arr = np.zeros((2, mixing_matrix[("POS", "SHE", a, b)].ell.shape[0]))
-                for idx in [0, 1]:
-                    arr = arr.at[idx].set(
-                        mixing_matrix[("POS", "SHE", a, b)]
-                        @ C_ell_calc[("POS", "SHE", a, b)].array[idx]
-                    )
-                C_ell_out[("POS", "SHE", a, b)] = arr
-
         # Main logic for each tracer combination
         if tracer_types == (PositionsTracer, PositionsTracer):
             for i in range(1, n_bin + 1):
@@ -707,9 +1040,22 @@ class AngularTwoPoint:
             (PositionsTracer, ShearTracer),
             (ShearTracer, PositionsTracer),
         ]:
-            for i in range(1, n_bin + 1):
-                for j in range(i, n_bin + 1):
-                    fill_pos_she(i, j)
+            # Cross-correlation: every (POS bin, SHE bin) pair, and the two
+            # tracers can have a different number of bins.
+            if tracer_types[0] is PositionsTracer:
+                n_pos, n_she = self.tracer1.n_z_bins, self.tracer2.n_z_bins
+            else:
+                n_pos, n_she = self.tracer2.n_z_bins, self.tracer1.n_z_bins
+            for i in range(1, n_pos + 1):
+                for j in range(1, n_she + 1):
+                    key = ("POS", "SHE", i, j)
+                    # The same mixing matrix acts on the E and the B part.
+                    C_ell_out[key] = np.stack(
+                        [
+                            mixing_matrix[key].array @ C_ell_calc[key].array[0],
+                            mixing_matrix[key].array @ C_ell_calc[key].array[1],
+                        ]
+                    )
 
         elif tracer_types == (ShearTracer, ShearTracer):
             for i in range(1, n_bin + 1):

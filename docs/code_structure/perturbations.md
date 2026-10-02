@@ -438,7 +438,25 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
-<<<<<<< 287-hi-class
+### MGCLASSPerturbations
+
+Interfaces with [MGCLASS](https://gitlab.com/zizgitlab/mgclass--ii).
+
+**Location**: `cloelib/cosmology/mgclass_cosmology.py`
+
+**When to use**: MGCLASS-specific features, comparison studies
+
+**Example**:
+
+```python
+from cloelib.cosmology.mgclass_cosmology import MGCLASSBackground, MGCLASSPerturbations
+
+bg = MGCLASSBackground(...)
+pert = MGCLASSPerturbations(
+    background=bg,
+    # other parameters
+)
+```
 
 ### hi_classPerturbations
 
@@ -460,8 +478,6 @@ pert = hi_classPerturbations(
 )
 ```
 
-=======
-
 ### EmantisPerturbations
 
 Accurate and fast emulator of the nonlinear matter power spectrum in modified gravity using [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis).
@@ -475,7 +491,6 @@ Accurate and fast emulator of the nonlinear matter power spectrum in modified gr
 - Fast predictions of the nonlinear matter power spectrum in f(R) gravity;
 - Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;
 - Limited to the Hu & Sawicki model (n=1) with fR0 as free parameter;
-  > > > > > > > main
 
 ## Adding Your Own Perturbations Implementation
 
@@ -776,7 +791,7 @@ def matter_power_spectrum(self, zs, ks):
 
 Now that you have a grounding in Perturbations, explore:
 
-- [Observables](observables.md) – Connect structure to survey measurements
-- [Summary Statistics](summary_statistics.md) – Compute final data products
+- [Observables](observables/index.md) – Connect structure to survey measurements
+- [Summary Statistics](summary_statistics/index.md) – Compute final data products
 - [Background](background.md) – Review the foundation
 - [API Reference](../api.md) – Full technical details

@@ -58,6 +58,7 @@ Thumbs.db
 # Local environment variables
 .env
 *.secrets
+.sisyphus/
 
 # Compiled Cython files
 *.c

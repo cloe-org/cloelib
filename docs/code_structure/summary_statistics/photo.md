@@ -108,6 +108,22 @@ Only `get_cosebis` is available as a class method. `get_cosebis_from_2pcf` is st
 
 Both interfaces require optional dependencies (`pylevin`, `mpmath`). The COSEBIs kernels (`w_ell`, `T_plus`, `T_minus`) must be precomputed using helpers from `cloelib.auxiliary.cosebi_helpers`.
 
+**Output format and units**:
+The output matches the Euclid LE3 COSEBI products read by `euclidlib.le3.twopcf_wl.cosebis`. Each `COSEBI` has an `array` of shape `(2, 2, n_modes)`, with EE in `array[0, 0]` and BB in `array[1, 1]`. The EB/BE entries are zero in the theory output. `thmin`/`thmax` are in **arcmin**.
+
+The inputs are in **radians**: `theta` in `get_cosebis_from_2pcf`, and the `thetagrid` passed to `get_W_ell`, whose `metadata["THMIN"]`/`["THMAX"]` are therefore in radians too. For example, for kernels matching a 1–400 arcmin product:
+
+```python
+import numpy as np
+from cloelib.auxiliary.cosebi_helpers import get_W_ell
+
+thetagrid = np.radians(np.geomspace(1.0, 400.0, 500) / 60)  # arcmin -> rad
+w_ell = get_W_ell(thetagrid, Nmax=20, ells=ells, N_thread=4)
+```
+
+**Integration grids**:
+The integrals over $\ell$ (and over $\theta$ for `get_cosebis_from_2pcf`) use the actual grid spacing, so `ells` and `theta` can be linearly or logarithmically spaced. Simpson's rule is used on linear and log grids, and the trapezoidal rule on any other increasing grid. The `ells` passed to `get_cosebis_from_cl`/`get_cosebis` must be the grid on which `w_ell` was evaluated, and it must be fine enough to resolve the oscillations of the kernels, whose period in $\ell$ is roughly $2\pi/\theta_{\max}$. Check convergence by comparing against a denser grid.
+
 ## AngularCorrelationFunction
 
 Protocol to set up how to compute real-space angular correlation functions $\xi(\theta)$.

@@ -12,7 +12,7 @@ from cloelib.observables.photo.spectrum_engine import (
 )
 from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.math_utils import simpsons_weights_jit
+from cloelib.auxiliary.math_utils import quadrature_weights, simpsons_weights_jit
 from cloelib.profiling import profile_function
 
 # General imports
@@ -195,6 +195,11 @@ def _growth_rate_on_grid(perturbations, zs_target):
     return perturbations.growth_rate(zs_target)
 
 
+def _rad_to_arcmin(x):
+    """Convert an angle from radians to arcmin, the unit of Euclid COSEBI products."""
+    return float(x) * 180 * 60 / float(np.pi)
+
+
 def _resolve_w_ell(w_ell, bin_key, ns):
     """
     Return ``(kernel_array, thmin, thmax)`` for a given bin pair.
@@ -223,7 +228,9 @@ def _resolve_w_ell(w_ell, bin_key, ns):
     -------
     kernel_array : np.ndarray, shape ``(len(ns), n_ell)``
     thmin : float
+        Minimum angular scale of the kernels in radians (``metadata["THMIN"]``).
     thmax : float
+        Maximum angular scale of the kernels in radians (``metadata["THMAX"]``).
     """
     i, j = bin_key[2], bin_key[3]
     # Detect per-bin layout: values are dicts (not arrays)
@@ -259,7 +266,9 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
         Angular power spectra in cosmolib format.  All SHE-SHE bin pairs
         present in the dict are processed automatically.
     ells : jax.numpy.ndarray
-        Multipoles at which the integration is performed.
+        Multipoles at which the integration is performed. Any strictly
+        increasing grid is accepted (see ``quadrature_weights``); it must be
+        fine enough to resolve the oscillations of the kernels.
     w_ell : dict
         Harmonic-space COSEBIs kernels.  Two layouts are accepted:
 
@@ -280,7 +289,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     -------
     dict
         Dictionary keyed like the SHE-SHE entries of `cells` with `COSEBI`
-        values of shape ``(2, 2, n_modes)``.
+        values of shape ``(2, 2, n_modes)``. ``thmin``/``thmax`` are in
+        arcmin, as in the Euclid LE3 products read by euclidlib.
     """
     if software is None:
         software = "get_cosebis_from_cl (cloelib)"
@@ -290,7 +300,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     nmodes = int(np.max(ns))
     n_modes = ns.shape[0]
     # Pre-compute the ell weighting factor once: shape (n_ell,)
-    ell_weight = ells * simpsons_weights_jit(len(ells)) / (2 * np.pi)
+    # E_n = int dl l / (2 pi) C(l) W_n(l)
+    ell_weight = ells * quadrature_weights(ells) / (2 * np.pi)
 
     she_she = [
         (key, cl_map)
@@ -343,8 +354,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
                 array=arr_all[idx],
                 mode=ns,
                 nmodes=nmodes,
-                thmin=thmin,
-                thmax=thmax,
+                thmin=_rad_to_arcmin(thmin),
+                thmax=_rad_to_arcmin(thmax),
                 software=software,
             )
     else:
@@ -365,8 +376,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
                 array=arr,
                 mode=ns,
                 nmodes=nmodes,
-                thmin=thmin,
-                thmax=thmax,
+                thmin=_rad_to_arcmin(thmin),
+                thmax=_rad_to_arcmin(thmax),
                 software=software,
             )
 
@@ -380,19 +391,32 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
     Can be used as a standalone function without instantiating `AngularTwoPoint`
     if two-point correlation functions are already available.
 
+    Following Schneider, Eifler & Krause (2010),
+
+    .. math::
+
+        E_n = \\frac{1}{2} \\int d\\theta\\, \\theta
+              [T_{+n}(\\theta) \\xi_+(\\theta) + T_{-n}(\\theta) \\xi_-(\\theta)],
+
+        B_n = \\frac{1}{2} \\int d\\theta\\, \\theta
+              [T_{+n}(\\theta) \\xi_+(\\theta) - T_{-n}(\\theta) \\xi_-(\\theta)].
+
     Parameters
     ----------
     twopcf : dict
         Two-point correlation functions in cosmolib format.
         Keys should be tuples like ``('SHE', 'SHE', i, j)``.
     theta : jax.numpy.ndarray
-        Angular scales in radians.
+        Angular scales in radians, spanning the COSEBI range
+        ``[theta_min, theta_max]``.
     T_plus : array-like
-        Real-space T_+ kernel functions.
+        Real-space T_+ kernel functions evaluated on `theta` (without the
+        extra factor of theta), shape ``(n_rows, len(theta))``.
     T_minus : array-like
-        Real-space T_- kernel functions.
+        Real-space T_- kernel functions evaluated on `theta`, same layout as
+        `T_plus`.
     ns : jax.numpy.ndarray
-        Mode indices selecting kernels from `T_plus`/`T_minus`.
+        Row indices selecting kernels from `T_plus`/`T_minus`.
     software : str, optional
         Software provenance tag stored in the output `COSEBI` objects.
         Defaults to ``'get_cosebis_from_2pcf (cloelib)'``.
@@ -400,7 +424,8 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
     Returns
     -------
     dict
-        COSEBIs with EE and BB modes, keyed like `twopcf`.
+        COSEBIs with EE and BB modes, keyed like `twopcf`. ``thmin``/``thmax``
+        are in arcmin, as in the Euclid LE3 products read by euclidlib.
     """
     if software is None:
         software = "get_cosebis_from_2pcf (cloelib)"
@@ -408,21 +433,22 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
     T_minus = np.asarray(T_minus)
     ns = np.asarray(ns)
     tomo_cosebis = {}
+    # Shape (n_modes, n_theta): d theta * theta / 2 folded into the kernels
+    theta_weight = quadrature_weights(theta) * theta / 2
+    Tp_w = T_plus[ns] * theta_weight
+    Tm_w = T_minus[ns] * theta_weight
 
     for key, cf_map in twopcf.items():
-        if (key[0] == "SHE") & (key[1] == "SHE"):
+        if not (key[0] == "SHE" and key[1] == "SHE"):
             continue
 
         xi_plus = np.interp(theta, cf_map.theta, cf_map.array[0, 0])
         xi_minus = np.interp(theta, cf_map.theta, cf_map.array[1, 1])
 
-        def compute_cosebi(T_p, T_m):
-            weights = simpsons_weights_jit(len(theta))
-            ee = np.sum(xi_plus * T_p * weights) / np.pi
-            bb = np.sum(xi_minus * T_m * weights) / np.pi
-            return ee, bb
-
-        ee_vals, bb_vals = jax.vmap(compute_cosebi)(T_plus[ns], T_minus[ns])
+        plus = Tp_w @ xi_plus
+        minus = Tm_w @ xi_minus
+        ee_vals = plus + minus
+        bb_vals = plus - minus
 
         arr = np.zeros((2, 2, ns.shape[0]), dtype=np.float64)
         arr = arr.at[0, 0, :].set(ee_vals)
@@ -431,8 +457,8 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
             array=arr,
             mode=ns,
             nmodes=int(np.max(ns)),
-            thmin=np.min(theta),
-            thmax=np.max(theta),
+            thmin=_rad_to_arcmin(np.min(theta)),
+            thmax=_rad_to_arcmin(np.max(theta)),
             software=software,
         )
 

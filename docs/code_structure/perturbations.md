@@ -612,7 +612,7 @@ refine this by adding the neutrino contribution at linear order. The difference 
 boosts to be equivalent at that level, so `cloelib` treats them as the same.
 
 !!! note "Return shape"
-All `matter_power_spectrum` methods (including baryonic ones) return shape `(n_k,)` for single-redshift inputs and `(n_z, n_k)` for multi-redshift inputs via `.squeeze()`.
+All `matter_power_spectrum` methods (including baryonic ones) return shape `(n_z, n_k)`, also for a single redshift, which gives `(1, n_k)`. `baryonic_suppression` returns the same shape, so the boosted spectra keep it.
 
 ## Adding Your Own Perturbations Implementation
 

@@ -559,8 +559,10 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
     Can be combined with *any* HMcode2020emu nonlinear perturbations class::
 
         class MyPert(HMcode2020BaryonBoostMixin, HMemuNonLinearPerturbations):
-            def __init__(self, background, linear, redshifts, log10TAGN=7.8):
-                HMemuNonLinearPerturbations.__init__(self, background, linear, redshifts)
+            def __init__(self, background, linearperturbations, redshifts, log10TAGN=7.8):
+                HMemuNonLinearPerturbations.__init__(
+                    self, background, linearperturbations, redshifts
+                )
                 HMcode2020BaryonBoostMixin.__init__(self, log10TAGN=log10TAGN)
 
     Or use :func:`~cloelib.cosmology.cosmology.with_baryon_boost`.

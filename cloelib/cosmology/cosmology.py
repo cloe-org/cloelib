@@ -349,12 +349,9 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
 
         def matter_power_spectrum(self, zs, ks, **kwargs):
             pk = NonLinearClass.matter_power_spectrum(self, zs, ks, **kwargs)
-            return (
-                pk
-                * self.baryonic_suppression(
-                    zs, ks, k_hunit=kwargs.get("k_hunit", False)
-                )
-            ).squeeze()
+            return pk * self.baryonic_suppression(
+                zs, ks, k_hunit=kwargs.get("k_hunit", False)
+            )
 
         def matter_power_spectrum_cb(self, zs, ks, **kwargs):
             # The cdm+baryon spectrum is given the *same* boost as total matter.
@@ -366,12 +363,9 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
             # mnu = 0.4 eV, and FLAMINGO simulations show total and cold boosts
             # to be equivalent at that level, so the same boost is used for both.
             pk = NonLinearClass.matter_power_spectrum_cb(self, zs, ks, **kwargs)
-            return (
-                pk
-                * self.baryonic_suppression(
-                    zs, ks, k_hunit=kwargs.get("k_hunit", False)
-                )
-            ).squeeze()
+            return pk * self.baryonic_suppression(
+                zs, ks, k_hunit=kwargs.get("k_hunit", False)
+            )
 
     Combined.__name__ = f"{NonLinearClass.__name__}With{BaryonMixinClass.__name__}"
     Combined.__qualname__ = Combined.__name__

@@ -133,7 +133,9 @@ def _dndz(n_z_bins, z):
     return dndz / np.trapezoid(dndz, z, axis=1)[:, None]
 
 
-def _nlbias_tracer(perturbations, dndz, z, loop_computer, **nuisance_extra):
+def _nlbias_tracer(
+    perturbations, dndz, z, loop_computer, subtract_sigma4=False, **nuisance_extra
+):
     return PositionsTracer(
         perturbations=perturbations,
         dndz=dndz,
@@ -141,6 +143,7 @@ def _nlbias_tracer(perturbations, dndz, z, loop_computer, **nuisance_extra):
         galaxy_bias_model="nonlinear",
         nuisance_params=_pos_nuisance(dndz.shape[0], **nuisance_extra),
         nl_bias_loop_computer=loop_computer,
+        nl_bias_subtract_sigma4=subtract_sigma4,
     )
 
 
@@ -219,9 +222,10 @@ def test_requirements_pruned_for_ia_pairing(cosmo_setup):
 
     assert bias.get_requirements_for_interaction(nla) == ()
     assert isinstance(nla, IntrinsicAlignmentContribution)
+    # sigma^4 is only requested when it is subtracted (off by default).
     assert {r.name for r in bias.get_requirements_for_interaction(lensing)} == set(
         _NLBIAS_KERNELS
-    )
+    ) - {"nlbias_sig4"}
     assert needs_generalized_engine(
         pos_tracer.get_contributions(), shear_tracer.get_contributions()
     )
@@ -463,6 +467,139 @@ def test_rsd_with_generalized_engine_raises_not_implemented(cosmo_setup):
     ks = np.asarray(perturbations.k)
     with pytest.raises(NotImplementedError):
         AngularTwoPoint(pos_tracer, pos_tracer).get_Cl(ells, 0, ks)
+
+
+def test_subtract_sigma4_rejected_for_non_nonlinear_model(cosmo_setup):
+    perturbations, z = cosmo_setup
+    dndz = _dndz(1, z)
+    with pytest.raises(ValueError):
+        PositionsTracer(
+            perturbations=perturbations,
+            dndz=dndz,
+            z=z,
+            galaxy_bias_model="per_bin",
+            nuisance_params=_pos_nuisance(1, b1_photo_bin0=1.1),
+            nl_bias_subtract_sigma4=True,
+        )
+
+
+def test_subtract_sigma4_requests_sig4_kernel(cosmo_setup):
+    perturbations, z = cosmo_setup
+    dndz = _dndz(1, z)
+    tracer = _nlbias_tracer(
+        perturbations, dndz, z, _StubNLBiasLoopComputer(), subtract_sigma4=True
+    )
+    assert {r.name for r in tracer.bias.get_spectrum_requests()} == set(_NLBIAS_KERNELS)
+
+
+def test_subtract_sigma4_changes_only_pos_pos(cosmo_setup):
+    """The sigma^4 pieces only enter `P_gg` (`b2`/`bs2` products): turning
+    the subtraction on changes POS-POS but leaves POS-SHE unchanged."""
+    perturbations, z = cosmo_setup
+    n_z_bins = 2
+    dndz = _dndz(n_z_bins, z)
+    bias = dict(
+        b1_photo_nl_bin0=1.4,
+        b1_photo_nl_bin1=1.7,
+        b2_photo_nl_bin0=0.5,
+        b2_photo_nl_bin1=0.2,
+        bs2_photo_nl_bin0=-0.3,
+    )
+    loop = _StubNLBiasLoopComputer()
+    plain = _nlbias_tracer(perturbations, dndz, z, loop, **bias)
+    subtracted = _nlbias_tracer(
+        perturbations, dndz, z, loop, subtract_sigma4=True, **bias
+    )
+    shear_tracer = ShearTracer(
+        perturbations=perturbations,
+        dndz=dndz,
+        z=z,
+        nuisance_params=_shear_nuisance(n_z_bins),
+    )
+
+    ells = np.logspace(1.0, np.log10(200), 6)
+    ks = np.asarray(perturbations.k)
+
+    pp_plain = AngularTwoPoint(plain, plain).get_Cl(ells, 0, ks)
+    pp_sub = AngularTwoPoint(subtracted, subtracted).get_Cl(ells, 0, ks)
+    ps_plain = AngularTwoPoint(plain, shear_tracer).get_Cl(ells, 0, ks)
+    ps_sub = AngularTwoPoint(subtracted, shear_tracer).get_Cl(ells, 0, ks)
+
+    for key in pp_plain:
+        assert not np.allclose(
+            np.asarray(pp_sub[key].array),
+            np.asarray(pp_plain[key].array),
+            rtol=1e-6,
+            atol=0.0,
+        ), key
+    for key in ps_plain:
+        np.testing.assert_allclose(
+            np.asarray(ps_sub[key].array), np.asarray(ps_plain[key].array)
+        )
+
+
+def test_shot_noise_only_on_same_bin_pairs(cosmo_setup):
+    """`Psn_photo_nl_bin{i}` adds `Psn_i * int W_i^2 / (H chi^2) dz` to the
+    auto-bin Cl only: linear in `Psn_i`, independent of ell, and absent from
+    cross-bin pairs and from the other bin (the two bins here fully overlap,
+    so a non-diagonal leak would show up)."""
+    perturbations, z = cosmo_setup
+    n_z_bins = 2
+    dndz = _dndz(n_z_bins, z)
+    bias = dict(b1_photo_nl_bin0=1.4, b1_photo_nl_bin1=1.7, b2_photo_nl_bin0=0.5)
+    loop = _StubNLBiasLoopComputer()
+
+    ells = np.logspace(1.0, np.log10(200), 6)
+    ks = np.asarray(perturbations.k)
+
+    def cls(**extra):
+        tracer = _nlbias_tracer(perturbations, dndz, z, loop, **bias, **extra)
+        out = AngularTwoPoint(tracer, tracer).get_Cl(ells, 0, ks)
+        return {key: np.asarray(spectrum.array) for key, spectrum in out.items()}
+
+    no_sn = cls()
+    sn = cls(Psn_photo_nl_bin0=1e3)
+    sn_double = cls(Psn_photo_nl_bin0=2e3)
+    sn_zero = cls(Psn_photo_nl_bin0=0.0, Psn_photo_nl_bin1=0.0)
+
+    diff = sn[("POS", "POS", 1, 1)] - no_sn[("POS", "POS", 1, 1)]
+    assert np.all(diff > 0)
+    np.testing.assert_allclose(diff, diff[0], rtol=1e-6)
+    np.testing.assert_allclose(
+        sn_double[("POS", "POS", 1, 1)] - no_sn[("POS", "POS", 1, 1)],
+        2 * diff,
+        rtol=1e-6,
+    )
+    for key in [("POS", "POS", 1, 2), ("POS", "POS", 2, 2)]:
+        np.testing.assert_allclose(sn[key], no_sn[key], rtol=1e-10)
+    for key in no_sn:
+        np.testing.assert_allclose(sn_zero[key], no_sn[key], rtol=1e-10)
+
+
+def test_shot_noise_absent_from_cross_tracer_pairs(cosmo_setup):
+    """No shot noise between two different tracers (e.g. POS-SHE)."""
+    perturbations, z = cosmo_setup
+    dndz = _dndz(1, z)
+    loop = _StubNLBiasLoopComputer()
+    shear_tracer = ShearTracer(
+        perturbations=perturbations,
+        dndz=dndz,
+        z=z,
+        nuisance_params=_shear_nuisance(1),
+    )
+    ells = np.logspace(1.0, np.log10(200), 6)
+    ks = np.asarray(perturbations.k)
+
+    plain = _nlbias_tracer(perturbations, dndz, z, loop, b1_photo_nl_bin0=1.4)
+    sn = _nlbias_tracer(
+        perturbations, dndz, z, loop, b1_photo_nl_bin0=1.4, Psn_photo_nl_bin0=1e3
+    )
+    ps_plain = AngularTwoPoint(plain, shear_tracer).get_Cl(ells, 0, ks)
+    ps_sn = AngularTwoPoint(sn, shear_tracer).get_Cl(ells, 0, ks)
+    for key in ps_plain:
+        np.testing.assert_allclose(
+            np.asarray(ps_sn[key].array), np.asarray(ps_plain[key].array)
+        )
 
 
 def test_linear_galaxy_bias_contribution_unaffected():

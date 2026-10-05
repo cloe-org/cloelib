@@ -377,12 +377,13 @@ class NonLinearGalaxyBiasContribution:
 
         P_gg(z, k)      = b1_a b1_b P_dd(z, k)
                          + (1/2)(b1_a b2_b + b1_b b2_a) Pd1d2(k,z)
-                         + (1/4) b2_a b2_b [Pd2d2(k,z) - 2 sig4(z)]
+                         + (1/4) b2_a b2_b [Pd2d2(k,z) - s 2 sig4(z)]
                          + (1/2)(b1_a bs2_b + b1_b bs2_a) Pd1s2(k,z)
-                         + (1/4)(b2_a bs2_b + b2_b bs2_a) [Pd2s2(k,z) - (4/3) sig4(z)]
-                         + (1/4) bs2_a bs2_b [Ps2s2(k,z) - (8/9) sig4(z)]
+                         + (1/4)(b2_a bs2_b + b2_b bs2_a) [Pd2s2(k,z) - s (4/3) sig4(z)]
+                         + (1/4) bs2_a bs2_b [Ps2s2(k,z) - s (8/9) sig4(z)]
                          + (1/2)(b1_a b3nl_b + b1_b b3nl_a) sig3nl(k,z)
                          + (1/2)(b1_a bk2_b + b1_b bk2_a) k^2 P_dd(k,z)
+                         + delta_ab Psn_a
 
         P_g,delta(z, k) = b1 P_dd(z, k)
                          + (1/2) b2 Pd1d2(k,z)
@@ -390,7 +391,20 @@ class NonLinearGalaxyBiasContribution:
                          + (1/2) b3nl sig3nl(k,z)
                          + (1/2) bk2 k^2 P_dd(k,z)
 
-    where `Pd1d2`/`Pd2d2`/`Pd1s2`/`Pd2s2`/`Ps2s2`/`sig3nl` are FAST-PT's
+    where `s` is 1 if `subtract_sigma4` is set and 0 otherwise, and
+    `Psn_a` is the free, scale-independent shot-noise amplitude of bin `a`
+    (same units as `matter_pk`), added to same-bin pairs only (`delta_ab` -
+    only when `other is self`, i.e. the auto-correlation of this tracer).
+
+    The sigma^4 subtraction removes the k -> 0 constant limits of the
+    `b2`/`bs2` loop terms, which are degenerate with a constant (shot-noise
+    like) term in `P_gg`. Whether to subtract them, and whether a free
+    shot-noise term should then absorb them, is a modelling choice (see
+    issue #622): `subtract_sigma4=False` (the default) matches CosmoSIS;
+    `True` reproduces the renormalised McDonald & Roy (2009) expressions.
+    The constant pieces only enter `P_gg`, never `P_g,delta`.
+
+    `Pd1d2`/`Pd2d2`/`Pd1s2`/`Pd2s2`/`Ps2s2`/`sig3nl` are FAST-PT's
     `one_loop_dd_bias_b3nl` kernels (pure functions of k, computed once at
     z=0 by `PBJNonlinearBiasLoopComputer`) scaled to redshift z via the
     growth factor `D(z)^4` (`_growth4`) - the same z-scaling
@@ -450,6 +464,11 @@ class NonLinearGalaxyBiasContribution:
       bs2: tidal (`s^2`) bias, shape `(n_z_bins,)`.
       b3nl: third-order non-local bias, shape `(n_z_bins,)`.
       bk2: non-local/counterterm bias, shape `(n_z_bins,)`.
+      subtract_sigma4: whether to subtract the sigma^4 constant pieces from
+        the `b2`/`bs2` loop terms of `P_gg` (default `False`, as CosmoSIS).
+      shot_noise: per-bin scale-independent shot noise `Psn_a`, shape
+        `(n_z_bins,)`, added to same-bin `P_gg` only; `None` (default)
+        adds no shot-noise terms at all.
     """
 
     def __init__(
@@ -461,6 +480,8 @@ class NonLinearGalaxyBiasContribution:
         bs2: np.ndarray,
         b3nl: np.ndarray,
         bk2: np.ndarray,
+        subtract_sigma4: bool = False,
+        shot_noise: np.ndarray | None = None,
     ) -> None:
         self._tracer = tracer
         self.b1 = b1
@@ -468,6 +489,8 @@ class NonLinearGalaxyBiasContribution:
         self.bs2 = bs2
         self.b3nl = b3nl
         self.bk2 = bk2
+        self.subtract_sigma4 = subtract_sigma4
+        self.shot_noise = shot_noise
         self._loop_computer = loop_computer
         self._growth4_cache: tuple | None = None
 
@@ -517,6 +540,7 @@ class NonLinearGalaxyBiasContribution:
         return tuple(
             SpectrumRequest(name=name, compute=self._loop_computer.compute(name))
             for name in _NLBIAS_KERNELS
+            if self.subtract_sigma4 or name != "nlbias_sig4"
         )
 
     def get_requirements_for_interaction(self, other):
@@ -562,6 +586,31 @@ class NonLinearGalaxyBiasContribution:
         """
         return bank.matter_pk * (bank.ks**2)[None, :]
 
+    def _shot_noise_terms(self, other, zs, bank: SpectraBank):
+        """`delta_ab Psn_a` as `PkTerm`s: one per bin `a`, with both kernels
+        masked to row `a`, since a single `PkTerm` (an outer product of
+        per-bin kernels) cannot express a same-bin-only term. `Psn_a` goes
+        into the kernel and the Pk grid is all ones, so the signed Pk
+        interpolation sees a positive constant whatever the sign of `Psn_a`.
+        Empty unless this is the tracer's own auto-correlation and
+        `shot_noise` was given.
+        """
+        if other is not self or self.shot_noise is None:
+            return ()
+        kernel = self._bias_kernel(np.ones(self._tracer.n_z_bins), zs)
+        ones_pk = np.ones_like(bank.matter_pk)
+        terms = []
+        for a in range(self._tracer.n_z_bins):
+            mask = np.zeros(self._tracer.n_z_bins).at[a].set(1.0)
+            terms.append(
+                PkTerm(
+                    (mask * self.shot_noise)[:, None] * kernel,
+                    mask[:, None] * kernel,
+                    ones_pk,
+                )
+            )
+        return tuple(terms)
+
     def get_pk_terms(self, other, zs, bank: SpectraBank):
         """The `PkTerm`s for `P_gg(k,z)` or `P_g,delta(k,z)`, as
         appropriate - see class docstring for both formulas and when each
@@ -594,7 +643,10 @@ class NonLinearGalaxyBiasContribution:
             pd2d2 = self._loop_pk(bank, "nlbias_Pd2d2")
             pd2s2 = self._loop_pk(bank, "nlbias_Pd2s2")
             ps2s2 = self._loop_pk(bank, "nlbias_Ps2s2")
-            sig4 = self._loop_pk(bank, "nlbias_sig4")
+            if self.subtract_sigma4:
+                sig4 = self._loop_pk(bank, "nlbias_sig4")
+            else:
+                sig4 = 0.0
 
             o_k_b1 = other._bias_kernel(other.b1, zs)
             o_k_b2 = other._bias_kernel(other.b2, zs)
@@ -603,6 +655,7 @@ class NonLinearGalaxyBiasContribution:
             o_k_bk2 = other._bias_kernel(other.bk2, zs)
 
             return (
+                *self._shot_noise_terms(other, zs, bank),
                 PkTerm(k_b1, o_k_b1, matter_pk),
                 PkTerm(k_b1, o_k_b2, 0.5 * pd1d2),
                 PkTerm(k_b2, o_k_b1, 0.5 * pd1d2),
@@ -641,6 +694,7 @@ class PositionsTracer:
         nuisance_params: dict,
         include_rsd: bool = False,
         nl_bias_loop_computer: NonlinearBiasLoopComputer | None = None,
+        nl_bias_subtract_sigma4: bool = False,
     ):
         r"""
         Initialize the class instance.
@@ -661,7 +715,9 @@ class PositionsTracer:
             `i` (`i = 0..dndz.shape[0]-1`),
             `nuisance_params["b1_photo_nl_bin{i}"/"b2_photo_nl_bin{i}"/
             "bs2_photo_nl_bin{i}"/"b3nl_photo_nl_bin{i}"/"bk2_photo_nl_bin{i}"]`,
-            each defaulting to the value that drops it from the expansion -
+            each defaulting to the value that drops it from the expansion,
+            plus an optional per-bin shot noise `"Psn_photo_nl_bin{i}"`
+            (default 0; no shot-noise terms at all if no such key is given) -
             see `NonLinearGalaxyBiasContribution`'s docstring for what it
             does and does not support).
           nuisance_params (dict): A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
@@ -672,6 +728,11 @@ class PositionsTracer:
             FAST-PT-computed kernels, or any other object with the same
             `.compute(name)` interface. Passing this with any
             `galaxy_bias_model` other than `"nonlinear"` raises `ValueError`.
+          nl_bias_subtract_sigma4: `galaxy_bias_model="nonlinear"` only -
+            subtract the sigma^4 constant pieces from the `b2`/`bs2` loop
+            terms of `P_gg` (default `False`, as CosmoSIS; see
+            `NonLinearGalaxyBiasContribution`). Setting it with any other
+            `galaxy_bias_model` raises `ValueError`.
         """
         if 0.0 in z:
             raise ValueError(
@@ -761,6 +822,10 @@ class PositionsTracer:
                     ]
                 )
 
+            has_shot_noise = any(
+                f"Psn_photo_nl_bin{bin}" in nuisance_params
+                for bin in range(self.n_z_bins)
+            )
             self.bias_array: Any = None  # unused: see NonLinearGalaxyBiasContribution
             self.bias = NonLinearGalaxyBiasContribution(
                 self,
@@ -770,11 +835,21 @@ class PositionsTracer:
                 bs2=nlbias_bin_array("bs2_photo_nl", 0.0),
                 b3nl=nlbias_bin_array("b3nl_photo_nl", 0.0),
                 bk2=nlbias_bin_array("bk2_photo_nl", 0.0),
+                subtract_sigma4=nl_bias_subtract_sigma4,
+                shot_noise=(
+                    nlbias_bin_array("Psn_photo_nl", 0.0) if has_shot_noise else None
+                ),
             )
         else:
             if nl_bias_loop_computer is not None:
                 raise ValueError(
                     "nl_bias_loop_computer is only used when "
+                    "galaxy_bias_model='nonlinear' (got "
+                    f"galaxy_bias_model={galaxy_bias_model!r})."
+                )
+            if nl_bias_subtract_sigma4:
+                raise ValueError(
+                    "nl_bias_subtract_sigma4 is only used when "
                     "galaxy_bias_model='nonlinear' (got "
                     f"galaxy_bias_model={galaxy_bias_model!r})."
                 )

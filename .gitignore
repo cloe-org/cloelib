@@ -82,3 +82,6 @@ jax_cache/
 *.jpg
 *.pdf
 *.xml
+
+# Emulators downloaded from Zenodo at runtime (see cosmopower_jax_cosmology.emulator_data)
+cloelib/cosmology/emulator-data-jax/

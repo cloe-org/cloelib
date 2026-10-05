@@ -21,6 +21,11 @@ except ImportError as e:
 
 import os
 import sys
+
+# Zenodo record holding the HMcode2020 emulators (w0wa-3degen-*)
+HMCODE_ZENODO_URL = "https://zenodo.org/records/22966883/files"
+
+
 class SuppressOutput:
     def __enter__(self):
         self._stdout = sys.stdout
@@ -95,7 +100,7 @@ class tbDDMNonLinearPerturbations:
             from cloelib.cosmology.cosmopower_jax_cosmology import (
                 emulator_data, load_pk_emulator, k_modes_path
             )
-            cp_NL  = load_pk_emulator(emulator_data("w0wa-3degen-nonlinear.npz"))
+            cp_NL  = load_pk_emulator(emulator_data("w0wa-3degen-nonlinear.npz", HMCODE_ZENODO_URL))
             k_emu  = np.loadtxt(k_modes_path)
             self.k = k_emu
 

@@ -7,7 +7,6 @@ from cloelib.auxiliary.extrapolator import extend_spectra
 from scipy import interpolate
 
 # General imports
-import os
 import numpy as np
 import copy
 from typing import Optional, Union, Sequence
@@ -25,6 +24,17 @@ import warnings
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     from cosmopower_jax.cosmopower_jax import CosmoPowerJAX
+
+# Zenodo records holding the emulators (downloaded on first use, see emulator_data)
+DDM_ZENODO_URL = "https://zenodo.org/records/22967046/files"  # ddm-1body-combined-*
+HMCODE_ZENODO_URL = "https://zenodo.org/records/22966883/files"  # w0wa-3degen-*
+
+
+def _ddm_emulator_path(kind: str) -> str:
+    """Return the local path of a 1bDDM emulator ("distances", "global" or "linear"), downloading it from Zenodo if needed."""
+    from cloelib.cosmology.cosmopower_jax_cosmology import emulator_data
+
+    return emulator_data(f"ddm-1body-combined-{kind}.npz", DDM_ZENODO_URL)
 
 
 class obDDMBackground:
@@ -147,17 +157,14 @@ class obDDMBackground:
             assert self.Omega_k0 == 0.0, (
                 "The 1bDDM background emulator only supports flat geometries."
             )
-            _emu_dir = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "emulator-data-jax"
-            )
             self._cp_distances = CosmoPowerJAX(
                 probe="custom_log",
-                filepath=os.path.join(_emu_dir, "ddm-1body-distances.npz"),
+                filepath=_ddm_emulator_path("distances"),
                 verbose=False,
             )
             cp_global = CosmoPowerJAX(
                 probe="custom",
-                filepath=os.path.join(_emu_dir, "ddm-1body-global.npz"),
+                filepath=_ddm_emulator_path("global"),
                 verbose=False,
             )
             _, Omega_m0_emu, rdrag_emu = np.array(
@@ -426,14 +433,16 @@ class obDDMLinearPerturbations:
             self.ns = self.background.ns
             self.f = self.background.f_dcdm
             self.Gamma_times_f = self.background.Gamma_times_f  # in 1/Gyr
-            # Load cosmopower emulator (path relative to this file, works in any install location)
-            _emu_dir = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "emulator-data-jax"
+            # Load cosmopower emulator (downloaded from Zenodo on first use);
+            # its k grid is the same as k-modes.txt (the old small-k-modes.txt)
+            from cloelib.cosmology.cosmopower_jax_cosmology import k_modes_path
+
+            cp = CosmoPowerJAX(
+                probe="custom_log",
+                filepath=_ddm_emulator_path("linear"),
+                verbose=False,
             )
-            EMU_PATH = os.path.join(_emu_dir, "ddm-1body-linear.npz")
-            DATA_PATH = os.path.join(_emu_dir, "small-k-modes.txt")
-            cp = CosmoPowerJAX(probe="custom_log", filepath=EMU_PATH, verbose=False)
-            self.k = np.loadtxt(DATA_PATH)
+            self.k = np.loadtxt(k_modes_path)
             # Pre-compute emulator predictions for all redshifts in self.z
             pk_emu = np.zeros((len(self.z), len(self.k)))
             for i, zi in enumerate(self.z):
@@ -469,9 +478,8 @@ class obDDMLinearPerturbations:
             )
 
             # Load global emulator for sigma8 (no z dependence)
-            GLOBAL_EMU_PATH = os.path.join(_emu_dir, "ddm-1body-global.npz")
             cp_global = CosmoPowerJAX(
-                probe="custom", filepath=GLOBAL_EMU_PATH, verbose=False
+                probe="custom", filepath=_ddm_emulator_path("global"), verbose=False
             )
             global_params = {
                 "omega_b": np.array([self.wb]),
@@ -710,7 +718,9 @@ class obDDMNonLinearPerturbations:
                 k_modes_path,
             )
 
-            cp_NL = load_pk_emulator(emulator_data("w0wa-3degen-nonlinear.npz"))
+            cp_NL = load_pk_emulator(
+                emulator_data("w0wa-3degen-nonlinear.npz", HMCODE_ZENODO_URL)
+            )
             k_emu = np.loadtxt(k_modes_path)
 
             mnu_total = self.background.mnu
@@ -746,7 +756,9 @@ class obDDMNonLinearPerturbations:
             )
 
             # Linear LCDM Pk: w0wa-3degen-linear.npz emulator (same params, no logT_AGN)
-            cp_LIN = load_pk_emulator(emulator_data("w0wa-3degen-linear.npz"))
+            cp_LIN = load_pk_emulator(
+                emulator_data("w0wa-3degen-linear.npz", HMCODE_ZENODO_URL)
+            )
 
             params_lin = {
                 "ombh2": np.tile(self.wb, len(self.z)),

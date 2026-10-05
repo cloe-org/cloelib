@@ -26,7 +26,7 @@ class SplitLinearPerturbations:
     @property
     def _interface_args(self) -> dict:
         """Save internal structure format of interface codes."""
-        return self.interface_args
+        return self.interface_args # type:ignore[union-attr
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False

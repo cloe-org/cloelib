@@ -63,17 +63,37 @@ Calculate the linear growth factor D(z, k).
 
 Normalized such that D(z=0) ≈ 1 in matter-dominated era.
 
-#### `growth_rate(zs, ks=None)`
+#### `growth_rate(zs=None, ks=None)`
 
-Calculate the linear growth rate f(z) = d ln D / d ln a.
+Calculate the linear growth rate f(z) = d ln D / d ln a. Every implementation follows the same convention:
 
-For scale-independent models, `ks` can be `None`.
+- `zs=None` returns the growth rate on the redshift grid the instance was built on; otherwise it is evaluated at `zs`.
+- `ks=None` returns an array of shape `(nz,)`; otherwise an array of shape `(nz, nk)`. A scale-independent growth rate is broadcast along `k`.
+
+Scale-dependent implementations evaluate f(z, k) at the given `ks`. Without `ks`, hi_class and mochi_class use k = 1 Mpc⁻¹, while BACCOemu, which has no such default, raises a `ValueError`.
+
+MGCLASS computes the growth rate by finite differences on its redshift grid, so it needs to be built on at least 3 redshifts to provide it.
 
 #### `sigma8_0()`
 
 Compute σ₈ at redshift z=0.
 
 The RMS matter fluctuation in 8 Mpc/h spheres—a key cosmological parameter.
+
+### Constructors
+
+All implementations are built with the same keyword arguments, so they can be swapped without changing the calling code:
+
+```python
+lin = LinearPerturbations(background=bg, redshifts=zs)
+nonlin = NonLinearPerturbations(background=bg, linearperturbations=lin, redshifts=zs)
+```
+
+This is described by the `LinearPerturbationsFactory` and `NonLinearPerturbationsFactory` protocols in `cloelib.cosmology.cosmology`, which can be used to type a class passed around as a parameter. Their type parameters are the background and, for the nonlinear one, the linear perturbations the class is built from. For example, `NonLinearPerturbationsFactory[CAMBBackground, HMemuLinearPerturbations]` is satisfied by `HMemuNonLinearPerturbations`, while `NonLinearPerturbationsFactory[CAMBBackground, CAMBLinearPerturbations]` is not, since HMcode2020Emu needs the cached `Pk`/`Pk_cb` grid of its linear perturbations (`WithLinearSpectrumGrid`).
+
+Options specific to a backend (e.g. `nonlinear_model`) are passed as additional keyword arguments and are not part of these protocols. In particular, the HMcode2020 baryonic feedback parameter `log10TAGN` is accepted by the HMcode-based backends (CAMB, CLASS, mochi_class, HMcode2020Emu and CosmoPower-JAX). CAMB, CLASS and mochi_class select their HMcode2020 feedback model when `log10TAGN` is given without a nonlinear model, and raise a `ValueError` if the chosen model ignores it.
+
+Backends that compute the nonlinear spectrum themselves (CAMB, CLASS, hi_class, MGCLASS, mochi_class) accept but do not use `linearperturbations`. `EmantisFofrNonLinearPerturbations` additionally requires the ΛCDM nonlinear perturbations and `fR0`.
 
 ## Existing Implementations
 
@@ -135,12 +155,18 @@ Interfaces with [CLASS](https://github.com/lesgourg/class_public).
 **Example**:
 
 ```python
-from cloelib.cosmology.class_cosmology import CLASSBackground, CLASSPerturbations
+from cloelib.cosmology.class_cosmology import (
+    CLASSBackground,
+    CLASSLinearPerturbations,
+    CLASSNonLinearPerturbations,
+)
 
 bg = CLASSBackground(...)
-pert = CLASSPerturbations(
-    background=bg,
-    # other parameters
+lin = CLASSLinearPerturbations(background=bg, redshifts=zs)
+
+# HMcode2020 with baryonic feedback, as with CAMB and HMcode2020Emu
+nonlin = CLASSNonLinearPerturbations(
+    background=bg, linearperturbations=lin, redshifts=zs, log10TAGN=7.8
 )
 ```
 
@@ -422,7 +448,9 @@ lin = CosmoPowerJAXLCDMPerturbations.Linear(background=bg, redshifts=zs)
 Pk = lin.matter_power_spectrum(0.0, ks)   # shape (1, len(ks))
 
 # Nonlinear P(k) with baryonic feedback
-nl = CosmoPowerJAXLCDMPerturbations.NonLinear(background=bg, redshifts=zs, log10TAGN=7.6)
+nl = CosmoPowerJAXLCDMPerturbations.NonLinear(
+    background=bg, linearperturbations=lin, redshifts=zs, log10TAGN=7.6
+)
 Pk_nl = nl.matter_power_spectrum(0.0, ks)
 
 # sigma8 and fsigma8 as a function of redshift
@@ -725,6 +753,11 @@ def test_growth_factor(background):
     assert np.all(D[0, :] > D[1, :])
     assert np.all(D[1, :] > D[2, :])
 ```
+
+Also add the new classes to the shared interface tests:
+
+- `tests/test_perturbations_interface.py`: add a builder to `BACKENDS`, so the class is checked at runtime against the common `growth_rate` convention.
+- `tests/typing/perturbations_conformance.py`: add the class, so ty checks that it implements `Perturbations` and that its constructor matches `LinearPerturbationsFactory`/`NonLinearPerturbationsFactory`.
 
 ### Step 5: Update Documentation
 

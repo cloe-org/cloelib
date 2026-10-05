@@ -155,10 +155,7 @@ If you use **cloelib** in your research, please cite the software using the
 metadata in [`CITATION.cff`](CITATION.cff). On GitHub, select **Cite this repository**
 to copy the citation in APA or BibTeX format.
 
-The citation lists the six maintainers, with metadata based on the
-[JOSS manuscript](paper/paper.md) and an additional TTK, RWTH Aachen University,
-Germany affiliation for Santiago Casas. Other contributions are acknowledged in
-the [contributors section](#-contributors).
+Other contributions are acknowledged in the [contributors section](#-contributors).
 
 ## 📜 License
 

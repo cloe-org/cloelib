@@ -9,7 +9,8 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
 
 # General imports
-import jax.numpy as np  # type: ignore
+from typing import Any
+import jax.numpy as np
 
 
 # UNITS
@@ -117,7 +118,9 @@ class CMBLensingTracer:
             * self.background.comoving_distance(z)
         )
         rz = self.background.comoving_distance(z)
-        z_star = self.background.z_star
+        # `Any`: backends accept a scalar redshift here, which the
+        # `Background` protocol's `comoving_distance(zs: T)` doesn't express.
+        z_star: Any = self.background.z_star
         rz_star = self.background.comoving_distance(z_star)
         efficiency = 1 - rz / rz_star
         result = factor * efficiency

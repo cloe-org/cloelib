@@ -43,6 +43,8 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all follows.
 """
 
 # cloelib imports
+from typing import Any, Callable, Protocol
+
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import cached_stacked_simpson
@@ -55,10 +57,10 @@ from cloelib.observables.photo.spectrum_engine import (
 )
 
 # General imports
-import jax.numpy as np  # type: ignore
-import jax.numpy as jnp  # type: ignore
-import jax  # type: ignore
-import interpax  # type: ignore
+import jax.numpy as np
+import jax.numpy as jnp
+import jax
+import interpax
 import jax.lax as lx
 import numpy as _numpy
 from scipy import interpolate as _scipy_interpolate
@@ -196,6 +198,19 @@ class MagnificationContribution:
 
     def compute_kernel(self, z):
         return self._tracer.get_window_magnification(z)
+
+
+class NonlinearBiasLoopComputer(Protocol):
+    """Interface `NonLinearGalaxyBiasContribution` needs from its one-loop
+    kernel backend.
+
+    `PBJNonlinearBiasLoopComputer` is the production implementation; any
+    other object with this member can be passed as `nl_bias_loop_computer`.
+    """
+
+    def compute(self, name: str) -> Callable[..., jnp.ndarray]:
+        """Return a `SpectrumRequest.compute` callable for kernel `name`."""
+        ...
 
 
 class PBJNonlinearBiasLoopComputer:
@@ -441,7 +456,7 @@ class NonLinearGalaxyBiasContribution:
         self,
         tracer: "PositionsTracer",
         b1: np.ndarray,
-        loop_computer: object,
+        loop_computer: NonlinearBiasLoopComputer,
         b2: np.ndarray,
         bs2: np.ndarray,
         b3nl: np.ndarray,
@@ -491,7 +506,7 @@ class NonLinearGalaxyBiasContribution:
         cached = self._growth4_cache
         if cached is not None and cached[0] is zs:
             return cached[1]
-        ks = getattr(self._tracer.perturbations, "k", None)
+        ks: Any = getattr(self._tracer.perturbations, "k", None)
         d_raw = self._tracer.perturbations.growth_factor(zs, ks)
         d = d_raw[:, 1] if getattr(d_raw, "ndim", 1) == 2 else d_raw
         result = d**4
@@ -625,7 +640,7 @@ class PositionsTracer:
         galaxy_bias_model: str,
         nuisance_params: dict,
         include_rsd: bool = False,
-        nl_bias_loop_computer: object | None = None,
+        nl_bias_loop_computer: NonlinearBiasLoopComputer | None = None,
     ):
         r"""
         Initialize the class instance.
@@ -746,7 +761,7 @@ class PositionsTracer:
                     ]
                 )
 
-            self.bias_array = None  # unused: see NonLinearGalaxyBiasContribution
+            self.bias_array: Any = None  # unused: see NonLinearGalaxyBiasContribution
             self.bias = NonLinearGalaxyBiasContribution(
                 self,
                 b1=nlbias_bin_array("b1_photo_nl", 1.0),

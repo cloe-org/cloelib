@@ -1,7 +1,7 @@
 from typing import Protocol, TypeVar, Union
 
-import numpy as np  # type: ignore
-import jax.numpy as jnp  # type: ignore
+import numpy as np
+import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 

@@ -138,6 +138,39 @@ def simpsons_weights_avg(num_el: int) -> jnp.ndarray:
     return _simpsons_weights_avg_cached(int(num_el))
 
 
+def quadrature_weights(x) -> jnp.ndarray:
+    """
+    Quadrature weights ``w`` on the grid ``x`` such that ``sum(w * f(x))``
+    approximates the integral of ``f`` over ``x``.
+
+    Simpson's rule is used for linearly spaced grids (``w = s * dx``) and for
+    logarithmically spaced grids (integrating in ``ln x``, ``w = s * dlnx * x``);
+    any other grid falls back to the trapezoidal rule.
+
+    Parameters
+    ----------
+    x : array-like
+        Strictly increasing integration grid (not traced by JAX).
+
+    Returns
+    -------
+    jnp.ndarray
+        Weights with the same length as ``x``.
+    """
+    x = np.asarray(x, dtype=float)
+    dx = np.diff(x)
+    if np.allclose(dx, dx[0], rtol=1e-8):
+        return simpsons_weights_jit(len(x)) * dx[0]
+    if x[0] > 0:
+        dlnx = np.diff(np.log(x))
+        if np.allclose(dlnx, dlnx[0], rtol=1e-8):
+            return simpsons_weights_jit(len(x)) * dlnx[0] * jnp.asarray(x)
+    w = np.zeros_like(x)
+    w[:-1] += dx / 2
+    w[1:] += dx / 2
+    return jnp.asarray(w)
+
+
 def stack_zeros_and_simpson(num_weights: int, num_zeros: int) -> jnp.ndarray:
     """Row of `stacked_simpson`: `num_zeros` zeros followed by the
     `simpsons_weights_avg` weights for `num_weights` nodes."""

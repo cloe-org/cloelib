@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using HMcode2020Emu."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, WithLinearSpectrumGrid
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.auxiliary.math_utils import ensure_z_zero_included
 
@@ -41,6 +41,8 @@ class HMemuLinearPerturbations:
             "w0": self.background.w0,
             "wa": self.background.wa,
         }
+
+        self._cosmo_params_hm_emu = dict(self.params_hm_emu)
 
         hm_bounds = HM2020_emu.emulator["linear"]["bounds"]
 
@@ -118,9 +120,9 @@ class HMemuLinearPerturbations:
         else:
             k_in = ks
         if hubble_units:
-            return self.Pk_interp(zs, k_in).squeeze() * self.background.h**3
+            return self.Pk_interp(zs, k_in) * self.background.h**3
         else:
-            return self.Pk_interp(zs, k_in).squeeze()
+            return self.Pk_interp(zs, k_in)
 
     def matter_power_spectrum_cb(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -142,9 +144,9 @@ class HMemuLinearPerturbations:
         else:
             k_in = ks
         if hubble_units:
-            return self.Pk_cb_interp(zs, k_in).squeeze() * self.background.h**3
+            return self.Pk_cb_interp(zs, k_in) * self.background.h**3
         else:
-            return self.Pk_cb_interp(zs, k_in).squeeze()
+            return self.Pk_cb_interp(zs, k_in)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         r"""
@@ -196,16 +198,38 @@ class HMemuLinearPerturbations:
 
         return D_cb_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
         """
         Calculate the growth rate for given redshifts and wavenumbers.
 
-        Returns:
-            (np.ndarray): The growth rate as a function of redshift and wavenumber.
-        """
-        self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
+        Args:
+            zs (Optional[array_like]): Redshifts at which to calculate the growth rate.
+                Defaults to the redshift grid of this instance.
+            ks (Optional[array_like]): Wavenumbers at which to calculate the growth rate.
+                The HMcode2020Emu growth rate is scale independent, so these only
+                set the shape of the output.
 
-        return self.fsigma8 / self.sigma8
+        Returns:
+            (np.ndarray): The growth rate, with shape (nz,) if ks is None
+                and (nz, nk) otherwise.
+        """
+        return _growth_rate(
+            self._cosmo_params_hm_emu,
+            self.z if zs is None else zs,
+            ks,
+        )
+
+    def sigma8_0(self) -> float:
+        """
+        Calculate the sigma8 value for the current cosmology.
+
+        Returns:
+        --------
+        float
+            The sigma8 value.
+        """
+        self.sigma8, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
+        return self.sigma8[0]
 
 
 class HMemuNonLinearPerturbations:
@@ -214,7 +238,7 @@ class HMemuNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Perturbations,
+        linearperturbations: WithLinearSpectrumGrid,
         redshifts: np.ndarray,
         log10TAGN: Optional[float] = None,
     ):
@@ -225,6 +249,14 @@ class HMemuNonLinearPerturbations:
 
         self.z = ensure_z_zero_included(redshifts[redshifts <= redshift_max])
         self.background = background
+        # Retained so downstream consumers that need the *linear* Pk (e.g.
+        # a perturbation-theory backend, which is only valid starting from
+        # linear input) can get back to it from a tracer's own (nonlinear)
+        # `perturbations` without the caller separately tracking both
+        # objects - same attribute name/pattern already used by
+        # `EE2NonLinearPerturbations`, `BACCOemuNonLinearPerturbations`,
+        # `EmantisFofrNonLinearPerturbations`, and `JAXNonLinearPerturbations`.
+        self.linearperturbations = linearperturbations
 
         self.params_hm_emu = {
             "omega_cdm": self.background.Omega_cdm0,
@@ -240,6 +272,8 @@ class HMemuNonLinearPerturbations:
 
         if baryonic_boost:
             self.params_hm_emu["log10TAGN"] = log10TAGN
+
+        self._cosmo_params_hm_emu = dict(self.params_hm_emu)
 
         hm_bounds = HM2020_emu.emulator["nonlinear"]["bounds"]
 
@@ -399,16 +433,26 @@ class HMemuNonLinearPerturbations:
 
         return D_cb_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
         """
         Calculate the growth rate for given redshifts and wavenumbers.
 
-        Returns:
-            (np.ndarray): The growth rate as a function of redshift and wavenumber.
-        """
-        self.sigma8, self.fsigma8 = HM2020_emu.get_sigma8(**self.params_hm_emu)
+        Args:
+            zs (Optional[array_like]): Redshifts at which to calculate the growth rate.
+                Defaults to the redshift grid of this instance.
+            ks (Optional[array_like]): Wavenumbers at which to calculate the growth rate.
+                The HMcode2020Emu growth rate is scale independent, so these only
+                set the shape of the output.
 
-        return self.fsigma8 / self.sigma8
+        Returns:
+            (np.ndarray): The growth rate, with shape (nz,) if ks is None
+                and (nz, nk) otherwise.
+        """
+        return _growth_rate(
+            self._cosmo_params_hm_emu,
+            self.z if zs is None else zs,
+            ks,
+        )
 
     def sigma8_0(self) -> float:
         """
@@ -419,15 +463,41 @@ class HMemuNonLinearPerturbations:
         float
             The sigma8 value.
         """
-        self.params_hm_emu["z"] = np.insert(self.z, 0, 0.0)
-        max_len = len(self.params_hm_emu["z"])
-        for k, v in self.params_hm_emu.items():
-            if len(v) < max_len:
-                pad_size = max_len - len(v)
-                # Repeat last element to match length
-                self.params_hm_emu[k] = np.pad(v, (0, pad_size), mode="edge")
-        self.sigma8_0, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
-        return self.sigma8_0[0]
+
+        self.sigma8, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
+        return self.sigma8[0]
+
+
+def _growth_rate(params: dict, zs, ks=None) -> np.ndarray:
+    r"""Evaluate the HMcode2020Emu growth rate $f = f\sigma_8 / \sigma_8$.
+
+    Redshifts above the range of the emulator are evaluated at its maximum
+    redshift, where the growth rate is already close to its matter-domination
+    value of unity.
+
+    Parameters
+    ----------
+    params: dict
+        Cosmological parameters of the emulator, one value per parameter.
+    zs: array_like
+        Redshifts at which to evaluate the growth rate.
+    ks: Optional[array_like]
+        Wavenumbers used to broadcast the scale-independent growth rate.
+
+    Returns
+    -------
+    np.ndarray
+        The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+    """
+    z_max = HM2020_emu.emulator["sigma8"]["bounds"]["z"][1]
+    z = np.clip(np.atleast_1d(np.asarray(zs, dtype=float)), 0.0, z_max)
+    sigma8, fsigma8 = HM2020_emu.get_sigma8(
+        **{key: np.tile(value, len(z)) for key, value in params.items()}, z=z
+    )
+    f = fsigma8 / sigma8
+    if ks is None:
+        return f
+    return np.tile(f[:, None], (1, np.size(ks)))
 
 
 def _set_neutrino_masses(background: Background) -> float:

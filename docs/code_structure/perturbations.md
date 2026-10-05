@@ -438,6 +438,26 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
+### MGCLASSPerturbations
+
+Interfaces with [MGCLASS](https://gitlab.com/zizgitlab/mgclass--ii).
+
+**Location**: `cloelib/cosmology/mgclass_cosmology.py`
+
+**When to use**: MGCLASS-specific features, comparison studies
+
+**Example**:
+
+```python
+from cloelib.cosmology.mgclass_cosmology import MGCLASSBackground, MGCLASSPerturbations
+
+bg = MGCLASSBackground(...)
+pert = MGCLASSPerturbations(
+    background=bg,
+    # other parameters
+)
+```
+
 ### hi_classPerturbations
 
 Interfaces with [hi_class](https://github.com/emiliobellini/hi_class_public).
@@ -471,7 +491,6 @@ Accurate and fast emulator of the nonlinear matter power spectrum in modified gr
 - Fast predictions of the nonlinear matter power spectrum in f(R) gravity;
 - Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;
 - Limited to the Hu & Sawicki model (n=1) with fR0 as free parameter;
-  > > > > > > > main
 
 ## Adding Your Own Perturbations Implementation
 

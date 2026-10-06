@@ -941,7 +941,7 @@ class PositionsTracer:
         Calculates the weak lensing shear kernel for a given tomographic bin
         distribution.
         Uses broadcasting to compute a 2D-array of integrands and then applies
-        `np.trapz` on the array along one axis.
+        `np.trapezoid` on the array along one axis.
 
         $$
             W_{i}^{\gamma}(\ell, z, k) =

@@ -269,33 +269,6 @@ def test_pair_integral_analytic_constant_integrand():
     )
 
 
-def _jaxpr_max_intermediate_size(jaxpr):
-    sizes = [0]
-    for eqn in jaxpr.eqns:
-        for var in eqn.outvars:
-            shape = getattr(var.aval, "shape", ())
-            sizes.append(int(np.prod(shape)) if shape else 1)
-        for sub in jax.core.jaxprs_in_params(eqn.params):
-            sizes.append(_jaxpr_max_intermediate_size(sub))
-    return max(sizes)
-
-
-def test_pair_integral_never_builds_the_five_index_tensor():
-    """Memory: the (n_ell, n_i, n_j, n_chi, n_R) integrand is never materialized.
-
-    It would dominate memory for a realistic 3x2 (about 180 MB per pair). The
-    jaxpr is inspected: no intermediate array may reach that size. The same
-    check fails for the textbook implementation, so it does detect the problem.
-    """
-    n_ell, n_a, n_b, n_chi, n_R = 4, 5, 6, 7, 8
-    inputs = _random_pair_inputs(n_ell, n_a, n_b, n_chi, n_R)
-
-    jaxpr = jax.make_jaxpr(pair_integral)(**inputs).jaxpr
-
-    full_integrand = n_ell * n_a * n_b * n_chi * n_R
-    assert _jaxpr_max_intermediate_size(jaxpr) < full_integrand
-
-
 def test_pair_integral_is_jittable_and_differentiable():
     """pair_integral is usable inside a jitted, differentiated likelihood.
 

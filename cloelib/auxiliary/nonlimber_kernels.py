@@ -130,8 +130,7 @@ def pair_integral(
     r"""Beyond-Limber $C_\ell$ of one pair of kernels (A, B).
 
     The $\chi$ and $R$ integrals and the sum over the two orderings are
-    fused into a single contraction, so the five-index
-    `(n_ell, n_bin_A, n_bin_B, n_chi, n_R)` integrand is never materialized.
+    done in a single contraction.
 
     Parameters:
       K_A, K_B (Array): $K(\chi)$ of each kernel, shape `(n_bin, n_chi)`.

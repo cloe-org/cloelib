@@ -446,16 +446,17 @@ class MGrowthLinearPerturbations:
         np.ndarray
             Linear matter power spectrum at the specified redshifts and scales.
         """
-        ps_base = self.base.matter_power_spectrum(0.0, ks)
-        pk = self.dz_norm_w0wacdm_interp(zs, ks) ** 2 * ps_base
-
-        return pk.squeeze()
+        zs_in = np.atleast_1d(np.asarray(zs, dtype=float))
+        ks_in = np.atleast_1d(np.asarray(ks, dtype=float))
+        ps_base = self.base.matter_power_spectrum(0.0, ks_in)
+        pk = self.dz_norm_w0wacdm_interp(zs_in, ks_in) ** 2 * ps_base
+        return np.reshape(pk, (zs_in.size, ks_in.size))
 
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""
         if self.gravity_model == "fr" or self.gravity_model == "mu":
             ks = np.logspace(-3, 2, 512)
-            pk_lin_z0 = self.matter_power_spectrum(0.0, ks)
+            pk_lin_z0 = np.ravel(self.matter_power_spectrum(0.0, ks))
             # convert to h/Mpc
             ks = ks * self.background.h
             # convert to Mpc^3/h^3

@@ -22,6 +22,13 @@ jax.config.update("jax_enable_x64", True)
 # unequal_time_pk
 # ---------------------------------------------------------------------------
 def test_unequal_time_pk_matches_geometric_mean():
+    """The unequal-time spectrum is the geometric mean of two equal-time ones.
+
+    P(k, chi, R chi) must equal sqrt(P(k, chi) P(k, R chi)). Taking log10 P
+    linear in chi makes the Akima interpolation of P(k, R chi) exact, even
+    below chi[0] where it extrapolates, so the closed form
+    k^-1 10^(-chi (1 + R) / 1000) is matched to rounding error.
+    """
     ks = jnp.logspace(-3, 0, 7)
     chi = jnp.linspace(200.0, 2000.0, 40)
     R = jnp.linspace(0.1, 1.0, 9)
@@ -37,6 +44,11 @@ def test_unequal_time_pk_matches_geometric_mean():
 
 
 def test_unequal_time_pk_equal_time_limit_and_symmetry():
+    """At R = 1 the two times coincide, so the geometric mean is P(k, chi) itself.
+
+    Also checks the output layout: (k, chi, R), i.e. the transpose of the
+    (chi, k) input.
+    """
     ks = jnp.logspace(-3, 0, 5)
     chi = jnp.linspace(100.0, 1000.0, 50)
     Pk_chi = (1.0 / ks)[None, :] * (1.0 + 1e-3 * chi[:, None])
@@ -49,16 +61,21 @@ def test_unequal_time_pk_equal_time_limit_and_symmetry():
 # w_ell
 # ---------------------------------------------------------------------------
 def test_w_ell_matches_explicit_loop():
+    """w_ell(chi, R) is the sum over Chebyshev index n of c_n(chi, R) T_tilde(ell, chi, R, n).
+
+    Compared with explicit Python loops on random data: guards the einsum
+    index order, which silently transposes if axes are swapped.
+    """
     rng = np.random.default_rng(0)
     n_cheb, n_chi, n_R, n_ell = 6, 5, 4, 3
     c = rng.normal(size=(n_cheb, n_chi, n_R))
     T = rng.normal(size=(n_ell, n_chi, n_R, n_cheb))
 
     expected = np.zeros((n_ell, n_chi, n_R))
-    for l in range(n_ell):
+    for ell in range(n_ell):
         for j in range(n_chi):
             for k in range(n_R):
-                expected[l, j, k] = np.sum(c[:, j, k] * T[l, j, k, :])
+                expected[ell, j, k] = np.sum(c[:, j, k] * T[ell, j, k, :])
 
     out = w_ell(jnp.asarray(c), jnp.asarray(T))
     assert out.shape == (n_ell, n_chi, n_R)
@@ -66,6 +83,12 @@ def test_w_ell_matches_explicit_loop():
 
 
 def test_chebyshev_coeffs_pipeline_shapes():
+    """unequal_time_pk and Pkl_chebyshev_coeffs fit together.
+
+    The output of the first (n_k, n_chi, n_R) is the input of the second;
+    with 32 + 1 nodes it must return (33, n_chi, n_R) coefficients, the layout
+    w_ell and the T-tilde matrices (n_cheb last) expect.
+    """
     ks = jnp.logspace(-4, 1, 300)
     chi = jnp.linspace(100.0, 1000.0, 12)
     R = jnp.linspace(0.1, 1.0, 5)
@@ -82,6 +105,11 @@ def test_chebyshev_coeffs_pipeline_shapes():
 # ---------------------------------------------------------------------------
 @pytest.fixture
 def linear_kernel_setup():
+    """Kernels linear in z, W(z) = a z + b, with z(chi) = chi / 250.
+
+    Akima interpolation is exact on linear data, even when extrapolating, so
+    the expected values of the tests below are known in closed form.
+    """
     z = jnp.linspace(0.0, 2.0, 60)
     chi = jnp.linspace(100.0, 500.0, 50)
     z_of_chi = chi / 250.0  # chi in [100, 500] -> z in [0.4, 2.0]
@@ -92,6 +120,12 @@ def linear_kernel_setup():
 
 
 def test_kernel_on_chi_R_linear_exact(linear_kernel_setup):
+    """A kernel is correctly resampled from the z grid to the chi and R chi grids.
+
+    Without the chi^-2 factor, a kernel linear in z is linear in chi, so both
+    K(chi) and K(R chi) have a closed form (the latter also below chi[0], by
+    exact extrapolation). Checks shapes and the (bin, chi, R) axis order.
+    """
     z, chi, z_of_chi, a, b, W_z = linear_kernel_setup
     R = jnp.linspace(0.3, 1.0, 6)
 
@@ -109,6 +143,12 @@ def test_kernel_on_chi_R_linear_exact(linear_kernel_setup):
 
 
 def test_kernel_on_chi_R_divide_by_chi2(linear_kernel_setup):
+    """divide_by_chi2 turns K(z(chi)) into K(z(chi)) / chi^2 (lensing-like kernels).
+
+    At R = 1, R chi is a node of the chi grid, so K(R chi) must be exactly
+    K(chi): this ties the second interpolation to the first without relying on
+    interpolation accuracy.
+    """
     z, chi, z_of_chi, a, b, W_z = linear_kernel_setup
     R = jnp.array([0.9, 1.0])
 
@@ -121,6 +161,11 @@ def test_kernel_on_chi_R_divide_by_chi2(linear_kernel_setup):
 
 
 def test_kernel_on_chi_R_zero_outside_redshift_range(linear_kernel_setup):
+    """There is no signal beyond the redshift range the kernel was built on.
+
+    Where z(chi) exceeds z[-1], an Akima extrapolation would give arbitrary
+    values; the kernel is set to zero there instead, and left untouched inside.
+    """
     z, _, _, a, b, W_z = linear_kernel_setup
     chi = jnp.linspace(100.0, 600.0, 50)
     z_of_chi = chi / 250.0  # chi > 500 maps beyond z[-1] = 2
@@ -163,6 +208,12 @@ def _pair_integral_reference(
 
 
 def test_pair_integral_matches_reference():
+    """The fused contraction equals the textbook five-index formula.
+
+    The reference builds the full (ell, i, j, chi, R) integrand and sums it
+    afterwards; pair_integral must give the same numbers from random inputs,
+    including different weights for the two orderings (w_12 != w_21, as for RSD).
+    """
     inputs = _random_pair_inputs()
     out = pair_integral(**inputs)
     assert out.shape == (4, 3, 2)
@@ -172,6 +223,11 @@ def test_pair_integral_matches_reference():
 
 
 def test_pair_integral_symmetric_pair_is_symmetric_in_bins():
+    """With A = B (same kernels, w_12 = w_21) C_ell[i, j] = C_ell[j, i].
+
+    A property of the physics, not of the implementation: it fails if the two
+    orderings are not combined consistently.
+    """
     inputs = _random_pair_inputs(n_a=4, n_b=4)
     inputs["K_B"], inputs["K_B_R"] = inputs["K_A"], inputs["K_A_R"]
     inputs["w_21"] = inputs["w_12"]
@@ -181,6 +237,12 @@ def test_pair_integral_symmetric_pair_is_symmetric_in_bins():
 
 
 def test_pair_integral_analytic_constant_integrand():
+    """Constant integrand: C_ell = 2/pi * 2 * prefactor_ell * (int dchi) * (int dR).
+
+    With unit kernels and w_ell, chi in [0, 4] and R in [0, 1] (Simpson
+    weights), this pins the overall normalization, including the 2/pi and the
+    factor 2 from adding the two orderings.
+    """
     n_ell, n_bin, n_chi, n_R = 3, 2, 21, 11
     chi = jnp.linspace(0.0, 4.0, n_chi)
     R = jnp.linspace(0.0, 1.0, n_R)
@@ -202,7 +264,9 @@ def test_pair_integral_analytic_constant_integrand():
 
     # 2/pi * (1 + 1) * pref_l * int_0^4 dchi * int_0^1 dR
     expected = 2.0 / jnp.pi * 2.0 * pref * 4.0 * 1.0
-    np.testing.assert_allclose(out, expected[:, None, None] * np.ones((1, 2, 2)), rtol=1e-10)
+    np.testing.assert_allclose(
+        out, expected[:, None, None] * np.ones((1, 2, 2)), rtol=1e-10
+    )
 
 
 def _jaxpr_max_intermediate_size(jaxpr):
@@ -217,6 +281,12 @@ def _jaxpr_max_intermediate_size(jaxpr):
 
 
 def test_pair_integral_never_builds_the_five_index_tensor():
+    """Memory: the (n_ell, n_i, n_j, n_chi, n_R) integrand is never materialized.
+
+    It would dominate memory for a realistic 3x2 (about 180 MB per pair). The
+    jaxpr is inspected: no intermediate array may reach that size. The same
+    check fails for the textbook implementation, so it does detect the problem.
+    """
     n_ell, n_a, n_b, n_chi, n_R = 4, 5, 6, 7, 8
     inputs = _random_pair_inputs(n_ell, n_a, n_b, n_chi, n_R)
 
@@ -227,6 +297,11 @@ def test_pair_integral_never_builds_the_five_index_tensor():
 
 
 def test_pair_integral_is_jittable_and_differentiable():
+    """pair_integral is usable inside a jitted, differentiated likelihood.
+
+    jax.value_and_grad of a scalar function of w_12 must trace and give a
+    finite value and gradient.
+    """
     inputs = _random_pair_inputs()
 
     def total(scale):

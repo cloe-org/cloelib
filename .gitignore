@@ -82,3 +82,6 @@ jax_cache/
 *.jpg
 *.pdf
 *.xml
+
+# T-tilde datasets (large, downloaded on first use)
+cloelib/auxiliary/t-tildes-data/

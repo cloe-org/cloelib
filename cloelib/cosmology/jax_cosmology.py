@@ -7,7 +7,6 @@ All of the functions are completely differentiable.
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.cosmology.cosmology import Background
 from cloelib.cosmology.derived_cosmology import (
     rdrag_fitting_function,
     z_star_fitting_function,
@@ -221,7 +220,7 @@ class JAXBackground:
             return 1 / self.hubble_parameter(x)
 
         def myquad(x, fun):
-            y, _ = quadgk(fun, [0.0, x])
+            y, _ = quadgk(fun, jnp.array([0.0, x]))
             return y
 
         y = jnp.array([myquad(myz, fun) for myz in zs])
@@ -290,18 +289,17 @@ class JAXBackground:
         Return the matter density as a function of redshift.
 
         Args:
-            zs (np.ndarray): Array of redshifts.
+            zs (np.ndarray): Array of redshifts. A bare Python/JAX scalar
+                is also accepted (returns a scalar) - `ShearTracer.
+                get_window_lensing`/`get_window_IA`/`get_window_magnification`
+                all call this as `Omega_m(0.0)`.
 
         Returns:
             (np.ndarray): Matter density values.
         """
-        return jnp.array(
-            [
-                (self.Omega_m0)
-                * (1 + z) ** 3
-                / (self.hubble_parameter(z) / self.H0) ** 2
-                for z in zs
-            ]
+        zs = jnp.asarray(zs)
+        return (
+            self.Omega_m0 * (1 + zs) ** 3 / (self.hubble_parameter(zs) / self.H0) ** 2
         )
 
     def Omega_cb(self, zs: jnp.ndarray) -> jnp.ndarray:
@@ -364,14 +362,25 @@ class JAXBackground:
 class JAXLinearPerturbations:
     """A wrapper for JAX linear perturbation calculations."""
 
-    def __init__(self, background: Background) -> None:
+    def __init__(
+        self, background: JAXBackground, redshifts: Optional[jnp.ndarray] = None
+    ) -> None:
         """
         Initialize the JAXLinearPerturbations class with a background instance.
 
         Args:
-            background (Background): A Background instance.
+            background (JAXBackground): A JAX background instance. Must be a
+                `JAXBackground` (not just any `Background`) since the growth
+                ODE solved here relies on JAX-specific helpers
+                (`Omega_m_a`, `Omega_de_a`, `w_a`) that aren't part of the
+                general `Background` protocol.
+            redshifts (Optional[jnp.ndarray]): Default redshifts for `growth_rate`.
+                The JAX backend has no internal redshift grid and evaluates every
+                quantity at the requested redshifts, so this is optional and
+                accepted for interface compatibility with the other backends.
         """
         self.background = background
+        self._redshifts = redshifts
 
     def D_derivs(self, y, x):
         """Write documentation (TODO)."""
@@ -405,8 +414,27 @@ class JAXLinearPerturbations:
 
         return result
 
-    def growth_rate(self, zs: jnp.ndarray):
-        """Compute the growth rate."""
+    def growth_rate(
+        self, zs: Optional[jnp.ndarray] = None, ks: Optional[jnp.ndarray] = None
+    ) -> jnp.ndarray:
+        """Compute the scale-independent growth rate.
+
+        Args:
+            zs (Optional[jnp.ndarray]): Redshifts at which to evaluate the growth
+                rate. Defaults to the `redshifts` given at construction.
+            ks (Optional[jnp.ndarray]): Wavenumbers used to broadcast the growth rate.
+
+        Returns:
+            jnp.ndarray: The growth rate, with shape (nz,) if ks is None and
+            (nz, nk) otherwise.
+        """
+        if zs is None:
+            zs = self._redshifts
+        if zs is None:
+            raise ValueError(
+                "The JAX backend has no internal redshift grid: pass `zs`, or "
+                "`redshifts` when building the perturbations."
+            )
         atab = jnp.logspace(-3.0, 0.0, 256)
 
         a_s = a_z(zs)
@@ -423,7 +451,9 @@ class JAXLinearPerturbations:
         ftab = y[:, 1] / y1[-1] * atab / gtab
 
         result = interp(a_s, atab, ftab)
-        return result
+        if ks is None:
+            return result
+        return jnp.tile(jnp.atleast_1d(result)[:, None], (1, jnp.size(ks)))
 
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""
@@ -628,7 +658,11 @@ class JAXLinearPerturbations:
         return 1.0 / (2.0 * jnp.pi**2.0) * y
 
     def matter_power_spectrum(
-        self, zs: jnp.ndarray, ks: jnp.ndarray, hubble_units=False, k_hunit=False
+        self,
+        zs: Union[float, jnp.ndarray],
+        ks: jnp.ndarray,
+        hubble_units=False,
+        k_hunit=False,
     ):
         r"""Compute the linear matter power spectrum.
 
@@ -719,10 +753,32 @@ class JAXLinearPerturbations:
 class JAXNonLinearPerturbations:
     """Class for perturbations cosmology using JAX, inheriting from Cosmology parent class."""
 
-    def __init__(self, background: Background):
-        """Initialse the class instance."""
+    def __init__(
+        self,
+        background: JAXBackground,
+        linearperturbations: Optional[JAXLinearPerturbations] = None,
+        redshifts: Optional[jnp.ndarray] = None,
+    ):
+        """Initialse the class instance.
+
+        Args:
+            background (JAXBackground): A JAX background instance.
+            linearperturbations (Optional[JAXLinearPerturbations]): The linear
+                perturbations the halofit correction is applied to. Defaults to
+                `JAXLinearPerturbations(background, redshifts)`.
+            redshifts (Optional[jnp.ndarray]): Default redshifts for `growth_rate`,
+                see `JAXLinearPerturbations`. If not given, those of
+                `linearperturbations` are used.
+        """
         self.background = background
-        self.linearperturbations = JAXLinearPerturbations(background)
+        self._redshifts = redshifts
+        if linearperturbations is None:
+            linearperturbations = JAXLinearPerturbations(background, redshifts)
+        elif linearperturbations.background is not background:
+            raise ValueError(
+                "`linearperturbations` must be built on the same `background`."
+            )
+        self.linearperturbations = linearperturbations
 
     def growth_factor(
         self, zs: jnp.ndarray, ks: Optional[jnp.ndarray] = None
@@ -730,9 +786,17 @@ class JAXNonLinearPerturbations:
         """Return the linear growth factor."""
         return self.linearperturbations.growth_factor(zs, ks)
 
-    def growth_rate(self, zs: jnp.ndarray) -> jnp.ndarray:
-        """Return the linear growth rate."""
-        return self.linearperturbations.growth_rate(zs)
+    def growth_rate(
+        self, zs: Optional[jnp.ndarray] = None, ks: Optional[jnp.ndarray] = None
+    ) -> jnp.ndarray:
+        """Return the linear growth rate, see `JAXLinearPerturbations.growth_rate`.
+
+        Without `zs`, it is evaluated at the `redshifts` given at construction,
+        or else at those of `linearperturbations`.
+        """
+        if zs is None:
+            zs = self._redshifts
+        return self.linearperturbations.growth_rate(zs, ks)
 
     def _halofit_parameters(self, zs):
         """Compute the non linear scale, effective spectral index, spectral curvature."""
@@ -877,10 +941,8 @@ class JAXNonLinearPerturbations:
 
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):
         """Write documentation (TODO)."""
-        Pk = jax.vmap(self.nonlinear_matter_power_spectrum, in_axes=(0, None))(ks, zs)
-        chi = self.linearperturbations.linearperturbations.background.comoving_distance(
-            zs
-        )
+        Pk = jax.vmap(self.matter_power_spectrum, in_axes=(0, None))(ks, zs)
+        chi = self.linearperturbations.background.comoving_distance(zs)
         k_lz = jnp.expand_dims((ells + 0.5), 1) / chi
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
         return Pkl

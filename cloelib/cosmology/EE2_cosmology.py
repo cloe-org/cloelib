@@ -1,14 +1,14 @@
 """Implementation of Background and Perturbation cosmology using EuclidEmulator2."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, Perturbations, WithWavenumberGrid
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
 
 # General imports
 import numpy as np
-from typing import Sequence
+from typing import Optional, Protocol, Sequence, runtime_checkable
 
 # Cosmology imports
 try:
@@ -20,13 +20,24 @@ except ImportError:
     raise ImportError("EuclidEmulator2 could not be imported or initialised.")
 
 
+@runtime_checkable
+class LinearPerturbationsWithK(Perturbations, WithWavenumberGrid, Protocol):
+    """A `Perturbations` implementation that also exposes its `.k` grid.
+
+    `EE2NonLinearPerturbations` needs both the full `Perturbations`
+    interface (to call `matter_power_spectrum`/`growth_factor`/etc. on its
+    `linearperturbations`) and the wavenumber grid that instance was built
+    on, which `Perturbations` deliberately omits.
+    """
+
+
 class EE2NonLinearPerturbations:
     """Class for nonlinear perturbations using EE2, compatible with the Perturbations protocol."""
 
     def __init__(
         self,
         background: Background,
-        linearperturbations: Perturbations,
+        linearperturbations: LinearPerturbationsWithK,
         redshifts: np.ndarray,
     ):
         """Initialize the EE2NonLinearPerturbations instance."""
@@ -168,19 +179,28 @@ class EE2NonLinearPerturbations:
 
         return self.linearperturbations.growth_factor(zs, ks)
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
         Calculate the growth rate for given redshifts and wavenumbers.
 
         We use here the growth from the fluctuations without baryons.
 
+        Parameters:
+        -----------
+        zs : Optional[np.ndarray]
+            Redshifts at which to evaluate the growth rate. Defaults to `self.z`.
+        ks : Optional[np.ndarray]
+            Wavenumbers at which to evaluate the growth rate.
+
         Returns:
         --------
         np.ndarray
-            The growth rate as a function of redshift and wavenumber.
+            The linear growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
         """
 
-        return self.linearperturbations.growth_rate()
+        return self.linearperturbations.growth_rate(self.z if zs is None else zs, ks)
 
     def sigma8_0(self) -> float:
         """

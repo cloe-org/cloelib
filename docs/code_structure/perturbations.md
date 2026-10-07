@@ -97,7 +97,10 @@ Backends that compute the nonlinear spectrum themselves (CAMB, CLASS, hi_class, 
 
 ## Existing Implementations
 
-### CAMBPerturbations
+### CAMB Perturbations
+
+CAMB provides separate linear and non-linear perturbation implementations:
+`CAMBLinearPerturbations` and `CAMBNonLinearPerturbations`.
 
 Interfaces with [CAMB](https://camb.readthedocs.io) for perturbation calculations.
 
@@ -115,7 +118,12 @@ Interfaces with [CAMB](https://camb.readthedocs.io) for perturbation calculation
 **Example**:
 
 ```python
-from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBPerturbations
+from cloelib.cosmology.camb_cosmology import (
+    CAMBBackground,
+    CAMBLinearPerturbations,
+    CAMBNonLinearPerturbations,
+)
+import numpy as np
 
 # First, create background
 bg = CAMBBackground(
@@ -128,10 +136,13 @@ bg = CAMBBackground(
     # ... other parameters
 )
 
-# Then create perturbations
-pert = CAMBPerturbations(
+# Then create linear and non-linear perturbations
+redshifts = np.array([0.0, 0.5, 1.0])
+linear_pert = CAMBLinearPerturbations(background=bg, redshifts=redshifts)
+pert = CAMBNonLinearPerturbations(
     background=bg,
-    # other parameters
+    linearperturbations=linear_pert,
+    redshifts=redshifts,
 )
 
 # Compute power spectrum
@@ -257,7 +268,9 @@ k = np.logspace(-3, 1, 100)
 
 background = CAMBBackground(...)
 linear_pert = CAMBLinearPerturbations(background, zs)
-nonlinear_pert = CAMBNonLinearPerturbations(background, zs)
+nonlinear_pert = CAMBNonLinearPerturbations(
+    background, linearperturbations=linear_pert, redshifts=zs
+)
 
 boost = MGemuNonlinearBoost(
     background,

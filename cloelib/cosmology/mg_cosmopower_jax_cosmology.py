@@ -226,17 +226,19 @@ def _boost_spline(emu, background, mu, eta, z, z_top=None):
     return interpolate.RectBivariateSpline(z, k_pad, boost_pad, kx=1, ky=1)
 
 
-def _sigma8(k, pk0):
+def _sigma8(k, pk0, h):
     """Compute sigma8 from a z=0 power spectrum with an R = 8 Mpc/h top hat.
 
     Args:
-        k (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+        k (numpy.ndarray): Wavenumbers in Mpc^-1.
         pk0 (numpy.ndarray): Matter power spectrum at z=0.
+        h (float): Dimensionless Hubble parameter H0/100, converting the
+            8 Mpc/h top-hat radius into Mpc.
 
     Returns:
         float: The rms matter fluctuation sigma8.
     """
-    x = k * 8.0
+    x = k * (8.0 / h)
     W = np.ones_like(x)
     m = x > 1e-8
     W[m] = 3.0 * (np.sin(x[m]) - x[m] * np.cos(x[m])) / x[m] ** 3
@@ -316,6 +318,7 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
             """Initialize the Linear instance."""
             assert background.Omega_k0 == 0, "Non-flat geometries not supported"
             self.background = background
+            self.h = background.H0 / 100.0
             self.z = np.atleast_1d(np.asarray(redshifts, dtype=float))
             self.bin_index = mg_params.bin_index
             self.mu, self.eta = mg_params.mu, mg_params.eta
@@ -335,12 +338,12 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
 
             Args:
                 zs (numpy.ndarray): Redshifts.
-                ks (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
 
             Returns:
                 pk (numpy.ndarray): Linear matter power spectrum (boost times LCDM baseline).
             """
-            return self._boost(zs, ks) * np.asarray(
+            return self._boost(zs, ks / self.h) * np.asarray(
                 self._base.matter_power_spectrum(zs, ks)
             )
 
@@ -349,7 +352,7 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
 
             Args:
                 zs (numpy.ndarray): Redshifts.
-                ks (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
 
             Returns:
                 (numpy.ndarray): The growth factor.
@@ -365,7 +368,7 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
                 float: The rms matter fluctuation sigma8.
             """
             pk0 = self.matter_power_spectrum(0.0, self.k).flatten()
-            return _sigma8(self.k, pk0)
+            return _sigma8(self.k, pk0, self.h)
 
     class NonLinear:
         """Nonlinear modified-gravity perturbations: nonlinear boost times LCDM baseline."""
@@ -374,6 +377,7 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
             """Initialize the NonLinear instance."""
             assert background.Omega_k0 == 0, "Non-flat geometries not supported"
             self.background = background
+            self.h = background.H0 / 100.0
             self.z = np.atleast_1d(np.asarray(redshifts, dtype=float))
             self.bin_index = mg_params.bin_index
             self.mu, self.eta = mg_params.mu, mg_params.eta
@@ -407,12 +411,12 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
 
             Args:
                 zs (numpy.ndarray): Redshifts.
-                ks (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
 
             Returns:
                 pk (numpy.ndarray): Nonlinear matter power spectrum (boost times LCDM baseline).
             """
-            return self._boost_nl(zs, ks) * np.asarray(
+            return self._boost_nl(zs, ks / self.h) * np.asarray(
                 self._base_nl.matter_power_spectrum(zs, ks)
             )
 
@@ -424,7 +428,7 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
 
             Args:
                 zs (numpy.ndarray): Redshifts.
-                ks (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
 
             Returns:
                 pk (numpy.ndarray): Nonlinear CDM+baryon matter power spectrum.
@@ -437,7 +441,7 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
             Built from the linear boost and the LCDM linear baseline, independent
             of the ``linearperturbations`` argument passed to the constructor.
             """
-            return self._boost_lin(zs, ks) * np.asarray(
+            return self._boost_lin(zs, ks / self.h) * np.asarray(
                 self._base_lin.matter_power_spectrum(zs, ks)
             )
 
@@ -446,7 +450,7 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
 
             Args:
                 zs (numpy.ndarray): Redshifts.
-                ks (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
 
             Returns:
                 (numpy.ndarray): The growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
@@ -467,7 +471,7 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
                 (numpy.ndarray): The growth rate, with shape (nz,) if ks is None
                     and (nz, nk) otherwise.
             """
-            k_ref = 0.05  # h/Mpc, linear & sub-horizon
+            k_ref = 0.05  # Mpc^-1, linear & sub-horizon
             pk_lin_ref_0 = np.ravel(self._pk_lin(0.0, k_ref))[0]
             D = np.sqrt(self._pk_lin(self.z, k_ref).flatten() / pk_lin_ref_0)
             f = -(1.0 + self.z) * np.gradient(np.log(D), self.z)
@@ -480,7 +484,7 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
                 float: The rms matter fluctuation sigma8.
             """
             k = np.asarray(self._base_lin.k)
-            return _sigma8(k, self._pk_lin(0.0, k).flatten())
+            return _sigma8(k, self._pk_lin(0.0, k).flatten(), self.h)
 
         def Sigma(self, zs) -> np.ndarray:
             """Compute the modified lensing parameter Sigma(z) = mu(1 + eta)/2.

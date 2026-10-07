@@ -501,39 +501,6 @@ class obDDMLinearPerturbations:
             self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
             self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
             self.interface_args["CLASSparams"]["non linear"] = "none"
-            # Precision settings matching the emulator training.
-            if False:
-                emulator_accuracy_settings = {
-                    "YHe": 0.2454006,
-                    "T_cmb": 2.7255,
-                    "perturbations_sampling_stepsize": 0.05,
-                    "ur_fluid_approximation": 2,
-                    "ur_fluid_trigger_tau_over_tau_k": 130.0,
-                    "radiation_streaming_approximation": 2,
-                    "radiation_streaming_trigger_tau_over_tau_k": 240.0,
-                    "hyper_flat_approximation_nu": 7000.0,
-                    "transfer_neglect_delta_k_S_t0": 0.17,
-                    "transfer_neglect_delta_k_S_t1": 0.05,
-                    "transfer_neglect_delta_k_S_t2": 0.17,
-                    "transfer_neglect_delta_k_S_e": 0.17,
-                    "start_small_k_at_tau_c_over_tau_h": 0.0004,
-                    "start_large_k_at_tau_h_over_tau_k": 0.05,
-                    "tight_coupling_trigger_tau_c_over_tau_h": 0.005,
-                    "tight_coupling_trigger_tau_c_over_tau_k": 0.008,
-                    "start_sources_at_tau_c_over_tau_h": 0.006,
-                    # Neutrino precision settings
-                    "tol_ncdm_synchronous": 1.0e-5,
-                    "ncdm_fluid_trigger_tau_over_tau_k": 100,
-                    "ncdm_fluid_approximation": 3,
-                }
-                self.interface_args["CLASSparams"].update(emulator_accuracy_settings)
-                # Neutrino sector: replace deg_ncdm shorthand with 3 explicit species matching emulator training
-                self.interface_args["CLASSparams"].pop("deg_ncdm", None)
-                self.interface_args["CLASSparams"]["N_ur"] = 0.00441
-                self.interface_args["CLASSparams"]["N_ncdm"] = 3
-                self.interface_args["CLASSparams"]["m_ncdm"] = "0.02,0.02,0.02"
-                self.interface_args["CLASSparams"]["T_ncdm"] = "0.71611,0.71611,0.71611"
-
             self.results = Class()
             self.results.set(self.interface_args["CLASSparams"])
             self.results.compute()

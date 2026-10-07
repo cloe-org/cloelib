@@ -8,11 +8,15 @@ from cloelib.observables.cmb import CMBLensingTracer
 from cloelib.observables.photo.spectrum_engine import (
     build_spectra_bank,
     get_effective_pk,
+    get_pk_terms,
     needs_generalized_engine,
 )
 from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.math_utils import simpsons_weights_jit
+from cloelib.auxiliary.math_utils import (
+    quadrature_weights,
+    simpsons_weights_avg,
+)
 from cloelib.profiling import profile_function
 
 # General imports
@@ -45,6 +49,34 @@ def Cl_integration(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray:
         (jax.numpy.ndarray): Angular power spectrum Cl with shape (len(ells), len(ells), len(ells)).
     """
     return np.einsum("iz,jz,lz,z,z,z->lij", WT1, WT2, Pkl, 1 / H, 1 / chi2, weights)
+
+
+@jax.jit
+def Cl_integration_batched(WT1, WT2, Pkl, H, chi2, weights) -> jax.numpy.ndarray:
+    """
+    Same as `Cl_integration`, batched (and summed) over an extra leading
+    "term" axis on `WT1`/`WT2`/`Pkl`.
+
+    Lets a caller with several *different* `(kernel1, kernel2, Pk)` triples
+    to sum into one Cl (e.g. `NonLinearGalaxyBiasContribution`'s several
+    `PkTerm`s per contribution pairing - see `spectrum_engine.PkTerm`)
+    fuse the whole sum into one `einsum` call instead of a Python loop over
+    `Cl_integration` - the sum over the term axis `t` falls out of
+    `einsum` for free (it appears in every input but not the output
+    subscripts, so it's contracted/summed exactly like `z` already is).
+
+    Parameters:
+        WT1 (jax.numpy.ndarray): Window function for the first tracer, shape (n_terms, n_bin1, len(z)).
+        WT2 (jax.numpy.ndarray): Window function for the second tracer, shape (n_terms, n_bin2, len(z)).
+        Pkl (jax.numpy.ndarray): Power spectrum interpolated on Limber grid, shape (n_terms, len(ells), len(z)).
+        H (jax.numpy.ndarray): Hubble parameter evaluated at redshifts.
+        chi2 (jax.numpy.ndarray): Square of comoving distances at redshifts.
+        weights (jax.numpy.ndarray): Array of weights used for the fixed nodes integration.
+
+    Returns:
+        (jax.numpy.ndarray): Angular power spectrum Cl with shape (len(ells), n_bin1, n_bin2), summed over the term axis.
+    """
+    return np.einsum("tiz,tjz,tlz,z,z,z->lij", WT1, WT2, Pkl, 1 / H, 1 / chi2, weights)
 
 
 @jax.jit
@@ -156,6 +188,19 @@ Pkl_interp_signed_vmap = jax.jit(
     jax.vmap(Pkl_interp_signed, in_axes=(0, None, None, None, None))
 )
 
+# Batches `Pkl_interp_signed_vmap` over an extra leading "term" axis on
+# `Pk` - lets `_compute_cl_generalized` interpolate every `PkTerm.pk` for
+# one contribution pairing (e.g. `NonLinearGalaxyBiasContribution`'s up to
+# thirteen terms per pairing - see `spectrum_engine.PkTerm`) in one batched
+# XLA call instead of one Python-level `Pkl_interp_signed_vmap` call per
+# term. Purely a performance change - each term's own interpolation is
+# identical either way (`vmap` batches independent per-term work, it
+# doesn't combine terms' `Pk`s before interpolating), so this changes no
+# numerics, only how many dispatches it takes.
+Pkl_interp_signed_vmap_terms = jax.jit(
+    jax.vmap(Pkl_interp_signed_vmap, in_axes=(None, None, None, None, 0))
+)
+
 
 @jax.jit
 def Cl_int_liz_jz(WT1l, WT2, Pkl, invH, invchi2, weights):
@@ -190,28 +235,14 @@ def _cosebi_einsum_perbin(kernel_array, ell_weight, cl_eb):
 
 
 def _growth_rate_on_grid(perturbations, zs_target):
-    # JAX-style backends; to be used for RSD calculation
-    try:
-        return perturbations.growth_rate(zs_target)
-    except TypeError:
-        pass
+    # Growth rate for the RSD calculation. Every `Perturbations`
+    # implementation evaluates `growth_rate` at the requested redshifts.
+    return perturbations.growth_rate(zs_target)
 
-    cache = getattr(perturbations, "_cloelib_growth_rate_cache", None)
-    if cache is None:
-        f_raw = perturbations.growth_rate()
-        z_raw = getattr(perturbations, "z", zs_target)
-        perturbations._cloelib_growth_rate_cache = (z_raw, f_raw)
-    else:
-        z_raw, f_raw = cache
 
-    # If grids match, return directly
-    try:
-        if (len(z_raw) == len(zs_target)) and (z_raw == zs_target).all():
-            return f_raw
-    except Exception:
-        pass
-
-    return np.interp(zs_target, z_raw, f_raw, left=f_raw[0], right=f_raw[-1])
+def _rad_to_arcmin(x):
+    """Convert an angle from radians to arcmin, the unit of Euclid COSEBI products."""
+    return float(x) * 180 * 60 / float(np.pi)
 
 
 def _resolve_w_ell(w_ell, bin_key, ns):
@@ -242,7 +273,9 @@ def _resolve_w_ell(w_ell, bin_key, ns):
     -------
     kernel_array : np.ndarray, shape ``(len(ns), n_ell)``
     thmin : float
+        Minimum angular scale of the kernels in radians (``metadata["THMIN"]``).
     thmax : float
+        Maximum angular scale of the kernels in radians (``metadata["THMAX"]``).
     """
     i, j = bin_key[2], bin_key[3]
     # Detect per-bin layout: values are dicts (not arrays)
@@ -278,7 +311,9 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
         Angular power spectra in cosmolib format.  All SHE-SHE bin pairs
         present in the dict are processed automatically.
     ells : jax.numpy.ndarray
-        Multipoles at which the integration is performed.
+        Multipoles at which the integration is performed. Any strictly
+        increasing grid is accepted (see ``quadrature_weights``); it must be
+        fine enough to resolve the oscillations of the kernels.
     w_ell : dict
         Harmonic-space COSEBIs kernels.  Two layouts are accepted:
 
@@ -299,7 +334,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     -------
     dict
         Dictionary keyed like the SHE-SHE entries of `cells` with `COSEBI`
-        values of shape ``(2, 2, n_modes)``.
+        values of shape ``(2, 2, n_modes)``. ``thmin``/``thmax`` are in
+        arcmin, as in the Euclid LE3 products read by euclidlib.
     """
     if software is None:
         software = "get_cosebis_from_cl (cloelib)"
@@ -309,7 +345,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     nmodes = int(np.max(ns))
     n_modes = ns.shape[0]
     # Pre-compute the ell weighting factor once: shape (n_ell,)
-    ell_weight = ells * simpsons_weights_jit(len(ells)) / (2 * np.pi)
+    # E_n = int dl l / (2 pi) C(l) W_n(l)
+    ell_weight = ells * quadrature_weights(ells) / (2 * np.pi)
 
     she_she = [
         (key, cl_map)
@@ -362,8 +399,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
                 array=arr_all[idx],
                 mode=ns,
                 nmodes=nmodes,
-                thmin=thmin,
-                thmax=thmax,
+                thmin=_rad_to_arcmin(thmin),
+                thmax=_rad_to_arcmin(thmax),
                 software=software,
             )
     else:
@@ -384,8 +421,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
                 array=arr,
                 mode=ns,
                 nmodes=nmodes,
-                thmin=thmin,
-                thmax=thmax,
+                thmin=_rad_to_arcmin(thmin),
+                thmax=_rad_to_arcmin(thmax),
                 software=software,
             )
 
@@ -399,19 +436,32 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
     Can be used as a standalone function without instantiating `AngularTwoPoint`
     if two-point correlation functions are already available.
 
+    Following Schneider, Eifler & Krause (2010),
+
+    .. math::
+
+        E_n = \\frac{1}{2} \\int d\\theta\\, \\theta
+              [T_{+n}(\\theta) \\xi_+(\\theta) + T_{-n}(\\theta) \\xi_-(\\theta)],
+
+        B_n = \\frac{1}{2} \\int d\\theta\\, \\theta
+              [T_{+n}(\\theta) \\xi_+(\\theta) - T_{-n}(\\theta) \\xi_-(\\theta)].
+
     Parameters
     ----------
     twopcf : dict
         Two-point correlation functions in cosmolib format.
         Keys should be tuples like ``('SHE', 'SHE', i, j)``.
     theta : jax.numpy.ndarray
-        Angular scales in radians.
+        Angular scales in radians, spanning the COSEBI range
+        ``[theta_min, theta_max]``.
     T_plus : array-like
-        Real-space T_+ kernel functions.
+        Real-space T_+ kernel functions evaluated on `theta` (without the
+        extra factor of theta), shape ``(n_rows, len(theta))``.
     T_minus : array-like
-        Real-space T_- kernel functions.
+        Real-space T_- kernel functions evaluated on `theta`, same layout as
+        `T_plus`.
     ns : jax.numpy.ndarray
-        Mode indices selecting kernels from `T_plus`/`T_minus`.
+        Row indices selecting kernels from `T_plus`/`T_minus`.
     software : str, optional
         Software provenance tag stored in the output `COSEBI` objects.
         Defaults to ``'get_cosebis_from_2pcf (cloelib)'``.
@@ -419,7 +469,8 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
     Returns
     -------
     dict
-        COSEBIs with EE and BB modes, keyed like `twopcf`.
+        COSEBIs with EE and BB modes, keyed like `twopcf`. ``thmin``/``thmax``
+        are in arcmin, as in the Euclid LE3 products read by euclidlib.
     """
     if software is None:
         software = "get_cosebis_from_2pcf (cloelib)"
@@ -427,21 +478,22 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
     T_minus = np.asarray(T_minus)
     ns = np.asarray(ns)
     tomo_cosebis = {}
+    # Shape (n_modes, n_theta): d theta * theta / 2 folded into the kernels
+    theta_weight = quadrature_weights(theta) * theta / 2
+    Tp_w = T_plus[ns] * theta_weight
+    Tm_w = T_minus[ns] * theta_weight
 
     for key, cf_map in twopcf.items():
-        if (key[0] == "SHE") & (key[1] == "SHE"):
+        if not (key[0] == "SHE" and key[1] == "SHE"):
             continue
 
         xi_plus = np.interp(theta, cf_map.theta, cf_map.array[0, 0])
         xi_minus = np.interp(theta, cf_map.theta, cf_map.array[1, 1])
 
-        def compute_cosebi(T_p, T_m):
-            weights = simpsons_weights_jit(len(theta))
-            ee = np.sum(xi_plus * T_p * weights) / np.pi
-            bb = np.sum(xi_minus * T_m * weights) / np.pi
-            return ee, bb
-
-        ee_vals, bb_vals = jax.vmap(compute_cosebi)(T_plus[ns], T_minus[ns])
+        plus = Tp_w @ xi_plus
+        minus = Tm_w @ xi_minus
+        ee_vals = plus + minus
+        bb_vals = plus - minus
 
         arr = np.zeros((2, 2, ns.shape[0]), dtype=np.float64)
         arr = arr.at[0, 0, :].set(ee_vals)
@@ -450,8 +502,8 @@ def get_cosebis_from_2pcf(twopcf, theta, T_plus, T_minus, ns, software=None):
             array=arr,
             mode=ns,
             nmodes=int(np.max(ns)),
-            thmin=np.min(theta),
-            thmax=np.max(theta),
+            thmin=_rad_to_arcmin(np.min(theta)),
+            thmax=_rad_to_arcmin(np.max(theta)),
             software=software,
         )
 
@@ -787,7 +839,10 @@ class AngularTwoPoint:
             )
 
         prefactor_cell = self._angular_prefactor(ells)
-        weights = simpsons_weights_jit(len(H))
+        # Redshift quadrature of the Limber integral: no alternating Simpson weights, so
+        # the result does not depend on the parity of the number of redshift nodes
+        # (see `simpsons_weights_avg`).
+        weights = simpsons_weights_avg(len(H))
 
         # C_ell_calc = (
         #    c_0
@@ -860,7 +915,12 @@ class AngularTwoPoint:
         physics separation `toy_cloelib.engine.compute_angular_power_
         spectrum` uses, reusing cloelib's own existing jitted Limber
         kernels (`Pkl_interp_vmap`, `Cl_integration`) unchanged for each
-        pair's integral.
+        pair's integral. A pair whose bias amplitudes vary per tomographic
+        bin (e.g. `NonLinearGalaxyBiasContribution`) instead declares
+        `get_pk_terms` - several additive `(kernel1, kernel2, pk)` triples
+        rather than one shared pair (see `spectrum_engine.PkTerm`'s
+        docstring); checked first, per `(c1, c2)`, before falling back to
+        `get_effective_pk`.
 
         Does not support RSD (`PositionsTracer(..., include_rsd=True)`)
         paired with a generalized-engine-requiring contribution - that
@@ -888,7 +948,10 @@ class AngularTwoPoint:
         )
         chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
         chi2 = chi**2
-        weights = simpsons_weights_jit(len(H))
+        # Redshift quadrature of the Limber integral: no alternating Simpson weights, so
+        # the result does not depend on the parity of the number of redshift nodes
+        # (see `simpsons_weights_avg`).
+        weights = simpsons_weights_avg(len(H))
 
         pert_zs = self.tracer1.perturbations.z
 
@@ -904,6 +967,29 @@ class AngularTwoPoint:
 
         for c1 in contributions1:
             for c2 in contributions2:
+                terms = get_pk_terms(c1, c2, zs_calc, bank)
+                if terms is not None:
+                    # Per-bin-varying amplitudes (e.g.
+                    # `NonLinearGalaxyBiasContribution`): several additive
+                    # (kernel1, kernel2, pk) triples instead of one shared
+                    # pair - see `PkTerm`'s docstring. Stacked and batched
+                    # (`Pkl_interp_signed_vmap_terms`/`Cl_integration_
+                    # batched`) into one interpolation call and one summed
+                    # einsum per pairing, rather than looping
+                    # `Pkl_interp_signed_vmap`/`Cl_integration` once per
+                    # term - a pure performance change (see those
+                    # functions' docstrings), not a numerical one.
+                    kernel1_stack = np.stack([t.kernel1 for t in terms])
+                    kernel2_stack = np.stack([t.kernel2 for t in terms])
+                    pk_stack = np.stack([t.pk.T for t in terms])
+                    Pkl_stack = Pkl_interp_signed_vmap_terms(
+                        k_lz, zs_calc, ks, pert_zs, pk_stack
+                    )
+                    C_ell_calc = C_ell_calc + Cl_integration_batched(
+                        kernel1_stack, kernel2_stack, Pkl_stack, H, chi2, weights
+                    )
+                    continue
+
                 pk_eff = get_effective_pk(c1, c2, bank)
                 if pk_eff is None:
                     Pkl_pair = Pkl_interp_vmap(k_lz, zs_calc, ks, pert_zs, matter_pk.T)

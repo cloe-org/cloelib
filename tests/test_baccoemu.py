@@ -145,7 +145,7 @@ def test_baccoemu_sigma8_0(baccoemu_perturbation_instance, key):
 def test_baccoemu_sigma8_0_cb(baccoemu_perturbation_instance, key):
     """Test baccoemu sigma8_0_cb."""
     assert hasattr(baccoemu_perturbation_instance[key], "sigma8_0_cb")
-    assert callable(baccoemu_perturbation_instance[key].sigma8_0)
+    assert callable(baccoemu_perturbation_instance[key].sigma8_0_cb)
     result = baccoemu_perturbation_instance[key].sigma8_0_cb()
     assert isinstance(result, (float, np.floating))
     assert result > 0  # Physical value

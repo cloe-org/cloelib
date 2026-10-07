@@ -11,7 +11,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 [![Tests: pytest](https://img.shields.io/badge/tests-pytest-blue?logo=pytest)](https://docs.pytest.org/)
 [![Linting: Ruff](https://img.shields.io/badge/linting-ruff-purple?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
 [![Code Style: Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg?logo=prettier&logoColor=white)](https://prettier.io/)
-[![Type Checking: mypy](https://img.shields.io/badge/type%20checking-mypy-8A2BE2?logo=mypy&logoColor=white)](https://mypy.readthedocs.io/)
+[![Type Checking: ty](https://img.shields.io/badge/type%20checking-ty-8A2BE2?logo=ty&logoColor=white)](https://docs.astral.sh/ty/)
 [![PyPI version](https://img.shields.io/pypi/v/cloelib.svg?logo=pypi&logoColor=white)](https://pypi.org/project/cloelib/)
 [![CRediT](https://img.shields.io/badge/contributions-CRediT-using?color=%23cd2653)](https://credit.niso.org/implementing-credit/)
 [![All Contributors](https://img.shields.io/github/all-contributors/cloe-org/cloelib?color=ee8449)](#contributors-)
@@ -25,6 +25,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 - [🚀 Installation](#-installation)
 - [📊 Usage](#-usage)
 - [🤝 Contributing](#-contributing)
+- [📚 Citation](#-citation)
 - [📜 License](#-license)
 - [🙏 Acknowledgements](#-acknowledgements)
 
@@ -148,6 +149,14 @@ git push origin feature/your-feature-name
 
 ---
 
+## 📚 Citation
+
+If you use **cloelib** in your research, please cite the software using the
+metadata in [`CITATION.cff`](CITATION.cff). On GitHub, select **Cite this repository**
+to copy the citation in APA or BibTeX format.
+
+Other contributions are acknowledged in the [contributors section](#-contributors).
+
 ## 📜 License
 
 This project is licensed under the **MIT LICENSE** – see the [LICENSE](LICENSE) file for details.
@@ -189,7 +198,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/PedroCarrilho"><img src="https://avatars.githubusercontent.com/u/60090062?v=4?s=100" width="100px;" alt="Pedro Carrilho"/><br /><sub><b>Pedro Carrilho</b></sub></a><br /><a href="#code-PedroCarrilho" title="Code">💻</a> <a href="#maintenance-PedroCarrilho" title="Maintenance">🚧</a> <a href="#ideas-PedroCarrilho" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-PedroCarrilho" title="Bug reports">🐛</a> <a href="#content-PedroCarrilho" title="Content">🖋</a> <a href="#data-PedroCarrilho" title="Data">🔣</a> <a href="#doc-PedroCarrilho" title="Documentation">📖</a> <a href="#talk-PedroCarrilho" title="Talks">📢</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://ntessore.page"><img src="https://avatars.githubusercontent.com/u/3993688?v=4?s=100" width="100px;" alt="Nicolas Tessore"/><br /><sub><b>Nicolas Tessore</b></sub></a><br /><a href="#tool-ntessore" title="Tools">🔧</a> <a href="#mentoring-ntessore" title="Mentoring">🧑‍🏫</a> <a href="#code-ntessore" title="Code">💻</a> <a href="#review-ntessore" title="Reviewed Pull Requests">👀</a> <a href="#bug-ntessore" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://sfarrens.github.io"><img src="https://avatars.githubusercontent.com/u/6851839?v=4?s=100" width="100px;" alt="Samuel Farrens"/><br /><sub><b>Samuel Farrens</b></sub></a><br /><a href="#tool-sfarrens" title="Tools">🔧</a> <a href="#mentoring-sfarrens" title="Mentoring">🧑‍🏫</a> <a href="#code-sfarrens" title="Code">💻</a> <a href="#review-sfarrens" title="Reviewed Pull Requests">👀</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/josecolomanadal"><img src="https://avatars.githubusercontent.com/u/83759085?v=4?s=100" width="100px;" alt="Jose Coloma Nadal"/><br /><sub><b>Jose Coloma Nadal</b></sub></a><br /><a href="#bug-josecolomanadal" title="Bug reports">🐛</a> <a href="#code-josecolomanadal" title="Code">💻</a> <a href="#ideas-josecolomanadal" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/josecolomanadal"><img src="https://avatars.githubusercontent.com/u/83759085?v=4?s=100" width="100px;" alt="Jose Coloma Nadal"/><br /><sub><b>Jose Coloma Nadal</b></sub></a><br /><a href="#bug-josecolomanadal" title="Bug reports">🐛</a> <a href="#code-josecolomanadal" title="Code">💻</a> <a href="#ideas-josecolomanadal" title="Ideas, Planning, & Feedback">🤔</a> <a href="#review-josecolomanadal" title="Reviewed Pull Requests">👀</a></td>
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/caspervedder"><img src="https://avatars.githubusercontent.com/u/187176614?v=4?s=100" width="100px;" alt="Casper Vedder"/><br /><sub><b>Casper Vedder</b></sub></a><br /><a href="#code-caspervedder" title="Code">💻</a> <a href="#ideas-caspervedder" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-caspervedder" title="Bug reports">🐛</a> <a href="#review-caspervedder" title="Reviewed Pull Requests">👀</a></td>
@@ -202,7 +211,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pburger112"><img src="https://avatars.githubusercontent.com/u/51719634?v=4?s=100" width="100px;" alt="Pierre Burger"/><br /><sub><b>Pierre Burger</b></sub></a><br /><a href="#code-pburger112" title="Code">💻</a> <a href="#ideas-pburger112" title="Ideas, Planning, & Feedback">🤔</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/davidesciotti"><img src="https://avatars.githubusercontent.com/u/84071067?v=4?s=100" width="100px;" alt="Davide Sciotti"/><br /><sub><b>Davide Sciotti</b></sub></a><br /><a href="#bug-davidesciotti" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/davidesciotti"><img src="https://avatars.githubusercontent.com/u/84071067?v=4?s=100" width="100px;" alt="Davide Sciotti"/><br /><sub><b>Davide Sciotti</b></sub></a><br /><a href="#bug-davidesciotti" title="Bug reports">🐛</a> <a href="#ideas-davidesciotti" title="Ideas, Planning, & Feedback">🤔</a> <a href="#mentoring-davidesciotti" title="Mentoring">🧑‍🏫</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/GabrieleParimbelli"><img src="https://avatars.githubusercontent.com/u/43963112?v=4?s=100" width="100px;" alt="GabrieleParimbelli"/><br /><sub><b>GabrieleParimbelli</b></sub></a><br /><a href="#bug-GabrieleParimbelli" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zahrabaghkhani"><img src="https://avatars.githubusercontent.com/u/47903409?v=4?s=100" width="100px;" alt="Zahra Baghkhani"/><br /><sub><b>Zahra Baghkhani</b></sub></a><br /><a href="#code-zahrabaghkhani" title="Code">💻</a> <a href="#ideas-zahrabaghkhani" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-zahrabaghkhani" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/fabriceroy"><img src="https://avatars.githubusercontent.com/u/29073232?v=4?s=100" width="100px;" alt="Fabrice Roy"/><br /><sub><b>Fabrice Roy</b></sub></a><br /><a href="#doc-fabriceroy" title="Documentation">📖</a> <a href="#code-fabriceroy" title="Code">💻</a> <a href="#ideas-fabriceroy" title="Ideas, Planning, & Feedback">🤔</a></td>
@@ -225,7 +234,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/raphkou"><img src="https://avatars.githubusercontent.com/u/61792335?v=4?s=100" width="100px;" alt="raphkou"/><br /><sub><b>raphkou</b></sub></a><br /><a href="#bug-raphkou" title="Bug reports">🐛</a> <a href="#code-raphkou" title="Code">💻</a> <a href="#ideas-raphkou" title="Ideas, Planning, & Feedback">🤔</a> <a href="#doc-raphkou" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ivansladoljev"><img src="https://avatars.githubusercontent.com/u/144113061?v=4?s=100" width="100px;" alt="Ivan Sladoljev"/><br /><sub><b>Ivan Sladoljev</b></sub></a><br /><a href="#code-ivansladoljev" title="Code">💻</a> <a href="#ideas-ivansladoljev" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/NastassiaG"><img src="https://avatars.githubusercontent.com/u/107264848?v=4?s=100" width="100px;" alt="NastassiaG"/><br /><sub><b>NastassiaG</b></sub></a><br /><a href="#code-NastassiaG" title="Code">💻</a> <a href="#bug-NastassiaG" title="Bug reports">🐛</a> <a href="#ideas-NastassiaG" title="Ideas, Planning, & Feedback">🤔</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/martincrocce"><img src="https://avatars.githubusercontent.com/u/29067049?v=4?s=100" width="100px;" alt="Martin Crocce"/><br /><sub><b>Martin Crocce</b></sub></a><br /><a href="#projectManagement-martincrocce" title="Project Management">📆</a> <a href="#mentoring-martincrocce" title="Mentoring">🧑‍🏫</a> <a href="#promotion-martincrocce" title="Promotion">📣</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/martincrocce"><img src="https://avatars.githubusercontent.com/u/29067049?v=4?s=100" width="100px;" alt="Martin Crocce"/><br /><sub><b>Martin Crocce</b></sub></a><br /><a href="#projectManagement-martincrocce" title="Project Management">📆</a> <a href="#mentoring-martincrocce" title="Mentoring">🧑‍🏫</a> <a href="#promotion-martincrocce" title="Promotion">📣</a> <a href="#ideas-martincrocce" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/CarmelitaCarbone"><img src="https://avatars.githubusercontent.com/u/17458225?v=4?s=100" width="100px;" alt="CarmelitaCarbone"/><br /><sub><b>CarmelitaCarbone</b></sub></a><br /><a href="#projectManagement-CarmelitaCarbone" title="Project Management">📆</a> <a href="#mentoring-CarmelitaCarbone" title="Mentoring">🧑‍🏫</a> <a href="#promotion-CarmelitaCarbone" title="Promotion">📣</a></td>

@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using hi_class."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
@@ -287,7 +287,7 @@ class hi_classBackground:
 
         return self.results.Om_b(zs) + self.results.Om_cdm(zs)
 
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the matter density as a function of redshift.
 
@@ -485,20 +485,39 @@ class hi_classLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
-        Calculate the growth rate f(z).
+        Calculate the growth rate f(z, k).
         The standard expression for scale-independent f assumes LCDM and isn't valid in modified gravity.
-        Instead, we use the scale-dependent growth rate at large k (1 Mpc^-1)
+        Instead, we use the scale-dependent growth rate, evaluated at large k (1 Mpc^-1)
+        if no wavenumbers are given.
+
+        Parameters
+        ----------
+        zs: Optional[np.ndarray]
+            Redshifts at which to evaluate the growth rate. Defaults to `self.z`.
+        ks: Optional[np.ndarray]
+            Wavenumbers at which to evaluate the growth rate.
 
         Returns
         -------
         np.ndarray
-            Scale-independent growth rate f(z)
+            Growth rate f(z) at k = 1 Mpc^-1 with shape (nz,) if ks is None,
+            and f(z, k) with shape (nz, nk) otherwise.
         """
-        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]
-
-        return np.array(arr)
+        z = self.z if zs is None else np.atleast_1d(zs)
+        if ks is None:
+            return np.array(
+                [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in z]
+            )
+        return np.array(
+            [
+                [self.results.scale_dependent_growth_factor_f(ki, zi) for ki in ks]
+                for zi in z
+            ]
+        )
 
     def sigma8_0(self) -> float:
         """
@@ -519,7 +538,7 @@ class hi_classNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Optional[object],
+        linearperturbations: Optional[Perturbations],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
     ):
@@ -664,20 +683,39 @@ class hi_classNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
-        Calculate the growth rate f(z).
+        Calculate the growth rate f(z, k).
         The standard expression for scale-independent f assumes LCDM and isn't valid in modified gravity.
-        Instead, we use the scale-dependent growth rate at large k (1 Mpc^-1)
+        Instead, we use the scale-dependent growth rate, evaluated at large k (1 Mpc^-1)
+        if no wavenumbers are given.
+
+        Parameters
+        ----------
+        zs: Optional[np.ndarray]
+            Redshifts at which to evaluate the growth rate. Defaults to `self.z`.
+        ks: Optional[np.ndarray]
+            Wavenumbers at which to evaluate the growth rate.
 
         Returns
         -------
         np.ndarray
-            Scale-independent growth rate f(z)
+            Growth rate f(z) at k = 1 Mpc^-1 with shape (nz,) if ks is None,
+            and f(z, k) with shape (nz, nk) otherwise.
         """
-        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]
-
-        return np.array(arr)
+        z = self.z if zs is None else np.atleast_1d(zs)
+        if ks is None:
+            return np.array(
+                [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in z]
+            )
+        return np.array(
+            [
+                [self.results.scale_dependent_growth_factor_f(ki, zi) for ki in ks]
+                for zi in z
+            ]
+        )
 
     def sigma8_0(self) -> float:
         """

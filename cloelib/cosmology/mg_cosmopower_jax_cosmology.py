@@ -5,7 +5,7 @@ applied on top of an external LCDM baseline (another cloelib Perturbations objec
 as P_MG = B * P_LCDM on the baseline k-grid, so that mu = eta = 1 returns LCDM exactly.
 mu and eta are read from a mutable MGParams holder and either modify a single redshift
 bin (bin_index an int) or all bins at once (bin_index None); the matching emulators are
-downloaded from Zenodo on first use. eta has no nonlinear effect and enters only through
+downloaded on first use. eta has no nonlinear effect and enters only through
 the lensing parameter Sigma = mu(1 + eta)/2.
 """
 
@@ -21,8 +21,12 @@ _trapz = (
     np.trapezoid if hasattr(np, "trapezoid") else np.trapz
 )  # numpy 2 removed np.trapz
 
-# Zenodo record hosting the MG boost emulators, downloaded and cached on first use.
-MG_EMULATOR_ZENODO_URL = "https://zenodo.org/records/22967046/files"
+# GitHub repository hosting the MG boost emulators, downloaded and cached on first use.
+# This is the raw-file base path; each .npz is fetched individually, not the whole repo.
+MG_EMULATOR_URL = (
+    "https://raw.githubusercontent.com/cosmopower-organization/"
+    "Euclid-DR1-matter-emulators/main/emulators/extended/parametrised_mg"
+)
 
 # Table 1 MG redshift bins: index -> (zmin, zmax)
 _BIN_EDGES = [(0.00, 0.43), (0.43, 0.91), (0.91, 1.47), (1.47, 2.15), (2.15, 3.00)]
@@ -75,8 +79,8 @@ def _emu_filename(branch, bin_index):
 def _load_emu(branch, bin_index=None):
     """Load and cache a CosmoPower-JAX boost emulator.
 
-    The emulator file is downloaded from the Zenodo record on first use and
-    cached locally, mirroring ``cosmopower_jax_cosmology``.
+    The emulator file is downloaded from the Euclid-DR1-matter-emulators GitHub
+    repository on first use and cached locally, mirroring ``cosmopower_jax_cosmology``.
 
     Args:
         branch (str): Either 'linear' or 'nonlinear'.
@@ -91,7 +95,7 @@ def _load_emu(branch, bin_index=None):
     if key not in _EMU_CACHE:
         from cloelib.cosmology.cosmopower_jax_cosmology import emulator_data
 
-        fp = emulator_data(_emu_filename(branch, bin_index), MG_EMULATOR_ZENODO_URL)
+        fp = emulator_data(_emu_filename(branch, bin_index), MG_EMULATOR_URL)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning)
             from cosmopower_jax.cosmopower_jax import CosmoPowerJAX

@@ -274,9 +274,11 @@ def test_emu_filename(branch, bin_index, expected):
     assert mg._emu_filename(branch, bin_index) == expected
 
 
-def test_zenodo_url_is_extended_record():
-    # The MG boost emulators live in the extended-cosmologies Zenodo record.
-    assert "22967046" in mg.MG_EMULATOR_ZENODO_URL
+def test_emulator_url_points_at_parametrised_mg():
+    # The MG boost emulators live in the extended/parametrised_mg folder of the
+    # Euclid-DR1-matter-emulators GitHub repository.
+    assert "Euclid-DR1-matter-emulators" in mg.MG_EMULATOR_URL
+    assert mg.MG_EMULATOR_URL.endswith("extended/parametrised_mg")
 
 
 def test_bounds_boxes_present():

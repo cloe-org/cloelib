@@ -44,7 +44,7 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all
 follows.
 """
 
-from typing import Dict, Optional
+from typing import Any, Callable, Dict, Optional, Protocol
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
@@ -62,10 +62,10 @@ from cloelib.observables.photo.spectrum_engine import (
 )
 
 # General imports
-import jax.numpy as np  # type: ignore
-import jax  # type: ignore
+import jax.numpy as np
+import jax
 import jax.numpy as jnp
-import interpax  # type: ignore
+import interpax
 import numpy as _numpy
 from scipy import interpolate as _scipy_interpolate
 
@@ -151,6 +151,23 @@ def _is_known_linear_perturbations(perturbations) -> bool:
     """
     name = type(perturbations).__name__
     return name.endswith("LinearPerturbations") and "NonLinear" not in name
+
+
+class TATTLoopComputer(Protocol):
+    """Interface `TATTContribution` needs from its one-loop kernel backend.
+
+    `PBJTATTLoopComputer` is the production implementation; any other
+    object with these two members can be passed as `tatt_loop_computer`.
+    """
+
+    @property
+    def linear_perturbations(self) -> Perturbations:
+        """Linear perturbations used for the D(z) factors in C1/C2/D**4."""
+        ...
+
+    def compute(self, name: str) -> Callable[..., jnp.ndarray]:
+        """Return a `SpectrumRequest.compute` callable for kernel `name`."""
+        ...
 
 
 class PBJTATTLoopComputer:
@@ -279,9 +296,9 @@ class PBJTATTLoopComputer:
 
         # Backend-dependent return shape for a length-1 `zs` (same class of
         # inconsistency `_growth_factor_1d` already works around for
-        # `growth_factor`): CAMB's `matter_power_spectrum` keeps an
-        # explicit (1, n_k) z-axis, HMemu's `.squeeze()`s it away to (n_k,).
-        # `reshape(-1)` normalizes either to the flat (n_k,) FAST-PT needs.
+        # `growth_factor`): most backends keep an explicit (1, n_k) z-axis,
+        # but not all are guaranteed to. `reshape(-1)` normalizes either to
+        # the flat (n_k,) FAST-PT needs.
         p_lin_z0 = _numpy.reshape(
             _numpy.asarray(
                 self.linear_perturbations.matter_power_spectrum(
@@ -419,7 +436,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
         A1: float,
         A2: float,
         b_TA: float,
-        loop_computer: object,
+        loop_computer: TATTLoopComputer,
         eta1: float = 0.0,
         eta2: float = 0.0,
         z0: float = 0.62,
@@ -580,7 +597,7 @@ class ShearTracer:
         z: np.ndarray,
         nuisance_params: dict,
         ia_model: "str | Contribution | None" = None,
-        tatt_loop_computer: Optional[object] = None,
+        tatt_loop_computer: Optional[TATTLoopComputer] = None,
     ):
         r"""
         Initialize the class instance.
@@ -691,8 +708,18 @@ class ShearTracer:
                 "inside get_window_IA rather than as a separate "
                 "effective-Pk grid."
             )
-        ks = self.perturbations.k if ks is None else ks
-        zs = self.perturbations.z if zs is None else zs
+        # `.k`/`.z` aren't part of the `Perturbations` protocol (see its
+        # docstring), so read them defensively and fail with a clear error.
+        if ks is None:
+            ks = getattr(self.perturbations, "k", None)
+        if zs is None:
+            zs = getattr(self.perturbations, "z", None)
+        if ks is None or zs is None:
+            raise ValueError(
+                "get_ia_effective_spectra() needs explicit ks/zs when "
+                f"{type(self.perturbations).__name__} does not expose its "
+                "own `.k`/`.z` grid."
+            )
         matter_pk = self.perturbations.matter_power_spectrum(zs, ks)
         return {
             "II": compute_effective_pk(self.ia, self.ia, matter_pk, ks, zs),
@@ -757,15 +784,7 @@ class ShearTracer:
         """
         Omega_m0 = self.background.Omega_m(0.0)
         Hz = self.perturbations.background.hubble_parameter(z)
-        # `growth_factor` is backend-dependent: some backends (e.g. CAMB)
-        # return D(z, k) with an explicit k-axis; others (e.g. the JAX
-        # backends) ignore `ks` entirely and return a scale-independent
-        # D(z), and don't set a `.k` attribute at all. NLA treats growth as
-        # ~scale-independent, so when a k-axis is present we pick a single
-        # representative column (unchanged from the historical behavior);
-        # when it isn't, the backend's own 1D D(z) is used directly.
-        # TODO discuss whether we want growth factor to output a 1D or a 2D array
-        ks = getattr(self.perturbations, "k", None)
+        ks: Any = getattr(self.perturbations, "k", None)
         Dz_raw = self.perturbations.growth_factor(z, ks)
         Dz = Dz_raw[:, 1] if getattr(Dz_raw, "ndim", 1) == 2 else Dz_raw
         A_IA = self.nuisance_params["AIA"]

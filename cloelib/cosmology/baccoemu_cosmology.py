@@ -152,31 +152,27 @@ class BACCOemuLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self, zs, ks) -> np.ndarray:
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
         r"""
         Calculate the total (dark matter + baryons + neutrinos) linear growth rate for given redshifts and wavenumbers.
 
         Args:
-            zs (array_like): Redshifts at which to calculate the growth factor.
-            ks (array_like): Wavenumbers at which to calculate the growth factor.
+            zs (Optional[array_like]): Redshifts at which to calculate the growth rate.
+                Defaults to `self.z`.
+            ks (array_like): Wavenumbers at which to calculate the growth rate. Required,
+                since the BACCOemu growth rate is scale dependent.
 
         Returns:
             (np.ndarray): The linear growth rate as a function of redshift and wavenumber.
         """
+        if zs is None:
+            zs = self.z
+        if ks is None:
+            raise ValueError(
+                "The BACCOemu growth rate is scale dependent: `ks` must be provided."
+            )
 
-        growth = self.growth_factor(zs, ks)
-        lna = np.log(1 / (1 + zs))
-
-        # sort by increasing lna
-        idx = np.argsort(lna)
-        lna_sorted = lna[idx]
-        growth_sorted = growth[idx, :]
-
-        cs = interpolate.CubicSpline(lna_sorted, np.log(growth_sorted), axis=0)
-        f = cs(lna_sorted, 1)  # d ln D / d ln a, shape (nz, nk)
-
-        unsort = np.argsort(idx)
-        return f[unsort, :]
+        return _growth_rate_from_growth_factor(self.growth_factor, self.z, zs, ks)
 
     def growth_factor_cb(self, zs, ks) -> np.ndarray:
         r"""
@@ -212,19 +208,7 @@ class BACCOemuLinearPerturbations:
         Returns:
             (np.ndarray): The linear cold growth rate as a function of redshift and wavenumber.
         """
-        growth = self.growth_factor_cb(zs, ks)
-        lna = np.log(1 / (1 + zs))
-
-        # sort by increasing lna
-        idx = np.argsort(lna)
-        lna_sorted = lna[idx]
-        growth_sorted = growth[idx, :]
-
-        cs = interpolate.CubicSpline(lna_sorted, np.log(growth_sorted), axis=0)
-        f = cs(lna_sorted, 1)  # d ln D / d ln a, shape (nz, nk)
-
-        unsort = np.argsort(idx)
-        return f[unsort, :]
+        return _growth_rate_from_growth_factor(self.growth_factor_cb, self.z, zs, ks)
 
     def sigma8_0(self) -> float:
         """
@@ -435,18 +419,20 @@ class BACCOemuNonLinearPerturbations:
         """
         return self.linearperturbations.growth_factor(zs, ks)
 
-    def growth_rate(self, zs, ks) -> np.ndarray:
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
         r"""
         Calculate the total (dark matter + baryons + neutrinos) linear growth rate for given redshifts and wavenumbers.
 
         Args:
-            zs (array_like): Redshifts at which to calculate the growth factor.
-            ks (array_like): Wavenumbers at which to calculate the growth factor.
+            zs (Optional[array_like]): Redshifts at which to calculate the growth rate.
+                Defaults to `self.z`.
+            ks (array_like): Wavenumbers at which to calculate the growth rate. Required,
+                since the BACCOemu growth rate is scale dependent.
 
         Returns:
             (np.ndarray): The linear growth rate as a function of redshift and wavenumber.
         """
-        return self.linearperturbations.growth_rate(zs, ks)
+        return self.linearperturbations.growth_rate(self.z if zs is None else zs, ks)
 
     def growth_factor_cb(self, zs, ks) -> np.ndarray:
         r"""
@@ -482,19 +468,7 @@ class BACCOemuNonLinearPerturbations:
         Returns:
             (np.ndarray): The linear cold growth rate as a function of redshift and wavenumber.
         """
-        growth = self.growth_factor_cb(zs, ks)
-        lna = np.log(1 / (1 + zs))
-
-        # sort by increasing lna
-        idx = np.argsort(lna)
-        lna_sorted = lna[idx]
-        growth_sorted = growth[idx, :]
-
-        cs = interpolate.CubicSpline(lna_sorted, np.log(growth_sorted), axis=0)
-        f = cs(lna_sorted, 1)  # d ln D / d ln a, shape (nz, nk)
-
-        unsort = np.argsort(idx)
-        return f[unsort, :]
+        return _growth_rate_from_growth_factor(self.growth_factor_cb, self.z, zs, ks)
 
     def sigma8_0(self) -> float:
         """
@@ -539,3 +513,30 @@ class BACCOemuNonLinearPerturbations:
             The sigma8 value.
         """
         return np.asarray(self.emu.get_sigma12(cold=True, **self.params_emu))[0]
+
+
+def _growth_rate_from_growth_factor(growth_factor, z_grid, zs, ks) -> np.ndarray:
+    r"""Compute $f = d\ln D / d\ln a$ from a growth factor $D(z, k)$.
+
+    The logarithmic derivative is taken with a cubic spline in $\ln a$ over
+    `z_grid`, the redshift grid of the perturbations, and evaluated at `zs`.
+    This keeps the result independent of how densely `zs` is sampled (a
+    spline through the requested redshifts alone reduces to a secant for
+    two of them).
+
+    Args:
+        growth_factor (Callable): Growth factor D(zs, ks), with shape (nz, nk).
+        z_grid (np.ndarray): Redshift grid of the perturbations.
+        zs (array_like): Redshifts at which to evaluate the growth rate.
+        ks (array_like): Wavenumbers at which to evaluate the growth rate.
+
+    Returns:
+        np.ndarray: The growth rate, with shape (nz, nk).
+    """
+    z_sorted = np.sort(np.asarray(z_grid))
+    growth = growth_factor(z_sorted, ks)
+    # reverse to increasing lna
+    cs = interpolate.CubicSpline(
+        np.log(1 / (1 + z_sorted))[::-1], np.log(growth)[::-1], axis=0
+    )
+    return cs(np.log(1 / (1 + np.atleast_1d(zs))), 1)

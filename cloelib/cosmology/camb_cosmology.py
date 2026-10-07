@@ -1,7 +1,11 @@
 """Implementation of Background and Perturbation cosmology using CAMB."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import (
+    Background,
+    Perturbations,
+    growth_rate_on_redshifts,
+)
 from cloelib.auxiliary.math_utils import ensure_z_zero_included
 
 # General imports
@@ -259,7 +263,7 @@ class CAMBBackground:
         """
         return self.results.angular_diameter_distance(zs)
 
-    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_cb(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
 
@@ -273,7 +277,7 @@ class CAMBBackground:
             "baryon", z=zs
         )
 
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the matter density as a function of redshift.
 
@@ -341,6 +345,27 @@ class CAMBLinearPerturbations:
         self.k, _, self.Pk = self.results.get_linear_matter_power_spectrum(
             hubble_units=False, k_hunit=False
         )
+        self._pk_interpolators: dict = {}
+
+    def _linear_pk_interpolator(self, var: str, hubble_units: bool, k_hunit: bool):
+        """Linear P(k, z) interpolator from the CAMB results of `__init__` (cached).
+
+        Uses `self.results` - the run with `kmax = self.kmax` done at construction -
+        rather than the module-level `camb.get_matter_power_interpolator(params,
+        ...)`, which re-runs CAMB on every call with its default `kmax` (and with
+        whatever state the shared `CAMBparams` has by then).
+        """
+        key = (var, bool(hubble_units), bool(k_hunit))
+        if key not in self._pk_interpolators:
+            self._pk_interpolators[key] = self.results.get_matter_power_interpolator(
+                nonlinear=False,
+                extrap_kmax=self.kmax,
+                hubble_units=hubble_units,
+                k_hunit=k_hunit,
+                var1=var,
+                var2=var,
+            )
+        return self._pk_interpolators[key]
 
     def matter_power_spectrum(
         self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False
@@ -356,16 +381,9 @@ class CAMBLinearPerturbations:
         Returns:
             pk (numpy.ndarray): Linear matter power spectrum at the specified scale and redshift
         """
-        pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args["CAMBparams"],
-            nonlinear=False,
-            extrap_kmax=self.kmax,
-            hubble_units=hubble_units,
-            k_hunit=k_hunit,
-            var1="delta_tot",
-            var2="delta_tot",
-        ).P(zs, ks)
-        return pk_values
+        return self._linear_pk_interpolator("delta_tot", hubble_units, k_hunit).P(
+            zs, ks
+        )
 
     def matter_power_spectrum_cb(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -392,27 +410,27 @@ class CAMBLinearPerturbations:
             Linear matter power spectrum at the specified scale
             and redshift
         """
-        pk_values = camb.get_matter_power_interpolator(
-            self.background.interface_args["CAMBparams"],
-            nonlinear=False,
-            extrap_kmax=self.kmax,
-            hubble_units=hubble_units,
-            k_hunit=k_hunit,
-            var1="delta_nonu",
-            var2="delta_nonu",
-        ).P(zs, ks)
-        return pk_values
+        return self._linear_pk_interpolator("delta_nonu", hubble_units, k_hunit).P(
+            zs, ks
+        )
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
-        Calculate growth rate.
+        Calculate the scale-independent growth rate f = fsigma8 / sigma8.
+
+        Args:
+            zs (Optional[np.ndarray]): Redshifts at which to evaluate the growth
+                rate, interpolated on the CAMB redshift grid. Defaults to `self.z`.
+            ks (Optional[np.ndarray]): Wavenumbers used to broadcast the growth rate.
 
         Returns:
-            (np.ndarray): growth rate.
+            (np.ndarray): growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
         """
         f_z = self.results.get_fsigma8() / self.results.get_sigma8()
         # Reversing array because camb re-sorts redshifts when power spectrum is computed
-        return f_z[::-1]
+        return growth_rate_on_redshifts(self.z, f_z[::-1], zs, ks)
 
     def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         r"""
@@ -476,7 +494,7 @@ class CAMBNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Optional[object],
+        linearperturbations: Optional[Perturbations],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         log10TAGN: Optional[float] = None,
@@ -485,13 +503,20 @@ class CAMBNonLinearPerturbations:
         Initialize the CAMBNonLinearPerturbations class with linear perturbation data.
 
         Args:
-            self (LinearPerturbations): An instance of the LinearPerturbations class.
+            background (Background): A CAMBBackground instance.
             linearperturbations: Linear perturbations object (unused by CAMB, which computes
                 nonlinear corrections internally; accepted for interface compatibility with
                 emulator-based NonLinPerturbations classes).
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
-                Defaults to None, which uses the CAMB default model.
+                Defaults to None, which uses the CAMB default model, or
+                "mead2020_feedback" if `log10TAGN` is given.
+            log10TAGN (Optional[float]): HMcode2020 baryonic feedback parameter
+                log10(T_AGN/K). Only used by the "mead2020_feedback" model.
+                Defaults to None (no baryonic feedback).
+
+        Raises:
+            ValueError: If `log10TAGN` is given with a nonlinear model that ignores it.
         """
         self.background = background
         self.kmax = 500
@@ -510,14 +535,21 @@ class CAMBNonLinearPerturbations:
         self.background.interface_args["CAMBparams"].Want_cl_2D_array = False
         self.background.interface_args["CAMBparams"].WantTransfer = True
 
-        if nonlinear_model is not None:
+        if log10TAGN is not None:
+            if nonlinear_model is None:
+                nonlinear_model = "mead2020_feedback"
+            elif nonlinear_model != "mead2020_feedback":
+                raise ValueError(
+                    "log10TAGN is only used by the 'mead2020_feedback' nonlinear "
+                    f"model, got nonlinear_model={nonlinear_model!r}."
+                )
+            self.background.interface_args["CAMBparams"].NonLinearModel.set_params(
+                halofit_version=nonlinear_model, HMCode_logT_AGN=log10TAGN
+            )
+        elif nonlinear_model is not None:
             self.background.interface_args["CAMBparams"].NonLinearModel.set_params(
                 halofit_version=nonlinear_model
             )
-            if log10TAGN is not None:
-                self.background.interface_args["CAMBparams"].NonLinearModel.set_params(
-                    halofit_version=nonlinear_model, HMCode_logT_AGN=log10TAGN
-                )
         else:
             self.background.interface_args["CAMBparams"].NonLinearModel.set_params()
 
@@ -591,16 +623,23 @@ class CAMBNonLinearPerturbations:
         ).P(zs, ks)
         return pk_values
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
-        Calculate growth rate.
+        Calculate the scale-independent growth rate f = fsigma8 / sigma8.
+
+        Args:
+            zs (Optional[np.ndarray]): Redshifts at which to evaluate the growth
+                rate, interpolated on the CAMB redshift grid. Defaults to `self.z`.
+            ks (Optional[np.ndarray]): Wavenumbers used to broadcast the growth rate.
 
         Returns:
-            (np.ndarray): growth rate.
+            (np.ndarray): growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
         """
         f_z = self.results.get_fsigma8() / self.results.get_sigma8()
         # Reversing array because camb re-sorts redshifts when power spectrum is computed
-        return f_z[::-1]
+        return growth_rate_on_redshifts(self.z, f_z[::-1], zs, ks)
 
     def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         r"""

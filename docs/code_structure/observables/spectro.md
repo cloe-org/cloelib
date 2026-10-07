@@ -108,6 +108,48 @@ mu = np.linspace(0, 1, 20)  # μ from 0 (perpendicular) to 1 (parallel)
 P_k_mu = spectro.Pk2d_rsd(k, mu)
 ```
 
+### PyBirdSpectroPower
+
+One-loop EFTofLSS power spectrum with IR resummation from
+[PyBird](https://github.com/pierrexyz/pybird), in the same bias and
+counterterm basis as PBJ. In $\Lambda$CDM, PyBird takes the linear power
+spectrum from the `LinearPerturbation` backend; for beyond-$\Lambda$CDM
+models (`mg_settings`), it computes the linear power spectrum and growth
+itself with CLASS.
+
+**Location**: `cloelib/observables/spectro/PyBird_spectro.py`
+
+**When to use**: Predictions of nonlinear galaxy power spectrum for
+spectroscopic observables, beyond $\Lambda$CDM models (with a PyBird
+version implementing them), MCMC sampling.
+
+**Example**:
+
+```python
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
+from cloelib.observables.spectro.PyBird_spectro import PyBirdSpectroPower
+
+zs = np.asarray([1.])
+bg = CAMBBackground(H0=67.5, ...)
+linear_perturbations = CAMBLinearPerturbations(bg, zs)
+
+RSD_parameters = {'b1': 1.412, ...} # Biases and counterterms (PBJ convention)
+spectro = PyBirdSpectroPower(linear_perturbations, RSD_parameters, redshift=1.0)
+
+# Beyond LCDM: "mg_model" and its PyBird options, passed as-is to PyBird
+spectro_ndgp = PyBirdSpectroPower(
+    linear_perturbations,
+    RSD_parameters,
+    redshift=1.0,
+    mg_settings={"mg_model": "nDGP", "logOmegarc": -1.0},
+)
+
+k = np.linspace(0.01, 0.6, 50)  # k in 1/Mpc
+mu = np.linspace(0, 1, 20)  # μ from 0 (perpendicular) to 1 (parallel)
+
+P_k_mu = spectro.Pk2d_rsd(k, mu)
+```
+
 ## Adding Your Own SpectroPower
 
 To add a new SpectroPower implementation, follow these steps.

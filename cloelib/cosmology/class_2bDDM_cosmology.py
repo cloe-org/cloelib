@@ -21,9 +21,12 @@ except ImportError as e:
 
 import os
 import sys
+import warnings
 
 # Zenodo record holding the HMcode2020 emulators (w0wa-3degen-*)
 HMCODE_ZENODO_URL = "https://zenodo.org/records/22966883/files"
+# Zenodo record holding the halofit emulators (halofit-w0wa-3mass-*)
+HALOFIT_ZENODO_URL = "https://zenodo.org/records/22966994/files"
 
 
 class SuppressOutput:
@@ -55,10 +58,35 @@ class tbDDMNonLinearPerturbations:
         f_dcdm: float,
         epsilon: float,
         Gamma: float,
-        use_emulator: bool = False,
+        use_emulator: bool = True,
         log10TAGN: Optional[float] = None,
+        non_linear_lcdm: str = "hmcode",
     ):
-        """Initialize the tbDDMNonLinearPerturbations instance."""
+        """Initialize the tbDDMNonLinearPerturbations instance.
+
+        Args:
+            background: Background cosmology object (standard LCDM-like CLASS background).
+            redshifts (np.ndarray): Array of redshifts.
+            f_dcdm (float): Fraction of the total cold dark matter that decays.
+            epsilon (float): Fraction of the rest mass energy given to the daughter particle.
+            Gamma (float): Decay rate in 1/Gyr.
+            use_emulator (bool): If True (default), the equivalent LCDM Pk comes from
+                CosmoPower-JAX emulators, otherwise from CLASS.
+            log10TAGN (Optional[float]): log10 of the AGN heating temperature used by HMcode
+                (default 7.6). Ignored for halofit.
+            non_linear_lcdm (str): Non-linear prescription applied to the equivalent LCDM Pk
+                that the 2bDDM boost multiplies, either "hmcode" (default; HMcode2020 with
+                baryonic feedback) or "halofit". Note that the boost emulator of Bucko et al.
+                was trained relative to halofit-LCDM.
+        """
+        non_linear_lcdm = non_linear_lcdm.lower()
+        if non_linear_lcdm not in ("hmcode", "halofit"):
+            raise ValueError(
+                f"non_linear_lcdm must be 'hmcode' or 'halofit', got '{non_linear_lcdm}'."
+            )
+        if non_linear_lcdm == "halofit" and log10TAGN is not None:
+            warnings.warn("log10TAGN is ignored when non_linear_lcdm='halofit'.")
+        self.non_linear_lcdm = non_linear_lcdm
         self.background   = background
         self.z            = redshifts
         self.kmax         = 40
@@ -75,32 +103,48 @@ class tbDDMNonLinearPerturbations:
 
         # ---- NL LCDM baseline Pk ----------------------------------------
         if not use_emulator:
-            # CLASS path: halofit-LCDM
+            # CLASS path: halofit or HMcode LCDM
             # (boost is defined relative to halofit-LCDM by Bucko et al.)
             self.interface_args = copy.deepcopy(self.background.interface_args)
             self.interface_args["CLASSparams"]["output"] = "mPk, mTk"
             self.interface_args["CLASSparams"]["P_k_max_1/Mpc"] = self.kmax
             self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
-            self.interface_args["CLASSparams"]["non linear"] = "halofit"
+            self.interface_args["CLASSparams"]["non linear"] = self.non_linear_lcdm
+            if self.non_linear_lcdm == "hmcode":
+                self.interface_args["CLASSparams"]["hmcode_version"] = (
+                    "2020_baryonic_feedback"
+                )
+                self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = (
+                    self.log10TAGN
+                )
             self.results = Class()
             self.results.set(self.interface_args["CLASSparams"])
             self.results.compute()
 
-            _, self.k, _ = self.results.get_pk_and_k_and_z(
+            _, k_class, _ = self.results.get_pk_and_k_and_z(
                 nonlinear=True, only_clustering_species=False, h_units=False
             )
+            k_min = k_class[0]
+            # log-spaced grid (100 pts/decade, like the emulator): CLASS's own grid is
+            # too coarse for the linear-in-k spline below
+            n_k = int(np.ceil(100 * np.log10(self.kmax / k_min))) + 1
+            self.k = np.geomspace(k_min, self.kmax, n_k)
             pk_nl_on_z = np.array(
                 [[self.results.pk(ki, zi) for ki in self.k] for zi in self.z]
             )  # (nz, nk)
 
         else:
-            # Emulator path: cosmopower-JAX HMcode2020 (w0wa-3degen-nonlinear.npz).
+            # Emulator path: cosmopower-JAX HMcode2020 (w0wa-3degen-nonlinear.npz) or
+            # halofit (halofit-w0wa-3mass-nonlinear.npz).
             # Note: the 2bDDM boost was trained vs halofit-LCDM, but HMcode2020 and
             # halofit agree at the few-percent level, so the inconsistency is small.
             from cloelib.cosmology.cosmopower_jax_cosmology import (
                 emulator_data, load_pk_emulator, k_modes_path
             )
-            cp_NL  = load_pk_emulator(emulator_data("w0wa-3degen-nonlinear.npz", HMCODE_ZENODO_URL))
+            if self.non_linear_lcdm == "hmcode":
+                cp_NL = load_pk_emulator(emulator_data("w0wa-3degen-nonlinear.npz", HMCODE_ZENODO_URL))
+            else:
+                cp_NL = load_pk_emulator(emulator_data("halofit-w0wa-3mass-nonlinear.npz", HALOFIT_ZENODO_URL))
             k_emu  = np.loadtxt(k_modes_path)
             self.k = k_emu
 
@@ -120,6 +164,8 @@ class tbDDMNonLinearPerturbations:
                 "logT_AGN": np.tile(self.log10TAGN,                         len(self.z)),
                 "z":        self.z,
             }
+            if self.non_linear_lcdm == "halofit":
+                params_nl.pop("logT_AGN")  # halofit emulator has no baryonic feedback
             pk_nl_on_z = np.array(cp_NL.predict(params_nl))  # (nz, nk)
 
         # ---- 2bDDM boost (same for both paths) ---------------------------

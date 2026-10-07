@@ -28,6 +28,7 @@ with warnings.catch_warnings():
 # Zenodo records holding the emulators (downloaded on first use, see emulator_data)
 DDM_ZENODO_URL = "https://zenodo.org/records/22967046/files"  # ddm-1body-combined-*
 HMCODE_ZENODO_URL = "https://zenodo.org/records/22966883/files"  # w0wa-3degen-*
+HALOFIT_ZENODO_URL = "https://zenodo.org/records/22966994/files"  # halofit-w0wa-3mass-*
 
 
 def _ddm_emulator_path(kind: str) -> str:
@@ -648,10 +649,32 @@ class obDDMNonLinearPerturbations:
         background: Background,
         linearperturbations: Perturbations,
         redshifts: np.ndarray,
-        use_emulator: bool = False,
+        use_emulator: bool = True,
         log10TAGN: Optional[float] = None,
+        non_linear_lcdm: str = "hmcode",
     ):
-        """Initialize the obDDMNonLinearPerturbations instance."""
+        """Initialize the obDDMNonLinearPerturbations instance.
+
+        Args:
+            background: 1bDDM background (obDDMBackground).
+            linearperturbations: 1bDDM linear perturbations (obDDMLinearPerturbations).
+            redshifts (np.ndarray): Array of redshifts.
+            use_emulator (bool): If True (default), the equivalent LCDM Pk comes from
+                CosmoPower-JAX emulators, otherwise from CLASS.
+            log10TAGN (Optional[float]): log10 of the AGN heating temperature used by HMcode
+                (default 7.6). Ignored for halofit.
+            non_linear_lcdm (str): Non-linear prescription applied to the equivalent LCDM Pk
+                that the 1bDDM boost multiplies, either "hmcode" (default; HMcode2020 with
+                baryonic feedback) or "halofit".
+        """
+        non_linear_lcdm = non_linear_lcdm.lower()
+        if non_linear_lcdm not in ("hmcode", "halofit"):
+            raise ValueError(
+                f"non_linear_lcdm must be 'hmcode' or 'halofit', got '{non_linear_lcdm}'."
+            )
+        if non_linear_lcdm == "halofit" and log10TAGN is not None:
+            warnings.warn("log10TAGN is ignored when non_linear_lcdm='halofit'.")
+        self.non_linear_lcdm = non_linear_lcdm
         self.background = background
         self.linearperturbations = linearperturbations
         self.z = redshifts
@@ -702,7 +725,14 @@ class obDDMNonLinearPerturbations:
             self.interface_args["CLASSparams"].pop("omega_ini_dcdm", None)
             self.interface_args["CLASSparams"].pop("Gamma_dcdm", None)
             self.interface_args["CLASSparams"]["omega_cdm"] = self.wdm
-            self.interface_args["CLASSparams"]["non linear"] = "halofit"
+            self.interface_args["CLASSparams"]["non linear"] = self.non_linear_lcdm
+            if self.non_linear_lcdm == "hmcode":
+                self.interface_args["CLASSparams"]["hmcode_version"] = (
+                    "2020_baryonic_feedback"
+                )
+                self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = (
+                    self.log10TAGN
+                )
             self.results = Class()
             self.results.set(self.interface_args["CLASSparams"])
             self.results.compute()
@@ -718,9 +748,15 @@ class obDDMNonLinearPerturbations:
                 k_modes_path,
             )
 
-            cp_NL = load_pk_emulator(
-                emulator_data("w0wa-3degen-nonlinear.npz", HMCODE_ZENODO_URL)
-            )
+            # Non-linear emulator of the equivalent LCDM Pk, trained with HMcode2020 or halofit
+            if self.non_linear_lcdm == "hmcode":
+                cp_NL = load_pk_emulator(
+                    emulator_data("w0wa-3degen-nonlinear.npz", HMCODE_ZENODO_URL)
+                )
+            else:
+                cp_NL = load_pk_emulator(
+                    emulator_data("halofit-w0wa-3mass-nonlinear.npz", HALOFIT_ZENODO_URL)
+                )
             k_emu = np.loadtxt(k_modes_path)
 
             mnu_total = self.background.mnu
@@ -737,6 +773,8 @@ class obDDMNonLinearPerturbations:
                 "logT_AGN": np.tile(self.log10TAGN, len(self.z)),
                 "z": self.z,
             }
+            if self.non_linear_lcdm == "halofit":
+                params_nl.pop("logT_AGN")  # halofit emulator has no baryonic feedback
 
             Pk_nonlin = np.array(cp_NL.predict(params_nl))
             k_out_nl, z_out_nl, Pk_out_nl = extend_spectra(
@@ -755,7 +793,8 @@ class obDDMNonLinearPerturbations:
                 z_out_nl, k_out_nl, Pk_out_nl, kx=1, ky=1
             )
 
-            # Linear LCDM Pk: w0wa-3degen-linear.npz emulator (same params, no logT_AGN)
+            # Linear LCDM Pk: independent of the non-linear prescription, so always the same
+            # emulator (same params, no logT_AGN)
             cp_LIN = load_pk_emulator(
                 emulator_data("w0wa-3degen-linear.npz", HMCODE_ZENODO_URL)
             )

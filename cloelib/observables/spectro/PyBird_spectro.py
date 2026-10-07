@@ -5,7 +5,7 @@ from cloelib.cosmology.cosmology import Perturbations
 
 # General imports
 import warnings
-from typing import Optional
+from typing import Optional, Protocol
 
 import numpy as np  # type: ignore
 from scipy.interpolate import make_interp_spline
@@ -45,6 +45,27 @@ try:
 except (ImportError, AttributeError, TypeError) as e:
     raise ImportError(f"PyBird could not be imported or initialised: {e}")
 
+
+class PyBirdLinearPerturbations(Perturbations, Protocol):
+    """The `Perturbations` interface plus the extras `PyBirdSpectroPower` uses.
+
+    `.z` and the `hubble_units`/`k_hunit` keywords of `matter_power_spectrum`
+    are not part of `Perturbations` (not every backend provides them), but the
+    Boltzmann-code backends PyBird is used with (CAMB, CLASS and variants) do.
+    """
+
+    @property
+    def z(self) -> np.ndarray:
+        """Redshift grid the linear quantities were computed on."""
+        ...
+
+    def matter_power_spectrum(
+        self, zs, ks, hubble_units: bool = False, k_hunit: bool = False
+    ) -> np.ndarray:
+        """Linear total-matter power spectrum."""
+        ...
+
+
 # Configuration the shared Correlator is currently set with
 _current_config = dict(PYBIRD_CONFIG)
 
@@ -66,7 +87,7 @@ class PyBirdSpectroPower:
 
     def __init__(
         self,
-        linear_perturbations: Perturbations,
+        linear_perturbations: PyBirdLinearPerturbations,
         nuisance_parameters: dict,
         redshift: float,
         mg_settings: Optional[dict] = None,
@@ -74,7 +95,7 @@ class PyBirdSpectroPower:
         r"""Class constructor.
 
         Args:
-          linear_perturbations (Perturbations): Perturbations object containing cosmology, linear power spectrum,
+          linear_perturbations (PyBirdLinearPerturbations): Perturbations object containing cosmology, linear power spectrum,
             redshift and growth functions
           nuisance_parameters (dict): Dictionary containing bias and counterterm parameters
           redshift (float): single redshift in which to evaluate PyBird
@@ -110,7 +131,7 @@ class PyBirdSpectroPower:
         else:
             if "mg_model" not in mg_settings:
                 raise KeyError("mg_settings must contain 'mg_model'.")
-            if self.background.mnu > 0:
+            if np.any(np.asarray(self.background.mnu) > 0):
                 raise NotImplementedError(
                     "Massive neutrinos are not passed to CLASS in the beyond-LCDM "
                     "PyBird route."
@@ -168,7 +189,7 @@ class PyBirdSpectroPower:
             "Omega_k": bg.Omega_k0,
             "A_s": bg.As,
             "n_s": bg.ns,
-            "alpha_s": getattr(bg, "alpha_s", 0.0),
+            "alpha_s": bg.alpha_s,
             "w0_fld": bg.w0,
             "wa_fld": bg.wa,
             "Omega_Lambda": 0.0,

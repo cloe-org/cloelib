@@ -35,6 +35,7 @@ HALOFIT_ZENODO_URL = "https://zenodo.org/records/22966994/files"  # halofit-w0wa
 ####### 1-body Decaying Dark Matter (1bDDM) ################################
 ###########################################################################
 
+
 def _ddm_emulator_path(kind: str) -> str:
     """Return the local path of a 1bDDM emulator ("distances", "global" or "linear"), downloading it from Zenodo if needed."""
     from cloelib.cosmology.cosmopower_jax_cosmology import emulator_data

@@ -1,89 +1,27 @@
-"""Binned modified-gravity perturbations using CosmoPower-JAX boost emulators.
+"""Implementation of modified-gravity Perturbation cosmology using CosmoPower-JAX emulators.
 
-This module applies a modified-gravity *boost*
-
-    B(k, z) = P_MG(k, z) / P_LCDM(k, z)
-
-predicted by CosmoPower-JAX emulators on top of an external LCDM baseline
-(another cloelib ``Perturbations`` object). The boost is applied as a
-multiplicative operator *at query time* on the baseline's own k-grid:
-
-    P_MG(k, z) = B(k, z) * P_LCDM(k, z)
-
-so that at B = 1 (mu = eta = 1, GR) the result is the baseline LCDM spectrum
-*exactly* -- the GR limit is recovered to machine precision, with no regridding
-artefacts.
-
-Two modes, selected by ``MGParams.bin_index``:
-
-* **Single-bin** (``bin_index`` is an int): mu, eta vary in ONE redshift bin
-  (the others held at GR). One emulator per bin::
-
-      mg-boost-linear-bin{0..4}.npz     inputs [Omega_m,Omega_b,h,ns,lnAs,mu,eta,z]
-      mg-boost-nonlinear-bin{0..4}.npz  inputs [Omega_m,Omega_b,h,ns,lnAs,mu,z]
-
-* **Multi-bin** (``bin_index`` is ``None``): mu (and eta, linear only) vary in
-  ALL 5 bins simultaneously -- the joint "unbinned" analysis. One emulator per
-  sector::
-
-      mg-boost-linear-multibin.npz     inputs [...,mu1..mu5, eta1..eta5, z]
-      mg-boost-nonlinear-multibin.npz  inputs [...,mu1..mu5, z]
-
-k is in h/Mpc; lnAs = ln(1e10 * As); emulators are loaded with
-``probe='custom_log'`` so ``predict()`` returns the boost directly. eta has NO
-nonlinear P(k) effect (it is not an NL input); it enters only via ``Sigma``.
-
-Redshift clamp: the emulators are queried only for z <= z_top, the upper
-edge of the active bin (single-bin) or of the last bin (multi-bin); above it
-B = 1 exactly. The per-bin linear emulators are trained only up to their own
-bin's upper edge and extrapolate catastrophically beyond it (bin 1: B ~ 10 at
-z = 3 at mu = eta = 1), which enters the IA kernel through ``growth_factor``
-and gave logL ~ -7e4 at the GR fiducial before the clamp (2026-09-18).
-
-Drop-in replacement for the ``LinPerturbations`` / ``NonLinPerturbations`` classes
-in ``cloelike`` (``EuclidLikelihood_photo_Cls``). Provides the modified lensing
-parameter ``Sigma(z) = mu(1 + eta)/2`` that ``photo.py`` applies to the WL kernel.
-
-Injecting mu/eta
-----------------
-cloelike builds ``background`` from a fixed cosmo-key list (no mu/eta/bin_index)
-and calls ``LinPerturbations(background, zs)`` / ``NonLinPerturbations(background,
-lp, zs, log10TAGN=...)``. MG params are injected via a mutable ``MGParams`` holder
-bound by ``mg_perturbations(...)``; the sampling wrapper updates mu/eta before
-each ``loglike`` call. ``bin_index`` is fixed per run (as in the paper).
-
-    # single-bin
-    mg = MGParams(mu=1.0, eta=1.0, bin_index=4)
-    Lin, NonLin = mg_perturbations(mg,
-                                   baseline_linear=LCDM.Linear,
-                                   baseline_nonlinear=LCDM.NonLinear)
-    # before each loglike:  mg.mu, mg.eta = param_dict["mu"], param_dict["eta"]
-
-    # multi-bin
-    mg = MGParams(mu=np.ones(5), eta=np.ones(5))          # bin_index=None
-    Lin, NonLin = mg_perturbations(mg, LCDM.Linear, LCDM.NonLinear)
-    # before each loglike:
-    #   mg.mu  = np.array([param_dict[f"mu{i}"]  for i in range(1, 6)])
-    #   mg.eta = np.array([param_dict[f"eta{i}"] for i in range(1, 6)])
-
-``binned_mg_perturbations`` (single-bin) and ``multibin_mg_perturbations``
-(multi-bin) are kept as aliases of ``mg_perturbations`` for backwards
-compatibility; the mode is chosen by ``mg_params.bin_index`` in all cases.
+The emulators predict the modified-gravity boost B(k, z) = P_MG(k, z) / P_LCDM(k, z),
+applied on top of an external LCDM baseline (another cloelib Perturbations object)
+as P_MG = B * P_LCDM on the baseline k-grid, so that mu = eta = 1 returns LCDM exactly.
+mu and eta are read from a mutable MGParams holder and either modify a single redshift
+bin (bin_index an int) or all bins at once (bin_index None); the matching emulators are
+downloaded from Zenodo on first use. eta has no nonlinear effect and enters only through
+the lensing parameter Sigma = mu(1 + eta)/2.
 """
 
+# cloelib imports
+from cloelib.cosmology.cosmology import growth_rate_on_redshifts
+
+# General imports
 import warnings
 import numpy as np
 from scipy import interpolate
-
-from cloelib.cosmology.cosmology import growth_rate_on_redshifts
 
 _trapz = (
     np.trapezoid if hasattr(np, "trapezoid") else np.trapz
 )  # numpy 2 removed np.trapz
 
-# Zenodo record hosting the parametrised-MG boost emulators (extended
-# cosmologies). Files are downloaded on first use and cached locally, mirroring
-# ``cosmopower_jax_cosmology``.
+# Zenodo record hosting the MG boost emulators, downloaded and cached on first use.
 MG_EMULATOR_ZENODO_URL = "https://zenodo.org/records/22967046/files"
 
 # Table 1 MG redshift bins: index -> (zmin, zmax)
@@ -92,9 +30,8 @@ N_BINS = len(_BIN_EDGES)
 
 _EMU_CACHE = {}
 
-# Training-box ranges of the MG boost emulators. The single-bin and multi-bin
-# variants were trained over different ranges; inputs outside the relevant box
-# are rejected. (z: only the upper edge is enforced -- see ``_check_mg_bounds``.)
+# Training-box ranges of the boost emulators; inputs outside the relevant box are
+# rejected. The single-bin and multi-bin variants were trained over different ranges.
 MG_EMULATOR_BOUNDS = {
     "single": {
         "Omega_m": (0.25, 0.35),
@@ -120,9 +57,15 @@ MG_EMULATOR_BOUNDS = {
 
 
 def _emu_filename(branch, bin_index):
-    """Emulator filename for a sector ('linear'|'nonlinear') and mode.
+    """Return the boost emulator filename for a sector and bin.
 
-    ``bin_index=None`` -> the joint multi-bin emulator; an int -> that bin.
+    Args:
+        branch (str): Either 'linear' or 'nonlinear'.
+        bin_index (Optional[int]): Bin index for the single-bin emulator, or None
+            for the joint multi-bin emulator.
+
+    Returns:
+        str: The emulator file name.
     """
     if bin_index is None:
         return f"mg-boost-{branch}-multibin.npz"
@@ -130,13 +73,19 @@ def _emu_filename(branch, bin_index):
 
 
 def _load_emu(branch, bin_index=None):
-    """Load (and cache) a CosmoPower-JAX boost emulator.
+    """Load and cache a CosmoPower-JAX boost emulator.
 
-    The emulator file is downloaded from the extended-cosmologies Zenodo record
-    on first use and cached locally, mirroring ``cosmopower_jax_cosmology``.
+    The emulator file is downloaded from the Zenodo record on first use and
+    cached locally, mirroring ``cosmopower_jax_cosmology``.
 
-    branch : 'linear' | 'nonlinear'
-    bin_index : int for the per-bin (single-bin) emulator, or None for multi-bin.
+    Args:
+        branch (str): Either 'linear' or 'nonlinear'.
+        bin_index (Optional[int]): Bin index for the single-bin emulator, or None
+            for the multi-bin emulator.
+
+    Returns:
+        CosmoPowerJAX: The emulator, loaded with ``probe='custom_log'`` so that
+            ``predict()`` returns the boost directly.
     """
     key = (branch, bin_index if bin_index is None else int(bin_index))
     if key not in _EMU_CACHE:
@@ -147,7 +96,6 @@ def _load_emu(branch, bin_index=None):
             warnings.filterwarnings("ignore", category=UserWarning)
             from cosmopower_jax.cosmopower_jax import CosmoPowerJAX
 
-            # probe='custom_log' -> predict() returns 10**(NN output) = boost
             _EMU_CACHE[key] = CosmoPowerJAX(
                 probe="custom_log", filepath=fp, verbose=False
             )
@@ -155,13 +103,18 @@ def _load_emu(branch, bin_index=None):
 
 
 def _z_top(bin_index):
-    """Highest redshift at which the MG modification is active.
+    """Return the highest redshift at which the MG modification is active.
 
-    Above it the boost is identically 1 (the modification has not started
-    yet), so the emulator must NOT be queried there: the per-bin *linear*
-    emulators are trained only up to the top of their own bin and extrapolate
-    wildly beyond it (bin 1 returns B ~ 10 at z = 3 even at mu = eta = 1),
-    which wrecks the IA growth factor in ``photo.py``.
+    Above this redshift the boost is identically 1, and the emulator must not be
+    queried there: the per-bin linear emulators are trained only up to the top of
+    their own bin and extrapolate strongly beyond it, which would corrupt the
+    growth factor used by the intrinsic-alignment kernel.
+
+    Args:
+        bin_index (Optional[int]): Active bin index, or None for the multi-bin case.
+
+    Returns:
+        float: The upper redshift edge of the active bin (or of the last bin).
     """
     if bin_index is None:
         return _BIN_EDGES[-1][1]
@@ -169,14 +122,21 @@ def _z_top(bin_index):
 
 
 def _check_mg_bounds(emu, background, mu, eta, z):
-    """Reject inputs outside the MG boost emulator's training box.
+    """Reject inputs outside the boost emulator's training box.
 
-    The single-bin and multi-bin emulators have different ranges; the variant is
-    detected from ``emu.parameters`` (single-bin emulators expose a scalar
-    ``'mu'``), matching ``_boost_spline``. ``mu``/``eta`` may be scalars
-    (single-bin) or length-N arrays (multi-bin) -- every component is checked.
-    The z *lower* bound is not enforced: z=0 is required for the growth/sigma8
-    normalisation, and the redshift clamp already caps the upper end.
+    The variant (single-bin or multi-bin) is detected from ``emu.parameters``,
+    matching ``_boost_spline``. The lower z bound is not enforced, as z=0 is
+    required for the growth and sigma8 normalisation.
+
+    Args:
+        emu (CosmoPowerJAX): The boost emulator.
+        background (Background): Background cosmology.
+        mu (array_like): Modified-gravity parameter(s).
+        eta (array_like): Gravitational-slip parameter(s).
+        z (array_like): Redshifts.
+
+    Raises:
+        ValueError: If any input lies outside the emulator's training range.
     """
     variant = "single" if "mu" in emu.parameters else "multi"
     box = MG_EMULATOR_BOUNDS[variant]
@@ -200,36 +160,41 @@ def _check_mg_bounds(emu, background, mu, eta, z):
 
 
 def _boost_spline(emu, background, mu, eta, z, z_top=None):
-    """Build a RectBivariateSpline B(z, k) from a boost emulator.
+    """Build a bivariate spline B(z, k) from a boost emulator.
 
-    Handles both the single-bin emulators (scalar ``mu``/``eta`` -> parameter
-    names ``'mu'``/``'eta'``) and the multi-bin emulators (length-N ``mu``/``eta``
-    -> ``'mu1'..'muN'``/``'eta1'..'etaN'``). The right columns are selected from
-    ``emu.parameters``, so the linear branch (uses eta) and nonlinear branch (no
-    eta) are both handled automatically.
+    Both the single-bin emulators (scalar ``mu``/``eta``) and the multi-bin
+    emulators (length-N ``mu``/``eta``, named ``mu1..muN``/``eta1..etaN``) are
+    handled; the columns are selected from ``emu.parameters``, so the linear
+    branch (with eta) and nonlinear branch (without eta) both work. The emulator
+    is evaluated only for ``z <= z_top``, with B = 1 above (see ``_z_top``);
+    ``z_top=None`` disables the clamp.
 
-    The emulator k-grid is padded with constant edge values so the spline does
-    *constant* (not divergent) extrapolation in k outside the trained range.
-    In z the emulator is only evaluated for ``z <= z_top``; above it B = 1
-    exactly (see ``_z_top``). ``z_top=None`` disables the clamp.
+    Args:
+        emu (CosmoPowerJAX): The boost emulator.
+        background (Background): Background cosmology.
+        mu (array_like): Modified-gravity parameter(s).
+        eta (array_like): Gravitational-slip parameter(s).
+        z (array_like): Redshifts at which to build the spline.
+        z_top (Optional[float]): Redshift above which B = 1, or None to disable.
+
+    Returns:
+        RectBivariateSpline: The boost B(z, k), with constant extrapolation in k.
     """
     z = np.atleast_1d(np.asarray(z, dtype=float))
     mu = np.atleast_1d(np.asarray(mu, dtype=float))
     eta = np.atleast_1d(np.asarray(eta, dtype=float))
     if z_top is not None:
-        # Enforce the training box on the top-level call (the internal recursion
-        # below re-enters with z_top=None on a sub-grid, so it runs once).
+        # Enforce the training box once, then query the emulator only where B is
+        # nontrivial (z <= z_top) and fill B = 1 above, keeping the full z grid so
+        # the spline knots stay strictly increasing.
         _check_mg_bounds(emu, background, mu, eta, z)
-        # Query the network only where the boost is nontrivial (z <= z_top)
-        # and fill B = 1 above; keep the full z grid so the spline knots stay
-        # strictly increasing.
         active = z <= z_top
         k = np.asarray(emu.modes, dtype=float)
         k_pad = np.concatenate(([k[0] * 1e-3], k, [k[-1] * 1e3]))
         boost_pad = np.ones((z.size, k_pad.size))
         if active.any():
             z_q = z[active]
-            if z_q.size == 1:  # spline needs >= 2 z-knots: evaluate on a pair
+            if z_q.size == 1:  # a spline needs at least two z knots
                 z_q = np.array([z_q[0], z_q[0] + 1e-3])
             spl_in = _boost_spline(emu, background, mu, eta, z_q, z_top=None)
             boost_pad[active] = spl_in(z[active], k_pad)
@@ -240,7 +205,7 @@ def _boost_spline(emu, background, mu, eta, z, z_top=None):
         "Omega_b": background.Omega_b0,
         "h": background.H0 / 100.0,
         "ns": background.ns,
-        "lnAs": np.log(background.As * 1e10),  # training convention
+        "lnAs": np.log(background.As * 1e10),
     }
     if "mu" in emu.parameters:  # single-bin emulator
         src["mu"] = float(mu[0])
@@ -254,7 +219,7 @@ def _boost_spline(emu, background, mu, eta, z, z_top=None):
     cols = [
         z if name == "z" else np.full(z.shape[0], src[name]) for name in emu.parameters
     ]
-    boost = np.asarray(emu.predict(np.stack(cols, axis=1)))  # (nz, nk), de-logged
+    boost = np.asarray(emu.predict(np.stack(cols, axis=1)))
     k = np.asarray(emu.modes, dtype=float)
     k_pad = np.concatenate(([k[0] * 1e-3], k, [k[-1] * 1e3]))
     boost_pad = np.concatenate((boost[:, :1], boost, boost[:, -1:]), axis=1)
@@ -262,7 +227,15 @@ def _boost_spline(emu, background, mu, eta, z, z_top=None):
 
 
 def _sigma8(k, pk0):
-    """sigma8 = sqrt[ 1/(2pi^2) int k^2 P(k,0) W^2(kR) dk ], R = 8 Mpc/h."""
+    """Compute sigma8 from a z=0 power spectrum with an R = 8 Mpc/h top hat.
+
+    Args:
+        k (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+        pk0 (numpy.ndarray): Matter power spectrum at z=0.
+
+    Returns:
+        float: The rms matter fluctuation sigma8.
+    """
     x = k * 8.0
     W = np.ones_like(x)
     m = x > 1e-8
@@ -271,16 +244,15 @@ def _sigma8(k, pk0):
 
 
 class MGParams:
-    """Mutable holder for the per-call MG parameters.
-
-    Single-bin:  ``MGParams(mu=1.0, eta=1.0, bin_index=i)``  -- scalar mu/eta in
-                 bin ``i`` (the other bins held at GR).
-    Multi-bin:   ``MGParams(mu=[...], eta=[...])``           -- length-``N_BINS``
-                 arrays, ``bin_index=None`` (default). ``mu``/``eta`` default to
-                 ``ones(N_BINS)`` (GR).
-    """
+    """Mutable holder for the per-call modified-gravity parameters mu and eta."""
 
     def __init__(self, mu=None, eta=None, bin_index=None):
+        """Initialize the MGParams holder.
+
+        Single-bin mode (``bin_index`` an int) stores scalar ``mu``/``eta`` for
+        that bin; multi-bin mode (``bin_index=None``) stores length-``N_BINS``
+        arrays. Unset ``mu``/``eta`` default to the GR value of one.
+        """
         self.bin_index = None if bin_index is None else int(bin_index)
         if self.bin_index is None:
             self.mu = np.ones(N_BINS) if mu is None else np.asarray(mu, dtype=float)
@@ -291,10 +263,19 @@ class MGParams:
 
 
 def _sigma_of_z(zs, mu, eta, bin_index):
-    r"""Sigma(z) = mu(1+eta)/2 in the active bin(s), 1 (GR) elsewhere.
+    """Compute the lensing parameter Sigma(z) = mu(1 + eta)/2.
 
-    Single-bin (``bin_index`` int): non-GR only inside that bin.
-    Multi-bin (``bin_index`` None): step function over all bins.
+    Sigma is non-GR inside the active bin (single-bin) or a step function over all
+    bins (multi-bin), and one elsewhere.
+
+    Args:
+        zs (array_like): Redshifts.
+        mu (array_like): Modified-gravity parameter(s).
+        eta (array_like): Gravitational-slip parameter(s).
+        bin_index (Optional[int]): Active bin index, or None for the multi-bin case.
+
+    Returns:
+        numpy.ndarray: Sigma(z) on the input redshifts.
     """
     zs = np.atleast_1d(np.asarray(zs, dtype=float))
     sigma = np.ones_like(zs, dtype=float)
@@ -310,21 +291,29 @@ def _sigma_of_z(zs, mu, eta, bin_index):
 
 
 def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear):
-    """Build cloelib-compatible (Linear, NonLinear) MG perturbation classes.
+    """Build the modified-gravity Linear and NonLinear perturbation classes.
 
-    The single-bin vs multi-bin mode is chosen by ``mg_params.bin_index``
-    (int -> single-bin, None -> multi-bin). The boost emulators are downloaded
-    from Zenodo on first use and cached locally.
+    The single-bin or multi-bin mode is selected by ``mg_params.bin_index``
+    (an int or None). The returned classes follow the cloelike LinPerturbations
+    and NonLinPerturbations protocols.
 
-    mg_params : MGParams                 read at every instantiation (sampled mu/eta)
-    baseline_linear / baseline_nonlinear : LCDM perturbation classes, e.g.
-        CosmoPowerJAXLCDMPerturbations.Linear / .NonLinear
+    Args:
+        mg_params (MGParams): Holder read at each instantiation for the sampled
+            mu and eta.
+        baseline_linear: LCDM linear perturbation class, e.g.
+            ``CosmoPowerJAXLCDMPerturbations.Linear``.
+        baseline_nonlinear: LCDM nonlinear perturbation class, e.g.
+            ``CosmoPowerJAXLCDMPerturbations.NonLinear``.
+
+    Returns:
+        tuple: The ``(Linear, NonLinear)`` modified-gravity perturbation classes.
     """
 
     class Linear:
-        """Linear MG perturbations: boost_lin(k,z) * LCDM linear baseline."""
+        """Linear modified-gravity perturbations: linear boost times LCDM baseline."""
 
         def __init__(self, background, redshifts):
+            """Initialize the Linear instance."""
             assert background.Omega_k0 == 0, "Non-flat geometries not supported"
             self.background = background
             self.z = np.atleast_1d(np.asarray(redshifts, dtype=float))
@@ -341,28 +330,48 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear):
             )
             self.k = np.asarray(self._base.k)  # baseline (wide) grid
 
-        def matter_power_spectrum(self, zs, ks):
+        def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+            """Compute the linear modified-gravity matter power spectrum.
+
+            Args:
+                zs (numpy.ndarray): Redshifts.
+                ks (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+
+            Returns:
+                pk (numpy.ndarray): Linear matter power spectrum (boost times LCDM baseline).
+            """
             return self._boost(zs, ks) * np.asarray(
                 self._base.matter_power_spectrum(zs, ks)
             )
 
-        def growth_factor(self, zs, ks):
+        def growth_factor(self, zs, ks) -> np.ndarray:
+            """Compute the linear growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
+
+            Args:
+                zs (numpy.ndarray): Redshifts.
+                ks (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+
+            Returns:
+                (numpy.ndarray): The growth factor.
+            """
             return np.sqrt(
                 self.matter_power_spectrum(zs, ks) / self.matter_power_spectrum(0.0, ks)
             )
 
-        def sigma8_0(self):
+        def sigma8_0(self) -> float:
+            """Compute sigma8 at z=0 from the linear modified-gravity power spectrum.
+
+            Returns:
+                float: The rms matter fluctuation sigma8.
+            """
             pk0 = self.matter_power_spectrum(0.0, self.k).flatten()
             return _sigma8(self.k, pk0)
 
     class NonLinear:
-        """Nonlinear MG perturbations: boost_nl(k,z) * LCDM nonlinear baseline.
-
-        Growth / sigma8 are derived from an internally-built *linear* MG P(k)
-        (boost_lin * LCDM linear baseline), independent of the lp argument.
-        """
+        """Nonlinear modified-gravity perturbations: nonlinear boost times LCDM baseline."""
 
         def __init__(self, background, linearperturbations, redshifts, log10TAGN=None):
+            """Initialize the NonLinear instance."""
             assert background.Omega_k0 == 0, "Non-flat geometries not supported"
             self.background = background
             self.z = np.atleast_1d(np.asarray(redshifts, dtype=float))
@@ -393,31 +402,70 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear):
             )
             self.k = np.asarray(self._base_nl.k)  # wide grid -> full Limber support
 
-        # --- nonlinear MG P(k): what enters the C(ell) ---
-        def matter_power_spectrum(self, zs, ks):
+        def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+            """Compute the nonlinear modified-gravity matter power spectrum.
+
+            Args:
+                zs (numpy.ndarray): Redshifts.
+                ks (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+
+            Returns:
+                pk (numpy.ndarray): Nonlinear matter power spectrum (boost times LCDM baseline).
+            """
             return self._boost_nl(zs, ks) * np.asarray(
                 self._base_nl.matter_power_spectrum(zs, ks)
             )
 
-        def matter_power_spectrum_cb(self, zs, ks):
-            # mnu small in this analysis -> cb ~ total (approximate)
+        def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+            """Compute the nonlinear CDM+baryon matter power spectrum.
+
+            Neutrino masses are small in this analysis, so the CDM+baryon spectrum
+            is approximated by the total matter spectrum.
+
+            Args:
+                zs (numpy.ndarray): Redshifts.
+                ks (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+
+            Returns:
+                pk (numpy.ndarray): Nonlinear CDM+baryon matter power spectrum.
+            """
             return self.matter_power_spectrum(zs, ks)
 
-        # --- linear MG P(k): used only for growth / sigma8 ---
         def _pk_lin(self, zs, ks):
+            """Linear modified-gravity power spectrum, used for growth and sigma8.
+
+            Built from the linear boost and the LCDM linear baseline, independent
+            of the ``linearperturbations`` argument passed to the constructor.
+            """
             return self._boost_lin(zs, ks) * np.asarray(
                 self._base_lin.matter_power_spectrum(zs, ks)
             )
 
-        def growth_factor(self, zs, ks):
+        def growth_factor(self, zs, ks) -> np.ndarray:
+            """Compute the linear growth factor from the linear modified-gravity P(k).
+
+            Args:
+                zs (numpy.ndarray): Redshifts.
+                ks (numpy.ndarray): Wavenumbers in h Mpc^{-1}.
+
+            Returns:
+                (numpy.ndarray): The growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
+            """
             return np.sqrt(self._pk_lin(zs, ks) / self._pk_lin(0.0, ks))
 
-        def growth_rate(self, zs=None, ks=None):
-            """Scale-independent f(z) = -(1+z) dlnD/dz from the linear MG P(k).
+        def growth_rate(self, zs=None, ks=None) -> np.ndarray:
+            """Compute the scale-independent growth rate f(z) = -(1 + z) dlnD/dz.
 
-            Computed on ``self.z``, then interpolated to ``zs`` and broadcast
-            over ``ks`` per the ``Perturbations.growth_rate`` convention: shape
-            (nz,) when ``ks`` is None, else (nz, nk).
+            f is computed on ``self.z`` from the linear modified-gravity power
+            spectrum, then interpolated to ``zs`` and broadcast over ``ks``.
+
+            Args:
+                zs (Optional[numpy.ndarray]): Redshifts. Defaults to the instance grid.
+                ks (Optional[numpy.ndarray]): Wavenumbers used to broadcast f.
+
+            Returns:
+                (numpy.ndarray): The growth rate, with shape (nz,) if ks is None
+                    and (nz, nk) otherwise.
             """
             k_ref = 0.05  # h/Mpc, linear & sub-horizon
             pk_lin_ref_0 = np.ravel(self._pk_lin(0.0, k_ref))[0]
@@ -425,18 +473,29 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear):
             f = -(1.0 + self.z) * np.gradient(np.log(D), self.z)
             return growth_rate_on_redshifts(self.z, f, zs, ks)
 
-        def sigma8_0(self):
+        def sigma8_0(self) -> float:
+            """Compute sigma8 at z=0 from the linear modified-gravity power spectrum.
+
+            Returns:
+                float: The rms matter fluctuation sigma8.
+            """
             k = np.asarray(self._base_lin.k)
             return _sigma8(k, self._pk_lin(0.0, k).flatten())
 
-        # --- modified lensing parameter (applied to WL kernel in photo.py) ---
-        def Sigma(self, zs):
-            r"""Sigma = mu(1+eta)/2 in the active bin(s), 1 (LCDM) elsewhere."""
+        def Sigma(self, zs) -> np.ndarray:
+            """Compute the modified lensing parameter Sigma(z) = mu(1 + eta)/2.
+
+            Args:
+                zs (numpy.ndarray): Redshifts.
+
+            Returns:
+                (numpy.ndarray): Sigma(z), non-GR in the active bin(s) and one elsewhere.
+            """
             return _sigma_of_z(zs, self.mu, self.eta, self.bin_index)
 
     return Linear, NonLinear
 
 
-# Backwards-compatible aliases: mode is selected by mg_params.bin_index.
+# Backwards-compatible aliases; the mode is selected by mg_params.bin_index.
 binned_mg_perturbations = mg_perturbations
 multibin_mg_perturbations = mg_perturbations

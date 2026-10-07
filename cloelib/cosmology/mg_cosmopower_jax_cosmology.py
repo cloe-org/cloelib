@@ -75,6 +75,8 @@ import warnings
 import numpy as np
 from scipy import interpolate
 
+from cloelib.cosmology.cosmology import growth_rate_on_redshifts
+
 _trapz = (
     np.trapezoid if hasattr(np, "trapezoid") else np.trapz
 )  # numpy 2 removed np.trapz
@@ -410,16 +412,18 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear):
         def growth_factor(self, zs, ks):
             return np.sqrt(self._pk_lin(zs, ks) / self._pk_lin(0.0, ks))
 
-        def growth_rate(self):
+        def growth_rate(self, zs=None, ks=None):
             """Scale-independent f(z) = -(1+z) dlnD/dz from the linear MG P(k).
 
-            Returns a 1-D array over self.z (matching CAMB/JAX backends); cloelib
-            interpolates it onto the requested grid for the GCph RSD term.
+            Computed on ``self.z``, then interpolated to ``zs`` and broadcast
+            over ``ks`` per the ``Perturbations.growth_rate`` convention: shape
+            (nz,) when ``ks`` is None, else (nz, nk).
             """
             k_ref = 0.05  # h/Mpc, linear & sub-horizon
             pk_lin_ref_0 = np.ravel(self._pk_lin(0.0, k_ref))[0]
             D = np.sqrt(self._pk_lin(self.z, k_ref).flatten() / pk_lin_ref_0)
-            return -(1.0 + self.z) * np.gradient(np.log(D), self.z)
+            f = -(1.0 + self.z) * np.gradient(np.log(D), self.z)
+            return growth_rate_on_redshifts(self.z, f, zs, ks)
 
         def sigma8_0(self):
             k = np.asarray(self._base_lin.k)

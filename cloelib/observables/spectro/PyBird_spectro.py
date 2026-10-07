@@ -7,7 +7,7 @@ from cloelib.cosmology.cosmology import Perturbations
 import warnings
 from typing import Optional, Protocol
 
-import numpy as np  # type: ignore
+import numpy as np
 from scipy.interpolate import make_interp_spline
 from scipy.special import legendre
 
@@ -149,8 +149,8 @@ class PyBirdSpectroPower:
         for c in ["c0", "c2", "c4"]:
             nuisance_parameters_pybird[c] *= h**2  # [Mpc]^2 -> [Mpc/h]^2
         for c in ["ct"]:
-            nuisance_parameters_pybird[c] *= (
-                -(h**4)
+            nuisance_parameters_pybird[c] *= -(
+                h**4
             )  # [Mpc]^4 -> [Mpc/h]^4 + sign sitch to match PBJ convention
 
         pkl = N.get(
@@ -171,8 +171,8 @@ class PyBirdSpectroPower:
             if c in ["c0", "c2", "c4"]:
                 pkl_term[i] *= h**2  # [Mpc]^2 -> [Mpc/h]^2
             if c in ["ct"]:
-                pkl_term[i] *= (
-                    -(h**4)
+                pkl_term[i] *= -(
+                    h**4
                 )  # [Mpc]^4 -> [Mpc/h]^4 + sign sitch to match PBJ convention
 
         self.ipkl_term = make_interp_spline(

@@ -261,11 +261,6 @@ def test_mgparams_modes():
     assert np.allclose(multi.eta, 1.0)
 
 
-def test_factory_aliases_are_the_same():
-    assert mg.binned_mg_perturbations is mg.mg_perturbations
-    assert mg.multibin_mg_perturbations is mg.mg_perturbations
-
-
 @pytest.mark.parametrize(
     "branch, bin_index, expected",
     [

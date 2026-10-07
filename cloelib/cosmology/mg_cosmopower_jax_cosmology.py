@@ -494,8 +494,3 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear):
             return _sigma_of_z(zs, self.mu, self.eta, self.bin_index)
 
     return Linear, NonLinear
-
-
-# Backwards-compatible aliases; the mode is selected by mg_params.bin_index.
-binned_mg_perturbations = mg_perturbations
-multibin_mg_perturbations = mg_perturbations

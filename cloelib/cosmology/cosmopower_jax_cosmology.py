@@ -49,7 +49,11 @@ The k-mode grid is read directly from each emulator (its ``.modes`` attribute),
 so different emulators may use different grids without any external k-mode file.
 """
 
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import (
+    Background,
+    Perturbations,
+    growth_rate_on_redshifts,
+)
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 import numpy as np
@@ -382,18 +386,28 @@ class CosmoPowerJAXw0waCDMPerturbations:
                 D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
             return D_z_k
 
-        def growth_rate(self) -> np.ndarray:
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
             """
-            Calculate the growth rate f(z) = d ln D / d ln a.
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
 
-            This is computed as f = fsigma8 / sigma8.
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
 
             Returns
             -------
             np.ndarray
-                The growth rate as a function of redshift.
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
             """
-            return self.fsigma8 / self.sigma8
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self) -> float:
             """
@@ -547,9 +561,28 @@ class CosmoPowerJAXw0waCDMPerturbations:
                 D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
             return D_z_k
 
-        def growth_rate(self) -> np.ndarray:
-            """Calculate the growth rate f(z) = fsigma8 / sigma8."""
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self) -> float:
             """Return sigma8 at z=0."""
@@ -710,9 +743,28 @@ class CosmoPowerJAXw0waCDMPerturbations:
                 D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
             return D_z_k
 
-        def growth_rate(self) -> np.ndarray:
-            """Calculate the growth rate f(z) = fsigma8 / sigma8."""
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self) -> float:
             """Return sigma8 at z=0."""
@@ -863,9 +915,28 @@ class CosmoPowerJAXw0waCDMPerturbations:
             """Calculate the growth factor D(z, k)."""
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            """Calculate the growth rate f(z) = fsigma8 / sigma8."""
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             """Return sigma8 at z=0."""
@@ -1227,9 +1298,28 @@ class CosmoPowerJAXwCDMPerturbations:
             """Calculate the growth factor D(z, k)."""
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            """Calculate the growth rate f(z) = fsigma8 / sigma8."""
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             """Return sigma8 at z=0."""
@@ -1364,8 +1454,28 @@ class CosmoPowerJAXwCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -1482,8 +1592,28 @@ class CosmoPowerJAXwCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -1600,8 +1730,28 @@ class CosmoPowerJAXwCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -1932,8 +2082,28 @@ class CosmoPowerJAXLCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -2045,8 +2215,28 @@ class CosmoPowerJAXLCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -2162,8 +2352,28 @@ class CosmoPowerJAXLCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -2279,8 +2489,28 @@ class CosmoPowerJAXLCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -2597,8 +2827,28 @@ class CosmoPowerJAXLCDMCurvaturePerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -2696,8 +2946,28 @@ class CosmoPowerJAXLCDMCurvaturePerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -2791,8 +3061,28 @@ class CosmoPowerJAXLCDMCurvaturePerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -2890,8 +3180,28 @@ class CosmoPowerJAXLCDMCurvaturePerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -2998,8 +3308,28 @@ class CosmoPowerJAXw0waCurvaturePerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -3100,8 +3430,28 @@ class CosmoPowerJAXw0waCurvaturePerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -3198,8 +3548,28 @@ class CosmoPowerJAXw0waCurvaturePerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -4060,8 +4430,28 @@ class CosmoPowerJAXw0waRunningIndexPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(
+            self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+        ) -> np.ndarray:
+            """
+            Calculate the growth rate f(z) = fsigma8 / sigma8.
+
+            Parameters
+            ----------
+            zs : Optional[np.ndarray]
+                Redshifts at which to evaluate the growth rate, interpolated on
+                the redshifts the emulator was evaluated at. Defaults to those.
+            ks : Optional[np.ndarray]
+                Wavenumbers used to broadcast the growth rate.
+
+            Returns
+            -------
+            np.ndarray
+                The growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
+            """
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]

@@ -170,7 +170,8 @@
         "tool",
         "mentoring",
         "code",
-        "review"
+        "review",
+        "bug"
       ]
     },
     {
@@ -193,7 +194,8 @@
       "contributions": [
         "bug",
         "code",
-        "ideas"
+        "ideas",
+        "review"
       ]
     },
     {
@@ -288,7 +290,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/84071067?v=4",
       "profile": "https://github.com/davidesciotti",
       "contributions": [
-        "bug"
+        "bug",
+        "ideas",
+        "mentoring"
       ]
     },
     {
@@ -487,7 +491,8 @@
       "contributions": [
         "projectManagement",
         "mentoring",
-        "promotion"
+        "promotion",
+        "ideas"
       ]
     },
     {
@@ -528,7 +533,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/42518815?v=4",
       "profile": "http://www.matthieuschaller.com",
       "contributions": [
-        "ideas"
+        "ideas",
+        "mentoring"
       ]
     },
     {
@@ -647,7 +653,8 @@
       "profile": "https://github.com/chiaradeleo1",
       "contributions": [
         "review",
-        "mentoring"
+        "mentoring",
+        "bug"
       ]
     },
     {

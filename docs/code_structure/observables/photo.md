@@ -1,14 +1,15 @@
-# Tracer Protocol (Photometric Observables)
+# Photometric Observables (Tracer Protocol)
 
 **Protocol Definition**: `cloelib.observables.photo.tracer.Tracer`
 
 Tracers define window functions for photometric surveys—how galaxies are distributed in redshift and how they trace the matter field.
 
-## Required Property
+## Required Properties
 
-- **`perturbations`**: Reference to a Perturbations object
-
-Tracers need perturbations to compute power spectra and growth.
+- **`perturbations`**: Reference to a Perturbations object. Tracers need perturbations to compute power spectra and growth.
+- **`n_z_bins`**: Number of tomographic redshift bins, used by `AngularTwoPoint.get_Cl` to size its output.
+- **`z`**: Redshift grid the tracer was built on, used by `AngularTwoPoint.get_Cl` as the Limber integration grid.
+- **`prefact_toggle`**: `1` if the spin-2-to-convergence Limber prefactor applies (shear), `0` otherwise (galaxy clustering, CMB lensing convergence).
 
 ## Required Methods
 
@@ -17,18 +18,6 @@ Tracers need perturbations to compute power spectra and growth.
 Compute the window function W(z) at given redshifts.
 
 **Returns**: Window function values, shape depends on number of redshift bins
-
-### `_window_integrand(z, zprime)`
-
-Window integrand for Limber integration.
-
-Used internally by summary statistics calculators.
-
-### `_get_prefactor(ell)`
-
-Compute prefactor for Limber approximation.
-
-Handles different tracer types (shear has extra factors, galaxy clustering doesn't).
 
 ## Existing Tracer Implementations
 
@@ -212,6 +201,7 @@ class CMBLensingTracer:
     def __init__(
         self,
         perturbations: Perturbations,
+        z: np.ndarray,
         z_cmb: float = 1100.0,  # CMB redshift
     ):
         """
@@ -219,12 +209,15 @@ class CMBLensingTracer:
 
         Args:
             perturbations: Perturbations object
+            z: Redshift grid for the Limber integral
             z_cmb: Redshift of last scattering surface
         """
         self.perturbations = perturbations
         self.background = perturbations.background
+        self.z = z
         self.z_cmb = z_cmb
-        self.prefact_toggle = 1  # Include lensing prefactor
+        self.n_z_bins = 1  # A single convergence "bin"
+        self.prefact_toggle = 0  # Convergence: no spin-2 prefactor
 
     def get_window(self, z: np.ndarray) -> np.ndarray:
         """
@@ -247,17 +240,6 @@ class CMBLensingTracer:
         window = 1.5 * self.background.Omega_m(0.0) * (1 + z) * H_z * efficiency
 
         return window
-
-    def _window_integrand(self, z: np.ndarray, zprime: np.ndarray) -> np.ndarray:
-        """Window integrand for Limber integration."""
-        # This is used by AngularTwoPoint
-        # Usually just returns get_window for the z argument
-        return self.get_window(z)
-
-    def _get_prefactor(self, ell: np.ndarray) -> np.ndarray:
-        """Prefactor for Limber approximation."""
-        # CMB lensing has same prefactor as shear
-        return ell * (ell + 1)
 ```
 
 ### Step 2: Add to Package
@@ -287,9 +269,9 @@ def test_cmb_lensing_tracer():
     bg = CAMBBackground(H0=67.5, ...)
     pert = CAMBPerturbations(background=bg)
 
-    tracer = CMBLensingTracer(perturbations=pert)
-
     z = np.linspace(0.1, 2.0, 50)
+    tracer = CMBLensingTracer(perturbations=pert, z=z)
+
     window = tracer.get_window(z)
 
     # Check shape
@@ -372,5 +354,6 @@ Ready to compute final statistics with your observables?
 - [Perturbations](../perturbations.md) – Review structure formation
 - [Background](../background.md) – Review the foundation
 - [API Reference](../../api.md) – Full technical details
-- [Back to Observables](index.md) – Review all oobservables
+- [Gravitational-Wave Observables](gw.md) – Compute windows for GW sources
+- [Back to Observables](index.md) – Review all observables
 - [Back to Overview](../index.md) – Review the architecture

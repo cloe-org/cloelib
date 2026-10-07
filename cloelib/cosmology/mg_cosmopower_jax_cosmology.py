@@ -290,7 +290,7 @@ def _sigma_of_z(zs, mu, eta, bin_index):
     return sigma
 
 
-def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear):
+def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
     """Build the modified-gravity Linear and NonLinear perturbation classes.
 
     The single-bin or multi-bin mode is selected by ``mg_params.bin_index``
@@ -300,9 +300,9 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear):
     Args:
         mg_params (MGParams): Holder read at each instantiation for the sampled
             mu and eta.
-        baseline_linear: LCDM linear perturbation class, e.g.
+        baseline_linear (type): LCDM linear perturbation class, e.g.
             ``CosmoPowerJAXLCDMPerturbations.Linear``.
-        baseline_nonlinear: LCDM nonlinear perturbation class, e.g.
+        baseline_nonlinear (type): LCDM nonlinear perturbation class, e.g.
             ``CosmoPowerJAXLCDMPerturbations.NonLinear``.
 
     Returns:

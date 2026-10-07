@@ -1,52 +1,12 @@
-"""
-This module provides CosmoPower-JAX-based emulators for linear and nonlinear matter power spectra.
+"""CosmoPower-JAX emulators for the linear and nonlinear matter power spectrum.
 
-Uses cosmopower_jax instead of tensorflow-based cosmopower for faster JAX-accelerated predictions.
-
-Supported cosmologies (Perturbations classes)
----------------------------------------------
-Baseline dark-energy models, each covering neutrino configurations
-N_mnu = 0 (massless), 1 (one massive), 2 (two degenerate) and 3 (three degenerate):
-- LCDM        : ``CosmoPowerJAXLCDMPerturbations``
-- wCDM        : ``CosmoPowerJAXwCDMPerturbations``
-- w0waCDM     : ``CosmoPowerJAXw0waCDMPerturbations``
-
-Extended cosmologies, each provided with LCDM and w0waCDM dark-energy backgrounds
-and covering N_mnu = 0, 1 and 3:
-- curvature (free Omega_k) : ``CosmoPowerJAXLCDMCurvaturePerturbations`` (LCDM),
-                             ``CosmoPowerJAXw0waCurvaturePerturbations`` (w0waCDM)
-- running spectral index (free alpha_s ) : ``CosmoPowerJAXLCDMRunningIndexPerturbations`` (LCDM),
-                            ``CosmoPowerJAXw0waRunningIndexPerturbations`` (w0waCDM)
-
-Spectra (inner classes)
------------------------
-Every cosmology exposes:
-- ``Linear`` / ``LinearCB``       : linear total-matter P(k) and CDM+baryon P_cb(k)
-- ``NonLinear`` / ``NonLinearCB`` : nonlinear P(k) / P_cb(k)
-
-Nonlinear prescription
-----------------------
-The baseline models additionally offer a choice of nonlinear recipe, selected by
-which class is used:
-- HMcode2020 (default) : ``NonLinear`` / ``NonLinearCB`` -- includes baryonic
-  feedback via the ``log10TAGN`` parameter.
-- halofit (Takahashi 2012) : ``NonLinearHalofit`` / ``NonLinearHalofitCB`` --
-  dark-matter-only, no baryonic feedback (``log10TAGN`` is accepted for interface
-  compatibility but ignored). Available for LCDM, wCDM and w0waCDM.
-
-All emulators also provide ``sigma8``, ``fsigma8``, ``growth_factor(z, k)`` and
-``growth_rate()``. Emulator inputs are validated against ``CP_EMULATOR_BOUNDS``.
-
-Emulator data
--------------
-Emulator ``.npz`` files are downloaded on demand from three Zenodo records
-(see ``ZENODO_RECORDS``):
-- HMcode emulators               : 10.5281/zenodo.22966883
-- halofit emulators              : 10.5281/zenodo.22966994
-- extended cosmologies (curvature / running) : 10.5281/zenodo.22967046
-
-The k-mode grid is read directly from each emulator (its ``.modes`` attribute),
-so different emulators may use different grids without any external k-mode file.
+Uses ``cosmopower_jax`` (rather than the TensorFlow-based ``cosmopower``) for fast
+JAX-accelerated predictions. Covers LCDM, wCDM and w0waCDM, plus curvature and
+running-spectral-index extensions, each over neutrino configurations N_mnu = 0-3.
+Every cosmology exposes ``Linear``/``LinearCB`` and ``NonLinear``/``NonLinearCB``
+inner classes; the baseline models additionally offer halofit nonlinear variants.
+All emulators provide ``sigma8``, ``fsigma8``, ``growth_factor`` and ``growth_rate``,
+and validate inputs against ``CP_EMULATOR_BOUNDS``.
 """
 
 from cloelib.cosmology.cosmology import (
@@ -356,7 +316,7 @@ class CosmoPowerJAXw0waCDMPerturbations:
             Returns
             -------
             np.ndarray
-                Linear matter power spectrum in (Mpc/h)^3.
+                Linear matter power spectrum in Mpc^3.
             """
             return self.Pk_int(zs, ks)
 
@@ -1048,8 +1008,10 @@ class CosmoPowerJAXw0waCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -1156,8 +1118,10 @@ class CosmoPowerJAXw0waCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -1859,8 +1823,10 @@ class CosmoPowerJAXwCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -1965,8 +1931,10 @@ class CosmoPowerJAXwCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -2617,8 +2585,10 @@ class CosmoPowerJAXLCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -2722,8 +2692,10 @@ class CosmoPowerJAXLCDMPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -3670,8 +3642,10 @@ class CosmoPowerJAXw0waCurvaturePerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -3769,8 +3743,10 @@ class CosmoPowerJAXLCDMRunningIndexPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -3862,8 +3838,10 @@ class CosmoPowerJAXLCDMRunningIndexPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -3951,8 +3929,10 @@ class CosmoPowerJAXLCDMRunningIndexPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -4044,8 +4024,10 @@ class CosmoPowerJAXLCDMRunningIndexPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -4146,8 +4128,10 @@ class CosmoPowerJAXw0waRunningIndexPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -4242,8 +4226,10 @@ class CosmoPowerJAXw0waRunningIndexPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]
@@ -4334,8 +4320,10 @@ class CosmoPowerJAXw0waRunningIndexPerturbations:
         def growth_factor(self, zs, ks):
             return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
+        def growth_rate(self, zs=None, ks=None):
+            return growth_rate_on_redshifts(
+                self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+            )
 
         def sigma8_0(self):
             return self.sigma8[0]

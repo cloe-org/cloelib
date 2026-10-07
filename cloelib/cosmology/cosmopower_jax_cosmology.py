@@ -24,45 +24,50 @@ import warnings
 from typing import Optional
 
 
-# Zenodo URL for emulator files
-ZENODO_RECORDS = {
-    "hmcode": "https://zenodo.org/records/22966883/files",
-    "halofit": "https://zenodo.org/records/22966994/files",
-    "extended": "https://zenodo.org/records/22967046/files",
-}
+# GitHub repository hosting the emulator files, downloaded and cached on first use.
+# This is the raw-file base path; each .npz is fetched individually, not the whole repo.
+GITHUB_EMULATOR_URL = (
+    "https://raw.githubusercontent.com/cosmopower-organization/"
+    "Euclid-DR1-matter-emulators/main/emulators"
+)
 
 
-def _zenodo_url_for(filename: str) -> str:
-    """Return the Zenodo record base URL that hosts ``filename``.
+def _emulator_url_for(filename: str) -> str:
+    """Return the GitHub raw base URL, including subfolder, that hosts ``filename``.
 
-    Files are split across three Zenodo records by cosmology family:
-    halofit emulators, HMcode emulators, and extended cosmologies
-    (curvature / running spectral index).
+    Emulators are organised by cosmology family and nonlinear prescription:
+    ``<model>/hmcode``, ``<model>/halofit`` and ``extended/<variant>``. The
+    subfolder is derived from the filename prefix.
     """
     if filename.startswith("halofit-"):
-        return ZENODO_RECORDS["halofit"]
-    if filename.startswith(("curvature-", "nrun-")):
-        return ZENODO_RECORDS["extended"]
-    return ZENODO_RECORDS["hmcode"]
+        subdir = f"{filename.split('-')[1]}/halofit"
+    elif filename.startswith("nrun-"):
+        subdir = "extended/running"
+    elif filename.startswith("curvature-"):
+        subdir = "extended/curvature"
+    else:
+        subdir = f"{filename.split('-')[0]}/hmcode"
+    return f"{GITHUB_EMULATOR_URL}/{subdir}"
 
 
-def emulator_data(filename: str, zenodo_url: Optional[str] = None) -> str:
+def emulator_data(filename: str, base_url: Optional[str] = None) -> str:
     """Download the emulator data file if it does not exist.
 
     Parameters
     ----------
     filename : str
         The name of the file to download.
-    zenodo_url : str, optional
-        The base URL from which to download the file. Defaults to ZENODO_URL.
+    base_url : str, optional
+        The base URL from which to download the file. Defaults to the GitHub
+        location derived from the filename.
 
     Returns
     -------
     str
         The path to the downloaded file.
     """
-    if zenodo_url is None:
-        zenodo_url = _zenodo_url_for(filename)
+    if base_url is None:
+        base_url = _emulator_url_for(filename)
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DATA_DIR = os.path.join(BASE_DIR, "emulator-data-jax")
@@ -70,7 +75,7 @@ def emulator_data(filename: str, zenodo_url: Optional[str] = None) -> str:
     file_path = os.path.join(DATA_DIR, filename)
 
     if not os.path.exists(file_path):
-        url = f"{zenodo_url}/{filename}"
+        url = f"{base_url}/{filename}"
         print(f"Downloading {filename} from {url} ...")
         urllib.request.urlretrieve(url, file_path)
 
@@ -129,7 +134,7 @@ CP_EMULATOR_BOUNDS = {
     "lnAs": np.array([1.61, 5.0]),
     "mnu": np.array([0.0, 1.0]),
     "logT_AGN": np.array([7.3, 8.5]),
-    "w0": np.array([-3.0, -0.33]),
+    "w0": np.array([-3.0, 1.0]),
     "wa": np.array([-3.0, 3.0]),
     "w": np.array([-3.0, 0.0]),
     "omk": np.array([-0.3, 0.3]),

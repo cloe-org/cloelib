@@ -433,7 +433,7 @@ Inputs are validated against a single global guardrail (`CP_EMULATOR_BOUNDS`); a
 | ns        | [0.6, 1.3]     | all                   |
 | lnAs      | [1.61, 5.0]    | all                   |
 | mnu       | [0, 1] eV      | massive-neutrino runs |
-| w0        | [-3, -0.33]    | w0waCDM               |
+| w0        | [-3, 1]        | w0waCDM               |
 | wa        | [-3, 3]        | w0waCDM               |
 | w         | [-3, 0]        | wCDM                  |
 | Omega_k0  | [-0.3, 0.3]    | curvature             |

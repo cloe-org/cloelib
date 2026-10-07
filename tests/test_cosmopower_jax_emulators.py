@@ -12,6 +12,7 @@ if HAS_COSMOPOWER_JAX:
         CosmoPowerJAXw0waCurvaturePerturbations as w0waCurvature,
         CosmoPowerJAXLCDMRunningIndexPerturbations as RunningIndex,
         CosmoPowerJAXw0waRunningIndexPerturbations as w0waRunningIndex,
+        check_emulator_bounds,
     )
 else:
     pytest.skip(
@@ -1028,6 +1029,14 @@ def test_parameter_out_of_bounds():
 
     with pytest.raises(ValueError, match="out of emulator range"):
         w0waCDM.Linear(background=bad_background, redshifts=np.array([0.0, 1.0]))
+
+
+def test_w0_upper_bound_is_one():
+    """w0 ceiling is +1 (previously -0.33): values up to 1 pass, above 1 raise."""
+    check_emulator_bounds({"w0": 0.5})  # now in range; was rejected under the old cap
+    check_emulator_bounds({"w0": 1.0})  # upper edge is inclusive
+    with pytest.raises(ValueError, match="out of emulator range"):
+        check_emulator_bounds({"w0": 1.5})
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")

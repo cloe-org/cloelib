@@ -204,18 +204,51 @@ Pkl_interp_signed_vmap_terms = jax.jit(
 
 @jax.jit
 def Cl_int_liz_jz(WT1l, WT2, Pkl, invH, invchi2, weights):
+    """Contract an RSD window for tracer 1 with an ordinary window for 2.
+
+    ``WT1l`` has shape ``(n_ell, n_bin1, n_z)``, ``WT2`` has shape
+    ``(n_bin2, n_z)``, ``Pkl`` has shape ``(n_ell, n_z)``, and each of
+    ``invH``, ``invchi2``, and ``weights`` has shape ``(n_z,)``.
+
+    The returned three-dimensional array is indexed by multipole and the two
+    tracer-bin axes. This helper performs the weighted contraction only; the
+    legacy integration path supplies physical prefactors and grid-spacing
+    factors.
+    """
     # for window w/ RSD X window w/o RSD
     return np.einsum("liz,jz,lz,z,z,z->lij", WT1l, WT2, Pkl, invH, invchi2, weights)
 
 
 @jax.jit
 def Cl_int_iz_ljz(WT1, WT2l, Pkl, invH, invchi2, weights):
+    """Contract an ordinary window for tracer 1 with tracer 2's RSD window.
+
+    ``WT1`` has shape ``(n_bin1, n_z)``, ``WT2l`` has shape
+    ``(n_ell, n_bin2, n_z)``, ``Pkl`` has shape ``(n_ell, n_z)``, and each
+    of ``invH``, ``invchi2``, and ``weights`` has shape ``(n_z,)``.
+
+    The returned three-dimensional array is indexed by multipole and the two
+    tracer-bin axes. This helper performs the weighted contraction only; the
+    legacy integration path supplies physical prefactors and grid-spacing
+    factors.
+    """
     # for window w/o RSD X window w/ RSD
     return np.einsum("iz,ljz,lz,z,z,z->lij", WT1, WT2l, Pkl, invH, invchi2, weights)
 
 
 @jax.jit
 def Cl_int_liz_ljz(WT1l, WT2l, Pkl, invH, invchi2, weights):
+    """Contract RSD windows for both tracers.
+
+    Each RSD window has shape ``(n_ell, n_bin, n_z)``; ``Pkl`` has shape
+    ``(n_ell, n_z)``, and each of ``invH``, ``invchi2``, and ``weights`` has
+    shape ``(n_z,)``.
+
+    The returned three-dimensional array is indexed by multipole and the two
+    tracer-bin axes. This helper performs the weighted contraction only; the
+    legacy integration path supplies physical prefactors and grid-spacing
+    factors.
+    """
     # for window w/ RSD X window w/ RSD
     return np.einsum("liz,ljz,lz,z,z,z->lij", WT1l, WT2l, Pkl, invH, invchi2, weights)
 

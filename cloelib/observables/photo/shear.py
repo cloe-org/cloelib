@@ -83,6 +83,7 @@ class LensingContribution:
         self._tracer = tracer
 
     def compute_kernel(self, z):
+        """Return the uncalibrated lensing kernel, shape ``(n_bin, n_z)``."""
         return self._tracer.get_window_lensing(z)
 
 
@@ -102,6 +103,7 @@ class NLAContribution(IntrinsicAlignmentContribution):
         self._tracer = tracer
 
     def compute_kernel(self, z):
+        """Return the uncalibrated NLA kernel, shape ``(n_bin, n_z)``."""
         return self._tracer.get_window_IA(z)
 
 
@@ -340,6 +342,14 @@ class PBJTATTLoopComputer:
         return kernels
 
     def compute(self, name: str):
+        """Return the FAST-PT callable for one named TATT kernel.
+
+        ``name`` must be present in ``_ALL_KERNELS``. The returned
+        ``SpectrumRequest.compute(matter_pk, ks, zs)`` ignores ``matter_pk``
+        and ``zs`` because the cached kernel depends only on k, and returns
+        shape ``(len(ks),)``.
+        """
+
         def _compute(matter_pk, ks, zs):
             del matter_pk, zs  # pure k-kernel; z-dependence lives elsewhere
             return jnp.asarray(self._kernels_for(ks)[name])
@@ -500,6 +510,11 @@ class TATTContribution(IntrinsicAlignmentContribution):
         return _growth_factor_1d(self._loop_computer.linear_perturbations, zs) ** 4
 
     def get_spectrum_requests(self):
+        """Return requests for the ten TATT kernels.
+
+        ``get_requirements_for_interaction`` retains only the GI kernels when
+        paired with a non-IA contribution; an IA-IA pairing needs all ten.
+        """
         return tuple(
             SpectrumRequest(name=name, compute=self._loop_computer.compute(name))
             for name in _ALL_KERNELS
@@ -592,14 +607,22 @@ class ShearTracer:
         ia_model: "str | Contribution | None" = None,
         tatt_loop_computer: Optional[TATTLoopComputer] = None,
     ):
-        r"""
-        Initialize the class instance.
+        r"""Construct a tomographic cosmic-shear tracer.
+
+        ``dndz`` is expected to have shape ``(n_bin, len(z))`` with
+        normalized distributions. Per-bin width transformations are applied
+        before redshift shifts. ``z`` must not contain zero.
 
         Args:
-          perturbations (object): An object from NonLinearPerturbations class
-          dndz (np.ndarray): A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
-            It is expected to be normalised.
-          z (np.ndarray): A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
+          perturbations: Backend supplying background and perturbation
+            quantities used by the kernels.
+          dndz: Normalized tomographic distributions, shape
+            ``(n_bin, len(z))``.
+          z: One-dimensional redshift grid corresponding to the second axis
+            of ``dndz``.
+          nuisance_params: Mapping requiring one-based keys
+            ``multiplicative_bias_{i+1}``, ``dz_shear_{i+1}``, and
+            ``width_shear_{i+1}`` for each bin.
           ia_model (str | Contribution | None): Which intrinsic-alignment
             contribution to use. `None` (default) means no intrinsic-alignment
             contribution at all - `get_window()`/`get_Cl` use only the lensing
@@ -616,6 +639,10 @@ class ShearTracer:
             kernels, or any other object with the same `.compute(name)`
             interface. Passing this with any `ia_model` other than
             `"TATT"` raises `ValueError`.
+
+        Raises:
+          ValueError: If ``z`` contains zero, ``ia_model`` is unknown, or the
+            TATT loop-computer argument is inconsistent with ``ia_model``.
         """
         if 0.0 in z:
             raise ValueError(
@@ -765,15 +792,19 @@ class ShearTracer:
         return ia_model
 
     def get_window_IA(self, z):
-        r"""Window integrand.
+        r"""Return the NLA intrinsic-alignment kernel on ``z``.
 
-        Calculates IA window
+        The per-bin kernel is ``-H(z)/c * AIA * CIA * Omega_m0 *
+        (1+z)**EtaIA / D(z) * dndz_shifted``. If the backend returns a
+        scale-dependent growth factor, the second tabulated k column is used;
+        otherwise its scale-independent result is used. TATT amplitudes are
+        represented in effective spectra rather than by this NLA window.
 
         Args:
-          z (float): Redshift at which kernel is being evaluated
+            z (array_like): Redshift evaluation grid.
 
-        Returns:
-          window_IA (np.ndarray):
+        Returns a two-dimensional NLA kernel with one row per tomographic
+        bin and one column per redshift.
         """
         Omega_m0 = self.background.Omega_m(0.0)
         Hz = self.perturbations.background.hubble_parameter(z)
@@ -787,7 +818,12 @@ class ShearTracer:
         return np.einsum("ij, j->ij", self.dndz_shifted, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
-        """Compute the lensing efficiency in a redshift bin."""
+        """Compute the legacy single-bin lensing efficiency.
+
+        Uses Akima interpolation of the shifted bin distribution and a fixed
+        integration grid from redshift 0 to 4. The vectorized production
+        window path uses :meth:`get_lensing_efficiency` instead.
+        """
         interpolator = interpax.Akima1DInterpolator(
             self.z, self.dndz_shifted[bin_idx, :]
         )
@@ -803,24 +839,24 @@ class ShearTracer:
 
     def get_lensing_efficiency(self, z):
         r"""
-        Compute the lensing efficiency kernel for each redshift bin.
+        Compute the discretized lensing efficiency for every bin.
 
-        This function calculates the geometric lensing kernel W(χ), which weights the contribution
-        of matter at different redshifts to the weak lensing signal, for a given redshift grid `z`.
+        The efficiency uses ``dndz_shifted`` and the grid distance-ratio
+        factor ``1 - chi(z_lens) / chi(z_source)``, contracted with cached
+        stacked Simpson weights. The supplied redshift grid is used as both
+        the lens and source grid; this implementation assumes uniform spacing.
 
         Args:
-          z (np.ndarray): 1D array of redshift values (must be evenly spaced). Used to compute comoving distances
-            and define integration domain.
+          z (np.ndarray): 1D, evenly spaced redshift evaluation grid.
 
-        Returns:
-          (np.ndarray): 2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
-            for each redshift bin over the evaluation grid.
+        Returns a two-dimensional lensing efficiency with one row per
+        tomographic bin and one column per redshift.
 
         Notes
         -----
         - Assumes `z` is evenly spaced; spacing is inferred as `z[1] - z[0]`.
         - Uses a precomputed Simpson rule weight matrix (`cached_stacked_simpson`) for integration.
-        - `self.dndz` is expected to have shape (N_bins, len(z)) and be normalized.
+        - `self.dndz_shifted` has shape ``(n_bin, len(z))``.
         - Efficiency is evaluated using `np.einsum`.
         """
         dz = z[1] - z[0]  # assuming equispaced!
@@ -831,29 +867,18 @@ class ShearTracer:
         return result
 
     def get_window_lensing(self, z):
-        r"""Weak Lensing shear kernel.
+        r"""Return the radial weak-lensing kernel for the supplied redshifts.
 
-        Calculates the weak lensing shear kernel for a given tomographic bin
-        distribution.
-        Uses broadcasting to compute a 2D-array of integrands and then applies
-        `np.trapz` on the array along one axis.
-
-        $$
-            W_{i}^{\gamma}(\ell, z, k) =
-            \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
-            \Omega_{{\rm m},0} (1 + z)
-            f_K\left[\tilde{r}(z)\right]
-            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
-            \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
-        $$
+        It multiplies the discretized efficiency from
+        :meth:`get_lensing_efficiency` by
+        ``3/2 * (H0/c)**2 * Omega_m0 * (1+z) * chi(z)``. The harmonic shear
+        response is applied by ``AngularTwoPoint``.
 
         Args:
-          z (numpy.ndarray): Redshift at which weight is evaluated (`float` type).
+          z (numpy.ndarray): Redshift evaluation grid.
 
-        Returns:
-          (numpy.ndarray): 1-D Numpy array of shear kernel values for specified bin
-            at specified scale for the redshifts defined in z
+        Returns a two-dimensional kernel with one row per bin and one column
+        per redshift.
         """
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (
@@ -868,15 +893,14 @@ class ShearTracer:
         return np.einsum("ij, j->ij", efficiency, factor)
 
     def get_window(self, z):
-        r"""Compute the Window.
+        r"""Sum lensing and optional IA kernels, then apply multiplicative bias.
 
-        Computes general window given the selected tracer
+        Args:
+          z (array_like): Redshift evaluation grid.
 
-        Parameters:
-          z (float): Redshift at which window kernel is being evaluated
-
-        Returns:
-          window (np.ndarray):
+        Returns a two-dimensional window with one row per bin and one column
+        per redshift. Each bin is multiplied once by
+        ``1 + multiplicative_bias_{i+1}``.
         """
         total_window = sum(c.compute_kernel(z) for c in self.get_contributions())
         # Apply multiplicative bias

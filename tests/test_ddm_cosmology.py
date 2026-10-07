@@ -8,6 +8,7 @@ against real CLASS runs are slow (about 1.5 minutes) and are only run when the e
 variable CLOE_RUN_SLOW_TESTS is set.
 """
 
+import importlib.util
 import inspect
 import os
 import warnings
@@ -18,21 +19,16 @@ import pytest
 pytest.importorskip("cosmopower_jax", reason="cosmopower_jax not installed")
 pytest.importorskip("classy", reason="classy not installed")
 
-from cloelib.cosmology import class_1bDDM_cosmology as ddm1b  # noqa: E402
-from cloelib.cosmology.class_1bDDM_cosmology import (  # noqa: E402
+from cloelib.cosmology import class_DDM_cosmology as ddm  # noqa: E402
+from cloelib.cosmology.class_DDM_cosmology import (  # noqa: E402
     obDDMBackground,
     obDDMLinearPerturbations,
     obDDMNonLinearPerturbations,
+    tbDDMNonLinearPerturbations,
 )
 from cloelib.cosmology.class_cosmology import CLASSBackground  # noqa: E402
 
-try:
-    from cloelib.cosmology import class_2bDDM_cosmology as ddm2b
-    from cloelib.cosmology.class_2bDDM_cosmology import tbDDMNonLinearPerturbations
-
-    HAS_2B = True
-except ImportError:  # DMemu not installed
-    HAS_2B = False
+HAS_2B = importlib.util.find_spec("DMemu") is not None  # the 2bDDM boost emulator
 
 requires_2b = pytest.mark.skipif(not HAS_2B, reason="DMemu not installed")
 slow = pytest.mark.skipif(
@@ -254,10 +250,10 @@ def test_1b_emulators_are_downloaded_from_zenodo(nl_1b):
     from cloelib.cosmology.cosmopower_jax_cosmology import emulator_data
 
     for filename, url in [
-        ("halofit-w0wa-3mass-nonlinear.npz", ddm1b.HALOFIT_ZENODO_URL),
-        ("w0wa-3degen-nonlinear.npz", ddm1b.HMCODE_ZENODO_URL),
-        ("w0wa-3degen-linear.npz", ddm1b.HMCODE_ZENODO_URL),
-        ("ddm-1body-combined-linear.npz", ddm1b.DDM_ZENODO_URL),
+        ("halofit-w0wa-3mass-nonlinear.npz", ddm.HALOFIT_ZENODO_URL),
+        ("w0wa-3degen-nonlinear.npz", ddm.HMCODE_ZENODO_URL),
+        ("w0wa-3degen-linear.npz", ddm.HMCODE_ZENODO_URL),
+        ("ddm-1body-combined-linear.npz", ddm.DDM_ZENODO_URL),
     ]:
         assert os.path.exists(emulator_data(filename, url))
 
@@ -267,7 +263,7 @@ def test_1b_emulators_are_downloaded_from_zenodo(nl_1b):
 # ---------------------------------------------------------------------------
 @pytest.fixture
 def mock_class_1b(monkeypatch):
-    monkeypatch.setattr(ddm1b, "Class", MockClass)
+    monkeypatch.setattr(ddm, "Class", MockClass)
 
 
 def test_1b_class_params_hmcode(mock_class_1b, background_1b, linear_1b):
@@ -398,7 +394,7 @@ def test_2b_log10TAGN_only_affects_hmcode(background_2b):
 # ---------------------------------------------------------------------------
 @pytest.fixture
 def mock_class_2b(monkeypatch):
-    monkeypatch.setattr(ddm2b, "Class", MockClass)
+    monkeypatch.setattr(ddm, "Class", MockClass)
 
 
 @requires_2b

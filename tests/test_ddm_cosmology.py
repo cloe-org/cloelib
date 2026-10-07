@@ -163,7 +163,8 @@ def test_1b_default_is_emulator_hmcode(background_1b, linear_1b, nl_1b):
     assert default.use_emulator is True
     assert default.non_linear_lcdm == "hmcode"
     np.testing.assert_allclose(
-        default.matter_power_spectrum(ZS, KS), nl_1b["hmcode"].matter_power_spectrum(ZS, KS)
+        default.matter_power_spectrum(ZS, KS),
+        nl_1b["hmcode"].matter_power_spectrum(ZS, KS),
     )
 
 
@@ -173,7 +174,9 @@ def test_1b_invalid_prescription(background_1b, linear_1b):
 
 
 def test_1b_prescription_is_case_insensitive(background_1b, linear_1b):
-    perts = obDDMNonLinearPerturbations(background_1b, linear_1b, ZS, non_linear_lcdm="HMcode")
+    perts = obDDMNonLinearPerturbations(
+        background_1b, linear_1b, ZS, non_linear_lcdm="HMcode"
+    )
     assert perts.non_linear_lcdm == "hmcode"
 
 
@@ -187,7 +190,9 @@ def test_1b_log10TAGN_warning_only_for_halofit(background_1b, linear_1b):
         obDDMNonLinearPerturbations(
             background_1b, linear_1b, ZS, log10TAGN=8.0, non_linear_lcdm="hmcode"
         )
-        obDDMNonLinearPerturbations(background_1b, linear_1b, ZS, non_linear_lcdm="halofit")
+        obDDMNonLinearPerturbations(
+            background_1b, linear_1b, ZS, non_linear_lcdm="halofit"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -267,7 +272,12 @@ def mock_class_1b(monkeypatch):
 
 def test_1b_class_params_hmcode(mock_class_1b, background_1b, linear_1b):
     obDDMNonLinearPerturbations(
-        background_1b, linear_1b, ZS, use_emulator=False, log10TAGN=8.1, non_linear_lcdm="hmcode"
+        background_1b,
+        linear_1b,
+        ZS,
+        use_emulator=False,
+        log10TAGN=8.1,
+        non_linear_lcdm="hmcode",
     )
     params = MockClass.last.params
     assert params["non linear"] == "hmcode"
@@ -285,7 +295,9 @@ def test_1b_class_params_halofit(mock_class_1b, background_1b, linear_1b):
     assert "log10T_heat_hmcode" not in params
 
 
-def test_1b_class_default_prescription_is_hmcode(mock_class_1b, background_1b, linear_1b):
+def test_1b_class_default_prescription_is_hmcode(
+    mock_class_1b, background_1b, linear_1b
+):
     obDDMNonLinearPerturbations(background_1b, linear_1b, ZS, use_emulator=False)
     params = MockClass.last.params
     assert params["non linear"] == "hmcode"
@@ -294,7 +306,9 @@ def test_1b_class_default_prescription_is_hmcode(mock_class_1b, background_1b, l
 
 def test_1b_class_params_are_equivalent_lcdm(mock_class_1b, background_1b, linear_1b):
     """The DDM parameters are removed and the total CDM is restored."""
-    perts = obDDMNonLinearPerturbations(background_1b, linear_1b, ZS, use_emulator=False)
+    perts = obDDMNonLinearPerturbations(
+        background_1b, linear_1b, ZS, use_emulator=False
+    )
     params = MockClass.last.params
     assert "omega_ini_dcdm" not in params and "Gamma_dcdm" not in params
     assert params["omega_cdm"] == pytest.approx(perts.wdm)
@@ -307,7 +321,12 @@ def test_1b_class_params_are_equivalent_lcdm(mock_class_1b, background_1b, linea
 def test_2b_invalid_prescription(background_2b):
     with pytest.raises(ValueError, match="non_linear_lcdm"):
         tbDDMNonLinearPerturbations(
-            background_2b, ZS, f_dcdm=F_DCDM, epsilon=0.01, Gamma=GAMMA_TIMES_F, non_linear_lcdm="foo"
+            background_2b,
+            ZS,
+            f_dcdm=F_DCDM,
+            epsilon=0.01,
+            Gamma=GAMMA_TIMES_F,
+            non_linear_lcdm="foo",
         )
 
 
@@ -319,7 +338,8 @@ def test_2b_default_is_emulator_hmcode(background_2b, nl_2b):
     assert default.use_emulator is True
     assert default.non_linear_lcdm == "hmcode"
     np.testing.assert_allclose(
-        default.matter_power_spectrum(ZS, KS), nl_2b["hmcode"].matter_power_spectrum(ZS, KS)
+        default.matter_power_spectrum(ZS, KS),
+        nl_2b["hmcode"].matter_power_spectrum(ZS, KS),
     )
 
 
@@ -327,10 +347,14 @@ def test_2b_default_is_emulator_hmcode(background_2b, nl_2b):
 def test_2b_log10TAGN_warning_only_for_halofit(background_2b):
     kwargs = dict(f_dcdm=F_DCDM, epsilon=0.01, Gamma=GAMMA_TIMES_F, log10TAGN=8.0)
     with pytest.warns(UserWarning, match="log10TAGN is ignored"):
-        tbDDMNonLinearPerturbations(background_2b, ZS, non_linear_lcdm="halofit", **kwargs)
+        tbDDMNonLinearPerturbations(
+            background_2b, ZS, non_linear_lcdm="halofit", **kwargs
+        )
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
-        tbDDMNonLinearPerturbations(background_2b, ZS, non_linear_lcdm="hmcode", **kwargs)
+        tbDDMNonLinearPerturbations(
+            background_2b, ZS, non_linear_lcdm="hmcode", **kwargs
+        )
 
 
 @requires_2b
@@ -398,7 +422,12 @@ def test_2b_class_params(mock_class_2b, background_2b):
 def test_2b_class_k_grid(mock_class_2b, background_2b):
     """CLASS is evaluated on a dense log-spaced grid, never beyond CLASS's own k range."""
     perts = tbDDMNonLinearPerturbations(
-        background_2b, ZS, f_dcdm=F_DCDM, epsilon=0.01, Gamma=GAMMA_TIMES_F, use_emulator=False
+        background_2b,
+        ZS,
+        f_dcdm=F_DCDM,
+        epsilon=0.01,
+        Gamma=GAMMA_TIMES_F,
+        use_emulator=False,
     )
     ks_used = np.unique(MockClass.last.pk_calls)  # sorted; evaluated for every redshift
     assert ks_used[0] == pytest.approx(MockClass.K_GRID[0])

@@ -722,7 +722,9 @@ class obDDMNonLinearPerturbations:
                 )
             else:
                 cp_NL = load_pk_emulator(
-                    emulator_data("halofit-w0wa-3mass-nonlinear.npz", HALOFIT_ZENODO_URL)
+                    emulator_data(
+                        "halofit-w0wa-3mass-nonlinear.npz", HALOFIT_ZENODO_URL
+                    )
                 )
             k_emu = np.loadtxt(k_modes_path)
 

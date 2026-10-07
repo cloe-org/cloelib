@@ -319,7 +319,9 @@ class CLASSLinearPerturbations:
         self.results.set(self.interface_args["CLASSparams"])
         self.results.compute()
         # GFA, I added this line in order to retrieve the wavenumber grid (in 1/Mpc) used by CLASS to compute Pk
-        _, self.k, _ = self.results.get_pk_and_k_and_z(nonlinear=False, only_clustering_species = False, h_units=False)
+        _, self.k, _ = self.results.get_pk_and_k_and_z(
+            nonlinear=False, only_clustering_species=False, h_units=False
+        )
 
     @property
     def _interface_args(self) -> dict:
@@ -486,7 +488,9 @@ class CLASSNonLinearPerturbations:
         self.results.set(self.interface_args["CLASSparams"])
         self.results.compute()
         # GFA, I added this line in order to retrieve the wavenumber grid (in 1/Mpc) used by CLASS to compute Pk
-        _, self.k, _ = self.results.get_pk_and_k_and_z(nonlinear=True, only_clustering_species = False, h_units=False)
+        _, self.k, _ = self.results.get_pk_and_k_and_z(
+            nonlinear=True, only_clustering_species=False, h_units=False
+        )
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False

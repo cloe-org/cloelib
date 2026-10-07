@@ -76,6 +76,11 @@ plugins:
             signature_crossrefs: true
             unwrap_annotated: true
 
+hooks:
+  - docs/hooks/api_toc.py
+
+exclude_docs: hooks
+  
 markdown_extensions:
   - admonition
   - pymdownx.details
@@ -90,7 +95,7 @@ markdown_extensions:
   - pymdownx.snippets:
       base_path: ["."]
   - toc:
-      toc_depth: 3
+      toc_depth: 4
       permalink: true
   - pymdownx.arithmatex:
       generic: true

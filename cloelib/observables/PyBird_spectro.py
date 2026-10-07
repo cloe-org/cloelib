@@ -1,36 +1,62 @@
-"""Interface of Legendre Multipoles with PyBIrd."""
+"""Interface of Legendre Multipoles with PyBird."""
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Perturbations
 
 # General imports
+import warnings
+from typing import Optional
+
 import numpy as np  # type: ignore
 from scipy.interpolate import make_interp_spline
 from scipy.special import legendre
+
+# Largest wavenumber [h/Mpc] at which PyBird is evaluated. Beyond it the
+# multipoles are extrapolated, so it must cover the largest k requested
+# downstream, e.g. the k_in range of the mixing matrices (up to ~1 h/Mpc for
+# Euclid DR1). It must stay below 1 h/Mpc, the edge of the linear power
+# spectrum PyBird tabulates when it runs CLASS for beyond-LCDM models.
+KMAX = 0.95
+
+PYBIRD_CONFIG = {
+    "output": "bPk",
+    "multipole": 3,
+    "kmax": KMAX,
+    "km": 1.0,
+    "kr": 1.0,
+    "eft_basis": "pbj",
+    "with_bias": False,
+    "with_stoch": False,
+    "with_resum": True,
+    "optiresum": True,
+    "with_nnlo_counterterm": True,
+}
+
+# Analytically-marginalisable terms: likelihood (PBJ) name -> PyBird name
+MARG_TERMS = {"bG3": "bGamma3", "c0": "c0", "c2": "c2", "c4": "c4", "ck4": "ct"}
+
+ells = [0, 2, 4]
 
 try:
     from pybird.correlator import Correlator
 
     N = Correlator()
-    N.set(
-        {
-            "output": "bPk",
-            "multipole": 3,
-            "kmax": 0.5,
-            "km": 1.0,
-            "kr": 1.0,
-            "eft_basis": "pbj",
-            "with_bias": False,
-            "with_stoch": False,
-            "with_resum": True,
-            "optiresum": True,
-            "with_nnlo_counterterm": True,
-        }
-    )
-    ells = [0, 2, 4]
-
+    N.set(dict(PYBIRD_CONFIG))
 except (ImportError, AttributeError, TypeError) as e:
     raise ImportError(f"PyBird could not be imported or initialised: {e}")
+
+# Configuration the shared Correlator is currently set with
+_current_config = dict(PYBIRD_CONFIG)
+
+
+def _set_correlator(config: dict, force: bool = False):
+    """Replace the shared Correlator if its configuration changes."""
+    global N, _current_config
+    if force or config != _current_config:
+        # A fresh Correlator: Correlator.set keeps the options of earlier calls
+        N = Correlator()
+        N.set(dict(config))
+        _current_config = dict(config)
 
 
 class PyBirdSpectroPower:
@@ -38,87 +64,65 @@ class PyBirdSpectroPower:
 
     NLcode = "PyBird"
 
-    def __init__(self, linear_perturbations: Perturbations, nuisance_parameters: dict, redshift: float, mg_settings: dict = None):
+    def __init__(
+        self,
+        linear_perturbations: Perturbations,
+        nuisance_parameters: dict,
+        redshift: float,
+        mg_settings: Optional[dict] = None,
+    ):
         r"""Class constructor.
 
         Args:
           linear_perturbations (Perturbations): Perturbations object containing cosmology, linear power spectrum,
             redshift and growth functions
           nuisance_parameters (dict): Dictionary containing bias and counterterm parameters
-          redshift (float): single redshift in which to evaluate PBJ
-          mg_settings (dict): Dictionary containing modified gravity settings, if applicable. Expected keys are 'mg_model' (str, either 'nDGP' or 'bootstrap') and 'parameters' (dict of model-specific parameters, e.g. {'logOmegarc': value} for nDGP).
+          redshift (float): single redshift in which to evaluate PyBird
+          mg_settings (dict): Optional beyond-LCDM model, passed as-is to PyBird: ``"mg_model"`` (PyBird model
+            name, e.g. ``"nDGP"``) plus the PyBird options of that model, e.g.
+            ``{"mg_model": "nDGP", "logOmegarc": -1.0}``. PyBird then computes the linear power spectrum and
+            growth with CLASS and exact time dependence, instead of taking them from ``linear_perturbations``.
         """
         self.linear_perturbations = linear_perturbations
         self.background = linear_perturbations.background
         self.parameters = nuisance_parameters
-        if mg_settings is not None:
-            self.exact_time = True
-            self.mg_settings = mg_settings 
-            self.mg_model = mg_settings['mg_model'] 
-            if self.mg_model == 'nDGP':
-                self.logOmrc = mg_settings["logOmegarc"]
-            else: raise Exception('%s is not implemented yet' % (self.mg_model))
-            #N = Correlator()
-            N.set(
-                {
-                    "output": "bPk",
-                    "multipole": 3,
-                    "kmax": 0.5,
-                    "km": 1.0,
-                    "kr": 1.0,
-                    "eft_basis": "pbj",
-                    "with_bias": False,
-                    "with_stoch": False,
-                    "with_resum": True,
-                    "optiresum": True,
-                    "with_nnlo_counterterm": True,
-                    "with_exact_time": True,
-                    "mg_model": self.mg_model,
-                    "logOmegarc": self.logOmrc
-                }
-            )
-        self.mask_z0 = linear_perturbations.z != 0.0
-        #self.redshift = linear_perturbations.z[self.mask_z0]
-        #z = self.redshift[0]  # assuming one sky - one redshift for now
+        self.mg_settings = mg_settings
+
         assert np.asarray(redshift).size == 1, "Only a single redshift can be passed."
         assert redshift in linear_perturbations.z, (
-            "Redshift requested for PBJ not previously computed with linear theory code"
+            "Redshift requested for PyBird not previously computed with linear theory code"
         )
         self.redshift = redshift
         z = self.redshift
-
-        kk = np.geomspace(1.0e-4, 2.0, 512)
-        plin = self.linear_perturbations.matter_power_spectrum(
-            z, kk, hubble_units=True, k_hunit=True
-        )
         h = self.background.h
-        # if mg_settings is not None:
-        #     keys = ['h', 'Omega_b0', 'Omega_cdm0', 'Omega_k0', 'As', 'ns', 'w0', 'wa']
-        #     self.linear_perturbations.background.__dict__
-        #     cosmology_params = {k: self.linear_perturbations.background.__dict__[k] for k in keys}
-        #     N.compute(cosmology_params, cosmo_module = 'class')
-        # else: #standard LCDM with EdS
-        #     f = self.linear_perturbations.growth_rate()[self.linear_perturbations.z == self.redshift][0]
-        #     D = self.linear_perturbations.growth_factor(z, 0.05)  # kpivot = 0.05
 
-        #     N.compute({"kk": kk, "pk_lin": plin, "z": z, "D": D, "f": f})
-        if mg_settings is not None:
-            key_map = {'h': 'h', 'Omega_b0': 'Omega_b', 'Omega_cdm0': 'Omega_cdm', 'Omega_k0': 'Omega_k', 'As': 'A_s', 'ns': 'n_s', 'w0': 'w0_fld', 'wa': 'wa_fld',}
-            src = self.linear_perturbations.background.__dict__
-            cosmo_dict = {class_key: src[my_key] for my_key, class_key in key_map.items()}
-            #Omega_fld = 1.0 - src['Omega_b0'] - src['Omega_cdm0'] - src['Omega_k0']
-            #cosmo_dict['Omega_fld'] = Omega_fld
-            cosmo_dict['Omega_Lambda'] = 0
-            cosmo_dict['z'] = self.redshift
-            cosmo_module = 'class'
-        else:#standard LCDM with EdS
-            f = self.linear_perturbations.growth_rate()[self.linear_perturbations.z == self.redshift][0]
-            D = self.linear_perturbations.growth_factor(z, 0.05)  # kpivot = 0.05
-            cosmo_dict = {"kk": kk, "pk_lin": plin, "z": z, "D": D, "f": f}
-            cosmo_module = None
-        N.compute(cosmo_dict, cosmo_module)
+        if mg_settings is None:
+            _set_correlator(PYBIRD_CONFIG)
+            kk = np.geomspace(1.0e-4, 2.0, 512)
+            plin = self.linear_perturbations.matter_power_spectrum(
+                z, kk, hubble_units=True, k_hunit=True
+            )
+            f = self.linear_perturbations.growth_rate()[
+                self.linear_perturbations.z == z
+            ][0]
+            # No growth factor: with_time=True, PyBird takes P_lin at z directly
+            N.compute({"kk": kk, "pk_lin": plin, "z": z, "f": f})
+        else:
+            if "mg_model" not in mg_settings:
+                raise KeyError("mg_settings must contain 'mg_model'.")
+            if self.background.mnu > 0:
+                raise NotImplementedError(
+                    "Massive neutrinos are not passed to CLASS in the beyond-LCDM "
+                    "PyBird route."
+                )
+            # Always re-set: the Correlator keeps the redshift of its last CLASS call
+            _set_correlator(
+                {**PYBIRD_CONFIG, "with_exact_time": True, **mg_settings}, force=True
+            )
+            N.compute(self._class_parameters(z), "class")
 
         k_ = N.co.k  # [h/Mpc]
+        self.kmax = k_[-1] * h  # [1/Mpc]
 
         nuisance_parameters_pybird = self.rename_nuisance_parameters(self.parameters)
         for c in ["c0", "c2", "c4"]:
@@ -135,7 +139,7 @@ class PyBirdSpectroPower:
             k_ * h, pkl / h**3, k=3, axis=-1
         )  # k: [1/Mpc], Pk: [Mpc]^3
 
-        self.marg_parameter_names = ["bGamma3", "c0", "c2", "c4", "ct"]
+        self.marg_parameter_names = list(MARG_TERMS.values())
 
         pkl_term = N.getmarg(
             nuisance_parameters_pybird,
@@ -153,6 +157,31 @@ class PyBirdSpectroPower:
         self.ipkl_term = make_interp_spline(
             k_ * h, pkl_term / h**3, k=3, axis=-1
         )  # k: [1/Mpc], Pk: [Mpc]^3
+
+    def _class_parameters(self, z: float) -> dict:
+        """CLASS input parameters of the background cosmology, at redshift z."""
+        bg = self.background
+        return {
+            "h": bg.h,
+            "Omega_b": bg.Omega_b0,
+            "Omega_cdm": bg.Omega_cdm0,
+            "Omega_k": bg.Omega_k0,
+            "A_s": bg.As,
+            "n_s": bg.ns,
+            "alpha_s": getattr(bg, "alpha_s", 0.0),
+            "w0_fld": bg.w0,
+            "wa_fld": bg.wa,
+            "Omega_Lambda": 0.0,
+            "z": z,
+        }
+
+    def _check_k_range(self, k: np.ndarray):
+        """Warn if k goes well beyond the range PyBird was evaluated on."""
+        if np.max(k) > 1.2 * self.kmax:
+            warnings.warn(
+                "PyBird multipoles are extrapolated well beyond the k range they "
+                "were computed on; increase KMAX in cloelib.observables.PyBird_spectro."
+            )
 
     def rename_nuisance_parameters(self, params):
         """PBJ/Comet to PyBird convention"""
@@ -184,6 +213,17 @@ class PyBirdSpectroPower:
 
         return {new_key: params[old_key] for new_key, old_key in key_map.items()}
 
+    @staticmethod
+    def _sumrule(k: np.ndarray, mu: np.ndarray, prefix: str = "") -> str:
+        """Einsum rule projecting multipoles on mu (1D k, or 2D k mesh with AP)."""
+        if k.ndim == 1:
+            return f"{prefix}lk,lm->{prefix}km"
+        if k.ndim == 2 and k.shape[1] == mu.shape[0]:
+            return f"{prefix}lkm,lm->{prefix}km"
+        raise ValueError(
+            f"k must be 1D or a 2D mesh matching mu; got shapes {k.shape}, {mu.shape}."
+        )
+
     def Pk2d_rsd(self, k: np.ndarray, mu: np.ndarray) -> np.ndarray:
         r"""2D power spectrum from couplings of density and velocity fields.
 
@@ -194,13 +234,9 @@ class PyBirdSpectroPower:
         Returns:
           Pk2d_rsd (np.ndarray): 2D power spectrum from couplings of density and velocity fields
         """
+        self._check_k_range(k)
         leglmu = np.array([legendre(ell)(mu) for ell in ells])
-        if k.ndim == 1:
-            sumrule = "lk,lm->km"
-        elif k.ndim == 2 and k.shape[1] == mu.shape[0]:
-            sumrule = "lkm,lm->km"  # for AP effect, k is a 2D mesh
-        pkmu = np.einsum(sumrule, self.ipkl(k), leglmu)
-        return pkmu
+        return np.einsum(self._sumrule(k, mu), self.ipkl(k), leglmu)
 
     def Pk2d_term_rsd(
         self, k: np.ndarray, mu: np.ndarray, term_list: list
@@ -221,16 +257,16 @@ class PyBirdSpectroPower:
         Returns
         -------
         Pk2d: np.ndarray
-            2D power spectrum of specific terms
+            2D power spectrum of specific terms, in the order of ``term_list``
         """
-        
-        margs = np.array(["bG3", "c0", "c2", "c4", "ck4"])
-        mask = np.isin(margs, term_list)
-        
+        unknown = [term for term in term_list if term not in MARG_TERMS]
+        if unknown:
+            raise ValueError(
+                f"Unknown terms {unknown}; available options: {list(MARG_TERMS)}."
+            )
+        self._check_k_range(k)
+        idx = [list(MARG_TERMS).index(term) for term in term_list]
         leglmu = np.array([legendre(ell)(mu) for ell in ells])
-        if k.ndim == 1:
-            sumrule = "flk,lm->fkm"#"lk,lm->km"
-        elif k.ndim == 2 and k.shape[1] == mu.shape[0]:
-            sumrule = "flkm,lm->fkm"  # for AP effect, k is a 2D mesh
-        pkmu_term = np.einsum(sumrule, self.ipkl_term(k), leglmu)[mask] #--> shape (Nterms, Nl, Nk) or (Nterms, Nk)
-        return pkmu_term
+        return np.einsum(
+            self._sumrule(k, mu, prefix="f"), self.ipkl_term(k)[idx], leglmu
+        )

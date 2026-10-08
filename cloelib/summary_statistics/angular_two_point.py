@@ -745,33 +745,10 @@ class AngularTwoPoint:
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
         limber_pk = self._limber_base_spectra(bank, k_lz, zs_calc)
 
-        if need_pcb:
-            if pcb_auto:
-                Pkl = self._cb_power_spectrum_limber_grid(
-                    zs_calc, ks, self.tracer1.perturbations.z, ells
-                )
-            else:
-                Pkl = self._cbxmatter_power_spectrum_limber_grid(
-                    zs_calc, ks, self.tracer1.perturbations.z, ells
-                )
-        else:
-            Pkl = self._matter_power_spectrum_limber_grid(
-                zs_calc, ks, self.tracer1.perturbations.z, ells
-            )
-
-        prefactor_cell = self._angular_prefactor(ells)
         # Redshift quadrature of the Limber integral: no alternating Simpson weights, so
         # the result does not depend on the parity of the number of redshift nodes
         # (see `simpsons_weights_avg`).
         weights = simpsons_weights_avg(len(H))
-
-        # C_ell_calc = (
-        #    c_0
-        #    * Cl_integration(WT1, WT2, Pkl, H, chi2, weights)
-        #    * dz
-        #    * prefactor_cell[:, None, None]
-        # )
-        # self.C_ell_calc = C_ell_calc
 
         invH = 1.0 / H
         invchi2 = 1.0 / chi2

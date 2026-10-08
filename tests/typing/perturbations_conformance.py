@@ -66,10 +66,12 @@ from cloelib.cosmology.jax_cosmology import (
 from cloelib.cosmology.ReACTEmu_cosmology import BoostedPerturbations
 from cloelib.cosmology.TabulatedBoost_cosmology import TabulatedBoostedPerturbations
 from cloelib.cosmology.cosmopower_jax_cosmology import (
-    CosmoPowerJAXCurvaturePerturbations,
+    CosmoPowerJAXLCDMCurvaturePerturbations,
     CosmoPowerJAXLCDMPerturbations,
-    CosmoPowerJAXRunningIndexPerturbations,
+    CosmoPowerJAXLCDMRunningIndexPerturbations,
     CosmoPowerJAXw0waCDMPerturbations,
+    CosmoPowerJAXw0waCurvaturePerturbations,
+    CosmoPowerJAXw0waRunningIndexPerturbations,
     CosmoPowerJAXwCDMPerturbations,
 )
 
@@ -176,52 +178,46 @@ def perturbations(
 
 def cosmopower_perturbations(
     w0wa_lin: CosmoPowerJAXw0waCDMPerturbations.Linear,
-    w0wa_lin_cb: CosmoPowerJAXw0waCDMPerturbations.LinearCB,
     w0wa_nl: CosmoPowerJAXw0waCDMPerturbations.NonLinear,
-    w0wa_nl_cb: CosmoPowerJAXw0waCDMPerturbations.NonLinearCB,
+    w0wa_nl_hf: CosmoPowerJAXw0waCDMPerturbations.NonLinearHalofit,
     wcdm_lin: CosmoPowerJAXwCDMPerturbations.Linear,
-    wcdm_lin_cb: CosmoPowerJAXwCDMPerturbations.LinearCB,
     wcdm_nl: CosmoPowerJAXwCDMPerturbations.NonLinear,
-    wcdm_nl_cb: CosmoPowerJAXwCDMPerturbations.NonLinearCB,
+    wcdm_nl_hf: CosmoPowerJAXwCDMPerturbations.NonLinearHalofit,
     lcdm_lin: CosmoPowerJAXLCDMPerturbations.Linear,
-    lcdm_lin_cb: CosmoPowerJAXLCDMPerturbations.LinearCB,
     lcdm_nl: CosmoPowerJAXLCDMPerturbations.NonLinear,
-    lcdm_nl_cb: CosmoPowerJAXLCDMPerturbations.NonLinearCB,
-    curvature_lin: CosmoPowerJAXCurvaturePerturbations.Linear,
-    curvature_lin_cb: CosmoPowerJAXCurvaturePerturbations.LinearCB,
-    curvature_nl: CosmoPowerJAXCurvaturePerturbations.NonLinear,
-    curvature_nl_cb: CosmoPowerJAXCurvaturePerturbations.NonLinearCB,
-    running_lin: CosmoPowerJAXRunningIndexPerturbations.Linear,
-    running_lin_cb: CosmoPowerJAXRunningIndexPerturbations.LinearCB,
-    running_nl: CosmoPowerJAXRunningIndexPerturbations.NonLinear,
-    running_nl_cb: CosmoPowerJAXRunningIndexPerturbations.NonLinearCB,
+    lcdm_nl_hf: CosmoPowerJAXLCDMPerturbations.NonLinearHalofit,
+    lcdm_curv_lin: CosmoPowerJAXLCDMCurvaturePerturbations.Linear,
+    lcdm_curv_nl: CosmoPowerJAXLCDMCurvaturePerturbations.NonLinear,
+    w0wa_curv_lin: CosmoPowerJAXw0waCurvaturePerturbations.Linear,
+    w0wa_curv_nl: CosmoPowerJAXw0waCurvaturePerturbations.NonLinear,
+    lcdm_run_lin: CosmoPowerJAXLCDMRunningIndexPerturbations.Linear,
+    lcdm_run_nl: CosmoPowerJAXLCDMRunningIndexPerturbations.NonLinear,
+    w0wa_run_lin: CosmoPowerJAXw0waRunningIndexPerturbations.Linear,
+    w0wa_run_nl: CosmoPowerJAXw0waRunningIndexPerturbations.NonLinear,
 ) -> None:
-    """The CosmoPower-JAX classes implement `Perturbations` except for the cb spectrum.
+    """The CosmoPower-JAX classes implement the full `Perturbations` protocol.
 
-    These backends split the total and cb spectra into separate classes (e.g.
-    `Linear` and `LinearCB`), neither providing `matter_power_spectrum_cb`.
+    Each total-matter class provides both `matter_power_spectrum` and
+    `matter_power_spectrum_cb` (the cb spectrum, built lazily from the paired cb
+    emulator), so they conform to `Perturbations` like the other backends.
     """
-    _lcdm_lin: Perturbations = lcdm_lin  # ty: ignore[invalid-assignment]
-    _w0wa_lin: PerturbationsWithoutCb = w0wa_lin
-    _w0wa_lin_cb: PerturbationsWithoutCb = w0wa_lin_cb
-    _w0wa_nl: PerturbationsWithoutCb = w0wa_nl
-    _w0wa_nl_cb: PerturbationsWithoutCb = w0wa_nl_cb
-    _wcdm_lin: PerturbationsWithoutCb = wcdm_lin
-    _wcdm_lin_cb: PerturbationsWithoutCb = wcdm_lin_cb
-    _wcdm_nl: PerturbationsWithoutCb = wcdm_nl
-    _wcdm_nl_cb: PerturbationsWithoutCb = wcdm_nl_cb
-    _lcdm_lin_partial: PerturbationsWithoutCb = lcdm_lin
-    _lcdm_lin_cb: PerturbationsWithoutCb = lcdm_lin_cb
-    _lcdm_nl: PerturbationsWithoutCb = lcdm_nl
-    _lcdm_nl_cb: PerturbationsWithoutCb = lcdm_nl_cb
-    _curvature_lin: PerturbationsWithoutCb = curvature_lin
-    _curvature_lin_cb: PerturbationsWithoutCb = curvature_lin_cb
-    _curvature_nl: PerturbationsWithoutCb = curvature_nl
-    _curvature_nl_cb: PerturbationsWithoutCb = curvature_nl_cb
-    _running_lin: PerturbationsWithoutCb = running_lin
-    _running_lin_cb: PerturbationsWithoutCb = running_lin_cb
-    _running_nl: PerturbationsWithoutCb = running_nl
-    _running_nl_cb: PerturbationsWithoutCb = running_nl_cb
+    _w0wa_lin: Perturbations = w0wa_lin
+    _w0wa_nl: Perturbations = w0wa_nl
+    _w0wa_nl_hf: Perturbations = w0wa_nl_hf
+    _wcdm_lin: Perturbations = wcdm_lin
+    _wcdm_nl: Perturbations = wcdm_nl
+    _wcdm_nl_hf: Perturbations = wcdm_nl_hf
+    _lcdm_lin: Perturbations = lcdm_lin
+    _lcdm_nl: Perturbations = lcdm_nl
+    _lcdm_nl_hf: Perturbations = lcdm_nl_hf
+    _lcdm_curv_lin: Perturbations = lcdm_curv_lin
+    _lcdm_curv_nl: Perturbations = lcdm_curv_nl
+    _w0wa_curv_lin: Perturbations = w0wa_curv_lin
+    _w0wa_curv_nl: Perturbations = w0wa_curv_nl
+    _lcdm_run_lin: Perturbations = lcdm_run_lin
+    _lcdm_run_nl: Perturbations = lcdm_run_nl
+    _w0wa_run_lin: Perturbations = w0wa_run_lin
+    _w0wa_run_nl: Perturbations = w0wa_run_nl
 
 
 # Linear constructors: `cls(background=..., redshifts=...)`.

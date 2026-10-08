@@ -489,14 +489,14 @@ def test_w0wa_linear_sigma8(background_w0wa, z_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_w0wa_pcb_linear(background_w0wa, z_array, k_array):
     """Test w0waCDM Pcb JAX emulator"""
-    emulator = w0waCDM.LinearCB(background=background_w0wa, redshifts=z_array)
+    emulator = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
 
-    pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb = emulator.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert isinstance(pk_cb, np.ndarray)
     assert np.all(pk_cb > 0)
     assert pk_cb.shape[0] == len(k_array)
-    # LinearCB now has sigma8 and fsigma8
+    # Linear provides sigma8 and fsigma8
     assert hasattr(emulator, "sigma8")
     assert hasattr(emulator, "fsigma8")
 
@@ -535,9 +535,9 @@ def test_w0wa_linear_1mass_power_spectrum(background_w0wa_1mass, z_array, k_arra
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_w0wa_linearcb_1mass_power_spectrum(background_w0wa_1mass, z_array, k_array):
     """Test w0waCDM 1mass Pcb JAX power spectrum"""
-    emulator = w0waCDM.LinearCB(background=background_w0wa_1mass, redshifts=z_array)
+    emulator = w0waCDM.Linear(background=background_w0wa_1mass, redshifts=z_array)
 
-    pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb = emulator.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert isinstance(pk_cb, np.ndarray)
     assert np.all(pk_cb > 0)
@@ -591,9 +591,9 @@ def test_w0wa_linear_3degen_power_spectrum(background_w0wa_3degen, z_array, k_ar
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_w0wa_linearcb_3degen_power_spectrum(background_w0wa_3degen, z_array, k_array):
     """Test w0waCDM 3degen Pcb JAX power spectrum"""
-    emulator = w0waCDM.LinearCB(background=background_w0wa_3degen, redshifts=z_array)
+    emulator = w0waCDM.Linear(background=background_w0wa_3degen, redshifts=z_array)
 
-    pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb = emulator.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert np.all(pk_cb > 0)
 
@@ -680,14 +680,14 @@ def test_w0wa_nonlinear_sigma8(background_w0wa, z_array):
 def test_w0wa_nonlinearcb(background_w0wa, z_array, k_array):
     """Test w0waCDM NonLinearCB JAX emulator"""
     linear = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
-    nonlinear_cb = w0waCDM.NonLinearCB(
+    nonlinear_cb = w0waCDM.NonLinear(
         background=background_w0wa,
         linearperturbations=linear,
         redshifts=z_array,
         log10TAGN=log10TAGN,
     )
 
-    pk_cb_nl = nonlinear_cb.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb_nl = nonlinear_cb.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert np.all(pk_cb_nl > 0)
     assert hasattr(nonlinear_cb, "sigma8")
@@ -715,9 +715,9 @@ def test_wcdm_linear_power_spectrum(background_wcdm, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_wcdm_pcb_linear(background_wcdm, z_array, k_array):
     """Test wCDM Pcb JAX emulator"""
-    emulator = wCDM.LinearCB(background=background_wcdm, redshifts=z_array)
+    emulator = wCDM.Linear(background=background_wcdm, redshifts=z_array)
 
-    pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb = emulator.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert np.all(pk_cb > 0)
     assert hasattr(emulator, "sigma8")
@@ -754,9 +754,9 @@ def test_wcdm_linear_1mass_power_spectrum(background_wcdm_1mass, z_array, k_arra
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_wcdm_linearcb_1mass_power_spectrum(background_wcdm_1mass, z_array, k_array):
     """Test wCDM 1mass Pcb JAX power spectrum"""
-    emulator = wCDM.LinearCB(background=background_wcdm_1mass, redshifts=z_array)
+    emulator = wCDM.Linear(background=background_wcdm_1mass, redshifts=z_array)
 
-    pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb = emulator.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert np.all(pk_cb > 0)
 
@@ -806,14 +806,14 @@ def test_wcdm_nonlinear_initialization(background_wcdm, z_array):
 def test_wcdm_nonlinearcb(background_wcdm, z_array, k_array):
     """Test wCDM NonLinearCB JAX emulator"""
     linear = wCDM.Linear(background=background_wcdm, redshifts=z_array)
-    nonlinear_cb = wCDM.NonLinearCB(
+    nonlinear_cb = wCDM.NonLinear(
         background=background_wcdm,
         linearperturbations=linear,
         redshifts=z_array,
         log10TAGN=log10TAGN,
     )
 
-    pk_cb_nl = nonlinear_cb.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb_nl = nonlinear_cb.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert np.all(pk_cb_nl > 0)
 
@@ -865,9 +865,9 @@ def test_lcdm_linear_sigma8(background_lcdm, z_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_lcdm_pcb_linear(background_lcdm, z_array, k_array):
     """Test LCDM Pcb JAX emulator"""
-    emulator = LCDM.LinearCB(background=background_lcdm, redshifts=z_array)
+    emulator = LCDM.Linear(background=background_lcdm, redshifts=z_array)
 
-    pk_cb = emulator.matter_power_spectrum(1.5, k_array)[0, :]
+    pk_cb = emulator.matter_power_spectrum_cb(1.5, k_array)[0, :]
 
     assert np.all(pk_cb > 0)
     assert hasattr(emulator, "sigma8")
@@ -902,9 +902,9 @@ def test_lcdm_linear_1mass_power_spectrum(background_lcdm_1mass, z_array, k_arra
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_lcdm_linearcb_1mass_power_spectrum(background_lcdm_1mass, z_array, k_array):
     """Test LCDM 1mass Pcb JAX power spectrum"""
-    emulator = LCDM.LinearCB(background=background_lcdm_1mass, redshifts=z_array)
+    emulator = LCDM.Linear(background=background_lcdm_1mass, redshifts=z_array)
 
-    pk_cb = emulator.matter_power_spectrum(1.5, k_array)[0, :]
+    pk_cb = emulator.matter_power_spectrum_cb(1.5, k_array)[0, :]
 
     assert np.all(pk_cb > 0)
 
@@ -946,9 +946,9 @@ def test_lcdm_linear_3degen_power_spectrum(background_lcdm_3degen, z_array, k_ar
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_lcdm_linearcb_3degen_power_spectrum(background_lcdm_3degen, z_array, k_array):
     """Test LCDM 3degen Pcb JAX power spectrum"""
-    emulator = LCDM.LinearCB(background=background_lcdm_3degen, redshifts=z_array)
+    emulator = LCDM.Linear(background=background_lcdm_3degen, redshifts=z_array)
 
-    pk_cb = emulator.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb = emulator.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert np.all(pk_cb > 0)
 
@@ -994,14 +994,14 @@ def test_lcdm_nonlinear_power_spectrum(background_lcdm, z_array, k_array):
 def test_lcdm_nonlinearcb(background_lcdm, z_array, k_array):
     """Test LCDM NonLinearCB JAX emulator"""
     linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
-    nonlinear_cb = LCDM.NonLinearCB(
+    nonlinear_cb = LCDM.NonLinear(
         background=background_lcdm,
         linearperturbations=linear,
         redshifts=z_array,
         log10TAGN=log10TAGN,
     )
 
-    pk_cb_nl = nonlinear_cb.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb_nl = nonlinear_cb.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert np.all(pk_cb_nl > 0)
     assert hasattr(nonlinear_cb, "sigma8")
@@ -1097,10 +1097,10 @@ def test_redshift_filtering(background_lcdm):
 def test_pcb_vs_total_matter(background_lcdm, z_array, k_array):
     """Test that Pcb and total matter spectra are similar (no massive neutrinos)"""
     emulator_total = LCDM.Linear(background=background_lcdm, redshifts=z_array)
-    emulator_pcb = LCDM.LinearCB(background=background_lcdm, redshifts=z_array)
+    emulator_pcb = LCDM.Linear(background=background_lcdm, redshifts=z_array)
 
     pk_total = emulator_total.matter_power_spectrum(0.0, k_array)[0, :]
-    pk_cb = emulator_pcb.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb = emulator_pcb.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     np.testing.assert_allclose(
         pk_total, pk_cb, rtol=0.01, err_msg="Pcb and total should match when mnu=0"
@@ -1187,16 +1187,16 @@ def test_w0wa_nonlinear_1mass(background_w0wa_1mass, z_array, k_array):
 
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_w0wa_nonlinearcb_1mass(background_w0wa_1mass, z_array, k_array):
-    """Test w0waCDM NonLinearCB with 1 massive neutrino"""
+    """Test w0waCDM nonlinear P_cb with 1 massive neutrino"""
     linear = w0waCDM.Linear(background=background_w0wa_1mass, redshifts=z_array)
-    nonlinear_cb = w0waCDM.NonLinearCB(
+    nonlinear_cb = w0waCDM.NonLinear(
         background=background_w0wa_1mass,
         linearperturbations=linear,
         redshifts=z_array,
         log10TAGN=log10TAGN,
     )
 
-    pk_cb_nl = nonlinear_cb.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb_nl = nonlinear_cb.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert np.all(pk_cb_nl > 0)
 
@@ -1220,16 +1220,16 @@ def test_w0wa_nonlinear_3degen(background_w0wa_3degen, z_array, k_array):
 
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_w0wa_nonlinearcb_3degen(background_w0wa_3degen, z_array, k_array):
-    """Test w0waCDM NonLinearCB with 3 degenerate neutrinos"""
+    """Test w0waCDM nonlinear P_cb with 3 degenerate neutrinos"""
     linear = w0waCDM.Linear(background=background_w0wa_3degen, redshifts=z_array)
-    nonlinear_cb = w0waCDM.NonLinearCB(
+    nonlinear_cb = w0waCDM.NonLinear(
         background=background_w0wa_3degen,
         linearperturbations=linear,
         redshifts=z_array,
         log10TAGN=log10TAGN,
     )
 
-    pk_cb_nl = nonlinear_cb.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb_nl = nonlinear_cb.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert np.all(pk_cb_nl > 0)
 
@@ -1503,9 +1503,9 @@ def test_curvature_nonlinear_exceeds_linear(background_curvature, z_array, k_arr
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_curvature_linear_pcb(background_curvature, z_array, k_array):
     """Test LCDM+curvature linear P_cb emulator"""
-    emulator = Curvature.LinearCB(background=background_curvature, redshifts=z_array)
+    emulator = Curvature.Linear(background=background_curvature, redshifts=z_array)
 
-    pk = emulator.matter_power_spectrum(z_array[0], k_array)[0, :]
+    pk = emulator.matter_power_spectrum_cb(z_array[0], k_array)[0, :]
 
     assert np.all(pk > 0)
     assert np.all(np.isfinite(pk))
@@ -1514,15 +1514,15 @@ def test_curvature_linear_pcb(background_curvature, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_curvature_nonlinear_pcb(background_curvature, z_array, k_array):
     """Test LCDM+curvature nonlinear P_cb emulator"""
-    linear = Curvature.LinearCB(background=background_curvature, redshifts=z_array)
-    nonlinear = Curvature.NonLinearCB(
+    linear = Curvature.Linear(background=background_curvature, redshifts=z_array)
+    nonlinear = Curvature.NonLinear(
         background=background_curvature,
         linearperturbations=linear,
         redshifts=z_array,
         log10TAGN=log10TAGN,
     )
 
-    pk = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+    pk = nonlinear.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert np.all(pk > 0)
     assert np.all(np.isfinite(pk))
@@ -1607,9 +1607,9 @@ def test_running_nonlinear_exceeds_linear(background_running, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_running_linear_pcb(background_running, z_array, k_array):
     """Test LCDM+running spectral index linear P_cb emulator"""
-    emulator = RunningIndex.LinearCB(background=background_running, redshifts=z_array)
+    emulator = RunningIndex.Linear(background=background_running, redshifts=z_array)
 
-    pk = emulator.matter_power_spectrum(z_array[0], k_array)[0, :]
+    pk = emulator.matter_power_spectrum_cb(z_array[0], k_array)[0, :]
 
     assert np.all(pk > 0)
     assert np.all(np.isfinite(pk))
@@ -1618,15 +1618,15 @@ def test_running_linear_pcb(background_running, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_running_nonlinear_pcb(background_running, z_array, k_array):
     """Test LCDM+running spectral index nonlinear P_cb emulator"""
-    linear = RunningIndex.LinearCB(background=background_running, redshifts=z_array)
-    nonlinear = RunningIndex.NonLinearCB(
+    linear = RunningIndex.Linear(background=background_running, redshifts=z_array)
+    nonlinear = RunningIndex.NonLinear(
         background=background_running,
         linearperturbations=linear,
         redshifts=z_array,
         log10TAGN=log10TAGN,
     )
 
-    pk = nonlinear.matter_power_spectrum(0.0, k_array)[0, :]
+    pk = nonlinear.matter_power_spectrum_cb(0.0, k_array)[0, :]
 
     assert np.all(pk > 0)
     assert np.all(np.isfinite(pk))
@@ -1731,7 +1731,7 @@ def test_w0wa_curvature_nonlinear(background_w0wa_curvature, z_array, k_array):
         redshifts=z_array,
         log10TAGN=log10TAGN,
     )
-    cb = w0waCurvature.NonLinearCB(
+    cb = w0waCurvature.NonLinear(
         background=background_w0wa_curvature,
         linearperturbations=linear,
         redshifts=z_array,
@@ -1739,7 +1739,7 @@ def test_w0wa_curvature_nonlinear(background_w0wa_curvature, z_array, k_array):
     )
 
     pk = nl.matter_power_spectrum(0.0, k_array)[0, :]
-    pk_cb = cb.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb = cb.matter_power_spectrum_cb(0.0, k_array)[0, :]
     assert np.all(pk > 0) and np.all(np.isfinite(pk))
     assert np.all(pk_cb > 0) and np.all(np.isfinite(pk_cb))
 
@@ -1792,7 +1792,7 @@ def test_w0wa_running_nonlinear(background_w0wa_running, z_array, k_array):
         redshifts=z_array,
         log10TAGN=log10TAGN,
     )
-    cb = w0waRunningIndex.NonLinearCB(
+    cb = w0waRunningIndex.NonLinear(
         background=background_w0wa_running,
         linearperturbations=linear,
         redshifts=z_array,
@@ -1800,7 +1800,7 @@ def test_w0wa_running_nonlinear(background_w0wa_running, z_array, k_array):
     )
 
     pk = nl.matter_power_spectrum(0.0, k_array)[0, :]
-    pk_cb = cb.matter_power_spectrum(0.0, k_array)[0, :]
+    pk_cb = cb.matter_power_spectrum_cb(0.0, k_array)[0, :]
     assert np.all(pk > 0) and np.all(np.isfinite(pk))
     assert np.all(pk_cb > 0) and np.all(np.isfinite(pk_cb))
 
@@ -1841,12 +1841,12 @@ def test_lcdm_halofit_nonlinear(background_lcdm, z_array, k_array):
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
 def test_lcdm_halofit_nonlinearcb(background_lcdm, z_array, k_array):
     """LCDM halofit nonlinear P_cb(k)"""
-    linear = LCDM.LinearCB(background=background_lcdm, redshifts=z_array)
-    nl = LCDM.NonLinearHalofitCB(
+    linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    nl = LCDM.NonLinearHalofit(
         background=background_lcdm, linearperturbations=linear, redshifts=z_array
     )
 
-    pk = nl.matter_power_spectrum(0.0, k_array)[0, :]
+    pk = nl.matter_power_spectrum_cb(0.0, k_array)[0, :]
     assert np.all(pk > 0)
     assert np.all(np.isfinite(pk))
 
@@ -1936,12 +1936,12 @@ def test_wcdm_halofit(background_wcdm_1mass, z_array, k_array):
     nl = wCDM.NonLinearHalofit(
         background=background_wcdm_1mass, linearperturbations=linear, redshifts=z_array
     )
-    cb = wCDM.NonLinearHalofitCB(
+    cb = wCDM.NonLinearHalofit(
         background=background_wcdm_1mass, linearperturbations=linear, redshifts=z_array
     )
 
     assert np.all(nl.matter_power_spectrum(0.0, k_array)[0, :] > 0)
-    assert np.all(cb.matter_power_spectrum(0.0, k_array)[0, :] > 0)
+    assert np.all(cb.matter_power_spectrum_cb(0.0, k_array)[0, :] > 0)
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
@@ -1951,12 +1951,12 @@ def test_w0wa_halofit(background_w0wa_2degen, z_array, k_array):
     nl = w0waCDM.NonLinearHalofit(
         background=background_w0wa_2degen, linearperturbations=linear, redshifts=z_array
     )
-    cb = w0waCDM.NonLinearHalofitCB(
+    cb = w0waCDM.NonLinearHalofit(
         background=background_w0wa_2degen, linearperturbations=linear, redshifts=z_array
     )
 
     assert np.all(nl.matter_power_spectrum(0.0, k_array)[0, :] > 0)
-    assert np.all(cb.matter_power_spectrum(0.0, k_array)[0, :] > 0)
+    assert np.all(cb.matter_power_spectrum_cb(0.0, k_array)[0, :] > 0)
 
 
 @pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")

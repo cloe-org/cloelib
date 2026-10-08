@@ -214,6 +214,44 @@ Accurate and fast emulators of the linear, non-linear, and baryonic power spectr
 - Large cosmological parameter range;
 - Neural network evaluation with JAX;
 
+### FlamingoBaryonResponseEmulatorPerturbations
+
+CAMB nonlinear power spectrum with a baryonic suppression correction from the [FLAMINGO](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator) hydrodynamical simulation suite.
+
+**Location**: `cloelib/cosmology/FlamingoBaryonResponseEmulator_cosmology.py`
+
+**When to use**: Accurate baryonic feedback modelled on FLAMINGO hydrodynamical simulations; can vary AGN jet fraction and ICM gas/stellar parameters.
+
+**Features**:
+
+- CAMB-based nonlinear baseline
+- FLAMINGO emulator response $B(k,z) = P_\text{hydro}/P_\text{DMO}$ applied at evaluation time
+- Three baryonic parameters: `fgas_sigma`, `Mstar_sigma`, `jet_fraction`
+- Valid for $z \leq 3$ and $k \leq 10^{1.5}\,h/\text{Mpc}$; outside these ranges the response is automatically clamped to 1
+- Standalone `FlamingoBaryonBoostMixin` composable with any nonlinear perturbations class
+
+**Example**:
+
+```python
+from cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology import (
+    CAMBNonLinearFLAMINGOBaryonicPerturbations,
+)
+
+pert = CAMBNonLinearFLAMINGOBaryonicPerturbations(
+    background=bg,
+    linearperturbations=lin_pert,
+    redshifts=zs,
+    baryon_kwargs=dict(
+        fgas_sigma=0.0,    # 0σ from calibrated gas fraction
+        Mstar_sigma=0.0,   # 0σ from stellar mass function
+        jet_fraction=0.0,  # pure thermal AGN feedback
+    ),
+)
+
+k = np.logspace(-2, 1, 100)  # k in 1/Mpc
+Pk = pert.matter_power_spectrum(np.array([0.5]), k)  # shape (n_k,)
+```
+
 ### ReACTEmu / BoostedPerturbations
 
 Modified-gravity nonlinear boost module based on [ReACT](https://arxiv.org/abs/2005.12184) and the [MGEmu](https://github.com/nebblu/MGEmus.git) emulator package.
@@ -519,6 +557,62 @@ Accurate and fast emulator of the nonlinear matter power spectrum in modified gr
 - Fast predictions of the nonlinear matter power spectrum in f(R) gravity;
 - Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;
 - Limited to the Hu & Sawicki model (n=1) with fR0 as free parameter;
+
+## Baryonic Boost Mixin Framework
+
+`cloelib` provides a composable `BaryonBoostMixin` Protocol that decouples the baryonic suppression from the underlying nonlinear solver. This makes it easy to combine any nonlinear backend with any baryonic model.
+
+**Protocol location**: `cloelib.cosmology.cosmology.BaryonBoostMixin`
+
+### `BaryonBoostMixin` Protocol
+
+Any class implementing this protocol must expose:
+
+```python
+def baryonic_suppression(self, zs, ks, k_hunit=False) -> np.ndarray:
+    """Return B(k,z) = P_hydro / P_DMO, shape (n_z, n_k)."""
+```
+
+Three ready-made mixins are provided:
+
+| Mixin                        | Backend           | Baryonic parameters                                                  |
+| ---------------------------- | ----------------- | -------------------------------------------------------------------- |
+| `FlamingoBaryonBoostMixin`   | FLAMINGO emulator | `fgas_sigma`, `Mstar_sigma`, `jet_fraction`                          |
+| `BACCOemuBaryonBoostMixin`   | BACCOemu          | `M_c`, `eta`, `beta`, `M1_z0_cen`, `theta_out`, `theta_inn`, `M_inn` |
+| `HMcode2020BaryonBoostMixin` | HMcode2020emu     | `log10TAGN`                                                          |
+
+Each mixin `__init__` must be called **after** the base nonlinear `__init__` (it reads `self.background` and emulator internals set by the base).
+
+### `with_baryon_boost` Factory
+
+`cloelib.cosmology.cosmology.with_baryon_boost(NonLinearClass, BaryonMixinClass)` creates a combined class with zero boilerplate:
+
+```python
+from cloelib.cosmology.cosmology import with_baryon_boost
+from cloelib.cosmology.baccoemu_cosmology import BACCOemuNonLinearPerturbations
+from cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology import FlamingoBaryonBoostMixin
+
+BACCOemuFLAMINGO = with_baryon_boost(BACCOemuNonLinearPerturbations, FlamingoBaryonBoostMixin)
+pert = BACCOemuFLAMINGO(
+    background, linear_pert, redshifts,
+    nonlinear_model_name="Arico2023",
+    baryon_kwargs=dict(fgas_sigma=0.0, Mstar_sigma=0.0, jet_fraction=0.0),
+)
+```
+
+The resulting object is fully `Perturbations`-compatible and can be passed directly to any `cloelib` tracer or likelihood.
+
+!!! warning "Total vs. cold matter boost"
+The same suppression $B(k,z)$ is applied to `matter_power_spectrum` and to
+`matter_power_spectrum_cb`. The backends do not all define the response the same
+way — FLAMINGO's is $(b + \mathrm{cdm} + \nu)/(\mathrm{cdm} + \nu)$ while
+BACCOemu's is the cold $(b + \mathrm{cdm})/(\mathrm{cdm} + \nu)$ — and one could
+refine this by adding the neutrino contribution at linear order. The difference is
+~$10^{-5}$ even for $m_\nu = 0.4$ eV, and FLAMINGO simulations show total and cold
+boosts to be equivalent at that level, so `cloelib` treats them as the same.
+
+!!! note "Return shape"
+All `matter_power_spectrum` methods (including baryonic ones) return shape `(n_z, n_k)`, also for a single redshift, which gives `(1, n_k)`. `baryonic_suppression` returns the same shape, so the boosted spectra keep it.
 
 ## Adding Your Own Perturbations Implementation
 

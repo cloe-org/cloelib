@@ -383,15 +383,17 @@ Fast JAX-based emulator for linear and nonlinear power spectra using [cosmopower
 - Two nonlinear prescriptions: **HMcode2020** (with baryonic feedback) and **halofit** (dark-matter-only)
 - σ₈(z), fσ₈(z), growth factor D(z,k), growth rate f(z)
 - Baseline (ΛCDM/wCDM/w0waCDM) and extended (curvature, running spectral index) cosmologies
-- Emulator files downloaded automatically from Zenodo on first use; the k-mode grid is read directly from each emulator
+- Emulator files downloaded automatically on first use from the Euclid-DR1-matter-emulators GitHub repository; the k-mode grid is read directly from each emulator
 
 #### Available classes
 
-Every Perturbations class exposes the same inner classes for the different spectra:
+Every Perturbations class exposes the same inner classes, each providing **both**
+the total-matter spectrum (`matter_power_spectrum`) and the CDM+baryon spectrum
+(`matter_power_spectrum_cb`, built on first use from the paired cb emulator):
 
-- `Linear` / `LinearCB` — linear total-matter P(k) / CDM+baryon P_cb(k)
-- `NonLinear` / `NonLinearCB` — nonlinear P(k) / P_cb(k) using **HMcode2020**, with baryonic feedback controlled by `log10TAGN`
-- `NonLinearHalofit` / `NonLinearHalofitCB` — nonlinear P(k) / P_cb(k) using **halofit** (Takahashi 2012); dark-matter-only, so `log10TAGN` is accepted for interface compatibility but ignored.
+- `Linear` — linear P(k) and P_cb(k)
+- `NonLinear` — nonlinear P(k) and P_cb(k) using **HMcode2020**, with baryonic feedback controlled by `log10TAGN`
+- `NonLinearHalofit` — nonlinear P(k) and P_cb(k) using **halofit** (Takahashi 2012); dark-matter-only, so `log10TAGN` is accepted for interface compatibility but ignored.
 
 | Class                                        | Cosmology              | N_mnu   | Nonlinear recipes   |
 | -------------------------------------------- | ---------------------- | ------- | ------------------- |

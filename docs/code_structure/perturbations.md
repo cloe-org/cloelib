@@ -93,7 +93,7 @@ This is described by the `LinearPerturbationsFactory` and `NonLinearPerturbation
 
 Options specific to a backend (e.g. `nonlinear_model`) are passed as additional keyword arguments and are not part of these protocols. In particular, the HMcode2020 baryonic feedback parameter `log10TAGN` is accepted by the HMcode-based backends (CAMB, CLASS, mochi_class, HMcode2020Emu and CosmoPower-JAX). CAMB, CLASS and mochi_class select their HMcode2020 feedback model when `log10TAGN` is given without a nonlinear model, and raise a `ValueError` if the chosen model ignores it.
 
-Backends that compute the nonlinear spectrum themselves (CAMB, CLASS, hi_class, MGCLASS, mochi_class) accept but do not use `linearperturbations`. `EmantisFofrNonLinearPerturbations` additionally requires the ΛCDM nonlinear perturbations and `fR0`.
+Backends that compute the nonlinear spectrum themselves (CAMB, CLASS, hi_class, MGCLASS, mochi_class, CosmoPower-JAX) accept but do not use `linearperturbations`. `EmantisFofrNonLinearPerturbations` additionally requires the ΛCDM nonlinear perturbations and `fR0`.
 
 ## Existing Implementations
 
@@ -381,7 +381,7 @@ Fast JAX-based emulator for linear and nonlinear power spectra using [cosmopower
 - Full JAX compatibility — automatic differentiation and JIT compilation
 - Linear and nonlinear P(k) and P_cb(k)
 - Two nonlinear prescriptions: **HMcode2020** (with baryonic feedback) and **halofit** (dark-matter-only)
-- σ₈(z), fσ₈(z), growth factor D(z,k), growth rate f(z)
+- σ₈(z), fσ₈(z), growth factors D(z,k) and D_cb(z,k), growth rate f(z)
 - Baseline (ΛCDM/wCDM/w0waCDM) and extended (curvature, running spectral index) cosmologies
 - Emulator files downloaded automatically on first use from the Euclid-DR1-matter-emulators GitHub repository; the k-mode grid is read directly from each emulator
 
@@ -426,7 +426,7 @@ nl = CosmoPowerJAXLCDMPerturbations.NonLinearHalofit(
 
 #### Parameter ranges
 
-Inputs are validated against a single global guardrail (`CP_EMULATOR_BOUNDS`); a parameter outside its range raises `ValueError`. The redshift `z` is not bounds-checked (it is clipped to the training range and extrapolated). These global bounds are deliberately loose — each emulator's actual training box is tighter and varies by family.
+Inputs are validated against a single global guardrail (`CP_EMULATOR_BOUNDS`); a parameter outside its range raises `ValueError`. The redshift `z` is not bounds-checked (it is clipped to the training range and extrapolated; z=0 is always added to the emulator grid, so σ₈(z=0) and the D(z=0)=1 normalisation are exact even when the requested redshifts start above zero). These global bounds are deliberately loose — each emulator's actual training box is tighter and varies by family.
 
 | Parameter | Enforced range | Applies to            |
 | --------- | -------------- | --------------------- |

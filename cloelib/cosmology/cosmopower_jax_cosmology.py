@@ -195,14 +195,14 @@ _CB_EMU_FILES = {
     "CosmoPowerJAXw0waCDMPerturbations.Linear": {
         0: "w0wa-0mass-cb-linear.npz",
         1: "w0wa-1mass-cb-linear.npz",
-        2: "w0wa-2degen-cb-linear.npz",
-        3: "w0wa-3degen-cb-linear.npz",
+        2: "w0wa-2mass-cb-linear.npz",
+        3: "w0wa-3mass-cb-linear.npz",
     },
     "CosmoPowerJAXw0waCDMPerturbations.NonLinear": {
         0: "w0wa-0mass-cb-nonlinear.npz",
         1: "w0wa-1mass-cb-nonlinear.npz",
-        2: "w0wa-2degen-cb-nonlinear.npz",
-        3: "w0wa-3degen-cb-nonlinear.npz",
+        2: "w0wa-2mass-cb-nonlinear.npz",
+        3: "w0wa-3mass-cb-nonlinear.npz",
     },
     "CosmoPowerJAXw0waCDMPerturbations.NonLinearHalofit": {
         0: "halofit-w0wa-0mass-cb-nonlinear.npz",
@@ -213,14 +213,14 @@ _CB_EMU_FILES = {
     "CosmoPowerJAXwCDMPerturbations.Linear": {
         0: "wcdm-0mass-cb-linear.npz",
         1: "wcdm-1mass-cb-linear.npz",
-        2: "wcdm-2degen-cb-linear.npz",
-        3: "wcdm-3degen-cb-linear.npz",
+        2: "wcdm-2mass-cb-linear.npz",
+        3: "wcdm-3mass-cb-linear.npz",
     },
     "CosmoPowerJAXwCDMPerturbations.NonLinear": {
         0: "wcdm-0mass-cb-nonlinear.npz",
         1: "wcdm-1mass-cb-nonlinear.npz",
-        2: "wcdm-2degen-cb-nonlinear.npz",
-        3: "wcdm-3degen-cb-nonlinear.npz",
+        2: "wcdm-2mass-cb-nonlinear.npz",
+        3: "wcdm-3mass-cb-nonlinear.npz",
     },
     "CosmoPowerJAXwCDMPerturbations.NonLinearHalofit": {
         0: "halofit-wcdm-0mass-cb-nonlinear.npz",
@@ -231,14 +231,14 @@ _CB_EMU_FILES = {
     "CosmoPowerJAXLCDMPerturbations.Linear": {
         0: "lcdm-0mass-cb-linear.npz",
         1: "lcdm-1mass-cb-linear.npz",
-        2: "lcdm-2degen-cb-linear.npz",
-        3: "lcdm-3degen-cb-linear.npz",
+        2: "lcdm-2mass-cb-linear.npz",
+        3: "lcdm-3mass-cb-linear.npz",
     },
     "CosmoPowerJAXLCDMPerturbations.NonLinear": {
         0: "lcdm-0mass-cb-nonlinear.npz",
         1: "lcdm-1mass-cb-nonlinear.npz",
-        2: "lcdm-2degen-cb-nonlinear.npz",
-        3: "lcdm-3degen-cb-nonlinear.npz",
+        2: "lcdm-2mass-cb-nonlinear.npz",
+        3: "lcdm-3mass-cb-nonlinear.npz",
     },
     "CosmoPowerJAXLCDMPerturbations.NonLinearHalofit": {
         0: "halofit-lcdm-0mass-cb-nonlinear.npz",
@@ -249,42 +249,42 @@ _CB_EMU_FILES = {
     "CosmoPowerJAXLCDMCurvaturePerturbations.Linear": {
         0: "curvature-lcdm-0mass-cb-linear.npz",
         1: "curvature-lcdm-1mass-cb-linear.npz",
-        3: "curvature-lcdm-3degen-cb-linear.npz",
+        3: "curvature-lcdm-3mass-cb-linear.npz",
     },
     "CosmoPowerJAXLCDMCurvaturePerturbations.NonLinear": {
         0: "curvature-lcdm-0mass-cb-nonlinear.npz",
         1: "curvature-lcdm-1mass-cb-nonlinear.npz",
-        3: "curvature-lcdm-3degen-cb-nonlinear.npz",
+        3: "curvature-lcdm-3mass-cb-nonlinear.npz",
     },
     "CosmoPowerJAXw0waCurvaturePerturbations.Linear": {
         0: "curvature-w0wa-0mass-cb-linear.npz",
         1: "curvature-w0wa-1mass-cb-linear.npz",
-        3: "curvature-w0wa-3degen-cb-linear.npz",
+        3: "curvature-w0wa-3mass-cb-linear.npz",
     },
     "CosmoPowerJAXw0waCurvaturePerturbations.NonLinear": {
         0: "curvature-w0wa-0mass-cb-nonlinear.npz",
         1: "curvature-w0wa-1mass-cb-nonlinear.npz",
-        3: "curvature-w0wa-3degen-cb-nonlinear.npz",
+        3: "curvature-w0wa-3mass-cb-nonlinear.npz",
     },
     "CosmoPowerJAXLCDMRunningIndexPerturbations.Linear": {
         0: "nrun-lcdm-0mass-cb-linear.npz",
         1: "nrun-lcdm-1mass-cb-linear.npz",
-        3: "nrun-lcdm-3degen-cb-linear.npz",
+        3: "nrun-lcdm-3mass-cb-linear.npz",
     },
     "CosmoPowerJAXLCDMRunningIndexPerturbations.NonLinear": {
         0: "nrun-lcdm-0mass-cb-nonlinear.npz",
         1: "nrun-lcdm-1mass-cb-nonlinear.npz",
-        3: "nrun-lcdm-3degen-cb-nonlinear.npz",
+        3: "nrun-lcdm-3mass-cb-nonlinear.npz",
     },
     "CosmoPowerJAXw0waRunningIndexPerturbations.Linear": {
         0: "nrun-w0wa-0mass-cb-linear.npz",
         1: "nrun-w0wa-1mass-cb-linear.npz",
-        3: "nrun-w0wa-3degen-cb-linear.npz",
+        3: "nrun-w0wa-3mass-cb-linear.npz",
     },
     "CosmoPowerJAXw0waRunningIndexPerturbations.NonLinear": {
         0: "nrun-w0wa-0mass-cb-nonlinear.npz",
         1: "nrun-w0wa-1mass-cb-nonlinear.npz",
-        3: "nrun-w0wa-3degen-cb-nonlinear.npz",
+        3: "nrun-w0wa-3mass-cb-nonlinear.npz",
     },
 }
 
@@ -312,12 +312,12 @@ class CosmoPowerJAXw0waCDMPerturbations:
                 cp_file_sigma = emulator_data("w0wa-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("w0wa-2degen-linear.npz")
-                cp_file_sigma = emulator_data("w0wa-2degen-s8-fs8.npz")
+                cp_file = emulator_data("w0wa-2mass-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-2mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("w0wa-3degen-linear.npz")
-                cp_file_sigma = emulator_data("w0wa-3degen-s8-fs8.npz")
+                cp_file = emulator_data("w0wa-3mass-linear.npz")
+                cp_file_sigma = emulator_data("w0wa-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -536,12 +536,12 @@ class CosmoPowerJAXw0waCDMPerturbations:
                 cp_file_sigma = emulator_data("w0wa-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file_pk = emulator_data("w0wa-2degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("w0wa-2degen-s8-fs8.npz")
+                cp_file_pk = emulator_data("w0wa-2mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-2mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file_pk = emulator_data("w0wa-3degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("w0wa-3degen-s8-fs8.npz")
+                cp_file_pk = emulator_data("w0wa-3mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("w0wa-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -763,19 +763,19 @@ class CosmoPowerJAXw0waCDMPerturbations:
             """Initialize the NonLinearHalofit instance."""
             if background.N_mnu == 0:
                 cp_file = emulator_data("halofit-w0wa-0mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-w0wa-0mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-w0wa-0mass-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
                 cp_file = emulator_data("halofit-w0wa-1mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-w0wa-1mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-w0wa-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
                 cp_file = emulator_data("halofit-w0wa-2mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-w0wa-2mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-w0wa-2mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
                 cp_file = emulator_data("halofit-w0wa-3mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-w0wa-3mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-w0wa-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -958,12 +958,12 @@ class CosmoPowerJAXwCDMPerturbations:
                 cp_file_sigma = emulator_data("wcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("wcdm-2degen-linear.npz")
-                cp_file_sigma = emulator_data("wcdm-2degen-s8-fs8.npz")
+                cp_file = emulator_data("wcdm-2mass-linear.npz")
+                cp_file_sigma = emulator_data("wcdm-2mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("wcdm-3degen-linear.npz")
-                cp_file_sigma = emulator_data("wcdm-3degen-s8-fs8.npz")
+                cp_file = emulator_data("wcdm-3mass-linear.npz")
+                cp_file_sigma = emulator_data("wcdm-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -1166,12 +1166,12 @@ class CosmoPowerJAXwCDMPerturbations:
                 cp_file_sigma = emulator_data("wcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("wcdm-2degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("wcdm-2degen-s8-fs8.npz")
+                cp_file = emulator_data("wcdm-2mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("wcdm-2mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("wcdm-3degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("wcdm-3degen-s8-fs8.npz")
+                cp_file = emulator_data("wcdm-3mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("wcdm-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -1362,19 +1362,19 @@ class CosmoPowerJAXwCDMPerturbations:
             """Initialize the NonLinearHalofit instance."""
             if background.N_mnu == 0:
                 cp_file = emulator_data("halofit-wcdm-0mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-wcdm-0mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-wcdm-0mass-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
                 cp_file = emulator_data("halofit-wcdm-1mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-wcdm-1mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-wcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
                 cp_file = emulator_data("halofit-wcdm-2mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-wcdm-2mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-wcdm-2mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
                 cp_file = emulator_data("halofit-wcdm-3mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-wcdm-3mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-wcdm-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -1547,12 +1547,12 @@ class CosmoPowerJAXLCDMPerturbations:
                 cp_file_sigma = emulator_data("lcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("lcdm-2degen-linear.npz")
-                cp_file_sigma = emulator_data("lcdm-2degen-s8-fs8.npz")
+                cp_file = emulator_data("lcdm-2mass-linear.npz")
+                cp_file_sigma = emulator_data("lcdm-2mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("lcdm-3degen-linear.npz")
-                cp_file_sigma = emulator_data("lcdm-3degen-s8-fs8.npz")
+                cp_file = emulator_data("lcdm-3mass-linear.npz")
+                cp_file_sigma = emulator_data("lcdm-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -1740,12 +1740,12 @@ class CosmoPowerJAXLCDMPerturbations:
                 cp_file_sigma = emulator_data("lcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
-                cp_file = emulator_data("lcdm-2degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("lcdm-2degen-s8-fs8.npz")
+                cp_file = emulator_data("lcdm-2mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("lcdm-2mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("lcdm-3degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("lcdm-3degen-s8-fs8.npz")
+                cp_file = emulator_data("lcdm-3mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("lcdm-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -1935,19 +1935,19 @@ class CosmoPowerJAXLCDMPerturbations:
             """Initialize the NonLinearHalofit instance."""
             if background.N_mnu == 0:
                 cp_file = emulator_data("halofit-lcdm-0mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-lcdm-0mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-lcdm-0mass-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
                 cp_file = emulator_data("halofit-lcdm-1mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-lcdm-1mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-lcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 2:
                 cp_file = emulator_data("halofit-lcdm-2mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-lcdm-2mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-lcdm-2mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
                 cp_file = emulator_data("halofit-lcdm-3mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("halofit-lcdm-3mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("halofit-lcdm-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -2118,21 +2118,15 @@ class CosmoPowerJAXLCDMCurvaturePerturbations:
             """Initialize the Linear instance."""
             if background.N_mnu == 0:
                 cp_file = emulator_data("curvature-lcdm-0mass-linear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-lcdm-0mass-combined-s8-fs8.npz"
-                )
+                cp_file_sigma = emulator_data("curvature-lcdm-0mass-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
                 cp_file = emulator_data("curvature-lcdm-1mass-linear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-lcdm-1mass-combined-s8-fs8.npz"
-                )
+                cp_file_sigma = emulator_data("curvature-lcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("curvature-lcdm-3degen-linear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-lcdm-3degen-combined-s8-fs8.npz"
-                )
+                cp_file = emulator_data("curvature-lcdm-3mass-linear.npz")
+                cp_file_sigma = emulator_data("curvature-lcdm-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -2293,21 +2287,15 @@ class CosmoPowerJAXLCDMCurvaturePerturbations:
             """Initialize the NonLinear instance."""
             if background.N_mnu == 0:
                 cp_file = emulator_data("curvature-lcdm-0mass-nonlinear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-lcdm-0mass-combined-s8-fs8.npz"
-                )
+                cp_file_sigma = emulator_data("curvature-lcdm-0mass-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
                 cp_file = emulator_data("curvature-lcdm-1mass-nonlinear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-lcdm-1mass-combined-s8-fs8.npz"
-                )
+                cp_file_sigma = emulator_data("curvature-lcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("curvature-lcdm-3degen-nonlinear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-lcdm-3degen-combined-s8-fs8.npz"
-                )
+                cp_file = emulator_data("curvature-lcdm-3mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("curvature-lcdm-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -2474,21 +2462,15 @@ class CosmoPowerJAXw0waCurvaturePerturbations:
             """Initialize the Linear instance."""
             if background.N_mnu == 0:
                 cp_file = emulator_data("curvature-w0wa-0mass-linear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-w0wa-0mass-combined-s8-fs8.npz"
-                )
+                cp_file_sigma = emulator_data("curvature-w0wa-0mass-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
                 cp_file = emulator_data("curvature-w0wa-1mass-linear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-w0wa-1mass-combined-s8-fs8.npz"
-                )
+                cp_file_sigma = emulator_data("curvature-w0wa-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("curvature-w0wa-3degen-linear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-w0wa-3degen-combined-s8-fs8.npz"
-                )
+                cp_file = emulator_data("curvature-w0wa-3mass-linear.npz")
+                cp_file_sigma = emulator_data("curvature-w0wa-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -2652,21 +2634,15 @@ class CosmoPowerJAXw0waCurvaturePerturbations:
             """Initialize the NonLinear instance."""
             if background.N_mnu == 0:
                 cp_file = emulator_data("curvature-w0wa-0mass-nonlinear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-w0wa-0mass-combined-s8-fs8.npz"
-                )
+                cp_file_sigma = emulator_data("curvature-w0wa-0mass-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
                 cp_file = emulator_data("curvature-w0wa-1mass-nonlinear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-w0wa-1mass-combined-s8-fs8.npz"
-                )
+                cp_file_sigma = emulator_data("curvature-w0wa-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("curvature-w0wa-3degen-nonlinear.npz")
-                cp_file_sigma = emulator_data(
-                    "curvature-w0wa-3degen-combined-s8-fs8.npz"
-                )
+                cp_file = emulator_data("curvature-w0wa-3mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("curvature-w0wa-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -2836,15 +2812,15 @@ class CosmoPowerJAXLCDMRunningIndexPerturbations:
             """Initialize the Linear instance."""
             if background.N_mnu == 0:
                 cp_file = emulator_data("nrun-lcdm-0mass-linear.npz")
-                cp_file_sigma = emulator_data("nrun-lcdm-0mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("nrun-lcdm-0mass-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
                 cp_file = emulator_data("nrun-lcdm-1mass-linear.npz")
-                cp_file_sigma = emulator_data("nrun-lcdm-1mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("nrun-lcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("nrun-lcdm-3degen-linear.npz")
-                cp_file_sigma = emulator_data("nrun-lcdm-3degen-combined-s8-fs8.npz")
+                cp_file = emulator_data("nrun-lcdm-3mass-linear.npz")
+                cp_file_sigma = emulator_data("nrun-lcdm-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -3005,15 +2981,15 @@ class CosmoPowerJAXLCDMRunningIndexPerturbations:
             """Initialize the NonLinear instance."""
             if background.N_mnu == 0:
                 cp_file = emulator_data("nrun-lcdm-0mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("nrun-lcdm-0mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("nrun-lcdm-0mass-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
                 cp_file = emulator_data("nrun-lcdm-1mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("nrun-lcdm-1mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("nrun-lcdm-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("nrun-lcdm-3degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("nrun-lcdm-3degen-combined-s8-fs8.npz")
+                cp_file = emulator_data("nrun-lcdm-3mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("nrun-lcdm-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -3180,15 +3156,15 @@ class CosmoPowerJAXw0waRunningIndexPerturbations:
             """Initialize the Linear instance."""
             if background.N_mnu == 0:
                 cp_file = emulator_data("nrun-w0wa-0mass-linear.npz")
-                cp_file_sigma = emulator_data("nrun-w0wa-0mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("nrun-w0wa-0mass-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
                 cp_file = emulator_data("nrun-w0wa-1mass-linear.npz")
-                cp_file_sigma = emulator_data("nrun-w0wa-1mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("nrun-w0wa-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("nrun-w0wa-3degen-linear.npz")
-                cp_file_sigma = emulator_data("nrun-w0wa-3degen-combined-s8-fs8.npz")
+                cp_file = emulator_data("nrun-w0wa-3mass-linear.npz")
+                cp_file_sigma = emulator_data("nrun-w0wa-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(
@@ -3352,15 +3328,15 @@ class CosmoPowerJAXw0waRunningIndexPerturbations:
             """Initialize the NonLinear instance."""
             if background.N_mnu == 0:
                 cp_file = emulator_data("nrun-w0wa-0mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("nrun-w0wa-0mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("nrun-w0wa-0mass-s8-fs8.npz")
                 self.has_neutrinos = False
             elif background.N_mnu == 1:
                 cp_file = emulator_data("nrun-w0wa-1mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("nrun-w0wa-1mass-combined-s8-fs8.npz")
+                cp_file_sigma = emulator_data("nrun-w0wa-1mass-s8-fs8.npz")
                 self.has_neutrinos = True
             elif background.N_mnu == 3:
-                cp_file = emulator_data("nrun-w0wa-3degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("nrun-w0wa-3degen-combined-s8-fs8.npz")
+                cp_file = emulator_data("nrun-w0wa-3mass-nonlinear.npz")
+                cp_file_sigma = emulator_data("nrun-w0wa-3mass-s8-fs8.npz")
                 self.has_neutrinos = True
             else:
                 raise ValueError(

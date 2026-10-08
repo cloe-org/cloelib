@@ -93,6 +93,10 @@ class _FakeBaselineLinear:
         ks = np.atleast_1d(np.asarray(ks, dtype=float))
         return (1.0 / (1.0 + zs))[:, None] ** 2 * (ks**-2.0)[None, :]
 
+    def matter_power_spectrum_cb(self, zs, ks):
+        # distinct from the total spectrum so tests can tell which one was boosted
+        return 0.9 * self.matter_power_spectrum(zs, ks)
+
     def sigma8_0(self):
         return 0.8
 
@@ -110,6 +114,10 @@ class _FakeBaselineNonLinear:
         return (
             (1.0 / (1.0 + zs))[:, None] ** 2 * (ks**-2.0)[None, :] * (1.0 + ks)[None, :]
         )
+
+    def matter_power_spectrum_cb(self, zs, ks):
+        # distinct from the total spectrum so tests can tell which one was boosted
+        return 0.9 * self.matter_power_spectrum(zs, ks)
 
 
 @pytest.fixture
@@ -189,6 +197,38 @@ def test_perturbations_protocol_surface(monkeypatch, zs, mode):
         assert p.growth_rate(zs, k).shape == (zs.size, k.size)  # ks given -> (nz, nk)
         assert np.isfinite(p.sigma8_0())
         assert p.Sigma(zs).shape == (zs.size,)
+
+
+def test_cb_boosts_baseline_cb_spectrum(monkeypatch, zs):
+    """P_cb = boost x baseline P_cb (not boost x baseline total matter)."""
+    Lin, NonLin = _build(monkeypatch, mg.MGParams(), boost=1.5)
+    lp = Lin(_bg(), zs)
+    nlp = NonLin(_bg(), lp, zs)
+    base_lin = _FakeBaselineLinear(_bg(), zs)
+    base_nl = _FakeBaselineNonLinear(_bg(), None, zs)
+    assert np.allclose(
+        lp.matter_power_spectrum_cb(zs, _KGRID),
+        1.5 * base_lin.matter_power_spectrum_cb(zs, _KGRID),
+        rtol=1e-8,
+    )
+    assert np.allclose(
+        nlp.matter_power_spectrum_cb(zs, _KGRID),
+        1.5 * base_nl.matter_power_spectrum_cb(zs, _KGRID),
+        rtol=1e-8,
+    )
+    # and it is not simply the boosted total-matter spectrum
+    assert not np.allclose(
+        nlp.matter_power_spectrum_cb(zs, _KGRID), nlp.matter_power_spectrum(zs, _KGRID)
+    )
+
+
+def test_nonlinear_retains_linearperturbations(monkeypatch, zs):
+    """NonLinear keeps the linear perturbations it was built from, so PT-based
+    consumers (e.g. the TATT loop computer) can recover the linear P(k)."""
+    Lin, NonLin = _build(monkeypatch, mg.MGParams(), boost=1.0)
+    lp = Lin(_bg(), zs)
+    nlp = NonLin(_bg(), lp, zs)
+    assert nlp.linearperturbations is lp
 
 
 # --------------------------------------------------------------------------- #

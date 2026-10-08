@@ -354,17 +354,19 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
         def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
             """Compute the linear CDM+baryon matter power spectrum.
 
-            Neutrino masses are small in this analysis, so the CDM+baryon spectrum
-            is approximated by the total matter spectrum.
+            The boost is applied to the baseline CDM+baryon spectrum, matching
+            the COLA spectra the boost emulators were trained on.
 
             Args:
                 zs (numpy.ndarray): Redshifts.
                 ks (numpy.ndarray): Wavenumbers in Mpc^-1.
 
             Returns:
-                pk (numpy.ndarray): Linear CDM+baryon matter power spectrum.
+                pk (numpy.ndarray): Linear CDM+baryon power spectrum (boost times LCDM baseline).
             """
-            return self.matter_power_spectrum(zs, ks)
+            return self._boost(zs, ks / self.h) * np.asarray(
+                self._base.matter_power_spectrum_cb(zs, ks)
+            )
 
         def growth_factor(self, zs, ks) -> np.ndarray:
             """Compute the linear growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
@@ -427,6 +429,10 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
             """Initialize the NonLinear instance."""
             assert background.Omega_k0 == 0, "Non-flat geometries not supported"
             self.background = background
+            # Retained for downstream consumers that need the *linear* P(k) back
+            # from a tracer's (nonlinear) `perturbations` - same attribute/pattern
+            # as HMcode2020Emu, EE2, BACCOemu, Emantis, JAX and CosmoPower-JAX.
+            self.linearperturbations = linearperturbations
             self.h = background.H0 / 100.0
             self.z = np.atleast_1d(np.asarray(redshifts, dtype=float))
             self.bin_index = mg_params.bin_index
@@ -473,17 +479,19 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
         def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
             """Compute the nonlinear CDM+baryon matter power spectrum.
 
-            Neutrino masses are small in this analysis, so the CDM+baryon spectrum
-            is approximated by the total matter spectrum.
+            The boost is applied to the baseline CDM+baryon spectrum, matching
+            the COLA spectra the boost emulators were trained on.
 
             Args:
                 zs (numpy.ndarray): Redshifts.
                 ks (numpy.ndarray): Wavenumbers in Mpc^-1.
 
             Returns:
-                pk (numpy.ndarray): Nonlinear CDM+baryon matter power spectrum.
+                pk (numpy.ndarray): Nonlinear CDM+baryon power spectrum (boost times LCDM baseline).
             """
-            return self.matter_power_spectrum(zs, ks)
+            return self._boost_nl(zs, ks / self.h) * np.asarray(
+                self._base_nl.matter_power_spectrum_cb(zs, ks)
+            )
 
         def _pk_lin(self, zs, ks):
             """Linear modified-gravity power spectrum, used for growth and sigma8.

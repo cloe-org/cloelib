@@ -351,6 +351,21 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
                 self._base.matter_power_spectrum(zs, ks)
             )
 
+        def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+            """Compute the linear CDM+baryon matter power spectrum.
+
+            Neutrino masses are small in this analysis, so the CDM+baryon spectrum
+            is approximated by the total matter spectrum.
+
+            Args:
+                zs (numpy.ndarray): Redshifts.
+                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+            Returns:
+                pk (numpy.ndarray): Linear CDM+baryon matter power spectrum.
+            """
+            return self.matter_power_spectrum(zs, ks)
+
         def growth_factor(self, zs, ks) -> np.ndarray:
             """Compute the linear growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
 
@@ -365,6 +380,26 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
                 self.matter_power_spectrum(zs, ks) / self.matter_power_spectrum(0.0, ks)
             )
 
+        def growth_rate(self, zs=None, ks=None) -> np.ndarray:
+            """Compute the scale-independent growth rate f(z) = -(1 + z) dlnD/dz.
+
+            f is computed on ``self.z`` from the linear modified-gravity power
+            spectrum, then interpolated to ``zs`` and broadcast over ``ks``.
+
+            Args:
+                zs (Optional[numpy.ndarray]): Redshifts. Defaults to the instance grid.
+                ks (Optional[numpy.ndarray]): Wavenumbers used to broadcast f.
+
+            Returns:
+                (numpy.ndarray): The growth rate, with shape (nz,) if ks is None
+                    and (nz, nk) otherwise.
+            """
+            k_ref = 0.05  # Mpc^-1, linear & sub-horizon
+            pk0 = np.ravel(self.matter_power_spectrum(0.0, k_ref))[0]
+            D = np.sqrt(self.matter_power_spectrum(self.z, k_ref).flatten() / pk0)
+            f = -(1.0 + self.z) * np.gradient(np.log(D), self.z)
+            return growth_rate_on_redshifts(self.z, f, zs, ks)
+
         def sigma8_0(self) -> float:
             """Compute sigma8 at z=0 from the linear modified-gravity power spectrum.
 
@@ -373,6 +408,17 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
             """
             pk0 = self.matter_power_spectrum(0.0, self.k).flatten()
             return _sigma8(self.k, pk0, self.h)
+
+        def Sigma(self, zs) -> np.ndarray:
+            """Compute the modified lensing parameter Sigma(z) = mu(1 + eta)/2.
+
+            Args:
+                zs (numpy.ndarray): Redshifts.
+
+            Returns:
+                (numpy.ndarray): Sigma(z), non-GR in the active bin(s) and one elsewhere.
+            """
+            return _sigma_of_z(zs, self.mu, self.eta, self.bin_index)
 
     class NonLinear:
         """Nonlinear modified-gravity perturbations: nonlinear boost times LCDM baseline."""

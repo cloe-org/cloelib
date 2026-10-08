@@ -8,8 +8,10 @@ models additionally offer halofit nonlinear variants. Each provides both the
 total-matter spectrum (``matter_power_spectrum``) and the CDM+baryon spectrum
 (``matter_power_spectrum_cb``, built at construction from the paired cb emulator),
 along with ``sigma8``, ``fsigma8``, ``growth_factor``, ``growth_factor_cb`` and
-``growth_rate``, and
-validates inputs against ``CP_EMULATOR_BOUNDS``.
+``growth_rate``, and validates inputs against ``CP_EMULATOR_BOUNDS``. The classes
+share one implementation (the private ``_CosmoPowerLinear``/``_CosmoPowerNonLinear``
+bases), parameterised by a per-cosmology ``_ModelSpec`` (emulator file prefix,
+supported N_mnu, extra parameters).
 """
 
 from cloelib.cosmology.cosmology import (
@@ -195,8 +197,8 @@ def _extended_pk_cb(cb_file, params, z_emu, extrap_z, ns):
 # Every cosmology below exposes the same ``Linear`` / ``NonLinear`` (and, for the
 # baseline models, ``NonLinearHalofit``) classes. Their behaviour is identical up
 # to (i) which emulator files are loaded and (ii) which extra cosmological
-# parameters the emulator takes, so each method is implemented once here and
-# installed on the (otherwise empty) inner classes by ``_emulator_class``.
+# parameters the emulator takes, so each method is implemented once in the
+# ``_CosmoPower*`` base classes below and the inner classes only name their spec.
 # --------------------------------------------------------------------------- #
 
 _SECTORS = {
@@ -271,247 +273,230 @@ def _emulator_files(spec, sector, n_mnu):
     return tuple(f.format(p=spec.prefix, n=n_mnu) for f in (pk, cb, sigma))
 
 
-def _setup(self, background, redshifts, log10TAGN=None):
-    """Load the emulators and build the P(k), P_cb(k) and sigma8 tables.
+class _CosmoPowerPerturbations:
+    """Shared implementation of every CosmoPower-JAX emulator class.
 
-    Shared by the linear, nonlinear and halofit ``__init__`` methods; the sector
-    and cosmology are read from the class attributes set by ``_emulator_class``.
-    """
-    spec, sector = self._spec, self._sector
-    cp_file, cp_file_cb, cp_file_sigma = _emulator_files(spec, sector, background.N_mnu)
-    cp_file, cp_file_cb, cp_file_sigma = (
-        emulator_data(cp_file),
-        emulator_data(cp_file_cb),
-        emulator_data(cp_file_sigma),
-    )
-    self.has_neutrinos = background.N_mnu > 0
-
-    emulator = load_pk_emulator(cp_file)
-    if sector == "linear":
-        self.cp_LIN = emulator
-    else:
-        self.cp_NONLIN = emulator
-    self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-    self.k_emu = np.asarray(emulator.modes)
-    self.k_min = self.k_emu[0]
-    self.k_max = self.k_emu[-1]
-    self.background = background
-    if spec.flat_only:
-        assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-    self.z = ensure_z_zero_included(redshifts[redshifts <= 5])
-    self.params = {
-        "ombh2": self.background.Omega_b0 * self.background.h**2,
-        "omch2": self.background.Omega_cdm0 * self.background.h**2,
-        "H0": self.background.H0,
-        "ns": self.background.ns,
-        "lnAs": np.log(self.background.As * 1e10),
-    }
-    for name, attribute in spec.params.items():
-        self.params[name] = getattr(self.background, attribute)
-    baryons = _SECTORS[sector][3]
-    if baryons:
-        self.params["logT_AGN"] = log10TAGN if log10TAGN is not None else 7.6
-    if self.has_neutrinos:
-        self.params["mnu"] = self.background.mnu
-
-    check_emulator_bounds(self.params)
-
-    for key in self.params.keys():
-        self.params[key] = np.tile(self.params[key], len(self.z))
-    self.params["z"] = self.z
-
-    if baryons:
-        sigma_params = self.params
-    else:
-        # The sigma8/fsigma8 emulator is shared with the HMcode modules and expects
-        # logT_AGN; sigma8/fsigma8 are (near) linear quantities, so they are
-        # evaluated at the fiducial logT_AGN=7.6.
-        self.sigma_params = self.params.copy()
-        self.sigma_params["logT_AGN"] = np.tile(7.6, len(self.z))
-        sigma_params = self.sigma_params
-
-    Pk = np.array(emulator.predict(self.params))
-    k_out, z_out, Pk_out = extend_spectra(
-        self.k_emu,
-        self.z,
-        Pk,
-        flag_range=True,
-        option_wavenumber="logk2",
-        option_redshift="power_law",
-        extrap_z=redshifts,
-        option_cosmo="const",
-        ns=self.background.ns,
-    )
-    self.k, self.z, self.Pk = k_out, z_out, Pk_out
-    self.Pk_interp = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
-    self.Pk_cb = _extended_pk_cb(
-        cp_file_cb, self.params, self.params["z"], redshifts, self.background.ns
-    )
-    self.Pk_cb_interp = interpolate.RectBivariateSpline(
-        self.z, self.k, self.Pk_cb, kx=1, ky=1
-    )
-
-    sigma_predictions = np.array(self.cp_SIGMA.predict(sigma_params))
-    self.sigma8 = sigma_predictions[:, 0]
-    self.fsigma8 = sigma_predictions[:, 1]
-
-
-def _init_linear(self, background: Background, redshifts: np.ndarray):
-    """Initialize the Linear instance."""
-    _setup(self, background, redshifts)
-
-
-def _init_nonlinear(
-    self,
-    background: Background,
-    linearperturbations: Perturbations,
-    redshifts: np.ndarray,
-    log10TAGN: Optional[float] = None,
-):
-    """Initialize the NonLinear instance.
-
-    ``log10TAGN`` controls the HMcode2020 baryonic feedback; the halofit
-    prescription is dark-matter-only, so there it is accepted for interface
-    compatibility but ignored.
-    """
-    # Retained for downstream consumers that need the *linear* P(k) back from a
-    # tracer's (nonlinear) `perturbations` - same attribute/pattern as
-    # HMcode2020Emu, EE2, BACCOemu, Emantis and JAX.
-    self.linearperturbations = linearperturbations
-    _setup(self, background, redshifts, log10TAGN)
-
-
-def _str(self) -> str:
-    """Return emulator description."""
-    sector = {
-        "linear": "linear",
-        "nonlinear": "nonlinear",
-        "halofit": "nonlinear (halofit)",
-    }
-    n_mnu = self.background.N_mnu
-    neutrinos = _NEUTRINOS.get(n_mnu, "unsupported").format(mnu=self.background.mnu)
-    extra = "".join(
-        f", {name}={getattr(self.background, attribute)}"
-        for name, attribute in self._spec.params.items()
-    )
-    text = (
-        f"Cosmopower-JAX {sector[self._sector]} P(k) module for {self._spec.label} "
-        f"cosmology.\nConfiguration: N_mnu={n_mnu}, {neutrinos}{extra}."
-    )
-    if self._sector == "halofit":
-        text += " Dark-matter-only halofit (no baryonic feedback)."
-    return text
-
-
-def _matter_power_spectrum(self, zs, ks) -> np.ndarray:
-    """Compute the matter power spectrum P(k, z).
-
-    Args:
-        zs (numpy.ndarray): Redshifts.
-        ks (numpy.ndarray): Wavenumbers in Mpc^-1.
-
-    Returns:
-        pk (numpy.ndarray): Total-matter power spectrum.
-    """
-    return self.Pk_interp(zs, ks)
-
-
-def _matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
-    """Compute the CDM+baryon matter power spectrum P_cb(k, z).
-
-    Args:
-        zs (numpy.ndarray): Redshifts.
-        ks (numpy.ndarray): Wavenumbers in Mpc^-1.
-
-    Returns:
-        pk (numpy.ndarray): CDM+baryon (no neutrino) power spectrum.
-    """
-    return self.Pk_cb_interp(zs, ks)
-
-
-def _growth_factor(self, zs, ks) -> np.ndarray:
-    """Compute the growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
-
-    Args:
-        zs (numpy.ndarray): Redshifts.
-        ks (numpy.ndarray): Wavenumbers in Mpc^-1.
-
-    Returns:
-        (numpy.ndarray): The growth factor, normalised to D(z=0) = 1.
-    """
-    return np.sqrt(self.Pk_interp(zs, ks) / self.Pk_interp(0, ks))
-
-
-def _growth_factor_cb(self, zs, ks) -> np.ndarray:
-    """Compute the cb growth factor D_cb(z, k) = sqrt[P_cb(z, k) / P_cb(0, k)].
-
-    Args:
-        zs (numpy.ndarray): Redshifts.
-        ks (numpy.ndarray): Wavenumbers in Mpc^-1.
-
-    Returns:
-        (numpy.ndarray): The cb growth factor, normalised to D_cb(z=0) = 1.
-    """
-    return np.sqrt(self.Pk_cb_interp(zs, ks) / self.Pk_cb_interp(0, ks))
-
-
-def _growth_rate(
-    self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
-) -> np.ndarray:
-    """Compute the scale-independent growth rate f(z) = fsigma8 / sigma8.
-
-    Args:
-        zs (Optional[numpy.ndarray]): Redshifts, interpolated on the grid the
-            emulator was evaluated at. Defaults to that grid.
-        ks (Optional[numpy.ndarray]): Wavenumbers used to broadcast f.
-
-    Returns:
-        (numpy.ndarray): The growth rate, with shape (nz,) if ks is None
-            and (nz, nk) otherwise.
-    """
-    return growth_rate_on_redshifts(
-        self.params["z"], self.fsigma8 / self.sigma8, zs, ks
-    )
-
-
-def _sigma8_0(self) -> float:
-    """Compute sigma8 at z=0.
-
-    Returns:
-        float: The rms matter fluctuation sigma8 at z=0.
-    """
-    return self.sigma8[0]
-
-
-def _emulator_class(spec, sector):
-    """Return a class decorator installing the shared emulator implementation.
-
-    The decorated (empty) class gains ``__init__``, ``__str__`` and the
-    ``Perturbations`` methods, all shared between every cosmology and sector.
-
-    Args:
-        spec (_ModelSpec): The cosmology.
-        sector (str): One of ``"linear"``, ``"nonlinear"`` or ``"halofit"``.
-
-    Returns:
-        Callable: The class decorator.
+    Subclasses set ``_spec`` (the cosmology) and ``_sector`` (``"linear"``,
+    ``"nonlinear"`` or ``"halofit"``); everything else is common.
     """
 
-    def decorate(cls):
-        cls._spec = spec
-        cls._sector = sector
-        cls.__init__ = _init_linear if sector == "linear" else _init_nonlinear
-        cls.__str__ = _str
-        cls.matter_power_spectrum = _matter_power_spectrum
-        cls.matter_power_spectrum_cb = _matter_power_spectrum_cb
-        cls.growth_factor = _growth_factor
-        cls.growth_factor_cb = _growth_factor_cb
-        cls.growth_rate = _growth_rate
-        cls.sigma8_0 = _sigma8_0
-        return cls
+    _spec: _ModelSpec
+    _sector: str
 
-    return decorate
+    def _setup(self, background, redshifts, log10TAGN=None):
+        """Load the emulators and build the P(k), P_cb(k) and sigma8 tables.
+
+        Shared by the linear, nonlinear and halofit ``__init__`` methods; the sector
+        and cosmology are read from the ``_sector``/``_spec`` class attributes.
+        """
+        spec, sector = self._spec, self._sector
+        cp_file, cp_file_cb, cp_file_sigma = _emulator_files(
+            spec, sector, background.N_mnu
+        )
+        cp_file, cp_file_cb, cp_file_sigma = (
+            emulator_data(cp_file),
+            emulator_data(cp_file_cb),
+            emulator_data(cp_file_sigma),
+        )
+        self.has_neutrinos = background.N_mnu > 0
+
+        emulator = load_pk_emulator(cp_file)
+        if sector == "linear":
+            self.cp_LIN = emulator
+        else:
+            self.cp_NONLIN = emulator
+        self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
+        self.k_emu = np.asarray(emulator.modes)
+        self.k_min = self.k_emu[0]
+        self.k_max = self.k_emu[-1]
+        self.background = background
+        if spec.flat_only:
+            assert background.Omega_k0 == 0, "Non flat geometries not supported"
+
+        self.z = ensure_z_zero_included(redshifts[redshifts <= 5])
+        self.params = {
+            "ombh2": self.background.Omega_b0 * self.background.h**2,
+            "omch2": self.background.Omega_cdm0 * self.background.h**2,
+            "H0": self.background.H0,
+            "ns": self.background.ns,
+            "lnAs": np.log(self.background.As * 1e10),
+        }
+        for name, attribute in spec.params.items():
+            self.params[name] = getattr(self.background, attribute)
+        baryons = _SECTORS[sector][3]
+        if baryons:
+            self.params["logT_AGN"] = log10TAGN if log10TAGN is not None else 7.6
+        if self.has_neutrinos:
+            self.params["mnu"] = self.background.mnu
+
+        check_emulator_bounds(self.params)
+
+        for key in self.params.keys():
+            self.params[key] = np.tile(self.params[key], len(self.z))
+        self.params["z"] = self.z
+
+        if baryons:
+            sigma_params = self.params
+        else:
+            # The sigma8/fsigma8 emulator is shared with the HMcode modules and expects
+            # logT_AGN; sigma8/fsigma8 are (near) linear quantities, so they are
+            # evaluated at the fiducial logT_AGN=7.6.
+            self.sigma_params = self.params.copy()
+            self.sigma_params["logT_AGN"] = np.tile(7.6, len(self.z))
+            sigma_params = self.sigma_params
+
+        Pk = np.array(emulator.predict(self.params))
+        k_out, z_out, Pk_out = extend_spectra(
+            self.k_emu,
+            self.z,
+            Pk,
+            flag_range=True,
+            option_wavenumber="logk2",
+            option_redshift="power_law",
+            extrap_z=redshifts,
+            option_cosmo="const",
+            ns=self.background.ns,
+        )
+        self.k, self.z, self.Pk = k_out, z_out, Pk_out
+        self.Pk_interp = interpolate.RectBivariateSpline(
+            self.z, self.k, Pk_out, kx=1, ky=1
+        )
+        self.Pk_cb = _extended_pk_cb(
+            cp_file_cb, self.params, self.params["z"], redshifts, self.background.ns
+        )
+        self.Pk_cb_interp = interpolate.RectBivariateSpline(
+            self.z, self.k, self.Pk_cb, kx=1, ky=1
+        )
+
+        sigma_predictions = np.array(self.cp_SIGMA.predict(sigma_params))
+        self.sigma8 = sigma_predictions[:, 0]
+        self.fsigma8 = sigma_predictions[:, 1]
+
+    def __str__(self) -> str:
+        """Return emulator description."""
+        sector = {
+            "linear": "linear",
+            "nonlinear": "nonlinear",
+            "halofit": "nonlinear (halofit)",
+        }
+        n_mnu = self.background.N_mnu
+        neutrinos = _NEUTRINOS.get(n_mnu, "unsupported").format(mnu=self.background.mnu)
+        extra = "".join(
+            f", {name}={getattr(self.background, attribute)}"
+            for name, attribute in self._spec.params.items()
+        )
+        text = (
+            f"Cosmopower-JAX {sector[self._sector]} P(k) module for {self._spec.label} "
+            f"cosmology.\nConfiguration: N_mnu={n_mnu}, {neutrinos}{extra}."
+        )
+        if self._sector == "halofit":
+            text += " Dark-matter-only halofit (no baryonic feedback)."
+        return text
+
+    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+        """Compute the matter power spectrum P(k, z).
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            pk (numpy.ndarray): Total-matter power spectrum.
+        """
+        return self.Pk_interp(zs, ks)
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        """Compute the CDM+baryon matter power spectrum P_cb(k, z).
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            pk (numpy.ndarray): CDM+baryon (no neutrino) power spectrum.
+        """
+        return self.Pk_cb_interp(zs, ks)
+
+    def growth_factor(self, zs, ks) -> np.ndarray:
+        """Compute the growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            (numpy.ndarray): The growth factor, normalised to D(z=0) = 1.
+        """
+        return np.sqrt(self.Pk_interp(zs, ks) / self.Pk_interp(0, ks))
+
+    def growth_factor_cb(self, zs, ks) -> np.ndarray:
+        """Compute the cb growth factor D_cb(z, k) = sqrt[P_cb(z, k) / P_cb(0, k)].
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            (numpy.ndarray): The cb growth factor, normalised to D_cb(z=0) = 1.
+        """
+        return np.sqrt(self.Pk_cb_interp(zs, ks) / self.Pk_cb_interp(0, ks))
+
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
+        """Compute the scale-independent growth rate f(z) = fsigma8 / sigma8.
+
+        Args:
+            zs (Optional[numpy.ndarray]): Redshifts, interpolated on the grid the
+                emulator was evaluated at. Defaults to that grid.
+            ks (Optional[numpy.ndarray]): Wavenumbers used to broadcast f.
+
+        Returns:
+            (numpy.ndarray): The growth rate, with shape (nz,) if ks is None
+                and (nz, nk) otherwise.
+        """
+        return growth_rate_on_redshifts(
+            self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+        )
+
+    def sigma8_0(self) -> float:
+        """Compute sigma8 at z=0.
+
+        Returns:
+            float: The rms matter fluctuation sigma8 at z=0.
+        """
+        return self.sigma8[0]
+
+
+class _CosmoPowerLinear(_CosmoPowerPerturbations):
+    """Shared linear emulator class; built with ``(background, redshifts)``."""
+
+    def __init__(self, background: Background, redshifts: np.ndarray):
+        """Initialize the Linear instance."""
+        self._setup(background, redshifts)
+
+
+class _CosmoPowerNonLinear(_CosmoPowerPerturbations):
+    """Shared nonlinear emulator class (HMcode2020 or halofit sector)."""
+
+    def __init__(
+        self,
+        background: Background,
+        linearperturbations: Perturbations,
+        redshifts: np.ndarray,
+        log10TAGN: Optional[float] = None,
+    ):
+        """Initialize the NonLinear instance.
+
+        ``log10TAGN`` controls the HMcode2020 baryonic feedback; the halofit
+        prescription is dark-matter-only, so there it is accepted for interface
+        compatibility but ignored.
+        """
+        # Retained for downstream consumers that need the *linear* P(k) back from a
+        # tracer's (nonlinear) `perturbations` - same attribute/pattern as
+        # HMcode2020Emu, EE2, BACCOemu, Emantis and JAX.
+        self.linearperturbations = linearperturbations
+        self._setup(background, redshifts, log10TAGN)
 
 
 _BASE = (0, 1, 2, 3)
@@ -552,17 +537,20 @@ class CosmoPowerJAXw0waCDMPerturbations:
     Class for w0waCDM cosmology perturbations using CosmoPower-JAX emulators.
     """
 
-    @_emulator_class(_W0WACDM, "linear")
-    class Linear:
+    class Linear(_CosmoPowerLinear):
         """Linear matter power spectrum."""
 
-    @_emulator_class(_W0WACDM, "nonlinear")
-    class NonLinear:
+        _spec, _sector = _W0WACDM, "linear"
+
+    class NonLinear(_CosmoPowerNonLinear):
         """Nonlinear matter power spectrum using HMcode2020."""
 
-    @_emulator_class(_W0WACDM, "halofit")
-    class NonLinearHalofit:
+        _spec, _sector = _W0WACDM, "nonlinear"
+
+    class NonLinearHalofit(_CosmoPowerNonLinear):
         """Nonlinear matter power spectrum using halofit (Takahashi 2012)."""
+
+        _spec, _sector = _W0WACDM, "halofit"
 
 
 class CosmoPowerJAXwCDMPerturbations:
@@ -570,33 +558,39 @@ class CosmoPowerJAXwCDMPerturbations:
     Class for wCDM cosmology perturbations using CosmoPower-JAX emulators.
     """
 
-    @_emulator_class(_WCDM, "linear")
-    class Linear:
+    class Linear(_CosmoPowerLinear):
         """Linear matter power spectrum."""
 
-    @_emulator_class(_WCDM, "nonlinear")
-    class NonLinear:
+        _spec, _sector = _WCDM, "linear"
+
+    class NonLinear(_CosmoPowerNonLinear):
         """Nonlinear matter power spectrum using HMcode2020."""
 
-    @_emulator_class(_WCDM, "halofit")
-    class NonLinearHalofit:
+        _spec, _sector = _WCDM, "nonlinear"
+
+    class NonLinearHalofit(_CosmoPowerNonLinear):
         """Nonlinear matter power spectrum using halofit (Takahashi 2012)."""
+
+        _spec, _sector = _WCDM, "halofit"
 
 
 class CosmoPowerJAXLCDMPerturbations:
     """Class for LCDM cosmology perturbations using CosmoPower-JAX emulators."""
 
-    @_emulator_class(_LCDM, "linear")
-    class Linear:
+    class Linear(_CosmoPowerLinear):
         """Linear matter power spectrum."""
 
-    @_emulator_class(_LCDM, "nonlinear")
-    class NonLinear:
+        _spec, _sector = _LCDM, "linear"
+
+    class NonLinear(_CosmoPowerNonLinear):
         """Nonlinear matter power spectrum using HMcode2020."""
 
-    @_emulator_class(_LCDM, "halofit")
-    class NonLinearHalofit:
+        _spec, _sector = _LCDM, "nonlinear"
+
+    class NonLinearHalofit(_CosmoPowerNonLinear):
         """Nonlinear matter power spectrum using halofit (Takahashi 2012)."""
+
+        _spec, _sector = _LCDM, "halofit"
 
 
 class CosmoPowerJAXLCDMCurvaturePerturbations:
@@ -608,13 +602,15 @@ class CosmoPowerJAXLCDMCurvaturePerturbations:
     validated against :data:`CP_EMULATOR_BOUNDS`.
     """
 
-    @_emulator_class(_LCDM_CURVATURE, "linear")
-    class Linear:
+    class Linear(_CosmoPowerLinear):
         """Linear matter power spectrum."""
 
-    @_emulator_class(_LCDM_CURVATURE, "nonlinear")
-    class NonLinear:
+        _spec, _sector = _LCDM_CURVATURE, "linear"
+
+    class NonLinear(_CosmoPowerNonLinear):
         """Nonlinear matter power spectrum using HMcode2020."""
+
+        _spec, _sector = _LCDM_CURVATURE, "nonlinear"
 
 
 class CosmoPowerJAXw0waCurvaturePerturbations:
@@ -626,13 +622,15 @@ class CosmoPowerJAXw0waCurvaturePerturbations:
     validated against :data:`CP_EMULATOR_BOUNDS`.
     """
 
-    @_emulator_class(_W0WA_CURVATURE, "linear")
-    class Linear:
+    class Linear(_CosmoPowerLinear):
         """Linear matter power spectrum."""
 
-    @_emulator_class(_W0WA_CURVATURE, "nonlinear")
-    class NonLinear:
+        _spec, _sector = _W0WA_CURVATURE, "linear"
+
+    class NonLinear(_CosmoPowerNonLinear):
         """Nonlinear matter power spectrum using HMcode2020."""
+
+        _spec, _sector = _W0WA_CURVATURE, "nonlinear"
 
 
 class CosmoPowerJAXLCDMRunningIndexPerturbations:
@@ -644,13 +642,15 @@ class CosmoPowerJAXLCDMRunningIndexPerturbations:
     validated against :data:`CP_EMULATOR_BOUNDS`.
     """
 
-    @_emulator_class(_LCDM_RUNNING, "linear")
-    class Linear:
+    class Linear(_CosmoPowerLinear):
         """Linear matter power spectrum."""
 
-    @_emulator_class(_LCDM_RUNNING, "nonlinear")
-    class NonLinear:
+        _spec, _sector = _LCDM_RUNNING, "linear"
+
+    class NonLinear(_CosmoPowerNonLinear):
         """Nonlinear matter power spectrum using HMcode2020."""
+
+        _spec, _sector = _LCDM_RUNNING, "nonlinear"
 
 
 class CosmoPowerJAXw0waRunningIndexPerturbations:
@@ -662,10 +662,12 @@ class CosmoPowerJAXw0waRunningIndexPerturbations:
     validated against :data:`CP_EMULATOR_BOUNDS`.
     """
 
-    @_emulator_class(_W0WA_RUNNING, "linear")
-    class Linear:
+    class Linear(_CosmoPowerLinear):
         """Linear matter power spectrum."""
 
-    @_emulator_class(_W0WA_RUNNING, "nonlinear")
-    class NonLinear:
+        _spec, _sector = _W0WA_RUNNING, "linear"
+
+    class NonLinear(_CosmoPowerNonLinear):
         """Nonlinear matter power spectrum using HMcode2020."""
+
+        _spec, _sector = _W0WA_RUNNING, "nonlinear"

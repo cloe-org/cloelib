@@ -424,7 +424,7 @@ def test_w0wa_linear_initialization(background_w0wa, z_array):
     """Test w0waCDM JAX emulator initializes correctly"""
     emulator = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
 
-    assert hasattr(emulator, "Pk_int")
+    assert hasattr(emulator, "Pk_interp")
     assert hasattr(emulator, "k")
     assert hasattr(emulator, "z")
     assert emulator.k_min > 0
@@ -509,7 +509,7 @@ def test_w0wa_linear_1mass_initialization(background_w0wa_1mass, z_array):
     """Test w0waCDM 1mass JAX emulator initializes correctly"""
     emulator = w0waCDM.Linear(background=background_w0wa_1mass, redshifts=z_array)
 
-    assert hasattr(emulator, "Pk_int")
+    assert hasattr(emulator, "Pk_interp")
     assert hasattr(emulator, "k")
     assert hasattr(emulator, "z")
     assert emulator.k_min > 0
@@ -571,7 +571,7 @@ def test_w0wa_linear_3degen_initialization(background_w0wa_3degen, z_array):
     """Test w0waCDM 3degen JAX emulator initializes correctly"""
     emulator = w0waCDM.Linear(background=background_w0wa_3degen, redshifts=z_array)
 
-    assert hasattr(emulator, "Pk_int")
+    assert hasattr(emulator, "Pk_interp")
     assert emulator.has_neutrinos is True
     assert emulator.background.N_mnu == 3
 
@@ -612,7 +612,7 @@ def test_w0wa_nonlinear_initialization(background_w0wa, z_array):
         log10TAGN=log10TAGN,
     )
 
-    assert hasattr(nonlinear, "Pk_int")
+    assert hasattr(nonlinear, "Pk_interp")
     assert hasattr(nonlinear, "sigma8")
     assert hasattr(nonlinear, "fsigma8")
 
@@ -732,7 +732,7 @@ def test_wcdm_linear_1mass_initialization(background_wcdm_1mass, z_array):
     """Test wCDM 1mass JAX emulator initializes correctly"""
     emulator = wCDM.Linear(background=background_wcdm_1mass, redshifts=z_array)
 
-    assert hasattr(emulator, "Pk_int")
+    assert hasattr(emulator, "Pk_interp")
     assert hasattr(emulator, "k")
     assert hasattr(emulator, "z")
     assert hasattr(emulator, "sigma8")
@@ -769,7 +769,7 @@ def test_wcdm_linear_3degen_initialization(background_wcdm_3degen, z_array):
     """Test wCDM 3degen JAX emulator initializes correctly"""
     emulator = wCDM.Linear(background=background_wcdm_3degen, redshifts=z_array)
 
-    assert hasattr(emulator, "Pk_int")
+    assert hasattr(emulator, "Pk_interp")
     assert emulator.background.N_mnu == 3
 
 
@@ -797,7 +797,7 @@ def test_wcdm_nonlinear_initialization(background_wcdm, z_array):
         log10TAGN=log10TAGN,
     )
 
-    assert hasattr(nonlinear, "Pk_int")
+    assert hasattr(nonlinear, "Pk_interp")
     assert hasattr(nonlinear, "sigma8")
     assert hasattr(nonlinear, "fsigma8")
 
@@ -882,7 +882,7 @@ def test_lcdm_linear_1mass_initialization(background_lcdm_1mass, z_array):
     """Test LCDM 1mass JAX emulator initializes correctly"""
     emulator = LCDM.Linear(background=background_lcdm_1mass, redshifts=z_array)
 
-    assert hasattr(emulator, "Pk_int")
+    assert hasattr(emulator, "Pk_interp")
     assert hasattr(emulator, "k")
     assert hasattr(emulator, "z")
 
@@ -929,7 +929,7 @@ def test_lcdm_linear_3degen_initialization(background_lcdm_3degen, z_array):
     """Test LCDM 3degen JAX emulator initializes correctly"""
     emulator = LCDM.Linear(background=background_lcdm_3degen, redshifts=z_array)
 
-    assert hasattr(emulator, "Pk_int")
+    assert hasattr(emulator, "Pk_interp")
     assert emulator.background.N_mnu == 3
 
 
@@ -967,7 +967,7 @@ def test_lcdm_nonlinear_initialization(background_lcdm, z_array):
         log10TAGN=log10TAGN,
     )
 
-    assert hasattr(nonlinear, "Pk_int")
+    assert hasattr(nonlinear, "Pk_interp")
     assert hasattr(nonlinear, "sigma8")
     assert hasattr(nonlinear, "fsigma8")
 
@@ -1432,7 +1432,7 @@ def test_curvature_linear_initialization(background_curvature, z_array):
     """Test LCDM+curvature linear emulator initializes correctly"""
     emulator = Curvature.Linear(background=background_curvature, redshifts=z_array)
 
-    assert hasattr(emulator, "Pk_int")
+    assert hasattr(emulator, "Pk_interp")
     assert hasattr(emulator, "k")
     assert hasattr(emulator, "z")
     assert hasattr(emulator, "sigma8")
@@ -1536,7 +1536,7 @@ def test_running_linear_initialization(background_running, z_array):
     """Test LCDM+running spectral index linear emulator initializes correctly"""
     emulator = RunningIndex.Linear(background=background_running, redshifts=z_array)
 
-    assert hasattr(emulator, "Pk_int")
+    assert hasattr(emulator, "Pk_interp")
     assert hasattr(emulator, "k")
     assert hasattr(emulator, "z")
     assert hasattr(emulator, "sigma8")
@@ -1971,3 +1971,70 @@ def test_halofit_str(background_lcdm, z_array):
     assert "Cosmopower-JAX" in info_str
     assert "halofit" in info_str
     assert "LCDM" in info_str
+
+
+# ============= cb surface: .Pk_cb grid, growth_factor_cb, protocol, z=0 =============
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_pk_cb_grid_aligned_with_total(background_lcdm, z_array):
+    """`.Pk_cb` is built at construction on the same (z, k) grid as `.Pk`, so
+    the class satisfies `WithLinearSpectrumGrid` like HMcode2020Emu."""
+    from cloelib.cosmology.cosmology import WithLinearSpectrumGrid
+
+    emulator = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    assert emulator.Pk_cb.shape == emulator.Pk.shape
+    assert emulator.Pk_cb.shape == (emulator.z.size, emulator.k.size)
+    assert isinstance(emulator, WithLinearSpectrumGrid)
+    np.testing.assert_allclose(
+        emulator.matter_power_spectrum_cb(emulator.z, emulator.k),
+        emulator.Pk_cb,
+        rtol=1e-10,
+    )
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_growth_factor_cb(background_lcdm, z_array, k_array):
+    """D_cb(z, k) = sqrt(P_cb(z)/P_cb(0)): unity at z=0, finite, shaped (nz, nk)."""
+    linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    nonlinear = LCDM.NonLinear(
+        background=background_lcdm, linearperturbations=linear, redshifts=z_array
+    )
+    for emulator in (linear, nonlinear):
+        D0 = emulator.growth_factor_cb(0.0, k_array)
+        np.testing.assert_allclose(D0, 1.0, rtol=1e-10)
+        D = emulator.growth_factor_cb(z_array, k_array)
+        assert D.shape == (len(z_array), len(k_array))
+        assert np.all(np.isfinite(D))
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_nonlinear_retains_linearperturbations(background_lcdm, z_array):
+    """Nonlinear classes retain the linear perturbations they were built from
+    (`.linearperturbations`), so PT-based consumers (e.g. the TATT loop computer)
+    can recover the linear P(k) from the nonlinear object, as HMcode2020Emu does."""
+    linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    nonlinear = LCDM.NonLinear(
+        background=background_lcdm, linearperturbations=linear, redshifts=z_array
+    )
+    halofit = LCDM.NonLinearHalofit(
+        background=background_lcdm, linearperturbations=linear, redshifts=z_array
+    )
+    assert nonlinear.linearperturbations is linear
+    assert halofit.linearperturbations is linear
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_sigma8_0_without_z_zero_in_grid(background_lcdm):
+    """sigma8_0 is sigma8 at z=0 even when the construction grid omits z=0
+    (`ensure_z_zero_included` adds it), not sigma8 at the first grid redshift."""
+    with_zero = LCDM.Linear(
+        background=background_lcdm, redshifts=np.array([0.0, 0.5, 1.0, 2.0])
+    )
+    without_zero = LCDM.Linear(
+        background=background_lcdm, redshifts=np.array([0.5, 1.0, 2.0])
+    )
+    assert without_zero.params["z"][0] == 0.0
+    np.testing.assert_allclose(
+        without_zero.sigma8_0(), with_zero.sigma8_0(), rtol=1e-10
+    )

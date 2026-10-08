@@ -389,7 +389,8 @@ Fast JAX-based emulator for linear and nonlinear power spectra using [cosmopower
 
 Every Perturbations class exposes the same inner classes, each providing **both**
 the total-matter spectrum (`matter_power_spectrum`) and the CDM+baryon spectrum
-(`matter_power_spectrum_cb`, built on first use from the paired cb emulator):
+(`matter_power_spectrum_cb`, built at construction from the paired cb emulator), with
+the cached `Pk`/`Pk_cb` grids and `growth_factor`/`growth_factor_cb`:
 
 - `Linear` — linear P(k) and P_cb(k)
 - `NonLinear` — nonlinear P(k) and P_cb(k) using **HMcode2020**, with baryonic feedback controlled by `log10TAGN`

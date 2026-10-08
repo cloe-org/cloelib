@@ -198,7 +198,7 @@ def cosmopower_perturbations(
     """The CosmoPower-JAX classes implement the full `Perturbations` protocol.
 
     Each total-matter class provides both `matter_power_spectrum` and
-    `matter_power_spectrum_cb` (the cb spectrum, built lazily from the paired cb
+    `matter_power_spectrum_cb` (the cb spectrum, built at construction from the paired cb
     emulator), so they conform to `Perturbations` like the other backends.
     """
     _w0wa_lin: Perturbations = w0wa_lin

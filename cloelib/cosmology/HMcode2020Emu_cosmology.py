@@ -556,7 +556,7 @@ def _set_neutrino_masses(background: Background) -> float:
 class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
     """Mixin providing baryonic suppression via an HMcode2020-computed P_baryon/P_dmo ratio.
 
-    Can be combined with *any* HMcode2020emu nonlinear perturbations class::
+    Can be combined with *any* nonlinear perturbations class (not just HMcode2020emu)::
 
         class MyPert(HMcode2020BaryonBoostMixin, HMemuNonLinearPerturbations):
             def __init__(self, background, linearperturbations, redshifts, log10TAGN=7.8):
@@ -569,13 +569,13 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
 
     .. note::
         ``__init__`` must be called **after** the base NonLinear ``__init__``
-        because it reads ``self.params_hm_emu`` and ``self.background``.
+        because it reads ``self.background`` and ``self.z``.
         Scales below the nonlinear emulator k range get suppression = 1.
     """
 
     #: Both supplied by the nonlinear perturbations class this mixin is composed with.
     background: Background
-    params_hm_emu: dict
+    z: np.ndarray
 
     def __init__(self, log10TAGN: float) -> None:
         """Initialise the HMcode2020 baryon-ratio spline.
@@ -583,8 +583,11 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
         Runs the emulator twice (DMO and baryonic) and stores
         ``B(z, k)`` as a bivariate spline in ``self._baryon_ratio_interp``.
 
-        Call this **after** ``HMemuNonLinearPerturbations.__init__`` so that
-        ``self.params_hm_emu`` and ``self.background`` are already set.
+        Call this **after** the base NonLinear ``__init__`` so that
+        ``self.background`` and ``self.z`` are already set. The emulator
+        parameters are built from ``self.background`` rather than taken from
+        the base class, so the HMcode2020 baryonic boost can be applied on top
+        of a different nonlinear prescription.
 
         Parameters
         ----------
@@ -592,31 +595,38 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
             log₁₀ of the AGN heating temperature in Kelvin.
             Typical range: 7.6 (weak) – 8.3 (strong feedback).
         """
-        if "log10TAGN" in self.params_hm_emu:
-            raise ValueError(
-                "The base HMemuNonLinearPerturbations was built with log10TAGN, so its "
-                "matter_power_spectrum already includes the HMcode2020 baryonic boost. "
-                "Composing HMcode2020BaryonBoostMixin on top would apply it twice. "
-                "Build the base with log10TAGN=None and pass log10TAGN to this mixin "
-                "instead, or drop the mixin and use the base class on its own."
-            )
+        # The emulator parameters are built here rather than taken from the
+        # base class, so this mixin also works on top of a non-HMcode2020emu
+        # nonlinear prescription.
         hm_bounds = HM2020_emu.emulator["nonlinear"]["bounds"]
-        if np.prod(log10TAGN - hm_bounds["log10TAGN"]) > 0:
-            raise ValueError(
-                f"HMcode 2020 NL emulator: log10TAGN={log10TAGN} is out of bounds "
-                f"{hm_bounds['log10TAGN']}."
-            )
-        z_emu = self.params_hm_emu["z"]
-        nz = len(z_emu)
-        _, Pk_dmo = HM2020_emu.get_nonlinear_pk(
-            nonu=False, **self.params_hm_emu, baryonic_boost=False
-        )
-        params_with_tagn = {
-            **self.params_hm_emu,
-            "log10TAGN": np.tile(log10TAGN, nz),
+        cosmo_params = {
+            "omega_cdm": self.background.Omega_cdm0,
+            "omega_baryon": self.background.Omega_b0,
+            "As": self.background.As,
+            "ns": self.background.ns,
+            "hubble": self.background.H0 / 100,
+            "neutrino_mass": _set_neutrino_masses(self.background),
+            "w0": self.background.w0,
+            "wa": self.background.wa,
+            "log10TAGN": log10TAGN,
         }
+        for key, value in cosmo_params.items():
+            if np.prod(value - hm_bounds[key]) > 0:
+                raise ValueError(
+                    f"HMcode 2020 NL emulator: {key}={value} is out of bounds "
+                    f"{hm_bounds[key]}."
+                )
+        z_emu = np.unique(self.z[self.z <= hm_bounds["z"][1]])
+        params_baryon = {
+            key: np.tile(value, len(z_emu)) for key, value in cosmo_params.items()
+        }
+        params_baryon["z"] = z_emu
+        params_dmo = {k: v for k, v in params_baryon.items() if k != "log10TAGN"}
+        _, Pk_dmo = HM2020_emu.get_nonlinear_pk(
+            nonu=False, **params_dmo, baryonic_boost=False
+        )
         _, Pk_baryon = HM2020_emu.get_nonlinear_pk(
-            nonu=False, **params_with_tagn, baryonic_boost=True
+            nonu=False, **params_baryon, baryonic_boost=True
         )
         ratio = Pk_baryon / Pk_dmo
         k_nl_phys = (

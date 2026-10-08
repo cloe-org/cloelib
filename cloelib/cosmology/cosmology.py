@@ -284,6 +284,26 @@ class BaryonBoostMixin(Protocol):
         ...
 
 
+def _native_baryon_options(kwargs: dict) -> list[str]:
+    """Return the nonlinear constructor options that already switch on baryons.
+
+    Several nonlinear backends can include a baryonic boost themselves
+    (BACCOemu via `baryonic_boost`, HMcode2020emu, CAMB and CLASS via
+    `log10TAGN` or their HMcode2020 feedback model). Composing a baryonic
+    mixin on top of one of them would apply baryonic feedback twice.
+    """
+    options = [
+        f"{name}={kwargs[name]!r}"
+        for name in ("baryonic_boost", "log10TAGN")
+        if kwargs.get(name) is not None
+    ]
+    if kwargs.get("nonlinear_model") == "mead2020_feedback":
+        options.append("nonlinear_model='mead2020_feedback'")
+    if kwargs.get("hmcode_version") == "2020_baryonic_feedback":
+        options.append("hmcode_version='2020_baryonic_feedback'")
+    return options
+
+
 def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
     """Compose a nonlinear perturbations class with a baryonic-boost mixin.
 
@@ -291,8 +311,8 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
 
     * Places ``BaryonMixinClass`` as the **left** parent (MRO priority).
     * Wires ``__init__`` to call ``NonLinearClass.__init__`` first (so that
-      emulator state such as ``self.emu`` and ``self.params_*`` is available)
-      and then ``BaryonMixinClass.__init__`` with ``baryon_kwargs``.
+      ``self.background`` and ``self.z`` are available) and then
+      ``BaryonMixinClass.__init__`` with ``baryon_kwargs``.
     * Overrides ``matter_power_spectrum`` and ``matter_power_spectrum_cb`` to
       multiply P(k, z) by ``baryonic_suppression``.
 
@@ -340,10 +360,35 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
     type
         A new class named
         ``"{NonLinearClass.__name__}With{BaryonMixinClass.__name__}"``.
+
+    Raises
+    ------
+    TypeError
+        If ``NonLinearClass`` already carries a baryonic mixin, since stacking
+        two baryonic models would apply baryonic feedback twice.
+    ValueError
+        At construction, if the nonlinear options passed already switch on
+        the backend's own baryonic boost (e.g. ``log10TAGN`` or
+        ``baryonic_boost``), for the same reason.
     """
+    if issubclass(NonLinearClass, BaryonBoostMixin):
+        raise TypeError(
+            f"{NonLinearClass.__name__} already includes a baryonic boost; "
+            f"composing {BaryonMixinClass.__name__} on top would apply baryonic "
+            "feedback twice. Start from a nonlinear class without baryons."
+        )
 
     class Combined(BaryonMixinClass, NonLinearClass):
         def __init__(self, *args, baryon_kwargs=None, **kwargs):
+            native = _native_baryon_options(kwargs)
+            if native:
+                raise ValueError(
+                    f"{NonLinearClass.__name__} was given {', '.join(native)}, so "
+                    "its matter_power_spectrum already includes a baryonic boost. "
+                    f"Composing {BaryonMixinClass.__name__} on top would apply "
+                    "baryonic feedback twice. Drop those options and use the mixin, "
+                    "or drop the mixin and use the base class on its own."
+                )
             NonLinearClass.__init__(self, *args, **kwargs)
             BaryonMixinClass.__init__(self, **(baryon_kwargs or {}))
 

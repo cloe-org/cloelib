@@ -535,8 +535,7 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
 
     .. note::
         ``__init__`` must be called **after** the base NonLinear ``__init__``
-        because it reads ``self.params_emu`` and ``self.background`` which are
-        set there.
+        because it reads ``self.background`` and ``self.z`` which are set there.
 
     .. warning::
         ``BACCOemuNonLinearPerturbations`` composed with this mixin does **not**
@@ -551,7 +550,7 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
 
     #: Both supplied by the nonlinear perturbations class this mixin is composed with.
     background: Background
-    params_emu: dict
+    z: np.ndarray
 
     def __init__(
         self,
@@ -571,9 +570,10 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         ``B(z, k)`` as a bivariate spline in ``self._baryon_ratio_interp``.
 
         Call this **after** ``NonLinearPerturbations.__init__`` so
-        that ``self.params_emu`` and ``self.background`` are set.
+        that ``self.background`` and ``self.z`` are set.
 
-        The mixin selects its own BACCOemu instance rather than reusing the base
+        The mixin selects its own BACCOemu instance and builds the emulator
+        parameters from ``self.background`` rather than reusing the base
         class's, so the BACCOemu baryonic boost can be applied on top of a
         different nonlinear prescription.
 
@@ -595,22 +595,29 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         theta_out, M_inn:
             Used only by ``Arico2021``; leave at ``None`` for ``Burger2025``.
         """
-        if "M_c" in self.params_emu:
-            raise ValueError(
-                "The base BACCOemuNonLinearPerturbations was built with "
-                "baryonic_boost set, so its matter_power_spectrum already includes "
-                "the BACCOemu baryonic boost. Composing BACCOemuBaryonBoostMixin on "
-                "top would apply it twice. Build the base with baryonic_boost=None "
-                "and pass the baryonification parameters to this mixin instead, or "
-                "drop the mixin and use the base class on its own."
-            )
         # BACCOemu was trained with the boost factor, so a single
         # `get_baryonic_boost` call is enough -- no separate DMO and baryonic
-        # spectra. The emulator is selected here rather than taken from the base
-        # class, so this mixin also works on top of a non-BACCOemu nonlinear
-        # prescription.
+        # spectra. The emulator and its cosmological parameters are set up here
+        # rather than taken from the base class, so this mixin also works on top
+        # of a non-BACCOemu nonlinear prescription.
         baryon_emu = emu[nonlinear_model_name][baryonic_model_name]
-        z_emu = 1.0 / self.params_emu["expfactor"] - 1.0
+        baryon_info = baryon_emu.emulator["baryon"]
+        expfactor_min = baryon_info["bounds"][
+            list(baryon_info["keys"]).index("expfactor")
+        ][0]
+        redshift_max = 1 / expfactor_min.item() - 1
+        z_emu = np.unique(self.z[self.z <= redshift_max])
+        params_dmo = {
+            "omega_cold": self.background.Omega_cdm0 + self.background.Omega_b0,
+            "omega_baryon": self.background.Omega_b0,
+            "A_s": self.background.As,
+            "ns": self.background.ns,
+            "hubble": self.background.H0 / 100,
+            "neutrino_mass": self.background.mnu,
+            "w0": self.background.w0,
+            "wa": self.background.wa,
+            "expfactor": 1 / (1 + z_emu),
+        }
         baryonic_params = {
             k: v
             for k, v in {
@@ -624,9 +631,7 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
             }.items()
             if v is not None
         }
-        k_baryon, boost = baryon_emu.get_baryonic_boost(
-            **{**self.params_emu, **baryonic_params}
-        )
+        k_baryon, boost = baryon_emu.get_baryonic_boost(**params_dmo, **baryonic_params)
         k_phys = k_baryon * self.background.h  # h/Mpc -> 1/Mpc
         # Native support of the BACCOemu baryonic boost, in 1/Mpc. It is much
         # narrower in k than the FLAMINGO and HMcode2020 responses (it stops

@@ -235,6 +235,44 @@ def _bacco_baryons():
     return lin, nonlin
 
 
+def _camb_with(BaryonMixinClass, **baryon_kwargs):
+    """CAMB nonlinear perturbations with a baryonic boost from another backend."""
+    from cloelib.cosmology.camb_cosmology import (
+        CAMBLinearPerturbations,
+        CAMBNonLinearPerturbations,
+    )
+    from cloelib.cosmology.cosmology import with_baryon_boost
+
+    background = _camb_background()
+    lin = CAMBLinearPerturbations(background=background, redshifts=REDSHIFTS)
+    nonlin = with_baryon_boost(CAMBNonLinearPerturbations, BaryonMixinClass)(
+        background=background,
+        linearperturbations=lin,
+        redshifts=REDSHIFTS,
+        baryon_kwargs=baryon_kwargs,
+    )
+    return lin, nonlin
+
+
+def _camb_bacco_baryons():
+    from cloelib.cosmology.baccoemu_cosmology import BACCOemuBaryonBoostMixin
+
+    return _camb_with(
+        BACCOemuBaryonBoostMixin,
+        M_c=13.0,
+        eta=-0.25,
+        beta=-0.15,
+        M1_z0_cen=11.0,
+        theta_inn=-1.0,
+    )
+
+
+def _camb_hmcode_baryons():
+    from cloelib.cosmology.HMcode2020Emu_cosmology import HMcode2020BaryonBoostMixin
+
+    return _camb_with(HMcode2020BaryonBoostMixin, log10TAGN=7.8)
+
+
 def _camb_flamingo():
     from cloelib.cosmology.camb_cosmology import CAMBLinearPerturbations
     from cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology import (
@@ -275,6 +313,8 @@ BACKENDS = {
         "FlamingoBaryonResponseEmulator",
         SCALE_INDEPENDENT,
     ),
+    "CAMB+BACCOemu": (_camb_bacco_baryons, "baccoemu", SCALE_INDEPENDENT),
+    "CAMB+HMcode2020": (_camb_hmcode_baryons, "HMcode2020Emu", SCALE_INDEPENDENT),
 }
 
 
@@ -615,3 +655,53 @@ def test_ty_conformance():
         text=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+class _NoBaryonsNonLinear:
+    """Nonlinear perturbations stand-in recording whether it was built."""
+
+    built = False
+
+    def __init__(self, *args, **kwargs):
+        _NoBaryonsNonLinear.built = True
+
+
+class _UnitBoostMixin:
+    """Baryonic mixin stand-in with a unit boost."""
+
+    def __init__(self):
+        pass
+
+    def baryonic_suppression(self, zs, ks, k_hunit=False):
+        return np.ones((np.size(zs), np.size(ks)))
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        dict(log10TAGN=7.8),
+        dict(baryonic_boost="Burger2025"),
+        dict(nonlinear_model="mead2020_feedback"),
+        dict(hmcode_version="2020_baryonic_feedback"),
+    ],
+)
+def test_with_baryon_boost_rejects_native_baryons(kwargs):
+    """A baryonic mixin is not applied on top of a backend's own baryonic boost."""
+    from cloelib.cosmology.cosmology import with_baryon_boost
+
+    _NoBaryonsNonLinear.built = False
+    Combined = with_baryon_boost(_NoBaryonsNonLinear, _UnitBoostMixin)
+    with pytest.raises(ValueError, match="twice"):
+        Combined(None, None, REDSHIFTS, **kwargs)
+    assert not _NoBaryonsNonLinear.built
+    Combined(None, None, REDSHIFTS, log10TAGN=None)
+    assert _NoBaryonsNonLinear.built
+
+
+def test_with_baryon_boost_rejects_stacked_mixins():
+    """Two baryonic mixins are not stacked on the same nonlinear class."""
+    from cloelib.cosmology.cosmology import with_baryon_boost
+
+    Combined = with_baryon_boost(_NoBaryonsNonLinear, _UnitBoostMixin)
+    with pytest.raises(TypeError, match="twice"):
+        with_baryon_boost(Combined, _UnitBoostMixin)

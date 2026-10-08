@@ -8,14 +8,19 @@ from cloelib.cosmology.cosmology import Perturbations
 # General imports
 import numpy as np
 from typing import Optional
-from scipy.integrate import quad, cumulative_trapezoid
 from scipy import interpolate
 import jax.numpy as jnp
-import camb
-from scipy.optimize import brentq
 
+from cloelib.cosmology.theta_h0 import (
+    resolve_background_densities,
+    theta_to_H0 as _theta_to_H0,
+)
 
-C_KM_S_MPC = 2997.92458
+# Gauss–Legendre nodes for the comoving-distance integral. Within one w bin the
+# integrand is analytic, and panels no wider than `_CHI_PANEL` stay at the
+# roundoff of scipy.quad (which is what this method used to call per step).
+_CHI_GL_X, _CHI_GL_W = np.polynomial.legendre.leggauss(16)
+_CHI_PANEL = 2.0
 
 # Cosmology imports
 try:
@@ -125,107 +130,32 @@ def get_de_density_i(z, zbin_edges, zbin_widths, zbin_centers, w_i):
     ) * product
     return rho
 
-def _camb_recombination_at_theta(theta, omch2, ombh2, omega_k=0.0, mnu=0.06,
-                                 TCMB=2.7255, nnu=3.044):
-    """Single CAMB call: rstar and zstar depend only weakly on H0, so fix them here."""
-    original_feedback_level = camb.config.FeedbackLevel
-    try:
-        camb.set_feedback_level(0)
-        p = camb.CAMBparams()
-        p.set_dark_energy(w=-1., wa=0., dark_energy_model="ppf")
-        p.set_cosmology(
-            ombh2=ombh2,
-            omch2=omch2,
-            omk=omega_k,
-            mnu=mnu,
-            cosmomc_theta=theta,
-            TCMB=TCMB,
-            nnu=nnu,
-        )
-        derived = camb.get_background(p).get_derived_params()
-    finally:
-        camb.config.FeedbackLevel = original_feedback_level
-    return derived["zstar"], derived["rstar"]
-
-def _z_grid_to_zstar(zstar, n_low=265, n_high=512):
-    z_low = np.linspace(0.0, 3., n_low)
-    z_high = np.logspace(np.log10(3.001), np.log10(zstar), n_high)
-    return np.unique(np.concatenate((z_low, z_high)))
-
-
-def omega_r_h2(TCMB=2.7255, nnu=3.044):
-    """Photon + massless neutrino contribution to Omega_r h^2 (CAMB convention)."""
-    ogamma = 2.4728e-5 * (TCMB / 2.7255) ** 4
-    return ogamma * (1.0 + (7.0 / 8.0) * (4.0 / 11.0) ** (4.0 / 3.0) * nnu)
-
-# Effective massive-neutrino matter fraction G(z, mnu): the WMAP7 radiation
-# multiplier (Appendix C of arXiv:2502.07185) over-estimates E(z) at z ~ 1000
-# and biases H0 from theta by ~0.6 km/s/Mpc.  CAMB's nu contribution to E^2 is
-# well approximated as omnu * (1+z)^3 * G(z, mnu) with G -> 1 today and G -> 0
-# at early times (Lesgourgues/Komatsu-style transition, fitted to CAMB).
-_NU_MATTER_SCALE = 6.328
-_NU_MATTER_POWER = 0.5
-
-def _neutrino_matter_fraction(z, mnu):
-    """Fraction of omnuh2 that contributes as non-relativistic matter at redshift z."""
-    z = np.asarray(z, dtype=float)
-    if mnu <= 0.0:
-        return np.zeros_like(z)
-    z_transition = _NU_MATTER_SCALE / mnu
-    return 1.0 / (1.0 + ((1.0 + z) / z_transition) ** _NU_MATTER_POWER)
-
-
-def _precompute_de_background(z_star_array, w_i, zbin_edges, zbin_widths, zbin_centers):
-    """DE part of the Friedmann integral is independent of H0."""
-    de_density_factor = get_de_density(z_star_array, zbin_edges, zbin_widths, zbin_centers, w_i)
-    return de_density_factor
-
-def _comoving_distance_analytic(H0, z_star_array, de_density_factor,
-                                omch2, ombh2, mnu=0.06, omega_k=0.0,
-                                TCMB=2.7255, nnu=3.044):
-    h = H0 / 100.0
-    H0mpc = h / C_KM_S_MPC
-    omnuh2 = mnu / 93.14
-    omega_b = ombh2 / h**2
-    omega_c = omch2 / h**2
-    omega_nu = omnuh2 / h**2
-    omega_r = omega_r_h2(TCMB, nnu) / h**2
-    omega_de = 1.0 - omega_b - omega_c - omega_nu - omega_r - omega_k / h**2
-    nu_matter = _neutrino_matter_fraction(z_star_array, mnu)
-    omega_m = omega_b + omega_c + omega_nu * nu_matter
-    E_grid = np.sqrt(
-        omega_r * (1.0 + z_star_array) ** 4
-        + omega_m * (1.0 + z_star_array) ** 3
-        + omega_de * de_density_factor
+def theta_to_H0(
+    theta,
+    omch2,
+    ombh2,
+    w_i,
+    zbin_edges,
+    zbin_widths,
+    zbin_centers,
+    omega_k=0.0,
+    mnu=0.06,
+    TCMB=2.7255,
+    nnu=3.044,
+    h0_bracket=(50.0, 90.0),
+):
+    """H0 in km/s/Mpc for this binned ``w(z)``, given ``theta = r_s / D_M(z_*)``."""
+    return _theta_to_H0(
+        theta,
+        omch2,
+        ombh2,
+        lambda z: get_de_density(z, zbin_edges, zbin_widths, zbin_centers, w_i),
+        omega_k=omega_k,
+        mnu=mnu,
+        TCMB=TCMB,
+        nnu=nnu,
+        h0_bracket=h0_bracket,
     )
-    r_dimless = cumulative_trapezoid(1.0 / E_grid, z_star_array, initial=0.0)
-    return r_dimless[-1]/ H0mpc
-
-def theta_to_H0(theta, omch2, ombh2,
-                      w_i, zbin_edges, zbin_widths, zbin_centers,
-                      omega_k=0.0, mnu=0.06, TCMB=2.7255, nnu=3.044, 
-                      h0_bracket=(50.0, 90.0)):
-    """Solve for H0 such that r_s / D_M(z_*) = theta using the binned-w background.
-
-    Speed: rstar and zstar are fixed from one CAMB recombination call (they vary
-    < 0.01% over the H0 bracket).  The binned-w dark-energy factor is precomputed once.
-    Only the cheap distance integral runs inside brentq.
-    """
-    zstar, rstar = _camb_recombination_at_theta(
-        theta, omch2, ombh2, omega_k, mnu, TCMB, nnu
-    )
-    z_star_array = _z_grid_to_zstar(zstar)
-    de_density_factor = _precompute_de_background(z_star_array, w_i, zbin_edges, zbin_widths, zbin_centers)
-
-    def theta_residual(H0):
-        D_M = _comoving_distance_analytic(
-            H0, z_star_array, de_density_factor,
-            omch2, ombh2, mnu, omega_k, TCMB, nnu,
-        )
-        #print(H0, rstar / D_M - theta)
-        return rstar / D_M - theta
-
-    return brentq(theta_residual, h0_bracket[0], h0_bracket[1])
 
 
 class DEBinnedEoSBackground:
@@ -256,39 +186,34 @@ class DEBinnedEoSBackground:
         self.zbin_centers = 0.5 * (zbin_edges[1:] + zbin_edges[:-1])
         self.w_i = w_i
 
-        self.mnu = cosmology_dict['mnu'] if 'mnu' in cosmology_dict else 0.06
-        self.nnu = cosmology_dict['nnu'] if 'nnu' in cosmology_dict else 3.044
-        self.As = cosmology_dict['As']
-        self.ns = cosmology_dict['ns']
-        self.Omega_k0 = cosmology_dict['Omega_k0'] if 'Omega_k0' in cosmology_dict else 0.0
-        # small omega's
-        if 'Omch2' and 'Ombh2' in cosmology_dict:
-            self.Omch2 = cosmology_dict['Omch2']
-            self.Ombh2 = cosmology_dict['Ombh2']
-            # 'cosmomc_theta' should be around ~1, the real theta_* is ~0.01
-            if 'cosmomc_theta' in cosmology_dict:
-                self.H0 = theta_to_H0(
-                    cosmology_dict['cosmomc_theta']/100., self.Omch2, self.Ombh2, self.w_i, self.zbin_edges, self.zbin_widths, self.zbin_centers,
-                    mnu=self.mnu, nnu=self.nnu, omega_k=self.Omega_k0
-                )
-            else:
-                self.H0 = cosmology_dict['H0']
-            self.h = self.H0 / 100
-
-            self.Omega_b0 = self.Ombh2 / (self.h)**2
-            self.Omega_cdm0 = self.Omch2 / (self.h)**2
-            self.Omega_m0 = self.Omega_cdm0 + self.Omega_b0 + self.mnu / 93.14 / (self.h) ** 2
-        elif 'Omega_b0' and 'Omega_cdm0' in cosmology_dict:
-            self.Omega_b0 = cosmology_dict['Omega_b0']
-            self.Omega_cdm0 = cosmology_dict['Omega_cdm0']
-            if 'H0' in cosmology_dict:
-                self.H0 = cosmology_dict['H0']
-            else:
-                raise ValueError("H0 must be provided if Omega_b0 and Omega_cdm0 are provided.")
-            self.h = self.H0 / 100
-            self.Omega_m0 = self.Omega_cdm0 + self.Omega_b0 + self.mnu / 93.14 / (self.h) ** 2
-        else:
-            raise ValueError("Either small omega's or Omega_b0 and Omega_cdm0 must be provided.")
+        densities = resolve_background_densities(
+            lambda z: get_de_density(
+                z, self.zbin_edges, self.zbin_widths, self.zbin_centers, self.w_i
+            ),
+            H0=cosmology_dict.get("H0"),
+            Omega_b0=cosmology_dict.get("Omega_b0"),
+            Omega_cdm0=cosmology_dict.get("Omega_cdm0"),
+            Omega_k0=cosmology_dict.get("Omega_k0", 0.0),
+            mnu=cosmology_dict.get("mnu", 0.06),
+            nnu=cosmology_dict.get("nnu", 3.044),
+            Omch2=cosmology_dict.get("Omch2"),
+            Ombh2=cosmology_dict.get("Ombh2"),
+            cosmomc_theta=cosmology_dict.get("cosmomc_theta"),
+        )
+        self.H0 = densities["H0"]
+        self.h = densities["h"]
+        self.Omega_b0 = densities["Omega_b0"]
+        self.Omega_cdm0 = densities["Omega_cdm0"]
+        self.Omega_m0 = densities["Omega_m0"]
+        self.Omega_k0 = densities["Omega_k0"]
+        self.mnu = densities["mnu"]
+        self.nnu = densities["nnu"]
+        self.As = cosmology_dict["As"]
+        self.ns = cosmology_dict["ns"]
+        if "Omch2" in cosmology_dict:
+            self.Omch2 = cosmology_dict["Omch2"]
+        if "Ombh2" in cosmology_dict:
+            self.Ombh2 = cosmology_dict["Ombh2"]
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
@@ -315,9 +240,22 @@ class DEBinnedEoSBackground:
             "Unsupported units for hubble_parameter. Choose '1/Mpc' or 'km/s/Mpc'."
         )
 
+    def _expansion(self, zs: np.ndarray) -> np.ndarray:
+        """E(z) = H(z)/H0 from the analytic binned-w dark-energy density."""
+        de = get_de_density(
+            zs, self.zbin_edges, self.zbin_widths, self.zbin_centers, self.w_i
+        )
+        return np.sqrt(self.Omega_m0 * (1.0 + zs) ** 3 + (1.0 - self.Omega_m0) * de)
+
     def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
         Return the comoving distance as a function of redshift.
+
+        The integral is the same one previously evaluated with ``scipy.quad``
+        on each redshift step. It is now a 16-point Gauss–Legendre rule on
+        panels split at the ``w`` bin edges (and capped at width 2), which
+        matches that quadrature to its own tolerance. Repeated calls with the
+        same redshifts reuse the result.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -325,29 +263,34 @@ class DEBinnedEoSBackground:
         Returns:
             np.ndarray: Comoving distance values.
         """
+        zs = np.asarray(zs, dtype=float)
+        key = (zs.shape, np.ascontiguousarray(zs).tobytes())
+        cached = getattr(self, "_comoving_cache", None)
+        if cached is not None and cached[0] == key:
+            return cached[1].copy()
 
-        def r_z_int(z):
-            return 1.0 / np.sqrt(
-                self.Omega_m0 * pow(1.0 + z, 3)
-                + (1 - self.Omega_m0)
-                * get_de_density_i(
-                    z, self.zbin_edges, self.zbin_widths, self.zbin_centers, self.w_i
-                )
-            )
-
-        zz_ = np.hstack(([0.0], zs)) if zs[0] != 0.0 else zs
-        r_z_grid = (
-            np.array(
-                [
-                    quad(r_z_int, zz_[i], zz_[i + 1])[0] / self.H0
-                    for i in range(len(zz_) - 1)
-                ]
-            )
-            * SPEED_OF_LIGHT
-            / 1000
-        )  # Mpc
-        r_z_total = np.cumsum(r_z_grid)
-        return r_z_total
+        z_max = float(np.max(zs)) if zs.size else 0.0
+        breaks = self.zbin_edges[(self.zbin_edges > 0.0) & (self.zbin_edges < z_max)]
+        nodes = np.unique(np.concatenate((np.array([0.0]), np.ravel(zs), breaks)))
+        pieces = [nodes[0]]
+        for left, right in zip(nodes[:-1], nodes[1:]):
+            n_panel = int(np.ceil((right - left) / _CHI_PANEL))
+            pieces.extend(np.linspace(left, right, n_panel + 1)[1:])
+        nodes = np.asarray(pieces)
+        left, right = nodes[:-1], nodes[1:]
+        half = 0.5 * (right - left)
+        mid = 0.5 * (right + left)
+        z = mid[:, None] + half[:, None] * _CHI_GL_X
+        inv_e = 1.0 / self._expansion(z)
+        chi_nodes = np.cumsum(half * (inv_e @ _CHI_GL_W)) * (
+            SPEED_OF_LIGHT / 1000.0
+        ) / self.H0
+        index = np.searchsorted(nodes, zs)
+        chi = np.zeros(zs.shape, dtype=float)
+        positive = index > 0
+        chi[positive] = chi_nodes[index[positive] - 1]
+        self._comoving_cache = (key, chi)
+        return chi.copy()
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """

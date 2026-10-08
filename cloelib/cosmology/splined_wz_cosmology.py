@@ -4,6 +4,10 @@
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.cosmology.cosmology import Perturbations
+from cloelib.cosmology.theta_h0 import (
+    resolve_background_densities,
+    theta_to_H0 as _theta_to_H0,
+)
 
 # General imports
 import numpy as np
@@ -44,13 +48,52 @@ def w_of_z(z, z_i, w_i):
 
 def get_de_density(z, z_i, w_i):
     """
-    Optimized version using pre-computation and vectorization.
+    Dark-energy density from the splined equation of state.
+
+    The integral is anchored at the first redshift sample. A scalar redshift,
+    including the ``Omega_m(0)`` call from the lensing kernel, is treated as a
+    one-point sample so ``f_DE`` there is 1.
     """
-    z = np.asarray(z)
+    z = np.asarray(z, dtype=float)
+    scalar = z.ndim == 0
+    z = np.atleast_1d(z)
     w_grid = np.asarray(w_of_z(z, z_i, w_i), dtype=float)
     de_integrand = (1.0 + w_grid) / (1.0 + z)
     de_int = cumulative_trapezoid(de_integrand, z, initial=0.0)
-    return np.exp(3.0 * de_int)
+    rho = np.exp(3.0 * de_int)
+    if scalar:
+        return rho[0]
+    return rho
+
+
+def theta_to_H0(
+    theta,
+    omch2,
+    ombh2,
+    z_i,
+    w_i,
+    omega_k=0.0,
+    mnu=0.06,
+    TCMB=2.7255,
+    nnu=3.044,
+    h0_bracket=(50.0, 90.0),
+):
+    """H0 in km/s/Mpc for this splined ``w(z)``, given ``theta = r_s / D_M(z_*)``.
+
+    ``w(z)`` is held at ``w_i[0]`` below the first node and at ``w_i[-1]`` above
+    the last, so the nodes should cover the redshifts out to last scattering.
+    """
+    return _theta_to_H0(
+        theta,
+        omch2,
+        ombh2,
+        lambda z: get_de_density(z, z_i, w_i),
+        omega_k=omega_k,
+        mnu=mnu,
+        TCMB=TCMB,
+        nnu=nnu,
+        h0_bracket=h0_bracket,
+    )
 
 
 class DESplinedEoSBackground:
@@ -58,41 +101,52 @@ class DESplinedEoSBackground:
 
     def __init__(
         self,
-        H0: float,
-        Omega_b0: float,
-        Omega_cdm0: float,
-        Omega_k0: float,
-        As: float,
-        ns: float,
-        mnu: float,
-        z_i: np.ndarray, 
+        cosmology_dict: dict,
+        z_i: np.ndarray,
         w_i: np.ndarray,
     ) -> None:
         """
-        Initialize the CAMBBackground instance with cosmological parameters.
+        Initialize the background.
+
+        ``cosmology_dict`` supplies ``Omega_b0``, ``Omega_cdm0`` and ``H0``, or
+        ``Omch2``, ``Ombh2`` together with ``H0`` or CosmoMC's ``cosmomc_theta``
+        (``100 theta_*``). Small omegas take precedence when both sets are
+        supplied. ``cosmomc_theta`` is converted to ``H0`` with this spline in
+        ``w(z)``.
 
         Args:
-            H0 (float): Hubble parameter in [km/s/Mpc].
-            Omega_b0 (float): Baryonic matter density parameter.
-            Omega_cdm0 (float): Cold dark matter density parameter.
-            Omega_k0(float): Curvature density parameter.
-            As (float): Scalar amplitude of primordial fluctuations.
-            ns (float): Scalar spectral index.
-            mnu (float): Total sum of neutrino mass in [eV].
-            z_i (np.ndarray): Array of redshift values for the spline.
-            w_i (np.ndarray): Array of equation of state parameters for the redshift bins.
+            cosmology_dict (dict): Cosmological parameters.
+            z_i (np.ndarray): Redshift knots of the spline.
+            w_i (np.ndarray): ``w`` at those knots.
         """
-        self.H0 = H0
-        self.h = self.H0 / 100
-        self.Omega_b0 = Omega_b0
-        self.Omega_cdm0 = Omega_cdm0
-        self.Omega_k0 = Omega_k0
-        self.As = As
-        self.ns = ns
-        self.mnu = mnu
-        self.Omega_m0 = Omega_cdm0 + Omega_b0 + self.mnu / 93.14 / (self.h) ** 2
         self.z_i = z_i
         self.w_i = w_i
+        densities = resolve_background_densities(
+            lambda z: get_de_density(z, self.z_i, self.w_i),
+            H0=cosmology_dict.get("H0"),
+            Omega_b0=cosmology_dict.get("Omega_b0"),
+            Omega_cdm0=cosmology_dict.get("Omega_cdm0"),
+            Omega_k0=cosmology_dict.get("Omega_k0", 0.0),
+            mnu=cosmology_dict.get("mnu", 0.06),
+            nnu=cosmology_dict.get("nnu", 3.044),
+            Omch2=cosmology_dict.get("Omch2"),
+            Ombh2=cosmology_dict.get("Ombh2"),
+            cosmomc_theta=cosmology_dict.get("cosmomc_theta"),
+        )
+        self.H0 = densities["H0"]
+        self.h = densities["h"]
+        self.Omega_b0 = densities["Omega_b0"]
+        self.Omega_cdm0 = densities["Omega_cdm0"]
+        self.Omega_m0 = densities["Omega_m0"]
+        self.Omega_k0 = densities["Omega_k0"]
+        self.mnu = densities["mnu"]
+        self.nnu = densities["nnu"]
+        self.As = cosmology_dict["As"]
+        self.ns = cosmology_dict["ns"]
+        if "Omch2" in cosmology_dict:
+            self.Omch2 = cosmology_dict["Omch2"]
+        if "Ombh2" in cosmology_dict:
+            self.Ombh2 = cosmology_dict["Ombh2"]
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

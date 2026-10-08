@@ -9,6 +9,7 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import cached_stacked_simpson
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.observables.photo.contributions import CB, MATTER
 
 # General imports
 import jax.numpy as np
@@ -123,12 +124,21 @@ class GalaxyBiasContribution:
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
 
+    @property
+    def field(self) -> str:
+        """Galaxies trace cb with `use_Pcb=True`, the total matter otherwise."""
+        return CB if self._tracer.use_Pcb else MATTER
+
     def compute_kernel(self, z):
         return self._tracer.get_window_positions(z)
 
 
 class MagnificationContribution:
-    """Magnification-bias kernel term of `PositionsTracer.get_window()`."""
+    """Magnification-bias kernel term of `PositionsTracer.get_window()`.
+
+    Lensing by the total matter, so it traces `MATTER` even with
+    `use_Pcb=True` (the default `field`).
+    """
 
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer

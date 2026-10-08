@@ -164,6 +164,34 @@ def test_gr_limit_nonlinear(monkeypatch, zs):
 
 
 # --------------------------------------------------------------------------- #
+# Perturbations protocol surface (Linear and NonLinear)
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("mode", ["single", "multi"])
+def test_perturbations_protocol_surface(monkeypatch, zs, mode):
+    """Both Linear and NonLinear expose the full Perturbations API with the
+    documented shapes: matter_power_spectrum(_cb), growth_factor, growth_rate
+    ((nz,) without ks and (nz, nk) with ks), sigma8_0 and Sigma."""
+    if mode == "single":
+        params = mg.MGParams(mu=1.05, eta=1.05, bin_index=2)
+    else:
+        params = mg.MGParams(
+            mu=1.05 * np.ones(mg.N_BINS), eta=1.05 * np.ones(mg.N_BINS)
+        )
+    Lin, NonLin = _build(monkeypatch, params, boost=1.1)
+    lp = Lin(_bg(), zs)
+    nlp = NonLin(_bg(), None, zs)
+    k = np.array([0.05, 0.1, 0.2])
+    for p in (lp, nlp):
+        assert p.matter_power_spectrum(zs, k).shape == (zs.size, k.size)
+        assert p.matter_power_spectrum_cb(zs, k).shape == (zs.size, k.size)
+        assert p.growth_factor(zs, k).shape == (zs.size, k.size)
+        assert p.growth_rate(zs).shape == (zs.size,)  # ks=None -> (nz,)
+        assert p.growth_rate(zs, k).shape == (zs.size, k.size)  # ks given -> (nz, nk)
+        assert np.isfinite(p.sigma8_0())
+        assert p.Sigma(zs).shape == (zs.size,)
+
+
+# --------------------------------------------------------------------------- #
 # Redshift clamp (B = 1 above the active bin's upper edge)
 # --------------------------------------------------------------------------- #
 def test_redshift_clamp_single_bin(monkeypatch):

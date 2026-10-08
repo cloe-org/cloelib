@@ -494,9 +494,9 @@ nonlinear MG power spectrum is obtained by boosting a fast LCDM emulator
 - Scale-independent growth rate \(f(z)\) and \(\sigma_8\) from an internally-built
   linear MG \(P(k)\); GR limit recovered to machine precision (no regridding);
 - Mutable `MGParams` holder for injecting sampled \(\mu, \eta\) each likelihood call;
-- Emulators are **downloaded on first use from the extended-cosmologies Zenodo
-  record** and cached locally, mirroring `CosmoPowerJAXPerturbations` (no local
-  model directory needed);
+- Emulators are **downloaded on first use from the Euclid-DR1-matter-emulators
+  GitHub repository** and cached locally, mirroring `CosmoPowerJAXPerturbations`
+  (no local model directory needed);
 
 **Example**:
 
@@ -512,9 +512,6 @@ Lin, NonLin = mg_perturbations(
 )
 # in the sampling wrapper, before each loglike:  mg.mu, mg.eta = ...
 ```
-
-`binned_mg_perturbations` (single-bin) and `multibin_mg_perturbations` (multi-bin)
-are kept as aliases of `mg_perturbations` for backwards compatibility.
 
 **Emulator ranges** (enforced; predictions outside raise `ValueError`):
 

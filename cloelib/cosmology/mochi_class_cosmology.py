@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using MOCHI_CLASS (https://github.com/mcataneo/mochi_class_public)."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 import sys
 
@@ -427,7 +427,7 @@ class mochiCLASSBackground:
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the matter density as a function of redshift.
 
@@ -668,20 +668,34 @@ class mochiCLASSLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self, k=1.0) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
-        Calculate the scale-dependent growth rate f(z).
+        Calculate the scale-dependent growth rate f(z, k).
 
         Args:
-            k (float): Wavenumber at which to evaluate the growth rate. Defaults to 1.0 (scale-independent).
+            zs (Optional[np.ndarray]): Redshifts at which to evaluate the growth rate.
+                Defaults to `self.z`.
+            ks (Optional[np.ndarray]): Wavenumbers at which to evaluate the growth rate.
 
         Returns:
         -------
         np.ndarray
-            Scale-dependent growth rate f(z)
+            Growth rate f(z) at k = 1 Mpc^-1 with shape (nz,) if ks is None,
+            and f(z, k) with shape (nz, nk) otherwise.
         """
-        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]
-        return np.array(arr)
+        z = self.z if zs is None else np.atleast_1d(zs)
+        if ks is None:
+            return np.array(
+                [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in z]
+            )
+        return np.array(
+            [
+                [self.results.scale_dependent_growth_factor_f(ki, zi) for ki in ks]
+                for zi in z
+            ]
+        )
 
     def sigma8_0(self) -> float:
         """
@@ -707,7 +721,7 @@ class mochiCLASSNonLinearPerturbations:
     def __init__(
         self,
         background: mochiCLASSBackground,
-        linearperturbations: Optional[object],
+        linearperturbations: Optional[Perturbations],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         hmcode_version: Optional[str] = None,
@@ -721,13 +735,42 @@ class mochiCLASSNonLinearPerturbations:
                 nonlinear corrections internally; accepted for interface compatibility with
                 emulator-based NonLinPerturbations classes).
             redshifts (np.ndarray): Array of redshifts for the calculations.
-            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
-            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
-            log10TAGN (Optional[float]): HMCode baryonic feedback log_10_T_AGN parameter. Defaults to None.
+            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None
+                (no nonlinear), or "hmcode" if `log10TAGN` is given.
+            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None,
+                or "2020_baryonic_feedback" if `log10TAGN` is given.
+            log10TAGN (Optional[float]): HMcode2020 baryonic feedback parameter
+                log10(T_AGN/K), passed to CLASS as `log10T_heat_hmcode`. Defaults to None
+                (no baryonic feedback, or the CLASS default for "2020_baryonic_feedback").
+
+        Raises:
+            ValueError: If `log10TAGN` is given with a nonlinear model or HMcode version
+                that ignores it, or with `background.mg_stable_basis_on`.
         """
         self.background = background
         self.z = redshifts
         self.kmax = 100
+
+        if log10TAGN is not None:
+            if background.mg_stable_basis_on:
+                raise ValueError(
+                    "log10TAGN is not supported with mg_stable_basis_on, for which "
+                    "mochi_class does not implement nonlinear corrections."
+                )
+            if nonlinear_model is None:
+                nonlinear_model = "hmcode"
+            if hmcode_version is None:
+                hmcode_version = "2020_baryonic_feedback"
+            if (nonlinear_model, hmcode_version) != (
+                "hmcode",
+                "2020_baryonic_feedback",
+            ):
+                raise ValueError(
+                    "log10TAGN is only used by nonlinear_model='hmcode' with "
+                    "hmcode_version='2020_baryonic_feedback', got "
+                    f"nonlinear_model={nonlinear_model!r}, "
+                    f"hmcode_version={hmcode_version!r}."
+                )
 
         if nonlinear_model is None:
             nonlinear_model = "none"
@@ -749,13 +792,8 @@ class mochiCLASSNonLinearPerturbations:
             )
         elif hmcode_version is not None:
             self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
-            if hmcode_version == "2020_baryonic_feedback":
-                try:
-                    self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
-                except KeyError:
-                    raise KeyError(
-                        "log10TAGN is required for HMcode 2020 baryonic feedback model."
-                    )
+            if log10TAGN is not None:
+                self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
@@ -859,20 +897,34 @@ class mochiCLASSNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self, k=1.0) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
-        Calculate the scale-dependent growth rate f(z).
+        Calculate the scale-dependent growth rate f(z, k).
 
         Args:
-            k (float): Wavenumber at which to evaluate the growth rate. Defaults to 1.0 (scale-independent).
+            zs (Optional[np.ndarray]): Redshifts at which to evaluate the growth rate.
+                Defaults to `self.z`.
+            ks (Optional[np.ndarray]): Wavenumbers at which to evaluate the growth rate.
 
         Returns:
         -------
         np.ndarray
-            Scale-dependent growth rate f(z)
+            Growth rate f(z) at k = 1 Mpc^-1 with shape (nz,) if ks is None,
+            and f(z, k) with shape (nz, nk) otherwise.
         """
-        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]
-        return np.array(arr)
+        z = self.z if zs is None else np.atleast_1d(zs)
+        if ks is None:
+            return np.array(
+                [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in z]
+            )
+        return np.array(
+            [
+                [self.results.scale_dependent_growth_factor_f(ki, zi) for ki in ks]
+                for zi in z
+            ]
+        )
 
     def sigma8_0(self) -> float:
         """

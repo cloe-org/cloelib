@@ -265,6 +265,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ytchang05"><img src="https://avatars.githubusercontent.com/u/67809413?v=4?s=100" width="100px;" alt="Yu-Ting"/><br /><sub><b>Yu-Ting</b></sub></a><br /><a href="#code-ytchang05" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ptallada"><img src="https://avatars.githubusercontent.com/u/2226268?v=4?s=100" width="100px;" alt="Pau Tallada Crespí"/><br /><sub><b>Pau Tallada Crespí</b></sub></a><br /><a href="#ideas-ptallada" title="Ideas, Planning, & Feedback">🤔</a> <a href="#code-ptallada" title="Code">💻</a> <a href="#bug-ptallada" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://lshuns.github.io/"><img src="https://avatars.githubusercontent.com/u/41175095?v=4?s=100" width="100px;" alt="Shun-Sheng Li"/><br /><sub><b>Shun-Sheng Li</b></sub></a><br /><a href="#code-lshuns" title="Code">💻</a> <a href="#bug-lshuns" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/amandinelebrun"><img src="https://avatars.githubusercontent.com/u/10905968?v=4?s=100" width="100px;" alt="amandinelebrun"/><br /><sub><b>amandinelebrun</b></sub></a><br /><a href="#review-amandinelebrun" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
 </table>

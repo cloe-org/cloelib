@@ -97,7 +97,7 @@ class CMBLensingTracer:
             \frac{f_K\left[\tilde{r}(z_*) - \tilde{r}(z)\right]}
             {f_K\left[\tilde{r}(z_*)\right]}\\
         $$
-        
+
         Parameters
         ----------
         z: float

@@ -7,7 +7,9 @@ follow the package structure directly.
 
 from pathlib import Path
 
-PACKAGE_ROOT = Path(__file__).resolve().parents[2]  # repository root (this file lives in docs/hooks/)
+PACKAGE_ROOT = (
+    Path(__file__).resolve().parents[2]
+)  # repository root (this file lives in docs/hooks/)
 API_PAGES = {"api.md"}
 
 

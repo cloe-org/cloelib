@@ -80,7 +80,7 @@ hooks:
   - docs/hooks/api_toc.py
 
 exclude_docs: hooks
-  
+
 markdown_extensions:
   - admonition
   - pymdownx.details

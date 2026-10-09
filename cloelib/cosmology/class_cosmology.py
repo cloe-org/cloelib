@@ -489,7 +489,9 @@ class CLASSNonLinearPerturbations:
         self.results.compute()
         # GFA, I added this line in order to retrieve the wavenumber grid (in 1/Mpc) used by CLASS to compute Pk
         _, self.k, _ = self.results.get_pk_and_k_and_z(
-            nonlinear=True, only_clustering_species=False, h_units=False
+            nonlinear=nonlinear_model != "none",
+            only_clustering_species=False,
+            h_units=False,
         )
 
     def matter_power_spectrum(

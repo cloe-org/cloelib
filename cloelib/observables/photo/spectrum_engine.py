@@ -27,6 +27,7 @@ from typing import Callable, Dict, Optional, Sequence
 
 import jax.numpy as jnp
 
+from cloelib.auxiliary.math_utils import safe_sqrt
 from cloelib.observables.photo.contributions import CB, MATTER
 
 
@@ -49,17 +50,6 @@ class SpectrumRequest:
 
     name: str
     compute: Callable[..., jnp.ndarray]
-
-
-def _safe_sqrt(x):
-    """`sqrt` with a finite gradient at (and below) zero.
-
-    `jax.grad` of `sqrt(x)` is `inf` at `x = 0`, which turns into NaNs once
-    multiplied by a zero cotangent. The double-`where` keeps both the value
-    and the gradient finite where `x <= 0` (value and gradient set to 0).
-    """
-    positive = x > 0
-    return jnp.where(positive, jnp.sqrt(jnp.where(positive, x, 1.0)), 0.0)
 
 
 class SpectraBank:
@@ -151,13 +141,13 @@ class SpectraBank:
         """
         perturbations = self._require_perturbations("the cb x matter spectrum")
         if getattr(perturbations, "linearperturbations", None) is None:
-            return _safe_sqrt(self._spectrum("P_cb") * self._spectrum("P_mm"))
+            return safe_sqrt(self._spectrum("P_cb") * self._spectrum("P_mm"))
         background = perturbations.background
         f_cb = jnp.squeeze(background.Omega_cb(0.0)) / jnp.squeeze(
             background.Omega_m(0.0)
         )
         Pcb_l = self._spectrum("P_cb_lin")
-        return f_cb * (self._spectrum("P_cb") - Pcb_l) + _safe_sqrt(
+        return f_cb * (self._spectrum("P_cb") - Pcb_l) + safe_sqrt(
             Pcb_l * self._spectrum("P_mm_lin")
         )
 

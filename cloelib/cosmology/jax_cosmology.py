@@ -750,7 +750,9 @@ class JAXLinearPerturbations:
         """
         pk = self.matter_power_spectrum(zs, ks, hubble_units, k_hunit)
         ratio = self._cb_to_matter_ratio(zs, ks, k_hunit)
-        return pk * jnp.reshape(ratio, jnp.shape(pk))
+        # `matter_power_spectrum` squeezes its output; restore the
+        # (len(zs), len(ks)) shape so a single redshift keeps its z axis.
+        return jnp.reshape(pk, jnp.shape(ratio)) * ratio
 
     def _unnormalized_growth_factor(self, zs: jnp.ndarray) -> jnp.ndarray:
         """Growth factor normalised to `D = a` deep in matter domination."""

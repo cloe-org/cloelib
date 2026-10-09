@@ -54,6 +54,7 @@ from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
     Contribution,
+    contribution_field,
 )
 from cloelib.observables.photo.spectrum_engine import (
     SpectraBank,
@@ -533,6 +534,11 @@ class TATTContribution(IntrinsicAlignmentContribution):
         this contribution's full TATT terms rather than assuming both sides
         are identical.
 
+        The `P_dd(z,k)` terms use the base spectrum of the fields the two
+        sides trace (`bank.base`): `P_mm` against IA or lensing, the cb x
+        matter cross spectrum against the galaxy-bias term of a
+        `PositionsTracer(use_Pcb=True)`.
+
         Returns `None` (defers to the plain matter Pk) only if this call is
         somehow reached with neither side being IA-like, which shouldn't
         happen given `get_requirements_for_interaction`.
@@ -540,7 +546,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
         zs = bank.zs
         d4 = self._D4(zs)[:, None]
         c1_self = self._C1(zs)
-        matter_pk = bank.matter_pk
+        matter_pk = bank.base(contribution_field(self), contribution_field(other))
 
         def _kernel(name):
             return bank.get(

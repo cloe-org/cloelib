@@ -307,20 +307,15 @@ class JAXBackground:
         Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
 
         Args:
-            zs (jnp.ndarray): Array of redshifts.
+            zs (jnp.ndarray): Array of redshifts. A bare Python/JAX scalar
+                is also accepted (returns a scalar), as for `Omega_m`.
 
         Returns:
             jnp.ndarray: Matter density values (no neutrinos).
         """
+        zs = jnp.asarray(zs)
         _Omega_m_use = self.Omega_b0 + self.Omega_cdm0
-        return jnp.array(
-            [
-                (_Omega_m_use)
-                * (1 + z) ** 3
-                / (self.hubble_parameter(z) / self.H0) ** 2
-                for z in zs
-            ]
-        )
+        return _Omega_m_use * (1 + zs) ** 3 / (self.hubble_parameter(zs) / self.H0) ** 2
 
     def w_a(self, a):
         """Write documentation (TODO)."""
@@ -746,8 +741,92 @@ class JAXLinearPerturbations:
         pk: array_like
             Linear matter power spectrum at the specified scale
             and redshift
+
+        Notes
+        -----
+        `P_cb = P_mm (D_cb / D_cbnu)^2`, with the scale-dependent growth of
+        cb and of the total matter in the presence of massive neutrinos
+        from Eisenstein & Hu 1999 (see `_cb_to_matter_ratio`).
         """
-        raise NotImplementedError("Not implemented for jax.")
+        pk = self.matter_power_spectrum(zs, ks, hubble_units, k_hunit)
+        ratio = self._cb_to_matter_ratio(zs, ks, k_hunit)
+        # `matter_power_spectrum` squeezes its output; restore the
+        # (len(zs), len(ks)) shape so a single redshift keeps its z axis.
+        return jnp.reshape(pk, jnp.shape(ratio)) * ratio
+
+    def _unnormalized_growth_factor(self, zs: jnp.ndarray) -> jnp.ndarray:
+        """Growth factor normalised to `D = a` deep in matter domination."""
+        atab = jnp.logspace(-3.0, 0.0, 128)
+        y0 = jnp.array([atab[0], 1.0])
+
+        def fn(x, y):
+            return self.D_derivs(x, y)
+
+        y = odeint(fn, y0, atab)
+        return interp(a_z(jnp.atleast_1d(zs)), atab, y[:, 0])
+
+    def _cb_to_matter_ratio(
+        self, zs: jnp.ndarray, ks: jnp.ndarray, k_hunit=False
+    ) -> jnp.ndarray:
+        r"""Ratio `P_cb / P_mm = (D_cb / D_cbnu)^2` from Eisenstein & Hu 1999.
+
+        With `q = k \Theta_{2.7}^2 / (\Omega_m h^2 {\rm Mpc}^{-1})`, the
+        free-streaming parameter
+        `y_fs = 17.2 f_nu (1 + 0.488 f_nu^{-7/6}) (N_nu q / f_nu)^2` and
+        `p_cb = (5 - sqrt(1 + 24 f_cb)) / 4` (EH99 Eqs. 5, 11, 14),
+
+        $$
+            D_{cb} = \left[1 + \left(\frac{D_1}{1 + y_{fs}}\right)^{0.7}
+                \right]^{p_{cb}/0.7} D_1^{1 - p_{cb}}, \quad
+            D_{cb\nu} = \left[f_{cb}^{0.7/p_{cb}} + \left(\frac{D_1}{1 + y_{fs}}
+                \right)^{0.7}\right]^{p_{cb}/0.7} D_1^{1 - p_{cb}}
+        $$
+
+        (EH99 Eqs. 12-13), where `D_1` is the growth factor of the total
+        matter normalised to `(1 + z_eq) a` in matter domination. `D_1` is
+        taken from the growth ODE of `growth_factor` rather than EH99's
+        LCDM fit (Eq. 10), so it follows `w0`/`wa`. `N_nu` is the number of
+        degenerate massive species, `N_mnu` (at least 1).
+
+        Without massive neutrinos the ratio is exactly 1; the `jnp.where`
+        guards keep values and gradients finite in that limit.
+
+        Args:
+            zs (array_like): Redshifts.
+            ks (array_like): Wavenumbers, in 1/Mpc (h/Mpc if `k_hunit`).
+            k_hunit (bool): Whether `ks` is in h/Mpc.
+
+        Returns:
+            jnp.ndarray: The ratio, shape `(len(zs), len(ks))`.
+        """
+        bg = self.background
+        zs = jnp.atleast_1d(zs)
+        ks = jnp.atleast_1d(ks)
+        k_mpc = ks * bg.h if k_hunit else ks
+
+        theta2 = (2.726 / 2.7) ** 2
+        om_h2 = bg.Omega_m0 * bg.h**2
+        z_eq = 2.50e4 * om_h2 / theta2**2  # EH99 Eq. 1
+        q = k_mpc * theta2 / om_h2
+
+        f_nu = bg.Omega_nu0 / bg.Omega_m0
+        has_nu = f_nu > 0.0
+        f_nu_safe = jnp.where(has_nu, f_nu, 1e-2)
+        f_cb_safe = 1.0 - f_nu_safe
+        n_nu = max(bg.N_mnu, 1)
+
+        y_fs = (
+            17.2
+            * f_nu_safe
+            * (1.0 + 0.488 * f_nu_safe ** (-7.0 / 6.0))
+            * (n_nu * q / f_nu_safe) ** 2
+        )
+        p_cb = (5.0 - jnp.sqrt(1.0 + 24.0 * f_cb_safe)) / 4.0
+        D1 = (1.0 + z_eq) * self._unnormalized_growth_factor(zs)
+        x = (D1[:, None] / (1.0 + y_fs[None, :])) ** 0.7
+        # D_cb / D_cbnu: the common D1^(1 - p_cb) factor cancels.
+        ratio = ((1.0 + x) / (f_cb_safe ** (0.7 / p_cb) + x)) ** (2.0 * p_cb / 0.7)
+        return jnp.where(has_nu, ratio, 1.0)
 
 
 class JAXNonLinearPerturbations:
@@ -969,10 +1048,35 @@ class JAXNonLinearPerturbations:
         Returns
         -------
         pk: numpy.ndarray
-            Linear matter power spectrum at the specified scale
+            Non-linear cb power spectrum at the specified scale
             and redshift
+
+        Notes
+        -----
+        Massive neutrinos are assumed to stay linear (as in HMcode2020), so
+        all the non-linear power of the total matter comes from cb,
+        `P_mm^NL - P_mm^L = f_cb^2 (P_cb^NL - P_cb^L)`:
+
+        $$
+            P_{cb}^{NL} = P_{cb}^{L} + \frac{P_{mm}^{NL} - P_{mm}^{L}}{f_{cb}^2}
+        $$
+
+        with `f_cb = Omega_cb0 / Omega_m0`, `P_mm^NL` from halofit and
+        `P_cb^L` from `JAXLinearPerturbations.matter_power_spectrum_cb`.
+        It goes to `P_cb^L` on linear scales.
         """
-        raise NotImplementedError("Not implemented for jax.")
+        pk_nl = self.matter_power_spectrum(zs, ks, hubble_units, k_hunit)
+        shape = jnp.shape(pk_nl)
+        linear = self.linearperturbations
+        pk_l = jnp.reshape(
+            linear.matter_power_spectrum(zs, ks, hubble_units, k_hunit), shape
+        )
+        pk_cb_l = jnp.reshape(
+            linear.matter_power_spectrum_cb(zs, ks, hubble_units, k_hunit), shape
+        )
+        bg = self.background
+        f_cb = (bg.Omega_b0 + bg.Omega_cdm0) / bg.Omega_m0
+        return pk_cb_l + (pk_nl - pk_l) / f_cb**2
 
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""

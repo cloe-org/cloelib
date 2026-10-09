@@ -49,6 +49,7 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import cached_stacked_simpson
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.contributions import IntrinsicAlignmentContribution
 from cloelib.observables.photo.spectrum_engine import (
     PkTerm,
@@ -186,12 +187,21 @@ class GalaxyBiasContribution:
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
 
+    @property
+    def field(self) -> str:
+        """Galaxies trace cb with `use_Pcb=True`, the total matter otherwise."""
+        return CB if self._tracer.use_Pcb else MATTER
+
     def compute_kernel(self, z):
         return self._tracer.get_window_positions(z)
 
 
 class MagnificationContribution:
-    """Magnification-bias kernel term of `PositionsTracer.get_window()`."""
+    """Magnification-bias kernel term of `PositionsTracer.get_window()`.
+
+    Lensing by the total matter, so it traces `MATTER` even with
+    `use_Pcb=True` (the default `field`).
+    """
 
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
@@ -640,6 +650,7 @@ class PositionsTracer:
         galaxy_bias_model: str,
         nuisance_params: dict,
         include_rsd: bool = False,
+        use_Pcb: bool = False,
         nl_bias_loop_computer: NonlinearBiasLoopComputer | None = None,
     ):
         r"""
@@ -665,6 +676,8 @@ class PositionsTracer:
             see `NonLinearGalaxyBiasContribution`'s docstring for what it
             does and does not support).
           nuisance_params (dict): A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
+          include_rsd (bool): A flag indicating whether to include redshift-space distortions in the calculations.
+          use_Pcb (bool): A flag indicating whether to use the power spectrum of cold dark matter + baryons (no neutrinos).
           nl_bias_loop_computer: required when `galaxy_bias_model="nonlinear"`
             (raises `ValueError` if omitted) - `NonLinearGalaxyBiasContribution`'s
             one-loop kernel backend. Pass
@@ -702,6 +715,7 @@ class PositionsTracer:
             for i in range(dndz.shape[0])
         ]
         self.include_rsd = include_rsd
+        self.use_Pcb = use_Pcb
 
         # Using dict.get so I can provide a default since lax has to compile every branch of the conditional
         def per_bin_case():

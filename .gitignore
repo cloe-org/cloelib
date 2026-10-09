@@ -82,3 +82,5 @@ jax_cache/
 *.jpg
 *.pdf
 *.xml
+cloelib/cosmology/emulator-data-jax
+tests/validation_data

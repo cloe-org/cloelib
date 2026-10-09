@@ -237,3 +237,14 @@ def simps(f, a, b, N=128):
     y = f(x)
     S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
     return S
+
+
+def safe_sqrt(x):
+    """`sqrt` with a finite gradient at (and below) zero.
+
+    `jax.grad` of `sqrt(x)` is `inf` at `x = 0`, which turns into NaNs once
+    multiplied by a zero cotangent. The double-`where` keeps both the value
+    and the gradient finite where `x <= 0` (value and gradient set to 0).
+    """
+    positive = x > 0
+    return jnp.where(positive, jnp.sqrt(jnp.where(positive, x, 1.0)), 0.0)

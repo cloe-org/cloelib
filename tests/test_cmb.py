@@ -138,3 +138,64 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
     assert ("CMBL", "SHE", 1, 1) in cells_reverse.keys()
     assert cells_reverse[("CMBL", "POS", 1, 1)].shape == (nl,)
     assert cells_reverse[("CMBL", "SHE", 1, 1)].shape == (2, nl)
+
+
+class _WithSigma:
+    """Proxy adding a redshift-dependent MG lensing parameter Sigma(z) to a backend."""
+
+    def __init__(self, perturbations, sigma):
+        self._perturbations = perturbations
+        self._sigma = sigma
+
+    def __getattr__(self, name):
+        return getattr(self._perturbations, name)
+
+    def Sigma(self, z):
+        return self._sigma(z)
+
+
+def test_sigma_scales_all_lensing_kernels(camb_cmb_setup):
+    """Sigma(z) multiplies the magnification-bias and CMB-lensing kernels exactly as
+    it does the shear kernel; without Sigma the kernels are unchanged (Sigma = 1)."""
+    perturbations, z_auto, z_cross, dndz = camb_cmb_setup
+    sigma = lambda z: 1.0 + 0.05 * np.asarray(z)  # noqa: E731
+    nuisance_pos = {
+        "b1_photo_bin1": 1.0,
+        "dz_pos_1": 0.0,
+        "width_pos_1": 1.0,
+        "magnification_bias_1": 0.5,
+    }
+    nuisance_shear = {
+        "AIA": 0.0,
+        "CIA": 0.0,
+        "EtaIA": 0.0,
+        "multiplicative_bias_1": 0.0,
+        "dz_shear_1": 0.0,
+        "width_shear_1": 1.0,
+    }
+    gr = perturbations
+    mg = _WithSigma(perturbations, sigma)
+
+    pos_gr = PositionsTracer(gr, dndz, z_cross, "per_bin", nuisance_pos)
+    pos_mg = PositionsTracer(mg, dndz, z_cross, "per_bin", nuisance_pos)
+    np.testing.assert_allclose(
+        np.asarray(pos_mg.get_window_magnification(z_cross)),
+        np.asarray(pos_gr.get_window_magnification(z_cross)) * sigma(z_cross)[None, :],
+        rtol=1e-10,
+    )
+
+    cmb_gr = CMBLensingTracer(gr, z_auto)
+    cmb_mg = CMBLensingTracer(mg, z_auto)
+    np.testing.assert_allclose(
+        np.asarray(cmb_mg.get_window(z_auto)),
+        np.asarray(cmb_gr.get_window(z_auto)) * sigma(z_auto)[None, :],
+        rtol=1e-10,
+    )
+
+    shear_gr = ShearTracer(gr, dndz, z_cross, nuisance_shear, ia_model="NLA")
+    shear_mg = ShearTracer(mg, dndz, z_cross, nuisance_shear, ia_model="NLA")
+    np.testing.assert_allclose(
+        np.asarray(shear_mg.get_window_lensing(z_cross)),
+        np.asarray(shear_gr.get_window_lensing(z_cross)) * sigma(z_cross)[None, :],
+        rtol=1e-10,
+    )

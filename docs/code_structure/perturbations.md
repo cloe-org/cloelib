@@ -544,7 +544,8 @@ nonlinear MG power spectrum is obtained by boosting a fast LCDM emulator
 
 - Emulator-based MG boost applied to any external LCDM `Perturbations` solver;
 - Provides the modified lensing parameter \(\Sigma(z) = \mu(1+\eta)/2\) (a step
-  function over the redshift bins) that `photo.py` applies to the WL kernel;
+  function over the redshift bins), applied to every lensing kernel: cosmic shear,
+  magnification bias and CMB lensing (`photo.shear`, `photo.positions`, `cmb`);
 - Scale-independent growth rate \(f(z)\) and \(\sigma_8\) from an internally-built
   linear MG \(P(k)\); GR limit recovered to machine precision (no regridding);
 - Mutable `MGParams` holder for injecting sampled \(\mu, \eta\) each likelihood call;

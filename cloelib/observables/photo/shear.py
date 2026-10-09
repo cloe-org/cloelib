@@ -54,6 +54,7 @@ from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
     Contribution,
+    unit_sigma,
 )
 from cloelib.observables.photo.spectrum_engine import (
     SpectraBank,
@@ -72,11 +73,6 @@ from scipy import interpolate as _scipy_interpolate
 
 # UNITS
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
-
-
-def _unit_sigma(z):
-    """Default MG lensing parameter Sigma(z) = 1 for GR / LCDM perturbations."""
-    return np.ones_like(z)
 
 
 # Same convention: SPEED_OF_LIGHT is in m/s.
@@ -873,7 +869,7 @@ class ShearTracer:
         )
         efficiency = self.get_lensing_efficiency(z)
         # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.
-        Sigma = getattr(self.perturbations, "Sigma", _unit_sigma)(z)
+        Sigma = getattr(self.perturbations, "Sigma", unit_sigma)(z)
         return np.einsum("ij, j->ij", efficiency, factor) * Sigma[np.newaxis, :]
 
     def get_window(self, z):

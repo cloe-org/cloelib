@@ -2,11 +2,19 @@
 
 The emulators predict the modified-gravity boost B(k, z) = P_MG(k, z) / P_LCDM(k, z),
 applied on top of an external LCDM baseline (another cloelib Perturbations object)
-as P_MG = B * P_LCDM on the baseline k-grid, so that mu = eta = 1 returns LCDM exactly.
-mu and eta are read from a mutable MGParams holder and either modify a single redshift
-bin (bin_index an int) or all bins at once (bin_index None); the matching emulators are
-downloaded on first use. eta has no nonlinear effect and enters only through
-the lensing parameter Sigma = mu(1 + eta)/2.
+as P_MG = B * P_LCDM on the baseline k-grid (no regridding), so that mu = eta = 1
+recovers the baseline up to the boost emulators' own residual at GR (|B - 1| below
+3e-4 for k <= 1 h/Mpc, up to 2.5e-3 at k ~ 10 h/Mpc for the nonlinear multi-bin
+emulator). mu and eta are read from a mutable MGParams holder and either modify a
+single redshift bin (bin_index an int) or all bins at once (bin_index None); the
+matching emulators are downloaded on first use. eta has no nonlinear effect and
+enters only through the lensing parameter Sigma = mu(1 + eta)/2, which every
+lensing kernel (cosmic shear, magnification bias, CMB lensing) applies.
+
+The implementation lives in the module-level ``MGLinearPerturbations`` and
+``MGNonLinearPerturbations`` classes, which are checked statically against the
+``Perturbations`` protocol; ``mg_perturbations`` returns subclasses with the MG
+parameters and the LCDM baseline classes bound as class attributes.
 """
 
 # cloelib imports
@@ -296,6 +304,270 @@ def _sigma_of_z(zs, mu, eta, bin_index):
     return sigma
 
 
+class MGLinearPerturbations:
+    """Linear modified-gravity perturbations: linear boost times LCDM baseline.
+
+    The sampled parameters and the LCDM baseline are bound through the class
+    attributes ``mg_params`` and ``baseline_linear``; ``mg_perturbations`` returns
+    a subclass with them set. Defined at module level so the ``Perturbations``
+    protocol is checked statically (``tests/typing/perturbations_conformance.py``).
+    """
+
+    #: Holder read at instantiation for the sampled mu and eta.
+    mg_params: MGParams
+    #: LCDM linear perturbation class, e.g. ``CosmoPowerJAXLCDMPerturbations.Linear``.
+    baseline_linear: type
+
+    def __init__(self, background, redshifts):
+        """Initialize the Linear instance."""
+        assert background.Omega_k0 == 0, "Non-flat geometries not supported"
+        self.background = background
+        self.h = background.H0 / 100.0
+        self.z = np.atleast_1d(np.asarray(redshifts, dtype=float))
+        self.bin_index = self.mg_params.bin_index
+        self.mu, self.eta = self.mg_params.mu, self.mg_params.eta
+        self._base = self.baseline_linear(background, self.z)
+        self._boost = _boost_spline(
+            _load_emu("linear", self.bin_index),
+            background,
+            self.mu,
+            self.eta,
+            self.z,
+            z_top=_z_top(self.bin_index),
+        )
+        self.k = np.asarray(self._base.k)  # baseline (wide) grid
+
+    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+        """Compute the linear modified-gravity matter power spectrum.
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            pk (numpy.ndarray): Linear matter power spectrum (boost times LCDM baseline).
+        """
+        return self._boost(zs, ks / self.h) * np.asarray(
+            self._base.matter_power_spectrum(zs, ks)
+        )
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        """Compute the linear CDM+baryon matter power spectrum.
+
+        The boost is applied to the baseline CDM+baryon spectrum, matching
+        the COLA spectra the boost emulators were trained on.
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            pk (numpy.ndarray): Linear CDM+baryon power spectrum (boost times LCDM baseline).
+        """
+        return self._boost(zs, ks / self.h) * np.asarray(
+            self._base.matter_power_spectrum_cb(zs, ks)
+        )
+
+    def growth_factor(self, zs, ks) -> np.ndarray:
+        """Compute the linear growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            (numpy.ndarray): The growth factor.
+        """
+        return np.sqrt(
+            self.matter_power_spectrum(zs, ks) / self.matter_power_spectrum(0.0, ks)
+        )
+
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
+        """Compute the scale-independent growth rate f(z) = -(1 + z) dlnD/dz.
+
+        f is computed on ``self.z`` from the linear modified-gravity power
+        spectrum, then interpolated to ``zs`` and broadcast over ``ks``.
+
+        Args:
+            zs (Optional[numpy.ndarray]): Redshifts. Defaults to the instance grid.
+            ks (Optional[numpy.ndarray]): Wavenumbers used to broadcast f.
+
+        Returns:
+            (numpy.ndarray): The growth rate, with shape (nz,) if ks is None
+                and (nz, nk) otherwise.
+        """
+        k_ref = 0.05  # Mpc^-1, linear & sub-horizon
+        pk0 = np.ravel(self.matter_power_spectrum(0.0, k_ref))[0]
+        D = np.sqrt(self.matter_power_spectrum(self.z, k_ref).flatten() / pk0)
+        f = -(1.0 + self.z) * np.gradient(np.log(D), self.z)
+        return growth_rate_on_redshifts(self.z, f, zs, ks)
+
+    def sigma8_0(self) -> float:
+        """Compute sigma8 at z=0 from the linear modified-gravity power spectrum.
+
+        Returns:
+            float: The rms matter fluctuation sigma8.
+        """
+        pk0 = self.matter_power_spectrum(0.0, self.k).flatten()
+        return _sigma8(self.k, pk0, self.h)
+
+    def Sigma(self, zs) -> np.ndarray:
+        """Compute the modified lensing parameter Sigma(z) = mu(1 + eta)/2.
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+
+        Returns:
+            (numpy.ndarray): Sigma(z), non-GR in the active bin(s) and one elsewhere.
+        """
+        return _sigma_of_z(zs, self.mu, self.eta, self.bin_index)
+
+
+class MGNonLinearPerturbations:
+    """Nonlinear modified-gravity perturbations: nonlinear boost times LCDM baseline.
+
+    Bound through the class attributes ``mg_params``, ``baseline_linear`` and
+    ``baseline_nonlinear``; see ``MGLinearPerturbations``.
+    """
+
+    #: Holder read at instantiation for the sampled mu and eta.
+    mg_params: MGParams
+    #: LCDM linear perturbation class, used for the growth rate and sigma8.
+    baseline_linear: type
+    #: LCDM nonlinear perturbation class, e.g. ``CosmoPowerJAXLCDMPerturbations.NonLinear``.
+    baseline_nonlinear: type
+
+    def __init__(self, background, linearperturbations, redshifts, log10TAGN=None):
+        """Initialize the NonLinear instance."""
+        assert background.Omega_k0 == 0, "Non-flat geometries not supported"
+        self.background = background
+        # Retained for downstream consumers that need the *linear* P(k) back
+        # from a tracer's (nonlinear) `perturbations` - same attribute/pattern
+        # as HMcode2020Emu, EE2, BACCOemu, Emantis, JAX and CosmoPower-JAX.
+        self.linearperturbations = linearperturbations
+        self.h = background.H0 / 100.0
+        self.z = np.atleast_1d(np.asarray(redshifts, dtype=float))
+        self.bin_index = self.mg_params.bin_index
+        self.mu, self.eta = self.mg_params.mu, self.mg_params.eta
+
+        base_lin = self.baseline_linear(background, self.z)
+        self._base_nl = self.baseline_nonlinear(
+            background, base_lin, self.z, log10TAGN=log10TAGN
+        )
+        self._base_lin = base_lin
+        z_top = _z_top(self.bin_index)
+        self._boost_nl = _boost_spline(
+            _load_emu("nonlinear", self.bin_index),
+            background,
+            self.mu,
+            self.eta,
+            self.z,
+            z_top=z_top,
+        )
+        self._boost_lin = _boost_spline(
+            _load_emu("linear", self.bin_index),
+            background,
+            self.mu,
+            self.eta,
+            self.z,
+            z_top=z_top,
+        )
+        self.k = np.asarray(self._base_nl.k)  # wide grid -> full Limber support
+
+    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+        """Compute the nonlinear modified-gravity matter power spectrum.
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            pk (numpy.ndarray): Nonlinear matter power spectrum (boost times LCDM baseline).
+        """
+        return self._boost_nl(zs, ks / self.h) * np.asarray(
+            self._base_nl.matter_power_spectrum(zs, ks)
+        )
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        """Compute the nonlinear CDM+baryon matter power spectrum.
+
+        The boost is applied to the baseline CDM+baryon spectrum, matching
+        the COLA spectra the boost emulators were trained on.
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            pk (numpy.ndarray): Nonlinear CDM+baryon power spectrum (boost times LCDM baseline).
+        """
+        return self._boost_nl(zs, ks / self.h) * np.asarray(
+            self._base_nl.matter_power_spectrum_cb(zs, ks)
+        )
+
+    def _pk_lin(self, zs, ks):
+        """Linear modified-gravity power spectrum, used for growth and sigma8.
+
+        Built from the linear boost and the LCDM linear baseline, independent
+        of the ``linearperturbations`` argument passed to the constructor.
+        """
+        return self._boost_lin(zs, ks / self.h) * np.asarray(
+            self._base_lin.matter_power_spectrum(zs, ks)
+        )
+
+    def growth_factor(self, zs, ks) -> np.ndarray:
+        """Compute the linear growth factor from the linear modified-gravity P(k).
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            (numpy.ndarray): The growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
+        """
+        return np.sqrt(self._pk_lin(zs, ks) / self._pk_lin(0.0, ks))
+
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
+        """Compute the scale-independent growth rate f(z) = -(1 + z) dlnD/dz.
+
+        f is computed on ``self.z`` from the linear modified-gravity power
+        spectrum, then interpolated to ``zs`` and broadcast over ``ks``.
+
+        Args:
+            zs (Optional[numpy.ndarray]): Redshifts. Defaults to the instance grid.
+            ks (Optional[numpy.ndarray]): Wavenumbers used to broadcast f.
+
+        Returns:
+            (numpy.ndarray): The growth rate, with shape (nz,) if ks is None
+                and (nz, nk) otherwise.
+        """
+        k_ref = 0.05  # Mpc^-1, linear & sub-horizon
+        pk_lin_ref_0 = np.ravel(self._pk_lin(0.0, k_ref))[0]
+        D = np.sqrt(self._pk_lin(self.z, k_ref).flatten() / pk_lin_ref_0)
+        f = -(1.0 + self.z) * np.gradient(np.log(D), self.z)
+        return growth_rate_on_redshifts(self.z, f, zs, ks)
+
+    def sigma8_0(self) -> float:
+        """Compute sigma8 at z=0 from the linear modified-gravity power spectrum.
+
+        Returns:
+            float: The rms matter fluctuation sigma8.
+        """
+        k = np.asarray(self._base_lin.k)
+        return _sigma8(k, self._pk_lin(0.0, k).flatten(), self.h)
+
+    def Sigma(self, zs) -> np.ndarray:
+        """Compute the modified lensing parameter Sigma(z) = mu(1 + eta)/2.
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+
+        Returns:
+            (numpy.ndarray): Sigma(z), non-GR in the active bin(s) and one elsewhere.
+        """
+        return _sigma_of_z(zs, self.mu, self.eta, self.bin_index)
+
+
 def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
     """Build the modified-gravity Linear and NonLinear perturbation classes.
 
@@ -312,247 +584,18 @@ def mg_perturbations(mg_params, baseline_linear, baseline_nonlinear) -> tuple:
             ``CosmoPowerJAXLCDMPerturbations.NonLinear``.
 
     Returns:
-        tuple: The ``(Linear, NonLinear)`` modified-gravity perturbation classes.
+        tuple: The ``(Linear, NonLinear)`` modified-gravity perturbation classes,
+            subclasses of ``MGLinearPerturbations`` / ``MGNonLinearPerturbations``
+            with the arguments bound as class attributes.
     """
 
-    class Linear:
-        """Linear modified-gravity perturbations: linear boost times LCDM baseline."""
+    class Linear(MGLinearPerturbations):
+        """Linear modified-gravity perturbations bound to ``mg_params``."""
 
-        def __init__(self, background, redshifts):
-            """Initialize the Linear instance."""
-            assert background.Omega_k0 == 0, "Non-flat geometries not supported"
-            self.background = background
-            self.h = background.H0 / 100.0
-            self.z = np.atleast_1d(np.asarray(redshifts, dtype=float))
-            self.bin_index = mg_params.bin_index
-            self.mu, self.eta = mg_params.mu, mg_params.eta
-            self._base = baseline_linear(background, self.z)
-            self._boost = _boost_spline(
-                _load_emu("linear", self.bin_index),
-                background,
-                self.mu,
-                self.eta,
-                self.z,
-                z_top=_z_top(self.bin_index),
-            )
-            self.k = np.asarray(self._base.k)  # baseline (wide) grid
+    class NonLinear(MGNonLinearPerturbations):
+        """Nonlinear modified-gravity perturbations bound to ``mg_params``."""
 
-        def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-            """Compute the linear modified-gravity matter power spectrum.
-
-            Args:
-                zs (numpy.ndarray): Redshifts.
-                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
-
-            Returns:
-                pk (numpy.ndarray): Linear matter power spectrum (boost times LCDM baseline).
-            """
-            return self._boost(zs, ks / self.h) * np.asarray(
-                self._base.matter_power_spectrum(zs, ks)
-            )
-
-        def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
-            """Compute the linear CDM+baryon matter power spectrum.
-
-            The boost is applied to the baseline CDM+baryon spectrum, matching
-            the COLA spectra the boost emulators were trained on.
-
-            Args:
-                zs (numpy.ndarray): Redshifts.
-                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
-
-            Returns:
-                pk (numpy.ndarray): Linear CDM+baryon power spectrum (boost times LCDM baseline).
-            """
-            return self._boost(zs, ks / self.h) * np.asarray(
-                self._base.matter_power_spectrum_cb(zs, ks)
-            )
-
-        def growth_factor(self, zs, ks) -> np.ndarray:
-            """Compute the linear growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
-
-            Args:
-                zs (numpy.ndarray): Redshifts.
-                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
-
-            Returns:
-                (numpy.ndarray): The growth factor.
-            """
-            return np.sqrt(
-                self.matter_power_spectrum(zs, ks) / self.matter_power_spectrum(0.0, ks)
-            )
-
-        def growth_rate(self, zs=None, ks=None) -> np.ndarray:
-            """Compute the scale-independent growth rate f(z) = -(1 + z) dlnD/dz.
-
-            f is computed on ``self.z`` from the linear modified-gravity power
-            spectrum, then interpolated to ``zs`` and broadcast over ``ks``.
-
-            Args:
-                zs (Optional[numpy.ndarray]): Redshifts. Defaults to the instance grid.
-                ks (Optional[numpy.ndarray]): Wavenumbers used to broadcast f.
-
-            Returns:
-                (numpy.ndarray): The growth rate, with shape (nz,) if ks is None
-                    and (nz, nk) otherwise.
-            """
-            k_ref = 0.05  # Mpc^-1, linear & sub-horizon
-            pk0 = np.ravel(self.matter_power_spectrum(0.0, k_ref))[0]
-            D = np.sqrt(self.matter_power_spectrum(self.z, k_ref).flatten() / pk0)
-            f = -(1.0 + self.z) * np.gradient(np.log(D), self.z)
-            return growth_rate_on_redshifts(self.z, f, zs, ks)
-
-        def sigma8_0(self) -> float:
-            """Compute sigma8 at z=0 from the linear modified-gravity power spectrum.
-
-            Returns:
-                float: The rms matter fluctuation sigma8.
-            """
-            pk0 = self.matter_power_spectrum(0.0, self.k).flatten()
-            return _sigma8(self.k, pk0, self.h)
-
-        def Sigma(self, zs) -> np.ndarray:
-            """Compute the modified lensing parameter Sigma(z) = mu(1 + eta)/2.
-
-            Args:
-                zs (numpy.ndarray): Redshifts.
-
-            Returns:
-                (numpy.ndarray): Sigma(z), non-GR in the active bin(s) and one elsewhere.
-            """
-            return _sigma_of_z(zs, self.mu, self.eta, self.bin_index)
-
-    class NonLinear:
-        """Nonlinear modified-gravity perturbations: nonlinear boost times LCDM baseline."""
-
-        def __init__(self, background, linearperturbations, redshifts, log10TAGN=None):
-            """Initialize the NonLinear instance."""
-            assert background.Omega_k0 == 0, "Non-flat geometries not supported"
-            self.background = background
-            # Retained for downstream consumers that need the *linear* P(k) back
-            # from a tracer's (nonlinear) `perturbations` - same attribute/pattern
-            # as HMcode2020Emu, EE2, BACCOemu, Emantis, JAX and CosmoPower-JAX.
-            self.linearperturbations = linearperturbations
-            self.h = background.H0 / 100.0
-            self.z = np.atleast_1d(np.asarray(redshifts, dtype=float))
-            self.bin_index = mg_params.bin_index
-            self.mu, self.eta = mg_params.mu, mg_params.eta
-
-            base_lin = baseline_linear(background, self.z)
-            self._base_nl = baseline_nonlinear(
-                background, base_lin, self.z, log10TAGN=log10TAGN
-            )
-            self._base_lin = base_lin
-            z_top = _z_top(self.bin_index)
-            self._boost_nl = _boost_spline(
-                _load_emu("nonlinear", self.bin_index),
-                background,
-                self.mu,
-                self.eta,
-                self.z,
-                z_top=z_top,
-            )
-            self._boost_lin = _boost_spline(
-                _load_emu("linear", self.bin_index),
-                background,
-                self.mu,
-                self.eta,
-                self.z,
-                z_top=z_top,
-            )
-            self.k = np.asarray(self._base_nl.k)  # wide grid -> full Limber support
-
-        def matter_power_spectrum(self, zs, ks) -> np.ndarray:
-            """Compute the nonlinear modified-gravity matter power spectrum.
-
-            Args:
-                zs (numpy.ndarray): Redshifts.
-                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
-
-            Returns:
-                pk (numpy.ndarray): Nonlinear matter power spectrum (boost times LCDM baseline).
-            """
-            return self._boost_nl(zs, ks / self.h) * np.asarray(
-                self._base_nl.matter_power_spectrum(zs, ks)
-            )
-
-        def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
-            """Compute the nonlinear CDM+baryon matter power spectrum.
-
-            The boost is applied to the baseline CDM+baryon spectrum, matching
-            the COLA spectra the boost emulators were trained on.
-
-            Args:
-                zs (numpy.ndarray): Redshifts.
-                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
-
-            Returns:
-                pk (numpy.ndarray): Nonlinear CDM+baryon power spectrum (boost times LCDM baseline).
-            """
-            return self._boost_nl(zs, ks / self.h) * np.asarray(
-                self._base_nl.matter_power_spectrum_cb(zs, ks)
-            )
-
-        def _pk_lin(self, zs, ks):
-            """Linear modified-gravity power spectrum, used for growth and sigma8.
-
-            Built from the linear boost and the LCDM linear baseline, independent
-            of the ``linearperturbations`` argument passed to the constructor.
-            """
-            return self._boost_lin(zs, ks / self.h) * np.asarray(
-                self._base_lin.matter_power_spectrum(zs, ks)
-            )
-
-        def growth_factor(self, zs, ks) -> np.ndarray:
-            """Compute the linear growth factor from the linear modified-gravity P(k).
-
-            Args:
-                zs (numpy.ndarray): Redshifts.
-                ks (numpy.ndarray): Wavenumbers in Mpc^-1.
-
-            Returns:
-                (numpy.ndarray): The growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
-            """
-            return np.sqrt(self._pk_lin(zs, ks) / self._pk_lin(0.0, ks))
-
-        def growth_rate(self, zs=None, ks=None) -> np.ndarray:
-            """Compute the scale-independent growth rate f(z) = -(1 + z) dlnD/dz.
-
-            f is computed on ``self.z`` from the linear modified-gravity power
-            spectrum, then interpolated to ``zs`` and broadcast over ``ks``.
-
-            Args:
-                zs (Optional[numpy.ndarray]): Redshifts. Defaults to the instance grid.
-                ks (Optional[numpy.ndarray]): Wavenumbers used to broadcast f.
-
-            Returns:
-                (numpy.ndarray): The growth rate, with shape (nz,) if ks is None
-                    and (nz, nk) otherwise.
-            """
-            k_ref = 0.05  # Mpc^-1, linear & sub-horizon
-            pk_lin_ref_0 = np.ravel(self._pk_lin(0.0, k_ref))[0]
-            D = np.sqrt(self._pk_lin(self.z, k_ref).flatten() / pk_lin_ref_0)
-            f = -(1.0 + self.z) * np.gradient(np.log(D), self.z)
-            return growth_rate_on_redshifts(self.z, f, zs, ks)
-
-        def sigma8_0(self) -> float:
-            """Compute sigma8 at z=0 from the linear modified-gravity power spectrum.
-
-            Returns:
-                float: The rms matter fluctuation sigma8.
-            """
-            k = np.asarray(self._base_lin.k)
-            return _sigma8(k, self._pk_lin(0.0, k).flatten(), self.h)
-
-        def Sigma(self, zs) -> np.ndarray:
-            """Compute the modified lensing parameter Sigma(z) = mu(1 + eta)/2.
-
-            Args:
-                zs (numpy.ndarray): Redshifts.
-
-            Returns:
-                (numpy.ndarray): Sigma(z), non-GR in the active bin(s) and one elsewhere.
-            """
-            return _sigma_of_z(zs, self.mu, self.eta, self.bin_index)
-
+    Linear.mg_params = NonLinear.mg_params = mg_params
+    Linear.baseline_linear = NonLinear.baseline_linear = baseline_linear
+    NonLinear.baseline_nonlinear = baseline_nonlinear
     return Linear, NonLinear

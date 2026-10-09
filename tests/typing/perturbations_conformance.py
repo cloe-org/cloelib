@@ -74,6 +74,10 @@ from cloelib.cosmology.cosmopower_jax_cosmology import (
     CosmoPowerJAXw0waRunningIndexPerturbations,
     CosmoPowerJAXwCDMPerturbations,
 )
+from cloelib.cosmology.mg_cosmopower_jax_cosmology import (
+    MGLinearPerturbations,
+    MGNonLinearPerturbations,
+)
 
 
 # Copies of `Perturbations` without one member. Their member names are kept in
@@ -126,6 +130,8 @@ def backgrounds(
 
 
 def perturbations(
+    mg_lin: MGLinearPerturbations,
+    mg_nl: MGNonLinearPerturbations,
     camb_lin: CAMBLinearPerturbations,
     camb_nl: CAMBNonLinearPerturbations,
     class_lin: CLASSLinearPerturbations,
@@ -160,6 +166,9 @@ def perturbations(
     _mochi_nl: Perturbations = mochi_nl
     _hmemu_lin: Perturbations = hmemu_lin
     _hmemu_nl: Perturbations = hmemu_nl
+    # The MG boost classes are module-level bases bound by `mg_perturbations`.
+    _mg_lin: Perturbations = mg_lin
+    _mg_nl: Perturbations = mg_nl
     _bacco_lin: Perturbations = bacco_lin
     _bacco_nl: Perturbations = bacco_nl
     _ee2_nl: Perturbations = ee2_nl

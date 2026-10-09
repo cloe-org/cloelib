@@ -222,6 +222,25 @@ def test_cb_boosts_baseline_cb_spectrum(monkeypatch, zs):
     )
 
 
+def test_factory_returns_bound_module_level_classes(monkeypatch):
+    """`mg_perturbations` returns subclasses of the module-level
+    `MGLinearPerturbations` / `MGNonLinearPerturbations` (the classes checked
+    statically in `tests/typing/perturbations_conformance.py`) with the MG
+    parameters and baselines bound as class attributes."""
+    params = mg.MGParams(mu=1.02, eta=0.98, bin_index=1)
+    Lin, NonLin = _build(monkeypatch, params, boost=1.0)
+    assert issubclass(Lin, mg.MGLinearPerturbations)
+    assert issubclass(NonLin, mg.MGNonLinearPerturbations)
+    assert Lin.mg_params is params and NonLin.mg_params is params
+    assert Lin.baseline_linear is _FakeBaselineLinear
+    assert NonLin.baseline_linear is _FakeBaselineLinear
+    assert NonLin.baseline_nonlinear is _FakeBaselineNonLinear
+    # two factories with different holders must not share state
+    other = mg.MGParams(mu=1.05, eta=1.05, bin_index=3)
+    Lin2, _ = _build(monkeypatch, other, boost=1.0)
+    assert Lin2.mg_params is other and Lin.mg_params is params
+
+
 def test_nonlinear_retains_linearperturbations(monkeypatch, zs):
     """NonLinear keeps the linear perturbations it was built from, so PT-based
     consumers (e.g. the TATT loop computer) can recover the linear P(k)."""

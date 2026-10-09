@@ -524,8 +524,10 @@ Pure JAX implementation for automatic differentiation.
 
 Applies a CosmoPower-JAX modified-gravity **boost** \(B(k,z) = P*\mathrm{MG}/P*{\Lambda\mathrm{CDM}}\)
 as a multiplicative operator on top of an external LCDM baseline perturbation
-object, so that the GR limit (\(\mu = \eta = 1\)) reproduces the baseline spectrum
-exactly.
+object, so that the GR limit (\(\mu = \eta = 1\)) reproduces the baseline spectrum up
+to the boost emulators' own residual at GR (\(|B-1| \lesssim 3\times10^{-4}\) for
+\(k \le 1\,h/\mathrm{Mpc}\), up to \(2.5\times10^{-3}\) at \(k \sim 10\,h/\mathrm{Mpc}\) for the
+nonlinear multi-bin emulator); no regridding error is introduced.
 
 **Location**: `cloelib/cosmology/mg_cosmopower_jax_cosmology.py`
 
@@ -547,8 +549,12 @@ nonlinear MG power spectrum is obtained by boosting a fast LCDM emulator
   function over the redshift bins), applied to every lensing kernel: cosmic shear,
   magnification bias and CMB lensing (`photo.shear`, `photo.positions`, `cmb`);
 - Scale-independent growth rate \(f(z)\) and \(\sigma_8\) from an internally-built
-  linear MG \(P(k)\); GR limit recovered to machine precision (no regridding);
+  linear MG \(P(k)\); the boost is applied on the baseline k-grid, so the GR limit
+  is recovered up to the emulators' own residual (no regridding error);
 - Mutable `MGParams` holder for injecting sampled \(\mu, \eta\) each likelihood call;
+- Implemented in module-level `MGLinearPerturbations` / `MGNonLinearPerturbations`
+  (statically checked against the `Perturbations` protocol); `mg_perturbations`
+  returns subclasses with the MG parameters and LCDM baseline bound;
 - Emulators are **downloaded on first use from the Euclid-DR1-matter-emulators
   GitHub repository** and cached locally, mirroring `CosmoPowerJAXPerturbations`
   (no local model directory needed);

@@ -3,6 +3,17 @@ from typing import Protocol, TypeVar, Union
 import numpy as np
 import jax.numpy as jnp
 
+
+def unit_sigma(z):
+    """Default MG lensing parameter Sigma(z) = 1 for GR / LCDM perturbations.
+
+    Every lensing kernel (shear, magnification bias, CMB lensing) multiplies by
+    ``perturbations.Sigma(z)`` when the perturbations provide it, and by this
+    otherwise.
+    """
+    return jnp.ones_like(z)
+
+
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 

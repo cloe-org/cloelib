@@ -520,6 +520,76 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
 
+### MG CosmoPower-JAX boost perturbations
+
+Applies a CosmoPower-JAX modified-gravity **boost** \(B(k,z) = P*\mathrm{MG}/P*{\Lambda\mathrm{CDM}}\)
+as a multiplicative operator on top of an external LCDM baseline perturbation
+object, so that the GR limit (\(\mu = \eta = 1\)) reproduces the baseline spectrum up
+to the boost emulators' own residual at GR (\(|B-1| \lesssim 3\times10^{-4}\) for
+\(k \le 1\,h/\mathrm{Mpc}\), up to \(2.5\times10^{-3}\) at \(k \sim 10\,h/\mathrm{Mpc}\) for the
+nonlinear multi-bin emulator); no regridding error is introduced.
+
+**Location**: `cloelib/cosmology/mg_cosmopower_jax_cosmology.py`
+
+**When to use**: Phenomenological \(\mu(z), \eta(z)\) modified gravity where the
+nonlinear MG power spectrum is obtained by boosting a fast LCDM emulator
+(e.g. `CosmoPowerJAXLCDMPerturbations`) rather than solving MG directly.
+
+**Two modes**, selected by `MGParams.bin_index`:
+
+- **Single-bin** (`bin_index` is an int): \(\mu, \eta\) vary in one redshift bin
+  (per-bin emulators `mg-boost-{linear,nonlinear}-bin{0..4}.npz`);
+- **Multi-bin** (`bin_index=None`): \(\mu\) (and \(\eta\), linear only) vary in all
+  five bins simultaneously (joint emulators `mg-boost-{linear,nonlinear}-multibin.npz`).
+
+**Features**:
+
+- Emulator-based MG boost applied to any external LCDM `Perturbations` solver;
+- Provides the modified lensing parameter \(\Sigma(z) = \mu(1+\eta)/2\) (a step
+  function over the redshift bins), applied to every lensing kernel: cosmic shear,
+  magnification bias and CMB lensing (`photo.shear`, `photo.positions`, `cmb`);
+- Scale-independent growth rate \(f(z)\) and \(\sigma_8\) from an internally-built
+  linear MG \(P(k)\); the boost is applied on the baseline k-grid, so the GR limit
+  is recovered up to the emulators' own residual (no regridding error);
+- Mutable `MGParams` holder for injecting sampled \(\mu, \eta\) each likelihood call;
+- Implemented in module-level `MGLinearPerturbations` / `MGNonLinearPerturbations`
+  (statically checked against the `Perturbations` protocol); `mg_perturbations`
+  returns subclasses with the MG parameters and LCDM baseline bound;
+- Emulators are **downloaded on first use from the Euclid-DR1-matter-emulators
+  GitHub repository** and cached locally, mirroring `CosmoPowerJAXPerturbations`
+  (no local model directory needed);
+
+**Example**:
+
+```python
+import numpy as np
+from cloelib.cosmology.cosmopower_jax_cosmology import CosmoPowerJAXLCDMPerturbations as LCDM
+from cloelib.cosmology.mg_cosmopower_jax_cosmology import MGParams, mg_perturbations
+
+# single-bin (bin 4); use MGParams(mu=..., eta=...) with bin_index=None for multi-bin
+mg = MGParams(mu=1.0, eta=1.0, bin_index=4)
+Lin, NonLin = mg_perturbations(
+    mg, baseline_linear=LCDM.Linear, baseline_nonlinear=LCDM.NonLinear
+)
+# in the sampling wrapper, before each loglike:  mg.mu, mg.eta = ...
+```
+
+**Emulator ranges** (enforced; predictions outside raise `ValueError`):
+
+| Parameter           | Single-bin  | Multi-bin   |
+| ------------------- | ----------- | ----------- |
+| \(\Omega_m\)        | 0.25–0.35   | 0.25–0.40   |
+| \(\Omega_b\)        | 0.040–0.055 | 0.040–0.055 |
+| \(h\)               | 0.65–0.73   | 0.65–0.75   |
+| \(n_s\)             | 0.95–1.00   | 0.80–1.20   |
+| \(\ln(10^{10}A_s)\) | 2.996–3.091 | 2.944–3.219 |
+| \(\mu\) (per bin)   | 0.9–1.1     | 0.9–1.1     |
+| \(\eta\) (per bin)  | 0.9–1.1     | 0.9–1.1     |
+| \(z\)               | 0.01–3      | 0–3         |
+
+The \(z\) upper edge is enforced (and handled by the redshift clamp); the lower
+edge is not, so \(z = 0\) remains available for the growth/\(\sigma_8\) normalisation.
+
 ### MGCLASSPerturbations
 
 Interfaces with [MGCLASS](https://gitlab.com/zizgitlab/mgclass--ii).

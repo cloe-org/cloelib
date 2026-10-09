@@ -49,7 +49,10 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import cached_stacked_simpson
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
-from cloelib.observables.photo.contributions import IntrinsicAlignmentContribution
+from cloelib.observables.photo.contributions import (
+    IntrinsicAlignmentContribution,
+    unit_sigma,
+)
 from cloelib.observables.photo.spectrum_engine import (
     PkTerm,
     SpectraBank,
@@ -970,9 +973,12 @@ class PositionsTracer:
             * self.background.comoving_distance(z)
         )
         efficiency = self.get_magnification_efficiency(z)
+        # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.
+        Sigma = getattr(self.perturbations, "Sigma", unit_sigma)(z)
         return (
             np.einsum("ij, j->ij", efficiency, factor)
             * np.array(self.magnification_bias)[:, None]
+            * Sigma[np.newaxis, :]
         )
 
     def get_window(self, z) -> np.ndarray:

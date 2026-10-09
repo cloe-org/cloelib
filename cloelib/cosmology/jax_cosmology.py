@@ -486,8 +486,27 @@ class JAXLinearPerturbations:
         r = 1.5 * self.background.Omega_m_a(x) / x / x
         return jnp.array([y[1], -q * y[1] + r * y[0]])
 
-    def growth_factor(self, zs: jnp.ndarray, ks: Optional[jnp.ndarray] = None):
-        """Compute the growth factor."""
+    def growth_factor(
+        self, zs: jnp.ndarray, ks: Optional[jnp.ndarray] = None
+    ) -> jnp.ndarray:
+        """Evaluate the normalized, scale-independent linear growth factor.
+
+        The growth equation is integrated over a fixed grid of 128 scale
+        factors from ``1e-3`` to ``1``. The result is normalized to ``D(z=0)=1``
+        and linearly interpolated in scale factor at the requested redshifts.
+
+        Args:
+            zs (jnp.ndarray): One-dimensional array of redshifts at which to
+                evaluate the growth factor. Values are converted to scale
+                factors with ``a = 1 / (1 + z)``.
+            ks (Optional[jnp.ndarray]): Wavenumbers, accepted for compatibility
+                with the perturbations interface. Growth is scale-independent
+                in this implementation, so this argument is ignored.
+
+        Returns:
+            jnp.ndarray: JAX array of growth-factor values, with one value per
+                input redshift and the same shape as ``zs``.
+        """
         atab = jnp.logspace(-3.0, 0.0, 128)
 
         a_s = a_z(zs)
@@ -874,7 +893,20 @@ class JAXNonLinearPerturbations:
     def growth_factor(
         self, zs: jnp.ndarray, ks: Optional[jnp.ndarray] = None
     ) -> jnp.ndarray:
-        """Return the linear growth factor."""
+        """Return the linear growth factor from the wrapped linear backend.
+
+        Args:
+            zs (jnp.ndarray): One-dimensional array of redshifts at which to
+                evaluate the growth factor.
+            ks (Optional[jnp.ndarray]): Optional wavenumbers accepted for
+                interface compatibility. The JAX growth factor is
+                scale-independent, so this argument is ignored.
+
+        Returns:
+            jnp.ndarray: Growth-factor values from
+                ``linearperturbations.growth_factor(zs, ks)``, with one value
+                per input redshift.
+        """
         return self.linearperturbations.growth_factor(zs, ks)
 
     def growth_rate(

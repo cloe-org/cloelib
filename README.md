@@ -50,15 +50,18 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 
 `cloelib` interfaces with the following external codes, each used by a specific internal module for its calculations:
 
-| Background                                                    | Perturbations                                                                 | SpectroPower                                                       |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [camb](https://camb.readthedocs.io)                           | [camb](https://camb.readthedocs.io)                                           | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
-| [class](https://github.com/lesgourg/class_public)             | [class](https://github.com/lesgourg/class_public)                             | [pbjcosmo](https://chiaramoretti.gitlab.io/pbj/)                   |
-| [mochi_class](https://github.com/mcataneo/mochi_class_public) | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)            | NA                                                                 |
-| [mgclass](https://gitlab.com/zizgitlab/mgclass--ii)           | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                | NA                                                                 |
-| NA                                                            | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
-| NA                                                            | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
-| NA                                                            | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                         | NA                                                                 |
+| Background                                                    | Perturbations                                                                                   | SpectroPower                                                       |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [camb](https://camb.readthedocs.io)                           | [camb](https://camb.readthedocs.io)                                                             | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
+| [class](https://github.com/lesgourg/class_public)             | [class](https://github.com/lesgourg/class_public)                                               | [pbjcosmo](https://chiaramoretti.gitlab.io/pbj/)                   |
+| [mochi_class](https://github.com/mcataneo/mochi_class_public) | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)                              | NA                                                                 |
+| [mgclass](https://gitlab.com/zizgitlab/mgclass--ii)           | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                                  | NA                                                                 |
+| NA                                                            | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper)                   | NA                                                                 |
+| NA                                                            | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                                             | NA                                                                 |
+| NA                                                            | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                                           | NA                                                                 |
+| NA                                                            | [FlamingoBaryonResponseEmulator](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator) | NA                                                                 |
+
+We do not provide installation support for `PBJ`.
 
 <!-- --8<-- [end:supported-codes] -->
 
@@ -69,6 +72,8 @@ Several optional dependencies enhance **cloelib** capabilities:
 - **`pyinstrument`** – Time profiling for performance optimization
 - **`pylevin`**, **`mpmath`** – Required for specific observational probes (i.e: COSEBIs)
 - **`tensorflow`** – Needed for certain emulator backends (i.e: `HMCode2020emu`)
+- **`baccoemu`** – Required for BACCOemu nonlinear and baryonic perturbations
+- **`FlamingoBaryonResponseEmulator`** – Required for FLAMINGO baryonic suppression
 
 These are not included in the default installation but can be installed as shown below.
 
@@ -100,13 +105,13 @@ pip install .
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,mochi_classy]
+pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,mochi_classy,FlamingoBaryonResponseEmulator]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mochi_classy,mgclassy]"
+> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mochi_classy,mgclassy,FlamingoBaryonResponseEmulator]"
 > ```
 
 The `react` extra installs [`MGEmu`](https://github.com/nebblu/MGEmus.git) together with the TensorFlow support it needs for the ReACT modified-gravity boost module. If you only need that stack, `pip install ".[react,camb]"` is usually enough to get started.
@@ -195,7 +200,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/chiaramoretti"><img src="https://avatars.githubusercontent.com/u/12472732?v=4?s=100" width="100px;" alt="Chiara Moretti"/><br /><sub><b>Chiara Moretti</b></sub></a><br /><a href="#code-chiaramoretti" title="Code">💻</a> <a href="#maintenance-chiaramoretti" title="Maintenance">🚧</a> <a href="#ideas-chiaramoretti" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-chiaramoretti" title="Bug reports">🐛</a> <a href="#content-chiaramoretti" title="Content">🖋</a> <a href="#doc-chiaramoretti" title="Documentation">📖</a> <a href="#talk-chiaramoretti" title="Talks">📢</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AndreaPezzotta"><img src="https://avatars.githubusercontent.com/u/29603598?v=4?s=100" width="100px;" alt="AndreaPezzotta"/><br /><sub><b>AndreaPezzotta</b></sub></a><br /><a href="#code-AndreaPezzotta" title="Code">💻</a> <a href="#maintenance-AndreaPezzotta" title="Maintenance">🚧</a> <a href="#ideas-AndreaPezzotta" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-AndreaPezzotta" title="Bug reports">🐛</a> <a href="#content-AndreaPezzotta" title="Content">🖋</a> <a href="#data-AndreaPezzotta" title="Data">🔣</a> <a href="#doc-AndreaPezzotta" title="Documentation">📖</a> <a href="#talk-AndreaPezzotta" title="Talks">📢</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.cosmostat.org/people/santiago-casas"><img src="https://avatars.githubusercontent.com/u/6987716?v=4?s=100" width="100px;" alt="Santiago Casas"/><br /><sub><b>Santiago Casas</b></sub></a><br /><a href="#code-santiagocasas" title="Code">💻</a> <a href="#maintenance-santiagocasas" title="Maintenance">🚧</a> <a href="#ideas-santiagocasas" title="Ideas, Planning, & Feedback">🤔</a> <a href="#review-santiagocasas" title="Reviewed Pull Requests">👀</a> <a href="#bug-santiagocasas" title="Bug reports">🐛</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/PedroCarrilho"><img src="https://avatars.githubusercontent.com/u/60090062?v=4?s=100" width="100px;" alt="Pedro Carrilho"/><br /><sub><b>Pedro Carrilho</b></sub></a><br /><a href="#code-PedroCarrilho" title="Code">💻</a> <a href="#maintenance-PedroCarrilho" title="Maintenance">🚧</a> <a href="#ideas-PedroCarrilho" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-PedroCarrilho" title="Bug reports">🐛</a> <a href="#content-PedroCarrilho" title="Content">🖋</a> <a href="#data-PedroCarrilho" title="Data">🔣</a> <a href="#doc-PedroCarrilho" title="Documentation">📖</a> <a href="#talk-PedroCarrilho" title="Talks">📢</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/PedroCarrilho"><img src="https://avatars.githubusercontent.com/u/60090062?v=4?s=100" width="100px;" alt="Pedro Carrilho"/><br /><sub><b>Pedro Carrilho</b></sub></a><br /><a href="#code-PedroCarrilho" title="Code">💻</a> <a href="#maintenance-PedroCarrilho" title="Maintenance">🚧</a> <a href="#ideas-PedroCarrilho" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-PedroCarrilho" title="Bug reports">🐛</a> <a href="#content-PedroCarrilho" title="Content">🖋</a> <a href="#data-PedroCarrilho" title="Data">🔣</a> <a href="#doc-PedroCarrilho" title="Documentation">📖</a> <a href="#talk-PedroCarrilho" title="Talks">📢</a> <a href="#review-PedroCarrilho" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://ntessore.page"><img src="https://avatars.githubusercontent.com/u/3993688?v=4?s=100" width="100px;" alt="Nicolas Tessore"/><br /><sub><b>Nicolas Tessore</b></sub></a><br /><a href="#tool-ntessore" title="Tools">🔧</a> <a href="#mentoring-ntessore" title="Mentoring">🧑‍🏫</a> <a href="#code-ntessore" title="Code">💻</a> <a href="#review-ntessore" title="Reviewed Pull Requests">👀</a> <a href="#bug-ntessore" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://sfarrens.github.io"><img src="https://avatars.githubusercontent.com/u/6851839?v=4?s=100" width="100px;" alt="Samuel Farrens"/><br /><sub><b>Samuel Farrens</b></sub></a><br /><a href="#tool-sfarrens" title="Tools">🔧</a> <a href="#mentoring-sfarrens" title="Mentoring">🧑‍🏫</a> <a href="#code-sfarrens" title="Code">💻</a> <a href="#review-sfarrens" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/josecolomanadal"><img src="https://avatars.githubusercontent.com/u/83759085?v=4?s=100" width="100px;" alt="Jose Coloma Nadal"/><br /><sub><b>Jose Coloma Nadal</b></sub></a><br /><a href="#bug-josecolomanadal" title="Bug reports">🐛</a> <a href="#code-josecolomanadal" title="Code">💻</a> <a href="#ideas-josecolomanadal" title="Ideas, Planning, & Feedback">🤔</a> <a href="#review-josecolomanadal" title="Reviewed Pull Requests">👀</a></td>
@@ -260,6 +265,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ytchang05"><img src="https://avatars.githubusercontent.com/u/67809413?v=4?s=100" width="100px;" alt="Yu-Ting"/><br /><sub><b>Yu-Ting</b></sub></a><br /><a href="#code-ytchang05" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ptallada"><img src="https://avatars.githubusercontent.com/u/2226268?v=4?s=100" width="100px;" alt="Pau Tallada Crespí"/><br /><sub><b>Pau Tallada Crespí</b></sub></a><br /><a href="#ideas-ptallada" title="Ideas, Planning, & Feedback">🤔</a> <a href="#code-ptallada" title="Code">💻</a> <a href="#bug-ptallada" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://lshuns.github.io/"><img src="https://avatars.githubusercontent.com/u/41175095?v=4?s=100" width="100px;" alt="Shun-Sheng Li"/><br /><sub><b>Shun-Sheng Li</b></sub></a><br /><a href="#code-lshuns" title="Code">💻</a> <a href="#bug-lshuns" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/amandinelebrun"><img src="https://avatars.githubusercontent.com/u/10905968?v=4?s=100" width="100px;" alt="amandinelebrun"/><br /><sub><b>amandinelebrun</b></sub></a><br /><a href="#review-amandinelebrun" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
 </table>

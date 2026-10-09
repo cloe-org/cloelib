@@ -95,7 +95,7 @@ markdown_extensions:
   - pymdownx.snippets:
       base_path: ["."]
   - toc:
-      toc_depth: 4
+      toc_depth: 5
       permalink: true
   - pymdownx.arithmatex:
       generic: true
@@ -123,6 +123,7 @@ nav:
           - Tracer Protocol (Photometric): code_structure/observables/photo.md
           - Tracer Protocol (Gravitational-Wave): code_structure/observables/gw.md
           - SpectroPower Protocol (Spectroscopic): code_structure/observables/spectro.md
+          - HaloAbundance Protocol: code_structure/observables/halo_abundance.md
       - Summary Statistics:
           - Overview: code_structure/summary_statistics/index.md
           - Photometric Summary Statistics: code_structure/summary_statistics/photo.md

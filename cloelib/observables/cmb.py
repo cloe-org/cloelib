@@ -87,18 +87,17 @@ class CMBLensingTracer:
         return (self.convergence,)
 
     def get_window(self, z):
-        r"""Compute the Window.
+        r"""Computes CMB lensing window function
 
-        Computes CMB lensing window function
-
-        .. math::
+        $$
             W^{\kappa}(\ell, z, k) =
             \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
             \Omega_{{\rm m},0} (1 + z)
             f_K\left[\tilde{r}(z)\right]
             \frac{f_K\left[\tilde{r}(z_*) - \tilde{r}(z)\right]}
             {f_K\left[\tilde{r}(z_*)\right]}\\
-
+        $$
+        
         Parameters
         ----------
         z: float

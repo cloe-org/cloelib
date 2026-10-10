@@ -63,17 +63,37 @@ Calculate the linear growth factor D(z, k).
 
 Normalized such that D(z=0) ≈ 1 in matter-dominated era.
 
-#### `growth_rate(zs, ks=None)`
+#### `growth_rate(zs=None, ks=None)`
 
-Calculate the linear growth rate f(z) = d ln D / d ln a.
+Calculate the linear growth rate f(z) = d ln D / d ln a. Every implementation follows the same convention:
 
-For scale-independent models, `ks` can be `None`.
+- `zs=None` returns the growth rate on the redshift grid the instance was built on; otherwise it is evaluated at `zs`.
+- `ks=None` returns an array of shape `(nz,)`; otherwise an array of shape `(nz, nk)`. A scale-independent growth rate is broadcast along `k`.
+
+Scale-dependent implementations evaluate f(z, k) at the given `ks`. Without `ks`, hi_class and mochi_class use k = 1 Mpc⁻¹, while BACCOemu, which has no such default, raises a `ValueError`.
+
+MGCLASS computes the growth rate by finite differences on its redshift grid, so it needs to be built on at least 3 redshifts to provide it.
 
 #### `sigma8_0()`
 
 Compute σ₈ at redshift z=0.
 
 The RMS matter fluctuation in 8 Mpc/h spheres—a key cosmological parameter.
+
+### Constructors
+
+All implementations are built with the same keyword arguments, so they can be swapped without changing the calling code:
+
+```python
+lin = LinearPerturbations(background=bg, redshifts=zs)
+nonlin = NonLinearPerturbations(background=bg, linearperturbations=lin, redshifts=zs)
+```
+
+This is described by the `LinearPerturbationsFactory` and `NonLinearPerturbationsFactory` protocols in `cloelib.cosmology.cosmology`, which can be used to type a class passed around as a parameter. Their type parameters are the background and, for the nonlinear one, the linear perturbations the class is built from. For example, `NonLinearPerturbationsFactory[CAMBBackground, HMemuLinearPerturbations]` is satisfied by `HMemuNonLinearPerturbations`, while `NonLinearPerturbationsFactory[CAMBBackground, CAMBLinearPerturbations]` is not, since HMcode2020Emu needs the cached `Pk`/`Pk_cb` grid of its linear perturbations (`WithLinearSpectrumGrid`).
+
+Options specific to a backend (e.g. `nonlinear_model`) are passed as additional keyword arguments and are not part of these protocols. In particular, the HMcode2020 baryonic feedback parameter `log10TAGN` is accepted by the HMcode-based backends (CAMB, CLASS, mochi_class, HMcode2020Emu and CosmoPower-JAX). CAMB, CLASS and mochi_class select their HMcode2020 feedback model when `log10TAGN` is given without a nonlinear model, and raise a `ValueError` if the chosen model ignores it.
+
+Backends that compute the nonlinear spectrum themselves (CAMB, CLASS, hi_class, MGCLASS, mochi_class, CosmoPower-JAX) accept but do not use `linearperturbations`. `EmantisFofrNonLinearPerturbations` additionally requires the ΛCDM nonlinear perturbations and `fR0`.
 
 ## Existing Implementations
 
@@ -135,12 +155,18 @@ Interfaces with [CLASS](https://github.com/lesgourg/class_public).
 **Example**:
 
 ```python
-from cloelib.cosmology.class_cosmology import CLASSBackground, CLASSPerturbations
+from cloelib.cosmology.class_cosmology import (
+    CLASSBackground,
+    CLASSLinearPerturbations,
+    CLASSNonLinearPerturbations,
+)
 
 bg = CLASSBackground(...)
-pert = CLASSPerturbations(
-    background=bg,
-    # other parameters
+lin = CLASSLinearPerturbations(background=bg, redshifts=zs)
+
+# HMcode2020 with baryonic feedback, as with CAMB and HMcode2020Emu
+nonlin = CLASSNonLinearPerturbations(
+    background=bg, linearperturbations=lin, redshifts=zs, log10TAGN=7.8
 )
 ```
 
@@ -187,6 +213,44 @@ Accurate and fast emulators of the linear, non-linear, and baryonic power spectr
 - Inclusion of baryonic effects through baryonification;
 - Large cosmological parameter range;
 - Neural network evaluation with JAX;
+
+### FlamingoBaryonResponseEmulatorPerturbations
+
+CAMB nonlinear power spectrum with a baryonic suppression correction from the [FLAMINGO](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator) hydrodynamical simulation suite.
+
+**Location**: `cloelib/cosmology/FlamingoBaryonResponseEmulator_cosmology.py`
+
+**When to use**: Accurate baryonic feedback modelled on FLAMINGO hydrodynamical simulations; can vary AGN jet fraction and ICM gas/stellar parameters.
+
+**Features**:
+
+- CAMB-based nonlinear baseline
+- FLAMINGO emulator response $B(k,z) = P_\text{hydro}/P_\text{DMO}$ applied at evaluation time
+- Three baryonic parameters: `fgas_sigma`, `Mstar_sigma`, `jet_fraction`
+- Valid for $z \leq 3$ and $k \leq 10^{1.5}\,h/\text{Mpc}$; outside these ranges the response is automatically clamped to 1
+- Standalone `FlamingoBaryonBoostMixin` composable with any nonlinear perturbations class
+
+**Example**:
+
+```python
+from cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology import (
+    CAMBNonLinearFLAMINGOBaryonicPerturbations,
+)
+
+pert = CAMBNonLinearFLAMINGOBaryonicPerturbations(
+    background=bg,
+    linearperturbations=lin_pert,
+    redshifts=zs,
+    baryon_kwargs=dict(
+        fgas_sigma=0.0,    # 0σ from calibrated gas fraction
+        Mstar_sigma=0.0,   # 0σ from stellar mass function
+        jet_fraction=0.0,  # pure thermal AGN feedback
+    ),
+)
+
+k = np.logspace(-2, 1, 100)  # k in 1/Mpc
+Pk = pert.matter_power_spectrum(np.array([0.5]), k)  # shape (n_k,)
+```
 
 ### ReACTEmu / BoostedPerturbations
 
@@ -354,52 +418,68 @@ Fast JAX-based emulator for linear and nonlinear power spectra using [cosmopower
 
 - Full JAX compatibility — automatic differentiation and JIT compilation
 - Linear and nonlinear P(k) and P_cb(k)
-- σ₈(z), fσ₈(z), growth factor D(z,k), growth rate f(z)
-- Emulator files downloaded automatically from Zenodo on first use
+- Two nonlinear prescriptions: **HMcode2020** (with baryonic feedback) and **halofit** (dark-matter-only)
+- σ₈(z), fσ₈(z), growth factors D(z,k) and D_cb(z,k), growth rate f(z)
+- Baseline (ΛCDM/wCDM/w0waCDM) and extended (curvature, running spectral index) cosmologies
+- Emulator files downloaded automatically on first use from the Euclid-DR1-matter-emulators GitHub repository; the k-mode grid is read directly from each emulator
 
 #### Available classes
 
-| Class                                                | Cosmology        | Spectrum                    |
-| ---------------------------------------------------- | ---------------- | --------------------------- |
-| `CosmoPowerJAXLCDMPerturbations.Linear`              | ΛCDM             | P(k) linear                 |
-| `CosmoPowerJAXLCDMPerturbations.LinearCB`            | ΛCDM             | P_cb(k) linear              |
-| `CosmoPowerJAXLCDMPerturbations.NonLinear`           | ΛCDM             | P(k) nonlinear (HMcode2020) |
-| `CosmoPowerJAXLCDMPerturbations.NonLinearCB`         | ΛCDM             | P_cb(k) nonlinear           |
-| `CosmoPowerJAXwCDMPerturbations.Linear`              | wCDM             | P(k) linear                 |
-| `CosmoPowerJAXwCDMPerturbations.LinearCB`            | wCDM             | P_cb(k) linear              |
-| `CosmoPowerJAXwCDMPerturbations.NonLinear`           | wCDM             | P(k) nonlinear              |
-| `CosmoPowerJAXwCDMPerturbations.NonLinearCB`         | wCDM             | P_cb(k) nonlinear           |
-| `CosmoPowerJAXw0waCDMPerturbations.Linear`           | w0waCDM          | P(k) linear                 |
-| `CosmoPowerJAXw0waCDMPerturbations.LinearCB`         | w0waCDM          | P_cb(k) linear              |
-| `CosmoPowerJAXw0waCDMPerturbations.NonLinear`        | w0waCDM          | P(k) nonlinear              |
-| `CosmoPowerJAXw0waCDMPerturbations.NonLinearCB`      | w0waCDM          | P_cb(k) nonlinear           |
-| `CosmoPowerJAXCurvaturePerturbations.Linear`         | ΛCDM + curvature | P(k) linear                 |
-| `CosmoPowerJAXCurvaturePerturbations.LinearCB`       | ΛCDM + curvature | P_cb(k) linear              |
-| `CosmoPowerJAXCurvaturePerturbations.NonLinear`      | ΛCDM + curvature | P(k) nonlinear              |
-| `CosmoPowerJAXCurvaturePerturbations.NonLinearCB`    | ΛCDM + curvature | P_cb(k) nonlinear           |
-| `CosmoPowerJAXRunningIndexPerturbations.Linear`      | ΛCDM + α_s       | P(k) linear                 |
-| `CosmoPowerJAXRunningIndexPerturbations.LinearCB`    | ΛCDM + α_s       | P_cb(k) linear              |
-| `CosmoPowerJAXRunningIndexPerturbations.NonLinear`   | ΛCDM + α_s       | P(k) nonlinear              |
-| `CosmoPowerJAXRunningIndexPerturbations.NonLinearCB` | ΛCDM + α_s       | P_cb(k) nonlinear           |
+Every Perturbations class exposes the same inner classes, each providing **both**
+the total-matter spectrum (`matter_power_spectrum`) and the CDM+baryon spectrum
+(`matter_power_spectrum_cb`, built at construction from the paired cb emulator), with
+the cached `Pk`/`Pk_cb` grids and `growth_factor`/`growth_factor_cb`:
 
-ΛCDM, wCDM, and w0waCDM classes support **N_mnu = 0, 1, 2, 3** massive neutrinos. Curvature and running spectral index classes have neutrino mass fixed at mnu = 0.06 eV.
+- `Linear` — linear P(k) and P_cb(k)
+- `NonLinear` — nonlinear P(k) and P_cb(k) using **HMcode2020**, with baryonic feedback controlled by `log10TAGN`
+- `NonLinearHalofit` — nonlinear P(k) and P_cb(k) using **halofit** (Takahashi 2012); dark-matter-only, so `log10TAGN` is accepted for interface compatibility but ignored.
+
+| Class                                        | Cosmology              | N_mnu   | Nonlinear recipes   |
+| -------------------------------------------- | ---------------------- | ------- | ------------------- |
+| `CosmoPowerJAXLCDMPerturbations`             | ΛCDM                   | 0,1,2,3 | HMcode2020, halofit |
+| `CosmoPowerJAXwCDMPerturbations`             | wCDM                   | 0,1,2,3 | HMcode2020, halofit |
+| `CosmoPowerJAXw0waCDMPerturbations`          | w0waCDM                | 0,1,2,3 | HMcode2020, halofit |
+| `CosmoPowerJAXLCDMCurvaturePerturbations`    | ΛCDM + curvature (Ω_k) | 0,1,3   | HMcode2020          |
+| `CosmoPowerJAXw0waCurvaturePerturbations`    | w0waCDM + curvature    | 0,1,3   | HMcode2020          |
+| `CosmoPowerJAXLCDMRunningIndexPerturbations` | ΛCDM + running (α_s)   | 0,1,3   | HMcode2020          |
+| `CosmoPowerJAXw0waRunningIndexPerturbations` | w0waCDM + running      | 0,1,3   | HMcode2020          |
+
+The neutrino configuration is selected automatically from `background.N_mnu`: 0 (massless), 1 (one massive), 2 (two degenerate), 3 (three degenerate). Baseline cosmologies cover 0–3; the extended (curvature / running) cosmologies cover 0, 1 and 3 (an unsupported value raises `ValueError`).
+
+#### Selecting the nonlinear prescription
+
+The recipe is chosen by which nonlinear class you use — the constructor signature is identical, so it is a drop-in swap:
+
+```python
+# HMcode2020 (default) — baryonic feedback via log10TAGN
+nl = CosmoPowerJAXLCDMPerturbations.NonLinear(
+    background=bg, linearperturbations=lin, redshifts=zs, log10TAGN=7.8
+)
+
+# halofit — dark-matter-only (log10TAGN ignored)
+nl = CosmoPowerJAXLCDMPerturbations.NonLinearHalofit(
+    background=bg, linearperturbations=lin, redshifts=zs
+)
+```
 
 #### Parameter ranges
 
-| Parameter | ΛCDM / wCDM / w0waCDM   | ΛCDM + curvature | ΛCDM + α_s      |
-| --------- | ----------------------- | ---------------- | --------------- |
-| ombh2     | [0.001, 0.1]            | [0.019, 0.025]   | [0.019, 0.025]  |
-| omch2     | [0.05, 0.9]             | [0.09, 0.15]     | [0.09, 0.15]    |
-| H0        | [20, 100]               | [60, 80]         | [60, 80]        |
-| ns        | [0.6, 1.3]              | [0.8, 1.2]       | [0.8, 1.2]      |
-| lnAs      | [1.61, 5]               | [1.6, 4.0]       | [1.6, 4.0]      |
-| z         | [0, 5]                  | [0, 5]           | [0, 5]          |
-| w0        | [-3, -0.33] (wCDM/w0wa) | —                | —               |
-| wa        | [-3, 3] (w0wa only)     | —                | —               |
-| mnu       | [0, 1] eV               | 0.06 eV (fixed)  | 0.06 eV (fixed) |
-| Omega_k0  | 0 (fixed)               | [-0.1, 0.1]      | 0 (fixed)       |
-| alpha_s   | —                       | —                | [-0.1, 0.1]     |
-| log10TAGN | [7.6, 8.5]              | [7.6, 8.5]       | [7.6, 8.5]      |
+Inputs are validated against a single global guardrail (`CP_EMULATOR_BOUNDS`); a parameter outside its range raises `ValueError`. The redshift `z` is not bounds-checked (it is clipped to the training range and extrapolated; z=0 is always added to the emulator grid, so σ₈(z=0) and the D(z=0)=1 normalisation are exact even when the requested redshifts start above zero). These global bounds are deliberately loose — each emulator's actual training box is tighter and varies by family.
+
+| Parameter | Enforced range | Applies to            |
+| --------- | -------------- | --------------------- |
+| ombh2     | [0.001, 0.1]   | all                   |
+| omch2     | [0.05, 0.9]    | all                   |
+| H0        | [20, 100]      | all                   |
+| ns        | [0.6, 1.3]     | all                   |
+| lnAs      | [1.61, 5.0]    | all                   |
+| mnu       | [0, 1] eV      | massive-neutrino runs |
+| w0        | [-3, 1]        | w0waCDM               |
+| wa        | [-3, 3]        | w0waCDM               |
+| w         | [-3, 0]        | wCDM                  |
+| Omega_k0  | [-0.3, 0.3]    | curvature             |
+| alpha_s   | [-0.3, 0.3]    | running               |
+| log10TAGN | [7.3, 8.5]     | HMcode nonlinear      |
 
 #### Example
 
@@ -421,8 +501,10 @@ bg = CAMBBackground(
 lin = CosmoPowerJAXLCDMPerturbations.Linear(background=bg, redshifts=zs)
 Pk = lin.matter_power_spectrum(0.0, ks)   # shape (1, len(ks))
 
-# Nonlinear P(k) with baryonic feedback
-nl = CosmoPowerJAXLCDMPerturbations.NonLinear(background=bg, redshifts=zs, log10TAGN=7.6)
+# Nonlinear P(k) with baryonic feedback (HMcode2020)
+nl = CosmoPowerJAXLCDMPerturbations.NonLinear(
+    background=bg, linearperturbations=lin, redshifts=zs, log10TAGN=7.6
+)
 Pk_nl = nl.matter_power_spectrum(0.0, ks)
 
 # sigma8 and fsigma8 as a function of redshift
@@ -437,6 +519,96 @@ Pure JAX implementation for automatic differentiation.
 **Location**: `cloelib/cosmology/jax_cosmology.py`
 
 **When to use**: Computing gradients, Fisher forecasts, HMC sampling
+
+### MG CosmoPower-JAX boost perturbations
+
+Applies a CosmoPower-JAX modified-gravity **boost** \(B(k,z) = P*\mathrm{MG}/P*{\Lambda\mathrm{CDM}}\)
+as a multiplicative operator on top of an external LCDM baseline perturbation
+object, so that the GR limit (\(\mu = \eta = 1\)) reproduces the baseline spectrum up
+to the boost emulators' own residual at GR (\(|B-1| \lesssim 3\times10^{-4}\) for
+\(k \le 1\,h/\mathrm{Mpc}\), up to \(2.5\times10^{-3}\) at \(k \sim 10\,h/\mathrm{Mpc}\) for the
+nonlinear multi-bin emulator); no regridding error is introduced.
+
+**Location**: `cloelib/cosmology/mg_cosmopower_jax_cosmology.py`
+
+**When to use**: Phenomenological \(\mu(z), \eta(z)\) modified gravity where the
+nonlinear MG power spectrum is obtained by boosting a fast LCDM emulator
+(e.g. `CosmoPowerJAXLCDMPerturbations`) rather than solving MG directly.
+
+**Two modes**, selected by `MGParams.bin_index`:
+
+- **Single-bin** (`bin_index` is an int): \(\mu, \eta\) vary in one redshift bin
+  (per-bin emulators `mg-boost-{linear,nonlinear}-bin{0..4}.npz`);
+- **Multi-bin** (`bin_index=None`): \(\mu\) (and \(\eta\), linear only) vary in all
+  five bins simultaneously (joint emulators `mg-boost-{linear,nonlinear}-multibin.npz`).
+
+**Features**:
+
+- Emulator-based MG boost applied to any external LCDM `Perturbations` solver;
+- Provides the modified lensing parameter \(\Sigma(z) = \mu(1+\eta)/2\) (a step
+  function over the redshift bins), applied to every lensing kernel: cosmic shear,
+  magnification bias and CMB lensing (`photo.shear`, `photo.positions`, `cmb`);
+- Scale-independent growth rate \(f(z)\) and \(\sigma_8\) from an internally-built
+  linear MG \(P(k)\); the boost is applied on the baseline k-grid, so the GR limit
+  is recovered up to the emulators' own residual (no regridding error);
+- Mutable `MGParams` holder for injecting sampled \(\mu, \eta\) each likelihood call;
+- Implemented in module-level `MGLinearPerturbations` / `MGNonLinearPerturbations`
+  (statically checked against the `Perturbations` protocol); `mg_perturbations`
+  returns subclasses with the MG parameters and LCDM baseline bound;
+- Emulators are **downloaded on first use from the Euclid-DR1-matter-emulators
+  GitHub repository** and cached locally, mirroring `CosmoPowerJAXPerturbations`
+  (no local model directory needed);
+
+**Example**:
+
+```python
+import numpy as np
+from cloelib.cosmology.cosmopower_jax_cosmology import CosmoPowerJAXLCDMPerturbations as LCDM
+from cloelib.cosmology.mg_cosmopower_jax_cosmology import MGParams, mg_perturbations
+
+# single-bin (bin 4); use MGParams(mu=..., eta=...) with bin_index=None for multi-bin
+mg = MGParams(mu=1.0, eta=1.0, bin_index=4)
+Lin, NonLin = mg_perturbations(
+    mg, baseline_linear=LCDM.Linear, baseline_nonlinear=LCDM.NonLinear
+)
+# in the sampling wrapper, before each loglike:  mg.mu, mg.eta = ...
+```
+
+**Emulator ranges** (enforced; predictions outside raise `ValueError`):
+
+| Parameter           | Single-bin  | Multi-bin   |
+| ------------------- | ----------- | ----------- |
+| \(\Omega_m\)        | 0.25–0.35   | 0.25–0.40   |
+| \(\Omega_b\)        | 0.040–0.055 | 0.040–0.055 |
+| \(h\)               | 0.65–0.73   | 0.65–0.75   |
+| \(n_s\)             | 0.95–1.00   | 0.80–1.20   |
+| \(\ln(10^{10}A_s)\) | 2.996–3.091 | 2.944–3.219 |
+| \(\mu\) (per bin)   | 0.9–1.1     | 0.9–1.1     |
+| \(\eta\) (per bin)  | 0.9–1.1     | 0.9–1.1     |
+| \(z\)               | 0.01–3      | 0–3         |
+
+The \(z\) upper edge is enforced (and handled by the redshift clamp); the lower
+edge is not, so \(z = 0\) remains available for the growth/\(\sigma_8\) normalisation.
+
+### MGCLASSPerturbations
+
+Interfaces with [MGCLASS](https://gitlab.com/zizgitlab/mgclass--ii).
+
+**Location**: `cloelib/cosmology/mgclass_cosmology.py`
+
+**When to use**: MGCLASS-specific features, comparison studies
+
+**Example**:
+
+```python
+from cloelib.cosmology.mgclass_cosmology import MGCLASSBackground, MGCLASSPerturbations
+
+bg = MGCLASSBackground(...)
+pert = MGCLASSPerturbations(
+    background=bg,
+    # other parameters
+)
+```
 
 ### hi_classPerturbations
 
@@ -471,7 +643,62 @@ Accurate and fast emulator of the nonlinear matter power spectrum in modified gr
 - Fast predictions of the nonlinear matter power spectrum in f(R) gravity;
 - Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;
 - Limited to the Hu & Sawicki model (n=1) with fR0 as free parameter;
-  > > > > > > > main
+
+## Baryonic Boost Mixin Framework
+
+`cloelib` provides a composable `BaryonBoostMixin` Protocol that decouples the baryonic suppression from the underlying nonlinear solver. This makes it easy to combine any nonlinear backend with any baryonic model.
+
+**Protocol location**: `cloelib.cosmology.cosmology.BaryonBoostMixin`
+
+### `BaryonBoostMixin` Protocol
+
+Any class implementing this protocol must expose:
+
+```python
+def baryonic_suppression(self, zs, ks, k_hunit=False) -> np.ndarray:
+    """Return B(k,z) = P_hydro / P_DMO, shape (n_z, n_k)."""
+```
+
+Three ready-made mixins are provided:
+
+| Mixin                        | Backend           | Baryonic parameters                                                  |
+| ---------------------------- | ----------------- | -------------------------------------------------------------------- |
+| `FlamingoBaryonBoostMixin`   | FLAMINGO emulator | `fgas_sigma`, `Mstar_sigma`, `jet_fraction`                          |
+| `BACCOemuBaryonBoostMixin`   | BACCOemu          | `M_c`, `eta`, `beta`, `M1_z0_cen`, `theta_out`, `theta_inn`, `M_inn` |
+| `HMcode2020BaryonBoostMixin` | HMcode2020emu     | `log10TAGN`                                                          |
+
+Each mixin `__init__` must be called **after** the base nonlinear `__init__` (it reads `self.background` and emulator internals set by the base).
+
+### `with_baryon_boost` Factory
+
+`cloelib.cosmology.cosmology.with_baryon_boost(NonLinearClass, BaryonMixinClass)` creates a combined class with zero boilerplate:
+
+```python
+from cloelib.cosmology.cosmology import with_baryon_boost
+from cloelib.cosmology.baccoemu_cosmology import BACCOemuNonLinearPerturbations
+from cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology import FlamingoBaryonBoostMixin
+
+BACCOemuFLAMINGO = with_baryon_boost(BACCOemuNonLinearPerturbations, FlamingoBaryonBoostMixin)
+pert = BACCOemuFLAMINGO(
+    background, linear_pert, redshifts,
+    nonlinear_model_name="Arico2023",
+    baryon_kwargs=dict(fgas_sigma=0.0, Mstar_sigma=0.0, jet_fraction=0.0),
+)
+```
+
+The resulting object is fully `Perturbations`-compatible and can be passed directly to any `cloelib` tracer or likelihood.
+
+!!! warning "Total vs. cold matter boost"
+The same suppression $B(k,z)$ is applied to `matter_power_spectrum` and to
+`matter_power_spectrum_cb`. The backends do not all define the response the same
+way — FLAMINGO's is $(b + \mathrm{cdm} + \nu)/(\mathrm{cdm} + \nu)$ while
+BACCOemu's is the cold $(b + \mathrm{cdm})/(\mathrm{cdm} + \nu)$ — and one could
+refine this by adding the neutrino contribution at linear order. The difference is
+~$10^{-5}$ even for $m_\nu = 0.4$ eV, and FLAMINGO simulations show total and cold
+boosts to be equivalent at that level, so `cloelib` treats them as the same.
+
+!!! note "Return shape"
+All `matter_power_spectrum` methods (including baryonic ones) return shape `(n_z, n_k)`, also for a single redshift, which gives `(1, n_k)`. `baryonic_suppression` returns the same shape, so the boosted spectra keep it.
 
 ## Adding Your Own Perturbations Implementation
 
@@ -707,6 +934,11 @@ def test_growth_factor(background):
     assert np.all(D[1, :] > D[2, :])
 ```
 
+Also add the new classes to the shared interface tests:
+
+- `tests/test_perturbations_interface.py`: add a builder to `BACKENDS`, so the class is checked at runtime against the common `growth_rate` convention.
+- `tests/typing/perturbations_conformance.py`: add the class, so ty checks that it implements `Perturbations` and that its constructor matches `LinearPerturbationsFactory`/`NonLinearPerturbationsFactory`.
+
 ### Step 5: Update Documentation
 
 - Add to `docs/api.md`
@@ -772,7 +1004,7 @@ def matter_power_spectrum(self, zs, ks):
 
 Now that you have a grounding in Perturbations, explore:
 
-- [Observables](observables.md) – Connect structure to survey measurements
-- [Summary Statistics](summary_statistics.md) – Compute final data products
+- [Observables](observables/index.md) – Connect structure to survey measurements
+- [Summary Statistics](summary_statistics/index.md) – Compute final data products
 - [Background](background.md) – Review the foundation
 - [API Reference](../api.md) – Full technical details

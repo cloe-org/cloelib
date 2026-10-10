@@ -199,23 +199,23 @@ class EmantisFofrNonLinearPerturbations:
 
         return self.linearperturbations.growth_factor(zs, ks)
 
-    def growth_rate(self, zs, ks) -> np.ndarray:
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
         """Compute the growth rate f(z, k) for given redshifts and wavenumbers.
 
         Parameters:
         -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
+        zs : Optional[array_like]
+            Redshifts at which to calculate the growth rate. Defaults to `self.z`.
+        ks : Optional[array_like]
+            Wavenumbers at which to calculate the growth rate.
 
         Returns:
         --------
         np.ndarray
-            The growth rate as a function of redshift and wavenumber.
+            The linear growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
         """
 
-        return self.linearperturbations.growth_rate(zs, ks)
+        return self.linearperturbations.growth_rate(self.z if zs is None else zs, ks)
 
     def sigma8_0(self) -> float:
         """

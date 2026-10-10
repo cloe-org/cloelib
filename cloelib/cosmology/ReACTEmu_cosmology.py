@@ -1,5 +1,5 @@
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, WithWavenumberGrid
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 
@@ -28,7 +28,7 @@ class MGemuNonlinearBoost:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Perturbations,
+        linearperturbations: WithWavenumberGrid,
         zs: np.ndarray,
         gravity_model: str,
         mgpars: dict,
@@ -51,8 +51,9 @@ class MGemuNonlinearBoost:
             A cosmological background instance containing parameters such as
             Omega_b0, Omega_cdm0, H0, ns, mnu, w0, and wa. Note w0 and wa are assumed to be LCDM values for some modified gravity models.
 
-        linearperturbations : Perturbations
-            A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline.
+        linearperturbations : WithWavenumberGrid
+            A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline;
+            only its `.k` wavenumber grid is used here.
 
         zs : np.ndarray
             Array of redshifts at which to compute the MG corrections.
@@ -192,7 +193,9 @@ class MGemuNonlinearBoost:
         zvals_inrange = zvals[(zvals >= zmin) & (zvals <= zmax)]
 
         # common cosmology block
-        Omega_nu_real = self.background.mnu / 93.14 / (self.background.H0 / 100.0) ** 2
+        Omega_nu_real = (
+            np.sum(self.background.mnu) / 93.14 / (self.background.H0 / 100.0) ** 2
+        )
         Omega_m = self.background.Omega_cdm0 + self.background.Omega_b0 + Omega_nu_real
 
         # Fixing massive neutrinos to 0 for the boost as decided in TH1-4 telecon, 23.03.2026 but keep same total Om
@@ -431,14 +434,14 @@ class BoostedPerturbations:
         self.k = getattr(base_perturbations, "k", None)
         self.z = getattr(base_perturbations, "z", None)
 
-    def matter_power_spectrum(self, z, k):
+    def matter_power_spectrum(self, zs, ks):
         """Return the boosted nonlinear matter power spectrum.
 
         Parameters
         ----------
-        z : float or np.ndarray
+        zs : float or np.ndarray
             Redshift value or array of redshifts.
-        k : float or np.ndarray
+        ks : float or np.ndarray
             Wavenumber value or array of wavenumbers in 1/Mpc.
 
         Returns
@@ -448,8 +451,8 @@ class BoostedPerturbations:
             inputs return a scalar, while array inputs return the corresponding
             one- or two-dimensional array.
         """
-        z = np.atleast_1d(z)
-        k = np.atleast_1d(k)
+        z = np.atleast_1d(zs)
+        k = np.atleast_1d(ks)
 
         # Get the unboosted spectrum from the base model
         P_base = self.base.matter_power_spectrum(z, k)
@@ -501,9 +504,10 @@ class BoostedPerturbations:
 
         # Case B: linear-growth estimate from boost at large scales
         # pick a default large-scale k: prefer the smallest available k-grid if we have one
-        if getattr(self, "k", None) is not None and len(self.k) > 0:
+        self_k = getattr(self, "k", None)
+        if self_k is not None and len(self_k) > 0:
             k_lin = float(
-                np.min(self.k)
+                np.min(self_k)
             )  # typically the safest large-scale mode available
         else:
             k_lin = 2e-2  # [1/Mpc] fallback default; adjust if your units differ
@@ -518,6 +522,16 @@ class BoostedPerturbations:
         D_lin = np.sqrt(Bz / B0)
 
         return np.squeeze(D_lin)
+
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
+        """Return the linear growth rate of `base_lin_perturbations`.
+
+        The boost only modifies the nonlinear matter power spectrum, so the
+        growth rate is that of the underlying linear perturbations, see
+        `Perturbations.growth_rate`. Without `zs`, it is evaluated on `self.z`,
+        the redshift grid of `base_perturbations`, if that has one.
+        """
+        return self.base_lin.growth_rate(self.z if zs is None else zs, ks)
 
     def sigma8_0(self) -> float:
         """

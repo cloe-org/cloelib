@@ -9,7 +9,7 @@ the required format.
 """
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, WithWavenumberGrid
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 
@@ -33,8 +33,9 @@ class TabulatedNonlinearBoost:
         A cosmological background instance containing parameters such as
         Omega_b0, Omega_cdm0, H0, ns, mnu, w0, and wa. Note w0 and wa are assumed to be LCDM values for some modified gravity models.
 
-    linearperturbations : Perturbations
-        A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline.
+    linearperturbations : WithWavenumberGrid
+        A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline;
+        only its `.k` wavenumber grid is used here.
 
     zs : np.ndarray
         Array of redshifts at which to compute the MG corrections.
@@ -65,7 +66,7 @@ class TabulatedNonlinearBoost:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Perturbations,
+        linearperturbations: WithWavenumberGrid,
         zs: np.ndarray,
         boost_file: str,
         z_cols: Sequence[float],
@@ -85,16 +86,16 @@ class TabulatedNonlinearBoost:
         ktab = data[:, 0]
         boost_kz = data[:, 1:]  # shape (Nk, Nsnap)
 
-        z_cols = np.asarray(z_cols, dtype=float)
-        if boost_kz.shape[1] != len(z_cols):
+        z_cols_arr = np.asarray(z_cols, dtype=float)
+        if boost_kz.shape[1] != len(z_cols_arr):
             raise ValueError(
                 f"Number of boost columns ({boost_kz.shape[1]}) does not match "
-                f"length of z_cols ({len(z_cols)})."
+                f"length of z_cols ({len(z_cols_arr)})."
             )
 
         # Ensure z is sorted ascending and reorder boost columns accordingly
-        sort_idx = np.argsort(z_cols)
-        z_sorted = z_cols[sort_idx]
+        sort_idx = np.argsort(z_cols_arr)
+        z_sorted = z_cols_arr[sort_idx]
         boost_zk = boost_kz[
             :, sort_idx
         ].T  # -> shape (Nz, Nk) as RectBivariateSpline expects
@@ -275,14 +276,14 @@ class TabulatedBoostedPerturbations:
         self.k = getattr(base_perturbations, "k", None)
         self.z = getattr(base_perturbations, "z", None)
 
-    def matter_power_spectrum(self, z, k):
+    def matter_power_spectrum(self, zs, ks):
         """Return the boosted nonlinear matter power spectrum.
 
         Parameters
         ----------
-        z : float or np.ndarray
+        zs : float or np.ndarray
             Redshift value or array of redshifts.
-        k : float or np.ndarray
+        ks : float or np.ndarray
             Wavenumber value or array of wavenumbers in 1/Mpc.
 
         Returns
@@ -292,8 +293,8 @@ class TabulatedBoostedPerturbations:
             inputs return a scalar, while array inputs return the corresponding
             one- or two-dimensional array.
         """
-        z = np.atleast_1d(z)
-        k = np.atleast_1d(k)
+        z = np.atleast_1d(zs)
+        k = np.atleast_1d(ks)
 
         # Get the unboosted spectrum from the base model
         P_base = self.base.matter_power_spectrum(z, k)
@@ -345,9 +346,10 @@ class TabulatedBoostedPerturbations:
 
         # Case B: linear-growth estimate from boost at large scales
         # pick a default large-scale k: prefer the smallest available k-grid if we have one
-        if getattr(self, "k", None) is not None and len(self.k) > 0:
+        self_k = getattr(self, "k", None)
+        if self_k is not None and len(self_k) > 0:
             k_lin = float(
-                np.min(self.k)
+                np.min(self_k)
             )  # typically the safest large-scale mode available
         else:
             k_lin = 2e-2  # [1/Mpc] fallback default; adjust if your units differ
@@ -362,6 +364,16 @@ class TabulatedBoostedPerturbations:
         D_lin = np.sqrt(Bz / B0)
 
         return np.squeeze(D_lin)
+
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
+        """Return the linear growth rate of `base_lin_perturbations`.
+
+        The boost only modifies the nonlinear matter power spectrum, so the
+        growth rate is that of the underlying linear perturbations, see
+        `Perturbations.growth_rate`. Without `zs`, it is evaluated on `self.z`,
+        the redshift grid of `base_perturbations`, if that has one.
+        """
+        return self.base_lin.growth_rate(self.z if zs is None else zs, ks)
 
     def sigma8_0(self) -> float:
         """Calculate the sigma8 value for the current cosmology."""

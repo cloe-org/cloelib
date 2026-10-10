@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use cloelib in your research, please cite this software using the metadata below."
+type: software
+title: "cloelib – The Library for the Cosmology Likelihood for Observables in Euclid"
+authors:
+  - family-names: Bonici
+    given-names: Marco
+    orcid: "https://orcid.org/0000-0002-8430-126X"
+    affiliation: "Waterloo Centre for Astrophysics, University of Waterloo, Canada"
+  - family-names: Cañas-Herrera
+    given-names: Guadalupe
+    orcid: "https://orcid.org/0000-0003-2796-2149"
+    affiliation: "Leiden Observatory, Leiden University, Netherlands"
+  - family-names: Carrilho
+    given-names: Pedro
+    orcid: "https://orcid.org/0000-0003-1339-0194"
+    affiliation: "Centre for Astrophysics Research, University of Hertfordshire, United Kingdom"
+  - family-names: Casas
+    given-names: Santiago
+    orcid: "https://orcid.org/0000-0002-4751-5138"
+    affiliation: "Scientific Information, German Aerospace Center (DLR), Germany; TTK, RWTH Aachen University, Germany"
+  - family-names: Moretti
+    given-names: Chiara
+    orcid: "https://orcid.org/0000-0003-3314-8936"
+    affiliation: "INAF - Osservatorio Astronomico di Trieste, Italy"
+  - family-names: Pezzotta
+    given-names: Andrea
+    orcid: "https://orcid.org/0000-0003-0726-2268"
+    affiliation: "INAF - Osservatorio Astronomico di Brera, Italy"
+repository-code: "https://github.com/cloe-org/cloelib"
+url: "https://cloe-org.github.io/cloelib/"
+license: MIT
+keywords:
+  - cosmology
+  - Euclid
+  - Python
+  - JAX
+  - automatic differentiation
+  - cosmological observables

@@ -37,6 +37,9 @@ class CLASSBackground:
         N_mnu: int,
         N_ur: Optional[float] = None,
         alpha_s: float = 0.0,
+        Omega_wdm0: Optional[float] = None,
+        m_wdm: Optional[float] = None,
+        T_wdm_over_T_gamma: Optional[float] = None,
         **kwargs,
     ) -> None:
         """
@@ -58,6 +61,9 @@ class CLASSBackground:
             N_mnu (int): Number of massive neutrino species.
             N_ur (Optional[float]): Effective number of ultra-relativistic species.
                 If not provided, it will be inferred from N_mnu such that N_eff = 3.044.
+            Omega_wdm0 (Optional[float]): Warm dark matter density parameter.
+            m_wdm (Optional[float]): Warm dark matter mass in eV.
+            T_wdm_over_T_gamma (Optional[float]): Ratio of warm dark matter temperature to the photon temperature.
         """
         self.H0 = H0
         self.h = self.H0 / 100
@@ -80,6 +86,12 @@ class CLASSBackground:
         if self.N_mnu > 0 and np.sum(self.mnu) == 0:
             raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
 
+        if Omega_wdm0 is not None and self.N_mnu > 0:
+            raise ValueError(
+                "Warm dark matter is not compatible with massive neutrinos."
+                " Either set Omega_wdm0=None or N_mnu=0."
+            )
+
         # Initialize CLASS parameters
         self.interface_args: dict = {
             "CLASSparams": {}
@@ -100,10 +112,31 @@ class CLASSBackground:
         # To avoid using a cosmological constant
         self.interface_args["CLASSparams"]["Omega_Lambda"] = 0.0
 
-        # Set neutrino parameters
-        if self.N_mnu > 0:
-            self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
-        self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
+        # Set warm dark matter parameters
+        if Omega_wdm0 is not None:
+            if m_wdm is None:
+                raise ValueError("If Omega_wdm0 is provided, m_wdm is also needed.")
+
+            if T_wdm_over_T_gamma is None:
+                raise ValueError(
+                    "If Omega_wdm0 is provided, T_wdm_over_T_gamma is also needed."
+                )
+
+            self.interface_args["CLASSparams"]["N_ncdm"] = 1
+            self.interface_args["CLASSparams"]["m_ncdm"] = m_wdm
+
+            omega_wdm = Omega_wdm0 * (self.h) ** 2
+            self.interface_args["CLASSparams"]["omega_ncdm"] = omega_wdm
+            self.interface_args["CLASSparams"]["T_ncdm"] = T_wdm_over_T_gamma
+
+        else:
+            # Set neutrino parameters
+            if self.N_mnu > 0:
+                self.interface_args["CLASSparams"]["m_ncdm"] = (
+                    self._set_neutrino_masses()
+                )
+            self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
+
         self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
 
         # Initialize CLASS
@@ -149,7 +182,9 @@ class CLASSBackground:
         """
         Return the effective number of relativistic species.
 
-        Assumes a standard value of T_ncdm = 0.71611 K for neutrinos.
+        Assumes a standard value of T_ncdm = 0.71611 K for neutrinos
+        if warm dark matter is not active (Omega_wdm0=None).
+        Otherwise, T_ncdm is set to the provided T_wdm_over_T_gamma.
         """
         return self.results.Neff()
 

@@ -4,6 +4,11 @@
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.extrapolator import extend_spectra
+from cloelib.cosmology.cosmopower_jax_cosmology import (
+    GITHUB_EMULATOR_URL,
+    emulator_data,
+    load_pk_emulator,
+)
 from scipy import interpolate
 
 # General imports
@@ -25,10 +30,9 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore")
     from cosmopower_jax.cosmopower_jax import CosmoPowerJAX
 
-# Zenodo records holding the emulators (downloaded on first use, see emulator_data)
-DDM_ZENODO_URL = "https://zenodo.org/records/22967046/files"  # ddm-1body-combined-*
-HMCODE_ZENODO_URL = "https://zenodo.org/records/22966883/files"  # w0wa-3degen-*
-HALOFIT_ZENODO_URL = "https://zenodo.org/records/22966994/files"  # halofit-w0wa-3mass-*
+# The emulators are downloaded on first use (see emulator_data) from the GitHub repository
+# of the Euclid DR1 matter emulators; the 1bDDM ones live in its extended/1bddm folder
+DDM_EMULATOR_URL = f"{GITHUB_EMULATOR_URL}/extended/1bddm"
 
 
 ###########################################################################
@@ -37,10 +41,8 @@ HALOFIT_ZENODO_URL = "https://zenodo.org/records/22966994/files"  # halofit-w0wa
 
 
 def _ddm_emulator_path(kind: str) -> str:
-    """Return the local path of a 1bDDM emulator ("distances", "global" or "linear"), downloading it from Zenodo if needed."""
-    from cloelib.cosmology.cosmopower_jax_cosmology import emulator_data
-
-    return emulator_data(f"ddm-1body-combined-{kind}.npz", DDM_ZENODO_URL)
+    """Return the local path of a 1bDDM emulator ("distances", "global" or "linear"), downloading it if needed."""
+    return emulator_data(f"ddm-1body-neutrino-{kind}.npz", DDM_EMULATOR_URL)
 
 
 class obDDMBackground:
@@ -91,7 +93,9 @@ class obDDMBackground:
             f_dcdm (float): fraction of the total cold dark matter that decays into dark radiation.
             Gamma_times_f (float): Decay rate of the dcdm component (in units of 1/Gyr) times f_dcdm.
             use_emulator (bool): If True (default), use the CosmoPower-JAX 1bDDM background
-                and global emulators instead of CLASS for distances and sigma8/r_d.
+                and global emulators instead of CLASS for distances and sigma8/r_d. The
+                emulators assume three degenerate massive neutrinos (N_mnu=3), with
+                mnu the sum of their masses, in [0, 1] eV.
         """
         self.H0 = H0
         self.h = self.H0 / 100
@@ -255,6 +259,30 @@ class obDDMBackground:
         else:
             raise TypeError("mnu must be a float, numpy.ndarray or Sequence of floats")
 
+    @property
+    def m_ncdm(self) -> float:
+        """Sum of the neutrino masses in eV, the neutrino input of the 1bDDM emulators.
+
+        The emulators assume three degenerate massive species (or no massive neutrinos)
+        and a mass sum in [0, 1] eV.
+        """
+        mnu = np.atleast_1d(np.asarray(self.mnu, dtype=float))
+        total = float(np.sum(mnu))
+        if total > 0 and (
+            self.N_mnu != 3
+            or len(mnu) not in (1, 3)
+            or not np.allclose(mnu, total / len(mnu))
+        ):
+            raise ValueError(
+                "The 1bDDM emulators assume 3 degenerate massive neutrino species "
+                f"(N_mnu=3), got mnu={self.mnu}, N_mnu={self.N_mnu}."
+            )
+        if not 0.0 <= total <= 1.0:
+            raise ValueError(
+                f"Sum of neutrino masses {total} eV out of emulator range [0, 1]."
+            )
+        return total
+
     def _emulator_params(self, zs: Optional[np.ndarray] = None) -> dict:
         """Build the parameter dictionary for the DDM-1body background emulators.
 
@@ -274,9 +302,9 @@ class obDDMBackground:
             "h": np.full(n, self.h),
             "n_s": np.full(n, self.ns),
             "ln10^{10}A_s": np.full(n, np.log(1e10 * self.As)),
-            "tau_reio": np.full(n, 0.054),
             "f_dcdm": np.full(n, self.f_dcdm),
             "Gamma_times_f": np.full(n, self.Gamma_times_f),
+            "m_ncdm": np.full(n, self.m_ncdm),
         }
         if zs is not None:
             params["z"] = np.asarray(zs)
@@ -439,16 +467,14 @@ class obDDMLinearPerturbations:
             self.ns = self.background.ns
             self.f = self.background.f_dcdm
             self.Gamma_times_f = self.background.Gamma_times_f  # in 1/Gyr
-            # Load cosmopower emulator (downloaded from Zenodo on first use);
-            # its k grid is the same as k-modes.txt (the old small-k-modes.txt)
-            from cloelib.cosmology.cosmopower_jax_cosmology import k_modes_path
-
+            self.m_ncdm = self.background.m_ncdm  # sum of the neutrino masses in eV
+            # Load cosmopower emulator (downloaded on first use); it carries its own k grid
             cp = CosmoPowerJAX(
                 probe="custom_log",
                 filepath=_ddm_emulator_path("linear"),
                 verbose=False,
             )
-            self.k = np.loadtxt(k_modes_path)
+            self.k = np.asarray(cp.modes)
             # Pre-compute emulator predictions for all redshifts in self.z
             pk_emu = np.zeros((len(self.z), len(self.k)))
             for i, zi in enumerate(self.z):
@@ -458,9 +484,9 @@ class obDDMLinearPerturbations:
                     "h": np.array([self.h]),
                     "n_s": np.array([self.ns]),
                     "ln10^{10}A_s": np.array([self.log_As]),
-                    "tau_reio": np.array([0.054]),
                     "f_dcdm": np.array([self.f]),
                     "Gamma_times_f": np.array([self.Gamma_times_f]),
+                    "m_ncdm": np.array([self.m_ncdm]),
                     "z": np.array([zi]),
                 }
                 pk_emu[i, :] = np.array(cp.predict(params)).squeeze()
@@ -493,9 +519,9 @@ class obDDMLinearPerturbations:
                 "h": np.array([self.h]),
                 "n_s": np.array([self.ns]),
                 "ln10^{10}A_s": np.array([self.log_As]),
-                "tau_reio": np.array([0.054]),
                 "f_dcdm": np.array([self.f]),
                 "Gamma_times_f": np.array([self.Gamma_times_f]),
+                "m_ncdm": np.array([self.m_ncdm]),
             }
             sigma8_emu, _, _ = np.array(cp_global.predict(global_params)).squeeze()
             self._sigma8_emu = float(sigma8_emu)
@@ -714,24 +740,14 @@ class obDDMNonLinearPerturbations:
         else:
             # Emulator path: cosmopower-jax emulators for both NL and linear equiv LCDM Pk.
 
-            from cloelib.cosmology.cosmopower_jax_cosmology import (
-                emulator_data,
-                load_pk_emulator,
-                k_modes_path,
-            )
-
             # Non-linear emulator of the equivalent LCDM Pk, trained with HMcode2020 or halofit
             if self.non_linear_lcdm == "hmcode":
-                cp_NL = load_pk_emulator(
-                    emulator_data("w0wa-3degen-nonlinear.npz", HMCODE_ZENODO_URL)
-                )
+                cp_NL = load_pk_emulator(emulator_data("w0wa-3mass-nonlinear.npz"))
             else:
                 cp_NL = load_pk_emulator(
-                    emulator_data(
-                        "halofit-w0wa-3mass-nonlinear.npz", HALOFIT_ZENODO_URL
-                    )
+                    emulator_data("halofit-w0wa-3mass-nonlinear.npz")
                 )
-            k_emu = np.loadtxt(k_modes_path)
+            k_emu = np.asarray(cp_NL.modes)
 
             mnu_total = self.background.mnu
 
@@ -769,9 +785,7 @@ class obDDMNonLinearPerturbations:
 
             # Linear LCDM Pk: independent of the non-linear prescription, so always the same
             # emulator (same params, no logT_AGN)
-            cp_LIN = load_pk_emulator(
-                emulator_data("w0wa-3degen-linear.npz", HMCODE_ZENODO_URL)
-            )
+            cp_LIN = load_pk_emulator(emulator_data("w0wa-3mass-linear.npz"))
 
             params_lin = {
                 "ombh2": np.tile(self.wb, len(self.z)),
@@ -1133,27 +1147,17 @@ class tbDDMNonLinearPerturbations:
             )  # (nz, nk)
 
         else:
-            # Emulator path: cosmopower-JAX HMcode2020 (w0wa-3degen-nonlinear.npz) or
+            # Emulator path: cosmopower-JAX HMcode2020 (w0wa-3mass-nonlinear.npz) or
             # halofit (halofit-w0wa-3mass-nonlinear.npz).
             # Note: the 2bDDM boost was trained vs halofit-LCDM, but HMcode2020 and
             # halofit agree at the few-percent level, so the inconsistency is small.
-            from cloelib.cosmology.cosmopower_jax_cosmology import (
-                emulator_data,
-                load_pk_emulator,
-                k_modes_path,
-            )
-
             if self.non_linear_lcdm == "hmcode":
-                cp_NL = load_pk_emulator(
-                    emulator_data("w0wa-3degen-nonlinear.npz", HMCODE_ZENODO_URL)
-                )
+                cp_NL = load_pk_emulator(emulator_data("w0wa-3mass-nonlinear.npz"))
             else:
                 cp_NL = load_pk_emulator(
-                    emulator_data(
-                        "halofit-w0wa-3mass-nonlinear.npz", HALOFIT_ZENODO_URL
-                    )
+                    emulator_data("halofit-w0wa-3mass-nonlinear.npz")
                 )
-            k_emu = np.loadtxt(k_modes_path)
+            k_emu = np.asarray(cp_NL.modes)
             self.k = k_emu
 
             h = self.background.h

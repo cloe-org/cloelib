@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using CLASS."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
@@ -12,7 +12,7 @@ import warnings
 
 # Cosmology imports
 try:
-    from classy import Class  # type: ignore
+    from classy import Class
 except ImportError as e:
     raise ImportError("classy could not be imported.") from e
 
@@ -105,9 +105,6 @@ class CLASSBackground:
             self.interface_args["CLASSparams"]["m_ncdm"] = self._set_neutrino_masses()
         self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
         self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
-
-        # Fix YHe to standard BBN value to avoid interpolation failure at extreme omega_b
-        self.interface_args["CLASSparams"]["YHe"] = 0.2454006
 
         # Initialize CLASS
         self.results = Class()
@@ -260,7 +257,7 @@ class CLASSBackground:
 
         return self.results.Om_b(zs) + self.results.Om_cdm(zs)
 
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the matter density as a function of redshift.
 
@@ -270,9 +267,7 @@ class CLASSBackground:
         Returns:
             (np.ndarray): Matter density values.
         """
-        zs = np.atleast_1d(zs)
-        result = np.array([self.results.Om_m(z) for z in zs])
-        return result if len(result) > 1 else result[0]
+        return self.results.Om_m(zs)
 
     def Omega_b(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -304,8 +299,7 @@ class CLASSLinearPerturbations:
         """Initialize the CLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
-        self.kmax = 49
-        self.results = None  # Store CLASS results
+        self.kmax = 100
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -315,13 +309,11 @@ class CLASSLinearPerturbations:
         self.interface_args["CLASSparams"]["k_per_decade_for_pk"] = 10
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.interface_args["CLASSparams"]["non linear"] = "none"
+        self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
         self.results.compute()
-        # GFA, I added this line in order to retrieve the wavenumber grid (in 1/Mpc) used by CLASS to compute Pk
-        _, self.k, _ = self.results.get_pk_and_k_and_z(
-            nonlinear=False, only_clustering_species=False, h_units=False
-        )
+        self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
     @property
     def _interface_args(self) -> dict:
@@ -345,7 +337,7 @@ class CLASSLinearPerturbations:
         """
         if hubble_units or k_hunit:
             raise ValueError("This CLASS method does not yet support h-units")
-        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
         # To match array convention of CAMB
         return self.Pk_linear
 
@@ -389,7 +381,7 @@ class CLASSLinearPerturbations:
             )
         else:
             self.Pk_cb_linear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_linear
@@ -419,15 +411,26 @@ class CLASSLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
         Calculate the growth rate f(z).
 
+        Args:
+            zs (Optional[np.ndarray]): Redshifts at which to evaluate the growth rate.
+                Defaults to `self.z`.
+            ks (Optional[np.ndarray]): Wavenumbers used to broadcast the growth rate.
+
         Returns:
-            (np.ndarray): Scale-independent growth rate f(z)
+            (np.ndarray): Scale-independent growth rate f(z), with shape (nz,) if
+                ks is None and (nz, nk) otherwise.
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
-        return np.array(arr)
+        z = self.z if zs is None else np.atleast_1d(zs)
+        arr = np.array([self.results.scale_independent_growth_factor_f(zi) for zi in z])
+        if ks is None:
+            return arr
+        return np.tile(arr[:, None], (1, np.size(ks)))
 
     def sigma8_0(self) -> float:
         """
@@ -439,7 +442,7 @@ class CLASSLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()
 
 
 class CLASSNonLinearPerturbations:
@@ -448,10 +451,11 @@ class CLASSNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Optional[object],
+        linearperturbations: Optional[Perturbations],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         hmcode_version: Optional[str] = None,
+        log10TAGN: Optional[float] = None,
     ):
         """Initialize the CLASSNonLinearPerturbation instance.
 
@@ -461,12 +465,37 @@ class CLASSNonLinearPerturbations:
                 nonlinear corrections internally; accepted for interface compatibility with
                 emulator-based NonLinPerturbations classes).
             redshifts (np.ndarray): Array of redshifts for the calculations.
-            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
-            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
+            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None
+                (no nonlinear), or "hmcode" if `log10TAGN` is given.
+            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None,
+                or "2020_baryonic_feedback" if `log10TAGN` is given.
+            log10TAGN (Optional[float]): HMcode2020 baryonic feedback parameter
+                log10(T_AGN/K), passed to CLASS as `log10T_heat_hmcode`. Defaults to None
+                (no baryonic feedback, or the CLASS default for "2020_baryonic_feedback").
+
+        Raises:
+            ValueError: If `log10TAGN` is given with a nonlinear model or HMcode version
+                that ignores it.
         """
         self.background = background
         self.z = redshifts
-        self.kmax = 45
+        self.kmax = 100
+
+        if log10TAGN is not None:
+            if nonlinear_model is None:
+                nonlinear_model = "hmcode"
+            if hmcode_version is None:
+                hmcode_version = "2020_baryonic_feedback"
+            if (nonlinear_model, hmcode_version) != (
+                "hmcode",
+                "2020_baryonic_feedback",
+            ):
+                raise ValueError(
+                    "log10TAGN is only used by nonlinear_model='hmcode' with "
+                    "hmcode_version='2020_baryonic_feedback', got "
+                    f"nonlinear_model={nonlinear_model!r}, "
+                    f"hmcode_version={hmcode_version!r}."
+                )
 
         if nonlinear_model is None:
             nonlinear_model = "none"
@@ -483,16 +512,13 @@ class CLASSNonLinearPerturbations:
         self.interface_args["CLASSparams"]["non_linear"] = nonlinear_model
         if hmcode_version is not None:
             self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
+        if log10TAGN is not None:
+            self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
         self.results.compute()
-        # GFA, I added this line in order to retrieve the wavenumber grid (in 1/Mpc) used by CLASS to compute Pk
-        _, self.k, _ = self.results.get_pk_and_k_and_z(
-            nonlinear=nonlinear_model != "none",
-            only_clustering_species=False,
-            h_units=False,
-        )
+        self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -557,7 +583,7 @@ class CLASSNonLinearPerturbations:
             )
         else:
             self.Pk_cb_nonlinear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_nonlinear
@@ -587,15 +613,26 @@ class CLASSNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
         Calculate the growth rate f(z).
 
+        Args:
+            zs (Optional[np.ndarray]): Redshifts at which to evaluate the growth rate.
+                Defaults to `self.z`.
+            ks (Optional[np.ndarray]): Wavenumbers used to broadcast the growth rate.
+
         Returns:
-            (np.ndarray): Scale-independent growth rate f(z)
+            (np.ndarray): Scale-independent growth rate f(z), with shape (nz,) if
+                ks is None and (nz, nk) otherwise.
         """
-        arr = [self.results.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
-        return np.array(arr)
+        z = self.z if zs is None else np.atleast_1d(zs)
+        arr = np.array([self.results.scale_independent_growth_factor_f(zi) for zi in z])
+        if ks is None:
+            return arr
+        return np.tile(arr[:, None], (1, np.size(ks)))
 
     def sigma8_0(self) -> float:
         """
@@ -607,4 +644,4 @@ class CLASSNonLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()

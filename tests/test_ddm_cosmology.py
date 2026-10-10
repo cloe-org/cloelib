@@ -243,19 +243,65 @@ def test_1b_linear_lcdm_emulator_is_prescription_independent(nl_1b):
     """The linear LCDM Pk does not depend on the non-linear prescription."""
     lin_hm = nl_1b["hmcode"].Pk_lin_int_lcdm(ZS, KS)
     lin_hf = nl_1b["halofit"].Pk_lin_int_lcdm(ZS, KS)
-    np.testing.assert_array_equal(lin_hm, lin_hf)
+    np.testing.assert_allclose(
+        lin_hm, lin_hf, rtol=1e-10
+    )  # k grids differ at rounding level
 
 
-def test_1b_emulators_are_downloaded_from_zenodo(nl_1b):
+def test_1b_emulators_are_downloaded_from_github(nl_1b):
     from cloelib.cosmology.cosmopower_jax_cosmology import emulator_data
 
+    assert ddm.DDM_EMULATOR_URL.endswith("/extended/1bddm")
     for filename, url in [
-        ("halofit-w0wa-3mass-nonlinear.npz", ddm.HALOFIT_ZENODO_URL),
-        ("w0wa-3degen-nonlinear.npz", ddm.HMCODE_ZENODO_URL),
-        ("w0wa-3degen-linear.npz", ddm.HMCODE_ZENODO_URL),
-        ("ddm-1body-combined-linear.npz", ddm.DDM_ZENODO_URL),
+        ("halofit-w0wa-3mass-nonlinear.npz", None),  # url derived from the filename
+        ("w0wa-3mass-nonlinear.npz", None),
+        ("w0wa-3mass-linear.npz", None),
+        ("ddm-1body-neutrino-linear.npz", ddm.DDM_EMULATOR_URL),
     ]:
         assert os.path.exists(emulator_data(filename, url))
+
+
+def test_1b_m_ncdm_is_the_sum_of_the_neutrino_masses(monkeypatch):
+    """The emulators take the neutrino mass sum (3 degenerate species) as input."""
+    monkeypatch.setattr(ddm, "Class", MockClass)  # no CLASS run needed here
+
+    def background(**kwargs):
+        cosmo = {**COSMO, **kwargs}
+        return obDDMBackground(
+            f_dcdm=F_DCDM, Gamma_times_f=GAMMA_TIMES_F, use_emulator=False, **cosmo
+        )
+
+    assert background(mnu=0.06, N_mnu=3).m_ncdm == pytest.approx(0.06)
+    assert background(mnu=[0.02, 0.02, 0.02], N_mnu=3).m_ncdm == pytest.approx(0.06)
+    assert background(mnu=0.0, N_mnu=0, N_ur=None).m_ncdm == 0.0
+    with pytest.raises(ValueError, match="3 degenerate"):
+        background(mnu=0.06, N_mnu=1, N_ur=None).m_ncdm
+    with pytest.raises(ValueError, match="3 degenerate"):
+        background(mnu=[0.01, 0.02, 0.03], N_mnu=3).m_ncdm
+    with pytest.raises(ValueError, match="out of emulator range"):
+        background(mnu=1.5, N_mnu=3).m_ncdm
+
+
+def test_1b_emulators_depend_on_the_neutrino_mass():
+    """The neutrino mass is an input of the emulators (distances, sigma8 and Pk)."""
+
+    def emulated(mnu):
+        cosmo = {**COSMO, "mnu": mnu}
+        bg = obDDMBackground(f_dcdm=F_DCDM, Gamma_times_f=GAMMA_TIMES_F, **cosmo)
+        lin = obDDMLinearPerturbations(bg, ZS)
+        return bg, lin
+
+    bg_light, lin_light = emulated(0.06)
+    bg_heavy, lin_heavy = emulated(0.3)
+    pk_light = lin_light.matter_power_spectrum(ZS, KS)
+    pk_heavy = lin_heavy.matter_power_spectrum(ZS, KS)
+    assert np.max(np.abs(pk_heavy / pk_light - 1)) > 0.05  # free-streaming suppression
+    assert lin_heavy.sigma8_0() < lin_light.sigma8_0()
+    assert not np.allclose(
+        bg_light.angular_diameter_distance(ZS),
+        bg_heavy.angular_diameter_distance(ZS),
+        rtol=1e-4,
+    )
 
 
 # ---------------------------------------------------------------------------

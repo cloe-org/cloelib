@@ -10,9 +10,10 @@
 """
 
 # General imports
-from typing import Protocol, Union, Sequence, TypeVar, Optional, runtime_checkable
+from typing import Any, Protocol, Union, Sequence, TypeVar, Optional, runtime_checkable
 
-import numpy as np  # type: ignore
+import numpy as np
+import numpy.typing as npt
 import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
@@ -43,7 +44,7 @@ class Background(Protocol):
         ...
 
     @property
-    def mnu(self) -> Union[float, Sequence[float], T]:
+    def mnu(self) -> Union[float, Sequence[float], np.ndarray, jnp.ndarray]:
         """Total neutrino mass in eV (float) or an array of individual neutrino masses in eV."""
         ...
 
@@ -106,8 +107,14 @@ class Background(Protocol):
         """Compute the matter density as a function of redshift."""
         ...
 
-    def Omega_m(self, zs: T) -> T:
-        """Compute the matter density as a function of redshift."""
+    def Omega_m(self, zs: Union[T, float]) -> T:
+        """Compute the matter density as a function of redshift.
+
+        A bare Python float is also accepted for a single redshift (e.g.
+        `Omega_m(0.0)` to get Omega_m0), matching the convention used
+        throughout cloelib's observables code; implementations return a
+        scalar in that case.
+        """
         ...
 
     def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
@@ -143,7 +150,19 @@ class Background(Protocol):
 
 @runtime_checkable
 class Perturbations(Protocol):
-    """Protocol for Perturbation cosmology class."""
+    """Protocol for Perturbation cosmology class.
+
+    Note: some consumers (e.g. `ShearTracer.get_window_IA`,
+    `AngularTwoPoint.get_Cl`) informally read `.k`/`.z` attributes off a
+    `Perturbations` instance for the wavenumber/redshift grid it was built
+    on. These are deliberately *not* part of this Protocol: not every
+    backend sets them (e.g. the JAX backends ignore the `ks` argument to
+    `growth_factor` and never set `self.k`), and several tests assert
+    `isinstance(instance, Perturbations)` for those backends. Code reading
+    `.k`/`.z` off an arbitrary `Perturbations` must use
+    `getattr(perturbations, "k", None)` / handle their absence, not assume
+    they exist.
+    """
 
     @property
     def background(self) -> Background:
@@ -155,17 +174,322 @@ class Perturbations(Protocol):
         ...
 
     def growth_rate(self, zs: Optional[T] = None, ks: Optional[T] = None) -> T:
-        """Calculate the growth rate for given redshifts and wavenumbers."""
+        """Calculate the growth rate for given redshifts and wavenumbers.
+
+        Every implementation follows the same convention:
+
+        - `zs=None` returns the growth rate on the redshift grid the instance
+          was built on; otherwise it is evaluated at `zs`.
+        - `ks=None` returns a 1D array of shape `(nz,)`; otherwise an array
+          of shape `(nz, nk)` (a scale-independent growth rate is broadcast
+          along `k`).
+        """
         ...
 
     def matter_power_spectrum(self, zs: T, ks: T) -> T:
         """Retrieve the matter power spectrum."""
         ...
 
-    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+    def matter_power_spectrum_cb(self, zs: T, ks: T) -> T:
         """Retrieves matter power spectrum of cold dark matter + baryons (no neutrinos)."""
         ...
 
     def sigma8_0(self) -> float:
         """Retrieve sigma8 at z=0."""
         ...
+
+
+@runtime_checkable
+class WithWavenumberGrid(Protocol):
+    """Structural protocol for a `linearperturbations`-like object exposing a `k` grid.
+
+    `.k` is deliberately not part of the `Perturbations` protocol (see its
+    docstring). Boost-style implementations that need the wavenumber grid
+    their `linearperturbations` argument was built on (e.g.
+    `EE2NonLinearPerturbations`, `MGemuNonlinearBoost`,
+    `TabulatedNonlinearBoost`) type that argument against this narrower
+    protocol instead of the full `Perturbations`, since not every
+    `Perturbations` implementation sets `.k`.
+    """
+
+    @property
+    def k(self) -> np.ndarray:
+        """Wavenumber grid in 1/Mpc."""
+        ...
+
+
+@runtime_checkable
+class WithLinearSpectrumGrid(WithWavenumberGrid, Protocol):
+    """Structural protocol for a `linearperturbations` exposing cached P(k, z) grids.
+
+    Used by implementations (e.g. `HMemuNonLinearPerturbations`) that stitch
+    a cached low-k linear tail onto a high-k nonlinear/emulated spectrum,
+    and so need direct array access to the grid `linearperturbations` was
+    built on rather than going through `matter_power_spectrum`/
+    `matter_power_spectrum_cb`. `.z`/`.Pk`/`.Pk_cb` are, like `.k`,
+    deliberately not part of the `Perturbations` protocol.
+    """
+
+    @property
+    def z(self) -> np.ndarray:
+        """Redshift grid the linear spectrum was computed on."""
+        ...
+
+    @property
+    def Pk(self) -> np.ndarray:
+        """Cached linear total-matter power spectrum on the (z, k) grid."""
+        ...
+
+    @property
+    def Pk_cb(self) -> np.ndarray:
+        """Cached linear cdm+baryon power spectrum on the (z, k) grid."""
+        ...
+
+
+@runtime_checkable
+class BaryonBoostMixin(Protocol):
+    """Protocol for mixins that add a baryonic suppression factor.
+
+    Any class that provides ``baryonic_suppression`` satisfies this protocol,
+    regardless of inheritance.  Used for static type-checking only — never
+    instantiated directly.
+
+    Concrete implementations live in backend-specific files and are composed
+    into ``Perturbations`` subclasses to override ``matter_power_spectrum``::
+
+        class FlamingoBaryonBoostMixin(BaryonBoostMixin):
+            def baryonic_suppression(self, zs, ks, k_hunit=False): ...
+
+        class CAMBNonLinearFLAMINGOPerturbations(
+            FlamingoBaryonBoostMixin, CAMBNonLinearPerturbations
+        ):
+            def matter_power_spectrum(self, zs, ks, ...):
+                return super().matter_power_spectrum(...) * self.baryonic_suppression(...)
+    """
+
+    def baryonic_suppression(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+        """Return the multiplicative baryonic suppression factor P_hydro/P_DMO.
+
+        Parameters
+        ----------
+        zs:
+            Redshifts, shape (nz,).
+        ks:
+            Wavenumbers, shape (nk,).
+
+        Returns
+        -------
+        np.ndarray, shape (nz, nk)
+        """
+        ...
+
+
+def _native_baryon_options(kwargs: dict) -> list[str]:
+    """Return the nonlinear constructor options that already switch on baryons.
+
+    Several nonlinear backends can include a baryonic boost themselves
+    (BACCOemu via `baryonic_boost`, HMcode2020emu, CAMB and CLASS via
+    `log10TAGN` or their HMcode2020 feedback model). Composing a baryonic
+    mixin on top of one of them would apply baryonic feedback twice.
+    """
+    options = [
+        f"{name}={kwargs[name]!r}"
+        for name in ("baryonic_boost", "log10TAGN")
+        if kwargs.get(name) is not None
+    ]
+    if kwargs.get("nonlinear_model") == "mead2020_feedback":
+        options.append("nonlinear_model='mead2020_feedback'")
+    if kwargs.get("hmcode_version") == "2020_baryonic_feedback":
+        options.append("hmcode_version='2020_baryonic_feedback'")
+    return options
+
+
+def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
+    """Compose a nonlinear perturbations class with a baryonic-boost mixin.
+
+    Returns a new class that:
+
+    * Places ``BaryonMixinClass`` as the **left** parent (MRO priority).
+    * Wires ``__init__`` to call ``NonLinearClass.__init__`` first (so that
+      ``self.background`` and ``self.z`` are available) and then
+      ``BaryonMixinClass.__init__`` with ``baryon_kwargs``.
+    * Overrides ``matter_power_spectrum`` and ``matter_power_spectrum_cb`` to
+      multiply P(k, z) by ``baryonic_suppression``.
+
+    Usage
+    -----
+    ::
+
+        from cloelib.cosmology.cosmology import with_baryon_boost
+        from cloelib.cosmology.baccoemu_cosmology import BACCOemuNonLinearPerturbations
+        from cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology import (
+            FlamingoBaryonBoostMixin,
+        )
+
+        BACCOemuFLAMINGO = with_baryon_boost(
+            BACCOemuNonLinearPerturbations, FlamingoBaryonBoostMixin
+        )
+        pert = BACCOemuFLAMINGO(
+            background, linear_pert, redshifts,
+            nonlinear_model_name="Arico2023",
+            baryon_kwargs=dict(fgas_sigma=0.0, Mstar_sigma=0.0, jet_fraction=0.0),
+        )
+
+    For HMcode2020::
+
+        BACCOemuHM = with_baryon_boost(
+            BACCOemuNonLinearPerturbations, HMcode2020BaryonBoostMixin
+        )
+        pert = BACCOemuHM(
+            background, linear_pert, redshifts,
+            baryon_kwargs=dict(log10TAGN=7.8),
+        )
+
+    Parameters
+    ----------
+    NonLinearClass:
+        A concrete nonlinear perturbations class (e.g.
+        ``BACCOemuNonLinearPerturbations``, ``CAMBNonLinearPerturbations``).
+    BaryonMixinClass:
+        A concrete :class:`BaryonBoostMixin` subclass (e.g.
+        ``FlamingoBaryonBoostMixin``, ``BACCOemuBaryonBoostMixin``,
+        ``HMcode2020BaryonBoostMixin``).
+
+    Returns
+    -------
+    type
+        A new class named
+        ``"{NonLinearClass.__name__}With{BaryonMixinClass.__name__}"``.
+
+    Raises
+    ------
+    TypeError
+        If ``NonLinearClass`` already carries a baryonic mixin, since stacking
+        two baryonic models would apply baryonic feedback twice.
+    ValueError
+        At construction, if the nonlinear options passed already switch on
+        the backend's own baryonic boost (e.g. ``log10TAGN`` or
+        ``baryonic_boost``), for the same reason.
+    """
+    if issubclass(NonLinearClass, BaryonBoostMixin):
+        raise TypeError(
+            f"{NonLinearClass.__name__} already includes a baryonic boost; "
+            f"composing {BaryonMixinClass.__name__} on top would apply baryonic "
+            "feedback twice. Start from a nonlinear class without baryons."
+        )
+
+    class Combined(BaryonMixinClass, NonLinearClass):
+        def __init__(self, *args, baryon_kwargs=None, **kwargs):
+            native = _native_baryon_options(kwargs)
+            if native:
+                raise ValueError(
+                    f"{NonLinearClass.__name__} was given {', '.join(native)}, so "
+                    "its matter_power_spectrum already includes a baryonic boost. "
+                    f"Composing {BaryonMixinClass.__name__} on top would apply "
+                    "baryonic feedback twice. Drop those options and use the mixin, "
+                    "or drop the mixin and use the base class on its own."
+                )
+            NonLinearClass.__init__(self, *args, **kwargs)
+            BaryonMixinClass.__init__(self, **(baryon_kwargs or {}))
+
+        def matter_power_spectrum(self, zs, ks, **kwargs):
+            pk = NonLinearClass.matter_power_spectrum(self, zs, ks, **kwargs)
+            return pk * self.baryonic_suppression(
+                zs, ks, k_hunit=kwargs.get("k_hunit", False)
+            )
+
+        def matter_power_spectrum_cb(self, zs, ks, **kwargs):
+            # The cdm+baryon spectrum is given the *same* boost as total matter.
+            # The backends differ slightly in what they predict -- FLAMINGO's
+            # response is (b + cdm + nu) / (cdm + nu), BACCOemu's is the cold
+            # (b + cdm) / (cdm + nu) -- and one could refine this by adding the
+            # neutrino contribution at linear order, as BACCOemu does for its
+            # nonlinear boost. In practice the difference is ~1e-5 even for
+            # mnu = 0.4 eV, and FLAMINGO simulations show total and cold boosts
+            # to be equivalent at that level, so the same boost is used for both.
+            pk = NonLinearClass.matter_power_spectrum_cb(self, zs, ks, **kwargs)
+            return pk * self.baryonic_suppression(
+                zs, ks, k_hunit=kwargs.get("k_hunit", False)
+            )
+
+    Combined.__name__ = f"{NonLinearClass.__name__}With{BaryonMixinClass.__name__}"
+    Combined.__qualname__ = Combined.__name__
+    return Combined
+
+
+B_contra = TypeVar("B_contra", bound=Background, contravariant=True)
+L_contra = TypeVar("L_contra", contravariant=True)
+
+
+class LinearPerturbationsFactory(Protocol[B_contra]):
+    """Constructor interface shared by every linear `Perturbations` class.
+
+    A linear perturbations class is built as
+    `cls(background=..., redshifts=...)`. `B_contra` is the background type
+    the implementation needs (e.g. `mochiCLASSBackground`), so a class that
+    requires a specific background is only accepted where that background
+    type is promised.
+    """
+
+    def __call__(self, background: B_contra, redshifts: np.ndarray) -> Perturbations:
+        """Build the linear perturbations."""
+        ...
+
+
+class NonLinearPerturbationsFactory(Protocol[B_contra, L_contra]):
+    """Constructor interface shared by every nonlinear `Perturbations` class.
+
+    A nonlinear perturbations class is built as
+    `cls(background=..., linearperturbations=..., redshifts=...)`, followed
+    by optional, backend-specific keyword arguments (e.g. `nonlinear_model`,
+    or `log10TAGN` for the HMcode-based backends) that are deliberately not
+    part of this interface.
+
+    `L_contra` is the type of `linearperturbations` the caller provides, so
+    implementations that need more than the `Perturbations` interface from
+    it (e.g. `HMemuNonLinearPerturbations` reads the cached `Pk`/`Pk_cb`
+    grid, see `WithLinearSpectrumGrid`) are only accepted for linear
+    perturbations that provide it.
+    """
+
+    def __call__(
+        self,
+        background: B_contra,
+        linearperturbations: L_contra,
+        redshifts: np.ndarray,
+    ) -> Perturbations:
+        """Build the nonlinear perturbations."""
+        ...
+
+
+def growth_rate_on_redshifts(
+    z_grid: npt.ArrayLike,
+    f_grid: npt.ArrayLike,
+    zs: Optional[npt.ArrayLike] = None,
+    ks: Optional[npt.ArrayLike] = None,
+) -> np.ndarray:
+    """Evaluate a tabulated, scale-independent growth rate following `Perturbations.growth_rate`.
+
+    Used by implementations that compute the growth rate on their own
+    redshift grid. Requested redshifts are linearly interpolated on that
+    grid and clamped to its edge values outside of it.
+
+    Args:
+        z_grid (array_like): Redshifts at which `f_grid` is tabulated.
+        f_grid (array_like): Growth rate at `z_grid`.
+        zs (Optional[array_like]): Redshifts at which to evaluate the growth
+            rate. Defaults to `z_grid`, returning `f_grid` unchanged.
+        ks (Optional[array_like]): Wavenumbers used to broadcast the growth rate.
+
+    Returns:
+        np.ndarray: The growth rate, with shape (nz,) if `ks` is None and
+        (nz, nk) otherwise.
+    """
+    f = np.asarray(f_grid)
+    if zs is not None:
+        z = np.asarray(z_grid)
+        order = np.argsort(z)
+        f = np.interp(np.atleast_1d(np.asarray(zs, dtype=float)), z[order], f[order])
+    if ks is None:
+        return f
+    return np.tile(f[:, None], (1, np.size(ks)))

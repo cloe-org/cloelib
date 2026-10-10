@@ -1,7 +1,8 @@
 """Implementation of the decaying dark matter cosmologies (1bDDM and 2bDDM), using CLASS and emulators."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.class_cosmology import CLASSBackground
+from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.cosmology.cosmopower_jax_cosmology import (
@@ -21,7 +22,7 @@ from typing import Optional, Union, Sequence
 
 # Cosmology imports
 try:
-    from classy import Class  # type: ignore
+    from classy import Class
 except ImportError as e:
     raise ImportError("classy could not be imported.") from e
 
@@ -449,7 +450,10 @@ class obDDMLinearPerturbations:
     """Class for perturbations cosmology using CLASS, inheriting from Perturbations parent class."""
 
     def __init__(
-        self, background: Background, redshifts: np.ndarray, use_emulator: bool = True
+        self,
+        background: obDDMBackground,
+        redshifts: np.ndarray,
+        use_emulator: bool = True,
     ):
         """Initialize the obDDMLinearPerturbations instance."""
         self.background = background
@@ -622,7 +626,10 @@ class obDDMLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        arr = [self.background.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [
+            self.background.results.scale_independent_growth_factor_f(zi)
+            for zi in self.z
+        ]
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -644,7 +651,7 @@ class obDDMNonLinearPerturbations:
 
     def __init__(
         self,
-        background: Background,
+        background: obDDMBackground,
         linearperturbations: Perturbations,
         redshifts: np.ndarray,
         use_emulator: bool = True,
@@ -1016,7 +1023,10 @@ class obDDMNonLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        arr = [self.background.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [
+            self.background.results.scale_independent_growth_factor_f(zi)
+            for zi in self.z
+        ]
         return np.array(arr)
 
     def sigma8_0(self) -> float:
@@ -1064,7 +1074,7 @@ class tbDDMNonLinearPerturbations:
 
     def __init__(
         self,
-        background: Background,
+        background: CLASSBackground,
         redshifts: np.ndarray,
         f_dcdm: float,
         epsilon: float,
@@ -1323,5 +1333,8 @@ class tbDDMNonLinearPerturbations:
         np.ndarray
             Scale-independent growth rate f(z)
         """
-        arr = [self.background.scale_independent_growth_factor_f(zi) for zi in self.z]  # type: ignore[union-attr]
+        arr = [
+            self.background.results.scale_independent_growth_factor_f(zi)
+            for zi in self.z
+        ]
         return np.array(arr)

@@ -23,7 +23,7 @@ that case.
 """
 
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional, Sequence
+from typing import Callable, Sequence
 
 import jax.numpy as jnp
 
@@ -72,7 +72,7 @@ class SpectraBank:
 
     def __init__(
         self,
-        matter_pk: Optional[jnp.ndarray],
+        matter_pk: jnp.ndarray | None,
         ks: jnp.ndarray,
         zs: jnp.ndarray,
         perturbations=None,
@@ -82,10 +82,10 @@ class SpectraBank:
         self.ks = ks
         self.zs = zs
         self.perturbations = perturbations
-        self._spectra: Dict[str, jnp.ndarray] = {}
+        self._spectra: dict[str, jnp.ndarray] = {}
         if matter_pk is not None:
             self._spectra["P_mm"] = matter_pk
-        self._grids: Dict[str, jnp.ndarray] = {}
+        self._grids: dict[str, jnp.ndarray] = {}
 
     @classmethod
     def from_perturbations(cls, perturbations, ks, zs) -> "SpectraBank":
@@ -228,26 +228,6 @@ def needs_generalized_engine(contributions1, contributions2) -> bool:
             ):
                 return True
     return False
-
-
-def build_spectra_bank(
-    contributions1, contributions2, matter_pk, ks, zs
-) -> SpectraBank:
-    """Populate a `SpectraBank` with every request either tracer's
-    contributions declare for their pairing with the other tracer's
-    contributions - the minimal set the generalized engine needs, mirroring
-    `toy_cloelib.engine.setup_engine`'s plan-building (without a separate
-    static-plan object, since here the bank is rebuilt fresh per call
-    anyway).
-    """
-    bank = SpectraBank(matter_pk, ks, zs)
-    for c1 in contributions1:
-        for c2 in contributions2:
-            for req in _requirements_for_interaction(c1, c2):
-                bank.get(req)
-            for req in _requirements_for_interaction(c2, c1):
-                bank.get(req)
-    return bank
 
 
 def get_effective_pk(c1, c2, bank: SpectraBank):

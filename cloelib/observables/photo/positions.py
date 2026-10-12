@@ -655,8 +655,9 @@ class PositionsTracer:
         galaxy_bias_model: str,
         nuisance_params: dict,
         include_rsd: bool = False,
-        use_Pcb: bool = False,
         nl_bias_loop_computer: NonlinearBiasLoopComputer | None = None,
+        *,
+        use_Pcb: bool = False,
     ):
         r"""
         Initialize the class instance.
@@ -682,9 +683,6 @@ class PositionsTracer:
             does and does not support).
           nuisance_params (dict): A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
           include_rsd (bool): A flag indicating whether to include redshift-space distortions in the calculations.
-          use_Pcb (bool): A flag indicating whether to use the power spectrum of cold dark matter + baryons (no neutrinos).
-            Not supported with `galaxy_bias_model="nonlinear"` (raises
-            `NotImplementedError`).
           nl_bias_loop_computer: required when `galaxy_bias_model="nonlinear"`
             (raises `ValueError` if omitted) - `NonLinearGalaxyBiasContribution`'s
             one-loop kernel backend. Pass
@@ -692,7 +690,15 @@ class PositionsTracer:
             FAST-PT-computed kernels, or any other object with the same
             `.compute(name)` interface. Passing this with any
             `galaxy_bias_model` other than `"nonlinear"` raises `ValueError`.
+          use_Pcb (bool): Keyword-only. A flag indicating whether to use the power spectrum of cold dark matter + baryons (no neutrinos).
+            Must be a Python `bool` (raises `TypeError` otherwise). Not
+            supported with `galaxy_bias_model="nonlinear"` (raises
+            `NotImplementedError`).
         """
+        if not isinstance(use_Pcb, bool):
+            raise TypeError(
+                f"use_Pcb must be a bool, got {type(use_Pcb).__name__}."
+            )
         if 0.0 in z:
             raise ValueError(
                 "One of the z array elements is equal to zero, breaking Limber integration."

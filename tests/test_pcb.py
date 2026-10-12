@@ -320,6 +320,22 @@ def tomography():
     return z, dndz
 
 
+def test_use_pcb_is_keyword_only(camb_linear, tomography):
+    z, dndz = tomography
+    tracer = _positions(camb_linear, dndz, z, use_Pcb=False)
+    with pytest.raises(TypeError):
+        PositionsTracer(
+            camb_linear, dndz, z, "per_bin", tracer.nuisance_params, False, None, True
+        )
+
+
+@pytest.mark.parametrize("use_Pcb", [1, "True", None, np.True_])
+def test_use_pcb_must_be_bool(camb_linear, tomography, use_Pcb):
+    z, dndz = tomography
+    with pytest.raises(TypeError, match="use_Pcb"):
+        _positions(camb_linear, dndz, z, use_Pcb=use_Pcb)
+
+
 def test_cross_spectrum_linear_matches_camb(camb_linear, camb_background):
     bank = SpectraBank.from_perturbations(camb_linear, K_TEST, Z_TEST)
     expected = _camb_cross_linear(camb_background, Z_TEST, K_TEST)

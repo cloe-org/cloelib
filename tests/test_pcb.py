@@ -35,6 +35,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
+from cloelib.observables.cmb import CMBLensingTracer
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.spectrum_engine import SpectraBank
@@ -287,7 +288,13 @@ def test_nonlinear_pcb_consistent_with_nonlinear_pmm(nonlinear_case):
 
 
 def _positions(
-    perturbations, dndz, z, use_Pcb, magnification_bias=0.0, bias=(1.3, 1.7)
+    perturbations,
+    dndz,
+    z,
+    use_Pcb,
+    magnification_bias=0.0,
+    bias=(1.3, 1.7),
+    include_rsd=False,
 ):
     n_bins = dndz.shape[0]
     nuisance = {
@@ -296,7 +303,15 @@ def _positions(
         **{f"magnification_bias_{i + 1}": magnification_bias for i in range(n_bins)},
         **{f"b1_photo_bin{i}": bias[i] for i in range(n_bins)},
     }
-    return PositionsTracer(perturbations, dndz, z, "per_bin", nuisance, use_Pcb=use_Pcb)
+    return PositionsTracer(
+        perturbations,
+        dndz,
+        z,
+        "per_bin",
+        nuisance,
+        include_rsd=include_rsd,
+        use_Pcb=use_Pcb,
+    )
 
 
 def _shear(perturbations, dndz, z):
@@ -455,3 +470,76 @@ def test_magnification_traces_total_matter(camb_nonlinear, tomography, partner, 
         expected = cl(bias_only, others[0]) + cl(mag_only, others[0])
         actual = cl(full, others[0])
     assert_allclose(actual, expected, rtol=1e-6, atol=1e-30)
+
+
+# --- C_ell integrates the right spectrum ---------------------------------------------
+
+
+class _SwappedMatterSpectrum:
+    """Wraps a backend, replacing its `matter_power_spectrum` with `pk_fn`.
+
+    Every other attribute is the wrapped backend's.
+    """
+
+    def __init__(self, base, pk_fn):
+        self._base = base
+        self._pk_fn = pk_fn
+
+    def __getattr__(self, name):
+        return getattr(self._base, name)
+
+    def matter_power_spectrum(self, zs, ks):
+        return self._pk_fn(zs, ks)
+
+
+def _cb_cross_matter(perturbations):
+    def pk_fn(zs, ks):
+        return SpectraBank.from_perturbations(perturbations, ks, zs).base(CB, MATTER)
+
+    return pk_fn
+
+
+def _assert_cb_cl_matches_swapped(cl_cb, cl_swapped, cl_mm):
+    # The cb spectrum must make a difference, or the test checks nothing.
+    assert np.max(np.abs(cl_cb / cl_mm - 1)) > 1e-2
+    assert_allclose(cl_cb, cl_swapped, rtol=1e-6, atol=1e-30)
+
+
+# With zero magnification bias every term of a `use_Pcb=True` positions tracer
+# traces cb, and the C_ell is linear in the spectrum: it must equal the C_ell of
+# a `use_Pcb=False` tracer whose matter spectrum is replaced by P_cb (auto) or by
+# the cb x matter spectrum (against a total-matter tracer).
+
+
+@pytest.mark.parametrize("partner", ["self", "SHE"])
+def test_rsd_traces_cb(camb_nonlinear, tomography, partner):
+    z, dndz = tomography
+    pert = camb_nonlinear
+    ells = np.logspace(1.0, np.log10(2000.0), 8)
+    if partner == "self":
+        swapped = _SwappedMatterSpectrum(pert, pert.matter_power_spectrum_cb)
+    else:
+        swapped = _SwappedMatterSpectrum(pert, _cb_cross_matter(pert))
+
+    def cl(perturbations, use_Pcb):
+        pos = _positions(perturbations, dndz, z, use_Pcb, include_rsd=True)
+        other = pos if partner == "self" else _shear(perturbations, dndz, z)
+        return np.asarray(AngularTwoPoint(pos, other).get_Cl_tensor(ells, 0, pert.k))
+
+    _assert_cb_cl_matches_swapped(cl(pert, True), cl(swapped, False), cl(pert, False))
+
+
+@pytest.mark.parametrize("order", ["POS-CMBL", "CMBL-POS"])
+def test_cmb_lensing_x_cb_positions(camb_nonlinear, tomography, order):
+    z, dndz = tomography
+    pert = camb_nonlinear
+    ells = np.logspace(1.0, np.log10(2000.0), 8)
+    swapped = _SwappedMatterSpectrum(pert, _cb_cross_matter(pert))
+
+    def cl(perturbations, use_Pcb):
+        pos = _positions(perturbations, dndz, z, use_Pcb)
+        cmbl = CMBLensingTracer(perturbations=perturbations, z=z)
+        pair = (pos, cmbl) if order == "POS-CMBL" else (cmbl, pos)
+        return np.asarray(AngularTwoPoint(*pair).get_Cl_tensor(ells, 0, pert.k))
+
+    _assert_cb_cl_matches_swapped(cl(pert, True), cl(swapped, False), cl(pert, False))

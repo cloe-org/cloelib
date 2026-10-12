@@ -27,7 +27,11 @@ from cloelib.cosmology.camb_cosmology import (
     CAMBLinearPerturbations,
     CAMBNonLinearPerturbations,
 )
-from cloelib.observables.photo.contributions import IntrinsicAlignmentContribution
+from cloelib.observables.photo.contributions import (
+    CB,
+    MATTER,
+    IntrinsicAlignmentContribution,
+)
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.observables.photo.shear import (
     NLAContribution,
@@ -35,7 +39,10 @@ from cloelib.observables.photo.shear import (
     _ALL_KERNELS,
     _GI_KERNELS,
 )
-from cloelib.observables.photo.spectrum_engine import needs_generalized_engine
+from cloelib.observables.photo.spectrum_engine import (
+    SpectraBank,
+    needs_generalized_engine,
+)
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 
 import importlib.util
@@ -476,6 +483,75 @@ def test_generalized_engine_uses_pcb_like_legacy(cosmo_setup):
     cl_tatt_cb = cl("TATT", use_Pcb=True)
     np.testing.assert_allclose(cl_tatt_cb, cl("NLA", use_Pcb=True), rtol=5e-3)
     assert not np.allclose(cl_tatt_cb, cl("TATT", use_Pcb=False), rtol=1e-4, atol=0.0)
+
+
+def test_pcb_only_changes_tree_level_tatt_term(cosmo_setup):
+    """With `PositionsTracer(use_Pcb=True)` and a TATT shear tracer at
+    nonzero A2/b_TA, only the `C1 * P_dd` term of the galaxy-IA effective
+    spectrum switches to the cb x matter spectrum; the one-loop terms do not
+    depend on the base spectrum.
+
+    Checked exactly on `get_effective_pk`: the generalized engine
+    interpolates `log10|P_eff|` of the summed spectrum
+    (`Pkl_interp_signed`), so the same identity on the C_ell only holds to
+    interpolation accuracy. End to end, the C_ell must still change with
+    both `use_Pcb` and A2/b_TA.
+    """
+    perturbations, z = cosmo_setup
+    n_z_bins = 2
+    dndz = np.ones((n_z_bins, len(z)))
+    dndz /= np.trapezoid(dndz, z, axis=1)[:, None]
+    ells = np.logspace(1.0, np.log10(200), 6)
+    ks = np.asarray(perturbations.k)
+    pos_nuisance = {
+        **{f"dz_pos_{i + 1}": 0.0 for i in range(n_z_bins)},
+        **{f"width_pos_{i + 1}": 1.0 for i in range(n_z_bins)},
+        **{f"magnification_bias_{i + 1}": 0.5 for i in range(n_z_bins)},
+    }
+
+    def pos(use_Pcb):
+        return PositionsTracer(
+            perturbations, dndz, z, "per_bin", pos_nuisance, use_Pcb=use_Pcb
+        )
+
+    def shear(A2IA, bTA):
+        return ShearTracer(
+            perturbations=perturbations,
+            dndz=dndz,
+            z=z,
+            nuisance_params=_shear_nuisance(n_z_bins, A2IA=A2IA, bTA=bTA),
+            ia_model="TATT",
+            tatt_loop_computer=_StubTATTLoopComputer(perturbations),
+        )
+
+    pos_cb, pos_mm = pos(True), pos(False)
+    shear_tatt = shear(0.4, -0.83)
+    tatt = shear_tatt.ia
+    assert isinstance(tatt, TATTContribution)
+
+    bank = SpectraBank.from_perturbations(perturbations, ks, perturbations.z)
+    eff_cb = np.asarray(tatt.get_effective_pk(pos_cb.bias, bank))
+    eff_mm = np.asarray(tatt.get_effective_pk(pos_mm.bias, bank))
+    c1 = np.asarray(tatt._C1(bank.zs))[:, None]
+    p_cbxm = np.asarray(bank.base(CB, MATTER))
+    p_mm = np.asarray(bank.base(MATTER, MATTER))
+
+    # The loop terms are there, and the same for cb and mm.
+    assert not np.allclose(eff_mm, c1 * p_mm, rtol=1e-4, atol=0.0)
+    np.testing.assert_allclose(
+        eff_cb - eff_mm,
+        c1 * (p_cbxm - p_mm),
+        rtol=1e-10,
+        atol=1e-12 * np.max(np.abs(eff_mm)),
+    )
+
+    def cl(tracer1, tracer2):
+        return np.asarray(AngularTwoPoint(tracer1, tracer2).get_Cl_tensor(ells, 0, ks))
+
+    cl_cb = cl(pos_cb, shear_tatt)
+    assert np.all(np.isfinite(cl_cb))
+    assert not np.allclose(cl_cb, cl(pos_mm, shear_tatt), rtol=1e-4, atol=0.0)
+    assert not np.allclose(cl_cb, cl(pos_cb, shear(0.0, 0.0)), rtol=1e-4, atol=0.0)
 
 
 def test_rsd_with_generalized_engine_raises_not_implemented(cosmo_setup):

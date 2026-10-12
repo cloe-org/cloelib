@@ -729,6 +729,9 @@ class AngularTwoPoint:
             f = _growth_rate_on_grid(self.tracer1.perturbations, zs_calc)
 
             def rsd_term(tracer):
+                # With use_Pcb the RSD term is integrated against the cb
+                # spectrum, but `f` is still the growth rate of the total
+                # matter, not the (scale-dependent) one of cb.
                 field = CB if _uses_pcb(tracer) else MATTER
                 return (field, tracer.get_window_rsd(ells, H, f, chi), True)
 

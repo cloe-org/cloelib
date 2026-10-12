@@ -7,6 +7,7 @@ This class is compatible with the Tracer protocol.
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
+from cloelib.observables.photo.contributions import unit_sigma
 
 # General imports
 from typing import Any
@@ -87,17 +88,16 @@ class CMBLensingTracer:
         return (self.convergence,)
 
     def get_window(self, z):
-        r"""Compute the Window.
+        r"""Computes CMB lensing window function
 
-        Computes CMB lensing window function
-
-        .. math::
+        $$
             W^{\kappa}(\ell, z, k) =
             \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
             \Omega_{{\rm m},0} (1 + z)
             f_K\left[\tilde{r}(z)\right]
             \frac{f_K\left[\tilde{r}(z_*) - \tilde{r}(z)\right]}
             {f_K\left[\tilde{r}(z_*)\right]}\\
+        $$
 
         Parameters
         ----------
@@ -123,5 +123,7 @@ class CMBLensingTracer:
         z_star: Any = self.background.z_star
         rz_star = self.background.comoving_distance(z_star)
         efficiency = 1 - rz / rz_star
-        result = factor * efficiency
+        # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.
+        Sigma = getattr(self.perturbations, "Sigma", unit_sigma)(z)
+        result = factor * efficiency * Sigma
         return np.expand_dims(result, 0)

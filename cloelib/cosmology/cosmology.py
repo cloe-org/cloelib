@@ -170,19 +170,41 @@ class Perturbations(Protocol):
         ...
 
     def growth_factor(self, zs: T, ks: T) -> T:
-        """Calculate the growth factor for given redshifts and wavenumbers."""
+        """Evaluate the dimensionless growth factor at redshifts and wavenumbers.
+
+        Args:
+            zs (T): One-dimensional NumPy or JAX array of redshifts, with
+                shape ``(nz,)``.
+            ks (T): One-dimensional NumPy or JAX array of wavenumbers in
+                ``1/Mpc``, with shape ``(nk,)``.
+
+        Returns:
+            T: NumPy or JAX array of growth-factor values. Scale-dependent
+            backends generally return shape ``(nz, nk)``; scale-independent
+            backends may return shape ``(nz,)``. The growth factor is
+            conventionally normalized to unity at redshift zero. Consult the
+            concrete backend when relying on a particular shape or
+            normalization convention.
+        """
         ...
 
     def growth_rate(self, zs: Optional[T] = None, ks: Optional[T] = None) -> T:
         """Calculate the growth rate for given redshifts and wavenumbers.
 
-        Every implementation follows the same convention:
+        Args:
+            zs (Optional[T]): One-dimensional NumPy or JAX array of redshifts,
+                with shape ``(nz,)``. If ``None``, implementations use the
+                redshift grid they were built on; implementations without a
+                default grid may raise ``ValueError``.
+            ks (Optional[T]): One-dimensional NumPy or JAX array of wavenumbers
+                in ``1/Mpc``, with shape ``(nk,)``. If ``None``, return the
+                growth rate as a function of redshift only.
 
-        - `zs=None` returns the growth rate on the redshift grid the instance
-          was built on; otherwise it is evaluated at `zs`.
-        - `ks=None` returns a 1D array of shape `(nz,)`; otherwise an array
-          of shape `(nz, nk)` (a scale-independent growth rate is broadcast
-          along `k`).
+        Returns:
+            T: NumPy or JAX array of growth-rate values. With ``ks=None``, the
+            shape is ``(nz,)``; with wavenumbers supplied, the shape is
+            ``(nz, nk)``. Scale-independent growth rates are broadcast along
+            the wavenumber axis.
         """
         ...
 

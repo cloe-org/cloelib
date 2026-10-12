@@ -142,7 +142,8 @@
         "maintenance",
         "ideas",
         "review",
-        "bug"
+        "bug",
+        "doc"
       ]
     },
     {
@@ -460,7 +461,8 @@
         "bug",
         "code",
         "ideas",
-        "doc"
+        "doc",
+        "review"
       ]
     },
     {
@@ -695,6 +697,15 @@
       "profile": "https://github.com/amandinelebrun",
       "contributions": [
         "review"
+      ]
+    },
+    {
+      "login": "sankarshana16",
+      "name": "Sankarshana Srinivasan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52423565?v=4",
+      "profile": "https://sankarshana16.github.io/",
+      "contributions": [
+        "code"
       ]
     }
   ]

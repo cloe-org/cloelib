@@ -121,20 +121,32 @@ class JAXBackground:
 
     @property
     def N_ur(self) -> None:
-        """Effective number of ultra-relativistic species.
+        """
+        Effective number of ultra-relativistic species.
 
-        Checks if N_ur is provided and raises an error if so.
-        FIXME: Not implemented, so this will always return None.
+        This property is not supported in the JAX backend and always returns None.
+        If N_ur was provided during initialization, a ValueError is raised.
+
+        Returns
+        -------
+        None
         """
         if self._provided_N_ur is not None:
-            raise ValueError("N_ur is not supported in JAXBackground. ")
+            raise ValueError("N_ur is not supported in JAXBackground.")
         return None
 
     @property
     def N_eff(self) -> float:
-        """Effective number of relativistic species.
+        """
+        Effective number of relativistic species.
 
-        FIXME: Not implemented, so this will always return the default 3.044.
+        This property returns the default value of 3.044, as the JAX backend does not support
+        variations in N_eff.
+
+        Returns
+        -------
+        float
+            The effective number of relativistic species, set to 3.044.
         """
         return 3.044
 
@@ -323,15 +335,56 @@ class JAXBackground:
         )
 
     def w_a(self, a):
-        """Write documentation (TODO)."""
+        """
+        Compute the dark energy equation of state parameter w(a).
+
+        This function implements the linear equation of state w(a) = w0 + (1 - a) * wa,
+        following the parametrization of Linder (2003).
+
+        Parameters
+        ----------
+        a (float or ndarray): Scale factor.
+
+        Returns
+        -------
+        float or ndarray: The equation of state parameter w at scale factor a.
+        """
         return self.w0 + (1.0 - a) * self.wa  # Equation (6) in Linder (2003)
 
     def f_de(self, a):
-        """Write documentation (TODO)."""
+        """
+        Compute the logarithmic dark-energy density evolution relative to today.
+
+        For the CPL equation of state ``w(a) = w0 + (1 - a) * wa``, this returns
+        ``ln(rho_de(a) / rho_de(1))``. Its exponential is the dark-energy density
+        fraction relative to its value at ``a = 1`` and is used in ``Esqr``.
+
+        Parameters
+        ----------
+        a (float or ndarray): Scale factor.
+
+        Returns
+        -------
+        float or ndarray
+            ``ln(rho_de(a) / rho_de(1))``.
+        """
         return -3.0 * (1.0 + self.w0 + self.wa) * jnp.log(a) + 3.0 * self.wa * (a - 1.0)
 
     def Esqr(self, a):
-        """Write documentation (TODO)."""
+        """
+        Compute the dimensionless energy density squared E^2(a).
+
+        This function returns the square of the expansion rate normalized by the Hubble constant,
+        E^2(a) = (H(a)/H0)^2.
+
+        Parameters
+        ----------
+        a (float or ndarray): Scale factor.
+
+        Returns
+        -------
+        float or ndarray: The dimensionless energy density squared at scale factor a.
+        """
         OmDE = 1.0 - self.Omega_m0 - self.Omega_k0
         return (
             self.Omega_m0 * jnp.power(a, -3)
@@ -340,11 +393,35 @@ class JAXBackground:
         )
 
     def Omega_m_a(self, a):
-        """Write documentation (TODO)."""
+        """
+        Compute the matter density parameter as a function of scale factor.
+
+        This function returns the fraction of the total energy density contributed by matter at scale factor a.
+
+        Parameters
+        ----------
+        a (float or ndarray): Scale factor.
+
+        Returns
+        -------
+        float or ndarray: The matter density parameter Omega_m at scale factor a.
+        """
         return self.Omega_m0 * jnp.power(a, -3) / self.Esqr(a)
 
     def Omega_de_a(self, a):
-        """Write documentation (TODO)."""
+        """
+        Compute the dark energy density parameter as a function of scale factor.
+
+        This function returns the fraction of the total energy density contributed by dark energy at scale factor a.
+
+        Parameters
+        ----------
+        a (float or ndarray): Scale factor.
+
+        Returns
+        -------
+        float or ndarray: The dark energy density parameter Omega_de at scale factor a.
+        """
         OmDE = 1.0 - self.Omega_m0 - self.Omega_k0
         return OmDE * jnp.exp(self.f_de(a)) / self.Esqr(a)
 
@@ -383,7 +460,21 @@ class JAXLinearPerturbations:
         self._redshifts = redshifts
 
     def D_derivs(self, y, x):
-        """Write documentation (TODO)."""
+        """
+        Compute the derivatives of the growth factor for numerical integration.
+
+        This function implements the second-order linear perturbation equations for the growth factor D and its derivative,
+        used in solving the ODE for the growth factor.
+
+        Parameters
+        ----------
+        y (array_like): Current values [D, D'] at scale factor x.
+        x (float or ndarray): Scale factor.
+
+        Returns
+        -------
+        ndarray: Derivatives [D', D''] at scale factor x.
+        """
         q = (
             2.0
             - 0.5
@@ -395,8 +486,27 @@ class JAXLinearPerturbations:
         r = 1.5 * self.background.Omega_m_a(x) / x / x
         return jnp.array([y[1], -q * y[1] + r * y[0]])
 
-    def growth_factor(self, zs: jnp.ndarray, ks: Optional[jnp.ndarray] = None):
-        """Compute the growth factor."""
+    def growth_factor(
+        self, zs: jnp.ndarray, ks: Optional[jnp.ndarray] = None
+    ) -> jnp.ndarray:
+        """Evaluate the normalized, scale-independent linear growth factor.
+
+        The growth equation is integrated over a fixed grid of 128 scale
+        factors from ``1e-3`` to ``1``. The result is normalized to ``D(z=0)=1``
+        and linearly interpolated in scale factor at the requested redshifts.
+
+        Args:
+            zs (jnp.ndarray): One-dimensional array of redshifts at which to
+                evaluate the growth factor. Values are converted to scale
+                factors with ``a = 1 / (1 + z)``.
+            ks (Optional[jnp.ndarray]): Wavenumbers, accepted for compatibility
+                with the perturbations interface. Growth is scale-independent
+                in this implementation, so this argument is ignored.
+
+        Returns:
+            jnp.ndarray: JAX array of growth-factor values, with one value per
+                input redshift and the same shape as ``zs``.
+        """
         atab = jnp.logspace(-3.0, 0.0, 128)
 
         a_s = a_z(zs)
@@ -783,7 +893,20 @@ class JAXNonLinearPerturbations:
     def growth_factor(
         self, zs: jnp.ndarray, ks: Optional[jnp.ndarray] = None
     ) -> jnp.ndarray:
-        """Return the linear growth factor."""
+        """Return the linear growth factor from the wrapped linear backend.
+
+        Args:
+            zs (jnp.ndarray): One-dimensional array of redshifts at which to
+                evaluate the growth factor.
+            ks (Optional[jnp.ndarray]): Optional wavenumbers accepted for
+                interface compatibility. The JAX growth factor is
+                scale-independent, so this argument is ignored.
+
+        Returns:
+            jnp.ndarray: Growth-factor values from
+                ``linearperturbations.growth_factor(zs, ks)``, with one value
+                per input redshift.
+        """
         return self.linearperturbations.growth_factor(zs, ks)
 
     def growth_rate(
@@ -854,7 +977,35 @@ class JAXNonLinearPerturbations:
         return k_nl, n_eff, C
 
     def halofit(self, zs, ks, hubble_units=False, k_hunit=False):
-        """Write documentation (TODO)."""
+        """
+        Compute the nonlinear matter power spectrum using the HaloFit model.
+
+        This function applies the HaloFit fitting formula to the linear matter power spectrum,
+        providing a fitting model for the nonlinear regime.
+
+        Parameters
+        ----------
+        zs : array-like
+            Redshift or redshifts at which to evaluate the spectrum.
+        ks : array-like
+            Wavenumber or wavenumbers. ``k_hunit`` controls whether these are
+            interpreted in ``h Mpc^-1`` or ``Mpc^-1``.
+        hubble_units : bool, optional
+            Selects the power-spectrum conversion used by
+            :meth:`JAXLinearPerturbations.matter_power_spectrum`: when false,
+            the result is divided by ``h**3``; when true, that conversion is
+            omitted. Defaults to false.
+        k_hunit : bool, optional
+            If true, ``ks`` are in ``h Mpc^-1``; otherwise they are in
+            ``Mpc^-1``. Defaults to false.
+
+        Returns
+        -------
+        jax.Array
+            Nonlinear power spectrum. Singleton dimensions are removed by
+            ``squeeze``; otherwise the result follows the redshift and
+            wavenumber dimensions.
+        """
         zs = jnp.atleast_1d(zs)
         a_s = a_z(zs)
 
@@ -940,7 +1091,23 @@ class JAXNonLinearPerturbations:
         )
 
     def nonlinear_matter_power_spectrum_limber_grid(self, z_l, ks, zs, ells):
-        """Write documentation (TODO)."""
+        """
+        Compute the nonlinear matter power spectrum on a Limber grid.
+
+        This function computes the nonlinear matter power spectrum along lines of constant redshift,
+        used for angular correlation function calculations.
+
+        Parameters
+        ----------
+        z_l (array_like): Line-of-sight redshifts.
+        ks (array_like): Wavenumbers.
+        zs (array_like): Redshifts for the power spectrum evaluation.
+        ells (array_like): Multipole moments.
+
+        Returns
+        -------
+        ndarray: The nonlinear matter power spectrum on the Limber grid.
+        """
         Pk = jax.vmap(self.matter_power_spectrum, in_axes=(0, None))(ks, zs)
         chi = self.linearperturbations.background.comoving_distance(zs)
         k_lz = jnp.expand_dims((ells + 0.5), 1) / chi
@@ -982,7 +1149,31 @@ class JAXNonLinearPerturbations:
 
 # function takenfrom JAXCosmo. Should likely be moved to an utils.py
 def simps(f, a, b, N=128):
-    """Write documentation (TODO)."""
+    """
+    Compute the Simpson's rule integral of a function over [a, b].
+
+    This function implements Simpson's rule for numerical integration.
+
+    Parameters
+    ----------
+    f : callable
+        Function to integrate.
+    a : float
+        Lower limit of integration.
+    b : float
+        Upper limit of integration.
+    N : int, optional
+        Number of subintervals (must be even). Default 128.
+
+    Returns
+    -------
+    float or ndarray: The integral of f over [a, b].
+
+    Raises
+    ------
+    ValueError
+        If N is odd.
+    """
     if N % 2 == 1:
         raise ValueError("N must be an even integer.")
     dx = (b - a) / N
@@ -994,7 +1185,25 @@ def simps(f, a, b, N=128):
 
 # function takes from JAXCosmo. Should likely be moved to an utils.py
 def odeint(fn, y0, t):
-    """Write documentation (TODO)."""
+    """
+    Solve an ordinary differential equation using the Runge-Kutta 4th order method.
+
+    This function integrates the ODE dy/dt = fn(y, t) with initial condition y(t0) = y0.
+
+    Parameters
+    ----------
+    fn : callable
+        The ODE function f(y, t).
+    y0 : array_like
+        Initial condition for y at t0.
+    t : array_like
+        Time points at which to evaluate the solution.
+
+    Returns
+    -------
+    ndarray
+        The solution y(t) at the specified time points.
+    """
 
     def rk4(carry, t):
         y, t_prev = carry
@@ -1013,14 +1222,29 @@ def odeint(fn, y0, t):
 @functools.partial(jax.vmap, in_axes=(0, None, None))
 def interp(x, xp, fp):
     """
-    Compute a linear interpolation (equivalent of jnp.interp).
+    Linearly interpolate or extrapolate tabulated one-dimensional data.
 
-    We are not doing any checks, so make sure your query points are lying
-    inside the array.
+    For each query value, the nearest tabulated point is selected and the
+    adjacent segment supplies the slope. Values outside the tabulated range are
+    linearly extrapolated using the first or last segment. At least three
+    strictly increasing ``xp`` values are required by the index clipping.
+    ``jax.vmap`` vectorizes over the leading dimension of ``x``; ``xp`` and
+    ``fp`` are shared across those queries.
 
-    TODO: Implement proper interpolation, like in interpolations.jl
+    Parameters
+    ----------
+    x : array_like
+        Query points.
+    xp : array_like
+        One-dimensional, strictly increasing data coordinates (length at least 3).
+    fp : array_like
+        One-dimensional function values corresponding to ``xp``; same length.
 
-    x, xp, fp need to be 1d arrays
+    Returns
+    -------
+    jax.Array
+        Interpolated or extrapolated values, vectorized over the leading axis
+        of ``x``.
     """
     # First we find the nearest neighbour
     ind = jnp.argmin((x - xp) ** 2)
@@ -1187,7 +1411,34 @@ def _difftrapn(function, interval, numtraps):
 
 @jax.jit
 def Pkl_interp(k_l, z_l, ks, zs, Pk):
-    """Write documentation (TODO)."""
+    """
+    Interpolate positive power-spectrum values on a two-dimensional grid.
+
+    Cubic interpolation is performed in ``log10(k)`` and redshift, on
+    ``log10(Pk)`` values, then transformed back to power-spectrum values.
+    Consequently, all entries of ``ks`` and ``Pk`` must be positive. The
+    leading two dimensions of ``Pk`` correspond to ``ks`` and ``zs``; query
+    coordinates ``k_l`` and ``z_l`` are broadcast according to ``interpax``'s
+    two-dimensional interpolation rules.
+
+    Parameters
+    ----------
+    k_l : array_like
+        Line-of-sight wavenumbers.
+    z_l : array_like
+        Line-of-sight redshifts.
+    ks : array_like
+        Wavenumbers grid.
+    zs : array_like
+        Redshifts grid.
+    Pk : array_like
+        Strictly positive power-spectrum values on the ``(ks, zs)`` grid.
+
+    Returns
+    -------
+    jax.Array
+        Interpolated positive power-spectrum values.
+    """
     return 10 ** interpax.interp2d(
         jnp.log10(k_l), z_l, jnp.log10(ks), zs, jnp.log10(Pk), method="cubic"
     )

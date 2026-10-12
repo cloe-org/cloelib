@@ -1053,8 +1053,11 @@ class JAXNonLinearPerturbations:
 
         Notes
         -----
-        Massive neutrinos are assumed to stay linear (as in HMcode2020), so
-        all the non-linear power of the total matter comes from cb,
+        Writing `P_mm = f_cb^2 P_cb + 2 f_cb f_nu P_cbnu + f_nu^2 P_nunu`,
+        the non-linear cb spectrum is obtained by assuming that both spectra
+        involving neutrinos keep their linear value,
+        `P_nunu^NL = P_nunu^L` and `P_cbnu^NL = P_cbnu^L`, so that all the
+        non-linear power of the total matter comes from cb,
         `P_mm^NL - P_mm^L = f_cb^2 (P_cb^NL - P_cb^L)`:
 
         $$

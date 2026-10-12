@@ -179,6 +179,23 @@ def test_nonlinear_requires_loop_computer(cosmo_setup):
         )
 
 
+def test_nonlinear_with_use_pcb_raises_not_implemented(cosmo_setup):
+    """Every `NonLinearGalaxyBiasContribution` term is built from `P_mm`, so
+    `use_Pcb=True` must be rejected instead of silently ignored."""
+    perturbations, z = cosmo_setup
+    dndz = _dndz(1, z)
+    with pytest.raises(NotImplementedError, match="use_Pcb"):
+        PositionsTracer(
+            perturbations=perturbations,
+            dndz=dndz,
+            z=z,
+            galaxy_bias_model="nonlinear",
+            nuisance_params=_pos_nuisance(1, b1_photo_nl_bin0=1.4),
+            nl_bias_loop_computer=_StubNLBiasLoopComputer(),
+            use_Pcb=True,
+        )
+
+
 def test_loop_computer_rejected_for_non_nonlinear_model(cosmo_setup):
     perturbations, z = cosmo_setup
     dndz = _dndz(1, z)

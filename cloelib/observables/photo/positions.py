@@ -444,6 +444,11 @@ class NonLinearGalaxyBiasContribution:
     per bin, matching `GalaxyBiasContribution`'s `"per_bin"` model, not its
     `"per_bin_int"`/`"poly"` ones) - a real, deliberate scope limit.
 
+    Every term is built from the total matter power spectrum (`P_dd` =
+    `P_mm`, one-loop kernels from the linear `P_mm`), so this class traces
+    `MATTER` only: `PositionsTracer(use_Pcb=True)` raises
+    `NotImplementedError` for `galaxy_bias_model="nonlinear"`.
+
     Args:
       tracer: the owning `PositionsTracer`.
       b1: linear bias (McDonald & Roy 2009 convention), shape `(n_z_bins,)`.
@@ -678,6 +683,8 @@ class PositionsTracer:
           nuisance_params (dict): A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
           include_rsd (bool): A flag indicating whether to include redshift-space distortions in the calculations.
           use_Pcb (bool): A flag indicating whether to use the power spectrum of cold dark matter + baryons (no neutrinos).
+            Not supported with `galaxy_bias_model="nonlinear"` (raises
+            `NotImplementedError`).
           nl_bias_loop_computer: required when `galaxy_bias_model="nonlinear"`
             (raises `ValueError` if omitted) - `NonLinearGalaxyBiasContribution`'s
             one-loop kernel backend. Pass
@@ -765,6 +772,13 @@ class PositionsTracer:
                     "cloelib.observables.photo.positions) - "
                     "NonLinearGalaxyBiasContribution has no illustrative "
                     "default."
+                )
+            if use_Pcb:
+                raise NotImplementedError(
+                    "galaxy_bias_model='nonlinear' does not support "
+                    "use_Pcb=True yet: NonLinearGalaxyBiasContribution's "
+                    "tree-level, k^2 counterterm and one-loop terms are all "
+                    "built from the total matter power spectrum."
                 )
 
             def nlbias_bin_array(prefix, default):

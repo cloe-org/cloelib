@@ -13,9 +13,7 @@ under test:
   the assumption that massive neutrinos stay linear (as in HMcode2020);
 - the cb x matter cross spectrum used for (cb-positions) x (matter tracer)
   pairs against CAMB's own delta_cb x delta_m spectrum (linear) and against
-  the cross spectrum reconstructed from the backend's P_mm^NL (nonlinear);
-- the full C_ell against CCL, an independent Limber implementation fed with
-  the same reference spectra.
+  the cross spectrum reconstructed from the backend's P_mm^NL (nonlinear).
 
 With f_cb = Omega_cb0 / Omega_m0 and neutrinos following linear theory,
 delta_m = f_cb delta_cb + f_nu delta_nu gives
@@ -29,7 +27,7 @@ and eliminating P_cb,nu gives the reference cross spectrum
 
     P_cb,m = [P_mm + f_cb^2 P_cb - (sqrt(P_mm^L) - f_cb sqrt(P_cb^L))^2] / (2 f_cb).
 
-The tests need the external backends (CAMB, CCL, and optionally CLASS and
+The tests need the external backends (CAMB, and optionally CLASS and
 HMcode2020Emu) and are skipped when they are not installed.
 """
 
@@ -308,7 +306,7 @@ def _shear(perturbations, dndz, z):
         **{f"dz_shear_{i + 1}": 0.0 for i in range(n_bins)},
         **{f"width_shear_{i + 1}": 1.0 for i in range(n_bins)},
     }
-    # No IA: the shear kernel is pure lensing, as CCL's `WeakLensingTracer` below.
+    # No IA: the shear kernel is pure lensing.
     return ShearTracer(
         perturbations=perturbations, dndz=dndz, z=z, nuisance_params=nuisance
     )
@@ -441,121 +439,3 @@ def test_magnification_traces_total_matter(camb_nonlinear, tomography, partner, 
         expected = cl(bias_only, others[0]) + cl(mag_only, others[0])
         actual = cl(full, others[0])
     assert_allclose(actual, expected, rtol=1e-6, atol=1e-30)
-
-
-# --- Angular power spectra vs CCL ---------------------------------------------------
-
-
-@pytest.fixture(
-    scope="module", params=["CAMB-linear", "CAMB-nonlinear", "HMcode2020Emu"]
-)
-def cl_case(request, camb_background, camb_linear, camb_nonlinear):
-    """(perturbations, cb x matter reference callable, rtol on C_cb / C_mm).
-
-    The C_cb / C_mm tolerance is set by the reference: exact for CAMB, while
-    HMcode2020Emu's nonlinear P_mm and P_cb are emulated separately and obey
-    the linear-neutrino relation behind `_reference_cross` only to ~1e-3.
-    """
-    if request.param == "CAMB-linear":
-        return (
-            camb_linear,
-            lambda zs, ks: _camb_cross_linear(camb_background, zs, ks),
-            1e-5,
-        )
-    if request.param == "CAMB-nonlinear":
-        nonlinear, linear, rtol = camb_nonlinear, camb_linear, 1e-5
-    else:
-        (linear, nonlinear), rtol = request.getfixturevalue("hmcode"), 1e-3
-    return (
-        nonlinear,
-        lambda zs, ks: _reference_cross(nonlinear, linear, camb_background, zs, ks),
-        rtol,
-    )
-
-
-def test_cl_matches_ccl(cl_case, tomography):
-    ccl = pytest.importorskip("pyccl")
-    perturbations, cross, rtol_ratio = cl_case
-    z, dndz = tomography
-    bias = (1.3, 1.7)
-    ells = np.logspace(1.0, np.log10(2000.0), 12)
-    n_bins = dndz.shape[0]
-
-    cosmo = ccl.Cosmology(
-        Omega_c=COSMO_PARS["Omega_cdm0"],
-        Omega_b=COSMO_PARS["Omega_b0"],
-        h=H,
-        A_s=COSMO_PARS["As"],
-        n_s=COSMO_PARS["ns"],
-        m_nu=COSMO_PARS["mnu"],
-        mass_split="single",
-        T_CMB=2.7255,
-        Neff=3.044,
-    )
-    ccl_pos = [
-        ccl.NumberCountsTracer(
-            cosmo, has_rsd=False, dndz=(z, dndz[i]), bias=(z, np.full_like(z, bias[i]))
-        )
-        for i in range(n_bins)
-    ]
-    ccl_shear = [ccl.WeakLensingTracer(cosmo, dndz=(z, dndz[i])) for i in range(n_bins)]
-    k_grid = np.logspace(-4, 1.5, 400)
-
-    def pk2d(pk_fn):
-        return ccl.Pk2D(
-            a_arr=1 / (1 + Z_PK[::-1]),
-            lk_arr=np.log(k_grid),
-            pk_arr=np.log(pk_fn(Z_PK, k_grid))[::-1],
-            is_logp=True,
-        )
-
-    def ccl_cl(tracers1, tracers2, pk):
-        cl = [
-            [ccl.angular_cl(cosmo, t1, t2, ells, p_of_k_a=pk) for t2 in tracers2]
-            for t1 in tracers1
-        ]
-        return np.moveaxis(np.array(cl), -1, 0)  # (n_ell, n_bins, n_bins)
-
-    def cloelib_cl(t1, t2):
-        return np.asarray(
-            AngularTwoPoint(t1, t2).get_Cl_tensor(ells, 0, perturbations.k)
-        )
-
-    pos_cb = _positions(perturbations, dndz, z, use_Pcb=True, bias=bias)
-    pos_mm = _positions(perturbations, dndz, z, use_Pcb=False, bias=bias)
-    shear = _shear(perturbations, dndz, z)
-    pk_mm = pk2d(perturbations.matter_power_spectrum)
-
-    diag = np.arange(n_bins)
-    # Lens bin i x source bin j >= i: a source bin in front of the lenses gives
-    # a tiny C_ell dominated by the integration accuracy.
-    lens, source = np.triu_indices(n_bins)
-    cases = {
-        # name: (C_ell^cb cloelib, C_ell^mm cloelib, C_ell^cb CCL, C_ell^mm CCL, selection)
-        "POS-POS": (
-            cloelib_cl(pos_cb, pos_cb),
-            cloelib_cl(pos_mm, pos_mm),
-            ccl_cl(ccl_pos, ccl_pos, pk2d(perturbations.matter_power_spectrum_cb)),
-            ccl_cl(ccl_pos, ccl_pos, pk_mm),
-            # Non-overlapping bin pairs are tiny and dominated by the integration.
-            (slice(None), diag, diag),
-        ),
-        "POS-SHE": (
-            cloelib_cl(pos_cb, shear),
-            cloelib_cl(pos_mm, shear),
-            ccl_cl(ccl_pos, ccl_shear, pk2d(cross)),
-            ccl_cl(ccl_pos, ccl_shear, pk_mm),
-            (slice(None), lens, source),
-        ),
-    }
-    for name, (cl_cb, cl_mm, ref_cb, ref_mm, sel) in cases.items():
-        # The cb spectrum must make a difference, or the test checks nothing.
-        assert np.max(np.abs(cl_cb[sel] / cl_mm[sel] - 1)) > 1e-2, name
-        assert_allclose(cl_cb[sel], ref_cb[sel], rtol=1e-3, err_msg=name)
-        # Integration differences between the two codes cancel in the ratio.
-        assert_allclose(
-            cl_cb[sel] / cl_mm[sel],
-            ref_cb[sel] / ref_mm[sel],
-            rtol=rtol_ratio,
-            err_msg=name,
-        )

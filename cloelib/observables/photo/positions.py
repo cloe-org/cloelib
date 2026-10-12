@@ -696,9 +696,7 @@ class PositionsTracer:
             `NotImplementedError`).
         """
         if not isinstance(use_Pcb, bool):
-            raise TypeError(
-                f"use_Pcb must be a bool, got {type(use_Pcb).__name__}."
-            )
+            raise TypeError(f"use_Pcb must be a bool, got {type(use_Pcb).__name__}.")
         if 0.0 in z:
             raise ValueError(
                 "One of the z array elements is equal to zero, breaking Limber integration."

@@ -3450,12 +3450,82 @@ they exist.</p>
 
 
 <a href="#cloelib.cosmology.cosmology.Perturbations.growth_factor" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmology.Perturbations.growth_factor(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmology.Perturbations.growth_factor(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations.growth_factor(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations.growth_factor(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Calculate the growth factor for given redshifts and wavenumbers.</p>
+        <p>Evaluate the dimensionless growth factor at redshifts and wavenumbers.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.cosmology.Perturbations.growth_factor(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.cosmology.Perturbations.growth_factor(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="cloelib.cosmology.cosmology.T">T</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional NumPy or JAX array of redshifts, with
+shape <code>(nz,)</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.cosmology.Perturbations.growth_factor(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.cosmology.Perturbations.growth_factor(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="cloelib.cosmology.cosmology.T">T</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional NumPy or JAX array of wavenumbers in
+<code>1/Mpc</code>, with shape <code>(nk,)</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>T</code></b> (              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>NumPy or JAX array of growth-factor values. Scale-dependent</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>backends generally return shape <code>(nz, nk)</code>; scale-independent</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>backends may return shape <code>(nz,)</code>. The growth factor is</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>conventionally normalized to unity at redshift zero. Consult the</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>concrete backend when relying on a particular shape or</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>normalization convention.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -3471,20 +3541,75 @@ they exist.</p>
 
 
 <a href="#cloelib.cosmology.cosmology.Perturbations.growth_rate" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.cosmology.Perturbations.growth_rate(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.cosmology.Perturbations.growth_rate(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations.growth_rate(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations.growth_rate(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Calculate the growth rate for given redshifts and wavenumbers.</p>
-<p>Every implementation follows the same convention:</p>
-<ul>
-<li><code>zs=None</code> returns the growth rate on the redshift grid the instance
-  was built on; otherwise it is evaluated at <code>zs</code>.</li>
-<li><code>ks=None</code> returns a 1D array of shape <code>(nz,)</code>; otherwise an array
-  of shape <code>(nz, nk)</code> (a scale-independent growth rate is broadcast
-  along <code>k</code>).</li>
-</ul>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.cosmology.Perturbations.growth_rate(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.cosmology.Perturbations.growth_rate(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="cloelib.cosmology.cosmology.T">T</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional NumPy or JAX array of redshifts,
+with shape <code>(nz,)</code>. If <code>None</code>, implementations use the
+redshift grid they were built on; implementations without a
+default grid may raise <code>ValueError</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.cosmology.Perturbations.growth_rate(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.cosmology.Perturbations.growth_rate(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="cloelib.cosmology.cosmology.T">T</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional NumPy or JAX array of wavenumbers
+in <code>1/Mpc</code>, with shape <code>(nk,)</code>. If <code>None</code>, return the
+growth rate as a function of redshift only.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>T</code></b> (              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>NumPy or JAX array of growth-rate values. With <code>ks=None</code>, the</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>shape is <code>(nz,)</code>; with wavenumbers supplied, the shape is</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p><code>(nz, nk)</code>. Scale-independent growth rates are broadcast along</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>the wavenumber axis.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -7527,8 +7652,10 @@ If not provided, it will be inferred from N_mnu such that N_eff = 3.044.</p>
     <div class="doc doc-contents ">
 
         <p>Effective number of ultra-relativistic species.</p>
-<p>Checks if N_ur is provided and raises an error if so.
-FIXME: Not implemented, so this will always return None.</p>
+<p>This property is not supported in the JAX backend and always returns None.
+If N_ur was provided during initialization, a ValueError is raised.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.N_ur--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.N_ur--returns" title="Permanent link">&para;</a></h6>
+<p>None</p>
 
           
     </div>
@@ -7554,7 +7681,11 @@ FIXME: Not implemented, so this will always return None.</p>
     <div class="doc doc-contents ">
 
         <p>Effective number of relativistic species.</p>
-<p>FIXME: Not implemented, so this will always return the default 3.044.</p>
+<p>This property returns the default value of 3.044, as the JAX backend does not support
+variations in N_eff.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.N_eff--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.N_eff--returns" title="Permanent link">&para;</a></h6>
+<p>float
+    The effective number of relativistic species, set to 3.044.</p>
 
           
     </div>
@@ -7962,7 +8093,13 @@ all call this as <code>Omega_m(0.0)</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Compute the dark energy equation of state parameter w(a).</p>
+<p>This function implements the linear equation of state w(a) = w0 + (1 - a) * wa,
+following the parametrization of Linder (2003).</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.w_a--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.w_a--parameters" title="Permanent link">&para;</a></h6>
+<p>a (float or ndarray): Scale factor.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.w_a--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.w_a--returns" title="Permanent link">&para;</a></h6>
+<p>float or ndarray: The equation of state parameter w at scale factor a.</p>
 
           
 
@@ -7983,7 +8120,15 @@ all call this as <code>Omega_m(0.0)</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Compute the logarithmic dark-energy density evolution relative to today.</p>
+<p>For the CPL equation of state <code>w(a) = w0 + (1 - a) * wa</code>, this returns
+<code>ln(rho_de(a) / rho_de(1))</code>. Its exponential is the dark-energy density
+fraction relative to its value at <code>a = 1</code> and is used in <code>Esqr</code>.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.f_de--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.f_de--parameters" title="Permanent link">&para;</a></h6>
+<p>a (float or ndarray): Scale factor.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.f_de--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.f_de--returns" title="Permanent link">&para;</a></h6>
+<p>float or ndarray
+    <code>ln(rho_de(a) / rho_de(1))</code>.</p>
 
           
 
@@ -8004,7 +8149,13 @@ all call this as <code>Omega_m(0.0)</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Compute the dimensionless energy density squared E^2(a).</p>
+<p>This function returns the square of the expansion rate normalized by the Hubble constant,
+E^2(a) = (H(a)/H0)^2.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.Esqr--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.Esqr--parameters" title="Permanent link">&para;</a></h6>
+<p>a (float or ndarray): Scale factor.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.Esqr--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.Esqr--returns" title="Permanent link">&para;</a></h6>
+<p>float or ndarray: The dimensionless energy density squared at scale factor a.</p>
 
           
 
@@ -8025,7 +8176,12 @@ all call this as <code>Omega_m(0.0)</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Compute the matter density parameter as a function of scale factor.</p>
+<p>This function returns the fraction of the total energy density contributed by matter at scale factor a.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.Omega_m_a--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.Omega_m_a--parameters" title="Permanent link">&para;</a></h6>
+<p>a (float or ndarray): Scale factor.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.Omega_m_a--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.Omega_m_a--returns" title="Permanent link">&para;</a></h6>
+<p>float or ndarray: The matter density parameter Omega_m at scale factor a.</p>
 
           
 
@@ -8046,7 +8202,12 @@ all call this as <code>Omega_m(0.0)</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Compute the dark energy density parameter as a function of scale factor.</p>
+<p>This function returns the fraction of the total energy density contributed by dark energy at scale factor a.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.Omega_de_a--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.Omega_de_a--parameters" title="Permanent link">&para;</a></h6>
+<p>a (float or ndarray): Scale factor.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXBackground.Omega_de_a--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXBackground.Omega_de_a--returns" title="Permanent link">&para;</a></h6>
+<p>float or ndarray: The dark energy density parameter Omega_de at scale factor a.</p>
 
           
 
@@ -8146,7 +8307,14 @@ accepted for interface compatibility with the other backends.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Compute the derivatives of the growth factor for numerical integration.</p>
+<p>This function implements the second-order linear perturbation equations for the growth factor D and its derivative,
+used in solving the ODE for the growth factor.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.D_derivs--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.D_derivs--parameters" title="Permanent link">&para;</a></h6>
+<p>y (array_like): Current values [D, D'] at scale factor x.
+x (float or ndarray): Scale factor.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.D_derivs--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.D_derivs--returns" title="Permanent link">&para;</a></h6>
+<p>ndarray: Derivatives [D', D''] at scale factor x.</p>
 
           
 
@@ -8162,12 +8330,55 @@ accepted for interface compatibility with the other backends.</p>
 
 
 <a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.growth_factor" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.growth_factor(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.growth_factor(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.growth_factor(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.growth_factor(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Compute the growth factor.</p>
+        <p>Evaluate the normalized, scale-independent linear growth factor.</p>
+<p>The growth equation is integrated over a fixed grid of 128 scale
+factors from <code>1e-3</code> to <code>1</code>. The result is normalized to <code>D(z=0)=1</code>
+and linearly interpolated in scale factor at the requested redshifts.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.growth_factor(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.growth_factor(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional array of redshifts at which to
+evaluate the growth factor. Values are converted to scale
+factors with <code>a = 1 / (1 + z)</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.growth_factor(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.growth_factor(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="jax.numpy.ndarray">ndarray</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Wavenumbers, accepted for compatibility
+with the perturbations interface. Growth is scale-independent
+in this implementation, so this argument is ignored.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>jnp.ndarray: JAX array of growth-factor values, with one value per
+input redshift and the same shape as <code>zs</code>.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -8564,12 +8775,52 @@ see <code>JAXLinearPerturbations</code>. If not given, those of
 
 
 <a href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.growth_factor" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.growth_factor(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.growth_factor(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.growth_factor(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.growth_factor(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Return the linear growth factor.</p>
+        <p>Return the linear growth factor from the wrapped linear backend.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.growth_factor(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.growth_factor(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional array of redshifts at which to
+evaluate the growth factor.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.growth_factor(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.growth_factor(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="jax.numpy.ndarray">ndarray</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Optional wavenumbers accepted for
+interface compatibility. The JAX growth factor is
+scale-independent, so this argument is ignored.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>jnp.ndarray: Growth-factor values from
+<code>linearperturbations.growth_factor(zs, ks)</code>, with one value
+per input redshift.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -8613,7 +8864,28 @@ or else at those of <code>linearperturbations</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Compute the nonlinear matter power spectrum using the HaloFit model.</p>
+<p>This function applies the HaloFit fitting formula to the linear matter power spectrum,
+providing a fitting model for the nonlinear regime.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.halofit--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.halofit--parameters" title="Permanent link">&para;</a></h6>
+<p>zs : array-like
+    Redshift or redshifts at which to evaluate the spectrum.
+ks : array-like
+    Wavenumber or wavenumbers. <code>k_hunit</code> controls whether these are
+    interpreted in <code>h Mpc^-1</code> or <code>Mpc^-1</code>.
+hubble_units : bool, optional
+    Selects the power-spectrum conversion used by
+    :meth:<code>JAXLinearPerturbations.matter_power_spectrum</code>: when false,
+    the result is divided by <code>h**3</code>; when true, that conversion is
+    omitted. Defaults to false.
+k_hunit : bool, optional
+    If true, <code>ks</code> are in <code>h Mpc^-1</code>; otherwise they are in
+    <code>Mpc^-1</code>. Defaults to false.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.halofit--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.halofit--returns" title="Permanent link">&para;</a></h6>
+<p>jax.Array
+    Nonlinear power spectrum. Singleton dimensions are removed by
+    <code>squeeze</code>; otherwise the result follows the redshift and
+    wavenumber dimensions.</p>
 
           
 
@@ -8656,7 +8928,16 @@ or else at those of <code>linearperturbations</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Compute the nonlinear matter power spectrum on a Limber grid.</p>
+<p>This function computes the nonlinear matter power spectrum along lines of constant redshift,
+used for angular correlation function calculations.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.nonlinear_matter_power_spectrum_limber_grid--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.nonlinear_matter_power_spectrum_limber_grid--parameters" title="Permanent link">&para;</a></h6>
+<p>z_l (array_like): Line-of-sight redshifts.
+ks (array_like): Wavenumbers.
+zs (array_like): Redshifts for the power spectrum evaluation.
+ells (array_like): Multipole moments.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.nonlinear_matter_power_spectrum_limber_grid--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.nonlinear_matter_power_spectrum_limber_grid--returns" title="Permanent link">&para;</a></h6>
+<p>ndarray: The nonlinear matter power spectrum on the Limber grid.</p>
 
           
 
@@ -8750,7 +9031,22 @@ or else at those of <code>linearperturbations</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Compute the Simpson's rule integral of a function over [a, b].</p>
+<p>This function implements Simpson's rule for numerical integration.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.simps--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.simps--parameters" title="Permanent link">&para;</a></h6>
+<p>f : callable
+    Function to integrate.
+a : float
+    Lower limit of integration.
+b : float
+    Upper limit of integration.
+N : int, optional
+    Number of subintervals (must be even). Default 128.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.simps--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.simps--returns" title="Permanent link">&para;</a></h6>
+<p>float or ndarray: The integral of f over [a, b].</p>
+<h6 id="cloelib.cosmology.jax_cosmology.simps--raises">Raises<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.simps--raises" title="Permanent link">&para;</a></h6>
+<p>ValueError
+    If N is odd.</p>
 
           
 
@@ -8771,7 +9067,18 @@ or else at those of <code>linearperturbations</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Solve an ordinary differential equation using the Runge-Kutta 4th order method.</p>
+<p>This function integrates the ODE dy/dt = fn(y, t) with initial condition y(t0) = y0.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.odeint--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.odeint--parameters" title="Permanent link">&para;</a></h6>
+<p>fn : callable
+    The ODE function f(y, t).
+y0 : array_like
+    Initial condition for y at t0.
+t : array_like
+    Time points at which to evaluate the solution.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.odeint--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.odeint--returns" title="Permanent link">&para;</a></h6>
+<p>ndarray
+    The solution y(t) at the specified time points.</p>
 
           
 
@@ -8792,11 +9099,24 @@ or else at those of <code>linearperturbations</code>.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Compute a linear interpolation (equivalent of jnp.interp).</p>
-<p>We are not doing any checks, so make sure your query points are lying
-inside the array.</p>
-<p>TODO: Implement proper interpolation, like in interpolations.jl</p>
-<p>x, xp, fp need to be 1d arrays</p>
+        <p>Linearly interpolate or extrapolate tabulated one-dimensional data.</p>
+<p>For each query value, the nearest tabulated point is selected and the
+adjacent segment supplies the slope. Values outside the tabulated range are
+linearly extrapolated using the first or last segment. At least three
+strictly increasing <code>xp</code> values are required by the index clipping.
+<code>jax.vmap</code> vectorizes over the leading dimension of <code>x</code>; <code>xp</code> and
+<code>fp</code> are shared across those queries.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.interp--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.interp--parameters" title="Permanent link">&para;</a></h6>
+<p>x : array_like
+    Query points.
+xp : array_like
+    One-dimensional, strictly increasing data coordinates (length at least 3).
+fp : array_like
+    One-dimensional function values corresponding to <code>xp</code>; same length.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.interp--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.interp--returns" title="Permanent link">&para;</a></h6>
+<p>jax.Array
+    Interpolated or extrapolated values, vectorized over the leading axis
+    of <code>x</code>.</p>
 
           
 
@@ -8965,7 +9285,27 @@ print("%g %g" % (2</em>result, erf(1)))
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Interpolate positive power-spectrum values on a two-dimensional grid.</p>
+<p>Cubic interpolation is performed in <code>log10(k)</code> and redshift, on
+<code>log10(Pk)</code> values, then transformed back to power-spectrum values.
+Consequently, all entries of <code>ks</code> and <code>Pk</code> must be positive. The
+leading two dimensions of <code>Pk</code> correspond to <code>ks</code> and <code>zs</code>; query
+coordinates <code>k_l</code> and <code>z_l</code> are broadcast according to <code>interpax</code>'s
+two-dimensional interpolation rules.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.Pkl_interp--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.Pkl_interp--parameters" title="Permanent link">&para;</a></h6>
+<p>k_l : array_like
+    Line-of-sight wavenumbers.
+z_l : array_like
+    Line-of-sight redshifts.
+ks : array_like
+    Wavenumbers grid.
+zs : array_like
+    Redshifts grid.
+Pk : array_like
+    Strictly positive power-spectrum values on the <code>(ks, zs)</code> grid.</p>
+<h6 id="cloelib.cosmology.jax_cosmology.Pkl_interp--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.Pkl_interp--returns" title="Permanent link">&para;</a></h6>
+<p>jax.Array
+    Interpolated positive power-spectrum values.</p>
 
           
 
@@ -18543,12 +18883,82 @@ on, which <code>Perturbations</code> deliberately omits.</p>
 
 
 <a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_factor</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Calculate the growth factor for given redshifts and wavenumbers.</p>
+        <p>Evaluate the dimensionless growth factor at redshifts and wavenumbers.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="cloelib.cosmology.cosmology.T">T</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional NumPy or JAX array of redshifts, with
+shape <code>(nz,)</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_factor(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="cloelib.cosmology.cosmology.T">T</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional NumPy or JAX array of wavenumbers in
+<code>1/Mpc</code>, with shape <code>(nk,)</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>T</code></b> (              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>NumPy or JAX array of growth-factor values. Scale-dependent</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>backends generally return shape <code>(nz, nk)</code>; scale-independent</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>backends may return shape <code>(nz,)</code>. The growth factor is</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>conventionally normalized to unity at redshift zero. Consult the</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>concrete backend when relying on a particular shape or</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>normalization convention.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -18564,20 +18974,75 @@ on, which <code>Perturbations</code> deliberately omits.</p>
 
 
 <a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Calculate the growth rate for given redshifts and wavenumbers.</p>
-<p>Every implementation follows the same convention:</p>
-<ul>
-<li><code>zs=None</code> returns the growth rate on the redshift grid the instance
-  was built on; otherwise it is evaluated at <code>zs</code>.</li>
-<li><code>ks=None</code> returns a 1D array of shape <code>(nz,)</code>; otherwise an array
-  of shape <code>(nz, nk)</code> (a scale-independent growth rate is broadcast
-  along <code>k</code>).</li>
-</ul>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="cloelib.cosmology.cosmology.T">T</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional NumPy or JAX array of redshifts,
+with shape <code>(nz,)</code>. If <code>None</code>, implementations use the
+redshift grid they were built on; implementations without a
+default grid may raise <code>ValueError</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.cosmology.EE2_cosmology.LinearPerturbationsWithK.growth_rate(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="cloelib.cosmology.cosmology.T">T</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional NumPy or JAX array of wavenumbers
+in <code>1/Mpc</code>, with shape <code>(nk,)</code>. If <code>None</code>, return the
+growth rate as a function of redshift only.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>T</code></b> (              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>NumPy or JAX array of growth-rate values. With <code>ks=None</code>, the</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>shape is <code>(nz,)</code>; with wavenumbers supplied, the shape is</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p><code>(nz, nk)</code>. Scale-independent growth rates are broadcast along</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>the wavenumber axis.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -22947,6 +23412,55 @@ ks: Optional[np.ndarray]
 
 
 
+        <p>Build a redshift- and wavenumber-dependent nonlinear power boost.</p>
+<p>The MGEmu backend supplies the boost relative to its GR baseline. This
+class interpolates that boost as <code>B(z, k)</code> and resamples it onto the
+supplied linear perturbation wavenumber grid. Wavenumbers are represented
+internally in <code>1/Mpc</code>. Supported <code>gravity_model</code> tags are <code>fr</code>,
+<code>dgp</code>, <code>gamma</code>, <code>mu</code>, <code>wCDM</code>, <code>w0waCDM</code>, and <code>ide</code>; the first
+four map to matching MGEmu backends, while the last three use its <code>ds</code>
+The <code>mgpars</code> keys read by the adapter are <code>fr0</code>, <code>omega_rc</code>,
+<code>gamma0</code>, <code>mu0</code>, <code>sigma0</code>, <code>c1</code>, <code>lam</code>, <code>q1</code>, <code>q2</code>,
+<code>q3</code>, and <code>xi</code>; omitted values use the defaults in the implementation.</p>
+<p>The input redshifts and <code>linearperturbations.k</code> must be suitable for
+spline construction and extrapolation; the constructor does not validate
+their ordering or sampling. Emulator training bounds are clipped in the
+parameter dictionary, and the emulator neutrino density is fixed to
+<code>1e-10</code>. For models other than <code>wCDM</code>, <code>w0waCDM</code>, <code>ide</code>, and
+<code>mu</code>, the background is required by an assertion to have <code>w0=-1</code> and
+<code>wa=0</code>. The boost is extended toward unity at low k, extrapolated to
+high k (up to the extension grid used by <code>extend_spectra</code>), and given
+one of the <code>power_law</code>, <code>freeze</code>, <code>one</code>, or <code>taper</code> high-redshift
+continuations. The latter policies return to a boost of unity according
+to the selected rule and <code>z_decay</code>.</p>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="ImportError">ImportError</span></code>
+            –
+          <div class="doc-md-description">
+            <p>If MGEmu cannot be imported.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="ValueError">ValueError</span></code>
+            –
+          <div class="doc-md-description">
+            <p>If the gravity model or high-redshift policy is unknown.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="AssertionError">AssertionError</span></code>
+            –
+          <div class="doc-md-description">
+            <p>If a model's assumed background equation of state is
+not satisfied.</p>
+          </div>
+        </li>
+    </ul>
+
         <p>These emulators were created based on training data produced using ReACT (https://arxiv.org/abs/2005.12184)</p>
 <p>This class allows for f(R), DGP, IDE and other parameterized gravity models</p>
 <p>See https://github.com/nebblu/MGEmus/tree/main for more details</p>
@@ -23025,19 +23539,20 @@ mu0/Sigma0 or binned values for mu-Sigma, xi for IDE, etc.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Computes the nonlinear matter power spectrum boost.</p>
+        <p>Evaluate the dimensionless nonlinear power-spectrum boost.</p>
 <h6 id="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost.mg_spectrum_boost--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost.mg_spectrum_boost--parameters" title="Permanent link">&para;</a></h6>
-<p>ks: numpy.ndarray
-    Wave number in Mpc^{-1}</p>
-
-
-<details class="zs" open>
-  <summary>numpy.ndarray</summary>
-  <p>redshifts</p>
-</details>        <h6 id="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost.mg_spectrum_boost--returns">Returns<a class="headerlink" href="#cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost.mg_spectrum_boost--returns" title="Permanent link">&para;</a></h6>
-<p>MGboost_interp: numpy.ndarray
-    Nonlinear matter power spectrum boost at the specified scale
-    and redshift</p>
+<p>zs : array_like
+    Redshifts at which to evaluate the boost.
+ks : array_like
+    Wavenumbers in <code>1/Mpc</code>.</p>
+<h6 id="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost.mg_spectrum_boost--returns">Returns<a class="headerlink" href="#cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost.mg_spectrum_boost--returns" title="Permanent link">&para;</a></h6>
+<p>numpy.ndarray
+    Boost values. With array inputs, <code>RectBivariateSpline</code> uses
+    grid semantics and returns shape <code>(len(zs), len(ks))</code>.</p>
+<h6 id="cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost.mg_spectrum_boost--notes">Notes<a class="headerlink" href="#cloelib.cosmology.ReACTEmu_cosmology.MGemuNonlinearBoost.mg_spectrum_boost--notes" title="Permanent link">&para;</a></h6>
+<p>Values outside the constructed interpolation grid use the spline's
+extrapolation behavior. For paired-point rather than grid evaluation,
+call <code>MGboost_interp(zs, ks, grid=False)</code> directly.</p>
 
           
 
@@ -23068,6 +23583,15 @@ mu0/Sigma0 or binned values for mu-Sigma, xi for IDE, etc.</p>
     <div class="doc doc-contents ">
 
 
+
+        <p>Adapt a baseline perturbation backend by multiplying its nonlinear P(k,z).</p>
+<p><code>base_perturbations</code> supplies <code>background</code>, <code>matter_power_spectrum</code>
+and <code>sigma8_0</code>; <code>base_lin_perturbations</code> supplies <code>growth_rate</code> and
+may supply <code>sigma_lensing</code>. <code>boost_interp</code> is a callable <code>B(z, k)</code>;
+grid-shaped spectra require a callable accepting the <code>grid=False</code>
+keyword for paired-point evaluation. The wrapper exposes <code>k</code> and <code>z</code>
+from the nonlinear base when present. It asserts a flat background, but
+does not check that the linear and nonlinear bases share one.</p>
 
         <h6 id="cloelib.cosmology.ReACTEmu_cosmology.BoostedPerturbations--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.ReACTEmu_cosmology.BoostedPerturbations--parameters" title="Permanent link">&para;</a></h6>
 <h6 id="cloelib.cosmology.ReACTEmu_cosmology.BoostedPerturbations--parameters_1">Parameters<a class="headerlink" href="#cloelib.cosmology.ReACTEmu_cosmology.BoostedPerturbations--parameters_1" title="Permanent link">&para;</a></h6>
@@ -23130,9 +23654,11 @@ ks : float or np.ndarray
     Wavenumber value or array of wavenumbers in 1/Mpc.</p>
 <h6 id="cloelib.cosmology.ReACTEmu_cosmology.BoostedPerturbations.matter_power_spectrum--returns">Returns<a class="headerlink" href="#cloelib.cosmology.ReACTEmu_cosmology.BoostedPerturbations.matter_power_spectrum--returns" title="Permanent link">&para;</a></h6>
 <p>float or np.ndarray
-    Boosted matter power spectrum. The output is squeezed so scalar
-    inputs return a scalar, while array inputs return the corresponding
-    one- or two-dimensional array.</p>
+    Boosted spectrum in the units returned by the base backend.
+    Inputs are promoted to 1D arrays; a base result shaped
+    <code>(len(zs), len(ks))</code> is multiplied by a pointwise boost, and
+    other shapes use the boost callable's ordinary argument handling.
+    The result is squeezed, removing all singleton axes.</p>
 
           
 
@@ -23153,11 +23679,14 @@ ks : float or np.ndarray
 
     <div class="doc doc-contents ">
 
-        <p>Calculate the growth factor.</p>
+        <p>Estimate the growth factor from the boosted spectrum.</p>
 <p>If <code>ks</code> is provided:
     D(z,k) = sqrt( P(z,k) / P(0,k) )
-If <code>ks</code> is None (linear growth via boost on large scales):
-    D(z)   = sqrt( B(z,k_lin) / B(0,k_lin) ), with a sensible default k_lin.</p>
+If <code>ks</code> is <code>None</code>, use the boost-only large-scale estimate
+<code>sqrt(B(z,k_lin) / B(0,k_lin))</code>. Here <code>k_lin</code> is the smallest
+available <code>self.k</code>, or <code>0.02 1/Mpc</code> if no grid is exposed. This
+branch does not use the base linear growth factor. Denominators are
+floored at <code>1e-300</code> and the result is squeezed.</p>
 <h6 id="cloelib.cosmology.ReACTEmu_cosmology.BoostedPerturbations.growth_factor--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.ReACTEmu_cosmology.BoostedPerturbations.growth_factor--parameters" title="Permanent link">&para;</a></h6>
 <p>zs : array_like
     Redshifts.
@@ -23212,10 +23741,14 @@ the redshift grid of <code>base_perturbations</code>, if that has one.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Calculate the sigma8 value for the current cosmology.</p>
+        <p>Approximate the boosted <code>sigma8(0)</code> from one low-k boost value.</p>
+<p>Returns <code>base.sigma8_0() * sqrt(B(0, 0.02 1/Mpc))</code>. This is a
+single-wavenumber approximation, not a re-integration of the boosted
+power spectrum. The boost callable can make the result array-valued
+(typically length one), despite the scalar return annotation.</p>
 <h6 id="cloelib.cosmology.ReACTEmu_cosmology.BoostedPerturbations.sigma8_0--returns">Returns:<a class="headerlink" href="#cloelib.cosmology.ReACTEmu_cosmology.BoostedPerturbations.sigma8_0--returns" title="Permanent link">&para;</a></h6>
-<p>float
-    The sigma8 value.</p>
+<p>float or np.ndarray
+    The base value multiplied by the square root of the boost.</p>
 
           
 
@@ -23301,8 +23834,8 @@ the required format.</p>
 <details class="the-boost-file-is-expected-to-have" open>
   <summary>The boost file is expected to have</summary>
   <ul>
-<li>column 1: k values (same k-grid used for all redshifts)</li>
-<li>columns 2..N: boost values B(k; z_i) for each snapshot/redshift</li>
+<li>column 1: k values in <code>h/Mpc</code> (same k-grid at every redshift)</li>
+<li>columns 2..N: dimensionless boost values <code>B(k; z_i)</code></li>
 </ul>
 </details>        <h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost--parameters" title="Permanent link">&para;</a></h6>
 <p>background : Background
@@ -23330,7 +23863,8 @@ Commented header lines starting with '#' are allowed.</p>
 <details class="z_cols-" open>
   <summary>Sequence[float]</summary>
   <p>1D array or list of redshifts corresponding to columns 2..N in the
-boost file (same order). Length must match the number of boost columns.</p>
+boost file (same order). Length must match the number of boost columns;
+values and corresponding columns are sorted by redshift internally.</p>
 </details>
 
 <details class="high_z_policy" open>
@@ -23343,9 +23877,23 @@ boost file (same order). Length must match the number of boost columns.</p>
   <summary>float</summary>
   <p>Gives the decay rate after emulator max redshift going back to LCDM (boost=1)</p>
 </details>        <h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost--notes">Notes<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost--notes" title="Permanent link">&para;</a></h6>
-<p>This class simply builds a RectBivariateSpline over (z, k) so that you can
-pass <code>self.boost_interp</code> into <code>BoostedPerturbations</code> in exactly the same
-way as the ReACT emulator-based version.</p>
+<p>The first column is converted from <code>h/Mpc</code> to <code>1/Mpc</code> using
+<code>background.h</code>. The input k grid and sorted snapshot redshifts must be
+strictly increasing and sufficiently sampled for a linear
+<code>RectBivariateSpline</code>; the requested <code>zs</code> grid must also be suitable
+for interpolation and extrapolation. Only the column count is explicitly
+validated, so file parsing, ordering, and spline errors otherwise
+propagate from NumPy/SciPy. The boost is resampled onto
+<code>linearperturbations.k</code> and extended at low and high k.</p>
+<p><code>high_z_policy</code> accepts <code>"power_law"</code>, <code>"freeze"</code>, <code>"one"</code>, or
+<code>"taper"</code>. <code>z_decay</code> sets the taper scale. Non-power-law policies are
+applied to requested redshifts outside the tabulated interval on either
+side; the implementation currently does not enforce a high-z floor at
+unity.</p>
+<h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost--raises">Raises<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost--raises" title="Permanent link">&para;</a></h6>
+<p>ValueError
+    If the file has fewer than two columns, the number of redshift labels
+    does not match the boost columns, or the policy is unsupported.</p>
 
           
 
@@ -23382,19 +23930,20 @@ way as the ReACT emulator-based version.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Computes the nonlinear matter power spectrum boost.</p>
+        <p>Evaluate the dimensionless nonlinear power-spectrum boost.</p>
 <h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--parameters" title="Permanent link">&para;</a></h6>
-<p>ks: numpy.ndarray
-    Wave number in Mpc^{-1}</p>
-
-
-<details class="zs" open>
-  <summary>numpy.ndarray</summary>
-  <p>redshifts</p>
-</details>        <h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--returns">Returns<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--returns" title="Permanent link">&para;</a></h6>
-<p>MGboost_interp: numpy.ndarray
-    Nonlinear matter power spectrum boost at the specified scale
-    and redshift</p>
+<p>zs : array_like
+    Redshifts at which to evaluate the boost.
+ks : array_like
+    Wavenumbers in <code>1/Mpc</code>.</p>
+<h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--returns">Returns<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--returns" title="Permanent link">&para;</a></h6>
+<p>numpy.ndarray
+    Boost values. With array inputs, <code>RectBivariateSpline</code> uses
+    grid semantics and returns shape <code>(len(zs), len(ks))</code>.</p>
+<h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--notes">Notes<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedNonlinearBoost.mg_spectrum_boost--notes" title="Permanent link">&para;</a></h6>
+<p>Values outside the constructed interpolation grid use the spline's
+extrapolation behavior. For paired-point rather than grid evaluation,
+call <code>MGboost_interp(zs, ks, grid=False)</code> directly.</p>
 
           
 
@@ -23425,6 +23974,17 @@ way as the ReACT emulator-based version.</p>
     <div class="doc doc-contents ">
 
 
+
+        <p>Apply a tabulated nonlinear boost through the Perturbations interface.</p>
+<p>The wrapper multiplies the nonlinear base's matter power spectrum by
+<code>boost_interp(z, k)</code>. The nonlinear base must provide
+<code>matter_power_spectrum</code> and <code>sigma8_0</code>; the linear base must provide
+<code>background</code> and <code>growth_rate</code> and may provide <code>sigma_lensing</code>.
+<code>k</code> and <code>z</code> are exposed from the nonlinear base when available. This
+class takes its <code>background</code> from the linear base and asserts flatness,
+but does not verify that the two bases use consistent backgrounds. For
+grid-shaped spectra the boost callable must accept <code>grid=False</code> for
+paired-point evaluation.</p>
 
         <h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations--parameters" title="Permanent link">&para;</a></h6>
 <p>base_lin_perturbations : object
@@ -23487,9 +24047,11 @@ ks : float or np.ndarray
     Wavenumber value or array of wavenumbers in 1/Mpc.</p>
 <h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.matter_power_spectrum--returns">Returns<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.matter_power_spectrum--returns" title="Permanent link">&para;</a></h6>
 <p>float or np.ndarray
-    Boosted matter power spectrum. The output is squeezed so scalar
-    inputs return a scalar, while array inputs return the corresponding
-    one- or two-dimensional array.</p>
+    Boosted spectrum in the units returned by the base backend.
+    Inputs are promoted to 1D arrays; a base result shaped
+    <code>(len(zs), len(ks))</code> is multiplied by a pointwise boost, and
+    other shapes use the boost callable's ordinary argument handling.
+    The result is squeezed, removing all singleton axes.</p>
 
           
 
@@ -23513,8 +24075,11 @@ ks : float or np.ndarray
         <p>Calculate the growth factor.</p>
 <p>If <code>ks</code> is provided:
     D(z,k) = sqrt( P(z,k) / P(0,k) )
-If <code>ks</code> is None (linear growth via boost on large scales):
-    D(z)   = sqrt( B(z,k_lin) / B(0,k_lin) ), with a sensible default k_lin.</p>
+If <code>ks</code> is <code>None</code>, use the boost-only large-scale estimate
+<code>sqrt(B(z, k_lin) / B(0, k_lin))</code>. Here <code>k_lin</code> is the smallest
+available <code>self.k</code>, or <code>0.02 1/Mpc</code> if no grid is exposed. This
+branch does not use the base linear growth factor. Denominators are
+floored at <code>1e-300</code> and the result is squeezed.</p>
 <h6 id="cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.growth_factor--parameters">Parameters<a class="headerlink" href="#cloelib.cosmology.TabulatedBoost_cosmology.TabulatedBoostedPerturbations.growth_factor--parameters" title="Permanent link">&para;</a></h6>
 <p>zs : array_like
     Redshifts.
@@ -23569,7 +24134,10 @@ the redshift grid of <code>base_perturbations</code>, if that has one.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Calculate the sigma8 value for the current cosmology.</p>
+        <p>Approximate boosted <code>sigma8(0)</code> from the boost at <code>0.02 1/Mpc</code>.</p>
+<p>Returns <code>base.sigma8_0() * sqrt(B(0, 0.02 1/Mpc))</code>; this does not
+re-integrate the boosted spectrum. The callable may make the result
+array-valued (typically length one), despite the scalar annotation.</p>
 
           
 
@@ -24713,6 +25281,27 @@ follows.</p>
 
 
 
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.shear.LensingContribution.compute_kernel" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">compute_kernel</span>
+
+
+<a href="#cloelib.observables.photo.shear.LensingContribution.compute_kernel" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute_kernel</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.shear.LensingContribution.compute_kernel(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the uncalibrated lensing kernel, shape <code>(n_bin, n_z)</code>.</p>
+
+          
+
+    </div>
+
+</div>
+
 
 
   </div>
@@ -24794,6 +25383,27 @@ change either way.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.shear.NLAContribution.compute_kernel" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">compute_kernel</span>
+
+
+<a href="#cloelib.observables.photo.shear.NLAContribution.compute_kernel" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute_kernel</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.shear.NLAContribution.compute_kernel(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the uncalibrated NLA kernel, shape <code>(n_bin, n_z)</code>.</p>
+
+          
+
+    </div>
+
+</div>
 
 
 
@@ -25010,6 +25620,31 @@ construction time.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.shear.PBJTATTLoopComputer.compute" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">compute</span>
+
+
+<a href="#cloelib.observables.photo.shear.PBJTATTLoopComputer.compute" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.shear.PBJTATTLoopComputer.compute(name)">name</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the FAST-PT callable for one named TATT kernel.</p>
+<p><code>name</code> must be present in <code>_ALL_KERNELS</code>. The returned
+<code>SpectrumRequest.compute(matter_pk, ks, zs)</code> ignores <code>matter_pk</code>
+and <code>zs</code> because the cached kernel depends only on k, and returns
+shape <code>(len(ks),)</code>.</p>
+
+          
+
+    </div>
+
+</div>
 
 
 
@@ -25244,6 +25879,29 @@ normalisation detail.</p>
 <div class="doc doc-object doc-function">
 
 
+<h6 id="cloelib.observables.photo.shear.TATTContribution.get_spectrum_requests" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_spectrum_requests</span>
+
+
+<a href="#cloelib.observables.photo.shear.TATTContribution.get_spectrum_requests" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_spectrum_requests</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return requests for the ten TATT kernels.</p>
+<p><code>get_requirements_for_interaction</code> retains only the GI kernels when
+paired with a non-IA contribution; an IA-IA pairing needs all ten.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h6 id="cloelib.observables.photo.shear.TATTContribution.get_requirements_for_interaction" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_requirements_for_interaction</span>
 
@@ -25319,7 +25977,7 @@ happen given <code>get_requirements_for_interaction</code>.</p>
 
 
 <a href="#cloelib.observables.photo.shear.ShearTracer" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ShearTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.shear.ShearTracer(nuisance_params)">nuisance_params</span></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer(ia_model)">ia_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.contributions.Contribution">Contribution</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer(tatt_loop_computer)">tatt_loop_computer</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTLoopComputer">TATTLoopComputer</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ShearTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer(nuisance_params)">nuisance_params</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer(ia_model)">ia_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.contributions.Contribution">Contribution</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer(tatt_loop_computer)">tatt_loop_computer</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTLoopComputer">TATTLoopComputer</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -25328,16 +25986,20 @@ happen given <code>get_requirements_for_interaction</code>.</p>
 
         <p>Class for the kernel for Cosmic Shear.</p>
 
+        <p><code>dndz</code> is expected to have shape <code>(n_bin, len(z))</code> with
+normalized distributions. Per-bin width transformations are applied
+before redshift shifts. <code>z</code> must not contain zero.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <ul>
         <li class="doc-section-item field-body">
 <h6 id="cloelib.observables.photo.shear.ShearTracer(perturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>perturbations</code></b>
-<a href="#cloelib.observables.photo.shear.ShearTracer(perturbations)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="object">object</span></code>)
+<a href="#cloelib.observables.photo.shear.ShearTracer(perturbations)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></code>)
           –
           <div class="doc-md-description">
-            <p>An object from NonLinearPerturbations class</p>
+            <p>Backend supplying background and perturbation
+quantities used by the kernels.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -25345,8 +26007,8 @@ happen given <code>get_requirements_for_interaction</code>.</p>
 <a href="#cloelib.observables.photo.shear.ShearTracer(dndz)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
           –
           <div class="doc-md-description">
-            <p>A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
-It is expected to be normalised.</p>
+            <p>Normalized tomographic distributions, shape
+<code>(n_bin, len(z))</code>.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -25354,7 +26016,18 @@ It is expected to be normalised.</p>
 <a href="#cloelib.observables.photo.shear.ShearTracer(z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
           –
           <div class="doc-md-description">
-            <p>A 1-dimensional array representing the redshift values corresponding to the <code>dndz</code> array.</p>
+            <p>One-dimensional redshift grid corresponding to the second axis
+of <code>dndz</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.shear.ShearTracer(nuisance_params)" class="doc doc-heading doc-heading-parameter">              <b><code>nuisance_params</code></b>
+<a href="#cloelib.observables.photo.shear.ShearTracer(nuisance_params)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="dict">dict</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Mapping requiring one-based keys
+<code>multiplicative_bias_{i+1}</code>, <code>dz_shear_{i+1}</code>, and
+<code>width_shear_{i+1}</code> for each bin.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -25389,6 +26062,19 @@ kernel backend (see <code>TATTContribution</code>'s docstring). Pass
 kernels, or any other object with the same <code>.compute(name)</code>
 interface. Passing this with any <code>ia_model</code> other than
 <code>"TATT"</code> raises <code>ValueError</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="ValueError">ValueError</span></code>
+            –
+          <div class="doc-md-description">
+            <p>If <code>z</code> contains zero, <code>ia_model</code> is unknown, or the
+TATT loop-computer argument is inconsistent with <code>ia_model</code>.</p>
           </div>
         </li>
     </ul>
@@ -25534,33 +26220,27 @@ as a separate grid).</p>
 
     <div class="doc doc-contents ">
 
-        <p>Window integrand.</p>
-<p>Calculates IA window</p>
+        <p>Return the NLA intrinsic-alignment kernel on <code>z</code>.</p>
+<p>The per-bin kernel is <code>-H(z)/c * AIA * CIA * Omega_m0 *
+(1+z)**EtaIA / D(z) * dndz_shifted</code>. If the backend returns a
+scale-dependent growth factor, the second tabulated k column is used;
+otherwise its scale-independent result is used. TATT amplitudes are
+represented in effective spectra rather than by this NLA window.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <ul>
         <li class="doc-section-item field-body">
 <h7 id="cloelib.observables.photo.shear.ShearTracer.get_window_IA(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
-<a href="#cloelib.observables.photo.shear.ShearTracer.get_window_IA(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="float">float</span></code>)
+<a href="#cloelib.observables.photo.shear.ShearTracer.get_window_IA(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="array_like">array_like</span></code>)
           –
           <div class="doc-md-description">
-            <p>Redshift at which kernel is being evaluated</p>
+            <p>Redshift evaluation grid.</p>
           </div>
         </li>
     </ul>
-
-
-<p><span class="doc-section-title">Returns:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-<b><code>window_IA</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
-)          –
-          <div class="doc-md-description">
-            
-          </div>
-        </li>
-    </ul>
+        <p>Returns a two-dimensional NLA kernel with one row per tomographic
+bin and one column per redshift.</p>
 
           
 
@@ -25581,7 +26261,10 @@ as a separate grid).</p>
 
     <div class="doc doc-contents ">
 
-        <p>Compute the lensing efficiency in a redshift bin.</p>
+        <p>Compute the legacy single-bin lensing efficiency.</p>
+<p>Uses Akima interpolation of the shifted bin distribution and a fixed
+integration grid from redshift 0 to 4. The vectorized production
+window path uses :meth:<code>get_lensing_efficiency</code> instead.</p>
 
           
 
@@ -25602,9 +26285,11 @@ as a separate grid).</p>
 
     <div class="doc doc-contents ">
 
-        <p>Compute the lensing efficiency kernel for each redshift bin.</p>
-<p>This function calculates the geometric lensing kernel W(χ), which weights the contribution
-of matter at different redshifts to the weak lensing signal, for a given redshift grid <code>z</code>.</p>
+        <p>Compute the discretized lensing efficiency for every bin.</p>
+<p>The efficiency uses <code>dndz_shifted</code> and the grid distance-ratio
+factor <code>1 - chi(z_lens) / chi(z_source)</code>, contracted with cached
+stacked Simpson weights. The supplied redshift grid is used as both
+the lens and source grid; this implementation assumes uniform spacing.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -25614,29 +26299,17 @@ of matter at different redshifts to the weak lensing signal, for a given redshif
 <a href="#cloelib.observables.photo.shear.ShearTracer.get_lensing_efficiency(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
           –
           <div class="doc-md-description">
-            <p>1D array of redshift values (must be evenly spaced). Used to compute comoving distances
-and define integration domain.</p>
+            <p>1D, evenly spaced redshift evaluation grid.</p>
           </div>
         </li>
     </ul>
-
-
-<p><span class="doc-section-title">Returns:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-              <code><span title="jax.numpy.ndarray">ndarray</span></code>
-          –
-          <div class="doc-md-description">
-            <p>2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
-for each redshift bin over the evaluation grid.</p>
-          </div>
-        </li>
-    </ul>
-        <h6 id="cloelib.observables.photo.shear.ShearTracer.get_lensing_efficiency--notes">Notes<a class="headerlink" href="#cloelib.observables.photo.shear.ShearTracer.get_lensing_efficiency--notes" title="Permanent link">&para;</a></h6>
+        <p>Returns a two-dimensional lensing efficiency with one row per
+tomographic bin and one column per redshift.</p>
+<h6 id="cloelib.observables.photo.shear.ShearTracer.get_lensing_efficiency--notes">Notes<a class="headerlink" href="#cloelib.observables.photo.shear.ShearTracer.get_lensing_efficiency--notes" title="Permanent link">&para;</a></h6>
 <ul>
 <li>Assumes <code>z</code> is evenly spaced; spacing is inferred as <code>z[1] - z[0]</code>.</li>
 <li>Uses a precomputed Simpson rule weight matrix (<code>cached_stacked_simpson</code>) for integration.</li>
-<li><code>self.dndz</code> is expected to have shape (N_bins, len(z)) and be normalized.</li>
+<li><code>self.dndz_shifted</code> has shape <code>(n_bin, len(z))</code>.</li>
 <li>Efficiency is evaluated using <code>np.einsum</code>.</li>
 </ul>
 
@@ -25659,20 +26332,11 @@ for each redshift bin over the evaluation grid.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Weak Lensing shear kernel.</p>
-<p>Calculates the weak lensing shear kernel for a given tomographic bin
-distribution.
-Uses broadcasting to compute a 2D-array of integrands and then applies
-<code>np.trapz</code> on the array along one axis.</p>
-<div class="arithmatex">\[
-    W_{i}^{\gamma}(\ell, z, k) =
-    \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
-    \Omega_{{\rm m},0} (1 + z)
-    f_K\left[\tilde{r}(z)\right]
-    \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
-    \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-    {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
-\]</div>
+        <p>Return the radial weak-lensing kernel for the supplied redshifts.</p>
+<p>It multiplies the discretized efficiency from
+:meth:<code>get_lensing_efficiency</code> by
+<code>3/2 * (H0/c)**2 * Omega_m0 * (1+z) * chi(z)</code>. The harmonic shear
+response is applied by <code>AngularTwoPoint</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -25682,23 +26346,12 @@ Uses broadcasting to compute a 2D-array of integrands and then applies
 <a href="#cloelib.observables.photo.shear.ShearTracer.get_window_lensing(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="numpy.ndarray">ndarray</span></code>)
           –
           <div class="doc-md-description">
-            <p>Redshift at which weight is evaluated (<code>float</code> type).</p>
+            <p>Redshift evaluation grid.</p>
           </div>
         </li>
     </ul>
-
-
-<p><span class="doc-section-title">Returns:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-              <code><span title="numpy.ndarray">ndarray</span></code>
-          –
-          <div class="doc-md-description">
-            <p>1-D Numpy array of shear kernel values for specified bin
-at specified scale for the redshifts defined in z</p>
-          </div>
-        </li>
-    </ul>
+        <p>Returns a two-dimensional kernel with one row per bin and one column
+per redshift.</p>
 
           
 
@@ -25719,33 +26372,23 @@ at specified scale for the redshifts defined in z</p>
 
     <div class="doc doc-contents ">
 
-        <p>Compute the Window.</p>
-<p>Computes general window given the selected tracer</p>
+        <p>Sum lensing and optional IA kernels, then apply multiplicative bias.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <ul>
         <li class="doc-section-item field-body">
 <h7 id="cloelib.observables.photo.shear.ShearTracer.get_window(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
-<a href="#cloelib.observables.photo.shear.ShearTracer.get_window(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="float">float</span></code>)
+<a href="#cloelib.observables.photo.shear.ShearTracer.get_window(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="array_like">array_like</span></code>)
           –
           <div class="doc-md-description">
-            <p>Redshift at which window kernel is being evaluated</p>
+            <p>Redshift evaluation grid.</p>
           </div>
         </li>
     </ul>
-
-
-<p><span class="doc-section-title">Returns:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-<b><code>window</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
-)          –
-          <div class="doc-md-description">
-            
-          </div>
-        </li>
-    </ul>
+        <p>Returns a two-dimensional window with one row per bin and one column
+per redshift. Each bin is multiplied once by
+<code>1 + multiplicative_bias_{i+1}</code>.</p>
 
           
 
@@ -25886,6 +26529,27 @@ galaxy-bias model, hence the distinct name; <code>get_window()</code>/
 
 
 
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.positions.GalaxyBiasContribution.compute_kernel" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">compute_kernel</span>
+
+
+<a href="#cloelib.observables.photo.positions.GalaxyBiasContribution.compute_kernel" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute_kernel</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.positions.GalaxyBiasContribution.compute_kernel(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the raw galaxy-bias kernel, shape <code>(n_bin, n_z)</code>.</p>
+
+          
+
+    </div>
+
+</div>
+
 
 
   </div>
@@ -25933,6 +26597,27 @@ galaxy-bias model, hence the distinct name; <code>get_window()</code>/
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.positions.MagnificationContribution.compute_kernel" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">compute_kernel</span>
+
+
+<a href="#cloelib.observables.photo.positions.MagnificationContribution.compute_kernel" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute_kernel</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.positions.MagnificationContribution.compute_kernel(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the raw magnification kernel, shape <code>(n_bin, n_z)</code>.</p>
+
+          
+
+    </div>
+
+</div>
 
 
 
@@ -26104,6 +26789,32 @@ construction time.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.positions.PBJNonlinearBiasLoopComputer.compute" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">compute</span>
+
+
+<a href="#cloelib.observables.photo.positions.PBJNonlinearBiasLoopComputer.compute" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.positions.PBJNonlinearBiasLoopComputer.compute(name)">name</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the cached FAST-PT callable for a nonlinear-bias kernel.</p>
+<p><code>name</code> must be one of the kernel names in <code>_NLBIAS_KERNELS</code>.
+The returned <code>SpectrumRequest.compute(matter_pk, ks, zs)</code> callable
+ignores <code>matter_pk</code> and <code>zs</code> because these kernels depend only on
+k, and returns shape <code>(len(ks),)</code>. Kernels are cached while the
+requested k grid is unchanged.</p>
+
+          
+
+    </div>
+
+</div>
 
 
 
@@ -26315,6 +27026,29 @@ its own k-shape - see class docstring). Matches
 <div class="doc doc-object doc-function">
 
 
+<h6 id="cloelib.observables.photo.positions.NonLinearGalaxyBiasContribution.get_spectrum_requests" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_spectrum_requests</span>
+
+
+<a href="#cloelib.observables.photo.positions.NonLinearGalaxyBiasContribution.get_spectrum_requests" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_spectrum_requests</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return one spectrum request per FAST-PT bias kernel.</p>
+<p>Interaction-specific requirements may prune these requests when the
+other contribution is intrinsic alignment.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h6 id="cloelib.observables.photo.positions.NonLinearGalaxyBiasContribution.get_requirements_for_interaction" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_requirements_for_interaction</span>
 
@@ -26385,7 +27119,7 @@ docstring for why these must be two different z-grids).</p>
 
 
 <a href="#cloelib.observables.photo.positions.PositionsTracer" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(nuisance_params)">nuisance_params</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.positions.PositionsTracer(include_rsd)">include_rsd</span></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(nl_bias_loop_computer)">nl_bias_loop_computer</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.NonlinearBiasLoopComputer">NonlinearBiasLoopComputer</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(nuisance_params)">nuisance_params</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(include_rsd)">include_rsd</a></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(nl_bias_loop_computer)">nl_bias_loop_computer</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.NonlinearBiasLoopComputer">NonlinearBiasLoopComputer</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -26394,7 +27128,10 @@ docstring for why these must be two different z-grids).</p>
 
         <p>Class to define the kernel for angular (galaxy) clustering.</p>
 
-        <h6 id="cloelib.observables.photo.positions.PositionsTracer--this-docstring-should-be-checked-i-replaced-linearperturbations-or-nonlinearperturbations-with-perturbations-as-the-type-of-perturbations-in-the-parameters-list-doc">This docstring should be checked. I replaced LinearPerturbations or NonLinearPerturbations with Perturbations as the type of perturbations in the parameters list doc.<a class="headerlink" href="#cloelib.observables.photo.positions.PositionsTracer--this-docstring-should-be-checked-i-replaced-linearperturbations-or-nonlinearperturbations-with-perturbations-as-the-type-of-perturbations-in-the-parameters-list-doc" title="Permanent link">&para;</a></h6>
+        <p><code>dndz</code> is expected to have shape <code>(n_bin, len(z))</code>. Per-bin
+width transformations are applied before redshift shifts. The redshift
+grid must not contain zero; the window integrations assume a suitably
+sampled grid.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -26404,7 +27141,8 @@ docstring for why these must be two different z-grids).</p>
 <a href="#cloelib.observables.photo.positions.PositionsTracer(perturbations)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></code>)
           –
           <div class="doc-md-description">
-            <p>An object from NonLinearPerturbations class</p>
+            <p>Backend providing the background and perturbation
+quantities required by this tracer.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -26412,8 +27150,8 @@ docstring for why these must be two different z-grids).</p>
 <a href="#cloelib.observables.photo.positions.PositionsTracer(dndz)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
           –
           <div class="doc-md-description">
-            <p>A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
-It is expected to be normalised.</p>
+            <p>Normalized tomographic redshift distributions, shape
+<code>(n_bin, len(z))</code>.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -26421,7 +27159,8 @@ It is expected to be normalised.</p>
 <a href="#cloelib.observables.photo.positions.PositionsTracer(z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
           –
           <div class="doc-md-description">
-            <p>A 1-dimensional array representing the redshift values corresponding to the <code>dndz</code> array.</p>
+            <p>One-dimensional redshift grid matching the second axis of
+<code>dndz</code>.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -26429,18 +27168,15 @@ It is expected to be normalised.</p>
 <a href="#cloelib.observables.photo.positions.PositionsTracer(galaxy_bias_model)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="str">str</span></code>)
           –
           <div class="doc-md-description">
-            <p>One of <code>"per_bin"</code>, <code>"per_bin_int"</code>, <code>"poly"</code>
-(<code>GalaxyBiasContribution</code>'s three linear models, read from
-<code>nuisance_params["b1_photo_bin{i}"/"b1_photo_poly{i}"]</code>) or
-<code>"nonlinear"</code> (<code>NonLinearGalaxyBiasContribution</code>, the standard
-McDonald &amp; Roy 2009 one-loop expansion plus a <code>bk2</code> counterterm -
-requires <code>nl_bias_loop_computer</code>, and reads, per tomographic bin
-<code>i</code> (<code>i = 0..dndz.shape[0]-1</code>),
-<code>nuisance_params["b1_photo_nl_bin{i}"/"b2_photo_nl_bin{i}"/
-"bs2_photo_nl_bin{i}"/"b3nl_photo_nl_bin{i}"/"bk2_photo_nl_bin{i}"]</code>,
-each defaulting to the value that drops it from the expansion -
-see <code>NonLinearGalaxyBiasContribution</code>'s docstring for what it
-does and does not support).</p>
+            <p><code>"per_bin"</code> uses constant per-bin
+<code>b1_photo_bin{i}</code>; <code>"per_bin_int"</code> interpolates those
+values between each distribution's peak; <code>"poly"</code> uses
+<code>b1_photo_poly0</code> through <code>b1_photo_poly3</code>; <code>"nonlinear"</code>
+selects the one-loop bias contribution and requires
+<code>nl_bias_loop_computer</code>. Linear bias defaults to 1.0;
+nonlinear <code>b1</code> defaults to 1.0 and <code>b2</code>, <code>bs2</code>,
+<code>b3nl</code>, and <code>bk2</code> default to 0.0. Bias nuisance bin
+indices are zero-based.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -26448,7 +27184,22 @@ does and does not support).</p>
 <a href="#cloelib.observables.photo.positions.PositionsTracer(nuisance_params)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="dict">dict</span></code>)
           –
           <div class="doc-md-description">
-            <p>A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.</p>
+            <p>Mapping containing required one-based
+<code>dz_pos_{i+1}</code>, <code>width_pos_{i+1}</code>, and
+<code>magnification_bias_{i+1}</code> values, plus optional bias
+parameters described above.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.positions.PositionsTracer(include_rsd)" class="doc doc-heading doc-heading-parameter">              <b><code>include_rsd</code></b>
+<a href="#cloelib.observables.photo.positions.PositionsTracer(include_rsd)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="bool">bool</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Whether to include the linear photo-RSD window in
+legacy <code>AngularTwoPoint</code> calculations. The generalized
+contribution engine does not support RSD.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -26458,13 +27209,22 @@ does and does not support).</p>
 )
           –
           <div class="doc-md-description">
-            <p>required when <code>galaxy_bias_model="nonlinear"</code>
-(raises <code>ValueError</code> if omitted) - <code>NonLinearGalaxyBiasContribution</code>'s
-one-loop kernel backend. Pass
-<code>PBJNonlinearBiasLoopComputer(perturbations)</code> for real
-FAST-PT-computed kernels, or any other object with the same
-<code>.compute(name)</code> interface. Passing this with any
-<code>galaxy_bias_model</code> other than <code>"nonlinear"</code> raises <code>ValueError</code>.</p>
+            <p>Required for <code>galaxy_bias_model="nonlinear"</code>
+and must implement <code>compute(name)</code>. Supplying it for another
+model, or omitting it for nonlinear bias, raises <code>ValueError</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="ValueError">ValueError</span></code>
+            –
+          <div class="doc-md-description">
+            <p>If the redshift grid contains zero or the nonlinear
+loop-computer argument is inconsistent with the bias model.</p>
           </div>
         </li>
     </ul>
@@ -26540,36 +27300,28 @@ FAST-PT-computed kernels, or any other object with the same
 
     <div class="doc doc-contents ">
 
-        <p>Galaxy Positions window function.</p>
-<p>Implements the galaxy clustering photometric window function.</p>
-<div class="arithmatex">\[
-    W_i^G(z) = \frac{n_i(z)}{\bar{n_i}}\frac{H(z)}{c}\\
-\]</div>
+        <p>Return the bias-weighted positions kernel at redshifts <code>z</code>.</p>
+<p>For each bin the kernel is <code>b_i(z) * dndz_shifted_i(z) * H(z)/c</code>.
+The bias is constant per bin for <code>per_bin</code> and redshift-dependent
+for <code>per_bin_int</code> and <code>poly</code>. In nonlinear mode this window is a
+diagnostic using the linear <code>b1</code> component; the full spectrum is
+formed by the generalized contribution engine.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <ul>
         <li class="doc-section-item field-body">
 <h7 id="cloelib.observables.photo.positions.PositionsTracer.get_window_positions(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
-<a href="#cloelib.observables.photo.positions.PositionsTracer.get_window_positions(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="numpy.ndarray">ndarray</span> | <span title="float">float</span></code>)
+<a href="#cloelib.observables.photo.positions.PositionsTracer.get_window_positions(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="array_like">array_like</span></code>)
           –
           <div class="doc-md-description">
-            <p>Redshift at which to evaluate distribution (array of <code>float</code> or <code>float</code>)</p>
+            <p>Redshift evaluation grid compatible with the tracer's
+distributions.</p>
           </div>
         </li>
     </ul>
-
-
-<p><span class="doc-section-title">Returns:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-<b><code>window_positions</code></b> (              <code><span title="numpy.ndarray">ndarray</span></code>
-)          –
-          <div class="doc-md-description">
-            <p>Window function for angular photometric galaxy clustering</p>
-          </div>
-        </li>
-    </ul>
+        <p>Returns an array with one row per tomographic bin and one column per
+redshift.</p>
 
           
 
@@ -26597,24 +27349,25 @@ is written as a linear combination of the source term evaluated at shifted redsh
 W^{\rm RSD}_i(\ell,z)
 =
 A_\ell\,S_i(z)
-+B_\ell\,S_i\!\left(z_{-2}(\ell,z)\right)
-+C_\ell\,S_i\!\left(z_{+2}(\ell,z)\right),
++B_\ell\,S_i\!\left(z_{-1}(\ell,z)\right)
++C_\ell\,S_i\!\left(z_{+1}(\ell,z)\right),
 \]</div>
 <p>with
 $$
 S_i(z)=\frac{H(z)\,f(z)}{c}\,n_i(z),
 $$</p>
-<p>and the shifted redshifts defined implicitly via comoving distance (here :math:<code>\chi \equiv r</code>):
+<p>and shifted distances defined by the <code>_alpha_coeffs</code> factors:
 $$
-\chi!\left(z_m(\ell,z)\right)=
-\frac{\ell+m+\tfrac12}{\ell+\tfrac12}\,\chi(z),
-\qquad m\in{-2,+2}.
+\chi_{-}=\frac{2\ell-3}{2\ell+1}\chi(z),\qquad
+\chi_{+}=\frac{2\ell+5}{2\ell+1}\chi(z).
 $$</p>
-<p>The coefficients are
+<p>The coefficients match <code>_L_coeffs</code>. Multipoles below 2 are set to
+zero, and shifted-distance queries outside the tabulated <code>chi</code> grid
+contribute zero.
 $$
 A_\ell=\frac{2\ell^2+2\ell-1}{(2\ell-1)(2\ell+3)},\quad
-B_\ell=-\frac{\ell(\ell-1)}{(2\ell-1)(2\ell+1)},\quad
-C_\ell=-\frac{(\ell+1)(\ell+2)}{(2\ell+1)(2\ell+3)}.
+B_\ell=-\frac{\ell(\ell-1)}{(2\ell-1)\sqrt{(2\ell-3)(2\ell+1)}},\quad
+C_\ell=-\frac{(\ell+1)(\ell+2)}{(2\ell+3)\sqrt{(2\ell+1)(2\ell+5)}}.
 $$</p>
 <h6 id="cloelib.observables.photo.positions.PositionsTracer.get_window_rsd--notes">Notes<a class="headerlink" href="#cloelib.observables.photo.positions.PositionsTracer.get_window_rsd--notes" title="Permanent link">&para;</a></h6>
 <ul>
@@ -26630,7 +27383,7 @@ chi : array_like
     Comoving distance χ(z)=r(z), sampled on the same z-grid.</p>
 <h6 id="cloelib.observables.photo.positions.PositionsTracer.get_window_rsd--returns">Returns<a class="headerlink" href="#cloelib.observables.photo.positions.PositionsTracer.get_window_rsd--returns" title="Permanent link">&para;</a></h6>
 <p>ndarray
-    The RSD window sampled on the z-grid (shape as returned by <code>get_photo_rsd</code>).</p>
+    The RSD window with shape <code>(len(ells), n_bin, len(chi))</code>.</p>
 
           
 
@@ -26651,9 +27404,7 @@ chi : array_like
 
     <div class="doc doc-contents ">
 
-        <p>Compute the magnification efficiency kernel for each redshift bin.</p>
-<p>This function calculates the geometric lensing kernel W(χ), which weights the contribution
-of matter at different redshifts to the weak lensing signal, for a given redshift grid <code>z</code>.</p>
+        <p>Compute magnification efficiency for each bin from shifted <code>dndz</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -26685,7 +27436,7 @@ for each redshift bin over the evaluation grid.</p>
 <ul>
 <li>Assumes <code>z</code> is evenly spaced; spacing is inferred as <code>z[1] - z[0]</code>.</li>
 <li>Uses a precomputed Simpson rule weight matrix (<code>cached_stacked_simpson</code>) for integration.</li>
-<li><code>self.dndz</code> is expected to have shape (N_bins, len(z)) and be normalized.</li>
+<li><code>self.dndz_shifted</code> has shape <code>(n_bin, len(z))</code>.</li>
 <li>Efficiency is evaluated using <code>np.einsum</code>.</li>
 </ul>
 
@@ -26708,46 +27459,28 @@ for each redshift bin over the evaluation grid.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Magnification photometric galaxy kernel.</p>
-<p>Calculates the weak lensing shear kernel for a given tomographic bin
-distribution.
-Uses broadcasting to compute a 2D-array of integrands and then applies
-<code>np.trapz</code> on the array along one axis.</p>
-<div class="arithmatex">\[
-    W_{i}^{\gamma}(\ell, z, k) =
-    \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
-    \Omega_{{\rm m},0} b_{\rm mag, i} (1 + z)
-    f_K\left[\tilde{r}(z)\right]
-    \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
-    \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-    {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
-\]</div>
+        <p>Return the magnification-bias contribution to the positions window.</p>
+<p>The geometric efficiency is evaluated on the supplied redshift grid
+using the shifted source distribution and Simpson weights; its
+distance-ratio factor is <code>1 - chi(z_lens) / chi(z_source)</code>. The
+resulting efficiency is multiplied by the usual matter-lensing
+prefactor and the per-bin <code>magnification_bias</code> value.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <ul>
         <li class="doc-section-item field-body">
 <h7 id="cloelib.observables.photo.positions.PositionsTracer.get_window_magnification(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
-<a href="#cloelib.observables.photo.positions.PositionsTracer.get_window_magnification(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+<a href="#cloelib.observables.photo.positions.PositionsTracer.get_window_magnification(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="array_like">array_like</span></code>)
           –
           <div class="doc-md-description">
-            <p>Redshift at which weight is evaluated (array of <code>float</code>).</p>
+            <p>One-dimensional, evenly spaced redshift evaluation grid.</p>
           </div>
         </li>
     </ul>
-
-
-<p><span class="doc-section-title">Returns:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-              <code><span title="numpy.ndarray">ndarray</span></code>
-          –
-          <div class="doc-md-description">
-            <p>1-D Numpy array of shear kernel values for specified bin
-at specified scale for the redshifts defined in z</p>
-          </div>
-        </li>
-    </ul>
+        <p>The returned two-dimensional kernel has one row per bin and one
+column per redshift; each bin is multiplied by its
+<code>magnification_bias_{i+1}</code> nuisance parameter.</p>
 
           
 
@@ -26768,34 +27501,23 @@ at specified scale for the redshifts defined in z</p>
 
     <div class="doc doc-contents ">
 
-        <p>Compute the angular photometric galaxy clustering window function.</p>
-<p>This function combines the galaxy clustering window and the magnification
-bias window to produce the final window function.</p>
+        <p>Sum the bias and magnification contribution kernels.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <ul>
         <li class="doc-section-item field-body">
 <h7 id="cloelib.observables.photo.positions.PositionsTracer.get_window(z)" class="doc doc-heading doc-heading-parameter">              <b><code>z</code></b>
-<a href="#cloelib.observables.photo.positions.PositionsTracer.get_window(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="float">float</span></code>)
+<a href="#cloelib.observables.photo.positions.PositionsTracer.get_window(z)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="array_like">array_like</span></code>)
           –
           <div class="doc-md-description">
-            <p>Redshift at which window kernel is being evaluated</p>
+            <p>Redshift evaluation grid.</p>
           </div>
         </li>
     </ul>
-
-
-<p><span class="doc-section-title">Returns:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-<b><code>window</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
-)          –
-          <div class="doc-md-description">
-            
-          </div>
-        </li>
-    </ul>
+        <p>Returns an array with one row per bin and one column per redshift. In
+nonlinear-bias mode this is diagnostic; the generalized engine forms
+the full bias spectrum from contribution terms.</p>
 
           
 
@@ -26811,6 +27533,60 @@ bias window to produce the final window function.</p>
 
 </div>
 
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.positions.get_photo_rsd" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">get_photo_rsd</span>
+
+
+<a href="#cloelib.observables.photo.positions.get_photo_rsd" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_photo_rsd</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.get_photo_rsd(ells)">ells</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.get_photo_rsd(chi)">chi</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.get_photo_rsd(S_bin_z)">S_bin_z</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Evaluate the shifted-distance approximation to the photo-RSD kernel.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.positions.get_photo_rsd(ells)" class="doc doc-heading doc-heading-parameter">              <b><code>ells</code></b>
+<a href="#cloelib.observables.photo.positions.get_photo_rsd(ells)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="array_like">array_like</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Multipoles, shape <code>(n_ell,)</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.positions.get_photo_rsd(chi)" class="doc doc-heading doc-heading-parameter">              <b><code>chi</code></b>
+<a href="#cloelib.observables.photo.positions.get_photo_rsd(chi)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="array_like">array_like</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Comoving-distance grid, shape <code>(n_z)</code>, used as the
+interpolation coordinate.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.positions.get_photo_rsd(S_bin_z)" class="doc doc-heading doc-heading-parameter">              <b><code>S_bin_z</code></b>
+<a href="#cloelib.observables.photo.positions.get_photo_rsd(S_bin_z)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="array_like">array_like</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Source term sampled on <code>chi</code>, shape <code>(n_bin, n_z)</code>.</p>
+          </div>
+        </li>
+    </ul>
+        <p>The returned RSD kernel is indexed by multipole, tomographic bin, and
+redshift. Shifted queries outside the supplied distance grid contribute
+zero; multipoles below two also have zero contribution.</p>
+
+          
+
+    </div>
+
+</div>
 
 
 
@@ -29551,20 +30327,75 @@ with (CAMB, CLASS and variants) do.</p>
 
 
 <a href="#cloelib.observables.spectro.PBJ_spectro.PBJLinearPerturbations.growth_rate" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><span title="cloelib.observables.spectro.PBJ_spectro.PBJLinearPerturbations.growth_rate(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.observables.spectro.PBJ_spectro.PBJLinearPerturbations.growth_rate(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">growth_rate</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.spectro.PBJ_spectro.PBJLinearPerturbations.growth_rate(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.spectro.PBJ_spectro.PBJLinearPerturbations.growth_rate(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="cloelib.cosmology.cosmology.T">T</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Calculate the growth rate for given redshifts and wavenumbers.</p>
-<p>Every implementation follows the same convention:</p>
-<ul>
-<li><code>zs=None</code> returns the growth rate on the redshift grid the instance
-  was built on; otherwise it is evaluated at <code>zs</code>.</li>
-<li><code>ks=None</code> returns a 1D array of shape <code>(nz,)</code>; otherwise an array
-  of shape <code>(nz, nk)</code> (a scale-independent growth rate is broadcast
-  along <code>k</code>).</li>
-</ul>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h7 id="cloelib.observables.spectro.PBJ_spectro.PBJLinearPerturbations.growth_rate(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.observables.spectro.PBJ_spectro.PBJLinearPerturbations.growth_rate(zs)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="typing.Optional">Optional</span>[<span title="cloelib.cosmology.cosmology.T">T</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional NumPy or JAX array of redshifts,
+with shape <code>(nz,)</code>. If <code>None</code>, implementations use the
+redshift grid they were built on; implementations without a
+default grid may raise <code>ValueError</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h7 id="cloelib.observables.spectro.PBJ_spectro.PBJLinearPerturbations.growth_rate(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.observables.spectro.PBJ_spectro.PBJLinearPerturbations.growth_rate(ks)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="typing.Optional">Optional</span>[<span title="cloelib.cosmology.cosmology.T">T</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>One-dimensional NumPy or JAX array of wavenumbers
+in <code>1/Mpc</code>, with shape <code>(nk,)</code>. If <code>None</code>, return the
+growth rate as a function of redshift only.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>T</code></b> (              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>NumPy or JAX array of growth-rate values. With <code>ks=None</code>, the</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>shape is <code>(nz,)</code>; with wavenumbers supplied, the shape is</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p><code>(nz, nk)</code>. Scale-independent growth rates are broadcast along</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="cloelib.cosmology.cosmology.T">T</span></code>
+          –
+          <div class="doc-md-description">
+            <p>the wavenumber axis.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -33328,6 +34159,90 @@ target this function's own zero-crossing/edge behavior).</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="cloelib.summary_statistics.angular_two_point.Cl_int_liz_jz" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">Cl_int_liz_jz</span>
+
+
+<a href="#cloelib.summary_statistics.angular_two_point.Cl_int_liz_jz" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Cl_int_liz_jz</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_jz(WT1l)">WT1l</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_jz(WT2)">WT2</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_jz(Pkl)">Pkl</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_jz(invH)">invH</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_jz(invchi2)">invchi2</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_jz(weights)">weights</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Contract an RSD window for tracer 1 with an ordinary window for 2.</p>
+<p><code>WT1l</code> has shape <code>(n_ell, n_bin1, n_z)</code>, <code>WT2</code> has shape
+<code>(n_bin2, n_z)</code>, <code>Pkl</code> has shape <code>(n_ell, n_z)</code>, and each of
+<code>invH</code>, <code>invchi2</code>, and <code>weights</code> has shape <code>(n_z,)</code>.</p>
+<p>The returned three-dimensional array is indexed by multipole and the two
+tracer-bin axes. This helper performs the weighted contraction only; the
+legacy integration path supplies physical prefactors and grid-spacing
+factors.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.summary_statistics.angular_two_point.Cl_int_iz_ljz" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">Cl_int_iz_ljz</span>
+
+
+<a href="#cloelib.summary_statistics.angular_two_point.Cl_int_iz_ljz" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Cl_int_iz_ljz</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_iz_ljz(WT1)">WT1</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_iz_ljz(WT2l)">WT2l</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_iz_ljz(Pkl)">Pkl</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_iz_ljz(invH)">invH</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_iz_ljz(invchi2)">invchi2</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_iz_ljz(weights)">weights</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Contract an ordinary window for tracer 1 with tracer 2's RSD window.</p>
+<p><code>WT1</code> has shape <code>(n_bin1, n_z)</code>, <code>WT2l</code> has shape
+<code>(n_ell, n_bin2, n_z)</code>, <code>Pkl</code> has shape <code>(n_ell, n_z)</code>, and each
+of <code>invH</code>, <code>invchi2</code>, and <code>weights</code> has shape <code>(n_z,)</code>.</p>
+<p>The returned three-dimensional array is indexed by multipole and the two
+tracer-bin axes. This helper performs the weighted contraction only; the
+legacy integration path supplies physical prefactors and grid-spacing
+factors.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.summary_statistics.angular_two_point.Cl_int_liz_ljz" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">Cl_int_liz_ljz</span>
+
+
+<a href="#cloelib.summary_statistics.angular_two_point.Cl_int_liz_ljz" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Cl_int_liz_ljz</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_ljz(WT1l)">WT1l</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_ljz(WT2l)">WT2l</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_ljz(Pkl)">Pkl</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_ljz(invH)">invH</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_ljz(invchi2)">invchi2</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.Cl_int_liz_ljz(weights)">weights</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Contract RSD windows for both tracers.</p>
+<p>Each RSD window has shape <code>(n_ell, n_bin, n_z)</code>; <code>Pkl</code> has shape
+<code>(n_ell, n_z)</code>, and each of <code>invH</code>, <code>invchi2</code>, and <code>weights</code> has
+shape <code>(n_z,)</code>.</p>
+<p>The returned three-dimensional array is indexed by multipole and the two
+tracer-bin axes. This helper performs the weighted contraction only; the
+legacy integration path supplies physical prefactors and grid-spacing
+factors.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">get_cosebis_from_cl</span>
 
@@ -36094,7 +37009,17 @@ safe to call inside jitted code.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Evaluate the Legendre polynomial of degree <code>n</code> at <code>x</code>.</p>
+<p>The polynomial is evaluated with the three-term recurrence relation. <code>x</code> may
+be a scalar or an array; the result is a JAX value with the corresponding shape.</p>
+<h6 id="cloelib.auxiliary.math_utils.legendre--parameters">Parameters<a class="headerlink" href="#cloelib.auxiliary.math_utils.legendre--parameters" title="Permanent link">&para;</a></h6>
+<p>n : int
+    Non-negative degree of the polynomial.
+x : array-like
+    Point or points at which to evaluate the polynomial.</p>
+<h6 id="cloelib.auxiliary.math_utils.legendre--returns">Returns<a class="headerlink" href="#cloelib.auxiliary.math_utils.legendre--returns" title="Permanent link">&para;</a></h6>
+<p>jax.Array
+    Values of the degree-<code>n</code> Legendre polynomial at <code>x</code>.</p>
 
           
 
@@ -36115,7 +37040,25 @@ safe to call inside jitted code.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Write documentation (TODO).</p>
+        <p>Compute Simpson's-rule integrals of <code>f</code> over <code>[a, b]</code>.</p>
+<p><code>f</code> is evaluated at <code>N + 1</code> equally spaced points, and composite
+Simpson's rule is applied along the leading axis of its result.</p>
+<h6 id="cloelib.auxiliary.math_utils.simps--parameters">Parameters<a class="headerlink" href="#cloelib.auxiliary.math_utils.simps--parameters" title="Permanent link">&para;</a></h6>
+<p>f : callable
+    Function evaluated at the integration points. Its result must have a
+    leading dimension of length <code>N + 1</code>.
+a, b : float
+    Lower and upper integration limits.
+N : int, optional
+    Number of equal subintervals; must be even. Defaults to 128.</p>
+<h6 id="cloelib.auxiliary.math_utils.simps--returns">Returns<a class="headerlink" href="#cloelib.auxiliary.math_utils.simps--returns" title="Permanent link">&para;</a></h6>
+<p>scalar or array-like
+    Integral value(s), with the shape of <code>f</code>'s result after reducing its
+    leading dimension. The concrete array type follows the value returned by
+    <code>f</code> and <code>numpy.sum</code>'s dispatch.</p>
+<h6 id="cloelib.auxiliary.math_utils.simps--raises">Raises<a class="headerlink" href="#cloelib.auxiliary.math_utils.simps--raises" title="Permanent link">&para;</a></h6>
+<p>ValueError
+    If <code>N</code> is odd.</p>
 
           
 

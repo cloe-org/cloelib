@@ -290,14 +290,9 @@ class _CosmoPowerPerturbations:
         and cosmology are read from the ``_sector``/``_spec`` class attributes.
         """
         spec, sector = self._spec, self._sector
-        cp_file, cp_file_cb, cp_file_sigma = _emulator_files(
-            spec, sector, background.N_mnu
-        )
-        cp_file, cp_file_cb, cp_file_sigma = (
-            emulator_data(cp_file),
-            emulator_data(cp_file_cb),
-            emulator_data(cp_file_sigma),
-        )
+        pk_name, cb_name, sigma_name = _emulator_files(spec, sector, background.N_mnu)
+        cp_file = emulator_data(pk_name)
+        cp_file_sigma = emulator_data(sigma_name)
         self.has_neutrinos = background.N_mnu > 0
 
         emulator = load_pk_emulator(cp_file)
@@ -338,9 +333,10 @@ class _CosmoPowerPerturbations:
         if baryons:
             sigma_params = self.params
         else:
-            # The sigma8/fsigma8 emulator is shared with the HMcode modules and expects
+            # The linear sector shares the HMcode sigma8/fsigma8 emulator, which expects
             # logT_AGN; sigma8/fsigma8 are (near) linear quantities, so they are
-            # evaluated at the fiducial logT_AGN=7.6.
+            # evaluated at the fiducial logT_AGN=7.6. The halofit sigma8/fsigma8
+            # emulators take no logT_AGN and ignore it.
             self.sigma_params = self.params.copy()
             self.sigma_params["logT_AGN"] = np.tile(7.6, len(self.z))
             sigma_params = self.sigma_params
@@ -362,7 +358,7 @@ class _CosmoPowerPerturbations:
             self.z, self.k, Pk_out, kx=1, ky=1
         )
         self.Pk_cb = _extended_pk_cb(
-            cp_file_cb, self.params, self.params["z"], redshifts, self.background.ns
+            cb_name, self.params, self.params["z"], redshifts, self.background.ns
         )
         self.Pk_cb_interp = interpolate.RectBivariateSpline(
             self.z, self.k, self.Pk_cb, kx=1, ky=1

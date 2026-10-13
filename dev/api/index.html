@@ -7074,9 +7074,9 @@ ks is None and (nz, nk) otherwise.</p>
 <a href="#cloelib.cosmology.class_cosmology.CLASSNonLinearPerturbations(linearperturbations)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a>]</code>)
           –
           <div class="doc-md-description">
-            <p>Linear perturbations object (unused by CLASS, which computes
-nonlinear corrections internally; accepted for interface compatibility with
-emulator-based NonLinPerturbations classes).</p>
+            <p>Linear perturbations object (CLASS computes the nonlinear
+corrections internally). Only needed for the cb x matter cross spectrum,
+e.g. <code>CLASSLinearPerturbations</code> on the same background.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -8057,7 +8057,8 @@ all call this as <code>Omega_m(0.0)</code>.</p>
 <a href="#cloelib.cosmology.jax_cosmology.JAXBackground.Omega_cb(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
           –
           <div class="doc-md-description">
-            <p>Array of redshifts.</p>
+            <p>Array of redshifts. A bare Python/JAX scalar
+is also accepted (returns a scalar), as for <code>Omega_m</code>.</p>
           </div>
         </li>
     </ul>
@@ -8674,6 +8675,10 @@ formulae of :cite:<code>1998:EisensteinHu</code></p>
 <p>pk: array_like
     Linear matter power spectrum at the specified scale
     and redshift</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb--notes">Notes<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXLinearPerturbations.matter_power_spectrum_cb--notes" title="Permanent link">&para;</a></h6>
+<p><code>P_cb = P_mm (D_cb / D_cbnu)^2</code>, with the scale-dependent growth of
+cb and of the total matter in the presence of massive neutrinos
+from Eisenstein &amp; Hu 1999 (see <code>_cb_to_matter_ratio</code>).</p>
 
           
 
@@ -8979,8 +8984,21 @@ ells (array_like): Multipole moments.</p>
   <p>Flag to specify if wavenumber in h units, defaults to False</p>
 </details>        <h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
 <p>pk: numpy.ndarray
-    Linear matter power spectrum at the specified scale
+    Non-linear cb power spectrum at the specified scale
     and redshift</p>
+<h6 id="cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--notes">Notes<a class="headerlink" href="#cloelib.cosmology.jax_cosmology.JAXNonLinearPerturbations.matter_power_spectrum_cb--notes" title="Permanent link">&para;</a></h6>
+<p>Writing <code>P_mm = f_cb^2 P_cb + 2 f_cb f_nu P_cbnu + f_nu^2 P_nunu</code>,
+the non-linear cb spectrum is obtained by assuming that both spectra
+involving neutrinos keep their linear value,
+<code>P_nunu^NL = P_nunu^L</code> and <code>P_cbnu^NL = P_cbnu^L</code>, so that all the
+non-linear power of the total matter comes from cb,
+<code>P_mm^NL - P_mm^L = f_cb^2 (P_cb^NL - P_cb^L)</code>:</p>
+<div class="arithmatex">\[
+    P_{cb}^{NL} = P_{cb}^{L} + \frac{P_{mm}^{NL} - P_{mm}^{L}}{f_{cb}^2}
+\]</div>
+<p>with <code>f_cb = Omega_cb0 / Omega_m0</code>, <code>P_mm^NL</code> from halofit and
+<code>P_cb^L</code> from <code>JAXLinearPerturbations.matter_power_spectrum_cb</code>.
+It goes to <code>P_cb^L</code> on linear scales.</p>
 
           
 
@@ -18924,9 +18942,9 @@ Defaults to <code>self.z</code>.</p>
 <a href="#cloelib.cosmology.mochi_class_cosmology.mochiCLASSNonLinearPerturbations(linearperturbations)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a>]</code>)
           –
           <div class="doc-md-description">
-            <p>Linear perturbations object (unused by CLASS, which computes
-nonlinear corrections internally; accepted for interface compatibility with
-emulator-based NonLinPerturbations classes).</p>
+            <p>Linear perturbations object (CLASS computes the nonlinear
+corrections internally). Only needed for the cb x matter cross spectrum,
+e.g. <code>mochiCLASSLinearPerturbations</code> on the same background.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -21208,6 +21226,34 @@ extrapolate_cosmo : bool optional (default=True)
 
 </div>
 
+<div class="doc doc-object doc-attribute">
+
+
+
+<h5 id="cloelib.cosmology.emantis_cosmology.EmantisFofrNonLinearPerturbations.cb_cross_prescription" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">cb_cross_prescription</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.emantis_cosmology.EmantisFofrNonLinearPerturbations.cb_cross_prescription" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">cb_cross_prescription</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>cb x matter cross spectrum prescription, that of the LCDM baseline.</p>
+<p>The same boost rescales the baseline total matter and cb spectra, so
+the cross spectrum follows the baseline's prescription (<code>None</code> if the
+baseline declares none).</p>
+
+          
+    </div>
+
+</div>
+
 
 
 
@@ -21268,6 +21314,9 @@ extrapolate_cosmo : bool optional (default=True)
 </details>        <h6 id="cloelib.cosmology.emantis_cosmology.EmantisFofrNonLinearPerturbations.matter_power_spectrum_cb--returns">Returns<a class="headerlink" href="#cloelib.cosmology.emantis_cosmology.EmantisFofrNonLinearPerturbations.matter_power_spectrum_cb--returns" title="Permanent link">&para;</a></h6>
 <p>pk: numpy.ndarray
     Nonlinear CDM+baryons power spectrum at the input redshift and wavenumber values.</p>
+<h6 id="cloelib.cosmology.emantis_cosmology.EmantisFofrNonLinearPerturbations.matter_power_spectrum_cb--raises">Raises<a class="headerlink" href="#cloelib.cosmology.emantis_cosmology.EmantisFofrNonLinearPerturbations.matter_power_spectrum_cb--raises" title="Permanent link">&para;</a></h6>
+<p>ValueError
+    If the cosmology has massive neutrinos.</p>
 
           
 
@@ -22573,9 +22622,9 @@ ks: Optional[np.ndarray]
 <a href="#cloelib.cosmology.hi_class_cosmology.hi_classNonLinearPerturbations(linearperturbations)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a>]</code>)
           –
           <div class="doc-md-description">
-            <p>Linear perturbations object (unused by hi_class, which computes
-nonlinear corrections internally; accepted for interface compatibility with
-emulator-based NonLinPerturbations classes).</p>
+            <p>Linear perturbations object (hi_class computes the nonlinear
+corrections internally). Only needed for the cb x matter cross spectrum,
+e.g. <code>hi_classLinearPerturbations</code> on the same background.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -23286,7 +23335,7 @@ Args:
 
 
 <a href="#cloelib.cosmology.mgclass_cosmology.MGCLASSBackground.Omega_cb" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mgclass_cosmology.MGCLASSBackground.Omega_cb(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_cb</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mgclass_cosmology.MGCLASSBackground.Omega_cb(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -23378,7 +23427,7 @@ Args:
 
 
 <a href="#cloelib.cosmology.mgclass_cosmology.MGCLASSBackground.Omega_b" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_b</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mgclass_cosmology.MGCLASSBackground.Omega_b(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">Omega_b</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.mgclass_cosmology.MGCLASSBackground.Omega_b(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -23687,9 +23736,9 @@ ks: Optional[np.ndarray]
 <a href="#cloelib.cosmology.mgclass_cosmology.MGCLASSNonLinearPerturbations(linearperturbations)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a>]</code>)
           –
           <div class="doc-md-description">
-            <p>Linear perturbations object (unused by MGCLASS, which computes
-nonlinear corrections internally; accepted for interface compatibility with
-emulator-based NonLinPerturbations classes).</p>
+            <p>Linear perturbations object (MGCLASS computes the nonlinear
+corrections internally). Only needed for the cb x matter cross spectrum,
+e.g. <code>MGCLASSLinearPerturbations</code> on the same background.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -25224,6 +25273,33 @@ and (nz, nk) otherwise.</p>
 
 
 
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="cloelib.cosmology.mg_cosmopower_jax_cosmology.MGNonLinearPerturbations.cb_cross_prescription" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">cb_cross_prescription</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.cosmology.mg_cosmopower_jax_cosmology.MGNonLinearPerturbations.cb_cross_prescription" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">cb_cross_prescription</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>cb x matter cross spectrum prescription, that of the LCDM baseline.</p>
+<p>The same boost rescales the baseline total matter and cb spectra, so
+the cross spectrum follows the baseline's prescription.</p>
+
+          
+    </div>
+
+</div>
+
 
 
 
@@ -26517,6 +26593,10 @@ also a <code>TATTContribution</code>); a plain <code>NLAContribution</code>
 C1delta=C2=0 - the correct NLA limit, just cross-correlated against
 this contribution's full TATT terms rather than assuming both sides
 are identical.</p>
+<p>The <code>P_dd(z,k)</code> terms use the base spectrum of the fields the two
+sides trace (<code>bank.base</code>): <code>P_mm</code> against IA or lensing, the cb x
+matter cross spectrum against the galaxy-bias term of a
+<code>PositionsTracer(use_Pcb=True)</code>.</p>
 <p>Returns <code>None</code> (defers to the plain matter Pk) only if this call is
 somehow reached with neither side being IA-like, which shouldn't
 happen given <code>get_requirements_for_interaction</code>.</p>
@@ -27093,6 +27173,31 @@ galaxy-bias model, hence the distinct name; <code>get_window()</code>/
 
 
 
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="cloelib.observables.photo.positions.GalaxyBiasContribution.field" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">field</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.observables.photo.positions.GalaxyBiasContribution.field" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">field</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Galaxies trace cb with <code>use_Pcb=True</code>, the total matter otherwise.</p>
+
+          
+    </div>
+
+</div>
+
 
 
 
@@ -27142,6 +27247,8 @@ galaxy-bias model, hence the distinct name; <code>get_window()</code>/
 
 
         <p>Magnification-bias kernel term of <code>PositionsTracer.get_window()</code>.</p>
+<p>Lensing by the total matter, so it traces <code>MATTER</code> even with
+<code>use_Pcb=True</code> (the default <code>field</code>).</p>
 
           
 
@@ -27472,6 +27579,10 @@ mechanism can't express a per-bin amplitude). Redshift dependence
 <em>within</em> a bin is not supported (each bias parameter is one constant
 per bin, matching <code>GalaxyBiasContribution</code>'s <code>"per_bin"</code> model, not its
 <code>"per_bin_int"</code>/<code>"poly"</code> ones) - a real, deliberate scope limit.</p>
+<p>Every term is built from the total matter power spectrum (<code>P_dd</code> =
+<code>P_mm</code>, one-loop kernels from the linear <code>P_mm</code>), so this class traces
+<code>MATTER</code> only: <code>PositionsTracer(use_Pcb=True)</code> raises
+<code>NotImplementedError</code> for <code>galaxy_bias_model="nonlinear"</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -27686,7 +27797,7 @@ docstring for why these must be two different z-grids).</p>
 
 
 <a href="#cloelib.observables.photo.positions.PositionsTracer" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(nuisance_params)">nuisance_params</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(include_rsd)">include_rsd</a></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(nl_bias_loop_computer)">nl_bias_loop_computer</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.NonlinearBiasLoopComputer">NonlinearBiasLoopComputer</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PositionsTracer</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(dndz)">dndz</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(z)">z</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(galaxy_bias_model)">galaxy_bias_model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(nuisance_params)">nuisance_params</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(include_rsd)">include_rsd</a></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(nl_bias_loop_computer)">nl_bias_loop_computer</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.NonlinearBiasLoopComputer">NonlinearBiasLoopComputer</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer(use_Pcb)">use_Pcb</a></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -27779,6 +27890,19 @@ contribution engine does not support RSD.</p>
             <p>Required for <code>galaxy_bias_model="nonlinear"</code>
 and must implement <code>compute(name)</code>. Supplying it for another
 model, or omitting it for nonlinear bias, raises <code>ValueError</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.positions.PositionsTracer(use_Pcb)" class="doc doc-heading doc-heading-parameter">              <b><code>use_Pcb</code></b>
+<a href="#cloelib.observables.photo.positions.PositionsTracer(use_Pcb)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="bool">bool</span></code>, default:
+                  <code>False</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Keyword-only. A flag indicating whether to use
+the power spectrum of cold dark matter + baryons (no neutrinos).
+Must be a Python <code>bool</code> (raises <code>TypeError</code> otherwise).
+Not supported with <code>galaxy_bias_model="nonlinear"</code> (raises <code>NotImplementedError</code>).</p>
           </div>
         </li>
     </ul>
@@ -28516,6 +28640,10 @@ so every simpler <code>Contribution</code> is unaffected:</p>
 </ul>
 <p><code>spectrum_engine.py</code> looks these up via <code>getattr(obj, name, None)</code>
 rather than requiring them here, so nothing below needs to change.</p>
+<p>An optional <code>field</code> attribute (<code>MATTER</code> or <code>CB</code>, read through
+<code>contribution_field</code>) states which density field the contribution
+traces; it selects the base power spectrum of each contribution pair
+in <code>AngularTwoPoint</code> (default: <code>MATTER</code>).</p>
 
           
 
@@ -28638,6 +28766,31 @@ base types <code>spectrum_engine.py</code> and both submodules share.</p>
 <p>Every lensing kernel (shear, magnification bias, CMB lensing) multiplies by
 <code>perturbations.Sigma(z)</code> when the perturbations provide it, and by this
 otherwise.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.contributions.contribution_field" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">contribution_field</span>
+
+
+<a href="#cloelib.observables.photo.contributions.contribution_field" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">contribution_field</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.contributions.contribution_field(contribution)">contribution</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p><code>contribution.field</code> if defined, else <code>MATTER</code>.</p>
+<p>Only contributions that can trace the cold dark matter + baryons field
+(e.g. <code>GalaxyBiasContribution</code> of a <code>PositionsTracer(use_Pcb=True)</code>)
+define <code>field</code>; everything else (lensing, magnification, intrinsic
+alignments, ...) traces the total matter and needs no change.</p>
 
           
 
@@ -28796,17 +28949,27 @@ different <code>compute</code> callable, not touching the Contribution.</p>
 
 
 <a href="#cloelib.observables.photo.spectrum_engine.SpectraBank" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">SpectraBank</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank(matter_pk)">matter_pk</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">SpectraBank</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank(matter_pk)">matter_pk</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank(perturbations)">perturbations</span></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
 
 
-        <p>Memoized store of derived power-spectrum grids for one <code>get_Cl</code> call.</p>
-<p>Not shared across calls - built fresh each time <code>get_Cl</code> needs the
-generalized engine, exactly like the plain matter Pk grid it already
-rebuilds every call today.</p>
+        <p>Memoized store of the power-spectrum grids for one <code>get_Cl</code> call.</p>
+<p>Holds two kinds of grids on the <code>(zs, ks)</code> grid, each computed at most
+once and only when first asked for:</p>
+<ul>
+<li>base spectra, <code>base(field1, field2)</code>: <code>P_mm</code>, <code>P_cb</code> and the cb x
+  matter cross spectrum, combined from the backend's <code>P_mm</code> and <code>P_cb</code>
+  (and their linear counterparts when the cross spectrum needs them);</li>
+<li>derived spectra, <code>get(request)</code>: e.g. TATT's one-loop kernels,
+  computed from <code>matter_pk</code> (<code>P_mm</code>).</li>
+</ul>
+<p>Not shared across calls - <code>AngularTwoPoint</code> builds one per <code>get_Cl</code> with
+<code>from_perturbations</code>. Built directly from an already evaluated
+<code>matter_pk</code> instead (<code>SpectraBank(matter_pk, ks, zs)</code>), only the total
+matter is available: <code>base</code> raises for any pair involving cb.</p>
 
           
 
@@ -28827,8 +28990,96 @@ rebuilds every call today.</p>
 
 
 
+<div class="doc doc-object doc-attribute">
 
 
+
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank.matter_pk" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">matter_pk</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank.matter_pk" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">matter_pk</span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The total matter power spectrum <code>P_mm</code>, shape <code>(len(zs), len(ks))</code>.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">from_perturbations</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_perturbations</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations(perturbations)">perturbations</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations(zs)">zs</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank">SpectraBank</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Bank evaluating every spectrum lazily from <code>perturbations</code>.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank.base" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">base</span>
+
+
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank.base" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">base</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.base(field1)">field1</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.base(field2)">field2</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Base power spectrum for a pair of traced fields.</p>
+<p><code>P_mm</code> for <code>(MATTER, MATTER)</code>, <code>P_cb</code> for <code>(CB, CB)</code> and the cb x
+matter cross spectrum for a mixed pair, with the fields given by
+<code>contributions.contribution_field</code>. The fields are static Python
+strings, so the choice is resolved at trace time and is safe under
+<code>jax.jit</code>/<code>jax.grad</code>.</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Array</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>shape <code>(len(zs), len(ks))</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
@@ -28843,7 +29094,7 @@ rebuilds every call today.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return the named grid, computing and caching it on first use.</p>
+        <p>Return the named derived grid, computing and caching it on first use.</p>
 
           
 
@@ -28986,32 +29237,6 @@ before any Limber integration - safe to call from plain (non-jitted)
 <div class="doc doc-object doc-function">
 
 
-<h5 id="cloelib.observables.photo.spectrum_engine.build_spectra_bank" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">build_spectra_bank</span>
-
-
-<a href="#cloelib.observables.photo.spectrum_engine.build_spectra_bank" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">build_spectra_bank</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.build_spectra_bank(contributions1)">contributions1</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.build_spectra_bank(contributions2)">contributions2</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.build_spectra_bank(matter_pk)">matter_pk</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.build_spectra_bank(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.build_spectra_bank(zs)">zs</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank">SpectraBank</a></span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Populate a <code>SpectraBank</code> with every request either tracer's
-contributions declare for their pairing with the other tracer's
-contributions - the minimal set the generalized engine needs, mirroring
-<code>toy_cloelib.engine.setup_engine</code>'s plan-building (without a separate
-static-plan object, since here the bank is rebuilt fresh per call
-anyway).</p>
-
-          
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
 <h5 id="cloelib.observables.photo.spectrum_engine.get_effective_pk" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">get_effective_pk</span>
 
@@ -29029,8 +29254,8 @@ is a property of the <em>pairing</em>, not of either side alone (e.g. a plain
 <code>LensingContribution</code> never defines this, but a <code>TATTContribution</code> it's
 paired with does, regardless of argument order: P_deltaI(k,z) is the
 same scalar grid whichever contribution is asked). <code>None</code> means neither
-side has anything special to say - use the plain matter Pk grid, i.e.
-every non-TATT pairing.</p>
+side has anything special to say - use the pair's base spectrum
+(<code>SpectraBank.base</code>), i.e. every non-TATT pairing.</p>
 
           
 
@@ -37626,6 +37851,30 @@ N : int, optional
 <h6 id="cloelib.auxiliary.math_utils.simps--raises">Raises<a class="headerlink" href="#cloelib.auxiliary.math_utils.simps--raises" title="Permanent link">&para;</a></h6>
 <p>ValueError
     If <code>N</code> is odd.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.auxiliary.math_utils.safe_sqrt" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">safe_sqrt</span>
+
+
+<a href="#cloelib.auxiliary.math_utils.safe_sqrt" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">safe_sqrt</span><span class="p">(</span><span class="n"><span title="cloelib.auxiliary.math_utils.safe_sqrt(x)">x</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p><code>sqrt</code> with a finite gradient at (and below) zero.</p>
+<p><code>jax.grad</code> of <code>sqrt(x)</code> is <code>inf</code> at <code>x = 0</code>, which turns into NaNs once
+multiplied by a zero cotangent. The double-<code>where</code> keeps both the value
+and the gradient finite where <code>x &lt;= 0</code> (value and gradient set to 0).</p>
 
           
 

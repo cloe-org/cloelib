@@ -669,6 +669,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="matter_power_spectrum_cb(zs, ks)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cb-x-matter-cross-spectrum-cb_cross_prescription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cb x matter cross spectrum: cb_cross_prescription
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1675,6 +1692,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="matter_power_spectrum_cb(zs, ks)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cb-x-matter-cross-spectrum-cb_cross_prescription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cb x matter cross spectrum: cb_cross_prescription
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -2209,6 +2243,58 @@
 </ul>
 <p><strong>Returns</strong>: Power spectrum in <strong>Mpc³</strong></p>
 <p><strong>Note</strong>: Can be linear or non-linear depending on implementation.</p>
+<h5 id="cb-x-matter-cross-spectrum-cb_cross_prescription">cb x matter cross spectrum: <code>cb_cross_prescription</code><a class="headerlink" href="#cb-x-matter-cross-spectrum-cb_cross_prescription" title="Permanent link">&para;</a></h5>
+<p>Pairing a <code>PositionsTracer(use_Pcb=True)</code> with a tracer of the total matter (lensing, magnification, CMB lensing) needs the cb x matter cross spectrum, which a backend does not provide directly. Every backend implementing <code>matter_power_spectrum_cb</code> declares how it is built through the class attribute <code>cb_cross_prescription</code>, one of the constants in <code>cloelib.cosmology.cosmology</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Cross spectrum</th>
+<th>Exact when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CB_CROSS_CORRELATED</code> (<code>"correlated"</code>)</td>
+<td><span class="arithmatex">\(\sqrt{P_{cb} P_{mm}}\)</span></td>
+<td>the backend applies the same non-linear boost to cb and total matter, <span class="arithmatex">\(P_{cb}^{NL}/P_{cb}^{L} = P_{mm}^{NL}/P_{mm}^{L}\)</span> (always true if linear)</td>
+</tr>
+<tr>
+<td><code>CB_CROSS_LINEAR_NU</code> (<code>"linear_neutrinos"</code>)</td>
+<td><span class="arithmatex">\(f_{cb}\,(P_{cb}^{NL} - P_{cb}^{L}) + \sqrt{P_{cb}^{L} P_{mm}^{L}}\)</span></td>
+<td>massive neutrinos, and the cb x neutrino spectrum, stay linear, <span class="arithmatex">\(P_{mm}^{NL} - P_{mm}^{L} = f_{cb}^2\,(P_{cb}^{NL} - P_{cb}^{L})\)</span>; needs <code>linearperturbations</code></td>
+</tr>
+</tbody>
+</table>
+<p>with <span class="arithmatex">\(f_{cb} = \Omega_{cb,0} / \Omega_{m,0}\)</span>. A backend declares the prescription whose condition its own non-linear <span class="arithmatex">\(P_{mm}\)</span> and <span class="arithmatex">\(P_{cb}\)</span> satisfy. How much the two prescriptions differ depends on the backend: at <span class="arithmatex">\(m_\nu = 0.15\)</span> eV, about <span class="arithmatex">\(3 \times 10^{-4}\)</span> in the cross spectrum for CAMB, at most <span class="arithmatex">\(2 \times 10^{-3}\)</span> for the emulators and about <span class="arithmatex">\(1\%\)</span> for CLASS with HMcode2020.</p>
+<table>
+<thead>
+<tr>
+<th>Prescription</th>
+<th>Backends</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CB_CROSS_CORRELATED</code></td>
+<td>all linear backends; CAMB, HMcode2020Emu and CosmoPowerJAX (<code>NonLinear</code>, <code>NonLinearHalofit</code>) non-linear</td>
+</tr>
+<tr>
+<td><code>CB_CROSS_LINEAR_NU</code></td>
+<td>EE2, BACCOemu, JAX; CLASS, hi_class, MGCLASS and mochi_class non-linear</td>
+</tr>
+<tr>
+<td>that of the baseline</td>
+<td>MG-CosmoPowerJAX non-linear and emantis</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Emulators</strong> (HMcode2020Emu, CosmoPowerJAX): <span class="arithmatex">\(P_{mm}^{NL}\)</span> and <span class="arithmatex">\(P_{cb}^{NL}\)</span> are emulated separately, and at <span class="arithmatex">\(m_\nu \lesssim 0.15\)</span> eV the two conditions cannot be told apart within the emulation accuracy (<span class="arithmatex">\(\sim 10^{-3}\)</span>). At higher masses the HMcode-based emulators follow the uniform boost of CAMB, so they are <code>correlated</code>. For the CosmoPowerJAX halofit sector the check is inconclusive; it shares the label of the HMcode one.</li>
+<li><strong>CLASS family</strong> (CLASS, <code>hi_class</code>, MGCLASS, <code>mochi_class</code>): the non-linear model (halofit/HMcode) is run on <span class="arithmatex">\(P_{cb}\)</span> separately from <span class="arithmatex">\(P_{mm}\)</span>, so neither condition holds exactly. <code>CB_CROSS_LINEAR_NU</code> is used since it only relies on the backend's own non-linear <span class="arithmatex">\(P_{cb}\)</span> and on linear spectra. Pass the matching <code>*LinearPerturbations</code> as <code>linearperturbations</code> to get the cross spectrum.</li>
+<li><strong>Boosts of a baseline</strong> (MG-CosmoPowerJAX, emantis): the same boost rescales the ΛCDM baseline <span class="arithmatex">\(P_{mm}\)</span> and <span class="arithmatex">\(P_{cb}\)</span>, so <code>cb_cross_prescription</code> is a property returning the baseline's. emantis is calibrated without massive neutrinos, and its <code>matter_power_spectrum_cb</code> raises a <code>ValueError</code> when <span class="arithmatex">\(m_\nu &gt; 0\)</span>.</li>
+</ul>
+<p>A new backend providing <code>matter_power_spectrum_cb</code> must declare it, as a class attribute or a property (and be added to <code>tests/test_cb_cross_prescription.py</code>): computing the cross spectrum for a backend without a valid <code>cb_cross_prescription</code> raises a <code>ValueError</code>. The attribute is not part of the <code>Perturbations</code> protocol, since only the cross spectrum needs it.</p>
 <h4 id="growth_factorzs-ks"><code>growth_factor(zs, ks)</code><a class="headerlink" href="#growth_factorzs-ks" title="Permanent link">&para;</a></h4>
 <p>Calculate the linear growth factor D(z, k).</p>
 <p>Normalized such that D(z=0) ≈ 1 in matter-dominated era.</p>
@@ -2230,7 +2316,7 @@
 </code></pre></div>
 <p>This is described by the <code>LinearPerturbationsFactory</code> and <code>NonLinearPerturbationsFactory</code> protocols in <code>cloelib.cosmology.cosmology</code>, which can be used to type a class passed around as a parameter. Their type parameters are the background and, for the nonlinear one, the linear perturbations the class is built from. For example, <code>NonLinearPerturbationsFactory[CAMBBackground, HMemuLinearPerturbations]</code> is satisfied by <code>HMemuNonLinearPerturbations</code>, while <code>NonLinearPerturbationsFactory[CAMBBackground, CAMBLinearPerturbations]</code> is not, since HMcode2020Emu needs the cached <code>Pk</code>/<code>Pk_cb</code> grid of its linear perturbations (<code>WithLinearSpectrumGrid</code>).</p>
 <p>Options specific to a backend (e.g. <code>nonlinear_model</code>) are passed as additional keyword arguments and are not part of these protocols. In particular, the HMcode2020 baryonic feedback parameter <code>log10TAGN</code> is accepted by the HMcode-based backends (CAMB, CLASS, mochi_class, HMcode2020Emu and CosmoPower-JAX). CAMB, CLASS and mochi_class select their HMcode2020 feedback model when <code>log10TAGN</code> is given without a nonlinear model, and raise a <code>ValueError</code> if the chosen model ignores it.</p>
-<p>Backends that compute the nonlinear spectrum themselves (CAMB, CLASS, hi_class, MGCLASS, mochi_class, CosmoPower-JAX) accept but do not use <code>linearperturbations</code>. <code>EmantisFofrNonLinearPerturbations</code> additionally requires the ΛCDM nonlinear perturbations and <code>fR0</code>.</p>
+<p>Backends that compute the nonlinear spectrum themselves (CAMB, CosmoPower-JAX) accept but do not use <code>linearperturbations</code>; CLASS, hi_class, MGCLASS and mochi_class only use it for the cb x matter cross spectrum (see <a href="#cb-x-matter-cross-spectrum-cb_cross_prescription"><code>cb_cross_prescription</code></a>). <code>EmantisFofrNonLinearPerturbations</code> additionally requires the ΛCDM nonlinear perturbations and <code>fR0</code>.</p>
 <h2 id="existing-implementations">Existing Implementations<a class="headerlink" href="#existing-implementations" title="Permanent link">&para;</a></h2>
 <h3 id="camb-perturbations">CAMB Perturbations<a class="headerlink" href="#camb-perturbations" title="Permanent link">&para;</a></h3>
 <p>CAMB provides separate linear and non-linear perturbation implementations:

@@ -2,7 +2,7 @@
 
 import numpy as np
 from cloelib.auxiliary.extrapolator import extend_spectra
-from cloelib.cosmology.cosmology import CB_CROSS_LINEAR_NU, Background, Perturbations
+from cloelib.cosmology.cosmology import Background, Perturbations
 from emantis.matter_power_spectrum import NonLinearMGBoostEmulator
 from scipy import interpolate
 
@@ -14,8 +14,6 @@ class EmantisFofrNonLinearPerturbations:
     The boost is then combined with an external nonlinear LCDM matter power spectrum prediction
     in order to obtain the full nonlinear matter power spectrum in f(R) gravity.
     """
-
-    cb_cross_prescription = CB_CROSS_LINEAR_NU
 
     def __init__(
         self,
@@ -137,6 +135,16 @@ class EmantisFofrNonLinearPerturbations:
     def background(self) -> Background:
         """Return the background object."""
         return self._background
+
+    @property
+    def cb_cross_prescription(self) -> str | None:
+        """cb x matter cross spectrum prescription, that of the LCDM baseline.
+
+        The same boost rescales the baseline total matter and cb spectra, so
+        the cross spectrum follows the baseline's prescription (`None` if the
+        baseline declares none).
+        """
+        return getattr(self.nonlinearpertubations_lcdm, "cb_cross_prescription", None)
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         """Compute the nonlinear total matter power spectrum.

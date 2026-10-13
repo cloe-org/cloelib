@@ -133,3 +133,23 @@ def test_mg_boost_cloelib_vs_external(
 
     # Mean absolute relative difference is smaller than 0.01%.
     assert np.mean(abs_rel_diff) < 1e-4
+
+
+@pytest.mark.skipif(
+    not _EMANTIS_INSTALLED,
+    reason="emantis is not installed",
+)
+@pytest.mark.parametrize("prescription", ["correlated", "linear_neutrinos", None])
+def test_cb_cross_prescription_is_the_baseline_one(prescription):
+    """The boost rescales the baseline P_mm and P_cb alike, so the cb x matter
+    prescription is the one of the LCDM baseline (`None` if it declares none)."""
+
+    class _Baseline:
+        pass
+
+    if prescription is not None:
+        _Baseline.cb_cross_prescription = prescription
+    # Skip the emulator set-up: the prescription only needs the baseline.
+    emantis_cloe = object.__new__(EmantisFofrNonLinearPerturbations)
+    emantis_cloe.nonlinearpertubations_lcdm = _Baseline()
+    assert emantis_cloe.cb_cross_prescription == prescription

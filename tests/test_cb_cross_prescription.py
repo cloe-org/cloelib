@@ -26,8 +26,10 @@ COSMOLOGY_DIR = Path(cloelib.cosmology.__file__).parent
 
 # Backends that keep massive neutrinos linear on top of a linear backend use
 # CB_CROSS_LINEAR_NU; Boltzmann codes (uniform non-linear boost) and linear
-# backends use CB_CROSS_CORRELATED. A new backend providing
+# backends use CB_CROSS_CORRELATED; boosts rescaling a baseline backend take
+# its prescription through a property. A new backend providing
 # `matter_power_spectrum_cb` must be added here.
+PROPERTY = "<property>"
 EXPECTED = {
     "camb_cosmology.py": {
         "CAMBLinearPerturbations": "CB_CROSS_CORRELATED",
@@ -61,7 +63,7 @@ EXPECTED = {
         "BACCOemuNonLinearPerturbations": "CB_CROSS_LINEAR_NU",
     },
     "emantis_cosmology.py": {
-        "EmantisFofrNonLinearPerturbations": "CB_CROSS_LINEAR_NU",
+        "EmantisFofrNonLinearPerturbations": PROPERTY,
     },
     "jax_cosmology.py": {
         "JAXLinearPerturbations": "CB_CROSS_CORRELATED",
@@ -69,7 +71,7 @@ EXPECTED = {
     },
     "mg_cosmopower_jax_cosmology.py": {
         "MGLinearPerturbations": "CB_CROSS_CORRELATED",
-        "MGNonLinearPerturbations": "CB_CROSS_LINEAR_NU",
+        "MGNonLinearPerturbations": PROPERTY,
     },
     "cosmopower_jax_cosmology.py": {
         "_CosmoPowerLinear": "CB_CROSS_CORRELATED",
@@ -81,7 +83,8 @@ EXPECTED = {
 def _declared_prescriptions(path):
     """`{qualname: declared value}` for every class of `path` defining
     `matter_power_spectrum_cb`, the value being the name assigned to its
-    `cb_cross_prescription` class attribute (`None` if not declared).
+    `cb_cross_prescription` class attribute, `PROPERTY` if it is a property
+    (e.g. delegating to a baseline backend), `None` if not declared.
 
     Classes with base classes (the `Perturbations` Protocol, the baryon
     `Combined` wrapper, subclasses of a backend) are skipped: they inherit
@@ -100,15 +103,18 @@ def _declared_prescriptions(path):
             walk(child, qualname + ".")
 
     def declaration(cls):
-        return next(
-            (
-                ast.unparse(n.value)
-                for n in cls.body
-                if isinstance(n, ast.Assign)
-                and [ast.unparse(t) for t in n.targets] == ["cb_cross_prescription"]
-            ),
-            None,
-        )
+        for n in cls.body:
+            if isinstance(n, ast.Assign) and [ast.unparse(t) for t in n.targets] == [
+                "cb_cross_prescription"
+            ]:
+                return ast.unparse(n.value)
+            if (
+                isinstance(n, ast.FunctionDef)
+                and n.name == "cb_cross_prescription"
+                and "property" in [ast.unparse(d) for d in n.decorator_list]
+            ):
+                return PROPERTY
+        return None
 
     walk(ast.parse(path.read_text()), "")
     found = {}

@@ -181,15 +181,26 @@ class EmantisFofrNonLinearPerturbations:
         -------
         pk: numpy.ndarray
             Nonlinear CDM+baryons power spectrum at the input redshift and wavenumber values.
+
+        Raises
+        ------
+        ValueError
+            If the cosmology has massive neutrinos.
         """
 
-        # We are assuming that we can apply the same MG boost to the total matter
-        # and to the CDM+baryons matter power spectra.
-        # In any case, emantis has been calibrated without neutrinos, so any use of neutrinos
-        # (or other non-cold matter) with this perturbation class will require some testing.
+        # emantis has been calibrated without massive neutrinos, where the
+        # CDM+baryons and the total matter coincide and the same MG boost applies
+        # to both. With massive neutrinos the boost of the CDM+baryons spectrum
+        # is not known.
+        if np.sum(self.background.mnu) > 0:
+            raise ValueError(
+                "EmantisFofrNonLinearPerturbations does not provide the CDM+baryons "
+                "power spectrum with massive neutrinos (mnu > 0): emantis has been "
+                "calibrated without them."
+            )
         return self.boost_interp(
             zs, np.log(ks)
-        ) * self.nonlinearpertubations_lcdm.matter_power_spectrum(zs, ks)
+        ) * self.nonlinearpertubations_lcdm.matter_power_spectrum_cb(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """Compute the growth factor D(z, k) normalized to D(0).

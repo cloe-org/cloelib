@@ -303,24 +303,13 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values (no neutrinos).
         """
-        if np.ndim(zs) == 0:
-            return self.Omega_cb(np.array([zs]))[0]
-        try:
-            Omegacb = np.array(
-                [
-                    (self.results.Omega_b() + self.results.Omega0_cdm())
-                    * (1 + z) ** 3.0
-                    / (self.hubble_parameter(z) / self.H0) ** 2.0
-                    for z in zs
-                ]
-            )
-        except TypeError:
-            Omegacb = (
-                (self.results.Omega_b() + self.results.Omega0_cdm())
-                * (1 + zs) ** 3.0
-                / (self.hubble_parameter(zs) / self.H0) ** 2.0
-            )
-        return Omegacb
+        z = np.atleast_1d(np.asarray(zs, dtype=float))
+        Omegacb = (
+            (self.results.Omega_b() + self.results.Omega0_cdm())
+            * (1 + z) ** 3.0
+            / (self.hubble_parameter(z) / self.H0) ** 2.0
+        )
+        return Omegacb[0] if np.ndim(zs) == 0 else Omegacb
 
     def Omega_m(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
@@ -346,24 +335,13 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        if np.ndim(zs) == 0:
-            return self.Omega_b(np.array([zs]))[0]
-        try:
-            Omegab = np.array(
-                [
-                    self.results.Omega_b()
-                    * (1 + z) ** 3.0
-                    / (self.hubble_parameter(z) / self.H0) ** 2.0
-                    for z in zs
-                ]
-            )
-        except TypeError:
-            Omegab = (
-                self.results.Omega_b()
-                * (1 + zs) ** 3.0
-                / (self.hubble_parameter(zs) / self.H0) ** 2.0
-            )
-        return Omegab
+        z = np.atleast_1d(np.asarray(zs, dtype=float))
+        Omegab = (
+            self.results.Omega_b()
+            * (1 + z) ** 3.0
+            / (self.hubble_parameter(z) / self.H0) ** 2.0
+        )
+        return Omegab[0] if np.ndim(zs) == 0 else Omegab
 
     @property
     def rdrag(self) -> float:

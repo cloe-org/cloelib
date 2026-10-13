@@ -293,7 +293,7 @@ class MGCLASSBackground:
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
-    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_cb(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
 
@@ -303,7 +303,8 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values (no neutrinos).
         """
-
+        if np.ndim(zs) == 0:
+            return self.Omega_cb(np.array([zs]))[0]
         try:
             Omegacb = np.array(
                 [
@@ -335,7 +336,7 @@ class MGCLASSBackground:
             return self.results.Om_m(zs)
         return np.array([self.results.Om_m(z) for z in np.asarray(zs)])
 
-    def Omega_b(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_b(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the baryon density as a function of redshift.
 
@@ -345,6 +346,8 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
+        if np.ndim(zs) == 0:
+            return self.Omega_b(np.array([zs]))[0]
         try:
             Omegab = np.array(
                 [

@@ -25,8 +25,8 @@ from cloelib.observables.photo.spectrum_engine import SpectraBank
 COSMOLOGY_DIR = Path(cloelib.cosmology.__file__).parent
 
 # Backends that keep massive neutrinos linear on top of a linear backend use
-# CB_CROSS_LINEAR_NU; Boltzmann codes (uniform non-linear boost) and linear
-# backends use CB_CROSS_CORRELATED; boosts rescaling a baseline backend take
+# CB_CROSS_LINEAR_NU; codes applying a uniform non-linear boost (CAMB and the
+# emulators trained on it) and linear backends use CB_CROSS_CORRELATED; boosts rescaling a baseline backend take
 # its prescription through a property. A new backend providing
 # `matter_power_spectrum_cb` must be added here.
 PROPERTY = "<property>"
@@ -53,7 +53,7 @@ EXPECTED = {
     },
     "HMcode2020Emu_cosmology.py": {
         "HMemuLinearPerturbations": "CB_CROSS_CORRELATED",
-        "HMemuNonLinearPerturbations": "CB_CROSS_LINEAR_NU",
+        "HMemuNonLinearPerturbations": "CB_CROSS_CORRELATED",
     },
     "EE2_cosmology.py": {
         "EE2NonLinearPerturbations": "CB_CROSS_LINEAR_NU",
@@ -75,7 +75,7 @@ EXPECTED = {
     },
     "cosmopower_jax_cosmology.py": {
         "_CosmoPowerLinear": "CB_CROSS_CORRELATED",
-        "_CosmoPowerNonLinear": "CB_CROSS_LINEAR_NU",
+        "_CosmoPowerNonLinear": "CB_CROSS_CORRELATED",
     },
 }
 

@@ -35,6 +35,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
+from cloelib.cosmology.cosmology import CB_CROSS_LINEAR_NU
 from cloelib.observables.cmb import CMBLensingTracer
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.observables.photo.contributions import CB, MATTER
@@ -182,9 +183,9 @@ def jax_nonlinear():
 def nonlinear_case(request, camb_background, camb_linear, camb_nonlinear):
     """(nonlinear, linear, background) for each nonlinear backend.
 
-    CAMB's nonlinear perturbations have no `linearperturbations`, so their
-    cross spectrum goes through `sqrt(P_cb^NL P_mm^NL)`; HMcode2020Emu's and
-    JAX's have one and go through `f_cb (P_cb^NL - P_cb^L) + sqrt(P_cb^L P_mm^L)`.
+    CAMB and HMcode2020Emu apply a uniform nonlinear boost, so their cross
+    spectrum goes through `sqrt(P_cb^NL P_mm^NL)`; JAX keeps neutrinos linear
+    and goes through `f_cb (P_cb^NL - P_cb^L) + sqrt(P_cb^L P_mm^L)`.
     """
     if request.param == "CAMB":
         return camb_nonlinear, camb_linear, camb_background
@@ -404,8 +405,8 @@ class _CountingPerturbations:
 def test_each_spectrum_computed_once(nonlinear_case, tomography, engine):
     # A cb galaxy auto spectrum with magnification needs every base spectrum:
     # P_cb (bias x bias), P_mm (magnification x magnification) and the cross
-    # spectrum (bias x magnification), which reuses P_cb and, when the
-    # backend has linear perturbations, the linear P_mm and P_cb.
+    # spectrum (bias x magnification), which reuses P_cb and P_mm and, for
+    # CB_CROSS_LINEAR_NU backends, the linear P_mm and P_cb.
     nonlinear, _, _ = nonlinear_case
     z, dndz = tomography
     counts = {}
@@ -420,7 +421,7 @@ def test_each_spectrum_computed_once(nonlinear_case, tomography, engine):
         a2p.get_Cl_tensor(ells, 0, nonlinear.k)
 
     expected = ["P_mm", "P_cb"]
-    if hasattr(nonlinear, "linearperturbations"):
+    if nonlinear.cb_cross_prescription == CB_CROSS_LINEAR_NU:
         expected += ["P_mm_lin", "P_cb_lin"]
     assert counts == dict.fromkeys(expected, 1)
 

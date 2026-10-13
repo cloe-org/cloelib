@@ -3,7 +3,6 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import (
     CB_CROSS_CORRELATED,
-    CB_CROSS_LINEAR_NU,
     Background,
     BaryonBoostMixin,
     WithLinearSpectrumGrid,
@@ -243,7 +242,7 @@ class HMemuLinearPerturbations:
 class HMemuNonLinearPerturbations:
     """Class for non linear perturbations cosmology using HMemu,  compatibly with the Perturbations protocol."""
 
-    cb_cross_prescription = CB_CROSS_LINEAR_NU
+    cb_cross_prescription = CB_CROSS_CORRELATED
 
     def __init__(
         self,

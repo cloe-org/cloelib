@@ -15,6 +15,7 @@ supported N_mnu, extra parameters).
 """
 
 from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
     Background,
     Perturbations,
     growth_rate_on_redshifts,
@@ -467,6 +468,8 @@ class _CosmoPowerPerturbations:
 class _CosmoPowerLinear(_CosmoPowerPerturbations):
     """Shared linear emulator class; built with ``(background, redshifts)``."""
 
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the Linear instance."""
         self._setup(background, redshifts)
@@ -474,6 +477,8 @@ class _CosmoPowerLinear(_CosmoPowerPerturbations):
 
 class _CosmoPowerNonLinear(_CosmoPowerPerturbations):
     """Shared nonlinear emulator class (HMcode2020 or halofit sector)."""
+
+    cb_cross_prescription = CB_CROSS_CORRELATED
 
     def __init__(
         self,

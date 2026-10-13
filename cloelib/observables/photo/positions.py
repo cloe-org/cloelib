@@ -49,6 +49,7 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import cached_stacked_simpson
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
     unit_sigma,
@@ -201,13 +202,22 @@ class GalaxyBiasContribution:
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
 
+    @property
+    def field(self) -> str:
+        """Galaxies trace cb with `use_Pcb=True`, the total matter otherwise."""
+        return CB if self._tracer.use_Pcb else MATTER
+
     def compute_kernel(self, z):
         """Return the raw galaxy-bias kernel, shape ``(n_bin, n_z)``."""
         return self._tracer.get_window_positions(z)
 
 
 class MagnificationContribution:
-    """Magnification-bias kernel term of `PositionsTracer.get_window()`."""
+    """Magnification-bias kernel term of `PositionsTracer.get_window()`.
+
+    Lensing by the total matter, so it traces `MATTER` even with
+    `use_Pcb=True` (the default `field`).
+    """
 
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
@@ -292,10 +302,11 @@ class PBJNonlinearBiasLoopComputer:
             )
         self._fpt = fpt
         # See class docstring: use the nonlinear backend's own linear
-        # source if it has one, else assume `perturbations` is linear.
-        self.linear_perturbations = getattr(
-            perturbations, "linearperturbations", perturbations
-        )
+        # source if it has one, else assume `perturbations` is linear. A
+        # `linearperturbations` set to None (e.g. a CLASS backend built
+        # without one) counts as missing.
+        linear = getattr(perturbations, "linearperturbations", None)
+        self.linear_perturbations = perturbations if linear is None else linear
         self._cached_ks: _numpy.ndarray | None = None
         self._cached_kernels: dict[str, _numpy.ndarray] | None = None
 
@@ -459,6 +470,11 @@ class NonLinearGalaxyBiasContribution:
     *within* a bin is not supported (each bias parameter is one constant
     per bin, matching `GalaxyBiasContribution`'s `"per_bin"` model, not its
     `"per_bin_int"`/`"poly"` ones) - a real, deliberate scope limit.
+
+    Every term is built from the total matter power spectrum (`P_dd` =
+    `P_mm`, one-loop kernels from the linear `P_mm`), so this class traces
+    `MATTER` only: `PositionsTracer(use_Pcb=True)` raises
+    `NotImplementedError` for `galaxy_bias_model="nonlinear"`.
 
     Args:
       tracer: the owning `PositionsTracer`.
@@ -672,6 +688,8 @@ class PositionsTracer:
         nuisance_params: dict,
         include_rsd: bool = False,
         nl_bias_loop_computer: NonlinearBiasLoopComputer | None = None,
+        *,
+        use_Pcb: bool = False,
     ):
         r"""Construct a tomographic photometric-position tracer.
 
@@ -706,11 +724,17 @@ class PositionsTracer:
             nl_bias_loop_computer: Required for ``galaxy_bias_model="nonlinear"``
                 and must implement ``compute(name)``. Supplying it for another
                 model, or omitting it for nonlinear bias, raises ``ValueError``.
+            use_Pcb (bool): Keyword-only. A flag indicating whether to use
+                the power spectrum of cold dark matter + baryons (no neutrinos).
+                Must be a Python `bool` (raises `TypeError` otherwise).
+                Not supported with `galaxy_bias_model="nonlinear"` (raises `NotImplementedError`).
 
         Raises:
             ValueError: If the redshift grid contains zero or the nonlinear
                 loop-computer argument is inconsistent with the bias model.
         """
+        if not isinstance(use_Pcb, bool):
+            raise TypeError(f"use_Pcb must be a bool, got {type(use_Pcb).__name__}.")
         if 0.0 in z:
             raise ValueError(
                 "One of the z array elements is equal to zero, breaking Limber integration."
@@ -740,6 +764,7 @@ class PositionsTracer:
             for i in range(dndz.shape[0])
         ]
         self.include_rsd = include_rsd
+        self.use_Pcb = use_Pcb
 
         # Using dict.get so I can provide a default since lax has to compile every branch of the conditional
         def per_bin_case():
@@ -789,6 +814,13 @@ class PositionsTracer:
                     "cloelib.observables.photo.positions) - "
                     "NonLinearGalaxyBiasContribution has no illustrative "
                     "default."
+                )
+            if use_Pcb:
+                raise NotImplementedError(
+                    "galaxy_bias_model='nonlinear' does not support "
+                    "use_Pcb=True yet: NonLinearGalaxyBiasContribution's "
+                    "tree-level, k^2 counterterm and one-loop terms are all "
+                    "built from the total matter power spectrum."
                 )
 
             def nlbias_bin_array(prefix, default):

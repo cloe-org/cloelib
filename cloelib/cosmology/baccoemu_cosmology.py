@@ -2,6 +2,8 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    CB_CROSS_LINEAR_NU,
     Background,
     BaryonBoostMixin,
     Perturbations,
@@ -41,6 +43,8 @@ for nonlinear_model in ["Angulo2021", "Arico2023"]:
 
 class BACCOemuLinearPerturbations:
     """Class for perturbations cosmology using BACCOemu, compatibly with the Perturbations protocol."""
+
+    cb_cross_prescription = CB_CROSS_CORRELATED
 
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Intialize the BACCOemuLinearPerturbations instance."""
@@ -262,6 +266,8 @@ class BACCOemuLinearPerturbations:
 
 class BACCOemuNonLinearPerturbations:
     """Class for non linear perturbations cosmology using BACCOemu, compatibly with the Perturbations protocol."""
+
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
 
     def __init__(
         self,

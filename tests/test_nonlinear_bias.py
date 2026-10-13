@@ -179,6 +179,23 @@ def test_nonlinear_requires_loop_computer(cosmo_setup):
         )
 
 
+def test_nonlinear_with_use_pcb_raises_not_implemented(cosmo_setup):
+    """Every `NonLinearGalaxyBiasContribution` term is built from `P_mm`, so
+    `use_Pcb=True` must be rejected instead of silently ignored."""
+    perturbations, z = cosmo_setup
+    dndz = _dndz(1, z)
+    with pytest.raises(NotImplementedError, match="use_Pcb"):
+        PositionsTracer(
+            perturbations=perturbations,
+            dndz=dndz,
+            z=z,
+            galaxy_bias_model="nonlinear",
+            nuisance_params=_pos_nuisance(1, b1_photo_nl_bin0=1.4),
+            nl_bias_loop_computer=_StubNLBiasLoopComputer(),
+            use_Pcb=True,
+        )
+
+
 def test_loop_computer_rejected_for_non_nonlinear_model(cosmo_setup):
     perturbations, z = cosmo_setup
     dndz = _dndz(1, z)
@@ -471,6 +488,21 @@ def test_linear_galaxy_bias_contribution_unaffected():
     `galaxy_bias_model` other than `"nonlinear"`."""
     assert not hasattr(GalaxyBiasContribution, "get_spectrum_requests")
     assert not hasattr(GalaxyBiasContribution, "get_pk_terms")
+
+
+@pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
+@pytest.mark.parametrize("has_linear", [True, False])
+def test_pbj_nlbias_loop_computer_linear_source(linear_perturbations, has_linear):
+    """The linear source is the backend's `linearperturbations`, or the backend
+    itself when that is None (e.g. a CLASS backend built without one)."""
+
+    class _Backend:
+        linearperturbations = linear_perturbations if has_linear else None
+
+    backend = _Backend()
+    computer = PBJNonlinearBiasLoopComputer(backend)
+    expected = linear_perturbations if has_linear else backend
+    assert computer.linear_perturbations is expected
 
 
 @pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")

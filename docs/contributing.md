@@ -2,6 +2,11 @@
 
 Thank you for your interest in contributing to **cloelib**! We are committed to an open science approach.
 
+**Everyone is welcome to contribute.** You do not need to be a member of the Euclid Consortium, or of any other collaboration, to open an issue or a pull request.
+
+!!! note "For Euclid Consortium members"
+    To avoid duplicated effort with ongoing Consortium work, please coordinate your proposal with the KP-JC-1 coordinators before starting. This is an internal coordination step only; it does not apply to external contributors.
+
 ## Ways to Contribute
 
 Check out [open issues](https://github.com/cloe-org/cloelib/issues) to see if development is already planned. We welcome community support on issues tagged with [`help wanted`](https://github.com/cloe-org/cloelib/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22).

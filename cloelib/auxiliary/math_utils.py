@@ -214,7 +214,23 @@ def cached_stacked_simpson(n: int) -> jnp.ndarray:
 
 
 def legendre(n, x):
-    """Write documentation (TODO)."""
+    """Evaluate the Legendre polynomial of degree ``n`` at ``x``.
+
+    The polynomial is evaluated with the three-term recurrence relation. ``x`` may
+    be a scalar or an array; the result is a JAX value with the corresponding shape.
+
+    Parameters
+    ----------
+    n : int
+        Non-negative degree of the polynomial.
+    x : array-like
+        Point or points at which to evaluate the polynomial.
+
+    Returns
+    -------
+    jax.Array
+        Values of the degree-``n`` Legendre polynomial at ``x``.
+    """
     if n == 0:
         return jnp.ones_like(x)
     elif n == 1:
@@ -229,7 +245,33 @@ def legendre(n, x):
 
 
 def simps(f, a, b, N=128):
-    """Write documentation (TODO)."""
+    """Compute Simpson's-rule integrals of ``f`` over ``[a, b]``.
+
+    ``f`` is evaluated at ``N + 1`` equally spaced points, and composite
+    Simpson's rule is applied along the leading axis of its result.
+
+    Parameters
+    ----------
+    f : callable
+        Function evaluated at the integration points. Its result must have a
+        leading dimension of length ``N + 1``.
+    a, b : float
+        Lower and upper integration limits.
+    N : int, optional
+        Number of equal subintervals; must be even. Defaults to 128.
+
+    Returns
+    -------
+    scalar or array-like
+        Integral value(s), with the shape of ``f``'s result after reducing its
+        leading dimension. The concrete array type follows the value returned by
+        ``f`` and ``numpy.sum``'s dispatch.
+
+    Raises
+    ------
+    ValueError
+        If ``N`` is odd.
+    """
     if N % 2 == 1:
         raise ValueError("N must be an even integer.")
     dx = (b - a) / N

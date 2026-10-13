@@ -72,18 +72,8 @@ EXPECTED = {
         "MGNonLinearPerturbations": "CB_CROSS_LINEAR_NU",
     },
     "cosmopower_jax_cosmology.py": {
-        f"{outer}.{inner}": value
-        for outer, inners in {
-            "CosmoPowerJAXw0waCDMPerturbations": ("NonLinear", "NonLinearHalofit"),
-            "CosmoPowerJAXwCDMPerturbations": ("NonLinear", "NonLinearHalofit"),
-            "CosmoPowerJAXLCDMPerturbations": ("NonLinear", "NonLinearHalofit"),
-            "CosmoPowerJAXLCDMCurvaturePerturbations": ("NonLinear",),
-            "CosmoPowerJAXw0waCurvaturePerturbations": ("NonLinear",),
-            "CosmoPowerJAXLCDMRunningIndexPerturbations": ("NonLinear",),
-            "CosmoPowerJAXw0waRunningIndexPerturbations": ("NonLinear",),
-        }.items()
-        for inner, value in [("Linear", "CB_CROSS_CORRELATED")]
-        + [(name, "CB_CROSS_LINEAR_NU") for name in inners]
+        "_CosmoPowerLinear": "CB_CROSS_CORRELATED",
+        "_CosmoPowerNonLinear": "CB_CROSS_LINEAR_NU",
     },
 }
 
@@ -95,30 +85,48 @@ def _declared_prescriptions(path):
 
     Classes with base classes (the `Perturbations` Protocol, the baryon
     `Combined` wrapper, subclasses of a backend) are skipped: they inherit
-    the declaration.
+    the declaration. A shared base that leaves the declaration to its direct
+    subclasses in the same file (e.g. `_CosmoPowerLinear`/`_CosmoPowerNonLinear`)
+    is replaced by those subclasses.
     """
-    found = {}
+    classes = {}
 
     def walk(node, prefix):
         for child in node.body:
             if not isinstance(child, ast.ClassDef):
                 continue
             qualname = prefix + child.name
-            methods = {n.name for n in child.body if isinstance(n, ast.FunctionDef)}
-            if "matter_power_spectrum_cb" in methods and not child.bases:
-                found[qualname] = next(
-                    (
-                        ast.unparse(n.value)
-                        for n in child.body
-                        if isinstance(n, ast.Assign)
-                        and [ast.unparse(t) for t in n.targets]
-                        == ["cb_cross_prescription"]
-                    ),
-                    None,
-                )
+            classes[qualname] = child
             walk(child, qualname + ".")
 
+    def declaration(cls):
+        return next(
+            (
+                ast.unparse(n.value)
+                for n in cls.body
+                if isinstance(n, ast.Assign)
+                and [ast.unparse(t) for t in n.targets] == ["cb_cross_prescription"]
+            ),
+            None,
+        )
+
     walk(ast.parse(path.read_text()), "")
+    found = {}
+    for qualname, cls in classes.items():
+        methods = {n.name for n in cls.body if isinstance(n, ast.FunctionDef)}
+        if "matter_power_spectrum_cb" not in methods or cls.bases:
+            continue
+        value = declaration(cls)
+        subclasses = {
+            sub_qualname: sub_value
+            for sub_qualname, sub in classes.items()
+            if cls.name in [ast.unparse(b) for b in sub.bases]
+            and (sub_value := declaration(sub)) is not None
+        }
+        if value is None and subclasses:
+            found.update(subclasses)
+        else:
+            found[qualname] = value
     return found
 
 

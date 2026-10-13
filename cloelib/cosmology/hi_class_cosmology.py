@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using hi_class."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import CB_CROSS_CORRELATED, Background, Perturbations
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
@@ -354,6 +354,8 @@ class hi_classBackground:
 class hi_classLinearPerturbations:
     """Class for perturbations cosmology using hi_class, inheriting from Perturbations parent class."""
 
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the hi_classLinearPerturbation instance."""
         self.background = background
@@ -534,6 +536,8 @@ class hi_classLinearPerturbations:
 
 class hi_classNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using hi_class, inheriting from Perturbations parent class."""
+
+    cb_cross_prescription = CB_CROSS_CORRELATED
 
     def __init__(
         self,

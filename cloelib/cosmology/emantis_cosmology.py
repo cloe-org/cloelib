@@ -2,7 +2,7 @@
 
 import numpy as np
 from cloelib.auxiliary.extrapolator import extend_spectra
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import CB_CROSS_LINEAR_NU, Background, Perturbations
 from emantis.matter_power_spectrum import NonLinearMGBoostEmulator
 from scipy import interpolate
 
@@ -14,6 +14,8 @@ class EmantisFofrNonLinearPerturbations:
     The boost is then combined with an external nonlinear LCDM matter power spectrum prediction
     in order to obtain the full nonlinear matter power spectrum in f(R) gravity.
     """
+
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
 
     def __init__(
         self,

@@ -57,6 +57,24 @@ Compute the CDM+baryons matter power spectrum Pcb(k, z).
 
 **Note**: Can be linear or non-linear depending on implementation.
 
+##### cb x matter cross spectrum: `cb_cross_prescription`
+
+Pairing a `PositionsTracer(use_Pcb=True)` with a tracer of the total matter (lensing, magnification, CMB lensing) needs the cb x matter cross spectrum, which a backend does not provide directly. Every backend implementing `matter_power_spectrum_cb` declares how it is built through the class attribute `cb_cross_prescription`, one of the constants in `cloelib.cosmology.cosmology`:
+
+| Value                                       | Cross spectrum                                                      | Assumption                                                                                       |
+| ------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `CB_CROSS_CORRELATED` (`"correlated"`)      | $\sqrt{P_{cb} P_{mm}}$                                              | cb and total matter perfectly correlated: same non-linear boost for all fields (exact if linear) |
+| `CB_CROSS_LINEAR_NU` (`"linear_neutrinos"`) | $f_{cb}\,(P_{cb}^{NL} - P_{cb}^{L}) + \sqrt{P_{cb}^{L} P_{mm}^{L}}$ | massive neutrinos, and the cb x neutrino spectrum, stay linear; needs `linearperturbations`      |
+
+with $f_{cb} = \Omega_{cb,0} / \Omega_{m,0}$. The two differ by $\mathcal{O}(f_\nu^2)$.
+
+| Prescription          | Backends                                                                                                                    |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `CB_CROSS_CORRELATED` | all linear backends; CAMB, CLASS, hi_class, MGCLASS and mochi_class non-linear                                              |
+| `CB_CROSS_LINEAR_NU`  | HMcode2020Emu, EE2, BACCOemu, emantis, JAX, CosmoPowerJAX (`NonLinear`, `NonLinearHalofit`) and MG-CosmoPowerJAX non-linear |
+
+A new backend providing `matter_power_spectrum_cb` must declare it (and be added to `tests/test_cb_cross_prescription.py`): computing the cross spectrum for a backend without a valid `cb_cross_prescription` raises a `ValueError`. The attribute is not part of the `Perturbations` protocol, since only the cross spectrum needs it.
+
 #### `growth_factor(zs, ks)`
 
 Calculate the linear growth factor D(z, k).

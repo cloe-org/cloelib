@@ -13,6 +13,8 @@ validates inputs against ``CP_EMULATOR_BOUNDS``.
 """
 
 from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    CB_CROSS_LINEAR_NU,
     Background,
     Perturbations,
     growth_rate_on_redshifts,
@@ -301,6 +303,8 @@ class CosmoPowerJAXw0waCDMPerturbations:
         Uses CosmoPower-JAX for fast JAX-accelerated predictions.
         """
 
+        cb_cross_prescription = CB_CROSS_CORRELATED
+
         def __init__(self, background: Background, redshifts: np.ndarray):
             """Initialize the Linear instance."""
             if background.N_mnu == 0:
@@ -518,6 +522,8 @@ class CosmoPowerJAXw0waCDMPerturbations:
         Nonlinear corrections are applied using the mead2020 model in CAMB, with baryonic feedback
         regulated using the `log10TAGN` parameter.
         """
+
+        cb_cross_prescription = CB_CROSS_LINEAR_NU
 
         def __init__(
             self,
@@ -753,6 +759,8 @@ class CosmoPowerJAXw0waCDMPerturbations:
         but ignored. Automatically selects the emulator from ``background.N_mnu``.
         """
 
+        cb_cross_prescription = CB_CROSS_LINEAR_NU
+
         def __init__(
             self,
             background: Background,
@@ -946,6 +954,8 @@ class CosmoPowerJAXwCDMPerturbations:
         This class uses a Cosmopower-JAX neural network to emulate the linear power spectrum
         for a wCDM cosmology. Automatically selects the appropriate emulator based on neutrino configuration.
         """
+
+        cb_cross_prescription = CB_CROSS_CORRELATED
 
         def __init__(self, background: Background, redshifts: np.ndarray):
             """Initialize the Linear instance."""
@@ -1148,6 +1158,8 @@ class CosmoPowerJAXwCDMPerturbations:
 
     class NonLinear:
         """Emulator for the nonlinear matter power spectrum in wCDM cosmology."""
+
+        cb_cross_prescription = CB_CROSS_LINEAR_NU
 
         def __init__(
             self,
@@ -1352,6 +1364,8 @@ class CosmoPowerJAXwCDMPerturbations:
         emulator from ``background.N_mnu``.
         """
 
+        cb_cross_prescription = CB_CROSS_LINEAR_NU
+
         def __init__(
             self,
             background: Background,
@@ -1535,6 +1549,8 @@ class CosmoPowerJAXLCDMPerturbations:
 
     class Linear:
         """Emulator for the linear matter power spectrum in LCDM cosmology."""
+
+        cb_cross_prescription = CB_CROSS_CORRELATED
 
         def __init__(self, background: Background, redshifts: np.ndarray):
             """Initialize the Linear instance."""
@@ -1722,6 +1738,8 @@ class CosmoPowerJAXLCDMPerturbations:
 
     class NonLinear:
         """Emulator for the nonlinear matter power spectrum in LCDM cosmology."""
+
+        cb_cross_prescription = CB_CROSS_LINEAR_NU
 
         def __init__(
             self,
@@ -1925,6 +1943,8 @@ class CosmoPowerJAXLCDMPerturbations:
         emulator from ``background.N_mnu``.
         """
 
+        cb_cross_prescription = CB_CROSS_LINEAR_NU
+
         def __init__(
             self,
             background: Background,
@@ -2114,6 +2134,8 @@ class CosmoPowerJAXLCDMCurvaturePerturbations:
     class Linear:
         """linear matter power spectrum in LCDM+curvature cosmology."""
 
+        cb_cross_prescription = CB_CROSS_CORRELATED
+
         def __init__(self, background: Background, redshifts: np.ndarray):
             """Initialize the Linear instance."""
             if background.N_mnu == 0:
@@ -2276,6 +2298,8 @@ class CosmoPowerJAXLCDMCurvaturePerturbations:
 
     class NonLinear:
         """nonlinear matter power spectrum in LCDM+curvature cosmology."""
+
+        cb_cross_prescription = CB_CROSS_LINEAR_NU
 
         def __init__(
             self,
@@ -2458,6 +2482,8 @@ class CosmoPowerJAXw0waCurvaturePerturbations:
     class Linear:
         """linear matter power spectrum in w0waCDM+curvature cosmology."""
 
+        cb_cross_prescription = CB_CROSS_CORRELATED
+
         def __init__(self, background: Background, redshifts: np.ndarray):
             """Initialize the Linear instance."""
             if background.N_mnu == 0:
@@ -2623,6 +2649,8 @@ class CosmoPowerJAXw0waCurvaturePerturbations:
 
     class NonLinear:
         """nonlinear matter power spectrum in w0waCDM+curvature cosmology."""
+
+        cb_cross_prescription = CB_CROSS_LINEAR_NU
 
         def __init__(
             self,
@@ -2808,6 +2836,8 @@ class CosmoPowerJAXLCDMRunningIndexPerturbations:
     class Linear:
         """linear matter power spectrum in LCDM+running spectral index cosmology."""
 
+        cb_cross_prescription = CB_CROSS_CORRELATED
+
         def __init__(self, background: Background, redshifts: np.ndarray):
             """Initialize the Linear instance."""
             if background.N_mnu == 0:
@@ -2970,6 +3000,8 @@ class CosmoPowerJAXLCDMRunningIndexPerturbations:
 
     class NonLinear:
         """nonlinear matter power spectrum in LCDM+running spectral index cosmology."""
+
+        cb_cross_prescription = CB_CROSS_LINEAR_NU
 
         def __init__(
             self,
@@ -3152,6 +3184,8 @@ class CosmoPowerJAXw0waRunningIndexPerturbations:
     class Linear:
         """linear matter power spectrum in w0waCDM+running spectral index cosmology."""
 
+        cb_cross_prescription = CB_CROSS_CORRELATED
+
         def __init__(self, background: Background, redshifts: np.ndarray):
             """Initialize the Linear instance."""
             if background.N_mnu == 0:
@@ -3317,6 +3351,8 @@ class CosmoPowerJAXw0waRunningIndexPerturbations:
 
     class NonLinear:
         """nonlinear matter power spectrum in w0waCDM+running spectral index cosmology."""
+
+        cb_cross_prescription = CB_CROSS_LINEAR_NU
 
         def __init__(
             self,

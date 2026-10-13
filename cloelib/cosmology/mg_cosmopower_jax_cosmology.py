@@ -18,7 +18,11 @@ parameters and the LCDM baseline classes bound as class attributes.
 """
 
 # cloelib imports
-from cloelib.cosmology.cosmology import growth_rate_on_redshifts
+from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    CB_CROSS_LINEAR_NU,
+    growth_rate_on_redshifts,
+)
 
 # General imports
 import warnings
@@ -313,6 +317,8 @@ class MGLinearPerturbations:
     protocol is checked statically (``tests/typing/perturbations_conformance.py``).
     """
 
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
     #: Holder read at instantiation for the sampled mu and eta.
     mg_params: MGParams
     #: LCDM linear perturbation class, e.g. ``CosmoPowerJAXLCDMPerturbations.Linear``.
@@ -429,6 +435,8 @@ class MGNonLinearPerturbations:
     Bound through the class attributes ``mg_params``, ``baseline_linear`` and
     ``baseline_nonlinear``; see ``MGLinearPerturbations``.
     """
+
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
 
     #: Holder read at instantiation for the sampled mu and eta.
     mg_params: MGParams

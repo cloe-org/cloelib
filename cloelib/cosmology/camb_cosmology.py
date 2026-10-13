@@ -2,6 +2,7 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
     Background,
     Perturbations,
     growth_rate_on_redshifts,
@@ -315,6 +316,8 @@ class CAMBBackground:
 class CAMBLinearPerturbations:
     """A wrapper for CAMB linear perturbation calculations."""
 
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
     def __init__(self, background: Background, redshifts: np.ndarray) -> None:
         """
         Initialize the CAMBLinearPerturbations class with a background instance.
@@ -490,6 +493,8 @@ class CAMBLinearPerturbations:
 
 class CAMBNonLinearPerturbations:
     """A wrapper for CAMB nonlinear perturbation calculations."""
+
+    cb_cross_prescription = CB_CROSS_CORRELATED
 
     def __init__(
         self,

@@ -28,6 +28,11 @@ from typing import Callable, Sequence
 import jax.numpy as jnp
 
 from cloelib.auxiliary.math_utils import safe_sqrt
+from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    CB_CROSS_LINEAR_NU,
+    CB_CROSS_PRESCRIPTIONS,
+)
 from cloelib.observables.photo.contributions import CB, MATTER
 
 
@@ -131,17 +136,40 @@ class SpectraBank:
     def _cb_cross_matter(self) -> jnp.ndarray:
         """cb cross matter power spectrum.
 
-        With linear neutrinos, `P_cb,m = f_cb P_cb + f_nu P_cb,nu` with a
-        linear `P_cb,nu`. Non-linear perturbations wrapping a
-        `linearperturbations` instance give
-        `f_cb (P_cb^NL - P_cb^L) + sqrt(P_cb^L P_mm^L)`; otherwise cb and the
-        total matter are taken as perfectly correlated, `sqrt(P_cb P_mm)`.
-        The check on `linearperturbations` is static Python, so it is safe
+        The formula is the one the backend declares in its
+        `cb_cross_prescription` class attribute (see
+        `cloelib.cosmology.cosmology`):
+
+        - `CB_CROSS_CORRELATED`: cb and the total matter perfectly
+          correlated, `sqrt(P_cb P_mm)`;
+        - `CB_CROSS_LINEAR_NU`: with linear neutrinos,
+          `P_cb,m = f_cb P_cb + f_nu P_cb,nu` with a linear `P_cb,nu`, i.e.
+          `f_cb (P_cb^NL - P_cb^L) + sqrt(P_cb^L P_mm^L)`, with the linear
+          spectra from the backend's `linearperturbations`.
+
+        The prescription is a static Python string, so the choice is safe
         under `jax.jit`.
+
+        Raises:
+            ValueError: if the backend does not declare a known prescription,
+                or declares `CB_CROSS_LINEAR_NU` without `linearperturbations`.
         """
         perturbations = self._require_perturbations("the cb x matter spectrum")
-        if getattr(perturbations, "linearperturbations", None) is None:
+        prescription = getattr(perturbations, "cb_cross_prescription", None)
+        if prescription not in CB_CROSS_PRESCRIPTIONS:
+            raise ValueError(
+                f"{type(perturbations).__name__} must declare the class attribute "
+                f"`cb_cross_prescription` as one of {CB_CROSS_PRESCRIPTIONS} to "
+                f"provide the cb x matter spectrum (got {prescription!r})."
+            )
+        if prescription == CB_CROSS_CORRELATED:
             return safe_sqrt(self._spectrum("P_cb") * self._spectrum("P_mm"))
+        if getattr(perturbations, "linearperturbations", None) is None:
+            raise ValueError(
+                f"{type(perturbations).__name__} declares "
+                f"cb_cross_prescription={CB_CROSS_LINEAR_NU!r}, which needs its "
+                f"`linearperturbations`, but it has none."
+            )
         background = perturbations.background
         f_cb = jnp.squeeze(background.Omega_cb(0.0)) / jnp.squeeze(
             background.Omega_m(0.0)

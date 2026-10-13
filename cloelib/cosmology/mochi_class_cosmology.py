@@ -1,7 +1,7 @@
 """Implementation of Background and Perturbation cosmology using MOCHI_CLASS (https://github.com/mcataneo/mochi_class_public)."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import CB_CROSS_CORRELATED, Background, Perturbations
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 import sys
 
@@ -530,6 +530,8 @@ class mochiCLASSBackground:
 class mochiCLASSLinearPerturbations:
     """Class for perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
 
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the CLASSLinearPerturbation instance."""
         self.background = background
@@ -717,6 +719,8 @@ class mochiCLASSLinearPerturbations:
 
 class mochiCLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
+
+    cb_cross_prescription = CB_CROSS_CORRELATED
 
     def __init__(
         self,

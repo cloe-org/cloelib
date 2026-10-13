@@ -6,6 +6,7 @@ All of the functions are completely differentiable.
 """
 
 # cloelib imports
+from cloelib.cosmology.cosmology import CB_CROSS_CORRELATED, CB_CROSS_LINEAR_NU
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.derived_cosmology import (
     rdrag_fitting_function,
@@ -433,6 +434,8 @@ class JAXBackground:
 
 class JAXLinearPerturbations:
     """A wrapper for JAX linear perturbation calculations."""
+
+    cb_cross_prescription = CB_CROSS_CORRELATED
 
     def __init__(
         self, background: JAXBackground, redshifts: Optional[jnp.ndarray] = None
@@ -941,6 +944,8 @@ class JAXLinearPerturbations:
 
 class JAXNonLinearPerturbations:
     """Class for perturbations cosmology using JAX, inheriting from Cosmology parent class."""
+
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
 
     def __init__(
         self,

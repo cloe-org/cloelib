@@ -18,6 +18,21 @@ import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
+# Prescriptions for the cb x matter cross power spectrum, declared by every
+# backend providing `matter_power_spectrum_cb` as the class attribute
+# `cb_cross_prescription` and read by `SpectraBank` (`photo.spectrum_engine`).
+# Both encode an assumption on the non-linear behaviour of massive neutrinos:
+#
+# - CB_CROSS_CORRELATED: cb and total matter perfectly correlated,
+#   `P_cb,m = sqrt(P_cb P_mm)`, i.e. the same non-linear boost for all fields
+#   (exact for linear spectra).
+# - CB_CROSS_LINEAR_NU: neutrinos stay linear and so does the cb x nu spectrum,
+#   `P_cb,m = f_cb (P_cb^NL - P_cb^L) + sqrt(P_cb^L P_mm^L)`. Needs the
+#   backend's `linearperturbations`.
+CB_CROSS_CORRELATED = "correlated"
+CB_CROSS_LINEAR_NU = "linear_neutrinos"
+CB_CROSS_PRESCRIPTIONS = (CB_CROSS_CORRELATED, CB_CROSS_LINEAR_NU)
+
 
 @runtime_checkable
 class Background(Protocol):

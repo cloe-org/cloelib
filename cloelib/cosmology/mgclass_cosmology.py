@@ -2,6 +2,7 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
     Background,
     Perturbations,
     growth_rate_on_redshifts,
@@ -374,6 +375,8 @@ class MGCLASSBackground:
 class MGCLASSLinearPerturbations:
     """Class for perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
 
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the MGCLASSLinearPerturbation instance."""
         self.background = background
@@ -563,6 +566,8 @@ class MGCLASSLinearPerturbations:
 
 class MGCLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
+
+    cb_cross_prescription = CB_CROSS_CORRELATED
 
     def __init__(
         self,

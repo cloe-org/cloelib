@@ -10,7 +10,9 @@ under test:
   neutrinos don't cluster, P_cb = P_mm without massive neutrinos) and against
   the other backends;
 - the nonlinear P_cb of each backend against its own nonlinear P_mm, under
-  the assumption that massive neutrinos stay linear (as in HMcode2020);
+  the assumption that massive neutrinos stay linear: exact for the
+  `linear_neutrinos` backends, within 2e-3 at mnu = 0.15 eV for the uniform
+  boost of CAMB and HMcode2020Emu;
 - the cb x matter cross spectrum used for (cb-positions) x (matter tracer)
   pairs against CAMB's own delta_cb x delta_m spectrum (linear) and against
   the cross spectrum reconstructed from the backend's P_mm^NL (nonlinear).

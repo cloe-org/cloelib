@@ -490,7 +490,10 @@ def test_matter_power_spectrum_cb():
 
     # linear
     perturbations = CAMBLinearPerturbations(background, np.linspace(0.0, 2.0, 100))
-    assert_allclose(perturbations.matter_power_spectrum(0, 1), 80.534861)
+    # rtol 1e-5: the linear P(k) is interpolated from the CAMB run of __init__
+    # (kmax = 300); the reference value came from a separate CAMB run with its
+    # default kmax, i.e. a different k tabulation (2e-6 relative difference at k = 1)
+    assert_allclose(perturbations.matter_power_spectrum(0, 1), 80.534861, rtol=1e-05)
     assert_allclose(perturbations.matter_power_spectrum_cb(0, 1), 81.748209, rtol=1e-03)
 
     # non-linear
@@ -549,3 +552,37 @@ def test_camb_background_running_spectral_index():
     )
     lin0 = CAMBLinearPerturbations(bg0, zs)
     assert lin.sigma8_0() != lin0.sigma8_0()
+
+
+def test_camb_linear_pk_uses_its_own_results(
+    camb_background_instance, zs, ks, monkeypatch
+):
+    """The linear P(k) comes from the CAMB run of __init__ (kmax = self.kmax), not from a
+    fresh CAMB run on every call (which used CAMB's default kmax)."""
+    import camb
+
+    linear_pert = CAMBLinearPerturbations(camb_background_instance, zs)
+
+    def no_camb_run(*args, **kwargs):
+        raise AssertionError("CAMB was re-run inside matter_power_spectrum")
+
+    monkeypatch.setattr(camb, "get_results", no_camb_run)
+    monkeypatch.setattr(camb, "get_matter_power_interpolator", no_camb_run)
+
+    pk = linear_pert.matter_power_spectrum(zs, ks)
+    pk_cb = linear_pert.matter_power_spectrum_cb(zs, ks)
+    growth = linear_pert.growth_factor(zs, ks)
+    for arr in (pk, pk_cb, growth):
+        assert arr.shape == (len(zs), len(ks))
+        assert np.all(np.isfinite(arr))
+    # beyond CAMB's default kmax = 10 / Mpc the spectrum is still CAMB's own (no extrapolation)
+    k_high = np.array([20.0, 50.0, 100.0])
+    k_nodes, z_nodes, pk_nodes = linear_pert.results.get_linear_matter_power_spectrum(
+        hubble_units=False, k_hunit=False
+    )
+    i0 = int(np.argmin(np.abs(z_nodes)))
+    assert_allclose(
+        linear_pert.matter_power_spectrum(np.array([z_nodes[i0]]), k_high)[0],
+        np.exp(np.interp(np.log(k_high), np.log(k_nodes), np.log(pk_nodes[i0]))),
+        rtol=1e-2,
+    )

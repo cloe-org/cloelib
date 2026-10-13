@@ -142,7 +142,8 @@
         "maintenance",
         "ideas",
         "review",
-        "bug"
+        "bug",
+        "doc"
       ]
     },
     {
@@ -158,7 +159,8 @@
         "content",
         "data",
         "doc",
-        "talk"
+        "talk",
+        "review"
       ]
     },
     {
@@ -170,7 +172,8 @@
         "tool",
         "mentoring",
         "code",
-        "review"
+        "review",
+        "bug"
       ]
     },
     {
@@ -193,7 +196,8 @@
       "contributions": [
         "bug",
         "code",
-        "ideas"
+        "ideas",
+        "review"
       ]
     },
     {
@@ -288,7 +292,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/84071067?v=4",
       "profile": "https://github.com/davidesciotti",
       "contributions": [
-        "bug"
+        "bug",
+        "ideas",
+        "mentoring"
       ]
     },
     {
@@ -455,7 +461,8 @@
         "bug",
         "code",
         "ideas",
-        "doc"
+        "doc",
+        "review"
       ]
     },
     {
@@ -487,7 +494,8 @@
       "contributions": [
         "projectManagement",
         "mentoring",
-        "promotion"
+        "promotion",
+        "ideas"
       ]
     },
     {
@@ -528,7 +536,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/42518815?v=4",
       "profile": "http://www.matthieuschaller.com",
       "contributions": [
-        "ideas"
+        "ideas",
+        "mentoring"
       ]
     },
     {
@@ -647,7 +656,8 @@
       "profile": "https://github.com/chiaradeleo1",
       "contributions": [
         "review",
-        "mentoring"
+        "mentoring",
+        "bug"
       ]
     },
     {
@@ -655,6 +665,45 @@
       "name": "Yu-Ting",
       "avatar_url": "https://avatars.githubusercontent.com/u/67809413?v=4",
       "profile": "https://github.com/ytchang05",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ptallada",
+      "name": "Pau Tallada Crespí",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2226268?v=4",
+      "profile": "https://github.com/ptallada",
+      "contributions": [
+        "ideas",
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "lshuns",
+      "name": "Shun-Sheng Li",
+      "avatar_url": "https://avatars.githubusercontent.com/u/41175095?v=4",
+      "profile": "https://lshuns.github.io/",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "amandinelebrun",
+      "name": "amandinelebrun",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10905968?v=4",
+      "profile": "https://github.com/amandinelebrun",
+      "contributions": [
+        "review"
+      ]
+    },
+    {
+      "login": "sankarshana16",
+      "name": "Sankarshana Srinivasan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52423565?v=4",
+      "profile": "https://sankarshana16.github.io/",
       "contributions": [
         "code"
       ]

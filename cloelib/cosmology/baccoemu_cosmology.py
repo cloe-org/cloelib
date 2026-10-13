@@ -1,14 +1,19 @@
 """Implementation of Background and Perturbation cosmology using BACCOemu (similarly to what done with HMcode2020emu)."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import (
+    Background,
+    BaryonBoostMixin,
+    Perturbations,
+    with_baryon_boost,
+)
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
 
 # General imports
 import numpy as np
-from typing import Optional
+from typing import Any, Optional
 
 # Cosmology imports
 try:
@@ -16,7 +21,10 @@ try:
 except ImportError:
     raise ImportError("BACCOemu could not be imported")
 
-emu = {}
+# Heterogeneous registry: `emu["linear"]` is a `Matter_powerspectrum` instance,
+# while `emu[nonlinear_model][baryonic_model]` nests one level deeper. Typed
+# as `Any` since the shape isn't uniform enough for a single `dict[str, X]`.
+emu: dict[str, Any] = {}
 emu["linear"] = baccoemu.Matter_powerspectrum(
     verbose=False, nonlinear_boost=False, baryonic_boost=False
 )
@@ -149,31 +157,27 @@ class BACCOemuLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self, zs, ks) -> np.ndarray:
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
         r"""
         Calculate the total (dark matter + baryons + neutrinos) linear growth rate for given redshifts and wavenumbers.
 
         Args:
-            zs (array_like): Redshifts at which to calculate the growth factor.
-            ks (array_like): Wavenumbers at which to calculate the growth factor.
+            zs (Optional[array_like]): Redshifts at which to calculate the growth rate.
+                Defaults to `self.z`.
+            ks (array_like): Wavenumbers at which to calculate the growth rate. Required,
+                since the BACCOemu growth rate is scale dependent.
 
         Returns:
             (np.ndarray): The linear growth rate as a function of redshift and wavenumber.
         """
+        if zs is None:
+            zs = self.z
+        if ks is None:
+            raise ValueError(
+                "The BACCOemu growth rate is scale dependent: `ks` must be provided."
+            )
 
-        growth = self.growth_factor(zs, ks)
-        lna = np.log(1 / (1 + zs))
-
-        # sort by increasing lna
-        idx = np.argsort(lna)
-        lna_sorted = lna[idx]
-        growth_sorted = growth[idx, :]
-
-        cs = interpolate.CubicSpline(lna_sorted, np.log(growth_sorted), axis=0)
-        f = cs(lna_sorted, 1)  # d ln D / d ln a, shape (nz, nk)
-
-        unsort = np.argsort(idx)
-        return f[unsort, :]
+        return _growth_rate_from_growth_factor(self.growth_factor, self.z, zs, ks)
 
     def growth_factor_cb(self, zs, ks) -> np.ndarray:
         r"""
@@ -209,19 +213,7 @@ class BACCOemuLinearPerturbations:
         Returns:
             (np.ndarray): The linear cold growth rate as a function of redshift and wavenumber.
         """
-        growth = self.growth_factor_cb(zs, ks)
-        lna = np.log(1 / (1 + zs))
-
-        # sort by increasing lna
-        idx = np.argsort(lna)
-        lna_sorted = lna[idx]
-        growth_sorted = growth[idx, :]
-
-        cs = interpolate.CubicSpline(lna_sorted, np.log(growth_sorted), axis=0)
-        f = cs(lna_sorted, 1)  # d ln D / d ln a, shape (nz, nk)
-
-        unsort = np.argsort(idx)
-        return f[unsort, :]
+        return _growth_rate_from_growth_factor(self.growth_factor_cb, self.z, zs, ks)
 
     def sigma8_0(self) -> float:
         """
@@ -276,9 +268,9 @@ class BACCOemuNonLinearPerturbations:
         background: Background,
         linearperturbations: Perturbations,
         redshifts: np.ndarray,
-        nonlinear_model_name: Optional[str] = "Arico2023",
+        nonlinear_model_name: str = "Arico2023",
         baryonic_boost: Optional[str] = None,
-        baryonic_model_name: Optional[str] = "Burger2025",
+        baryonic_model_name: str = "Burger2025",
         M_c: Optional[float] = None,
         eta: Optional[float] = None,
         beta: Optional[float] = None,
@@ -432,18 +424,20 @@ class BACCOemuNonLinearPerturbations:
         """
         return self.linearperturbations.growth_factor(zs, ks)
 
-    def growth_rate(self, zs, ks) -> np.ndarray:
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
         r"""
         Calculate the total (dark matter + baryons + neutrinos) linear growth rate for given redshifts and wavenumbers.
 
         Args:
-            zs (array_like): Redshifts at which to calculate the growth factor.
-            ks (array_like): Wavenumbers at which to calculate the growth factor.
+            zs (Optional[array_like]): Redshifts at which to calculate the growth rate.
+                Defaults to `self.z`.
+            ks (array_like): Wavenumbers at which to calculate the growth rate. Required,
+                since the BACCOemu growth rate is scale dependent.
 
         Returns:
             (np.ndarray): The linear growth rate as a function of redshift and wavenumber.
         """
-        return self.linearperturbations.growth_rate(zs, ks)
+        return self.linearperturbations.growth_rate(self.z if zs is None else zs, ks)
 
     def growth_factor_cb(self, zs, ks) -> np.ndarray:
         r"""
@@ -479,19 +473,7 @@ class BACCOemuNonLinearPerturbations:
         Returns:
             (np.ndarray): The linear cold growth rate as a function of redshift and wavenumber.
         """
-        growth = self.growth_factor_cb(zs, ks)
-        lna = np.log(1 / (1 + zs))
-
-        # sort by increasing lna
-        idx = np.argsort(lna)
-        lna_sorted = lna[idx]
-        growth_sorted = growth[idx, :]
-
-        cs = interpolate.CubicSpline(lna_sorted, np.log(growth_sorted), axis=0)
-        f = cs(lna_sorted, 1)  # d ln D / d ln a, shape (nz, nk)
-
-        unsort = np.argsort(idx)
-        return f[unsort, :]
+        return _growth_rate_from_growth_factor(self.growth_factor_cb, self.z, zs, ks)
 
     def sigma8_0(self) -> float:
         """
@@ -536,3 +518,214 @@ class BACCOemuNonLinearPerturbations:
             The sigma8 value.
         """
         return np.asarray(self.emu.get_sigma12(cold=True, **self.params_emu))[0]
+
+
+class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
+    """Mixin providing baryonic suppression via a BACCOemu-computed baryonic boost.
+
+    Can be combined with *any* nonlinear perturbations class (not just BACCOemu)
+    via :func:`~cloelib.cosmology.cosmology.with_baryon_boost`::
+
+        MyPert = with_baryon_boost(SomeNonLinearPerturbations, BACCOemuBaryonBoostMixin)
+        pert = MyPert(
+            background, linear_pert, redshifts,
+            baryon_kwargs=dict(nonlinear_model_name="Arico2023",
+                               baryonic_model_name="Burger2025"),
+        )
+
+    .. note::
+        ``__init__`` must be called **after** the base NonLinear ``__init__``
+        because it reads ``self.background`` and ``self.z`` which are set there.
+
+    .. warning::
+        ``BACCOemuNonLinearPerturbations`` composed with this mixin does **not**
+        reproduce ``BACCOemuNonLinearPerturbations(baryonic_boost=...)`` exactly.
+        The two differ outside the baryonic emulator's k range, because this
+        mixin extends the boost with its own power law (see ``__init__``) while
+        the native path leaves the extension to BACCOemu. Inside the emulated
+        range they agree to ~1e-4. Prefer the native argument when the nonlinear
+        and baryonic backends are both BACCOemu; this mixin exists to put the
+        BACCOemu boost on top of a *different* nonlinear backend.
+    """
+
+    #: Both supplied by the nonlinear perturbations class this mixin is composed with.
+    background: Background
+    z: np.ndarray
+
+    def __init__(
+        self,
+        M_c: Optional[float],
+        eta: Optional[float],
+        beta: Optional[float],
+        M1_z0_cen: Optional[float],
+        theta_inn: Optional[float],
+        nonlinear_model_name: str = "Arico2023",
+        baryonic_model_name: str = "Burger2025",
+        theta_out: Optional[float] = None,
+        M_inn: Optional[float] = None,
+    ) -> None:
+        """Initialise the BACCOemu baryon-ratio spline.
+
+        Calls ``get_baryonic_boost`` and stores
+        ``B(z, k)`` as a bivariate spline in ``self._baryon_ratio_interp``.
+
+        Call this **after** ``NonLinearPerturbations.__init__`` so
+        that ``self.background`` and ``self.z`` are set.
+
+        The mixin selects its own BACCOemu instance and builds the emulator
+        parameters from ``self.background`` rather than reusing the base
+        class's, so the BACCOemu baryonic boost can be applied on top of a
+        different nonlinear prescription.
+
+        The baryonification parameters carry **no default values**: BACCOemu
+        provides none, and picking some here would present one arbitrary choice as
+        "the BACCOemu prediction". ``theta_out`` and ``M_inn`` are the exception —
+        they exist only in the ``Arico2021`` model and are ignored by
+        ``Burger2025``, so they default to ``None``.
+
+        Parameters
+        ----------
+        M_c, eta, beta, M1_z0_cen, theta_inn:
+            Baryonification parameters. Required; BACCOemu has no defaults for them.
+        nonlinear_model_name:
+            BACCOemu nonlinear model used to select the emulator instance,
+            e.g. ``"Arico2023"`` or ``"Angulo2021"``.
+        baryonic_model_name:
+            BACCOemu baryonic model, e.g. ``"Burger2025"`` or ``"Arico2021"``.
+        theta_out, M_inn:
+            Used only by ``Arico2021``; leave at ``None`` for ``Burger2025``.
+        """
+        # BACCOemu was trained with the boost factor, so a single
+        # `get_baryonic_boost` call is enough -- no separate DMO and baryonic
+        # spectra. The emulator and its cosmological parameters are set up here
+        # rather than taken from the base class, so this mixin also works on top
+        # of a non-BACCOemu nonlinear prescription.
+        baryon_emu = emu[nonlinear_model_name][baryonic_model_name]
+        baryon_info = baryon_emu.emulator["baryon"]
+        expfactor_min = baryon_info["bounds"][
+            list(baryon_info["keys"]).index("expfactor")
+        ][0]
+        redshift_max = 1 / expfactor_min.item() - 1
+        z_emu = np.unique(self.z[self.z <= redshift_max])
+        params_dmo = {
+            "omega_cold": self.background.Omega_cdm0 + self.background.Omega_b0,
+            "omega_baryon": self.background.Omega_b0,
+            "A_s": self.background.As,
+            "ns": self.background.ns,
+            "hubble": self.background.H0 / 100,
+            "neutrino_mass": self.background.mnu,
+            "w0": self.background.w0,
+            "wa": self.background.wa,
+            "expfactor": 1 / (1 + z_emu),
+        }
+        baryonic_params = {
+            k: v
+            for k, v in {
+                "M_c": M_c,
+                "eta": eta,
+                "beta": beta,
+                "M1_z0_cen": M1_z0_cen,
+                "theta_out": theta_out,
+                "theta_inn": theta_inn,
+                "M_inn": M_inn,
+            }.items()
+            if v is not None
+        }
+        k_baryon, boost = baryon_emu.get_baryonic_boost(**params_dmo, **baryonic_params)
+        k_phys = k_baryon * self.background.h  # h/Mpc -> 1/Mpc
+        # Native support of the BACCOemu baryonic boost, in 1/Mpc. It is much
+        # narrower in k than the FLAMINGO and HMcode2020 responses (it stops
+        # around 17.7 h/Mpc), so it is recorded and exposed rather than left
+        # implicit.
+        self._baryon_k_range = (float(k_phys[0]), float(k_phys[-1]))
+
+        # `RectBivariateSpline` holds its boundary value outside the knot span
+        # instead of extrapolating, which turns B(k) into a flat, unphysical
+        # tail beyond the emulator range. Extend the boost with a power law
+        # first, and interpolate in log k, following `EE2NonLinearPerturbations`.
+        k_out, z_out, boost_out = extend_spectra(
+            k_phys,
+            z_emu,
+            np.asarray(boost),
+            flag_range=True,
+            option_wavenumber="power_law",
+            option_redshift="power_law",
+            extrap_z=z_emu,
+            option_cosmo="const",
+            ns=self.background.ns,
+        )
+        # Interpolated log-log: log B against log k. Splining the raw ratio in
+        # linear k was the source of the unphysical extrapolation.
+        self._baryon_ratio_interp = interpolate.RectBivariateSpline(
+            z_out, np.log(k_out), np.log(boost_out), kx=1, ky=1
+        )
+
+    @property
+    def baryon_k_range(self) -> tuple[float, float]:
+        """Wavenumbers in 1/Mpc over which ``baryonic_suppression`` is emulated.
+
+        Outside this range the returned suppression comes from the power-law
+        extrapolation applied at construction, not from the emulator itself.
+        """
+        return self._baryon_k_range
+
+    def baryonic_suppression(self, zs, ks, k_hunit: bool = False) -> np.ndarray:
+        """Return B(z, k) = P_baryon(z, k) / P_dmo(z, k).
+
+        Parameters
+        ----------
+        zs : array_like
+            Redshifts.
+        ks : array_like
+            Wavenumbers. By default in 1/Mpc; pass k_hunit=True for h/Mpc.
+        k_hunit : bool
+            If True, convert ks from h/Mpc to 1/Mpc before evaluating.
+
+        Returns
+        -------
+        np.ndarray
+            Baryonic suppression factor, shape (nz, nk).
+        """
+        zs = np.atleast_1d(zs)
+        ks = np.atleast_1d(ks)
+        if k_hunit:
+            ks = ks * self.background.h
+        # The spline holds log B against log k (see __init__).
+        return np.exp(self._baryon_ratio_interp(zs, np.log(ks)))
+
+
+#: Convenience alias: BACCOemu nonlinear perturbations with the BACCOemu baryonic-boost
+#: mixin pre-composed via :func:`~cloelib.cosmology.cosmology.with_baryon_boost`.
+#: Equivalent to calling ``with_baryon_boost(BACCOemuNonLinearPerturbations,
+#: BACCOemuBaryonBoostMixin)`` directly.  Baryonic parameters are passed through
+#: ``baryon_kwargs`` at construction time.
+BACCOemuNonLinearBaryonicPerturbations = with_baryon_boost(
+    BACCOemuNonLinearPerturbations, BACCOemuBaryonBoostMixin
+)
+
+
+def _growth_rate_from_growth_factor(growth_factor, z_grid, zs, ks) -> np.ndarray:
+    r"""Compute $f = d\ln D / d\ln a$ from a growth factor $D(z, k)$.
+
+    The logarithmic derivative is taken with a cubic spline in $\ln a$ over
+    `z_grid`, the redshift grid of the perturbations, and evaluated at `zs`.
+    This keeps the result independent of how densely `zs` is sampled (a
+    spline through the requested redshifts alone reduces to a secant for
+    two of them).
+
+    Args:
+        growth_factor (Callable): Growth factor D(zs, ks), with shape (nz, nk).
+        z_grid (np.ndarray): Redshift grid of the perturbations.
+        zs (array_like): Redshifts at which to evaluate the growth rate.
+        ks (array_like): Wavenumbers at which to evaluate the growth rate.
+
+    Returns:
+        np.ndarray: The growth rate, with shape (nz, nk).
+    """
+    z_sorted = np.sort(np.asarray(z_grid))
+    growth = growth_factor(z_sorted, ks)
+    # reverse to increasing lna
+    cs = interpolate.CubicSpline(
+        np.log(1 / (1 + z_sorted))[::-1], np.log(growth)[::-1], axis=0
+    )
+    return cs(np.log(1 / (1 + np.atleast_1d(zs))), 1)

@@ -35,7 +35,7 @@ jobs:
       - name: Install MkDocs and dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mkdocs-material mkdocstrings[python] mike
+          pip install "pymdown-extensions<12.2" mkdocs-material mkdocstrings[python] mike
           pip install -e .
 
       - name: Fetch gh-pages history

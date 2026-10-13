@@ -41,7 +41,7 @@ Resolves #IssueNumber
 
 ### ✅ PR Checklist for Developers
 
-- [ ] I have titled this PR before merging as "gh-#:", where "#" represents the task it closes
+- [ ] I have titled this PR as "gh-#: <short description>", where "#" represents the task it closes (enforced by the `PR Title` CI check)
 - [ ] I have run locally pre-commit using `pre-commit run --all-files`
 - [ ] I have tested my changes locally
 - [ ] No new warnings or errors introduced

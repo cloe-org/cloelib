@@ -644,3 +644,69 @@ def test_nl_matter_power_spectrum_cb_with_neutrinos(class_nonlin_perturb_instanc
         assert np.isclose(pk_cb[i, j], pk_direct, rtol=1e-12, atol=1e-15), (
             f"Mismatch at z={z_test}, k={k_test}"
         )
+
+
+# --- linearperturbations and the cb x matter cross spectrum ---------------------
+
+
+@pytest.fixture(scope="module")
+def class_massive_nu_background():
+    h = 0.677
+    return CLASSBackground(
+        H0=100 * h,
+        Omega_b0=0.022 / h**2,
+        Omega_cdm0=0.12 / h**2,
+        Omega_k0=0.0,
+        As=2.1e-9,
+        ns=0.96,
+        alpha_s=0.0,
+        mnu=0.15,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+        N_mnu=1,
+    )
+
+
+def test_nonlinear_linearperturbations_given_are_kept(class_massive_nu_background):
+    zs = np.array([0.0, 0.5, 1.0])
+    linear = CLASSLinearPerturbations(class_massive_nu_background, zs)
+    pert = CLASSNonLinearPerturbations(class_massive_nu_background, linear, zs)
+    assert pert.linearperturbations is linear
+
+
+def test_nonlinear_cb_cross_spectrum_needs_linearperturbations(
+    class_massive_nu_background,
+):
+    """Without `linearperturbations`, the cb x matter spectrum can't be built."""
+    from cloelib.observables.photo.contributions import CB, MATTER
+    from cloelib.observables.photo.spectrum_engine import SpectraBank
+
+    zs, ks = np.array([0.0, 0.5, 1.0]), np.logspace(-3, 0, 8)
+    pert = CLASSNonLinearPerturbations(class_massive_nu_background, None, zs)
+    assert pert.linearperturbations is None
+    with pytest.raises(ValueError, match="linearperturbations"):
+        SpectraBank.from_perturbations(pert, ks, zs).base(CB, MATTER)
+
+
+def test_nonlinear_cb_cross_spectrum_keeps_neutrinos_linear(
+    class_massive_nu_background,
+):
+    """The cb x matter spectrum is `f_cb (P_cb^NL - P_cb^L) + sqrt(P_cb^L P_mm^L)`,
+    with the linear spectra of the given `linearperturbations`."""
+    from cloelib.observables.photo.contributions import CB, MATTER
+    from cloelib.observables.photo.spectrum_engine import SpectraBank
+
+    zs, ks = np.array([0.0, 0.5, 1.0]), np.logspace(-3, 0, 8)
+    background = class_massive_nu_background
+    linear = CLASSLinearPerturbations(background, zs)
+    pert = CLASSNonLinearPerturbations(
+        background, linear, zs, nonlinear_model="hmcode", hmcode_version="2020"
+    )
+    f_cb = float(np.squeeze(background.Omega_cb(0.0) / background.Omega_m(0.0)))
+    pcb_lin = linear.matter_power_spectrum_cb(zs, ks)
+    expected = f_cb * (pert.matter_power_spectrum_cb(zs, ks) - pcb_lin) + np.sqrt(
+        pcb_lin * linear.matter_power_spectrum(zs, ks)
+    )
+    cross = SpectraBank.from_perturbations(pert, ks, zs).base(CB, MATTER)
+    np.testing.assert_allclose(cross, expected, rtol=1e-10)

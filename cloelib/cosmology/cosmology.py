@@ -18,6 +18,26 @@ import jax.numpy as jnp
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
+# Prescriptions for the cb x matter cross power spectrum, declared by every
+# backend providing `matter_power_spectrum_cb` as the class attribute
+# `cb_cross_prescription` and read by `SpectraBank` (`photo.spectrum_engine`).
+# Each is exact under a condition on the backend's own non-linear spectra, and
+# a backend declares the one it satisfies:
+#
+# - CB_CROSS_CORRELATED: `P_cb,m = sqrt(P_cb P_mm)`, exact if the backend
+#   applies the same non-linear boost to cb and total matter,
+#   `P_cb^NL / P_cb^L = P_mm^NL / P_mm^L` (always true for linear spectra).
+# - CB_CROSS_LINEAR_NU: `P_cb,m = f_cb (P_cb^NL - P_cb^L) + sqrt(P_cb^L P_mm^L)`,
+#   exact if neutrinos and the cb x nu spectrum stay linear,
+#   `P_mm^NL - P_mm^L = f_cb^2 (P_cb^NL - P_cb^L)`. Needs the backend's
+#   `linearperturbations`.
+#
+# Backends satisfying neither (e.g. CLASS, which runs its non-linear model on
+# P_cb separately) use the closest one; see `docs/code_structure/perturbations.md`.
+CB_CROSS_CORRELATED = "correlated"
+CB_CROSS_LINEAR_NU = "linear_neutrinos"
+CB_CROSS_PRESCRIPTIONS = (CB_CROSS_CORRELATED, CB_CROSS_LINEAR_NU)
+
 
 @runtime_checkable
 class Background(Protocol):

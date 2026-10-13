@@ -23,9 +23,17 @@ that case.
 """
 
 from dataclasses import dataclass
-from typing import Callable, Dict, Sequence
+from typing import Callable, Sequence
 
 import jax.numpy as jnp
+
+from cloelib.auxiliary.math_utils import safe_sqrt
+from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    CB_CROSS_LINEAR_NU,
+    CB_CROSS_PRESCRIPTIONS,
+)
+from cloelib.observables.photo.contributions import CB, MATTER
 
 
 @dataclass(frozen=True)
@@ -50,21 +58,153 @@ class SpectrumRequest:
 
 
 class SpectraBank:
-    """Memoized store of derived power-spectrum grids for one `get_Cl` call.
+    """Memoized store of the power-spectrum grids for one `get_Cl` call.
 
-    Not shared across calls - built fresh each time `get_Cl` needs the
-    generalized engine, exactly like the plain matter Pk grid it already
-    rebuilds every call today.
+    Holds two kinds of grids on the `(zs, ks)` grid, each computed at most
+    once and only when first asked for:
+
+    - base spectra, `base(field1, field2)`: `P_mm`, `P_cb` and the cb x
+      matter cross spectrum, combined from the backend's `P_mm` and `P_cb`
+      (and their linear counterparts when the cross spectrum needs them);
+    - derived spectra, `get(request)`: e.g. TATT's one-loop kernels,
+      computed from `matter_pk` (`P_mm`).
+
+    Not shared across calls - `AngularTwoPoint` builds one per `get_Cl` with
+    `from_perturbations`. Built directly from an already evaluated
+    `matter_pk` instead (`SpectraBank(matter_pk, ks, zs)`), only the total
+    matter is available: `base` raises for any pair involving cb.
     """
 
-    def __init__(self, matter_pk: jnp.ndarray, ks: jnp.ndarray, zs: jnp.ndarray):
-        self.matter_pk = matter_pk
+    def __init__(
+        self,
+        matter_pk: jnp.ndarray | None,
+        ks: jnp.ndarray,
+        zs: jnp.ndarray,
+        perturbations=None,
+    ):
+        if matter_pk is None and perturbations is None:
+            raise ValueError("SpectraBank needs `matter_pk` or `perturbations`.")
         self.ks = ks
         self.zs = zs
-        self._grids: Dict[str, jnp.ndarray] = {}
+        self.perturbations = perturbations
+        self._spectra: dict[str, jnp.ndarray] = {}
+        if matter_pk is not None:
+            self._spectra["P_mm"] = matter_pk
+        self._grids: dict[str, jnp.ndarray] = {}
+
+    @classmethod
+    def from_perturbations(cls, perturbations, ks, zs) -> "SpectraBank":
+        """Bank evaluating every spectrum lazily from `perturbations`."""
+        return cls(None, ks, zs, perturbations=perturbations)
+
+    @property
+    def matter_pk(self) -> jnp.ndarray:
+        """The total matter power spectrum `P_mm`, shape `(len(zs), len(ks))`."""
+        return self.base(MATTER, MATTER)
+
+    def _require_perturbations(self, name: str):
+        """`perturbations`, or a clear error for a bank built from `matter_pk`."""
+        perturbations = self.perturbations
+        if perturbations is None:
+            raise ValueError(
+                f"This SpectraBank was built from `matter_pk` alone and "
+                f"cannot provide {name}; use `SpectraBank.from_perturbations`."
+            )
+        return perturbations
+
+    def _spectrum(self, name: str) -> jnp.ndarray:
+        """One of the backend's spectra, evaluated on first use.
+
+        `P_mm`/`P_cb` come from `perturbations` itself, `P_mm_lin`/`P_cb_lin`
+        from its `linearperturbations`.
+        """
+        if name not in self._spectra:
+            perturbations = self._require_perturbations(name)
+            source = (
+                perturbations.linearperturbations
+                if name.endswith("_lin")
+                else perturbations
+            )
+            method = (
+                source.matter_power_spectrum_cb
+                if name.startswith("P_cb")
+                else source.matter_power_spectrum
+            )
+            self._spectra[name] = method(self.zs, self.ks)
+        return self._spectra[name]
+
+    def _cb_cross_matter(self) -> jnp.ndarray:
+        """cb cross matter power spectrum.
+
+        The formula is the one the backend declares in its
+        `cb_cross_prescription` class attribute (see
+        `cloelib.cosmology.cosmology`):
+
+        - `CB_CROSS_CORRELATED`: cb and the total matter perfectly
+          correlated, `sqrt(P_cb P_mm)`;
+        - `CB_CROSS_LINEAR_NU`: with linear neutrinos,
+          `P_cb,m = f_cb P_cb + f_nu P_cb,nu` with a linear `P_cb,nu`, i.e.
+          `f_cb (P_cb^NL - P_cb^L) + sqrt(P_cb^L P_mm^L)`, with the linear
+          spectra from the backend's `linearperturbations`.
+
+        The prescription is a static Python string, so the choice is safe
+        under `jax.jit`.
+
+        Raises:
+            ValueError: if the backend does not declare a known prescription,
+                or declares `CB_CROSS_LINEAR_NU` without `linearperturbations`.
+        """
+        perturbations = self._require_perturbations("the cb x matter spectrum")
+        prescription = getattr(perturbations, "cb_cross_prescription", None)
+        if prescription not in CB_CROSS_PRESCRIPTIONS:
+            raise ValueError(
+                f"{type(perturbations).__name__} must declare the class attribute "
+                f"`cb_cross_prescription` as one of {CB_CROSS_PRESCRIPTIONS} to "
+                f"provide the cb x matter spectrum (got {prescription!r})."
+            )
+        if prescription == CB_CROSS_CORRELATED:
+            return safe_sqrt(self._spectrum("P_cb") * self._spectrum("P_mm"))
+        if getattr(perturbations, "linearperturbations", None) is None:
+            raise ValueError(
+                f"{type(perturbations).__name__} declares "
+                f"cb_cross_prescription={CB_CROSS_LINEAR_NU!r}, which needs its "
+                f"`linearperturbations`, but it has none."
+            )
+        background = perturbations.background
+        f_cb = jnp.squeeze(background.Omega_cb(0.0)) / jnp.squeeze(
+            background.Omega_m(0.0)
+        )
+        Pcb_l = self._spectrum("P_cb_lin")
+        return f_cb * (self._spectrum("P_cb") - Pcb_l) + safe_sqrt(
+            Pcb_l * self._spectrum("P_mm_lin")
+        )
+
+    def base(self, field1: str, field2: str) -> jnp.ndarray:
+        """Base power spectrum for a pair of traced fields.
+
+        `P_mm` for `(MATTER, MATTER)`, `P_cb` for `(CB, CB)` and the cb x
+        matter cross spectrum for a mixed pair, with the fields given by
+        `contributions.contribution_field`. The fields are static Python
+        strings, so the choice is resolved at trace time and is safe under
+        `jax.jit`/`jax.grad`.
+
+        Returns:
+            Array: shape `(len(zs), len(ks))`.
+        """
+        fields = {field1, field2}
+        unknown = fields - {MATTER, CB}
+        if unknown:
+            raise ValueError(f"Unknown traced field(s) {sorted(unknown)}.")
+        if fields == {MATTER}:
+            return self._spectrum("P_mm")
+        if fields == {CB}:
+            return self._spectrum("P_cb")
+        if "P_cbxm" not in self._spectra:
+            self._spectra["P_cbxm"] = self._cb_cross_matter()
+        return self._spectra["P_cbxm"]
 
     def get(self, request: SpectrumRequest) -> jnp.ndarray:
-        """Return the named grid, computing and caching it on first use."""
+        """Return the named derived grid, computing and caching it on first use."""
         if request.name not in self._grids:
             self._grids[request.name] = request.compute(
                 self.matter_pk, self.ks, self.zs
@@ -118,26 +258,6 @@ def needs_generalized_engine(contributions1, contributions2) -> bool:
     return False
 
 
-def build_spectra_bank(
-    contributions1, contributions2, matter_pk, ks, zs
-) -> SpectraBank:
-    """Populate a `SpectraBank` with every request either tracer's
-    contributions declare for their pairing with the other tracer's
-    contributions - the minimal set the generalized engine needs, mirroring
-    `toy_cloelib.engine.setup_engine`'s plan-building (without a separate
-    static-plan object, since here the bank is rebuilt fresh per call
-    anyway).
-    """
-    bank = SpectraBank(matter_pk, ks, zs)
-    for c1 in contributions1:
-        for c2 in contributions2:
-            for req in _requirements_for_interaction(c1, c2):
-                bank.get(req)
-            for req in _requirements_for_interaction(c2, c1):
-                bank.get(req)
-    return bank
-
-
 def get_effective_pk(c1, c2, bank: SpectraBank):
     """The effective P(k,z) for the pairing `(c1, c2)`, or `None`.
 
@@ -147,8 +267,8 @@ def get_effective_pk(c1, c2, bank: SpectraBank):
     `LensingContribution` never defines this, but a `TATTContribution` it's
     paired with does, regardless of argument order: P_deltaI(k,z) is the
     same scalar grid whichever contribution is asked). `None` means neither
-    side has anything special to say - use the plain matter Pk grid, i.e.
-    every non-TATT pairing.
+    side has anything special to say - use the pair's base spectrum
+    (`SpectraBank.base`), i.e. every non-TATT pairing.
     """
     for a, b in ((c1, c2), (c2, c1)):
         getter = getattr(a, "get_effective_pk", None)

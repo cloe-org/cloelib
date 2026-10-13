@@ -222,6 +222,20 @@ def test_cb_boosts_baseline_cb_spectrum(monkeypatch, zs):
     )
 
 
+@pytest.mark.parametrize("prescription", ["correlated", "linear_neutrinos"])
+def test_nonlinear_cb_cross_prescription_is_the_baseline_one(
+    monkeypatch, zs, prescription
+):
+    """The boost rescales the baseline P_mm and P_cb alike, so the nonlinear
+    cb x matter prescription is the one of the LCDM baseline."""
+    monkeypatch.setattr(
+        _FakeBaselineNonLinear, "cb_cross_prescription", prescription, raising=False
+    )
+    Lin, NonLin = _build(monkeypatch, mg.MGParams(), boost=1.5)
+    lp = Lin(_bg(), zs)
+    assert NonLin(_bg(), lp, zs).cb_cross_prescription == prescription
+
+
 def test_factory_returns_bound_module_level_classes(monkeypatch):
     """`mg_perturbations` returns subclasses of the module-level
     `MGLinearPerturbations` / `MGNonLinearPerturbations` (the classes checked

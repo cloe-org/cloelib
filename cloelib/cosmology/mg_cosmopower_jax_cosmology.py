@@ -18,7 +18,10 @@ parameters and the LCDM baseline classes bound as class attributes.
 """
 
 # cloelib imports
-from cloelib.cosmology.cosmology import growth_rate_on_redshifts
+from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    growth_rate_on_redshifts,
+)
 
 # General imports
 import warnings
@@ -313,6 +316,8 @@ class MGLinearPerturbations:
     protocol is checked statically (``tests/typing/perturbations_conformance.py``).
     """
 
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
     #: Holder read at instantiation for the sampled mu and eta.
     mg_params: MGParams
     #: LCDM linear perturbation class, e.g. ``CosmoPowerJAXLCDMPerturbations.Linear``.
@@ -473,6 +478,15 @@ class MGNonLinearPerturbations:
             z_top=z_top,
         )
         self.k = np.asarray(self._base_nl.k)  # wide grid -> full Limber support
+
+    @property
+    def cb_cross_prescription(self) -> str:
+        """cb x matter cross spectrum prescription, that of the LCDM baseline.
+
+        The same boost rescales the baseline total matter and cb spectra, so
+        the cross spectrum follows the baseline's prescription.
+        """
+        return self._base_nl.cb_cross_prescription
 
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         """Compute the nonlinear modified-gravity matter power spectrum.

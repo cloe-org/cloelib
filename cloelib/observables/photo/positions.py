@@ -302,10 +302,11 @@ class PBJNonlinearBiasLoopComputer:
             )
         self._fpt = fpt
         # See class docstring: use the nonlinear backend's own linear
-        # source if it has one, else assume `perturbations` is linear.
-        self.linear_perturbations = getattr(
-            perturbations, "linearperturbations", perturbations
-        )
+        # source if it has one, else assume `perturbations` is linear. A
+        # `linearperturbations` set to None (e.g. a CLASS backend built
+        # without one) counts as missing.
+        linear = getattr(perturbations, "linearperturbations", None)
+        self.linear_perturbations = perturbations if linear is None else linear
         self._cached_ks: _numpy.ndarray | None = None
         self._cached_kernels: dict[str, _numpy.ndarray] | None = None
 

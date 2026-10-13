@@ -3,6 +3,7 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import (
     CB_CROSS_CORRELATED,
+    CB_CROSS_LINEAR_NU,
     Background,
     Perturbations,
     growth_rate_on_redshifts,
@@ -567,7 +568,11 @@ class MGCLASSLinearPerturbations:
 class MGCLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
 
-    cb_cross_prescription = CB_CROSS_CORRELATED
+    # MGCLASS runs its nonlinear model (halofit/HMcode) on P_cb separately from
+    # P_mm, so the cb x matter cross spectrum follows neither prescription
+    # exactly: they differ by ~1% at mnu = 0.15 eV with HMcode2020.
+    # CB_CROSS_LINEAR_NU only uses MGCLASS's own nonlinear P_cb and linear spectra.
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
 
     def __init__(
         self,
@@ -580,14 +585,15 @@ class MGCLASSNonLinearPerturbations:
 
         Args:
             background: Background cosmology object.
-            linearperturbations: Linear perturbations object (unused by MGCLASS, which computes
-                nonlinear corrections internally; accepted for interface compatibility with
-                emulator-based NonLinPerturbations classes).
+            linearperturbations: Linear perturbations object (MGCLASS computes the nonlinear
+                corrections internally). Only needed for the cb x matter cross spectrum,
+                e.g. `MGCLASSLinearPerturbations` on the same background.
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
         """
         self.background = background
         self.z = redshifts
+        self.linearperturbations = linearperturbations
         self.kmax = 100
 
         if nonlinear_model is None:

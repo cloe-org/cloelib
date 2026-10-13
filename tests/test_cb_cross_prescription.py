@@ -24,9 +24,11 @@ from cloelib.observables.photo.spectrum_engine import SpectraBank
 
 COSMOLOGY_DIR = Path(cloelib.cosmology.__file__).parent
 
-# Backends that keep massive neutrinos linear on top of a linear backend use
-# CB_CROSS_LINEAR_NU; codes applying a uniform non-linear boost (CAMB and the
-# emulators trained on it) and linear backends use CB_CROSS_CORRELATED; boosts rescaling a baseline backend take
+# Backends that keep massive neutrinos linear on top of a linear backend, and
+# the CLASS family (non-linear model run on P_cb separately, so neither
+# prescription is exact), use CB_CROSS_LINEAR_NU; codes applying a uniform
+# non-linear boost (CAMB and the emulators trained on it) and linear backends
+# use CB_CROSS_CORRELATED; boosts rescaling a baseline backend take
 # its prescription through a property. A new backend providing
 # `matter_power_spectrum_cb` must be added here.
 PROPERTY = "<property>"
@@ -37,19 +39,19 @@ EXPECTED = {
     },
     "class_cosmology.py": {
         "CLASSLinearPerturbations": "CB_CROSS_CORRELATED",
-        "CLASSNonLinearPerturbations": "CB_CROSS_CORRELATED",
+        "CLASSNonLinearPerturbations": "CB_CROSS_LINEAR_NU",
     },
     "hi_class_cosmology.py": {
         "hi_classLinearPerturbations": "CB_CROSS_CORRELATED",
-        "hi_classNonLinearPerturbations": "CB_CROSS_CORRELATED",
+        "hi_classNonLinearPerturbations": "CB_CROSS_LINEAR_NU",
     },
     "mgclass_cosmology.py": {
         "MGCLASSLinearPerturbations": "CB_CROSS_CORRELATED",
-        "MGCLASSNonLinearPerturbations": "CB_CROSS_CORRELATED",
+        "MGCLASSNonLinearPerturbations": "CB_CROSS_LINEAR_NU",
     },
     "mochi_class_cosmology.py": {
         "mochiCLASSLinearPerturbations": "CB_CROSS_CORRELATED",
-        "mochiCLASSNonLinearPerturbations": "CB_CROSS_CORRELATED",
+        "mochiCLASSNonLinearPerturbations": "CB_CROSS_LINEAR_NU",
     },
     "HMcode2020Emu_cosmology.py": {
         "HMemuLinearPerturbations": "CB_CROSS_CORRELATED",

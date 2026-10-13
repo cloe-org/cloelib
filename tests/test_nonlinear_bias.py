@@ -491,6 +491,21 @@ def test_linear_galaxy_bias_contribution_unaffected():
 
 
 @pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
+@pytest.mark.parametrize("has_linear", [True, False])
+def test_pbj_nlbias_loop_computer_linear_source(linear_perturbations, has_linear):
+    """The linear source is the backend's `linearperturbations`, or the backend
+    itself when that is None (e.g. a CLASS backend built without one)."""
+
+    class _Backend:
+        linearperturbations = linear_perturbations if has_linear else None
+
+    backend = _Backend()
+    computer = PBJNonlinearBiasLoopComputer(backend)
+    expected = linear_perturbations if has_linear else backend
+    assert computer.linear_perturbations is expected
+
+
+@pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
 def test_pbj_nlbias_loop_computer_kernels_finite_and_correctly_shaped(
     linear_perturbations,
 ):

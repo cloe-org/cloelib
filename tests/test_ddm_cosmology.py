@@ -282,6 +282,12 @@ def test_1b_m_ncdm_is_the_sum_of_the_neutrino_masses(monkeypatch):
         background(mnu=1.5, N_mnu=3).m_ncdm
 
 
+def test_1b_omega_m_of_the_boost_fit_is_the_initial_one(nl_1b):
+    """The omega_m of the Hubert/Enqvist fit is omega_b + the INITIAL dark matter density."""
+    perts = nl_1b["hmcode"]
+    assert perts.wm == pytest.approx(perts.wb + perts.wdm)
+
+
 def test_1b_emulators_depend_on_the_neutrino_mass():
     """The neutrino mass is an input of the emulators (distances, sigma8 and Pk)."""
 

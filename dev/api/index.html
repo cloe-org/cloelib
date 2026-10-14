@@ -37882,6 +37882,31 @@ and the gradient finite where <code>x &lt;= 0</code> (value and gradient set to 
 
 </div>
 
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.auxiliary.math_utils.check_nonzero_redshifts" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">check_nonzero_redshifts</span>
+
+
+<a href="#cloelib.auxiliary.math_utils.check_nonzero_redshifts" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">check_nonzero_redshifts</span><span class="p">(</span><span class="n"><span title="cloelib.auxiliary.math_utils.check_nonzero_redshifts(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Raise <code>ValueError</code> if the redshift grid <code>z</code> contains zero.</p>
+<p>A zero redshift breaks the Limber integration. The check runs in plain
+NumPy on a concrete grid, so a tracer constructor holding it can still be
+traced by <code>jax.jit</code>, where even a constant <code>jnp</code> array would otherwise be
+compared as a tracer. A traced <code>z</code> is not checked.</p>
+
+          
+
+    </div>
+
+</div>
+
 
 
   </div>

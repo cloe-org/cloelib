@@ -6,6 +6,7 @@ This class is compatible with the Tracer protocol.
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.math_utils import check_nonzero_redshifts
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.observables.photo.contributions import unit_sigma
 
@@ -67,10 +68,7 @@ class CMBLensingTracer:
         z : np.ndarray
             A 1-dimensional array used to perform line-of-sight integration.
         """
-        if 0.0 in z:
-            raise ValueError(
-                "One of the z array elements is equal to zero, breaking Limber integration."
-            )
+        check_nonzero_redshifts(z)
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z

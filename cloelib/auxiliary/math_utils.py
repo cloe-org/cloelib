@@ -290,3 +290,19 @@ def safe_sqrt(x):
     """
     positive = x > 0
     return jnp.where(positive, jnp.sqrt(jnp.where(positive, x, 1.0)), 0.0)
+
+
+def check_nonzero_redshifts(z):
+    """Raise `ValueError` if the redshift grid `z` contains zero.
+
+    A zero redshift breaks the Limber integration. The check runs in plain
+    NumPy on a concrete grid, so a tracer constructor holding it can still be
+    traced by `jax.jit`, where even a constant `jnp` array would otherwise be
+    compared as a tracer. A traced `z` is not checked.
+    """
+    if isinstance(z, jax.core.Tracer):
+        return
+    if np.any(np.asarray(z) == 0.0):
+        raise ValueError(
+            "One of the z array elements is equal to zero, breaking Limber integration."
+        )

@@ -20,7 +20,6 @@ import jax.numpy as jnp
 import numpy as np
 import jax
 import jax.lax as lx
-from jax.experimental import checkify as chk
 import functools
 import interpax
 from quadax import quadgk
@@ -164,23 +163,19 @@ class JAXBackground:
 
         Returns:
             Array: Total neutrino mass.
+
+        The checks run in plain Python so that the constructor can be traced
+        by `jax.jit`: the size of `mnu` is always static, while its value is
+        only checked when concrete (it is skipped when `mnu` is a tracer,
+        e.g. a sampled parameter inside a jitted likelihood).
         """
-
-        def core(mnu, N_mnu):
-            m = jnp.asarray(mnu, dtype=float)
-            s = jnp.sum(jnp.ravel(m))  # scalar or vector handled uniformly
-            size = m.size
-
-            # JIT-safe assertions (no Python control flow):
-            chk.check((size == 1) | (size == N_mnu), "size must be 1 or N_mnu")
-            chk.check((N_mnu == 0) | (s != 0.0), "if N_mnu>0 then sum(mnu)>0")
-
-            return s
-
-        err, out = chk.checkify(core)(mnu, N_mnu)
-        # host-side throw, still no Python if
-        err.throw()
-        return out
+        m = jnp.asarray(mnu, dtype=float)
+        if m.size not in (1, N_mnu):
+            raise ValueError(f"mnu must have size 1 or N_mnu={N_mnu}, got {m.size}.")
+        if not isinstance(mnu, jax.core.Tracer) and N_mnu != 0:
+            if np.sum(np.asarray(mnu, dtype=float)) == 0.0:
+                raise ValueError("If N_mnu > 0, then sum(mnu) must be > 0.")
+        return jnp.sum(jnp.ravel(m))
 
     def hubble_parameter(self, zs: jnp.ndarray, units: str = "km/s/Mpc") -> jnp.ndarray:
         """

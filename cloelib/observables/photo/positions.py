@@ -47,7 +47,10 @@ from typing import Any, Callable, Protocol
 
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.auxiliary.math_utils import cached_stacked_simpson
+from cloelib.auxiliary.math_utils import (
+    cached_stacked_simpson,
+    check_nonzero_redshifts,
+)
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.contributions import (
@@ -735,10 +738,7 @@ class PositionsTracer:
         """
         if not isinstance(use_Pcb, bool):
             raise TypeError(f"use_Pcb must be a bool, got {type(use_Pcb).__name__}.")
-        if 0.0 in z:
-            raise ValueError(
-                "One of the z array elements is equal to zero, breaking Limber integration."
-            )
+        check_nonzero_redshifts(z)
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z
@@ -848,16 +848,19 @@ class PositionsTracer:
                     "galaxy_bias_model='nonlinear' (got "
                     f"galaxy_bias_model={galaxy_bias_model!r})."
                 )
-            conditions = np.array(
-                [
-                    self.flags["galaxy_bias_model"] == "per_bin",
-                    self.flags["galaxy_bias_model"] == "per_bin_int",
-                    self.flags["galaxy_bias_model"] == "poly",
-                ]
-            )
-            index = np.argwhere(conditions, size=1).squeeze()
-
-            self.bias_array = [per_bin_case, per_bin_int_case, poly_case][index]()
+            # Plain Python dispatch on the static model string: a `jnp`-computed
+            # index would be a tracer under `jax.jit` and can't index a list.
+            bias_cases = {
+                "per_bin": per_bin_case,
+                "per_bin_int": per_bin_int_case,
+                "poly": poly_case,
+            }
+            if galaxy_bias_model not in bias_cases:
+                raise ValueError(
+                    f"Unknown galaxy_bias_model {galaxy_bias_model!r}; expected "
+                    f"one of {sorted(bias_cases) + ['nonlinear']}."
+                )
+            self.bias_array = bias_cases[galaxy_bias_model]()
             self.bias = GalaxyBiasContribution(self)
 
         self.magnification = MagnificationContribution(self)
@@ -908,17 +911,10 @@ class PositionsTracer:
             )
             return window
 
-        conditions = np.array(
-            [
-                self.flags["galaxy_bias_model"] == "per_bin",
-                self.flags["galaxy_bias_model"] in ["per_bin_int", "poly"],
-            ]
-        )
-        index = np.argwhere(conditions, size=1).squeeze()
-
-        window_positions = [per_bin_case, z_func_case][index]()
-
-        return window_positions
+        # Static Python branch (see `__init__`), safe under `jax.jit`.
+        if self.flags["galaxy_bias_model"] == "per_bin":
+            return per_bin_case()
+        return z_func_case()
 
     def get_window_rsd(self, ells, H, f, chi) -> np.ndarray:
         r"""

@@ -105,16 +105,24 @@ pip install .
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,mochi_classy,FlamingoBaryonResponseEmulator]
+pip install .[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,FlamingoBaryonResponseEmulator]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mochi_classy,mgclassy,FlamingoBaryonResponseEmulator]"
+> pip install ."[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,FlamingoBaryonResponseEmulator]"
 > ```
 
-The `react` extra installs [`MGEmu`](https://github.com/nebblu/MGEmus.git) together with the TensorFlow support it needs for the ReACT modified-gravity boost module. If you only need that stack, `pip install ".[react,camb]"` is usually enough to get started.
+The `react` extra installs the TensorFlow support needed by the ReACT modified-gravity boost module; [`MGEmu`](https://github.com/nebblu/MGEmus.git) itself is installed in step 5.
+
+5. **Install backends not available on PyPI** – HMcode2020Emu, MGEmu (needed by the `react` module) and mochi_class are only distributed from GitHub, so they cannot be declared as extras of a package published on PyPI. Install the ones you need directly:
+
+```sh
+pip install "HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"
+pip install "MGemu @ git+https://github.com/nebblu/MGEmus.git"
+pip install "mochi_classy @ git+https://github.com/mcataneo/mochi_class_public.git@mochi_classy"
+```
 
 You're all set! 🎉 Ready to compute cosmological observables.
 

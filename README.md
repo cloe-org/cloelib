@@ -96,22 +96,28 @@ cd cloelib
 git checkout <latest-tag>  # Find tags in "Releases"
 ```
 
-3. **Install cloelib** – Get the core library up and running:
+3. **Install cloelib** – Get the core library up and running, either from your clone:
 
 ```sh
 pip install .
 ```
 
+or directly from [PyPI](https://pypi.org/project/cloelib/) (no clone needed):
+
+```sh
+pip install cloelib
+```
+
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,FlamingoBaryonResponseEmulator]
+pip install .[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,tf-keras,cosmopower-jax,baccoemu,hiclassy,emantis,pbjcosmo,fastpt,react,mgclassy,FlamingoBaryonResponseEmulator]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,FlamingoBaryonResponseEmulator]"
+> pip install ."[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,tf-keras,cosmopower-jax,baccoemu,hiclassy,emantis,pbjcosmo,fastpt,react,mgclassy,FlamingoBaryonResponseEmulator]"
 > ```
 
 The `react` extra installs the TensorFlow support needed by the ReACT modified-gravity boost module; [`MGEmu`](https://github.com/nebblu/MGEmus.git) itself is installed in step 5.

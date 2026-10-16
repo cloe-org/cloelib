@@ -1,12 +1,18 @@
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import (
+    Background,
+    Perturbations,
+    WithWavenumberGrid,
+)
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 
 # General imports
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
+from typing import Protocol, runtime_checkable
 import os
+
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
@@ -18,20 +24,32 @@ REFERENCE_SPECTRUM_FILE = (
 )
 
 
+@runtime_checkable
+class LinearPerturbationsWithK(Perturbations, WithWavenumberGrid, Protocol):
+    """A `Perturbations` implementation that also exposes its `.k` grid.
+
+    `mochiBoostLinearPerturbations` needs both the full `Perturbations`
+    interface of its `base_perturbations` and the wavenumber grid that
+    instance was built on, which `Perturbations` deliberately omits.
+    """
+
+
 class mochiBoostLinearPerturbations:
     """
     Emulator for the linear matter power spectrum, trained on mochi CLASS, using Cosmopower
     based on the stable basis parametrisation.
     """
 
-    def __init__(self,
-                background: Background,
-                base_perturbations: Perturbations,
-                zs: np.ndarray,
-                cp_file: str,
-                stable_MG_dict: dict,
-                high_z_policy: str = "taper",
-                z_decay: float = 0.75):
+    def __init__(
+        self,
+        background: Background,
+        base_perturbations: LinearPerturbationsWithK,
+        zs: np.ndarray,
+        cp_file: str,
+        stable_MG_dict: dict,
+        high_z_policy: str = "taper",
+        z_decay: float = 0.75,
+    ):
         """
         Initialize the emulator with a given cosmological background and redshift array.
 
@@ -39,7 +57,7 @@ class mochiBoostLinearPerturbations:
         ----------
         background : Background
             Background cosmology object, providing all necessary cosmological parameters.
-        base_perturbations : Perturbations
+        base_perturbations : LinearPerturbationsWithK
             A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline.
         zs : np.ndarray
             Array of redshift values for which the power spectrum should be computed.
@@ -102,7 +120,6 @@ class mochiBoostLinearPerturbations:
             "M02": np.array([0.5, 1.5]),
             "z": np.array([0.0, 5.0]),
         }
-
 
         # CURRENTLY TRAINED WITH FIXED COSMOLOGY (PLANCK 2018):
         # fixed_Omega_m = 0.315

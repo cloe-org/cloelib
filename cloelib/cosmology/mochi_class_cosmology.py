@@ -529,6 +529,8 @@ class mochiCLASSBackground:
     def theta_star_100(self) -> float:
         """Angular size of the sound horizon at last scattering in degrees."""
         return self.results.theta_star_100()
+
+
 ####################################
 ############## LINEAR ##############
 ####################################

@@ -57,6 +57,29 @@ Compute the CDM+baryons matter power spectrum Pcb(k, z).
 
 **Note**: Can be linear or non-linear depending on implementation.
 
+##### cb x matter cross spectrum: `cb_cross_prescription`
+
+Pairing a `PositionsTracer(use_Pcb=True)` with a tracer of the total matter (lensing, magnification, CMB lensing) needs the cb x matter cross spectrum, which a backend does not provide directly. Every backend implementing `matter_power_spectrum_cb` declares how it is built through the class attribute `cb_cross_prescription`, one of the constants in `cloelib.cosmology.cosmology`:
+
+| Value                                       | Cross spectrum                                                      | Exact when                                                                                                                                                     |
+| ------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CB_CROSS_CORRELATED` (`"correlated"`)      | $\sqrt{P_{cb} P_{mm}}$                                              | the backend applies the same non-linear boost to cb and total matter, $P_{cb}^{NL}/P_{cb}^{L} = P_{mm}^{NL}/P_{mm}^{L}$ (always true if linear)                |
+| `CB_CROSS_LINEAR_NU` (`"linear_neutrinos"`) | $f_{cb}\,(P_{cb}^{NL} - P_{cb}^{L}) + \sqrt{P_{cb}^{L} P_{mm}^{L}}$ | massive neutrinos, and the cb x neutrino spectrum, stay linear, $P_{mm}^{NL} - P_{mm}^{L} = f_{cb}^2\,(P_{cb}^{NL} - P_{cb}^{L})$; needs `linearperturbations` |
+
+with $f_{cb} = \Omega_{cb,0} / \Omega_{m,0}$. A backend declares the prescription whose condition its own non-linear $P_{mm}$ and $P_{cb}$ satisfy. How much the two prescriptions differ depends on the backend: at $m_\nu = 0.15$ eV, about $3 \times 10^{-4}$ in the cross spectrum for CAMB, at most $2 \times 10^{-3}$ for the emulators and about $1\%$ for CLASS with HMcode2020.
+
+| Prescription          | Backends                                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------------------- |
+| `CB_CROSS_CORRELATED` | all linear backends; CAMB, HMcode2020Emu and CosmoPowerJAX (`NonLinear`, `NonLinearHalofit`) non-linear |
+| `CB_CROSS_LINEAR_NU`  | EE2, BACCOemu, JAX; CLASS, hi_class, MGCLASS and mochi_class non-linear                                 |
+| that of the baseline  | MG-CosmoPowerJAX non-linear and emantis                                                                 |
+
+- **Emulators** (HMcode2020Emu, CosmoPowerJAX): $P_{mm}^{NL}$ and $P_{cb}^{NL}$ are emulated separately, and at $m_\nu \lesssim 0.15$ eV the two conditions cannot be told apart within the emulation accuracy ($\sim 10^{-3}$). At higher masses the HMcode-based emulators follow the uniform boost of CAMB, so they are `correlated`. For the CosmoPowerJAX halofit sector the check is inconclusive; it shares the label of the HMcode one.
+- **CLASS family** (CLASS, `hi_class`, MGCLASS, `mochi_class`): the non-linear model (halofit/HMcode) is run on $P_{cb}$ separately from $P_{mm}$, so neither condition holds exactly. `CB_CROSS_LINEAR_NU` is used since it only relies on the backend's own non-linear $P_{cb}$ and on linear spectra. Pass the matching `*LinearPerturbations` as `linearperturbations` to get the cross spectrum.
+- **Boosts of a baseline** (MG-CosmoPowerJAX, emantis): the same boost rescales the ΛCDM baseline $P_{mm}$ and $P_{cb}$, so `cb_cross_prescription` is a property returning the baseline's. emantis is calibrated without massive neutrinos, and its `matter_power_spectrum_cb` raises a `ValueError` when $m_\nu > 0$.
+
+A new backend providing `matter_power_spectrum_cb` must declare it, as a class attribute or a property (and be added to `tests/test_cb_cross_prescription.py`): computing the cross spectrum for a backend without a valid `cb_cross_prescription` raises a `ValueError`. The attribute is not part of the `Perturbations` protocol, since only the cross spectrum needs it.
+
 #### `growth_factor(zs, ks)`
 
 Calculate the linear growth factor D(z, k).
@@ -93,7 +116,7 @@ This is described by the `LinearPerturbationsFactory` and `NonLinearPerturbation
 
 Options specific to a backend (e.g. `nonlinear_model`) are passed as additional keyword arguments and are not part of these protocols. In particular, the HMcode2020 baryonic feedback parameter `log10TAGN` is accepted by the HMcode-based backends (CAMB, CLASS, mochi_class, HMcode2020Emu and CosmoPower-JAX). CAMB, CLASS and mochi_class select their HMcode2020 feedback model when `log10TAGN` is given without a nonlinear model, and raise a `ValueError` if the chosen model ignores it.
 
-Backends that compute the nonlinear spectrum themselves (CAMB, CLASS, hi_class, MGCLASS, mochi_class, CosmoPower-JAX) accept but do not use `linearperturbations`. `EmantisFofrNonLinearPerturbations` additionally requires the ΛCDM nonlinear perturbations and `fR0`.
+Backends that compute the nonlinear spectrum themselves (CAMB, CosmoPower-JAX) accept but do not use `linearperturbations`; CLASS, hi_class, MGCLASS and mochi_class only use it for the cb x matter cross spectrum (see [`cb_cross_prescription`](#cb-x-matter-cross-spectrum-cb_cross_prescription)). `EmantisFofrNonLinearPerturbations` additionally requires the ΛCDM nonlinear perturbations and `fR0`.
 
 ## Existing Implementations
 

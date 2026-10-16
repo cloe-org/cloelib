@@ -279,3 +279,30 @@ def simps(f, a, b, N=128):
     y = f(x)
     S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
     return S
+
+
+def safe_sqrt(x):
+    """`sqrt` with a finite gradient at (and below) zero.
+
+    `jax.grad` of `sqrt(x)` is `inf` at `x = 0`, which turns into NaNs once
+    multiplied by a zero cotangent. The double-`where` keeps both the value
+    and the gradient finite where `x <= 0` (value and gradient set to 0).
+    """
+    positive = x > 0
+    return jnp.where(positive, jnp.sqrt(jnp.where(positive, x, 1.0)), 0.0)
+
+
+def check_nonzero_redshifts(z):
+    """Raise `ValueError` if the redshift grid `z` contains zero.
+
+    A zero redshift breaks the Limber integration. The check runs in plain
+    NumPy on a concrete grid, so a tracer constructor holding it can still be
+    traced by `jax.jit`, where even a constant `jnp` array would otherwise be
+    compared as a tracer. A traced `z` is not checked.
+    """
+    if isinstance(z, jax.core.Tracer):
+        return
+    if np.any(np.asarray(z) == 0.0):
+        raise ValueError(
+            "One of the z array elements is equal to zero, breaking Limber integration."
+        )

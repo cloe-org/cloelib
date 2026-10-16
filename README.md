@@ -96,25 +96,39 @@ cd cloelib
 git checkout <latest-tag>  # Find tags in "Releases"
 ```
 
-3. **Install cloelib** – Get the core library up and running:
+3. **Install cloelib** – Get the core library up and running, either from your clone:
 
 ```sh
 pip install .
 ```
 
+or directly from [PyPI](https://pypi.org/project/cloelib/) (no clone needed):
+
+```sh
+pip install cloelib
+```
+
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,mochi_classy,FlamingoBaryonResponseEmulator]
+pip install .[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,tf-keras,cosmopower-jax,baccoemu,hiclassy,emantis,pbjcosmo,fastpt,react,mgclassy,FlamingoBaryonResponseEmulator]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mochi_classy,mgclassy,FlamingoBaryonResponseEmulator]"
+> pip install ."[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,tf-keras,cosmopower-jax,baccoemu,hiclassy,emantis,pbjcosmo,fastpt,react,mgclassy,FlamingoBaryonResponseEmulator]"
 > ```
 
-The `react` extra installs [`MGEmu`](https://github.com/nebblu/MGEmus.git) together with the TensorFlow support it needs for the ReACT modified-gravity boost module. If you only need that stack, `pip install ".[react,camb]"` is usually enough to get started.
+The `react` extra installs the TensorFlow support needed by the ReACT modified-gravity boost module; [`MGEmu`](https://github.com/nebblu/MGEmus.git) itself is installed in step 5.
+
+5. **Install backends not available on PyPI** – HMcode2020Emu, MGEmu (needed by the `react` module) and mochi_class are only distributed from GitHub, so they cannot be declared as extras of a package published on PyPI. Install the ones you need directly:
+
+```sh
+pip install "HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"
+pip install "MGemu @ git+https://github.com/nebblu/MGEmus.git"
+pip install "mochi_classy @ git+https://github.com/mcataneo/mochi_class_public.git@mochi_classy"
+```
 
 You're all set! 🎉 Ready to compute cosmological observables.
 
@@ -267,6 +281,10 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://lshuns.github.io/"><img src="https://avatars.githubusercontent.com/u/41175095?v=4?s=100" width="100px;" alt="Shun-Sheng Li"/><br /><sub><b>Shun-Sheng Li</b></sub></a><br /><a href="#code-lshuns" title="Code">💻</a> <a href="#bug-lshuns" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/amandinelebrun"><img src="https://avatars.githubusercontent.com/u/10905968?v=4?s=100" width="100px;" alt="amandinelebrun"/><br /><sub><b>amandinelebrun</b></sub></a><br /><a href="#review-amandinelebrun" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://sankarshana16.github.io/"><img src="https://avatars.githubusercontent.com/u/52423565?v=4?s=100" width="100px;" alt="Sankarshana Srinivasan"/><br /><sub><b>Sankarshana Srinivasan</b></sub></a><br /><a href="#code-sankarshana16" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zuzannakr"><img src="https://avatars.githubusercontent.com/u/12124870?v=4?s=100" width="100px;" alt="zuzannakr"/><br /><sub><b>zuzannakr</b></sub></a><br /><a href="#code-zuzannakr" title="Code">💻</a> <a href="#maintenance-zuzannakr" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://gfabellan.github.io/"><img src="https://avatars.githubusercontent.com/u/59618978?v=4?s=100" width="100px;" alt="Guillermo Franco Abellán"/><br /><sub><b>Guillermo Franco Abellán</b></sub></a><br /><a href="#code-GFAbellan" title="Code">💻</a> <a href="#ideas-GFAbellan" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>

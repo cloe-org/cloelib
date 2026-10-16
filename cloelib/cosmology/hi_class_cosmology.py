@@ -1,7 +1,12 @@
 """Implementation of Background and Perturbation cosmology using hi_class."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    CB_CROSS_LINEAR_NU,
+    Background,
+    Perturbations,
+)
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
@@ -354,6 +359,8 @@ class hi_classBackground:
 class hi_classLinearPerturbations:
     """Class for perturbations cosmology using hi_class, inheriting from Perturbations parent class."""
 
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the hi_classLinearPerturbation instance."""
         self.background = background
@@ -535,6 +542,12 @@ class hi_classLinearPerturbations:
 class hi_classNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using hi_class, inheriting from Perturbations parent class."""
 
+    # hi_class runs its nonlinear model (halofit/HMcode) on P_cb separately from
+    # P_mm, so the cb x matter cross spectrum follows neither prescription
+    # exactly: they differ by ~1% at mnu = 0.15 eV with HMcode2020.
+    # CB_CROSS_LINEAR_NU only uses hi_class's own nonlinear P_cb and linear spectra.
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
+
     def __init__(
         self,
         background: Background,
@@ -546,14 +559,15 @@ class hi_classNonLinearPerturbations:
 
         Args:
             background: Background cosmology object.
-            linearperturbations: Linear perturbations object (unused by hi_class, which computes
-                nonlinear corrections internally; accepted for interface compatibility with
-                emulator-based NonLinPerturbations classes).
+            linearperturbations: Linear perturbations object (hi_class computes the nonlinear
+                corrections internally). Only needed for the cb x matter cross spectrum,
+                e.g. `hi_classLinearPerturbations` on the same background.
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
         """
         self.background = background
         self.z = redshifts
+        self.linearperturbations = linearperturbations
         self.kmax = 100
 
         if nonlinear_model is None:

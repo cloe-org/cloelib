@@ -49,11 +49,16 @@ from typing import Any, Callable, Dict, Optional, Protocol
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.auxiliary.math_utils import cached_stacked_simpson, simps
+from cloelib.auxiliary.math_utils import (
+    cached_stacked_simpson,
+    check_nonzero_redshifts,
+    simps,
+)
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
     Contribution,
+    contribution_field,
     unit_sigma,
 )
 from cloelib.observables.photo.spectrum_engine import (
@@ -551,6 +556,11 @@ class TATTContribution(IntrinsicAlignmentContribution):
         this contribution's full TATT terms rather than assuming both sides
         are identical.
 
+        The `P_dd(z,k)` terms use the base spectrum of the fields the two
+        sides trace (`bank.base`): `P_mm` against IA or lensing, the cb x
+        matter cross spectrum against the galaxy-bias term of a
+        `PositionsTracer(use_Pcb=True)`.
+
         Returns `None` (defers to the plain matter Pk) only if this call is
         somehow reached with neither side being IA-like, which shouldn't
         happen given `get_requirements_for_interaction`.
@@ -558,7 +568,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
         zs = bank.zs
         d4 = self._D4(zs)[:, None]
         c1_self = self._C1(zs)
-        matter_pk = bank.matter_pk
+        matter_pk = bank.base(contribution_field(self), contribution_field(other))
 
         def _kernel(name):
             return bank.get(
@@ -647,10 +657,7 @@ class ShearTracer:
           ValueError: If ``z`` contains zero, ``ia_model`` is unknown, or the
             TATT loop-computer argument is inconsistent with ``ia_model``.
         """
-        if 0.0 in z:
-            raise ValueError(
-                "One of the z array elements is equal to zero, breaking Limber integration."
-            )
+        check_nonzero_redshifts(z)
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z

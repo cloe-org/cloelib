@@ -26,7 +26,7 @@ import jax.numpy as jnp
 import pytest
 
 from cloelib.cosmology.jax_cosmology import JAXBackground, JAXNonLinearPerturbations
-from cloelib.observables.photo import ShearTracer
+from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 
 _FASTPT_INSTALLED = importlib.util.find_spec("fastpt") is not None
@@ -213,3 +213,88 @@ def test_get_cl_tensor_differentiable_tatt(grids):
     eps = 1e-4
     fd = (loss(0.40 + eps) - loss(0.40 - eps)) / (2 * eps)
     assert jnp.allclose(grad_A2IA, fd, rtol=1e-2)
+
+
+def _nuisance_positions(**extra):
+    return {
+        "dz_pos_1": 0.0,
+        "width_pos_1": 1.0,
+        "magnification_bias_1": 0.8,
+        "b1_photo_bin0": 1.5,
+        **extra,
+    }
+
+
+@pytest.mark.parametrize("use_Pcb", [False, True])
+def test_3x2pt_cl_tensor_jit_matches_eager(grids, use_Pcb):
+    """The full 3x2pt pipeline (GG, GL, LL), including building the
+    cosmology and the tracers, must trace under `jax.jit` and give the same
+    numbers as the eager evaluation. Building `JAXBackground` and
+    `PositionsTracer` inside the jitted function is what a jitted likelihood
+    does when the cosmology is sampled.
+    """
+    dndz = jnp.ones((1, len(grids["z_tracer"])))
+    dndz = dndz / jnp.trapezoid(dndz, grids["z_tracer"], axis=1)[:, None]
+
+    def cls_3x2pt(H0):
+        perturbations = _build_perturbations(grids["z_grid"], grids["ks"], H0=H0)
+        positions = PositionsTracer(
+            perturbations,
+            dndz,
+            grids["z_tracer"],
+            "per_bin",
+            _nuisance_positions(),
+            use_Pcb=use_Pcb,
+        )
+        shear = ShearTracer(
+            perturbations=perturbations,
+            dndz=dndz,
+            z=grids["z_tracer"],
+            nuisance_params=_nuisance_shear(),
+            ia_model="NLA",
+        )
+        return jnp.stack(
+            [
+                AngularTwoPoint(t1, t2).get_Cl_tensor(grids["ells"], 0, grids["ks"])
+                for t1, t2 in (
+                    (positions, positions),
+                    (positions, shear),
+                    (shear, shear),
+                )
+            ]
+        )
+
+    eager = cls_3x2pt(67.7)
+    jitted = jax.jit(cls_3x2pt)(67.7)
+    assert jnp.all(jnp.isfinite(jitted))
+    assert jnp.allclose(jitted, eager, rtol=1e-10, atol=0.0)
+
+
+def test_unknown_galaxy_bias_model_raises(grids):
+    perturbations = _build_perturbations(grids["z_grid"], grids["ks"])
+    dndz = jnp.ones((1, len(grids["z_tracer"])))
+    with pytest.raises(ValueError, match="Unknown galaxy_bias_model"):
+        PositionsTracer(
+            perturbations, dndz, grids["z_tracer"], "perbin", _nuisance_positions()
+        )
+
+
+@pytest.mark.parametrize(
+    "mnu, N_mnu, match",
+    [((0.02, 0.02), 3, "size 1 or N_mnu"), (0.0, 1, "sum\\(mnu\\) must be > 0")],
+)
+def test_jax_background_neutrino_mass_checks(mnu, N_mnu, match):
+    with pytest.raises(ValueError, match=match):
+        JAXBackground(
+            H0=67.7,
+            Omega_b0=0.05,
+            Omega_cdm0=0.25,
+            Omega_k0=0.0,
+            As=2e-9,
+            ns=0.96,
+            mnu=mnu,
+            w0=-1.0,
+            wa=0.0,
+            gamma_MG=0.0,
+            N_mnu=N_mnu,
+        )

@@ -1,0 +1,3375 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The Library for the Cosmology Likelihood for Observables in Euclid">
+      
+      
+        <meta name="author" content="cloe-org">
+      
+      
+        <link rel="canonical" href="https://cloe-org.github.io/cloelib/dev/v0.11/code_structure/perturbations/">
+      
+      
+        <link rel="prev" href="../background/">
+      
+      
+        <link rel="next" href="../observables/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Perturbations - cloelib</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#perturbations-structure-formation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="cloelib" class="md-header__button md-logo" aria-label="cloelib" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            cloelib
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Perturbations
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/cloe-org/cloelib" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cloe-org/cloelib
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../home/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Code Structure
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="cloelib" class="md-nav__button md-logo" aria-label="cloelib" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    cloelib
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/cloe-org/cloelib" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cloe-org/cloelib
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../home/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code Structure
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Code Structure
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../background/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Background
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perturbations
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Perturbations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-perturbations-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Perturbations Protocol
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Perturbations Protocol">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-property" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Property
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#required-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Required Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#matter_power_spectrumzs-ks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        matter_power_spectrum(zs, ks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#matter_power_spectrum_cbzs-ks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        matter_power_spectrum_cb(zs, ks)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="matter_power_spectrum_cb(zs, ks)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cb-x-matter-cross-spectrum-cb_cross_prescription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cb x matter cross spectrum: cb_cross_prescription
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#growth_factorzs-ks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        growth_factor(zs, ks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#growth_ratezsnone-ksnone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        growth_rate(zs=None, ks=None)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sigma8_0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sigma8_0()
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#constructors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constructors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#existing-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Existing Implementations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Existing Implementations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#camb-perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CAMB Perturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#classperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLASSPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hmcode2020emuperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HMCode2020EmuPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ee2perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EE2Perturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#baccoemuperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BACCOemuPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flamingobaryonresponseemulatorperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FlamingoBaryonResponseEmulatorPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reactemu-boostedperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ReACTEmu / BoostedPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tabulatedboost-tabulatedboostedperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TabulatedBoost / TabulatedBoostedPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cosmopowerjaxperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CosmoPowerJAXPerturbations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CosmoPowerJAXPerturbations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#available-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available classes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selecting-the-nonlinear-prescription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selecting the nonlinear prescription
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter-ranges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameter ranges
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jaxperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JAXPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mg-cosmopower-jax-boost-perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MG CosmoPower-JAX boost perturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mgclassperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MGCLASSPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hi_classperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        hi_classPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#emantisperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmantisPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#baryonic-boost-mixin-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Baryonic Boost Mixin Framework
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Baryonic Boost Mixin Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#baryonboostmixin-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BaryonBoostMixin Protocol
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with_baryon_boost-factory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        with_baryon_boost Factory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-your-own-perturbations-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Your Own Perturbations Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding Your Own Perturbations Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-your-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create Your Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-connect-to-background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Connect to Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-handle-array-shapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Handle Array Shapes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-add-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Add Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-update-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Update Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interface-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interface Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interface Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#working-with-external-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Working with External Codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-tricks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips &amp; Tricks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tips &amp; Tricks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#non-linear-vs-linear-power-spectra" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-linear vs. Linear Power Spectra
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameter Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observables
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Observables
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observables/photo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tracer Protocol (Photometric)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observables/gw/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tracer Protocol (Gravitational-Wave)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observables/spectro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SpectroPower Protocol (Spectroscopic)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../observables/halo_abundance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HaloAbundance Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Summary Statistics
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Summary Statistics
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../summary_statistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../summary_statistics/photo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Photometric Summary Statistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../summary_statistics/gw/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gravitational-Wave Summary Statistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../summary_statistics/spectro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spectroscopic Summary Statistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-perturbations-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Perturbations Protocol
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Perturbations Protocol">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-property" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Property
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#required-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Required Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#matter_power_spectrumzs-ks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        matter_power_spectrum(zs, ks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#matter_power_spectrum_cbzs-ks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        matter_power_spectrum_cb(zs, ks)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="matter_power_spectrum_cb(zs, ks)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cb-x-matter-cross-spectrum-cb_cross_prescription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cb x matter cross spectrum: cb_cross_prescription
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#growth_factorzs-ks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        growth_factor(zs, ks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#growth_ratezsnone-ksnone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        growth_rate(zs=None, ks=None)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sigma8_0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sigma8_0()
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#constructors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constructors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#existing-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Existing Implementations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Existing Implementations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#camb-perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CAMB Perturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#classperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLASSPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hmcode2020emuperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HMCode2020EmuPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ee2perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EE2Perturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#baccoemuperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BACCOemuPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flamingobaryonresponseemulatorperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FlamingoBaryonResponseEmulatorPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reactemu-boostedperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ReACTEmu / BoostedPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tabulatedboost-tabulatedboostedperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TabulatedBoost / TabulatedBoostedPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cosmopowerjaxperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CosmoPowerJAXPerturbations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CosmoPowerJAXPerturbations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#available-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available classes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selecting-the-nonlinear-prescription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selecting the nonlinear prescription
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter-ranges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameter ranges
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jaxperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JAXPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mg-cosmopower-jax-boost-perturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MG CosmoPower-JAX boost perturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mgclassperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MGCLASSPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hi_classperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        hi_classPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#emantisperturbations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmantisPerturbations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#baryonic-boost-mixin-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Baryonic Boost Mixin Framework
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Baryonic Boost Mixin Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#baryonboostmixin-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BaryonBoostMixin Protocol
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with_baryon_boost-factory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        with_baryon_boost Factory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-your-own-perturbations-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Your Own Perturbations Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding Your Own Perturbations Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-your-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create Your Class
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-connect-to-background" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Connect to Background
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-handle-array-shapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Handle Array Shapes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-add-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Add Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-update-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Update Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interface-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interface Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interface Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#working-with-external-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Working with External Codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tips-tricks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips &amp; Tricks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tips &amp; Tricks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#non-linear-vs-linear-power-spectra" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-linear vs. Linear Power Spectra
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameter-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameter Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="perturbations-structure-formation">Perturbations: Structure Formation<a class="headerlink" href="#perturbations-structure-formation" title="Permanent link">&para;</a></h1>
+<p>The <strong>Perturbations</strong> module computes structure formation in the universe.</p>
+<p>Building on the Background module, Perturbations calculates how galaxies, clusters, and cosmic web structures form and evolve.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>This module computes the growth and evolution of density fluctuations over cosmic time, including:</p>
+<ul>
+<li>Matter power spectra at various redshifts and scales</li>
+<li>Growth rates of structures at different epochs</li>
+<li>Key cosmological parameters like σ₈</li>
+</ul>
+<p>This module bridges smooth background cosmology and the observed clustered universe.</p>
+<h2 id="the-perturbations-protocol">The Perturbations Protocol<a class="headerlink" href="#the-perturbations-protocol" title="Permanent link">&para;</a></h2>
+<p><strong>Protocol Definition</strong>: <code>cloelib.cosmology.cosmology.Perturbations</code></p>
+<p>The Perturbations protocol defines what every perturbation calculator must provide. This module requires a Background instance as it depends on cosmological distances and densities.</p>
+<div class="admonition warning">
+<p class="admonition-title">Units convention</p>
+</div>
+<p>All wavenumbers within <code>cloelib</code> are <strong>always in 1/Mpc</strong> (not h/Mpc). Power spectra are therefore in <strong>Mpc³</strong>. Any class implementing the <code>Perturbations</code> protocol <strong>must</strong> adopt this convention. If the underlying code uses h/Mpc internally, the implementation wrapper is responsible for converting inputs and outputs.</p>
+<h3 id="required-property">Required Property<a class="headerlink" href="#required-property" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>background</code></strong>: Reference to the associated Background object</li>
+</ul>
+<p>This is key. Perturbations <em>always</em> needs a Background to compute distances, densities, etc.</p>
+<h3 id="required-methods">Required Methods<a class="headerlink" href="#required-methods" title="Permanent link">&para;</a></h3>
+<h4 id="matter_power_spectrumzs-ks"><code>matter_power_spectrum(zs, ks)</code><a class="headerlink" href="#matter_power_spectrumzs-ks" title="Permanent link">&para;</a></h4>
+<p>Compute the matter power spectrum for total matter Pmm(k, z).</p>
+<p><strong>Inputs</strong>:</p>
+<ul>
+<li><code>zs</code>: Redshifts (can be array)</li>
+<li><code>ks</code>: Wavenumbers in <strong>1/Mpc</strong> (can be array)</li>
+</ul>
+<p><strong>Returns</strong>: Power spectrum in <strong>Mpc³</strong></p>
+<p><strong>Note</strong>: Can be linear or non-linear depending on implementation.</p>
+<h4 id="matter_power_spectrum_cbzs-ks"><code>matter_power_spectrum_cb(zs, ks)</code><a class="headerlink" href="#matter_power_spectrum_cbzs-ks" title="Permanent link">&para;</a></h4>
+<p>Compute the CDM+baryons matter power spectrum Pcb(k, z).</p>
+<p><strong>Inputs</strong>:</p>
+<ul>
+<li><code>zs</code>: Redshifts (can be array)</li>
+<li><code>ks</code>: Wavenumbers in <strong>1/Mpc</strong> (can be array)</li>
+</ul>
+<p><strong>Returns</strong>: Power spectrum in <strong>Mpc³</strong></p>
+<p><strong>Note</strong>: Can be linear or non-linear depending on implementation.</p>
+<h5 id="cb-x-matter-cross-spectrum-cb_cross_prescription">cb x matter cross spectrum: <code>cb_cross_prescription</code><a class="headerlink" href="#cb-x-matter-cross-spectrum-cb_cross_prescription" title="Permanent link">&para;</a></h5>
+<p>Pairing a <code>PositionsTracer(use_Pcb=True)</code> with a tracer of the total matter (lensing, magnification, CMB lensing) needs the cb x matter cross spectrum, which a backend does not provide directly. Every backend implementing <code>matter_power_spectrum_cb</code> declares how it is built through the class attribute <code>cb_cross_prescription</code>, one of the constants in <code>cloelib.cosmology.cosmology</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Cross spectrum</th>
+<th>Exact when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CB_CROSS_CORRELATED</code> (<code>"correlated"</code>)</td>
+<td><span class="arithmatex">\(\sqrt{P_{cb} P_{mm}}\)</span></td>
+<td>the backend applies the same non-linear boost to cb and total matter, <span class="arithmatex">\(P_{cb}^{NL}/P_{cb}^{L} = P_{mm}^{NL}/P_{mm}^{L}\)</span> (always true if linear)</td>
+</tr>
+<tr>
+<td><code>CB_CROSS_LINEAR_NU</code> (<code>"linear_neutrinos"</code>)</td>
+<td><span class="arithmatex">\(f_{cb}\,(P_{cb}^{NL} - P_{cb}^{L}) + \sqrt{P_{cb}^{L} P_{mm}^{L}}\)</span></td>
+<td>massive neutrinos, and the cb x neutrino spectrum, stay linear, <span class="arithmatex">\(P_{mm}^{NL} - P_{mm}^{L} = f_{cb}^2\,(P_{cb}^{NL} - P_{cb}^{L})\)</span>; needs <code>linearperturbations</code></td>
+</tr>
+</tbody>
+</table>
+<p>with <span class="arithmatex">\(f_{cb} = \Omega_{cb,0} / \Omega_{m,0}\)</span>. A backend declares the prescription whose condition its own non-linear <span class="arithmatex">\(P_{mm}\)</span> and <span class="arithmatex">\(P_{cb}\)</span> satisfy. How much the two prescriptions differ depends on the backend: at <span class="arithmatex">\(m_\nu = 0.15\)</span> eV, about <span class="arithmatex">\(3 \times 10^{-4}\)</span> in the cross spectrum for CAMB, at most <span class="arithmatex">\(2 \times 10^{-3}\)</span> for the emulators and about <span class="arithmatex">\(1\%\)</span> for CLASS with HMcode2020.</p>
+<table>
+<thead>
+<tr>
+<th>Prescription</th>
+<th>Backends</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CB_CROSS_CORRELATED</code></td>
+<td>all linear backends; CAMB, HMcode2020Emu and CosmoPowerJAX (<code>NonLinear</code>, <code>NonLinearHalofit</code>) non-linear</td>
+</tr>
+<tr>
+<td><code>CB_CROSS_LINEAR_NU</code></td>
+<td>EE2, BACCOemu, JAX; CLASS, hi_class, MGCLASS and mochi_class non-linear</td>
+</tr>
+<tr>
+<td>that of the baseline</td>
+<td>MG-CosmoPowerJAX non-linear and emantis</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Emulators</strong> (HMcode2020Emu, CosmoPowerJAX): <span class="arithmatex">\(P_{mm}^{NL}\)</span> and <span class="arithmatex">\(P_{cb}^{NL}\)</span> are emulated separately, and at <span class="arithmatex">\(m_\nu \lesssim 0.15\)</span> eV the two conditions cannot be told apart within the emulation accuracy (<span class="arithmatex">\(\sim 10^{-3}\)</span>). At higher masses the HMcode-based emulators follow the uniform boost of CAMB, so they are <code>correlated</code>. For the CosmoPowerJAX halofit sector the check is inconclusive; it shares the label of the HMcode one.</li>
+<li><strong>CLASS family</strong> (CLASS, <code>hi_class</code>, MGCLASS, <code>mochi_class</code>): the non-linear model (halofit/HMcode) is run on <span class="arithmatex">\(P_{cb}\)</span> separately from <span class="arithmatex">\(P_{mm}\)</span>, so neither condition holds exactly. <code>CB_CROSS_LINEAR_NU</code> is used since it only relies on the backend's own non-linear <span class="arithmatex">\(P_{cb}\)</span> and on linear spectra. Pass the matching <code>*LinearPerturbations</code> as <code>linearperturbations</code> to get the cross spectrum.</li>
+<li><strong>Boosts of a baseline</strong> (MG-CosmoPowerJAX, emantis): the same boost rescales the ΛCDM baseline <span class="arithmatex">\(P_{mm}\)</span> and <span class="arithmatex">\(P_{cb}\)</span>, so <code>cb_cross_prescription</code> is a property returning the baseline's. emantis is calibrated without massive neutrinos, and its <code>matter_power_spectrum_cb</code> raises a <code>ValueError</code> when <span class="arithmatex">\(m_\nu &gt; 0\)</span>.</li>
+</ul>
+<p>A new backend providing <code>matter_power_spectrum_cb</code> must declare it, as a class attribute or a property (and be added to <code>tests/test_cb_cross_prescription.py</code>): computing the cross spectrum for a backend without a valid <code>cb_cross_prescription</code> raises a <code>ValueError</code>. The attribute is not part of the <code>Perturbations</code> protocol, since only the cross spectrum needs it.</p>
+<h4 id="growth_factorzs-ks"><code>growth_factor(zs, ks)</code><a class="headerlink" href="#growth_factorzs-ks" title="Permanent link">&para;</a></h4>
+<p>Calculate the linear growth factor D(z, k).</p>
+<p>Normalized such that D(z=0) ≈ 1 in matter-dominated era.</p>
+<h4 id="growth_ratezsnone-ksnone"><code>growth_rate(zs=None, ks=None)</code><a class="headerlink" href="#growth_ratezsnone-ksnone" title="Permanent link">&para;</a></h4>
+<p>Calculate the linear growth rate f(z) = d ln D / d ln a. Every implementation follows the same convention:</p>
+<ul>
+<li><code>zs=None</code> returns the growth rate on the redshift grid the instance was built on; otherwise it is evaluated at <code>zs</code>.</li>
+<li><code>ks=None</code> returns an array of shape <code>(nz,)</code>; otherwise an array of shape <code>(nz, nk)</code>. A scale-independent growth rate is broadcast along <code>k</code>.</li>
+</ul>
+<p>Scale-dependent implementations evaluate f(z, k) at the given <code>ks</code>. Without <code>ks</code>, hi_class and mochi_class use k = 1 Mpc⁻¹, while BACCOemu, which has no such default, raises a <code>ValueError</code>.</p>
+<p>MGCLASS computes the growth rate by finite differences on its redshift grid, so it needs to be built on at least 3 redshifts to provide it.</p>
+<h4 id="sigma8_0"><code>sigma8_0()</code><a class="headerlink" href="#sigma8_0" title="Permanent link">&para;</a></h4>
+<p>Compute σ₈ at redshift z=0.</p>
+<p>The RMS matter fluctuation in 8 Mpc/h spheres—a key cosmological parameter.</p>
+<h3 id="constructors">Constructors<a class="headerlink" href="#constructors" title="Permanent link">&para;</a></h3>
+<p>All implementations are built with the same keyword arguments, so they can be swapped without changing the calling code:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">lin</span> <span class="o">=</span> <span class="n">LinearPerturbations</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span> <span class="n">redshifts</span><span class="o">=</span><span class="n">zs</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">nonlin</span> <span class="o">=</span> <span class="n">NonLinearPerturbations</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span> <span class="n">linearperturbations</span><span class="o">=</span><span class="n">lin</span><span class="p">,</span> <span class="n">redshifts</span><span class="o">=</span><span class="n">zs</span><span class="p">)</span>
+</code></pre></div>
+<p>This is described by the <code>LinearPerturbationsFactory</code> and <code>NonLinearPerturbationsFactory</code> protocols in <code>cloelib.cosmology.cosmology</code>, which can be used to type a class passed around as a parameter. Their type parameters are the background and, for the nonlinear one, the linear perturbations the class is built from. For example, <code>NonLinearPerturbationsFactory[CAMBBackground, HMemuLinearPerturbations]</code> is satisfied by <code>HMemuNonLinearPerturbations</code>, while <code>NonLinearPerturbationsFactory[CAMBBackground, CAMBLinearPerturbations]</code> is not, since HMcode2020Emu needs the cached <code>Pk</code>/<code>Pk_cb</code> grid of its linear perturbations (<code>WithLinearSpectrumGrid</code>).</p>
+<p>Options specific to a backend (e.g. <code>nonlinear_model</code>) are passed as additional keyword arguments and are not part of these protocols. In particular, the HMcode2020 baryonic feedback parameter <code>log10TAGN</code> is accepted by the HMcode-based backends (CAMB, CLASS, mochi_class, HMcode2020Emu and CosmoPower-JAX). CAMB, CLASS and mochi_class select their HMcode2020 feedback model when <code>log10TAGN</code> is given without a nonlinear model, and raise a <code>ValueError</code> if the chosen model ignores it.</p>
+<p>Backends that compute the nonlinear spectrum themselves (CAMB, CosmoPower-JAX) accept but do not use <code>linearperturbations</code>; CLASS, hi_class, MGCLASS and mochi_class only use it for the cb x matter cross spectrum (see <a href="#cb-x-matter-cross-spectrum-cb_cross_prescription"><code>cb_cross_prescription</code></a>). <code>EmantisFofrNonLinearPerturbations</code> additionally requires the ΛCDM nonlinear perturbations and <code>fR0</code>.</p>
+<h2 id="existing-implementations">Existing Implementations<a class="headerlink" href="#existing-implementations" title="Permanent link">&para;</a></h2>
+<h3 id="camb-perturbations">CAMB Perturbations<a class="headerlink" href="#camb-perturbations" title="Permanent link">&para;</a></h3>
+<p>CAMB provides separate linear and non-linear perturbation implementations:
+<code>CAMBLinearPerturbations</code> and <code>CAMBNonLinearPerturbations</code>.</p>
+<p>Interfaces with <a href="https://camb.readthedocs.io">CAMB</a> for perturbation calculations.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/camb_cosmology.py</code></p>
+<p><strong>When to use</strong>: accurate, production-ready, but sometimes slow</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Linear and non-linear power spectra</li>
+<li>Multiple non-linear models (Halofit, HMCode, ...)</li>
+<li>Neutrino effects</li>
+<li>Modified gravity</li>
+</ul>
+<p><strong>Example</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.camb_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">CAMBBackground</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">CAMBLinearPerturbations</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">CAMBNonLinearPerturbations</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="p">)</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1"># First, create background</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">bg</span> <span class="o">=</span> <span class="n">CAMBBackground</span><span class="p">(</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">H0</span><span class="o">=</span><span class="mf">67.5</span><span class="p">,</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">Omega_b0</span><span class="o">=</span><span class="mf">0.0492</span><span class="p">,</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">Omega_cdm0</span><span class="o">=</span><span class="mf">0.2650</span><span class="p">,</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">As</span><span class="o">=</span><span class="mf">2.1e-9</span><span class="p">,</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">ns</span><span class="o">=</span><span class="mf">0.965</span><span class="p">,</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="n">alpha_s</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>   <span class="c1"># running of the spectral index</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="c1"># ... other parameters</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="p">)</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="c1"># Then create linear and non-linear perturbations</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="n">redshifts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="n">linear_pert</span> <span class="o">=</span> <span class="n">CAMBLinearPerturbations</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span> <span class="n">redshifts</span><span class="o">=</span><span class="n">redshifts</span><span class="p">)</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="n">pert</span> <span class="o">=</span> <span class="n">CAMBNonLinearPerturbations</span><span class="p">(</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>    <span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>    <span class="n">linearperturbations</span><span class="o">=</span><span class="n">linear_pert</span><span class="p">,</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>    <span class="n">redshifts</span><span class="o">=</span><span class="n">redshifts</span><span class="p">,</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="p">)</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="c1"># Compute power spectrum</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>  <span class="c1"># k in 1/Mpc</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="n">P_k_z</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">matter_power_spectrum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="c1"># Get σ₈</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="n">sigma8</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">sigma8_0</span><span class="p">()</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"σ₈ = </span><span class="si">{</span><span class="n">sigma8</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="classperturbations">CLASSPerturbations<a class="headerlink" href="#classperturbations" title="Permanent link">&para;</a></h3>
+<p>Interfaces with <a href="https://github.com/lesgourg/class_public">CLASS</a>.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/class_cosmology.py</code></p>
+<p><strong>When to use</strong>: CLASS-specific features, comparison studies</p>
+<p><strong>Example</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.class_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">CLASSBackground</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">CLASSLinearPerturbations</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">CLASSNonLinearPerturbations</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">bg</span> <span class="o">=</span> <span class="n">CLASSBackground</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">lin</span> <span class="o">=</span> <span class="n">CLASSLinearPerturbations</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span> <span class="n">redshifts</span><span class="o">=</span><span class="n">zs</span><span class="p">)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># HMcode2020 with baryonic feedback, as with CAMB and HMcode2020Emu</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">nonlin</span> <span class="o">=</span> <span class="n">CLASSNonLinearPerturbations</span><span class="p">(</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span> <span class="n">linearperturbations</span><span class="o">=</span><span class="n">lin</span><span class="p">,</span> <span class="n">redshifts</span><span class="o">=</span><span class="n">zs</span><span class="p">,</span> <span class="n">log10TAGN</span><span class="o">=</span><span class="mf">7.8</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="p">)</span>
+</code></pre></div>
+<h3 id="hmcode2020emuperturbations">HMCode2020EmuPerturbations<a class="headerlink" href="#hmcode2020emuperturbations" title="Permanent link">&para;</a></h3>
+<p>Fast emulator for non-linear power spectra using <a href="https://github.com/MariaTsedrik/HMcode2020Emu.git">HMCode2020Emu</a>.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/HMcode2020Emu_cosmology.py</code></p>
+<p><strong>When to use</strong>: Fast non-linear predictions, MCMC sampling</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Lightning-fast emulator</li>
+<li>Accurate non-linear P(k)</li>
+<li>Limited parameter range</li>
+</ul>
+<h3 id="ee2perturbations">EE2Perturbations<a class="headerlink" href="#ee2perturbations" title="Permanent link">&para;</a></h3>
+<p>Simulation-based emulator for non-linear power spectra using <a href="https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper">euclidemu2</a>.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/EE2_cosmology.py</code></p>
+<p><strong>When to use</strong>: Fast non-linear predictions based on simulations, MCMC sampling</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Lightning-fast (emulator.)</li>
+<li>Accurate DM-only non-linear boost for P_mm</li>
+<li>More limited parameter range</li>
+</ul>
+<h3 id="baccoemuperturbations">BACCOemuPerturbations<a class="headerlink" href="#baccoemuperturbations" title="Permanent link">&para;</a></h3>
+<p>Accurate and fast emulators of the linear, non-linear, and baryonic power spectra using <a href="https://bitbucket.org/rangulo/baccoemu/src/master/">BACCOemu</a>.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/baccoemu_cosmology.py</code></p>
+<p><strong>When to use</strong>: Predictions for the matter clustering, in the linear and non linear regime. Predictions of baryonic effects.</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Fast predictions of linear power spectra, growth factors, growth rates, and amplitude of fluctuations;</li>
+<li>Accurate total and cold non-linear matter power spectrum emulated from high-resolution simulations;</li>
+<li>Inclusion of baryonic effects through baryonification;</li>
+<li>Large cosmological parameter range;</li>
+<li>Neural network evaluation with JAX;</li>
+</ul>
+<h3 id="flamingobaryonresponseemulatorperturbations">FlamingoBaryonResponseEmulatorPerturbations<a class="headerlink" href="#flamingobaryonresponseemulatorperturbations" title="Permanent link">&para;</a></h3>
+<p>CAMB nonlinear power spectrum with a baryonic suppression correction from the <a href="https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator">FLAMINGO</a> hydrodynamical simulation suite.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/FlamingoBaryonResponseEmulator_cosmology.py</code></p>
+<p><strong>When to use</strong>: Accurate baryonic feedback modelled on FLAMINGO hydrodynamical simulations; can vary AGN jet fraction and ICM gas/stellar parameters.</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>CAMB-based nonlinear baseline</li>
+<li>FLAMINGO emulator response <span class="arithmatex">\(B(k,z) = P_\text{hydro}/P_\text{DMO}\)</span> applied at evaluation time</li>
+<li>Three baryonic parameters: <code>fgas_sigma</code>, <code>Mstar_sigma</code>, <code>jet_fraction</code></li>
+<li>Valid for <span class="arithmatex">\(z \leq 3\)</span> and <span class="arithmatex">\(k \leq 10^{1.5}\,h/\text{Mpc}\)</span>; outside these ranges the response is automatically clamped to 1</li>
+<li>Standalone <code>FlamingoBaryonBoostMixin</code> composable with any nonlinear perturbations class</li>
+</ul>
+<p><strong>Example</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">CAMBNonLinearFLAMINGOBaryonicPerturbations</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">pert</span> <span class="o">=</span> <span class="n">CAMBNonLinearFLAMINGOBaryonicPerturbations</span><span class="p">(</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">linearperturbations</span><span class="o">=</span><span class="n">lin_pert</span><span class="p">,</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">redshifts</span><span class="o">=</span><span class="n">zs</span><span class="p">,</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">baryon_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="n">fgas_sigma</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>    <span class="c1"># 0σ from calibrated gas fraction</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        <span class="n">Mstar_sigma</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>   <span class="c1"># 0σ from stellar mass function</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        <span class="n">jet_fraction</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># pure thermal AGN feedback</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="p">),</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="p">)</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>  <span class="c1"># k in 1/Mpc</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="n">Pk</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">matter_power_spectrum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">]),</span> <span class="n">k</span><span class="p">)</span>  <span class="c1"># shape (n_k,)</span>
+</code></pre></div>
+<h3 id="reactemu-boostedperturbations">ReACTEmu / BoostedPerturbations<a class="headerlink" href="#reactemu-boostedperturbations" title="Permanent link">&para;</a></h3>
+<p>Modified-gravity nonlinear boost module based on <a href="https://arxiv.org/abs/2005.12184">ReACT</a> and the <a href="https://github.com/nebblu/MGEmus.git">MGEmu</a> emulator package.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/ReACTEmu_cosmology.py</code></p>
+<p><strong>When to use</strong>: Fast nonlinear modified-gravity corrections on top of an existing LCDM perturbation pipeline.</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Supports <code>fr</code>, <code>dgp</code>, <code>gamma</code>, <code>mu</code>, <code>wCDM</code>, <code>w0waCDM</code>, and <code>ide</code> model tags</li>
+<li>Builds a boost interpolator <code>B(z, k)</code> and applies it to a baseline nonlinear matter spectrum</li>
+<li>Includes configurable high-redshift behavior via <code>high_z_policy</code> and <code>z_decay</code></li>
+<li>Exposes boosted <code>matter_power_spectrum</code>, <code>growth_factor</code>, and <code>sigma8_0</code></li>
+</ul>
+<p><strong>Installation</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">".[react]"</span>
+</code></pre></div>
+<p>This extra installs <a href="https://github.com/nebblu/MGEmus.git"><code>MGEmu</code></a> together with the TensorFlow support it expects. In environments where you want to drive the baseline spectra with CAMB as well, <code>pip install ".[react,camb]"</code> is a sensible default.</p>
+<p><strong>Example</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.camb_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">CAMBBackground</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">CAMBLinearPerturbations</span><span class="p">,</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">CAMBNonLinearPerturbations</span><span class="p">,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="p">)</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.ReACTEmu_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">MGemuNonlinearBoost</span><span class="p">,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="n">BoostedPerturbations</span><span class="p">,</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="p">)</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="n">zs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="n">background</span> <span class="o">=</span> <span class="n">CAMBBackground</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="n">linear_pert</span> <span class="o">=</span> <span class="n">CAMBLinearPerturbations</span><span class="p">(</span><span class="n">background</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="n">nonlinear_pert</span> <span class="o">=</span> <span class="n">CAMBNonLinearPerturbations</span><span class="p">(</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>    <span class="n">background</span><span class="p">,</span> <span class="n">linearperturbations</span><span class="o">=</span><span class="n">linear_pert</span><span class="p">,</span> <span class="n">redshifts</span><span class="o">=</span><span class="n">zs</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="p">)</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="n">boost</span> <span class="o">=</span> <span class="n">MGemuNonlinearBoost</span><span class="p">(</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>    <span class="n">background</span><span class="p">,</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>    <span class="n">linear_pert</span><span class="p">,</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>    <span class="n">zs</span><span class="p">,</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>    <span class="n">gravity_model</span><span class="o">=</span><span class="s2">"fr"</span><span class="p">,</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>    <span class="n">mgpars</span><span class="o">=</span><span class="p">{</span><span class="s2">"fr0"</span><span class="p">:</span> <span class="mf">1e-5</span><span class="p">},</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="p">)</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="n">mg_pert</span> <span class="o">=</span> <span class="n">BoostedPerturbations</span><span class="p">(</span><span class="n">linear_pert</span><span class="p">,</span> <span class="n">nonlinear_pert</span><span class="p">,</span> <span class="n">boost</span><span class="o">.</span><span class="n">MGboost_interp</span><span class="p">)</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="n">P_mg</span> <span class="o">=</span> <span class="n">mg_pert</span><span class="o">.</span><span class="n">matter_power_spectrum</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Usage notes</strong>:</p>
+<ul>
+<li><code>MGemuNonlinearBoost</code> expects an existing background plus a linear LCDM perturbation object. <code>BoostedPerturbations</code> then combines that boost with a baseline nonlinear spectrum.</li>
+<li>Internal wavenumbers follow the standard <code>cloelib</code> convention in <code>1/Mpc</code>, even when external emulator data are defined in <code>h/Mpc</code>.</li>
+<li>For models other than <code>wCDM</code>, <code>w0waCDM</code>, <code>ide</code>, and <code>mu</code>, the current implementation assumes a LCDM background with <code>w0 = -1</code> and <code>wa = 0</code>.</li>
+</ul>
+<p><strong>Emulator ranges</strong>:</p>
+<ul>
+<li><code>fr</code>: <code>Omega_m</code> 0.24-0.35, <code>Omega_b</code> 0.04-0.06, <code>H0</code> 63-75, <code>ns</code> 0.9-1.01, <code>As</code> 1.7e-9-2.5e-9, <code>Omega_nu</code> 1e-11-0.00317, <code>fR0</code> 1e-10-1e-4, <code>z</code> 0-2.0</li>
+<li><code>dgp</code>: <code>Omega_m</code> 0.2899-0.3392, <code>Omega_b</code> 0.04044-0.05686, <code>H0</code> 62.9-73.1, <code>ns</code> 0.9432-0.9862, <code>As</code> 1.5e-9-2.7e-9, <code>Omega_nu</code> 1e-11-0.00317, <code>omegarc</code> 1e-3-100, <code>z</code> 0-2.4</li>
+<li><code>gamma</code>: <code>Omega_m</code> 0.2899-0.3392, <code>Omega_b</code> 0.04044-0.05686, <code>H0</code> 63.8-73.1, <code>ns</code> 0.9432-0.9862, <code>As</code> 1.9511e-9-2.2669e-9, <code>Omega_nu</code> 1e-11-0.00317, <code>gamma</code> 0-1, <code>q1</code> -5 to 5, <code>z</code> 0-2.4</li>
+<li><code>mu</code>: <code>Omega_m</code> 0.24-0.4, <code>H0</code> 60-84, <code>As</code> 1.7e-9-2.5e-9, <code>w0</code> -1.5 to -0.5, <code>wa</code> -0.5 to 0.5, <code>mu0</code> -0.999 to 3, <code>c1</code> -0.3333 to 1, <code>lam</code> 0-2, <code>q1/q2/q3</code> -2 to 2, <code>z</code> 0-2.5</li>
+<li><code>wCDM</code>, <code>w0waCDM</code>, <code>ide</code> (shared <code>ds</code> backend): <code>Omega_m</code> 0.22-0.37, <code>Omega_b</code> 0.03-0.08, <code>H0</code> 63-84, <code>ns</code> 0.8-1.1, <code>As</code> 1.7e-9-2.5e-9, <code>Omega_nu</code> 1e-11-0.00317, <code>w0</code> -1.3 to -0.5, <code>wa</code> -2 to 0.5, <code>xi</code> 0-150, <code>z</code> 0-2.5</li>
+</ul>
+<p>Stay within these training ranges when sampling. Outside them, the implementation clips emulator inputs and applies its configured high-redshift policy, which is convenient for robustness but should not be treated as a new calibration region.</p>
+<h3 id="tabulatedboost-tabulatedboostedperturbations">TabulatedBoost / TabulatedBoostedPerturbations<a class="headerlink" href="#tabulatedboost-tabulatedboostedperturbations" title="Permanent link">&para;</a></h3>
+<p>Lightweight wrapper for applying a tabulated beyond-LCDM nonlinear boost to an existing nonlinear matter power spectrum.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/TabulatedBoost_cosmology.py</code></p>
+<p><strong>When to use</strong>: You already have boost data from simulations or another external pipeline and want to interpolate it onto the <code>cloelib</code> perturbation grid.</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Reads tabulated boost files with columns <code>[k, B(z_1), B(z_2), ...]</code></li>
+<li>Converts input <code>k</code> values from <code>h/Mpc</code> to the internal <code>1/Mpc</code> convention</li>
+<li>Reuses <code>cloelib</code>'s wavenumber extrapolation machinery</li>
+<li>Supports <code>power_law</code>, <code>freeze</code>, <code>one</code>, and <code>taper</code> high-redshift policies</li>
+<li>Exposes a <code>TabulatedBoostedPerturbations</code> wrapper with boosted <code>matter_power_spectrum</code>, <code>growth_factor</code>, and <code>sigma8_0</code></li>
+</ul>
+<p><strong>Input format</strong>:</p>
+<ul>
+<li>Column 1: <code>k</code> in <code>h/Mpc</code></li>
+<li>Remaining columns: boost values <code>B(k, z_i)</code> at each tabulated redshift</li>
+<li><code>z_cols</code> must list the redshifts corresponding to those boost columns, in the same order as the file</li>
+</ul>
+<p><strong>Example</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.camb_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">CAMBBackground</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">CAMBLinearPerturbations</span><span class="p">,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.HMcode2020Emu_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">HMemuNonLinearPerturbations</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.TabulatedBoost_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">TabulatedNonlinearBoost</span><span class="p">,</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">TabulatedBoostedPerturbations</span><span class="p">,</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="p">)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="n">zs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="n">z_cols</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    <span class="mf">3.017980</span><span class="p">,</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    <span class="mf">2.479559</span><span class="p">,</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>    <span class="mf">2.161320</span><span class="p">,</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>    <span class="mf">2.013288</span><span class="p">,</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>    <span class="mf">1.609499</span><span class="p">,</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    <span class="mf">1.259818</span><span class="p">,</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>    <span class="mf">1.000000</span><span class="p">,</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>    <span class="mf">0.823800</span><span class="p">,</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>    <span class="mf">0.677100</span><span class="p">,</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>    <span class="mf">0.552300</span><span class="p">,</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>    <span class="mf">0.444200</span><span class="p">,</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>    <span class="mf">0.349200</span><span class="p">,</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>    <span class="mf">0.264800</span><span class="p">,</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>    <span class="mf">0.188900</span><span class="p">,</span>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>    <span class="mf">0.120200</span><span class="p">,</span>
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>    <span class="mf">0.057540</span><span class="p">,</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>    <span class="mf">0.000031</span><span class="p">,</span>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>    <span class="mf">0.0</span><span class="p">,</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="p">]</span>
+<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>
+<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="n">background</span> <span class="o">=</span> <span class="n">CAMBBackground</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="n">linear_perturbations</span> <span class="o">=</span> <span class="n">CAMBLinearPerturbations</span><span class="p">(</span><span class="n">background</span><span class="p">,</span> <span class="n">zs</span><span class="p">)</span>
+<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="n">nonlinear_perturbations</span> <span class="o">=</span> <span class="n">HMemuNonLinearPerturbations</span><span class="p">(</span>
+<a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a>    <span class="n">background</span><span class="p">,</span>
+<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a>    <span class="n">linear_perturbations</span><span class="p">,</span>
+<a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a>    <span class="n">zs</span><span class="p">,</span>
+<a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a><span class="p">)</span>
+<a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a>
+<a id="__codelineno-6-43" name="__codelineno-6-43" href="#__codelineno-6-43"></a><span class="n">tabulated_boost</span> <span class="o">=</span> <span class="n">TabulatedNonlinearBoost</span><span class="p">(</span>
+<a id="__codelineno-6-44" name="__codelineno-6-44" href="#__codelineno-6-44"></a>    <span class="n">background</span><span class="p">,</span>
+<a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a>    <span class="n">linear_perturbations</span><span class="p">,</span>
+<a id="__codelineno-6-46" name="__codelineno-6-46" href="#__codelineno-6-46"></a>    <span class="n">zs</span><span class="p">,</span>
+<a id="__codelineno-6-47" name="__codelineno-6-47" href="#__codelineno-6-47"></a>    <span class="s2">"m11_p01_boosts.txt"</span><span class="p">,</span>
+<a id="__codelineno-6-48" name="__codelineno-6-48" href="#__codelineno-6-48"></a>    <span class="n">z_cols</span><span class="p">,</span>
+<a id="__codelineno-6-49" name="__codelineno-6-49" href="#__codelineno-6-49"></a>    <span class="n">high_z_policy</span><span class="o">=</span><span class="s2">"freeze"</span><span class="p">,</span>
+<a id="__codelineno-6-50" name="__codelineno-6-50" href="#__codelineno-6-50"></a><span class="p">)</span>
+<a id="__codelineno-6-51" name="__codelineno-6-51" href="#__codelineno-6-51"></a><span class="n">boosted_perturbations</span> <span class="o">=</span> <span class="n">TabulatedBoostedPerturbations</span><span class="p">(</span>
+<a id="__codelineno-6-52" name="__codelineno-6-52" href="#__codelineno-6-52"></a>    <span class="n">linear_perturbations</span><span class="p">,</span>
+<a id="__codelineno-6-53" name="__codelineno-6-53" href="#__codelineno-6-53"></a>    <span class="n">nonlinear_perturbations</span><span class="p">,</span>
+<a id="__codelineno-6-54" name="__codelineno-6-54" href="#__codelineno-6-54"></a>    <span class="n">tabulated_boost</span><span class="o">.</span><span class="n">MGboost_interp</span><span class="p">,</span>
+<a id="__codelineno-6-55" name="__codelineno-6-55" href="#__codelineno-6-55"></a><span class="p">)</span>
+</code></pre></div>
+<h3 id="cosmopowerjaxperturbations">CosmoPowerJAXPerturbations<a class="headerlink" href="#cosmopowerjaxperturbations" title="Permanent link">&para;</a></h3>
+<p>Fast JAX-based emulator for linear and nonlinear power spectra using <a href="https://github.com/dpiras/cosmopower-jax">cosmopower-jax</a>.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/cosmopower_jax_cosmology.py</code></p>
+<p><strong>When to use</strong>: Fast predictions with full JAX compatibility, gradient-based inference, MCMC sampling</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Full JAX compatibility — automatic differentiation and JIT compilation</li>
+<li>Linear and nonlinear P(k) and P_cb(k)</li>
+<li>Two nonlinear prescriptions: <strong>HMcode2020</strong> (with baryonic feedback) and <strong>halofit</strong> (dark-matter-only)</li>
+<li>σ₈(z), fσ₈(z), growth factors D(z,k) and D_cb(z,k), growth rate f(z)</li>
+<li>Baseline (ΛCDM/wCDM/w0waCDM) and extended (curvature, running spectral index) cosmologies</li>
+<li>Emulator files downloaded automatically on first use from the Euclid-DR1-matter-emulators GitHub repository; the k-mode grid is read directly from each emulator</li>
+</ul>
+<h4 id="available-classes">Available classes<a class="headerlink" href="#available-classes" title="Permanent link">&para;</a></h4>
+<p>Every Perturbations class exposes the same inner classes, each providing <strong>both</strong>
+the total-matter spectrum (<code>matter_power_spectrum</code>) and the CDM+baryon spectrum
+(<code>matter_power_spectrum_cb</code>, built at construction from the paired cb emulator), with
+the cached <code>Pk</code>/<code>Pk_cb</code> grids and <code>growth_factor</code>/<code>growth_factor_cb</code>:</p>
+<ul>
+<li><code>Linear</code> — linear P(k) and P_cb(k)</li>
+<li><code>NonLinear</code> — nonlinear P(k) and P_cb(k) using <strong>HMcode2020</strong>, with baryonic feedback controlled by <code>log10TAGN</code></li>
+<li><code>NonLinearHalofit</code> — nonlinear P(k) and P_cb(k) using <strong>halofit</strong> (Takahashi 2012); dark-matter-only, so <code>log10TAGN</code> is accepted for interface compatibility but ignored.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Cosmology</th>
+<th>N_mnu</th>
+<th>Nonlinear recipes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CosmoPowerJAXLCDMPerturbations</code></td>
+<td>ΛCDM</td>
+<td>0,1,2,3</td>
+<td>HMcode2020, halofit</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXwCDMPerturbations</code></td>
+<td>wCDM</td>
+<td>0,1,2,3</td>
+<td>HMcode2020, halofit</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXw0waCDMPerturbations</code></td>
+<td>w0waCDM</td>
+<td>0,1,2,3</td>
+<td>HMcode2020, halofit</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXLCDMCurvaturePerturbations</code></td>
+<td>ΛCDM + curvature (Ω_k)</td>
+<td>0,1,3</td>
+<td>HMcode2020</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXw0waCurvaturePerturbations</code></td>
+<td>w0waCDM + curvature</td>
+<td>0,1,3</td>
+<td>HMcode2020</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXLCDMRunningIndexPerturbations</code></td>
+<td>ΛCDM + running (α_s)</td>
+<td>0,1,3</td>
+<td>HMcode2020</td>
+</tr>
+<tr>
+<td><code>CosmoPowerJAXw0waRunningIndexPerturbations</code></td>
+<td>w0waCDM + running</td>
+<td>0,1,3</td>
+<td>HMcode2020</td>
+</tr>
+</tbody>
+</table>
+<p>The neutrino configuration is selected automatically from <code>background.N_mnu</code>: 0 (massless), 1 (one massive), 2 (two degenerate), 3 (three degenerate). Baseline cosmologies cover 0–3; the extended (curvature / running) cosmologies cover 0, 1 and 3 (an unsupported value raises <code>ValueError</code>).</p>
+<h4 id="selecting-the-nonlinear-prescription">Selecting the nonlinear prescription<a class="headerlink" href="#selecting-the-nonlinear-prescription" title="Permanent link">&para;</a></h4>
+<p>The recipe is chosen by which nonlinear class you use — the constructor signature is identical, so it is a drop-in swap:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># HMcode2020 (default) — baryonic feedback via log10TAGN</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">nl</span> <span class="o">=</span> <span class="n">CosmoPowerJAXLCDMPerturbations</span><span class="o">.</span><span class="n">NonLinear</span><span class="p">(</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span> <span class="n">linearperturbations</span><span class="o">=</span><span class="n">lin</span><span class="p">,</span> <span class="n">redshifts</span><span class="o">=</span><span class="n">zs</span><span class="p">,</span> <span class="n">log10TAGN</span><span class="o">=</span><span class="mf">7.8</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p">)</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="c1"># halofit — dark-matter-only (log10TAGN ignored)</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">nl</span> <span class="o">=</span> <span class="n">CosmoPowerJAXLCDMPerturbations</span><span class="o">.</span><span class="n">NonLinearHalofit</span><span class="p">(</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span> <span class="n">linearperturbations</span><span class="o">=</span><span class="n">lin</span><span class="p">,</span> <span class="n">redshifts</span><span class="o">=</span><span class="n">zs</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="p">)</span>
+</code></pre></div>
+<h4 id="parameter-ranges">Parameter ranges<a class="headerlink" href="#parameter-ranges" title="Permanent link">&para;</a></h4>
+<p>Inputs are validated against a single global guardrail (<code>CP_EMULATOR_BOUNDS</code>); a parameter outside its range raises <code>ValueError</code>. The redshift <code>z</code> is not bounds-checked (it is clipped to the training range and extrapolated; z=0 is always added to the emulator grid, so σ₈(z=0) and the D(z=0)=1 normalisation are exact even when the requested redshifts start above zero). These global bounds are deliberately loose — each emulator's actual training box is tighter and varies by family.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Enforced range</th>
+<th>Applies to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ombh2</td>
+<td>[0.001, 0.1]</td>
+<td>all</td>
+</tr>
+<tr>
+<td>omch2</td>
+<td>[0.05, 0.9]</td>
+<td>all</td>
+</tr>
+<tr>
+<td>H0</td>
+<td>[20, 100]</td>
+<td>all</td>
+</tr>
+<tr>
+<td>ns</td>
+<td>[0.6, 1.3]</td>
+<td>all</td>
+</tr>
+<tr>
+<td>lnAs</td>
+<td>[1.61, 5.0]</td>
+<td>all</td>
+</tr>
+<tr>
+<td>mnu</td>
+<td>[0, 1] eV</td>
+<td>massive-neutrino runs</td>
+</tr>
+<tr>
+<td>w0</td>
+<td>[-3, 1]</td>
+<td>w0waCDM</td>
+</tr>
+<tr>
+<td>wa</td>
+<td>[-3, 3]</td>
+<td>w0waCDM</td>
+</tr>
+<tr>
+<td>w</td>
+<td>[-3, 0]</td>
+<td>wCDM</td>
+</tr>
+<tr>
+<td>Omega_k0</td>
+<td>[-0.3, 0.3]</td>
+<td>curvature</td>
+</tr>
+<tr>
+<td>alpha_s</td>
+<td>[-0.3, 0.3]</td>
+<td>running</td>
+</tr>
+<tr>
+<td>log10TAGN</td>
+<td>[7.3, 8.5]</td>
+<td>HMcode nonlinear</td>
+</tr>
+</tbody>
+</table>
+<h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.camb_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">CAMBBackground</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.cosmopower_jax_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">CosmoPowerJAXLCDMPerturbations</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">zs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">ks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">bg</span> <span class="o">=</span> <span class="n">CAMBBackground</span><span class="p">(</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">H0</span><span class="o">=</span><span class="mf">67.0</span><span class="p">,</span> <span class="n">Omega_b0</span><span class="o">=</span><span class="mf">0.049</span><span class="p">,</span> <span class="n">Omega_cdm0</span><span class="o">=</span><span class="mf">0.270</span><span class="p">,</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="n">As</span><span class="o">=</span><span class="mf">2.1e-9</span><span class="p">,</span> <span class="n">ns</span><span class="o">=</span><span class="mf">0.96</span><span class="p">,</span> <span class="n">mnu</span><span class="o">=</span><span class="mf">0.06</span><span class="p">,</span> <span class="n">N_mnu</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="n">w0</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">wa</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">Omega_k0</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">gamma_MG</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="p">)</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1"># Linear P(k)</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="n">lin</span> <span class="o">=</span> <span class="n">CosmoPowerJAXLCDMPerturbations</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span> <span class="n">redshifts</span><span class="o">=</span><span class="n">zs</span><span class="p">)</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="n">Pk</span> <span class="o">=</span> <span class="n">lin</span><span class="o">.</span><span class="n">matter_power_spectrum</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">ks</span><span class="p">)</span>   <span class="c1"># shape (1, len(ks))</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="c1"># Nonlinear P(k) with baryonic feedback (HMcode2020)</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="n">nl</span> <span class="o">=</span> <span class="n">CosmoPowerJAXLCDMPerturbations</span><span class="o">.</span><span class="n">NonLinear</span><span class="p">(</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>    <span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span> <span class="n">linearperturbations</span><span class="o">=</span><span class="n">lin</span><span class="p">,</span> <span class="n">redshifts</span><span class="o">=</span><span class="n">zs</span><span class="p">,</span> <span class="n">log10TAGN</span><span class="o">=</span><span class="mf">7.6</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="p">)</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="n">Pk_nl</span> <span class="o">=</span> <span class="n">nl</span><span class="o">.</span><span class="n">matter_power_spectrum</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">ks</span><span class="p">)</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="c1"># sigma8 and fsigma8 as a function of redshift</span>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"sigma8(z=0) = </span><span class="si">{</span><span class="n">lin</span><span class="o">.</span><span class="n">sigma8</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"fsigma8(z=0) = </span><span class="si">{</span><span class="n">lin</span><span class="o">.</span><span class="n">fsigma8</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="jaxperturbations">JAXPerturbations<a class="headerlink" href="#jaxperturbations" title="Permanent link">&para;</a></h3>
+<p>Pure JAX implementation for automatic differentiation.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/jax_cosmology.py</code></p>
+<p><strong>When to use</strong>: Computing gradients, Fisher forecasts, HMC sampling</p>
+<h3 id="mg-cosmopower-jax-boost-perturbations">MG CosmoPower-JAX boost perturbations<a class="headerlink" href="#mg-cosmopower-jax-boost-perturbations" title="Permanent link">&para;</a></h3>
+<p>Applies a CosmoPower-JAX modified-gravity <strong>boost</strong> <span class="arithmatex">\(B(k,z) = P*\mathrm{MG}/P*{\Lambda\mathrm{CDM}}\)</span>
+as a multiplicative operator on top of an external LCDM baseline perturbation
+object, so that the GR limit (<span class="arithmatex">\(\mu = \eta = 1\)</span>) reproduces the baseline spectrum up
+to the boost emulators' own residual at GR (<span class="arithmatex">\(|B-1| \lesssim 3\times10^{-4}\)</span> for
+<span class="arithmatex">\(k \le 1\,h/\mathrm{Mpc}\)</span>, up to <span class="arithmatex">\(2.5\times10^{-3}\)</span> at <span class="arithmatex">\(k \sim 10\,h/\mathrm{Mpc}\)</span> for the
+nonlinear multi-bin emulator); no regridding error is introduced.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/mg_cosmopower_jax_cosmology.py</code></p>
+<p><strong>When to use</strong>: Phenomenological <span class="arithmatex">\(\mu(z), \eta(z)\)</span> modified gravity where the
+nonlinear MG power spectrum is obtained by boosting a fast LCDM emulator
+(e.g. <code>CosmoPowerJAXLCDMPerturbations</code>) rather than solving MG directly.</p>
+<p><strong>Two modes</strong>, selected by <code>MGParams.bin_index</code>:</p>
+<ul>
+<li><strong>Single-bin</strong> (<code>bin_index</code> is an int): <span class="arithmatex">\(\mu, \eta\)</span> vary in one redshift bin
+  (per-bin emulators <code>mg-boost-{linear,nonlinear}-bin{0..4}.npz</code>);</li>
+<li><strong>Multi-bin</strong> (<code>bin_index=None</code>): <span class="arithmatex">\(\mu\)</span> (and <span class="arithmatex">\(\eta\)</span>, linear only) vary in all
+  five bins simultaneously (joint emulators <code>mg-boost-{linear,nonlinear}-multibin.npz</code>).</li>
+</ul>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Emulator-based MG boost applied to any external LCDM <code>Perturbations</code> solver;</li>
+<li>Provides the modified lensing parameter <span class="arithmatex">\(\Sigma(z) = \mu(1+\eta)/2\)</span> (a step
+  function over the redshift bins), applied to every lensing kernel: cosmic shear,
+  magnification bias and CMB lensing (<code>photo.shear</code>, <code>photo.positions</code>, <code>cmb</code>);</li>
+<li>Scale-independent growth rate <span class="arithmatex">\(f(z)\)</span> and <span class="arithmatex">\(\sigma_8\)</span> from an internally-built
+  linear MG <span class="arithmatex">\(P(k)\)</span>; the boost is applied on the baseline k-grid, so the GR limit
+  is recovered up to the emulators' own residual (no regridding error);</li>
+<li>Mutable <code>MGParams</code> holder for injecting sampled <span class="arithmatex">\(\mu, \eta\)</span> each likelihood call;</li>
+<li>Implemented in module-level <code>MGLinearPerturbations</code> / <code>MGNonLinearPerturbations</code>
+  (statically checked against the <code>Perturbations</code> protocol); <code>mg_perturbations</code>
+  returns subclasses with the MG parameters and LCDM baseline bound;</li>
+<li>Emulators are <strong>downloaded on first use from the Euclid-DR1-matter-emulators
+  GitHub repository</strong> and cached locally, mirroring <code>CosmoPowerJAXPerturbations</code>
+  (no local model directory needed);</li>
+</ul>
+<p><strong>Example</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.cosmopower_jax_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">CosmoPowerJAXLCDMPerturbations</span> <span class="k">as</span> <span class="n">LCDM</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.mg_cosmopower_jax_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">MGParams</span><span class="p">,</span> <span class="n">mg_perturbations</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># single-bin (bin 4); use MGParams(mu=..., eta=...) with bin_index=None for multi-bin</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">mg</span> <span class="o">=</span> <span class="n">MGParams</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">eta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">bin_index</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">Lin</span><span class="p">,</span> <span class="n">NonLin</span> <span class="o">=</span> <span class="n">mg_perturbations</span><span class="p">(</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="n">mg</span><span class="p">,</span> <span class="n">baseline_linear</span><span class="o">=</span><span class="n">LCDM</span><span class="o">.</span><span class="n">Linear</span><span class="p">,</span> <span class="n">baseline_nonlinear</span><span class="o">=</span><span class="n">LCDM</span><span class="o">.</span><span class="n">NonLinear</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="p">)</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="c1"># in the sampling wrapper, before each loglike:  mg.mu, mg.eta = ...</span>
+</code></pre></div>
+<p><strong>Emulator ranges</strong> (enforced; predictions outside raise <code>ValueError</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Single-bin</th>
+<th>Multi-bin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="arithmatex">\(\Omega_m\)</span></td>
+<td>0.25–0.35</td>
+<td>0.25–0.40</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\Omega_b\)</span></td>
+<td>0.040–0.055</td>
+<td>0.040–0.055</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(h\)</span></td>
+<td>0.65–0.73</td>
+<td>0.65–0.75</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(n_s\)</span></td>
+<td>0.95–1.00</td>
+<td>0.80–1.20</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\ln(10^{10}A_s)\)</span></td>
+<td>2.996–3.091</td>
+<td>2.944–3.219</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\mu\)</span> (per bin)</td>
+<td>0.9–1.1</td>
+<td>0.9–1.1</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\eta\)</span> (per bin)</td>
+<td>0.9–1.1</td>
+<td>0.9–1.1</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(z\)</span></td>
+<td>0.01–3</td>
+<td>0–3</td>
+</tr>
+</tbody>
+</table>
+<p>The <span class="arithmatex">\(z\)</span> upper edge is enforced (and handled by the redshift clamp); the lower
+edge is not, so <span class="arithmatex">\(z = 0\)</span> remains available for the growth/<span class="arithmatex">\(\sigma_8\)</span> normalisation.</p>
+<h3 id="mgclassperturbations">MGCLASSPerturbations<a class="headerlink" href="#mgclassperturbations" title="Permanent link">&para;</a></h3>
+<p>Interfaces with <a href="https://gitlab.com/zizgitlab/mgclass--ii">MGCLASS</a>.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/mgclass_cosmology.py</code></p>
+<p><strong>When to use</strong>: MGCLASS-specific features, comparison studies</p>
+<p><strong>Example</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.mgclass_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">MGCLASSBackground</span><span class="p">,</span> <span class="n">MGCLASSPerturbations</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">bg</span> <span class="o">=</span> <span class="n">MGCLASSBackground</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">pert</span> <span class="o">=</span> <span class="n">MGCLASSPerturbations</span><span class="p">(</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="c1"># other parameters</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="p">)</span>
+</code></pre></div>
+<h3 id="hi_classperturbations">hi_classPerturbations<a class="headerlink" href="#hi_classperturbations" title="Permanent link">&para;</a></h3>
+<p>Interfaces with <a href="https://github.com/emiliobellini/hi_class_public">hi_class</a>.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/hi_class_cosmology.py</code></p>
+<p><strong>When to use</strong>: hi_class-specific features, comparison studies</p>
+<p><strong>Example</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.hi_class_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">hi_classBackground</span><span class="p">,</span> <span class="n">hi_classPerturbations</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">bg</span> <span class="o">=</span> <span class="n">hi_classBackground</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">pert</span> <span class="o">=</span> <span class="n">hi_classPerturbations</span><span class="p">(</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="c1"># other parameters</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="p">)</span>
+</code></pre></div>
+<h3 id="emantisperturbations">EmantisPerturbations<a class="headerlink" href="#emantisperturbations" title="Permanent link">&para;</a></h3>
+<p>Accurate and fast emulator of the nonlinear matter power spectrum in modified gravity using <a href="https://gitlab.obspm.fr/e-mantis/e-mantis">e-MANTIS</a>.</p>
+<p><strong>Location</strong>: <code>cloelib/cosmology/emantis_cosmology.py</code></p>
+<p><strong>When to use</strong>: Predictions for the nonlinear matter clustering in f(R) gravity.</p>
+<p><strong>Features</strong>:</p>
+<ul>
+<li>Fast predictions of the nonlinear matter power spectrum in f(R) gravity;</li>
+<li>Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;</li>
+<li>Limited to the Hu &amp; Sawicki model (n=1) with fR0 as free parameter;</li>
+</ul>
+<h2 id="baryonic-boost-mixin-framework">Baryonic Boost Mixin Framework<a class="headerlink" href="#baryonic-boost-mixin-framework" title="Permanent link">&para;</a></h2>
+<p><code>cloelib</code> provides a composable <code>BaryonBoostMixin</code> Protocol that decouples the baryonic suppression from the underlying nonlinear solver. This makes it easy to combine any nonlinear backend with any baryonic model.</p>
+<p><strong>Protocol location</strong>: <code>cloelib.cosmology.cosmology.BaryonBoostMixin</code></p>
+<h3 id="baryonboostmixin-protocol"><code>BaryonBoostMixin</code> Protocol<a class="headerlink" href="#baryonboostmixin-protocol" title="Permanent link">&para;</a></h3>
+<p>Any class implementing this protocol must expose:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">baryonic_suppression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="n">k_hunit</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="sd">"""Return B(k,z) = P_hydro / P_DMO, shape (n_z, n_k)."""</span>
+</code></pre></div>
+<p>Three ready-made mixins are provided:</p>
+<table>
+<thead>
+<tr>
+<th>Mixin</th>
+<th>Backend</th>
+<th>Baryonic parameters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FlamingoBaryonBoostMixin</code></td>
+<td>FLAMINGO emulator</td>
+<td><code>fgas_sigma</code>, <code>Mstar_sigma</code>, <code>jet_fraction</code></td>
+</tr>
+<tr>
+<td><code>BACCOemuBaryonBoostMixin</code></td>
+<td>BACCOemu</td>
+<td><code>M_c</code>, <code>eta</code>, <code>beta</code>, <code>M1_z0_cen</code>, <code>theta_out</code>, <code>theta_inn</code>, <code>M_inn</code></td>
+</tr>
+<tr>
+<td><code>HMcode2020BaryonBoostMixin</code></td>
+<td>HMcode2020emu</td>
+<td><code>log10TAGN</code></td>
+</tr>
+</tbody>
+</table>
+<p>Each mixin <code>__init__</code> must be called <strong>after</strong> the base nonlinear <code>__init__</code> (it reads <code>self.background</code> and emulator internals set by the base).</p>
+<h3 id="with_baryon_boost-factory"><code>with_baryon_boost</code> Factory<a class="headerlink" href="#with_baryon_boost-factory" title="Permanent link">&para;</a></h3>
+<p><code>cloelib.cosmology.cosmology.with_baryon_boost(NonLinearClass, BaryonMixinClass)</code> creates a combined class with zero boilerplate:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">with_baryon_boost</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.baccoemu_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">BACCOemuNonLinearPerturbations</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlamingoBaryonBoostMixin</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="n">BACCOemuFLAMINGO</span> <span class="o">=</span> <span class="n">with_baryon_boost</span><span class="p">(</span><span class="n">BACCOemuNonLinearPerturbations</span><span class="p">,</span> <span class="n">FlamingoBaryonBoostMixin</span><span class="p">)</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="n">pert</span> <span class="o">=</span> <span class="n">BACCOemuFLAMINGO</span><span class="p">(</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="n">background</span><span class="p">,</span> <span class="n">linear_pert</span><span class="p">,</span> <span class="n">redshifts</span><span class="p">,</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    <span class="n">nonlinear_model_name</span><span class="o">=</span><span class="s2">"Arico2023"</span><span class="p">,</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="n">baryon_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">fgas_sigma</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">Mstar_sigma</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">jet_fraction</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="p">)</span>
+</code></pre></div>
+<p>The resulting object is fully <code>Perturbations</code>-compatible and can be passed directly to any <code>cloelib</code> tracer or likelihood.</p>
+<div class="admonition warning">
+<p class="admonition-title">Total vs. cold matter boost</p>
+</div>
+<p>The same suppression <span class="arithmatex">\(B(k,z)\)</span> is applied to <code>matter_power_spectrum</code> and to
+<code>matter_power_spectrum_cb</code>. The backends do not all define the response the same
+way — FLAMINGO's is <span class="arithmatex">\((b + \mathrm{cdm} + \nu)/(\mathrm{cdm} + \nu)\)</span> while
+BACCOemu's is the cold <span class="arithmatex">\((b + \mathrm{cdm})/(\mathrm{cdm} + \nu)\)</span> — and one could
+refine this by adding the neutrino contribution at linear order. The difference is
+~<span class="arithmatex">\(10^{-5}\)</span> even for <span class="arithmatex">\(m_\nu = 0.4\)</span> eV, and FLAMINGO simulations show total and cold
+boosts to be equivalent at that level, so <code>cloelib</code> treats them as the same.</p>
+<div class="admonition note">
+<p class="admonition-title">Return shape</p>
+</div>
+<p>All <code>matter_power_spectrum</code> methods (including baryonic ones) return shape <code>(n_z, n_k)</code>, also for a single redshift, which gives <code>(1, n_k)</code>. <code>baryonic_suppression</code> returns the same shape, so the boosted spectra keep it.</p>
+<h2 id="adding-your-own-perturbations-implementation">Adding Your Own Perturbations Implementation<a class="headerlink" href="#adding-your-own-perturbations-implementation" title="Permanent link">&para;</a></h2>
+<p>To add a new Perturbations implementation, follow these steps.</p>
+<h3 id="step-1-create-your-class">Step 1: Create Your Class<a class="headerlink" href="#step-1-create-your-class" title="Permanent link">&para;</a></h3>
+<p>Create <code>cloelib/cosmology/my_solver_cosmology.py</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">Perturbations</span><span class="p">,</span> <span class="n">Background</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">MySolverPerturbations</span><span class="p">:</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="w">    </span><span class="sd">"""Interface to MySolver for perturbation calculations."""</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>        <span class="n">background</span><span class="p">:</span> <span class="n">Background</span><span class="p">,</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>        <span class="n">linearperturbations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>        <span class="n">redshifts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>        <span class="n">nonlinear_model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"halofit"</span><span class="p">,</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>        <span class="n">kmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">,</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>        <span class="n">zmax</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>        <span class="o">**</span><span class="n">kwargs</span>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>    <span class="p">):</span>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="w">        </span><span class="sd">"""</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="sd">        Initialize perturbation calculator.</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a><span class="sd">        Args:</span>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a><span class="sd">            background: Background object (any implementation)</span>
+<a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a><span class="sd">            linearperturbations: Linear perturbations object. Accepted for interface</span>
+<a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="sd">                compatibility with cloelike, which always passes this as the second</span>
+<a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a><span class="sd">                positional argument when constructing NonLinPerturbations. Unused by</span>
+<a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a><span class="sd">                codes that compute nonlinear corrections internally (e.g. CAMB, CLASS).</span>
+<a id="__codelineno-14-26" name="__codelineno-14-26" href="#__codelineno-14-26"></a><span class="sd">            redshifts: Array of redshifts for the calculations.</span>
+<a id="__codelineno-14-27" name="__codelineno-14-27" href="#__codelineno-14-27"></a><span class="sd">            nonlinear_model: Which non-linear model to use</span>
+<a id="__codelineno-14-28" name="__codelineno-14-28" href="#__codelineno-14-28"></a><span class="sd">            kmax: Maximum wavenumber in 1/Mpc</span>
+<a id="__codelineno-14-29" name="__codelineno-14-29" href="#__codelineno-14-29"></a><span class="sd">            zmax: Maximum redshift</span>
+<a id="__codelineno-14-30" name="__codelineno-14-30" href="#__codelineno-14-30"></a><span class="sd">        """</span>
+<a id="__codelineno-14-31" name="__codelineno-14-31" href="#__codelineno-14-31"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_background</span> <span class="o">=</span> <span class="n">background</span>
+<a id="__codelineno-14-32" name="__codelineno-14-32" href="#__codelineno-14-32"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">nonlinear_model</span> <span class="o">=</span> <span class="n">nonlinear_model</span>
+<a id="__codelineno-14-33" name="__codelineno-14-33" href="#__codelineno-14-33"></a>
+<a id="__codelineno-14-34" name="__codelineno-14-34" href="#__codelineno-14-34"></a>        <span class="c1"># Initialize your solver</span>
+<a id="__codelineno-14-35" name="__codelineno-14-35" href="#__codelineno-14-35"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span> <span class="o">=</span> <span class="n">MySolver</span><span class="p">(</span>
+<a id="__codelineno-14-36" name="__codelineno-14-36" href="#__codelineno-14-36"></a>            <span class="n">H0</span><span class="o">=</span><span class="n">background</span><span class="o">.</span><span class="n">H0</span><span class="p">,</span>
+<a id="__codelineno-14-37" name="__codelineno-14-37" href="#__codelineno-14-37"></a>            <span class="n">Omega_b</span><span class="o">=</span><span class="n">background</span><span class="o">.</span><span class="n">Omega_b0</span><span class="p">,</span>
+<a id="__codelineno-14-38" name="__codelineno-14-38" href="#__codelineno-14-38"></a>            <span class="c1"># ... pass cosmological parameters from background</span>
+<a id="__codelineno-14-39" name="__codelineno-14-39" href="#__codelineno-14-39"></a>        <span class="p">)</span>
+<a id="__codelineno-14-40" name="__codelineno-14-40" href="#__codelineno-14-40"></a>
+<a id="__codelineno-14-41" name="__codelineno-14-41" href="#__codelineno-14-41"></a>        <span class="c1"># Set up k and z grids</span>
+<a id="__codelineno-14-42" name="__codelineno-14-42" href="#__codelineno-14-42"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">set_k_grid</span><span class="p">(</span><span class="n">kmin</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">kmax</span><span class="o">=</span><span class="n">kmax</span><span class="p">,</span> <span class="n">nk</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+<a id="__codelineno-14-43" name="__codelineno-14-43" href="#__codelineno-14-43"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">set_z_grid</span><span class="p">(</span><span class="n">zmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">zmax</span><span class="o">=</span><span class="n">zmax</span><span class="p">,</span> <span class="n">nz</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<a id="__codelineno-14-44" name="__codelineno-14-44" href="#__codelineno-14-44"></a>
+<a id="__codelineno-14-45" name="__codelineno-14-45" href="#__codelineno-14-45"></a>        <span class="c1"># Compute power spectrum</span>
+<a id="__codelineno-14-46" name="__codelineno-14-46" href="#__codelineno-14-46"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">compute_power_spectrum</span><span class="p">(</span><span class="n">nonlinear</span><span class="o">=</span><span class="n">nonlinear_model</span><span class="p">)</span>
+<a id="__codelineno-14-47" name="__codelineno-14-47" href="#__codelineno-14-47"></a>
+<a id="__codelineno-14-48" name="__codelineno-14-48" href="#__codelineno-14-48"></a>    <span class="nd">@property</span>
+<a id="__codelineno-14-49" name="__codelineno-14-49" href="#__codelineno-14-49"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">background</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Background</span><span class="p">:</span>
+<a id="__codelineno-14-50" name="__codelineno-14-50" href="#__codelineno-14-50"></a><span class="w">        </span><span class="sd">"""Return the background object."""</span>
+<a id="__codelineno-14-51" name="__codelineno-14-51" href="#__codelineno-14-51"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background</span>
+<a id="__codelineno-14-52" name="__codelineno-14-52" href="#__codelineno-14-52"></a>
+<a id="__codelineno-14-53" name="__codelineno-14-53" href="#__codelineno-14-53"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ks</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-14-54" name="__codelineno-14-54" href="#__codelineno-14-54"></a><span class="w">        </span><span class="sd">"""</span>
+<a id="__codelineno-14-55" name="__codelineno-14-55" href="#__codelineno-14-55"></a><span class="sd">        Compute the total matter power spectrum P_mm(k, z).</span>
+<a id="__codelineno-14-56" name="__codelineno-14-56" href="#__codelineno-14-56"></a>
+<a id="__codelineno-14-57" name="__codelineno-14-57" href="#__codelineno-14-57"></a><span class="sd">        Args:</span>
+<a id="__codelineno-14-58" name="__codelineno-14-58" href="#__codelineno-14-58"></a><span class="sd">            zs: Redshifts (1D array)</span>
+<a id="__codelineno-14-59" name="__codelineno-14-59" href="#__codelineno-14-59"></a><span class="sd">            ks: Wavenumbers in 1/Mpc (1D array)</span>
+<a id="__codelineno-14-60" name="__codelineno-14-60" href="#__codelineno-14-60"></a>
+<a id="__codelineno-14-61" name="__codelineno-14-61" href="#__codelineno-14-61"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-14-62" name="__codelineno-14-62" href="#__codelineno-14-62"></a><span class="sd">            P(k, z) in Mpc³, shape (len(zs), len(ks))</span>
+<a id="__codelineno-14-63" name="__codelineno-14-63" href="#__codelineno-14-63"></a><span class="sd">        """</span>
+<a id="__codelineno-14-64" name="__codelineno-14-64" href="#__codelineno-14-64"></a>        <span class="c1"># Ensure inputs are arrays</span>
+<a id="__codelineno-14-65" name="__codelineno-14-65" href="#__codelineno-14-65"></a>        <span class="n">zs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">zs</span><span class="p">)</span>
+<a id="__codelineno-14-66" name="__codelineno-14-66" href="#__codelineno-14-66"></a>        <span class="n">ks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">ks</span><span class="p">)</span>
+<a id="__codelineno-14-67" name="__codelineno-14-67" href="#__codelineno-14-67"></a>
+<a id="__codelineno-14-68" name="__codelineno-14-68" href="#__codelineno-14-68"></a>        <span class="c1"># Call solver and interpolate</span>
+<a id="__codelineno-14-69" name="__codelineno-14-69" href="#__codelineno-14-69"></a>        <span class="n">P_k_z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">get_power_spectrum</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">ks</span><span class="p">)</span>
+<a id="__codelineno-14-70" name="__codelineno-14-70" href="#__codelineno-14-70"></a>
+<a id="__codelineno-14-71" name="__codelineno-14-71" href="#__codelineno-14-71"></a>        <span class="k">return</span> <span class="n">P_k_z</span>
+<a id="__codelineno-14-72" name="__codelineno-14-72" href="#__codelineno-14-72"></a>
+<a id="__codelineno-14-73" name="__codelineno-14-73" href="#__codelineno-14-73"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">matter_power_spectrum_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ks</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-14-74" name="__codelineno-14-74" href="#__codelineno-14-74"></a><span class="w">        </span><span class="sd">"""</span>
+<a id="__codelineno-14-75" name="__codelineno-14-75" href="#__codelineno-14-75"></a><span class="sd">        Compute the CDM+baryons matter power spectrum P_cb(k, z).</span>
+<a id="__codelineno-14-76" name="__codelineno-14-76" href="#__codelineno-14-76"></a>
+<a id="__codelineno-14-77" name="__codelineno-14-77" href="#__codelineno-14-77"></a><span class="sd">        Args:</span>
+<a id="__codelineno-14-78" name="__codelineno-14-78" href="#__codelineno-14-78"></a><span class="sd">            zs: Redshifts (1D array)</span>
+<a id="__codelineno-14-79" name="__codelineno-14-79" href="#__codelineno-14-79"></a><span class="sd">            ks: Wavenumbers in 1/Mpc (1D array)</span>
+<a id="__codelineno-14-80" name="__codelineno-14-80" href="#__codelineno-14-80"></a>
+<a id="__codelineno-14-81" name="__codelineno-14-81" href="#__codelineno-14-81"></a><span class="sd">        Returns:</span>
+<a id="__codelineno-14-82" name="__codelineno-14-82" href="#__codelineno-14-82"></a><span class="sd">            P_cb(k, z) in Mpc³, shape (len(zs), len(ks))</span>
+<a id="__codelineno-14-83" name="__codelineno-14-83" href="#__codelineno-14-83"></a><span class="sd">        """</span>
+<a id="__codelineno-14-84" name="__codelineno-14-84" href="#__codelineno-14-84"></a>        <span class="n">zs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">zs</span><span class="p">)</span>
+<a id="__codelineno-14-85" name="__codelineno-14-85" href="#__codelineno-14-85"></a>        <span class="n">ks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">ks</span><span class="p">)</span>
+<a id="__codelineno-14-86" name="__codelineno-14-86" href="#__codelineno-14-86"></a>
+<a id="__codelineno-14-87" name="__codelineno-14-87" href="#__codelineno-14-87"></a>        <span class="c1"># If the solver distinguishes cb from total matter, use the dedicated method;</span>
+<a id="__codelineno-14-88" name="__codelineno-14-88" href="#__codelineno-14-88"></a>        <span class="c1"># otherwise fall back to the total matter power spectrum</span>
+<a id="__codelineno-14-89" name="__codelineno-14-89" href="#__codelineno-14-89"></a>        <span class="n">P_cb_k_z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">get_cb_power_spectrum</span><span class="p">(</span><span class="n">zs</span><span class="p">,</span> <span class="n">ks</span><span class="p">)</span>
+<a id="__codelineno-14-90" name="__codelineno-14-90" href="#__codelineno-14-90"></a>
+<a id="__codelineno-14-91" name="__codelineno-14-91" href="#__codelineno-14-91"></a>        <span class="k">return</span> <span class="n">P_cb_k_z</span>
+<a id="__codelineno-14-92" name="__codelineno-14-92" href="#__codelineno-14-92"></a>
+<a id="__codelineno-14-93" name="__codelineno-14-93" href="#__codelineno-14-93"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">growth_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">ks</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-14-94" name="__codelineno-14-94" href="#__codelineno-14-94"></a><span class="w">        </span><span class="sd">"""Calculate linear growth factor D(z, k)."""</span>
+<a id="__codelineno-14-95" name="__codelineno-14-95" href="#__codelineno-14-95"></a>        <span class="n">zs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">zs</span><span class="p">)</span>
+<a id="__codelineno-14-96" name="__codelineno-14-96" href="#__codelineno-14-96"></a>        <span class="n">ks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">ks</span><span class="p">)</span>
+<a id="__codelineno-14-97" name="__codelineno-14-97" href="#__codelineno-14-97"></a>
+<a id="__codelineno-14-98" name="__codelineno-14-98" href="#__codelineno-14-98"></a>        <span class="c1"># Most codes compute scale-independent D(z)</span>
+<a id="__codelineno-14-99" name="__codelineno-14-99" href="#__codelineno-14-99"></a>        <span class="c1"># If scale-dependent, use ks; otherwise ignore</span>
+<a id="__codelineno-14-100" name="__codelineno-14-100" href="#__codelineno-14-100"></a>        <span class="n">D_z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">get_growth_factor</span><span class="p">(</span><span class="n">zs</span><span class="p">)</span>
+<a id="__codelineno-14-101" name="__codelineno-14-101" href="#__codelineno-14-101"></a>
+<a id="__codelineno-14-102" name="__codelineno-14-102" href="#__codelineno-14-102"></a>        <span class="c1"># Return shape (len(zs), len(ks)) even if scale-independent</span>
+<a id="__codelineno-14-103" name="__codelineno-14-103" href="#__codelineno-14-103"></a>        <span class="k">return</span> <span class="n">D_z</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">zs</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ks</span><span class="p">)))</span>
+<a id="__codelineno-14-104" name="__codelineno-14-104" href="#__codelineno-14-104"></a>
+<a id="__codelineno-14-105" name="__codelineno-14-105" href="#__codelineno-14-105"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">growth_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ks</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-14-106" name="__codelineno-14-106" href="#__codelineno-14-106"></a><span class="w">        </span><span class="sd">"""Calculate growth rate f(z) = d ln D / d ln a."""</span>
+<a id="__codelineno-14-107" name="__codelineno-14-107" href="#__codelineno-14-107"></a>        <span class="k">if</span> <span class="n">zs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-14-108" name="__codelineno-14-108" href="#__codelineno-14-108"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"zs must be provided"</span><span class="p">)</span>
+<a id="__codelineno-14-109" name="__codelineno-14-109" href="#__codelineno-14-109"></a>
+<a id="__codelineno-14-110" name="__codelineno-14-110" href="#__codelineno-14-110"></a>        <span class="n">zs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">zs</span><span class="p">)</span>
+<a id="__codelineno-14-111" name="__codelineno-14-111" href="#__codelineno-14-111"></a>        <span class="n">f_z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">get_growth_rate</span><span class="p">(</span><span class="n">zs</span><span class="p">)</span>
+<a id="__codelineno-14-112" name="__codelineno-14-112" href="#__codelineno-14-112"></a>
+<a id="__codelineno-14-113" name="__codelineno-14-113" href="#__codelineno-14-113"></a>        <span class="c1"># If ks provided, expand to 2D array</span>
+<a id="__codelineno-14-114" name="__codelineno-14-114" href="#__codelineno-14-114"></a>        <span class="k">if</span> <span class="n">ks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-14-115" name="__codelineno-14-115" href="#__codelineno-14-115"></a>            <span class="n">ks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">ks</span><span class="p">)</span>
+<a id="__codelineno-14-116" name="__codelineno-14-116" href="#__codelineno-14-116"></a>            <span class="n">f_z</span> <span class="o">=</span> <span class="n">f_z</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">zs</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ks</span><span class="p">)))</span>
+<a id="__codelineno-14-117" name="__codelineno-14-117" href="#__codelineno-14-117"></a>
+<a id="__codelineno-14-118" name="__codelineno-14-118" href="#__codelineno-14-118"></a>        <span class="k">return</span> <span class="n">f_z</span>
+<a id="__codelineno-14-119" name="__codelineno-14-119" href="#__codelineno-14-119"></a>
+<a id="__codelineno-14-120" name="__codelineno-14-120" href="#__codelineno-14-120"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">sigma8_0</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-14-121" name="__codelineno-14-121" href="#__codelineno-14-121"></a><span class="w">        </span><span class="sd">"""Compute σ₈ at z=0."""</span>
+<a id="__codelineno-14-122" name="__codelineno-14-122" href="#__codelineno-14-122"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_solver</span><span class="o">.</span><span class="n">get_sigma8</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="step-2-connect-to-background">Step 2: Connect to Background<a class="headerlink" href="#step-2-connect-to-background" title="Permanent link">&para;</a></h3>
+<p>The key pattern: your Perturbations wraps around a Background object.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Users do this:</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">bg</span> <span class="o">=</span> <span class="n">CAMBBackground</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># Or any Background implementation</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">pert</span> <span class="o">=</span> <span class="n">MySolverPerturbations</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">bg</span><span class="p">)</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1"># Now pert can access:</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="n">H_z</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">hubble_parameter</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="n">chi</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">comoving_distance</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+</code></pre></div>
+<p>This means implementations can be mixed and matched — for example, using a CAMB background with a custom perturbations class.</p>
+<h3 id="step-3-handle-array-shapes">Step 3: Handle Array Shapes<a class="headerlink" href="#step-3-handle-array-shapes" title="Permanent link">&para;</a></h3>
+<p>Pay attention to array shapes—it's easy to get confused! <code>cloelib</code> will always return arrays!</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">ks</span><span class="p">):</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">    </span><span class="sd">"""</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="sd">    Output shape: (len(zs), len(ks))</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="sd">    Example:</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="sd">        zs = [0.0, 0.5, 1.0]  # 3 redshifts</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="sd">        ks = [0.1, 0.2, ...]  # 100 wavenumbers</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="sd">        P_k_z has shape (3, 100)</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="sd">    """</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>    <span class="k">pass</span>
+</code></pre></div>
+<h3 id="step-4-add-tests">Step 4: Add Tests<a class="headerlink" href="#step-4-add-tests" title="Permanent link">&para;</a></h3>
+<p>Create <code>tests/test_my_solver_cosmology.py</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.camb_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">CAMBBackground</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.my_solver_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">MySolverPerturbations</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">background</span><span class="p">():</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="w">    </span><span class="sd">"""Create a test background."""</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    <span class="k">return</span> <span class="n">CAMBBackground</span><span class="p">(</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>        <span class="n">H0</span><span class="o">=</span><span class="mf">67.5</span><span class="p">,</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>        <span class="n">Omega_b0</span><span class="o">=</span><span class="mf">0.0492</span><span class="p">,</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>        <span class="n">Omega_cdm0</span><span class="o">=</span><span class="mf">0.2650</span><span class="p">,</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>        <span class="n">As</span><span class="o">=</span><span class="mf">2.1e-9</span><span class="p">,</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>        <span class="n">ns</span><span class="o">=</span><span class="mf">0.965</span><span class="p">,</span>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>        <span class="c1"># ... minimal parameters</span>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>    <span class="p">)</span>
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_initialization</span><span class="p">(</span><span class="n">background</span><span class="p">):</span>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a><span class="w">    </span><span class="sd">"""Test Perturbations initialization."""</span>
+<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>    <span class="n">pert</span> <span class="o">=</span> <span class="n">MySolverPerturbations</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">)</span>
+<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a>    <span class="k">assert</span> <span class="n">pert</span><span class="o">.</span><span class="n">background</span> <span class="ow">is</span> <span class="n">background</span>
+<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>
+<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_matter_power_spectrum</span><span class="p">(</span><span class="n">background</span><span class="p">):</span>
+<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a><span class="w">    </span><span class="sd">"""Test P(k, z) calculation."""</span>
+<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a>    <span class="n">pert</span> <span class="o">=</span> <span class="n">MySolverPerturbations</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">)</span>
+<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a>
+<a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a>    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+<a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a>    <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+<a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a>    <span class="n">P_k_z</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">matter_power_spectrum</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+<a id="__codelineno-17-30" name="__codelineno-17-30" href="#__codelineno-17-30"></a>
+<a id="__codelineno-17-31" name="__codelineno-17-31" href="#__codelineno-17-31"></a>    <span class="c1"># Check shape</span>
+<a id="__codelineno-17-32" name="__codelineno-17-32" href="#__codelineno-17-32"></a>    <span class="k">assert</span> <span class="n">P_k_z</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+<a id="__codelineno-17-33" name="__codelineno-17-33" href="#__codelineno-17-33"></a>
+<a id="__codelineno-17-34" name="__codelineno-17-34" href="#__codelineno-17-34"></a>    <span class="c1"># Check positivity</span>
+<a id="__codelineno-17-35" name="__codelineno-17-35" href="#__codelineno-17-35"></a>    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">P_k_z</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-17-36" name="__codelineno-17-36" href="#__codelineno-17-36"></a>
+<a id="__codelineno-17-37" name="__codelineno-17-37" href="#__codelineno-17-37"></a>    <span class="c1"># Check power decreases at high z (structure less developed)</span>
+<a id="__codelineno-17-38" name="__codelineno-17-38" href="#__codelineno-17-38"></a>    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">P_k_z</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&gt;</span> <span class="n">P_k_z</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+<a id="__codelineno-17-39" name="__codelineno-17-39" href="#__codelineno-17-39"></a>
+<a id="__codelineno-17-40" name="__codelineno-17-40" href="#__codelineno-17-40"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_sigma8</span><span class="p">(</span><span class="n">background</span><span class="p">):</span>
+<a id="__codelineno-17-41" name="__codelineno-17-41" href="#__codelineno-17-41"></a><span class="w">    </span><span class="sd">"""Test σ₈ calculation."""</span>
+<a id="__codelineno-17-42" name="__codelineno-17-42" href="#__codelineno-17-42"></a>    <span class="n">pert</span> <span class="o">=</span> <span class="n">MySolverPerturbations</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">)</span>
+<a id="__codelineno-17-43" name="__codelineno-17-43" href="#__codelineno-17-43"></a>    <span class="n">sigma8</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">sigma8_0</span><span class="p">()</span>
+<a id="__codelineno-17-44" name="__codelineno-17-44" href="#__codelineno-17-44"></a>
+<a id="__codelineno-17-45" name="__codelineno-17-45" href="#__codelineno-17-45"></a>    <span class="c1"># Reasonable range for σ₈</span>
+<a id="__codelineno-17-46" name="__codelineno-17-46" href="#__codelineno-17-46"></a>    <span class="k">assert</span> <span class="mf">0.5</span> <span class="o">&lt;</span> <span class="n">sigma8</span> <span class="o">&lt;</span> <span class="mf">1.2</span>
+<a id="__codelineno-17-47" name="__codelineno-17-47" href="#__codelineno-17-47"></a>
+<a id="__codelineno-17-48" name="__codelineno-17-48" href="#__codelineno-17-48"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_growth_factor</span><span class="p">(</span><span class="n">background</span><span class="p">):</span>
+<a id="__codelineno-17-49" name="__codelineno-17-49" href="#__codelineno-17-49"></a><span class="w">    </span><span class="sd">"""Test growth factor calculation."""</span>
+<a id="__codelineno-17-50" name="__codelineno-17-50" href="#__codelineno-17-50"></a>    <span class="n">pert</span> <span class="o">=</span> <span class="n">MySolverPerturbations</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">background</span><span class="p">)</span>
+<a id="__codelineno-17-51" name="__codelineno-17-51" href="#__codelineno-17-51"></a>
+<a id="__codelineno-17-52" name="__codelineno-17-52" href="#__codelineno-17-52"></a>    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">])</span>
+<a id="__codelineno-17-53" name="__codelineno-17-53" href="#__codelineno-17-53"></a>    <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])</span>
+<a id="__codelineno-17-54" name="__codelineno-17-54" href="#__codelineno-17-54"></a>    <span class="n">D</span> <span class="o">=</span> <span class="n">pert</span><span class="o">.</span><span class="n">growth_factor</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+<a id="__codelineno-17-55" name="__codelineno-17-55" href="#__codelineno-17-55"></a>
+<a id="__codelineno-17-56" name="__codelineno-17-56" href="#__codelineno-17-56"></a>    <span class="c1"># Check shape</span>
+<a id="__codelineno-17-57" name="__codelineno-17-57" href="#__codelineno-17-57"></a>    <span class="k">assert</span> <span class="n">D</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+<a id="__codelineno-17-58" name="__codelineno-17-58" href="#__codelineno-17-58"></a>
+<a id="__codelineno-17-59" name="__codelineno-17-59" href="#__codelineno-17-59"></a>    <span class="c1"># Check D decreases with z (earlier = less grown)</span>
+<a id="__codelineno-17-60" name="__codelineno-17-60" href="#__codelineno-17-60"></a>    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">D</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&gt;</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+<a id="__codelineno-17-61" name="__codelineno-17-61" href="#__codelineno-17-61"></a>    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&gt;</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="p">:])</span>
+</code></pre></div>
+<p>Also add the new classes to the shared interface tests:</p>
+<ul>
+<li><code>tests/test_perturbations_interface.py</code>: add a builder to <code>BACKENDS</code>, so the class is checked at runtime against the common <code>growth_rate</code> convention.</li>
+<li><code>tests/typing/perturbations_conformance.py</code>: add the class, so ty checks that it implements <code>Perturbations</code> and that its constructor matches <code>LinearPerturbationsFactory</code>/<code>NonLinearPerturbationsFactory</code>.</li>
+</ul>
+<h3 id="step-5-update-documentation">Step 5: Update Documentation<a class="headerlink" href="#step-5-update-documentation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add to <code>docs/api.md</code></li>
+<li>Update supported codes table in <code>README.md</code></li>
+<li>Add usage examples within the <code>playrgound</code> repository</li>
+</ul>
+<h2 id="interface-patterns">Interface Patterns<a class="headerlink" href="#interface-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="working-with-external-codes">Working with External Codes<a class="headerlink" href="#working-with-external-codes" title="Permanent link">&para;</a></h3>
+<p>Most Perturbations implementations wrap external Boltzmann codes:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyPerturbations</span><span class="p">:</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">background</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>        <span class="c1"># Extract parameters from background</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>            <span class="s1">'h'</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">h</span><span class="p">,</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>            <span class="s1">'Omega_b'</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">Omega_b0</span><span class="p">,</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>            <span class="s1">'Omega_c'</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">Omega_cdm0</span><span class="p">,</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>            <span class="c1"># ... more parameters</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>        <span class="p">}</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>        <span class="c1"># Initialize external code</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_external</span> <span class="o">=</span> <span class="n">ExternalCode</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_external</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a>        <span class="c1"># Store for later use</span>
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_z_grid</span> <span class="o">=</span> <span class="o">...</span>
+<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_k_grid</span> <span class="o">=</span> <span class="o">...</span>
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_P_k_z_grid</span> <span class="o">=</span> <span class="o">...</span>
+</code></pre></div>
+<h2 id="tips-tricks">Tips &amp; Tricks<a class="headerlink" href="#tips-tricks" title="Permanent link">&para;</a></h2>
+<h3 id="non-linear-vs-linear-power-spectra">Non-linear vs. Linear Power Spectra<a class="headerlink" href="#non-linear-vs-linear-power-spectra" title="Permanent link">&para;</a></h3>
+<p>Make it clear what you are computing linear or non-linear power spectra at the level of the protocol. The protocols should always return this method and their corresponding CDM and baryon only matter power spectrum <code>_cb</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">ks</span><span class="p">):</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span><span class="sd">"""</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="sd">    Compute matter power spectrum.</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="sd">    """</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="k">pass</span>
+</code></pre></div>
+<h3 id="parameter-validation">Parameter Validation<a class="headerlink" href="#parameter-validation" title="Permanent link">&para;</a></h3>
+<p>Check inputs early:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">matter_power_spectrum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zs</span><span class="p">,</span> <span class="n">ks</span><span class="p">):</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">ks</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Wavenumbers must be positive"</span><span class="p">)</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">zs</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Redshifts must be non-negative"</span><span class="p">)</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">ks</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">kmax</span><span class="p">):</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"k exceeds kmax=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kmax</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p>Now that you have a grounding in Perturbations, explore:</p>
+<ul>
+<li><a href="../observables/">Observables</a> – Connect structure to survey measurements</li>
+<li><a href="../summary_statistics/">Summary Statistics</a> – Compute final data products</li>
+<li><a href="../background/">Background</a> – Review the foundation</li>
+<li><a href="../../api/">API Reference</a> – Full technical details</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../background/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Background">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Background
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../observables/" class="md-footer__link md-footer__link--next" aria-label="Next: Overview">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Overview
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright 2025 cloe-org
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.footer", "navigation.instant.preview", "navigation.path", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.tracking", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "stable", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+        <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+      
+        <script src="../../javascripts/mermaid.js"></script>
+      
+    
+  </body>
+</html>

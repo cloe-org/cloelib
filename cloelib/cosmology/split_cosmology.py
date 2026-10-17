@@ -193,7 +193,7 @@ class SplitNonLinearPerturbations:
         self,
         background: Background,
         redshifts: np.ndarray,
-        lin_perturbations_split: np.ndarray,
+        lin_perturbations_split: Perturbations,
         lin_perturbations_growth: Perturbations,
         nl_perturbations_growth: Perturbations,
     ):

@@ -110,7 +110,7 @@ def class_perturbation_instances_growth(
 
 
 @pytest.fixture
-def omega_m_growth(scope="module"):
+def Omega_m_growth(scope="module"):
     return 0.35
 
 
@@ -121,7 +121,7 @@ def split_perturbation_instances(
     class_perturbation_instances_growth,
     zs,
     ks,
-    omega_m_growth,
+    Omega_m_growth,
     scope="module",
 ):
     """Fixture to create the Linear and NonLinear instances of
@@ -131,7 +131,7 @@ def split_perturbation_instances(
     class_nl_growth = class_perturbation_instances_growth["NonLinear"]
     split_lin = SplitLinearPerturbations(
         background=class_background_instance_geo,
-        omega_m_growth=omega_m_growth,
+        Omega_m_growth=Omega_m_growth,
         redshifts=zs,
         lin_perturbations=class_lin_geo,
     )
@@ -212,7 +212,7 @@ def lin_perturb_instance_nu(
 
     split_pert = SplitLinearPerturbations(
         background=class_background_instance_geo,
-        omega_m_growth=0.3,  # to match the geometry regime for CLASS comparison
+        Omega_m_growth=0.3,  # to match the geometry regime for CLASS comparison
         redshifts=zs,
         lin_perturbations=class_pert,
     )

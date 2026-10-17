@@ -617,6 +617,7 @@ class ShearTracer:
         dndz: np.ndarray,
         z: np.ndarray,
         nuisance_params: dict,
+        Omega_m_growth: dict,
         Omega_m_lens: dict,
         ia_model: "str | Contribution | None" = None,
         tatt_loop_computer: Optional[TATTLoopComputer] = None,
@@ -663,7 +664,7 @@ class ShearTracer:
         self.background = self.perturbations.background
         self.z = z
         self.nuisance_params = nuisance_params
-        self.Omega_m_IA = self.perturbations.lin_perturbations_split.Omega_m_growth
+        self.Omega_m_IA = self.Omega_m_growth
         self.Omega_m_lens = Omega_m_lens
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 1

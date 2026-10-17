@@ -79,6 +79,10 @@ EXPECTED = {
         "_CosmoPowerLinear": "CB_CROSS_CORRELATED",
         "_CosmoPowerNonLinear": "CB_CROSS_CORRELATED",
     },
+    "split_cosmology.py": {
+        "SplitLinearPerturbations": None,
+        "SplitNonLinearPerturbations": None,
+    },
 }
 
 

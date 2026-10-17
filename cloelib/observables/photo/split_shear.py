@@ -664,7 +664,7 @@ class ShearTracer:
         self.background = self.perturbations.background
         self.z = z
         self.nuisance_params = nuisance_params
-        self.Omega_m_IA = self.Omega_m_growth
+        self.Omega_m_IA = Omega_m_growth
         self.Omega_m_lens = Omega_m_lens
         # This is to add the necessary prefactor to shear, while avoiding it in GC
         self.prefact_toggle = 1

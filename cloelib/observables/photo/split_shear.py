@@ -617,8 +617,8 @@ class ShearTracer:
         dndz: np.ndarray,
         z: np.ndarray,
         nuisance_params: dict,
-        Omega_m_growth: dict,
-        Omega_m_lens: dict,
+        Omega_m_growth: float,
+        Omega_m_lens: float,
         ia_model: "str | Contribution | None" = None,
         tatt_loop_computer: Optional[TATTLoopComputer] = None,
     ):

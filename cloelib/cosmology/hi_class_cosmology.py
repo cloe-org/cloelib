@@ -1,7 +1,12 @@
 """Implementation of Background and Perturbation cosmology using hi_class."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    CB_CROSS_LINEAR_NU,
+    Background,
+    Perturbations,
+)
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
@@ -12,7 +17,7 @@ import warnings
 
 # Cosmology imports
 try:
-    from hiclassy import HiClass  # type: ignore
+    from hiclassy import HiClass
 except ImportError as e:
     raise ImportError("hiclassy could not be imported.") from e
 
@@ -287,7 +292,7 @@ class hi_classBackground:
 
         return self.results.Om_b(zs) + self.results.Om_cdm(zs)
 
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the matter density as a function of redshift.
 
@@ -354,12 +359,13 @@ class hi_classBackground:
 class hi_classLinearPerturbations:
     """Class for perturbations cosmology using hi_class, inheriting from Perturbations parent class."""
 
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the hi_classLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 100
-        self.results = None  # Store hi_class results
 
         # Ensure hi_class is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -407,7 +413,7 @@ class hi_classLinearPerturbations:
         """
         if hubble_units or k_hunit:
             raise ValueError("This hi_class method does not yet support h-units")
-        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])  # type: ignore[union-attr]
+        self.Pk_linear = np.array([[self.results.pk(ki, zi) for ki in ks] for zi in zs])
         # To match array convention of CAMB
         return self.Pk_linear
 
@@ -451,7 +457,7 @@ class hi_classLinearPerturbations:
             )
         else:
             self.Pk_cb_linear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_linear
@@ -486,20 +492,39 @@ class hi_classLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
-        Calculate the growth rate f(z).
+        Calculate the growth rate f(z, k).
         The standard expression for scale-independent f assumes LCDM and isn't valid in modified gravity.
-        Instead, we use the scale-dependent growth rate at large k (1 Mpc^-1)
+        Instead, we use the scale-dependent growth rate, evaluated at large k (1 Mpc^-1)
+        if no wavenumbers are given.
+
+        Parameters
+        ----------
+        zs: Optional[np.ndarray]
+            Redshifts at which to evaluate the growth rate. Defaults to `self.z`.
+        ks: Optional[np.ndarray]
+            Wavenumbers at which to evaluate the growth rate.
 
         Returns
         -------
         np.ndarray
-            Scale-independent growth rate f(z)
+            Growth rate f(z) at k = 1 Mpc^-1 with shape (nz,) if ks is None,
+            and f(z, k) with shape (nz, nk) otherwise.
         """
-        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
-
-        return np.array(arr)
+        z = self.z if zs is None else np.atleast_1d(zs)
+        if ks is None:
+            return np.array(
+                [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in z]
+            )
+        return np.array(
+            [
+                [self.results.scale_dependent_growth_factor_f(ki, zi) for ki in ks]
+                for zi in z
+            ]
+        )
 
     def sigma8_0(self) -> float:
         """
@@ -511,16 +536,22 @@ class hi_classLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()
 
 
 class hi_classNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using hi_class, inheriting from Perturbations parent class."""
 
+    # hi_class runs its nonlinear model (halofit/HMcode) on P_cb separately from
+    # P_mm, so the cb x matter cross spectrum follows neither prescription
+    # exactly: they differ by ~1% at mnu = 0.15 eV with HMcode2020.
+    # CB_CROSS_LINEAR_NU only uses hi_class's own nonlinear P_cb and linear spectra.
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
+
     def __init__(
         self,
         background: Background,
-        linearperturbations: Optional[object],
+        linearperturbations: Optional[Perturbations],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
     ):
@@ -528,14 +559,15 @@ class hi_classNonLinearPerturbations:
 
         Args:
             background: Background cosmology object.
-            linearperturbations: Linear perturbations object (unused by hi_class, which computes
-                nonlinear corrections internally; accepted for interface compatibility with
-                emulator-based NonLinPerturbations classes).
+            linearperturbations: Linear perturbations object (hi_class computes the nonlinear
+                corrections internally). Only needed for the cb x matter cross spectrum,
+                e.g. `hi_classLinearPerturbations` on the same background.
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
         """
         self.background = background
         self.z = redshifts
+        self.linearperturbations = linearperturbations
         self.kmax = 100
 
         if nonlinear_model is None:
@@ -630,7 +662,7 @@ class hi_classNonLinearPerturbations:
             )
         else:
             self.Pk_cb_nonlinear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_nonlinear
@@ -665,20 +697,39 @@ class hi_classNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
-        Calculate the growth rate f(z).
+        Calculate the growth rate f(z, k).
         The standard expression for scale-independent f assumes LCDM and isn't valid in modified gravity.
-        Instead, we use the scale-dependent growth rate at large k (1 Mpc^-1)
+        Instead, we use the scale-dependent growth rate, evaluated at large k (1 Mpc^-1)
+        if no wavenumbers are given.
+
+        Parameters
+        ----------
+        zs: Optional[np.ndarray]
+            Redshifts at which to evaluate the growth rate. Defaults to `self.z`.
+        ks: Optional[np.ndarray]
+            Wavenumbers at which to evaluate the growth rate.
 
         Returns
         -------
         np.ndarray
-            Scale-independent growth rate f(z)
+            Growth rate f(z) at k = 1 Mpc^-1 with shape (nz,) if ks is None,
+            and f(z, k) with shape (nz, nk) otherwise.
         """
-        arr = [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in self.z]  # type: ignore[union-attr]
-
-        return np.array(arr)
+        z = self.z if zs is None else np.atleast_1d(zs)
+        if ks is None:
+            return np.array(
+                [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in z]
+            )
+        return np.array(
+            [
+                [self.results.scale_dependent_growth_factor_f(ki, zi) for ki in ks]
+                for zi in z
+            ]
+        )
 
     def sigma8_0(self) -> float:
         """
@@ -690,4 +741,4 @@ class hi_classNonLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()

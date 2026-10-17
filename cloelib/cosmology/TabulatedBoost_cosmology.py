@@ -9,7 +9,7 @@ the required format.
 """
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import Background, WithWavenumberGrid
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 
@@ -24,8 +24,8 @@ class TabulatedNonlinearBoost:
     Nonlinear matter power spectrum boost from a tabulated file B(k; z).
 
     The boost file is expected to have:
-      - column 1: k values (same k-grid used for all redshifts)
-      - columns 2..N: boost values B(k; z_i) for each snapshot/redshift
+      - column 1: k values in ``h/Mpc`` (same k-grid at every redshift)
+      - columns 2..N: dimensionless boost values ``B(k; z_i)``
 
     Parameters
     ----------
@@ -33,8 +33,9 @@ class TabulatedNonlinearBoost:
         A cosmological background instance containing parameters such as
         Omega_b0, Omega_cdm0, H0, ns, mnu, w0, and wa. Note w0 and wa are assumed to be LCDM values for some modified gravity models.
 
-    linearperturbations : Perturbations
-        A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline.
+    linearperturbations : WithWavenumberGrid
+        A standard linear perturbation object (e.g. from CAMB) used as the LCDM baseline;
+        only its `.k` wavenumber grid is used here.
 
     zs : np.ndarray
         Array of redshifts at which to compute the MG corrections.
@@ -45,7 +46,8 @@ class TabulatedNonlinearBoost:
 
     z_cols : Sequence[float]
         1D array or list of redshifts corresponding to columns 2..N in the
-        boost file (same order). Length must match the number of boost columns.
+        boost file (same order). Length must match the number of boost columns;
+        values and corresponding columns are sorted by redshift internally.
 
 
     high_z_policy: string (default taper)
@@ -57,15 +59,32 @@ class TabulatedNonlinearBoost:
 
     Notes
     -----
-    This class simply builds a RectBivariateSpline over (z, k) so that you can
-    pass `self.boost_interp` into `BoostedPerturbations` in exactly the same
-    way as the ReACT emulator-based version.
+    The first column is converted from ``h/Mpc`` to ``1/Mpc`` using
+    ``background.h``. The input k grid and sorted snapshot redshifts must be
+    strictly increasing and sufficiently sampled for a linear
+    ``RectBivariateSpline``; the requested ``zs`` grid must also be suitable
+    for interpolation and extrapolation. Only the column count is explicitly
+    validated, so file parsing, ordering, and spline errors otherwise
+    propagate from NumPy/SciPy. The boost is resampled onto
+    ``linearperturbations.k`` and extended at low and high k.
+
+    ``high_z_policy`` accepts ``"power_law"``, ``"freeze"``, ``"one"``, or
+    ``"taper"``. ``z_decay`` sets the taper scale. Non-power-law policies are
+    applied to requested redshifts outside the tabulated interval on either
+    side; the implementation currently does not enforce a high-z floor at
+    unity.
+
+    Raises
+    ------
+    ValueError
+        If the file has fewer than two columns, the number of redshift labels
+        does not match the boost columns, or the policy is unsupported.
     """
 
     def __init__(
         self,
         background: Background,
-        linearperturbations: Perturbations,
+        linearperturbations: WithWavenumberGrid,
         zs: np.ndarray,
         boost_file: str,
         z_cols: Sequence[float],
@@ -85,16 +104,16 @@ class TabulatedNonlinearBoost:
         ktab = data[:, 0]
         boost_kz = data[:, 1:]  # shape (Nk, Nsnap)
 
-        z_cols = np.asarray(z_cols, dtype=float)
-        if boost_kz.shape[1] != len(z_cols):
+        z_cols_arr = np.asarray(z_cols, dtype=float)
+        if boost_kz.shape[1] != len(z_cols_arr):
             raise ValueError(
                 f"Number of boost columns ({boost_kz.shape[1]}) does not match "
-                f"length of z_cols ({len(z_cols)})."
+                f"length of z_cols ({len(z_cols_arr)})."
             )
 
         # Ensure z is sorted ascending and reorder boost columns accordingly
-        sort_idx = np.argsort(z_cols)
-        z_sorted = z_cols[sort_idx]
+        sort_idx = np.argsort(z_cols_arr)
+        z_sorted = z_cols_arr[sort_idx]
         boost_zk = boost_kz[
             :, sort_idx
         ].T  # -> shape (Nz, Nk) as RectBivariateSpline expects
@@ -216,21 +235,26 @@ class TabulatedNonlinearBoost:
         self.MGboost_interp = RectBivariateSpline(z_out, k_out, boost_out, kx=1, ky=1)
 
     def mg_spectrum_boost(self, zs, ks) -> np.ndarray:
-        r"""Computes the nonlinear matter power spectrum boost.
+        r"""Evaluate the dimensionless nonlinear power-spectrum boost.
 
         Parameters
         ----------
-        ks: numpy.ndarray
-            Wave number in Mpc^{-1}
-
-        zs: numpy.ndarray
-            redshifts
+        zs : array_like
+            Redshifts at which to evaluate the boost.
+        ks : array_like
+            Wavenumbers in ``1/Mpc``.
 
         Returns
         -------
-        MGboost_interp: numpy.ndarray
-            Nonlinear matter power spectrum boost at the specified scale
-            and redshift
+        numpy.ndarray
+            Boost values. With array inputs, ``RectBivariateSpline`` uses
+            grid semantics and returns shape ``(len(zs), len(ks))``.
+
+        Notes
+        -----
+        Values outside the constructed interpolation grid use the spline's
+        extrapolation behavior. For paired-point rather than grid evaluation,
+        call ``MGboost_interp(zs, ks, grid=False)`` directly.
 
         """
 
@@ -238,6 +262,19 @@ class TabulatedNonlinearBoost:
 
 
 class TabulatedBoostedPerturbations:
+    """Apply a tabulated nonlinear boost through the Perturbations interface.
+
+    The wrapper multiplies the nonlinear base's matter power spectrum by
+    ``boost_interp(z, k)``. The nonlinear base must provide
+    ``matter_power_spectrum`` and ``sigma8_0``; the linear base must provide
+    ``background`` and ``growth_rate`` and may provide ``sigma_lensing``.
+    ``k`` and ``z`` are exposed from the nonlinear base when available. This
+    class takes its ``background`` from the linear base and asserts flatness,
+    but does not verify that the two bases use consistent backgrounds. For
+    grid-shaped spectra the boost callable must accept ``grid=False`` for
+    paired-point evaluation.
+    """
+
     def __init__(self, base_lin_perturbations, base_perturbations, boost_interp):
         """
         Applies the nonlinear boost to the LCDM nonlinear spectrum given in base_perturbations.
@@ -275,25 +312,27 @@ class TabulatedBoostedPerturbations:
         self.k = getattr(base_perturbations, "k", None)
         self.z = getattr(base_perturbations, "z", None)
 
-    def matter_power_spectrum(self, z, k):
+    def matter_power_spectrum(self, zs, ks):
         """Return the boosted nonlinear matter power spectrum.
 
         Parameters
         ----------
-        z : float or np.ndarray
+        zs : float or np.ndarray
             Redshift value or array of redshifts.
-        k : float or np.ndarray
+        ks : float or np.ndarray
             Wavenumber value or array of wavenumbers in 1/Mpc.
 
         Returns
         -------
         float or np.ndarray
-            Boosted matter power spectrum. The output is squeezed so scalar
-            inputs return a scalar, while array inputs return the corresponding
-            one- or two-dimensional array.
+            Boosted spectrum in the units returned by the base backend.
+            Inputs are promoted to 1D arrays; a base result shaped
+            ``(len(zs), len(ks))`` is multiplied by a pointwise boost, and
+            other shapes use the boost callable's ordinary argument handling.
+            The result is squeezed, removing all singleton axes.
         """
-        z = np.atleast_1d(z)
-        k = np.atleast_1d(k)
+        z = np.atleast_1d(zs)
+        k = np.atleast_1d(ks)
 
         # Get the unboosted spectrum from the base model
         P_base = self.base.matter_power_spectrum(z, k)
@@ -314,8 +353,11 @@ class TabulatedBoostedPerturbations:
 
         If `ks` is provided:
             D(z,k) = sqrt( P(z,k) / P(0,k) )
-        If `ks` is None (linear growth via boost on large scales):
-            D(z)   = sqrt( B(z,k_lin) / B(0,k_lin) ), with a sensible default k_lin.
+        If ``ks`` is ``None``, use the boost-only large-scale estimate
+        ``sqrt(B(z, k_lin) / B(0, k_lin))``. Here ``k_lin`` is the smallest
+        available ``self.k``, or ``0.02 1/Mpc`` if no grid is exposed. This
+        branch does not use the base linear growth factor. Denominators are
+        floored at ``1e-300`` and the result is squeezed.
 
         Parameters
         ----------
@@ -345,9 +387,10 @@ class TabulatedBoostedPerturbations:
 
         # Case B: linear-growth estimate from boost at large scales
         # pick a default large-scale k: prefer the smallest available k-grid if we have one
-        if getattr(self, "k", None) is not None and len(self.k) > 0:
+        self_k = getattr(self, "k", None)
+        if self_k is not None and len(self_k) > 0:
             k_lin = float(
-                np.min(self.k)
+                np.min(self_k)
             )  # typically the safest large-scale mode available
         else:
             k_lin = 2e-2  # [1/Mpc] fallback default; adjust if your units differ
@@ -363,8 +406,23 @@ class TabulatedBoostedPerturbations:
 
         return np.squeeze(D_lin)
 
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
+        """Return the linear growth rate of `base_lin_perturbations`.
+
+        The boost only modifies the nonlinear matter power spectrum, so the
+        growth rate is that of the underlying linear perturbations, see
+        `Perturbations.growth_rate`. Without `zs`, it is evaluated on `self.z`,
+        the redshift grid of `base_perturbations`, if that has one.
+        """
+        return self.base_lin.growth_rate(self.z if zs is None else zs, ks)
+
     def sigma8_0(self) -> float:
-        """Calculate the sigma8 value for the current cosmology."""
+        """Approximate boosted ``sigma8(0)`` from the boost at ``0.02 1/Mpc``.
+
+        Returns ``base.sigma8_0() * sqrt(B(0, 0.02 1/Mpc))``; this does not
+        re-integrate the boosted spectrum. The callable may make the result
+        array-valued (typically length one), despite the scalar annotation.
+        """
         B0 = self.boost_interp(np.array([0.0]), np.array([2e-2]))  # shape (nz, 1)
         B0 = np.sqrt(B0[:, 0])
         return self.base.sigma8_0() * B0

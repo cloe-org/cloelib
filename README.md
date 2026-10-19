@@ -11,7 +11,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 [![Tests: pytest](https://img.shields.io/badge/tests-pytest-blue?logo=pytest)](https://docs.pytest.org/)
 [![Linting: Ruff](https://img.shields.io/badge/linting-ruff-purple?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
 [![Code Style: Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg?logo=prettier&logoColor=white)](https://prettier.io/)
-[![Type Checking: mypy](https://img.shields.io/badge/type%20checking-mypy-8A2BE2?logo=mypy&logoColor=white)](https://mypy.readthedocs.io/)
+[![Type Checking: ty](https://img.shields.io/badge/type%20checking-ty-8A2BE2?logo=ty&logoColor=white)](https://docs.astral.sh/ty/)
 [![PyPI version](https://img.shields.io/pypi/v/cloelib.svg?logo=pypi&logoColor=white)](https://pypi.org/project/cloelib/)
 [![CRediT](https://img.shields.io/badge/contributions-CRediT-using?color=%23cd2653)](https://credit.niso.org/implementing-credit/)
 [![All Contributors](https://img.shields.io/github/all-contributors/cloe-org/cloelib?color=ee8449)](#contributors-)
@@ -25,6 +25,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 - [🚀 Installation](#-installation)
 - [📊 Usage](#-usage)
 - [🤝 Contributing](#-contributing)
+- [📚 Citation](#-citation)
 - [📜 License](#-license)
 - [🙏 Acknowledgements](#-acknowledgements)
 
@@ -49,15 +50,18 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 
 `cloelib` interfaces with the following external codes, each used by a specific internal module for its calculations:
 
-| Background                                                    | Perturbations                                                                 | SpectroPower                                                       |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [camb](https://camb.readthedocs.io)                           | [camb](https://camb.readthedocs.io)                                           | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
-| [class](https://github.com/lesgourg/class_public)             | [class](https://github.com/lesgourg/class_public)                             | [pbjcosmo](https://chiaramoretti.gitlab.io/pbj/)                   |
-| [mochi_class](https://github.com/mcataneo/mochi_class_public) | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)            | NA                                                                 |
-| [mgclass](https://gitlab.com/zizgitlab/mgclass--ii)           | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                | NA                                                                 |
-| NA                                                            | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper) | NA                                                                 |
-| NA                                                            | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                           | NA                                                                 |
-| NA                                                            | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                         | NA                                                                 |
+| Background                                                    | Perturbations                                                                                   | SpectroPower                                                       |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [camb](https://camb.readthedocs.io)                           | [camb](https://camb.readthedocs.io)                                                             | [comet-emu](https://comet-emu.readthedocs.io/en/latest/index.html) |
+| [class](https://github.com/lesgourg/class_public)             | [class](https://github.com/lesgourg/class_public)                                               | [pbjcosmo](https://chiaramoretti.gitlab.io/pbj/)                   |
+| [mochi_class](https://github.com/mcataneo/mochi_class_public) | [HMCode2020emu](https://github.com/MariaTsedrik/HMcode2020Emu.git)                              | NA                                                                 |
+| [mgclass](https://gitlab.com/zizgitlab/mgclass--ii)           | [cosmopower-jax](https://github.com/dpiras/cosmopower-jax.git)                                  | NA                                                                 |
+| NA                                                            | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper)                   | NA                                                                 |
+| NA                                                            | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                                             | NA                                                                 |
+| NA                                                            | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                                           | NA                                                                 |
+| NA                                                            | [FlamingoBaryonResponseEmulator](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator) | NA                                                                 |
+
+We do not provide installation support for `PBJ`.
 
 <!-- --8<-- [end:supported-codes] -->
 
@@ -68,6 +72,8 @@ Several optional dependencies enhance **cloelib** capabilities:
 - **`pyinstrument`** – Time profiling for performance optimization
 - **`pylevin`**, **`mpmath`** – Required for specific observational probes (i.e: COSEBIs)
 - **`tensorflow`** – Needed for certain emulator backends (i.e: `HMCode2020emu`)
+- **`baccoemu`** – Required for BACCOemu nonlinear and baryonic perturbations
+- **`FlamingoBaryonResponseEmulator`** – Required for FLAMINGO baryonic suppression
 
 These are not included in the default installation but can be installed as shown below.
 
@@ -90,25 +96,39 @@ cd cloelib
 git checkout <latest-tag>  # Find tags in "Releases"
 ```
 
-3. **Install cloelib** – Get the core library up and running:
+3. **Install cloelib** – Get the core library up and running, either from your clone:
 
 ```sh
 pip install .
 ```
 
+or directly from [PyPI](https://pypi.org/project/cloelib/) (no clone needed):
+
+```sh
+pip install cloelib
+```
+
 4. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
-pip install .[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mgclassy,mochi_classy]
+pip install .[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,tf-keras,cosmopower-jax,baccoemu,hiclassy,emantis,pbjcosmo,fastpt,react,mgclassy,FlamingoBaryonResponseEmulator]
 ```
 
 > **💡 Pro Tip:** Some shells struggle with brackets. Try quotes if needed:
 >
 > ```sh
-> pip install ."[camb,classy,hmcode2020emu,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,pyinstrument,baccoemu,emantis,pbjcosmo,react,mochi_classy,mgclassy]"
+> pip install ."[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,tf-keras,cosmopower-jax,baccoemu,hiclassy,emantis,pbjcosmo,fastpt,react,mgclassy,FlamingoBaryonResponseEmulator]"
 > ```
 
-The `react` extra installs [`MGEmu`](https://github.com/nebblu/MGEmus.git) together with the TensorFlow support it needs for the ReACT modified-gravity boost module. If you only need that stack, `pip install ".[react,camb]"` is usually enough to get started.
+The `react` extra installs the TensorFlow support needed by the ReACT modified-gravity boost module; [`MGEmu`](https://github.com/nebblu/MGEmus.git) itself is installed in step 5.
+
+5. **Install backends not available on PyPI** – HMcode2020Emu, MGEmu (needed by the `react` module) and mochi_class are only distributed from GitHub, so they cannot be declared as extras of a package published on PyPI. Install the ones you need directly:
+
+```sh
+pip install "HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"
+pip install "MGemu @ git+https://github.com/nebblu/MGEmus.git"
+pip install "mochi_classy @ git+https://github.com/mcataneo/mochi_class_public.git@mochi_classy"
+```
 
 You're all set! 🎉 Ready to compute cosmological observables.
 
@@ -148,6 +168,14 @@ git push origin feature/your-feature-name
 
 ---
 
+## 📚 Citation
+
+If you use **cloelib** in your research, please cite the software using the
+metadata in [`CITATION.cff`](CITATION.cff). On GitHub, select **Cite this repository**
+to copy the citation in APA or BibTeX format.
+
+Other contributions are acknowledged in the [contributors section](#-contributors).
+
 ## 📜 License
 
 This project is licensed under the **MIT LICENSE** – see the [LICENSE](LICENSE) file for details.
@@ -185,11 +213,11 @@ This project follows the [all-contributors](https://github.com/all-contributors/
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/chiaramoretti"><img src="https://avatars.githubusercontent.com/u/12472732?v=4?s=100" width="100px;" alt="Chiara Moretti"/><br /><sub><b>Chiara Moretti</b></sub></a><br /><a href="#code-chiaramoretti" title="Code">💻</a> <a href="#maintenance-chiaramoretti" title="Maintenance">🚧</a> <a href="#ideas-chiaramoretti" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-chiaramoretti" title="Bug reports">🐛</a> <a href="#content-chiaramoretti" title="Content">🖋</a> <a href="#doc-chiaramoretti" title="Documentation">📖</a> <a href="#talk-chiaramoretti" title="Talks">📢</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AndreaPezzotta"><img src="https://avatars.githubusercontent.com/u/29603598?v=4?s=100" width="100px;" alt="AndreaPezzotta"/><br /><sub><b>AndreaPezzotta</b></sub></a><br /><a href="#code-AndreaPezzotta" title="Code">💻</a> <a href="#maintenance-AndreaPezzotta" title="Maintenance">🚧</a> <a href="#ideas-AndreaPezzotta" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-AndreaPezzotta" title="Bug reports">🐛</a> <a href="#content-AndreaPezzotta" title="Content">🖋</a> <a href="#data-AndreaPezzotta" title="Data">🔣</a> <a href="#doc-AndreaPezzotta" title="Documentation">📖</a> <a href="#talk-AndreaPezzotta" title="Talks">📢</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="http://www.cosmostat.org/people/santiago-casas"><img src="https://avatars.githubusercontent.com/u/6987716?v=4?s=100" width="100px;" alt="Santiago Casas"/><br /><sub><b>Santiago Casas</b></sub></a><br /><a href="#code-santiagocasas" title="Code">💻</a> <a href="#maintenance-santiagocasas" title="Maintenance">🚧</a> <a href="#ideas-santiagocasas" title="Ideas, Planning, & Feedback">🤔</a> <a href="#review-santiagocasas" title="Reviewed Pull Requests">👀</a> <a href="#bug-santiagocasas" title="Bug reports">🐛</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/PedroCarrilho"><img src="https://avatars.githubusercontent.com/u/60090062?v=4?s=100" width="100px;" alt="Pedro Carrilho"/><br /><sub><b>Pedro Carrilho</b></sub></a><br /><a href="#code-PedroCarrilho" title="Code">💻</a> <a href="#maintenance-PedroCarrilho" title="Maintenance">🚧</a> <a href="#ideas-PedroCarrilho" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-PedroCarrilho" title="Bug reports">🐛</a> <a href="#content-PedroCarrilho" title="Content">🖋</a> <a href="#data-PedroCarrilho" title="Data">🔣</a> <a href="#doc-PedroCarrilho" title="Documentation">📖</a> <a href="#talk-PedroCarrilho" title="Talks">📢</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="http://ntessore.page"><img src="https://avatars.githubusercontent.com/u/3993688?v=4?s=100" width="100px;" alt="Nicolas Tessore"/><br /><sub><b>Nicolas Tessore</b></sub></a><br /><a href="#tool-ntessore" title="Tools">🔧</a> <a href="#mentoring-ntessore" title="Mentoring">🧑‍🏫</a> <a href="#code-ntessore" title="Code">💻</a> <a href="#review-ntessore" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.cosmostat.org/people/santiago-casas"><img src="https://avatars.githubusercontent.com/u/6987716?v=4?s=100" width="100px;" alt="Santiago Casas"/><br /><sub><b>Santiago Casas</b></sub></a><br /><a href="#code-santiagocasas" title="Code">💻</a> <a href="#maintenance-santiagocasas" title="Maintenance">🚧</a> <a href="#ideas-santiagocasas" title="Ideas, Planning, & Feedback">🤔</a> <a href="#review-santiagocasas" title="Reviewed Pull Requests">👀</a> <a href="#bug-santiagocasas" title="Bug reports">🐛</a> <a href="#doc-santiagocasas" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/PedroCarrilho"><img src="https://avatars.githubusercontent.com/u/60090062?v=4?s=100" width="100px;" alt="Pedro Carrilho"/><br /><sub><b>Pedro Carrilho</b></sub></a><br /><a href="#code-PedroCarrilho" title="Code">💻</a> <a href="#maintenance-PedroCarrilho" title="Maintenance">🚧</a> <a href="#ideas-PedroCarrilho" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-PedroCarrilho" title="Bug reports">🐛</a> <a href="#content-PedroCarrilho" title="Content">🖋</a> <a href="#data-PedroCarrilho" title="Data">🔣</a> <a href="#doc-PedroCarrilho" title="Documentation">📖</a> <a href="#talk-PedroCarrilho" title="Talks">📢</a> <a href="#review-PedroCarrilho" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://ntessore.page"><img src="https://avatars.githubusercontent.com/u/3993688?v=4?s=100" width="100px;" alt="Nicolas Tessore"/><br /><sub><b>Nicolas Tessore</b></sub></a><br /><a href="#tool-ntessore" title="Tools">🔧</a> <a href="#mentoring-ntessore" title="Mentoring">🧑‍🏫</a> <a href="#code-ntessore" title="Code">💻</a> <a href="#review-ntessore" title="Reviewed Pull Requests">👀</a> <a href="#bug-ntessore" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://sfarrens.github.io"><img src="https://avatars.githubusercontent.com/u/6851839?v=4?s=100" width="100px;" alt="Samuel Farrens"/><br /><sub><b>Samuel Farrens</b></sub></a><br /><a href="#tool-sfarrens" title="Tools">🔧</a> <a href="#mentoring-sfarrens" title="Mentoring">🧑‍🏫</a> <a href="#code-sfarrens" title="Code">💻</a> <a href="#review-sfarrens" title="Reviewed Pull Requests">👀</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/josecolomanadal"><img src="https://avatars.githubusercontent.com/u/83759085?v=4?s=100" width="100px;" alt="Jose Coloma Nadal"/><br /><sub><b>Jose Coloma Nadal</b></sub></a><br /><a href="#bug-josecolomanadal" title="Bug reports">🐛</a> <a href="#code-josecolomanadal" title="Code">💻</a> <a href="#ideas-josecolomanadal" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/josecolomanadal"><img src="https://avatars.githubusercontent.com/u/83759085?v=4?s=100" width="100px;" alt="Jose Coloma Nadal"/><br /><sub><b>Jose Coloma Nadal</b></sub></a><br /><a href="#bug-josecolomanadal" title="Bug reports">🐛</a> <a href="#code-josecolomanadal" title="Code">💻</a> <a href="#ideas-josecolomanadal" title="Ideas, Planning, & Feedback">🤔</a> <a href="#review-josecolomanadal" title="Reviewed Pull Requests">👀</a></td>
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/caspervedder"><img src="https://avatars.githubusercontent.com/u/187176614?v=4?s=100" width="100px;" alt="Casper Vedder"/><br /><sub><b>Casper Vedder</b></sub></a><br /><a href="#code-caspervedder" title="Code">💻</a> <a href="#ideas-caspervedder" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-caspervedder" title="Bug reports">🐛</a> <a href="#review-caspervedder" title="Reviewed Pull Requests">👀</a></td>
@@ -202,7 +230,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pburger112"><img src="https://avatars.githubusercontent.com/u/51719634?v=4?s=100" width="100px;" alt="Pierre Burger"/><br /><sub><b>Pierre Burger</b></sub></a><br /><a href="#code-pburger112" title="Code">💻</a> <a href="#ideas-pburger112" title="Ideas, Planning, & Feedback">🤔</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/davidesciotti"><img src="https://avatars.githubusercontent.com/u/84071067?v=4?s=100" width="100px;" alt="Davide Sciotti"/><br /><sub><b>Davide Sciotti</b></sub></a><br /><a href="#bug-davidesciotti" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/davidesciotti"><img src="https://avatars.githubusercontent.com/u/84071067?v=4?s=100" width="100px;" alt="Davide Sciotti"/><br /><sub><b>Davide Sciotti</b></sub></a><br /><a href="#bug-davidesciotti" title="Bug reports">🐛</a> <a href="#ideas-davidesciotti" title="Ideas, Planning, & Feedback">🤔</a> <a href="#mentoring-davidesciotti" title="Mentoring">🧑‍🏫</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/GabrieleParimbelli"><img src="https://avatars.githubusercontent.com/u/43963112?v=4?s=100" width="100px;" alt="GabrieleParimbelli"/><br /><sub><b>GabrieleParimbelli</b></sub></a><br /><a href="#bug-GabrieleParimbelli" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zahrabaghkhani"><img src="https://avatars.githubusercontent.com/u/47903409?v=4?s=100" width="100px;" alt="Zahra Baghkhani"/><br /><sub><b>Zahra Baghkhani</b></sub></a><br /><a href="#code-zahrabaghkhani" title="Code">💻</a> <a href="#ideas-zahrabaghkhani" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-zahrabaghkhani" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/fabriceroy"><img src="https://avatars.githubusercontent.com/u/29073232?v=4?s=100" width="100px;" alt="Fabrice Roy"/><br /><sub><b>Fabrice Roy</b></sub></a><br /><a href="#doc-fabriceroy" title="Documentation">📖</a> <a href="#code-fabriceroy" title="Code">💻</a> <a href="#ideas-fabriceroy" title="Ideas, Planning, & Feedback">🤔</a></td>
@@ -222,16 +250,16 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zsirap"><img src="https://avatars.githubusercontent.com/u/50758399?v=4?s=100" width="100px;" alt="zsirap"/><br /><sub><b>zsirap</b></sub></a><br /><a href="#code-zsirap" title="Code">💻</a> <a href="#ideas-zsirap" title="Ideas, Planning, & Feedback">🤔</a> <a href="#bug-zsirap" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ktanidis"><img src="https://avatars.githubusercontent.com/u/60473500?v=4?s=100" width="100px;" alt="Konstantinos Tanidis"/><br /><sub><b>Konstantinos Tanidis</b></sub></a><br /><a href="#code-ktanidis" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://chaitanyachawak.github.io/"><img src="https://avatars.githubusercontent.com/u/55046588?v=4?s=100" width="100px;" alt="Chaitanya"/><br /><sub><b>Chaitanya</b></sub></a><br /><a href="#code-ChaitanyaChawak" title="Code">💻</a> <a href="#bug-ChaitanyaChawak" title="Bug reports">🐛</a> <a href="#review-ChaitanyaChawak" title="Reviewed Pull Requests">👀</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/raphkou"><img src="https://avatars.githubusercontent.com/u/61792335?v=4?s=100" width="100px;" alt="raphkou"/><br /><sub><b>raphkou</b></sub></a><br /><a href="#bug-raphkou" title="Bug reports">🐛</a> <a href="#code-raphkou" title="Code">💻</a> <a href="#ideas-raphkou" title="Ideas, Planning, & Feedback">🤔</a> <a href="#doc-raphkou" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/raphkou"><img src="https://avatars.githubusercontent.com/u/61792335?v=4?s=100" width="100px;" alt="raphkou"/><br /><sub><b>raphkou</b></sub></a><br /><a href="#bug-raphkou" title="Bug reports">🐛</a> <a href="#code-raphkou" title="Code">💻</a> <a href="#ideas-raphkou" title="Ideas, Planning, & Feedback">🤔</a> <a href="#doc-raphkou" title="Documentation">📖</a> <a href="#review-raphkou" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ivansladoljev"><img src="https://avatars.githubusercontent.com/u/144113061?v=4?s=100" width="100px;" alt="Ivan Sladoljev"/><br /><sub><b>Ivan Sladoljev</b></sub></a><br /><a href="#code-ivansladoljev" title="Code">💻</a> <a href="#ideas-ivansladoljev" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/NastassiaG"><img src="https://avatars.githubusercontent.com/u/107264848?v=4?s=100" width="100px;" alt="NastassiaG"/><br /><sub><b>NastassiaG</b></sub></a><br /><a href="#code-NastassiaG" title="Code">💻</a> <a href="#bug-NastassiaG" title="Bug reports">🐛</a> <a href="#ideas-NastassiaG" title="Ideas, Planning, & Feedback">🤔</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/martincrocce"><img src="https://avatars.githubusercontent.com/u/29067049?v=4?s=100" width="100px;" alt="Martin Crocce"/><br /><sub><b>Martin Crocce</b></sub></a><br /><a href="#projectManagement-martincrocce" title="Project Management">📆</a> <a href="#mentoring-martincrocce" title="Mentoring">🧑‍🏫</a> <a href="#promotion-martincrocce" title="Promotion">📣</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/martincrocce"><img src="https://avatars.githubusercontent.com/u/29067049?v=4?s=100" width="100px;" alt="Martin Crocce"/><br /><sub><b>Martin Crocce</b></sub></a><br /><a href="#projectManagement-martincrocce" title="Project Management">📆</a> <a href="#mentoring-martincrocce" title="Mentoring">🧑‍🏫</a> <a href="#promotion-martincrocce" title="Promotion">📣</a> <a href="#ideas-martincrocce" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/CarmelitaCarbone"><img src="https://avatars.githubusercontent.com/u/17458225?v=4?s=100" width="100px;" alt="CarmelitaCarbone"/><br /><sub><b>CarmelitaCarbone</b></sub></a><br /><a href="#projectManagement-CarmelitaCarbone" title="Project Management">📆</a> <a href="#mentoring-CarmelitaCarbone" title="Mentoring">🧑‍🏫</a> <a href="#promotion-CarmelitaCarbone" title="Promotion">📣</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://garico92.github.io/website/"><img src="https://avatars.githubusercontent.com/u/78367368?v=4?s=100" width="100px;" alt="Giovanni"/><br /><sub><b>Giovanni</b></sub></a><br /><a href="#code-garico92" title="Code">💻</a> <a href="#ideas-garico92" title="Ideas, Planning, & Feedback">🤔</a> <a href="#doc-garico92" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/JegerBroxterman"><img src="https://avatars.githubusercontent.com/u/115992884?v=4?s=100" width="100px;" alt="Jeger Broxterman"/><br /><sub><b>Jeger Broxterman</b></sub></a><br /><a href="#code-JegerBroxterman" title="Code">💻</a> <a href="#ideas-JegerBroxterman" title="Ideas, Planning, & Feedback">🤔</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="http://www.matthieuschaller.com"><img src="https://avatars.githubusercontent.com/u/42518815?v=4?s=100" width="100px;" alt="Matthieu Schaller"/><br /><sub><b>Matthieu Schaller</b></sub></a><br /><a href="#ideas-MatthieuSchaller" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.matthieuschaller.com"><img src="https://avatars.githubusercontent.com/u/42518815?v=4?s=100" width="100px;" alt="Matthieu Schaller"/><br /><sub><b>Matthieu Schaller</b></sub></a><br /><a href="#ideas-MatthieuSchaller" title="Ideas, Planning, & Feedback">🤔</a> <a href="#mentoring-MatthieuSchaller" title="Mentoring">🧑‍🏫</a> <a href="#bug-MatthieuSchaller" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/joezuntz"><img src="https://avatars.githubusercontent.com/u/220537?v=4?s=100" width="100px;" alt="joezuntz"/><br /><sub><b>joezuntz</b></sub></a><br /><a href="#mentoring-joezuntz" title="Mentoring">🧑‍🏫</a> <a href="#ideas-joezuntz" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/KlaraBertmann"><img src="https://avatars.githubusercontent.com/u/153739278?v=4?s=100" width="100px;" alt="KlaraBertmann"/><br /><sub><b>KlaraBertmann</b></sub></a><br /><a href="#code-KlaraBertmann" title="Code">💻</a> <a href="#ideas-KlaraBertmann" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/annmapo"><img src="https://avatars.githubusercontent.com/u/18014895?v=4?s=100" width="100px;" alt="Anna Porredon"/><br /><sub><b>Anna Porredon</b></sub></a><br /><a href="#ideas-annmapo" title="Ideas, Planning, & Feedback">🤔</a> <a href="#mentoring-annmapo" title="Mentoring">🧑‍🏫</a></td>
@@ -247,10 +275,16 @@ This project follows the [all-contributors](https://github.com/all-contributors/
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MartinKaercher"><img src="https://avatars.githubusercontent.com/u/64490739?v=4?s=100" width="100px;" alt="Martin Kärcher"/><br /><sub><b>Martin Kärcher</b></sub></a><br /><a href="#code-MartinKaercher" title="Code">💻</a> <a href="#ideas-MartinKaercher" title="Ideas, Planning, & Feedback">🤔</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/chiaradeleo1"><img src="https://avatars.githubusercontent.com/u/151924166?v=4?s=100" width="100px;" alt="Chiara De Leo"/><br /><sub><b>Chiara De Leo</b></sub></a><br /><a href="#review-chiaradeleo1" title="Reviewed Pull Requests">👀</a> <a href="#mentoring-chiaradeleo1" title="Mentoring">🧑‍🏫</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/chiaradeleo1"><img src="https://avatars.githubusercontent.com/u/151924166?v=4?s=100" width="100px;" alt="Chiara De Leo"/><br /><sub><b>Chiara De Leo</b></sub></a><br /><a href="#review-chiaradeleo1" title="Reviewed Pull Requests">👀</a> <a href="#mentoring-chiaradeleo1" title="Mentoring">🧑‍🏫</a> <a href="#bug-chiaradeleo1" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ytchang05"><img src="https://avatars.githubusercontent.com/u/67809413?v=4?s=100" width="100px;" alt="Yu-Ting"/><br /><sub><b>Yu-Ting</b></sub></a><br /><a href="#code-ytchang05" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ptallada"><img src="https://avatars.githubusercontent.com/u/2226268?v=4?s=100" width="100px;" alt="Pau Tallada Crespí"/><br /><sub><b>Pau Tallada Crespí</b></sub></a><br /><a href="#ideas-ptallada" title="Ideas, Planning, & Feedback">🤔</a> <a href="#code-ptallada" title="Code">💻</a> <a href="#bug-ptallada" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://lshuns.github.io/"><img src="https://avatars.githubusercontent.com/u/41175095?v=4?s=100" width="100px;" alt="Shun-Sheng Li"/><br /><sub><b>Shun-Sheng Li</b></sub></a><br /><a href="#code-lshuns" title="Code">💻</a> <a href="#bug-lshuns" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/amandinelebrun"><img src="https://avatars.githubusercontent.com/u/10905968?v=4?s=100" width="100px;" alt="amandinelebrun"/><br /><sub><b>amandinelebrun</b></sub></a><br /><a href="#review-amandinelebrun" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://sankarshana16.github.io/"><img src="https://avatars.githubusercontent.com/u/52423565?v=4?s=100" width="100px;" alt="Sankarshana Srinivasan"/><br /><sub><b>Sankarshana Srinivasan</b></sub></a><br /><a href="#code-sankarshana16" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zuzannakr"><img src="https://avatars.githubusercontent.com/u/12124870?v=4?s=100" width="100px;" alt="zuzannakr"/><br /><sub><b>zuzannakr</b></sub></a><br /><a href="#code-zuzannakr" title="Code">💻</a> <a href="#maintenance-zuzannakr" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://gfabellan.github.io/"><img src="https://avatars.githubusercontent.com/u/59618978?v=4?s=100" width="100px;" alt="Guillermo Franco Abellán"/><br /><sub><b>Guillermo Franco Abellán</b></sub></a><br /><a href="#code-GFAbellan" title="Code">💻</a> <a href="#ideas-GFAbellan" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>

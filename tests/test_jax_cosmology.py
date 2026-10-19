@@ -1,8 +1,7 @@
+import jax
 import jax.numpy as jnp
 import pytest
-
-# To uncomment when test_matter_power_spectrum_cb is set up:
-# from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose
 
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.cosmology.jax_cosmology import (
@@ -400,39 +399,147 @@ def test_jax_growth_rate(jax_perturbation_instances, key, zs, ks):
     assert result.ndim == 1
 
 
-def test_matter_power_spectrum_cb():
-    # not implemented yet
-    """
-    # Cosmology parameters
-    print("# Cosmology parameters")
-    _cosmo_pars = dict(
-        H0=67.7,
-        Omega_cdm0=0.12 / 0.677**2,
-        Omega_b0=0.022 / 0.677**2,
-        Omega_k0=0.0,
-        w0=-1.0,
-        wa=0.0,
-        ns=0.96,
-        mnu=0.1,
-        As=2e-9,
-        gamma_MG=0.0,
-        N_mnu=1,
-    )
-    background = JAXBackground(**_cosmo_pars)
+_PCB_COSMO_PARS = {
+    "H0": 67.7,
+    "Omega_cdm0": 0.12 / 0.677**2,
+    "Omega_b0": 0.022 / 0.677**2,
+    "Omega_k0": 0.0,
+    "w0": -1.0,
+    "wa": 0.0,
+    "ns": 0.96,
+    "mnu": 0.1,
+    "As": 2e-9,
+    "gamma_MG": 0.0,
+    "N_mnu": 1,
+}
+_PCB_ZS = jnp.array([0.0, 0.5, 1.0, 2.0])
+_PCB_KS = jnp.logspace(-3, jnp.log10(5.0), 30)
 
-    # linear
-    perturbations = JAXLinearPerturbations(background)
-    assert_allclose(perturbations.matter_power_spectrum(0, 1), 80.534861)
-    assert_allclose(perturbations.matter_power_spectrum_cb(0, 1), 81.748209, rtol=1e-03)
 
-    # non-linear
-    perturbations_nl = JAXNonLinearPerturbations(
-        background, jnp.linspace(0.0, 2.0, 100)
-    )
+def _f_cb(background):
+    return (background.Omega_b0 + background.Omega_cdm0) / background.Omega_m0
+
+
+@pytest.mark.parametrize(
+    "perturbations_class", [JAXLinearPerturbations, JAXNonLinearPerturbations]
+)
+def test_matter_power_spectrum_cb_reference_ratio(perturbations_class):
+    # P_cb / P_mm at z = 0, k = 1/Mpc: P_cb = 81.748209 and P_mm = 80.534861
+    # (linear), 747.017036 and 736.010737 (non-linear).
+    expected = {
+        JAXLinearPerturbations: 81.748209 / 80.534861,
+        JAXNonLinearPerturbations: 747.017036 / 736.010737,
+    }[perturbations_class]
+    perturbations = perturbations_class(JAXBackground(**_PCB_COSMO_PARS))
+    zs, ks = jnp.array([0.0]), jnp.array([1.0])
+    ratio = perturbations.matter_power_spectrum_cb(
+        zs, ks
+    ) / perturbations.matter_power_spectrum(zs, ks)
+    assert_allclose(ratio, expected, rtol=1e-3)
+
+
+@pytest.mark.parametrize(
+    "perturbations_class", [JAXLinearPerturbations, JAXNonLinearPerturbations]
+)
+def test_matter_power_spectrum_cb_equals_pmm_without_massive_neutrinos(
+    perturbations_class,
+):
+    background = JAXBackground(**{**_PCB_COSMO_PARS, "mnu": 0.0, "N_mnu": 0})
+    perturbations = perturbations_class(background)
     assert_allclose(
-        perturbations_nl.matter_power_spectrum(0, 1), 736.010737, rtol=1.0e-03
+        perturbations.matter_power_spectrum_cb(_PCB_ZS, _PCB_KS),
+        perturbations.matter_power_spectrum(_PCB_ZS, _PCB_KS),
+        rtol=1e-12,
     )
+
+
+def _linear_pcb_over_pmm(linear, zs, ks, **kwargs):
+    return linear.matter_power_spectrum_cb(
+        zs, ks, **kwargs
+    ) / linear.matter_power_spectrum(zs, ks, **kwargs)
+
+
+def test_linear_pcb_asymptotics():
+    # Above the neutrino free-streaming scale P_cb = P_mm; well below it
+    # neutrinos don't cluster and P_mm = f_cb^2 P_cb.
+    background = JAXBackground(**_PCB_COSMO_PARS)
+    linear = JAXLinearPerturbations(background)
+    ratio = _linear_pcb_over_pmm(linear, _PCB_ZS, jnp.array([1e-5, 5.0]))
+    assert_allclose(ratio[:, 0], 1.0, rtol=1e-4)
+    assert_allclose(ratio[:, 1], 1.0 / _f_cb(background) ** 2, rtol=1e-4)
+    # The suppression grows monotonically with k.
+    ratio = _linear_pcb_over_pmm(linear, _PCB_ZS, _PCB_KS)
+    assert jnp.all(jnp.diff(ratio, axis=1) >= 0.0)
+
+
+def test_linear_pcb_k_units():
+    # The same physical wavenumbers in 1/Mpc and h/Mpc give the same ratio.
+    linear = JAXLinearPerturbations(JAXBackground(**_PCB_COSMO_PARS))
+    h = _PCB_COSMO_PARS["H0"] / 100
     assert_allclose(
-        perturbations_nl.matter_power_spectrum_cb(0, 1), 747.017036, rtol=1.0e-03
+        _linear_pcb_over_pmm(linear, _PCB_ZS, _PCB_KS / h, k_hunit=True),
+        _linear_pcb_over_pmm(linear, _PCB_ZS, _PCB_KS),
+        rtol=1e-12,
     )
-    """
+
+
+def test_nonlinear_pcb_keeps_neutrinos_linear():
+    # P_mm^NL - P_mm^L = f_cb^2 (P_cb^NL - P_cb^L), and P_cb^NL = P_cb^L on
+    # linear scales.
+    background = JAXBackground(**_PCB_COSMO_PARS)
+    nonlinear = JAXNonLinearPerturbations(background)
+    linear = nonlinear.linearperturbations
+    f_cb2 = _f_cb(background) ** 2
+    assert_allclose(
+        nonlinear.matter_power_spectrum(_PCB_ZS, _PCB_KS)
+        - linear.matter_power_spectrum(_PCB_ZS, _PCB_KS),
+        f_cb2
+        * (
+            nonlinear.matter_power_spectrum_cb(_PCB_ZS, _PCB_KS)
+            - linear.matter_power_spectrum_cb(_PCB_ZS, _PCB_KS)
+        ),
+        rtol=1e-10,
+        atol=1e-10,
+    )
+    ks = jnp.logspace(-4, -3, 5)
+    assert_allclose(
+        nonlinear.matter_power_spectrum_cb(_PCB_ZS, ks),
+        linear.matter_power_spectrum_cb(_PCB_ZS, ks),
+        rtol=2e-3,
+    )
+
+
+@pytest.mark.parametrize(
+    "perturbations_class", [JAXLinearPerturbations, JAXNonLinearPerturbations]
+)
+def test_matter_power_spectrum_cb_jit(perturbations_class):
+    perturbations = perturbations_class(JAXBackground(**_PCB_COSMO_PARS))
+    assert_allclose(
+        jax.jit(perturbations.matter_power_spectrum_cb)(_PCB_ZS, _PCB_KS),
+        perturbations.matter_power_spectrum_cb(_PCB_ZS, _PCB_KS),
+        rtol=1e-12,
+    )
+
+
+@pytest.mark.parametrize("mnu, N_mnu", [(0.1, 1), (0.0, 0)])
+@pytest.mark.parametrize("parameter", ["mnu", "Omega_cdm0", "H0"])
+def test_matter_power_spectrum_cb_gradient(parameter, mnu, N_mnu):
+    # Finite gradients also without massive neutrinos, where the
+    # free-streaming terms are guarded, and matching finite differences.
+    pars = {**_PCB_COSMO_PARS, "mnu": mnu, "N_mnu": N_mnu}
+
+    def loss(value):
+        background = JAXBackground(**{**pars, parameter: value})
+        pk = JAXNonLinearPerturbations(background).matter_power_spectrum_cb(
+            _PCB_ZS, _PCB_KS
+        )
+        return jnp.sum(jnp.log(pk))
+
+    x0 = pars[parameter]
+    grad = jax.grad(loss)(x0)
+    assert jnp.isfinite(grad)
+    if parameter == "mnu" and mnu == 0.0:
+        return  # one-sided at the boundary of the physical range
+    eps = 1e-5 * max(abs(x0), 1.0)
+    fd = (loss(x0 + eps) - loss(x0 - eps)) / (2 * eps)
+    assert_allclose(grad, fd, rtol=1e-4)

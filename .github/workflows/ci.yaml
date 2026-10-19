@@ -73,7 +73,10 @@ jobs:
             "${ENV_PREFIX}/bin/python" -m pip install --upgrade pip
           env PATH="$PATH" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
             "${ENV_PREFIX}/bin/python" -m pip install \
-            ".[camb,classy,euclidemu2,baccoemu,emantis,react,hiclassy,mgclassy,mochi_classy]"
+            ".[camb,classy,euclidemu2,baccoemu,FlamingoBaryonResponseEmulator,emantis,react,hiclassy,mgclassy]" \
+            "HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git" \
+            "MGemu @ git+https://github.com/nebblu/MGEmus.git" \
+            "mochi_classy @ git+https://github.com/mcataneo/mochi_class_public.git@mochi_classy"
       - name: Run tests
         run: mamba run -n $ENV_NAME python -m pytest
   build:

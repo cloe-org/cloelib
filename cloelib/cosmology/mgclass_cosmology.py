@@ -1,7 +1,13 @@
 """Implementation of Background and Perturbation cosmology using MGCLASS, a patch to CLASS for modified gravity models."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    CB_CROSS_LINEAR_NU,
+    Background,
+    Perturbations,
+    growth_rate_on_redshifts,
+)
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 
 # General imports
@@ -287,7 +293,7 @@ class MGCLASSBackground:
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
-    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_cb(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
 
@@ -297,25 +303,15 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values (no neutrinos).
         """
+        z = np.atleast_1d(np.asarray(zs, dtype=float))
+        Omegacb = (
+            (self.results.Omega_b() + self.results.Omega0_cdm())
+            * (1 + z) ** 3.0
+            / (self.hubble_parameter(z) / self.H0) ** 2.0
+        )
+        return Omegacb[0] if np.ndim(zs) == 0 else Omegacb
 
-        try:
-            Omegacb = np.array(
-                [
-                    (self.results.Omega_b() + self.results.Omega0_cdm())
-                    * (1 + z) ** 3.0
-                    / (self.hubble_parameter(z) / self.H0) ** 2.0
-                    for z in zs
-                ]
-            )
-        except TypeError:
-            Omegacb = (
-                (self.results.Omega_b() + self.results.Omega0_cdm())
-                * (1 + zs) ** 3.0
-                / (self.hubble_parameter(zs) / self.H0) ** 2.0
-            )
-        return Omegacb
-
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the matter density as a function of redshift.
 
@@ -325,13 +321,11 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        try:
-            Omegam = np.array([self.results.Om_m(z) for z in zs])
-        except TypeError:
-            Omegam = self.results.Om_m(zs)
-        return Omegam
+        if np.ndim(zs) == 0:
+            return self.results.Om_m(zs)
+        return np.array([self.results.Om_m(z) for z in np.asarray(zs)])
 
-    def Omega_b(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_b(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the baryon density as a function of redshift.
 
@@ -341,22 +335,13 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        try:
-            Omegab = np.array(
-                [
-                    self.results.Omega_b()
-                    * (1 + z) ** 3.0
-                    / (self.hubble_parameter(z) / self.H0) ** 2.0
-                    for z in zs
-                ]
-            )
-        except TypeError:
-            Omegab = (
-                self.results.Omega_b()
-                * (1 + zs) ** 3.0
-                / (self.hubble_parameter(zs) / self.H0) ** 2.0
-            )
-        return Omegab
+        z = np.atleast_1d(np.asarray(zs, dtype=float))
+        Omegab = (
+            self.results.Omega_b()
+            * (1 + z) ** 3.0
+            / (self.hubble_parameter(z) / self.H0) ** 2.0
+        )
+        return Omegab[0] if np.ndim(zs) == 0 else Omegab
 
     @property
     def rdrag(self) -> float:
@@ -371,6 +356,8 @@ class MGCLASSBackground:
 
 class MGCLASSLinearPerturbations:
     """Class for perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
+
+    cb_cross_prescription = CB_CROSS_CORRELATED
 
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the MGCLASSLinearPerturbation instance."""
@@ -504,22 +491,47 @@ class MGCLASSLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
         Calculate the growth rate f(z).
+
+        Parameters
+        ----------
+        zs: Optional[np.ndarray]
+            Redshifts at which to evaluate the growth rate, interpolated on
+            `self.z`. Defaults to `self.z`.
+        ks: Optional[np.ndarray]
+            Wavenumbers used to broadcast the growth rate.
 
         Returns
         -------
         np.ndarray
-            Scale-independent growth rate f(z)
+            Scale-independent growth rate f(z), with shape (nz,) if ks is None
+            and (nz, nk) otherwise.
+
+        Raises
+        ------
+        ValueError
+            If the instance was built on fewer than 3 redshifts.
         """
+        if len(self.z) < 3:
+            raise ValueError(
+                "The MGCLASS growth rate is computed by finite differences on the "
+                "redshift grid, which needs at least 3 redshifts, got "
+                f"{len(self.z)}."
+            )
         D_z_k0 = self.growth_factor(self.z, np.array([1.0e-2]))
 
-        return (
+        # Second-order differences also at the grid edges, where first-order
+        # ones bias f(z) by several per cent.
+        f_z = (
             -(1 + self.z)
             / D_z_k0[:, 0]
-            * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])
+            * np.gradient(D_z_k0[:, 0], self.z, edge_order=2)
         )
+        return growth_rate_on_redshifts(self.z, f_z, zs, ks)
 
     def sigma8_0(self) -> float:
         """
@@ -537,16 +549,32 @@ class MGCLASSLinearPerturbations:
 class MGCLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
 
+    # MGCLASS runs its nonlinear model (halofit/HMcode) on P_cb separately from
+    # P_mm, so the cb x matter cross spectrum follows neither prescription
+    # exactly: they differ by ~1% at mnu = 0.15 eV with HMcode2020.
+    # CB_CROSS_LINEAR_NU only uses MGCLASS's own nonlinear P_cb and linear spectra.
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
+
     def __init__(
         self,
         background: Background,
-        linearperturbations: Optional[object],
+        linearperturbations: Optional[Perturbations],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
     ):
-        """Initialize the MGCLASSNonLinearPerturbation instance."""
+        """Initialize the MGCLASSNonLinearPerturbation instance.
+
+        Args:
+            background: Background cosmology object.
+            linearperturbations: Linear perturbations object (MGCLASS computes the nonlinear
+                corrections internally). Only needed for the cb x matter cross spectrum,
+                e.g. `MGCLASSLinearPerturbations` on the same background.
+            redshifts (np.ndarray): Array of redshifts for the calculations.
+            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
+        """
         self.background = background
         self.z = redshifts
+        self.linearperturbations = linearperturbations
         self.kmax = 100
 
         if nonlinear_model is None:
@@ -677,22 +705,47 @@ class MGCLASSNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
         Calculate the growth rate f(z).
+
+        Parameters
+        ----------
+        zs: Optional[np.ndarray]
+            Redshifts at which to evaluate the growth rate, interpolated on
+            `self.z`. Defaults to `self.z`.
+        ks: Optional[np.ndarray]
+            Wavenumbers used to broadcast the growth rate.
 
         Returns
         -------
         np.ndarray
-            Scale-independent growth rate f(z)
+            Scale-independent growth rate f(z), with shape (nz,) if ks is None
+            and (nz, nk) otherwise.
+
+        Raises
+        ------
+        ValueError
+            If the instance was built on fewer than 3 redshifts.
         """
+        if len(self.z) < 3:
+            raise ValueError(
+                "The MGCLASS growth rate is computed by finite differences on the "
+                "redshift grid, which needs at least 3 redshifts, got "
+                f"{len(self.z)}."
+            )
         D_z_k0 = self.growth_factor(self.z, np.array([1.0e-2]))
 
-        return (
+        # Second-order differences also at the grid edges, where first-order
+        # ones bias f(z) by several per cent.
+        f_z = (
             -(1 + self.z)
             / D_z_k0[:, 0]
-            * np.gradient(D_z_k0[:, 0], self.z[1] - self.z[0])
+            * np.gradient(D_z_k0[:, 0], self.z, edge_order=2)
         )
+        return growth_rate_on_redshifts(self.z, f_z, zs, ks)
 
     def sigma8_0(self) -> float:
         """

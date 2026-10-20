@@ -646,6 +646,11 @@ def _tatt_m_per_bin_amplitudes(
         A2^i  = k1 * A1^i
         bTA^i = k2 * log10(Mh^i/M0) - k3
 
+    `A2^i` here is the z=0 value: the full `A2^i(z) = k1*D(z)*A1^i` carries a
+    growth factor, which `_TATTMTcContribution._shape` applies (it is the
+    same for every bin, so it belongs to the shared z-shape, not to these
+    per-bin scalars) - see `TATTMContribution`'s docstring.
+
     `Mh^i`/`M0` (i.e. `log10_Mh_{i}`/`log10_M0`) are in Msun/h,
     - `Mh^i/M0` is a dimensionless ratio, so
     nothing here enforces that unit choice, but `log10_Mh_{i}` and
@@ -863,8 +868,9 @@ class _TATTMComponentContribution(IntrinsicAlignmentContribution):
         and `C1delta^i(z)` (since `C1delta^i(z) = bTA^i * C1^i(z)` reuses
         `C1^i(z)`'s own shape exactly). The default here, inherited
         unchanged by `_TATTMTaContribution`/`_TATTMTbContribution` -
-        `_TATTMTcContribution` overrides this with its own `s_2(z)`, since
-        `C2^i(z)` has a different D(z) power.
+        `_TATTMTcContribution` overrides this with its own
+        `s_2(z) = 5*C_IA*Omega_m0/D(z)`, which differs from `s_1(z)` only by
+        the factor -5, so that `C2^i(z)/C1^i(z)` is redshift independent.
         """
         d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
         return -self.C_IA * self._tracer.background.Omega_m(0.0) / d
@@ -941,12 +947,18 @@ class _TATTMTbContribution(_TATTMComponentContribution):
 
 
 class _TATTMTcContribution(_TATTMComponentContribution):
-    """C2-weighted rank-1 term: per-bin amplitude `a2^i = f_r^i*A2^i`,
-    shared shape `5*C_IA*Omega_m0/D(z)**2`."""
+    """C2-weighted rank-1 term: per-bin amplitude `a2^i = f_r^i*k1*A1^i`
+    (the z=0 value of `f_r^i*A2^i`), shared shape `5*C_IA*Omega_m0/D(z)`
+    (= -5 * `s_1(z)`).
+
+    The shape has one power of D(z) less than TATT's `5*C_IA*Omega_m0/D(z)**2`
+    because it also carries the growth factor of `A2^i(z) = k1*D(z)*A1^i`,
+    which keeps `C2^i(z)/C1^i(z) = -5*k1` independent of redshift - see
+    `TATTMContribution`'s docstring."""
 
     def _shape(self, zs):
         d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
-        return 5 * self.C_IA * self._tracer.background.Omega_m(0.0) / d**2
+        return 5 * self.C_IA * self._tracer.background.Omega_m(0.0) / d
 
     def get_requirements_for_interaction(self, other):
         names = (
@@ -974,13 +986,22 @@ class TATTMContribution(IntrinsicAlignmentContribution):
     tomographic-bin halo mass and red-galaxy fraction, rather than
     `TATTContribution`'s single global A1/A2/bTA.
 
-        A1^i  = alphaM * (Mh^i/M0)^betaM
-        A2^i  = k1 * A1^i
-        bTA^i = k2 * log10(Mh^i/M0) - k3
+        A1^i     = alphaM * (Mh^i/M0)^betaM
+        A2^i(z)  = k1 * D(z) * A1^i
+        bTA^i    = k2 * log10(Mh^i/M0) - k3
 
         C1^i(z)      = -f_r^i * A1^i * C_IA * Omega_m0 / D(z)
-        C2^i(z)      =  5 * f_r^i * A2^i * C_IA * Omega_m0 / D(z)**2
+        C2^i(z)      =  5 * f_r^i * A2^i(z) * C_IA * Omega_m0 / D(z)**2
+                     =  5 * f_r^i * k1 * A1^i * C_IA * Omega_m0 / D(z)
         C1delta^i(z) =  bTA^i * C1^i(z)
+
+    The growth factor in `A2^i(z)` makes `C2^i(z)/C1^i(z) = -5*k1` (and
+    `C1delta^i(z)/C1^i(z) = bTA^i`) independent of redshift, as found for the
+    quadratic shape biases in simulations (e.g. Akitsu, Li & Okumura 2023,
+    arXiv:2306.00969), rather than keeping `A2/A1` constant, whose ratio of
+    C's would then depend on TATT's normalisation of A2 by an extra D(z).
+    `D(z)` is normalised to D(0) = 1, so `k1`/`k2`/`k3` are the z=0 values
+    (Herle et al.'s measurements).
 
     Unlike `TATTContribution`, there is no `(1+z)^eta` redshift evolution
     here - the per-bin halo mass `Mh^i` (and fixed red fraction `f_r^i`) is
@@ -1029,7 +1050,8 @@ class TATTMContribution(IntrinsicAlignmentContribution):
         (not one per component) so `PBJTATTLoopComputer`'s own FAST-PT
         cache and linear-perturbations source stay consistent across all
         three.
-      k1: A2/A1 ratio (global; default 0.073, Herle et al.'s simple
+      k1: sets C2/C1 = -5*k1 at all redshifts, i.e. A2/A1 = k1*D(z),
+        = k1 at z=0 (global; default 0.073, Herle et al.'s simple
         iterative-inertia-tensor value - `nuisance_params.get("k1", 0.073)`
         - but sampled the same way as any other nuisance parameter if
         freed).

@@ -23,6 +23,7 @@ from cloelib.observables.photo.shear import (
     _TATTMTaContribution,
     _TATTMTbContribution,
     _TATTMTcContribution,
+    _growth_factor_1d,
     _tatt_m_per_bin_amplitudes,
 )
 from cloelib.observables.photo.spectrum_engine import SpectraBank
@@ -66,6 +67,17 @@ def _tatt_m_tracer(perturbations, dndz, z, n_z_bins, log10_mh, f_r, **extra):
         ia_model="TATT-M",
         tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
+
+
+def _with_c2_times_growth(tracer):
+    """Give a plain-TATT tracer TATT-M's C2 convention, `A2(z) = A2 * D(z)`
+    (i.e. C2/C1 constant in z), by multiplying its `_C2` by the growth
+    factor. Used as the reference when TATT-M collapses to TATT."""
+    ia, c2 = tracer.ia, tracer.ia._C2
+    ia._C2 = lambda zs: c2(zs) * _growth_factor_1d(
+        ia._loop_computer.linear_perturbations, zs
+    )
+    return tracer
 
 
 def test_tatt_m_per_bin_amplitudes_match_hand_formula():
@@ -155,7 +167,8 @@ def test_get_ia_effective_spectra_bin_pair_matches_collapsed_tatt_z(cosmo_setup)
     when every bin is engineered to share the same (A1, A2, bTA) - this
     compares the raw effective-Pk grids directly (no Limber interpolation
     involved, unlike the Cl-level collapse test), so the tolerance can be
-    tight.
+    tight. The TATT reference uses TATT-M's C2 convention (C2 times D(z),
+    see `_with_c2_times_growth`).
     """
     perturbations, z = cosmo_setup
     dndz = np.ones((1, len(z)))
@@ -182,13 +195,15 @@ def test_get_ia_effective_spectra_bin_pair_matches_collapsed_tatt_z(cosmo_setup)
         k3=k3,
         log10_M0=log10_M0,
     )
-    tatt_z_tracer = ShearTracer(
-        perturbations=perturbations,
-        dndz=dndz,
-        z=z,
-        nuisance_params=_shear_nuisance(1, A2IA=A2, bTA=b_ta, EtaIA=0.0, AIA=A1),
-        ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
+    tatt_z_tracer = _with_c2_times_growth(
+        ShearTracer(
+            perturbations=perturbations,
+            dndz=dndz,
+            z=z,
+            nuisance_params=_shear_nuisance(1, A2IA=A2, bTA=b_ta, EtaIA=0.0, AIA=A1),
+            ia_model="TATT",
+            tatt_loop_computer=_StubTATTLoopComputer(perturbations),
+        )
     )
 
     ks = np.logspace(-3, 1, 20)
@@ -372,9 +387,11 @@ def test_tatt_m_derived_terms_cached_not_just_raw_kernels(cosmo_setup):
 def test_tatt_m_collapses_to_tatt_z_when_bins_identical(cosmo_setup):
     """With per-bin Mh/f_r engineered so every bin gets the SAME (A1, A2,
     bTA), TATT-M must reproduce plain TATT (eta1=eta2=0, matching TATT-M's
-    lack of any (1+z)^eta factor) bin-by-bin, tightly - both go through
-    `_compute_cl_generalized`, so there's no legacy-vs-generalized numerical
-    gap to tolerate (unlike the existing TATT-vs-NLA comparison).
+    lack of any (1+z)^eta factor, and with C2 times D(z), matching TATT-M's
+    A2(z) = k1*D(z)*A1 - see `_with_c2_times_growth`) bin-by-bin, tightly -
+    both go through `_compute_cl_generalized`, so there's no
+    legacy-vs-generalized numerical gap to tolerate (unlike the existing
+    TATT-vs-NLA comparison).
     """
     perturbations, z = cosmo_setup
     n_z_bins = 2
@@ -406,13 +423,17 @@ def test_tatt_m_collapses_to_tatt_z_when_bins_identical(cosmo_setup):
         k3=k3,
         log10_M0=log10_M0,
     )
-    tatt_z_tracer = ShearTracer(
-        perturbations=perturbations,
-        dndz=dndz,
-        z=z,
-        nuisance_params=_shear_nuisance(n_z_bins, A2IA=A2, bTA=b_ta, EtaIA=0.0, AIA=A1),
-        ia_model="TATT",
-        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
+    tatt_z_tracer = _with_c2_times_growth(
+        ShearTracer(
+            perturbations=perturbations,
+            dndz=dndz,
+            z=z,
+            nuisance_params=_shear_nuisance(
+                n_z_bins, A2IA=A2, bTA=b_ta, EtaIA=0.0, AIA=A1
+            ),
+            ia_model="TATT",
+            tatt_loop_computer=_StubTATTLoopComputer(perturbations),
+        )
     )
 
     cl_tatt_m = AngularTwoPoint(tatt_m_tracer, tatt_m_tracer).get_Cl_tensor(ells, 0, ks)
@@ -429,6 +450,33 @@ def test_tatt_m_collapses_to_tatt_z_when_bins_identical(cosmo_setup):
     # empirically ~1.6% here, an expected footprint of this design (see
     # TATTMContribution's docstring), not a bug.
     np.testing.assert_allclose(np.asarray(cl_tatt_m), np.asarray(cl_tatt_z), rtol=2e-2)
+
+
+def test_tatt_m_c2_over_c1_is_redshift_independent(cosmo_setup):
+    """A2^i(z) = k1*D(z)*A1^i makes C2^i(z)/C1^i(z) = -5*k1 for every bin and
+    redshift (rather than A2/A1 being constant, which would make C2/C1
+    scale as 1/D(z))."""
+    perturbations, z = cosmo_setup
+    n_z_bins = 3
+    dndz = np.ones((n_z_bins, len(z)))
+    dndz /= np.trapezoid(dndz, z, axis=1)[:, None]
+    k1 = 0.073
+
+    tracer = _tatt_m_tracer(
+        perturbations,
+        dndz,
+        z,
+        n_z_bins,
+        log10_mh=[13.0, 13.5, 14.2],
+        f_r=[1.0, 0.5, 0.3],
+        k1=k1,
+    )
+    ta, _, tc = tracer.ia.get_components()
+    zs = perturbations.z
+    c1 = np.asarray(ta.amplitude)[:, None] * np.asarray(ta._shape(zs))[None, :]
+    c2 = np.asarray(tc.amplitude)[:, None] * np.asarray(tc._shape(zs))[None, :]
+
+    np.testing.assert_allclose(c2 / c1, -5 * k1, rtol=1e-12)
 
 
 def test_tatt_m_f_r_scaling(cosmo_setup):

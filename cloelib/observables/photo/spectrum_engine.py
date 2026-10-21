@@ -33,7 +33,7 @@ from cloelib.cosmology.cosmology import (
     CB_CROSS_LINEAR_NU,
     CB_CROSS_PRESCRIPTIONS,
 )
-from cloelib.observables.photo.contributions import CB, MATTER
+from cloelib.observables.photo.contributions import CB, HALO_MODEL_FIELDS, MATTER
 
 
 @dataclass(frozen=True)
@@ -184,17 +184,21 @@ class SpectraBank:
 
         `P_mm` for `(MATTER, MATTER)`, `P_cb` for `(CB, CB)` and the cb x
         matter cross spectrum for a mixed pair, with the fields given by
-        `contributions.contribution_field`. The fields are static Python
-        strings, so the choice is resolved at trace time and is safe under
-        `jax.jit`/`jax.grad`.
+        `contributions.contribution_field`. A pair involving a halo-model
+        field (`HALO_MODEL_FIELDS`: HOD galaxies, Compton-y) is the halo-model
+        spectrum `perturbations.power_spectrum(field1, field2, zs, ks)`. The
+        fields are static Python strings, so the choice is resolved at trace
+        time and is safe under `jax.jit`/`jax.grad`.
 
         Returns:
             Array: shape `(len(zs), len(ks))`.
         """
         fields = {field1, field2}
-        unknown = fields - {MATTER, CB}
+        unknown = fields - {MATTER, CB, *HALO_MODEL_FIELDS}
         if unknown:
             raise ValueError(f"Unknown traced field(s) {sorted(unknown)}.")
+        if fields & set(HALO_MODEL_FIELDS):
+            return self._halo_model_spectrum(field1, field2)
         if fields == {MATTER}:
             return self._spectrum("P_mm")
         if fields == {CB}:
@@ -202,6 +206,25 @@ class SpectraBank:
         if "P_cbxm" not in self._spectra:
             self._spectra["P_cbxm"] = self._cb_cross_matter()
         return self._spectra["P_cbxm"]
+
+    def _halo_model_spectrum(self, field1: str, field2: str) -> jnp.ndarray:
+        """Halo-model spectrum of a pair with a halo-model field, cached."""
+        if CB in (field1, field2):
+            raise NotImplementedError(
+                "The halo model provides no spectrum of cb with "
+                f"{field1!r}/{field2!r}; use_Pcb is not available here."
+            )
+        name = "P_" + "".join(sorted((field1, field2)))
+        if name not in self._spectra:
+            perturbations = self._require_perturbations(name)
+            power_spectrum = getattr(perturbations, "power_spectrum", None)
+            if power_spectrum is None:
+                raise ValueError(
+                    f"{type(perturbations).__name__} provides no halo-model "
+                    f"spectrum for the fields {field1!r}, {field2!r}."
+                )
+            self._spectra[name] = power_spectrum(field1, field2, self.zs, self.ks)
+        return self._spectra[name]
 
     def get(self, request: SpectrumRequest) -> jnp.ndarray:
         """Return the named derived grid, computing and caching it on first use."""

@@ -59,6 +59,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | NA                                                            | [euclidemu2](https://github.com/PedroCarrilho/EuclidEmulator2/tree/pywrapper)                   | NA                                                                 |
 | NA                                                            | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                                             | NA                                                                 |
 | NA                                                            | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                                           | NA                                                                 |
+| NA                                                            | [GODMAX](https://github.com/shivampcosmo/GODMAX)                                                | NA                                                                 |
 | NA                                                            | [FlamingoBaryonResponseEmulator](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator) | NA                                                                 |
 
 We do not provide installation support for `PBJ`.
@@ -122,13 +123,16 @@ pip install .[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,tf-kera
 
 The `react` extra installs the TensorFlow support needed by the ReACT modified-gravity boost module; [`MGEmu`](https://github.com/nebblu/MGEmus.git) itself is installed in step 5.
 
-5. **Install backends not available on PyPI** – HMcode2020Emu, MGEmu (needed by the `react` module) and mochi_class are only distributed from GitHub, so they cannot be declared as extras of a package published on PyPI. Install the ones you need directly:
+5. **Install backends not available on PyPI** – HMcode2020Emu, MGEmu (needed by the `react` module), mochi_class and GODMAX (needed by `godmax_cosmology` and the tSZ tracer) are only distributed from GitHub, so they cannot be declared as extras of a package published on PyPI. Install the ones you need directly:
 
 ```sh
 pip install "HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"
 pip install "MGemu @ git+https://github.com/nebblu/MGEmus.git"
 pip install "mochi_classy @ git+https://github.com/mcataneo/mochi_class_public.git@mochi_classy"
+pip install "godmax @ git+https://github.com/vilasinits/GODMAX.git@cloe-integration"
 ```
+
+The GODMAX line points to a development branch with the cloelib interface (`godmax.helpers.cloelib_cosmology`) until it is merged into GODMAX.
 
 You're all set! 🎉 Ready to compute cosmological observables.
 

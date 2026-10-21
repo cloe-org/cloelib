@@ -57,6 +57,8 @@ class CMBLensingTracer:
         self,
         perturbations: Perturbations,
         z: np.ndarray,
+        *,
+        z_source: float | None = None,
     ):
         r"""
         Initialize the class instance.
@@ -67,11 +69,15 @@ class CMBLensingTracer:
             An object from NonLinearPerturbations class
         z : np.ndarray
             A 1-dimensional array used to perform line-of-sight integration.
+        z_source : float, optional
+            Keyword-only. Redshift of the lensed source plane. Defaults to
+            the background's `z_star`; GODMAX uses 1100.
         """
         check_nonzero_redshifts(z)
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z
+        self.z_source = z_source
         self.n_z_bins = 1
         # This is to add the necessary prefactor to shear
         self.prefact_toggle = 0
@@ -118,7 +124,7 @@ class CMBLensingTracer:
         rz = self.background.comoving_distance(z)
         # `Any`: backends accept a scalar redshift here, which the
         # `Background` protocol's `comoving_distance(zs: T)` doesn't express.
-        z_star: Any = self.background.z_star
+        z_star: Any = self.background.z_star if self.z_source is None else self.z_source
         rz_star = self.background.comoving_distance(z_star)
         efficiency = 1 - rz / rz_star
         # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.

@@ -207,7 +207,7 @@ def _galaxy_config(galaxies: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, 
 
 
 def build_godmax_config(
-    redshifts,
+    redshifts: jnp.ndarray,
     model_tSZ: bool,
     galaxies: Optional[Dict[str, Any]],
     godmax_config: Optional[Dict[str, Dict[str, Any]]],
@@ -375,12 +375,12 @@ class GODMAXNonLinearPerturbations:
         self,
         background: JAXBackground,
         linearperturbations: Optional[JAXLinearPerturbations],
-        redshifts,
+        redshifts: jnp.ndarray,
         *,
         model_tSZ: bool = True,
         galaxies: Optional[Dict[str, Any]] = None,
         godmax_config: Optional[Dict[str, Dict[str, Any]]] = None,
-        **halo_params,
+        **halo_params: Any,
     ) -> None:
         """
         Initialise the halo-model perturbations and run GODMAX.
@@ -477,7 +477,7 @@ class GODMAXNonLinearPerturbations:
         """Retrieve sigma8 at z=0."""
         return self.linearperturbations.sigma8_0()
 
-    def baryonic_response(self, zs, ks):
+    def baryonic_response(self, zs: jnp.ndarray, ks: jnp.ndarray) -> jnp.ndarray:
         """Return P_DMB / P_NFW of the halo model.
 
         Args:
@@ -491,7 +491,7 @@ class GODMAXNonLinearPerturbations:
         zs, ks = jnp.atleast_1d(zs), jnp.atleast_1d(ks)
         return _interp_zk(zs, ks, self.z, self.k, self._response)
 
-    def matter_power_spectrum(self, zs, ks):
+    def matter_power_spectrum(self, zs: jnp.ndarray, ks: jnp.ndarray) -> jnp.ndarray:
         """Compute the non-linear matter power spectrum including baryons.
 
         Args:
@@ -506,7 +506,7 @@ class GODMAXNonLinearPerturbations:
         halofit = self.halofit.matter_power_spectrum(zs, ks)
         return jnp.reshape(halofit, (len(zs), len(ks))) * self.baryonic_response(zs, ks)
 
-    def matter_power_spectrum_cb(self, zs, ks):
+    def matter_power_spectrum_cb(self, zs: jnp.ndarray, ks: jnp.ndarray) -> jnp.ndarray:
         """Compute the cold dark matter + baryons spectrum.
 
         GODMAX has no massive neutrinos (`mnu = 0` is enforced), so this is the
@@ -514,7 +514,9 @@ class GODMAXNonLinearPerturbations:
         """
         return self.matter_power_spectrum(zs, ks)
 
-    def power_spectrum(self, field1: str, field2: str, zs, ks):
+    def power_spectrum(
+        self, field1: str, field2: str, zs: jnp.ndarray, ks: jnp.ndarray
+    ) -> jnp.ndarray:
         """Compute a halo-model power spectrum of two fields.
 
         Fields are `"m"` (matter), `"g"` (HOD galaxies) and `"y"` (Compton-y). The

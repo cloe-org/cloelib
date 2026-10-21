@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Protocol, Tuple, TypeVar, Union
+from typing import Any, Callable, Optional, Protocol, Tuple, TypeVar, Union
 
 import numpy as np
 import jax.numpy as jnp
@@ -212,7 +212,7 @@ def nonlimber_contributions(tracer):
     return getter() if getter is not None else tracer.get_contributions()
 
 
-def check_halo_model_field(perturbations, field: str, needed_for: str) -> None:
+def check_halo_model_field(perturbations: Any, field: str, needed_for: str) -> None:
     """Raise if `perturbations` cannot provide halo-model spectra of `field`.
 
     Args:
@@ -230,7 +230,7 @@ def check_halo_model_field(perturbations, field: str, needed_for: str) -> None:
         )
 
 
-def check_supported_model(perturbations, kind: str, model) -> None:
+def check_supported_model(perturbations: Any, kind: str, model: Optional[str]) -> None:
     """Raise if `perturbations` declares that it does not support `model`.
 
     A backend may declare `supported_ia_models` / `supported_galaxy_bias_models`

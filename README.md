@@ -285,6 +285,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zuzannakr"><img src="https://avatars.githubusercontent.com/u/12124870?v=4?s=100" width="100px;" alt="zuzannakr"/><br /><sub><b>zuzannakr</b></sub></a><br /><a href="#code-zuzannakr" title="Code">💻</a> <a href="#maintenance-zuzannakr" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://gfabellan.github.io/"><img src="https://avatars.githubusercontent.com/u/59618978?v=4?s=100" width="100px;" alt="Guillermo Franco Abellán"/><br /><sub><b>Guillermo Franco Abellán</b></sub></a><br /><a href="#code-GFAbellan" title="Code">💻</a> <a href="#ideas-GFAbellan" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/GiorgioLesci"><img src="https://avatars.githubusercontent.com/u/47445231?v=4?s=100" width="100px;" alt="Giorgio Francesco Lesci"/><br /><sub><b>Giorgio Francesco Lesci</b></sub></a><br /><a href="#code-GiorgioLesci" title="Code">💻</a> <a href="#ideas-GiorgioLesci" title="Ideas, Planning, & Feedback">🤔</a></td>
     </tr>
   </tbody>
 </table>

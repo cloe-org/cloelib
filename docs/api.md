@@ -94,6 +94,13 @@
       show_submodules: false
       heading_level: 3
 
+::: cloelib.cosmology.godmax_cosmology
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      show_submodules: false
+      heading_level: 3
+
 ::: cloelib.cosmology.hi_class_cosmology
     options:
       show_root_toc_entry: true
@@ -179,6 +186,20 @@ heading_level: 3
       heading_level: 4
 
 ::: cloelib.observables.cmb
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      show_submodules: false
+      heading_level: 3
+
+::: cloelib.observables.tsz
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      show_submodules: false
+      heading_level: 3
+
+::: cloelib.observables.kernel_conventions
     options:
       show_root_toc_entry: true
       show_root_heading: true

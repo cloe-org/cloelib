@@ -1,14 +1,19 @@
 """Implementation of Background and Perturbation cosmology using EuclidEmulator2."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations, WithWavenumberGrid
+from cloelib.cosmology.cosmology import (
+    CB_CROSS_LINEAR_NU,
+    Background,
+    Perturbations,
+    WithWavenumberGrid,
+)
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
 
 # General imports
 import numpy as np
-from typing import Protocol, Sequence, runtime_checkable
+from typing import Optional, Protocol, Sequence, runtime_checkable
 
 # Cosmology imports
 try:
@@ -33,6 +38,8 @@ class LinearPerturbationsWithK(Perturbations, WithWavenumberGrid, Protocol):
 
 class EE2NonLinearPerturbations:
     """Class for nonlinear perturbations using EE2, compatible with the Perturbations protocol."""
+
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
 
     def __init__(
         self,
@@ -179,19 +186,28 @@ class EE2NonLinearPerturbations:
 
         return self.linearperturbations.growth_factor(zs, ks)
 
-    def growth_rate(self) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
         Calculate the growth rate for given redshifts and wavenumbers.
 
         We use here the growth from the fluctuations without baryons.
 
+        Parameters:
+        -----------
+        zs : Optional[np.ndarray]
+            Redshifts at which to evaluate the growth rate. Defaults to `self.z`.
+        ks : Optional[np.ndarray]
+            Wavenumbers at which to evaluate the growth rate.
+
         Returns:
         --------
         np.ndarray
-            The growth rate as a function of redshift and wavenumber.
+            The linear growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
         """
 
-        return self.linearperturbations.growth_rate()
+        return self.linearperturbations.growth_rate(self.z if zs is None else zs, ks)
 
     def sigma8_0(self) -> float:
         """

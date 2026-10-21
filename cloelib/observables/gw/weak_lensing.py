@@ -7,7 +7,11 @@ holds `GWNumberCountsTracer`.
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.auxiliary.math_utils import cached_stacked_simpson, simps
+from cloelib.auxiliary.math_utils import (
+    cached_stacked_simpson,
+    check_nonzero_redshifts,
+    simps,
+)
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 
 # General imports
@@ -51,10 +55,7 @@ class GWWeakLensingTracer:
             `(n_z,)` corresponding to the `dndz` array.
           nuisance_params (dict): Redshift-shift and width parameters for every bin.
         """
-        if 0.0 in z:
-            raise ValueError(
-                "One of the z array elements is equal to zero, breaking Limber integration."
-            )
+        check_nonzero_redshifts(z)
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z

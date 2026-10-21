@@ -3,7 +3,35 @@ from typing import Protocol, TypeVar, Union
 import numpy as np
 import jax.numpy as jnp
 
+
+def unit_sigma(z):
+    """Default MG lensing parameter Sigma(z) = 1 for GR / LCDM perturbations.
+
+    Every lensing kernel (shear, magnification bias, CMB lensing) multiplies by
+    ``perturbations.Sigma(z)`` when the perturbations provide it, and by this
+    otherwise.
+    """
+    return jnp.ones_like(z)
+
+
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
+
+# Density fields a Contribution can trace. The base power spectrum of a pair of
+# contributions follows from their two fields: (MATTER, MATTER) -> P_mm,
+# (CB, CB) -> P_cb, mixed -> the cb x matter cross spectrum.
+MATTER = "m"
+CB = "cb"
+
+
+def contribution_field(contribution) -> str:
+    """`contribution.field` if defined, else `MATTER`.
+
+    Only contributions that can trace the cold dark matter + baryons field
+    (e.g. `GalaxyBiasContribution` of a `PositionsTracer(use_Pcb=True)`)
+    define `field`; everything else (lensing, magnification, intrinsic
+    alignments, ...) traces the total matter and needs no change.
+    """
+    return getattr(contribution, "field", MATTER)
 
 
 class Contribution(Protocol):
@@ -27,6 +55,11 @@ class Contribution(Protocol):
 
     `spectrum_engine.py` looks these up via `getattr(obj, name, None)`
     rather than requiring them here, so nothing below needs to change.
+
+    An optional `field` attribute (`MATTER` or `CB`, read through
+    `contribution_field`) states which density field the contribution
+    traces; it selects the base power spectrum of each contribution pair
+    in `AngularTwoPoint` (default: `MATTER`).
     """
 
     def compute_kernel(self, z: T) -> T:

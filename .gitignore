@@ -85,3 +85,7 @@ jax_cache/
 
 # T-tilde datasets (large, downloaded on first use)
 cloelib/auxiliary/t-tildes-data/
+
+# Other data
+cloelib/cosmology/emulator-data-jax
+tests/validation_data

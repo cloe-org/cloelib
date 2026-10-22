@@ -5,7 +5,13 @@ from cloelib.observables.photo.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
 from cloelib.observables.cmb import CMBLensingTracer
-from cloelib.observables.photo.contributions import CB, MATTER, contribution_field
+from cloelib.observables.tsz import tSZTracer
+from cloelib.observables.photo.contributions import (
+    CB,
+    HALO_MODEL_FIELDS,
+    MATTER,
+    contribution_field,
+)
 from cloelib.observables.photo.spectrum_engine import (
     SpectraBank,
     get_effective_pk,
@@ -626,7 +632,8 @@ class AngularTwoPoint:
             z (jax.numpy.ndarray): Redshift grid of the Limber integral.
 
         Returns:
-            (dict): Field (`MATTER` or `CB`) -> window, shape `(n_bins, len(z))`.
+            (dict): Field (`MATTER`, `CB`, or a halo-model field `GALAXY` /
+            `COMPTON_Y`) -> window, shape `(n_bins, len(z))`.
         """
         contributions = getattr(tracer, "get_contributions", lambda: ())()
         fields = [contribution_field(c) for c in contributions]
@@ -681,7 +688,26 @@ class AngularTwoPoint:
         contributions1 = getattr(self.tracer1, "get_contributions", lambda: ())()
         contributions2 = getattr(self.tracer2, "get_contributions", lambda: ())()
 
+        # Backends tabulated on a fixed redshift range (e.g. the halo model)
+        # can check that the Limber grid lies inside it.
+        check_coverage = getattr(
+            self.tracer1.perturbations, "check_redshift_coverage", None
+        )
+        if check_coverage is not None:
+            check_coverage(self.tracer1.z)
+
         if needs_generalized_engine(contributions1, contributions2):
+            halo_model = [
+                type(c).__name__
+                for c in (*contributions1, *contributions2)
+                if contribution_field(c) in HALO_MODEL_FIELDS
+            ]
+            if halo_model:
+                raise NotImplementedError(
+                    f"{', '.join(halo_model)} cannot be combined with contributions "
+                    "that bring their own effective spectra (e.g. TATT, "
+                    "non-linear galaxy bias)."
+                )
             return self._compute_cl_generalized(
                 ells, ks, contributions1, contributions2
             )
@@ -819,11 +845,16 @@ class AngularTwoPoint:
         gw_wl_prefactor = ells * (ells + 1.0) / (ells + 0.5) ** 2
 
         def tracer_prefactor(tracer):
-            return (
+            prefactor = (
                 1.0
                 + getattr(tracer, "prefact_toggle", 0) * (shear_prefactor - 1.0)
                 + getattr(tracer, "gw_prefact_toggle", 0) * (gw_wl_prefactor - 1.0)
             )
+            # Optional tracer-specific ell factor, e.g. the beam of a y map.
+            ell_factor = getattr(tracer, "ell_factor", None)
+            if ell_factor is not None:
+                prefactor = prefactor * ell_factor(ells)
+            return prefactor
 
         return tracer_prefactor(self.tracer1) * tracer_prefactor(self.tracer2)
 
@@ -984,6 +1015,9 @@ class AngularTwoPoint:
         # so the second dimension is filled with zeros.
         # CMBL - POS returns an array of shape (len(ells))
         # CMBL - CMBL returns an array of shape (len(ells))
+        # Y (tSZ Compton-y, a single bin) follows the CMBL layout:
+        # Y - Y, POS - Y and CMBL - Y return an array of shape (len(ells))
+        # SHE - Y returns an array of shape (2, len(ells))
 
         def pos_pos_rule(C, i, j):
             return {("POS", "POS", i, j): C[:, i - 1, j - 1]}
@@ -1031,6 +1065,19 @@ class AngularTwoPoint:
             block = C[:, i - 1, j - 1]
             return {("SHE", "GWWL", i, j): np.stack([block, np.zeros_like(block)])}
 
+        def y_y_rule(C, i, j):
+            return {("Y", "Y", i, j): C[:, i - 1, j - 1]}
+
+        def cmbl_y_rule(C, i, j):
+            return {("CMBL", "Y", i, j): C[:, i - 1, j - 1]}
+
+        def pos_y_rule(C, i, j):
+            return {("POS", "Y", i, j): C[:, i - 1, j - 1]}
+
+        def she_y_rule(C, i, j):
+            block = C[:, i - 1, j - 1]
+            return {("SHE", "Y", i, j): np.stack([block, np.zeros_like(block)])}
+
         tracer_rules = {
             (PositionsTracer, PositionsTracer): pos_pos_rule,
             (PositionsTracer, ShearTracer): pos_she_rule,
@@ -1045,6 +1092,10 @@ class AngularTwoPoint:
             (PositionsTracer, GWWeakLensingTracer): pos_gwwl_rule,
             (ShearTracer, GWNumberCountsTracer): she_gwnc_rule,
             (ShearTracer, GWWeakLensingTracer): she_gwwl_rule,
+            (tSZTracer, tSZTracer): y_y_rule,
+            (CMBLensingTracer, tSZTracer): cmbl_y_rule,
+            (PositionsTracer, tSZTracer): pos_y_rule,
+            (ShearTracer, tSZTracer): she_y_rule,
         }
 
         # Normalize the key so (A, B) and (B, A) are both supported. Keep

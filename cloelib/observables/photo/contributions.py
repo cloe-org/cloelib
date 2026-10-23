@@ -1,4 +1,5 @@
-from typing import Protocol, TypeVar, Union
+from dataclasses import dataclass
+from typing import Callable, Protocol, Tuple, TypeVar, Union
 
 import numpy as np
 import jax.numpy as jnp
@@ -60,6 +61,11 @@ class Contribution(Protocol):
     `contribution_field`) states which density field the contribution
     traces; it selects the base power spectrum of each contribution pair
     in `AngularTwoPoint` (default: `MATTER`).
+
+    Likewise optional, and read the same way, is the class attribute
+    `nonlimber_spec: NonLimberSpec`: what the beyond-Limber engine needs to
+    know about this contribution (see `NonLimberSpec`). A contribution
+    without it simply isn't supported beyond Limber.
     """
 
     def compute_kernel(self, z: T) -> T:
@@ -94,3 +100,94 @@ class IntrinsicAlignmentContribution:
     / `.positions` - this module holds only the generic, tracer-agnostic
     base types `spectrum_engine.py` and both submodules share.
     """
+
+
+# ---------------------------------------------------------------------------
+# Beyond-Limber metadata
+# ---------------------------------------------------------------------------
+def ell_prefactor_one(ells):
+    """No multipole dependence (galaxy clustering)."""
+    return jnp.ones(jnp.shape(ells))
+
+
+def ell_prefactor_magnification(ells):
+    """ell (ell + 1): from the two angular derivatives of the lensing potential."""
+    return ells * (ells + 1)
+
+
+def ell_prefactor_spin2(ells):
+    """sqrt((ell + 2)! / (ell - 2)!): shear from the lensing potential (spin 2)."""
+    return jnp.sqrt((ells + 2) * (ells + 1) * ells * (ells - 1))
+
+
+def ell_prefactor_rsd(ells):
+    """-1, kept here (not in the integrand) to avoid a subtraction there."""
+    return -jnp.ones(jnp.shape(ells))
+
+
+@dataclass(frozen=True)
+class NonLimberSpec:
+    """What the beyond-Limber engine needs to know about one `Contribution`.
+
+    Purely static (no arrays), so it is hashable and safe to read while
+    tracing under `jax.jit`.
+
+    Attributes:
+      power: the $p$ in the name of the T-tilde matrix a pair needs
+        (`T_{p_a + p_b}_..`, see `t_tilde_names`): $+1$ for galaxy clustering
+        and RSD, $-1$ for lensing, magnification and IA.
+      derivative: order of the Bessel-function derivative the kernel
+        multiplies ($0$ for all but RSD, which has $2$).
+      ell_prefactor: `ell_prefactor(ells) -> Array`, the kernel's own
+        $\\ell$-dependent factor.
+      divide_by_chi2: whether the kernel is divided by $\\chi^2$ when moved
+        to the $\\chi$ grid (`nonlimber_kernels.kernel_on_chi_R`).
+    """
+
+    power: int
+    derivative: int
+    ell_prefactor: Callable
+    divide_by_chi2: bool
+
+
+def _power_tag(power: int) -> str:
+    return f"minus{-power}" if power < 0 else str(power)
+
+
+def t_tilde_names(spec_a: NonLimberSpec, spec_b: NonLimberSpec) -> Tuple[str, str]:
+    """Names of the two T-tilde matrices a pair of contributions needs.
+
+    The name is `T_{p_a + p_b}_{d_a d_b}`, with a negative power written
+    `minusN` (e.g. `T_minus2_00`, `T_2_02`). The first element is for
+    the ordering (A at $\\chi$, B at $R\\chi$), the second for the swapped
+    one (derivative digits exchanged); they only differ when the two
+    derivative orders do (i.e. for pairs involving RSD).
+
+    Returns:
+      tuple[str, str]: `(name_12, name_21)`.
+    """
+    tag = _power_tag(spec_a.power + spec_b.power)
+    d_a, d_b = spec_a.derivative, spec_b.derivative
+    return f"T_{tag}_{d_a}{d_b}", f"T_{tag}_{d_b}{d_a}"
+
+
+def nonlimber_spec_of(contribution) -> NonLimberSpec:
+    """`contribution.nonlimber_spec`, or a clear error if it has none."""
+    spec = getattr(contribution, "nonlimber_spec", None)
+    if spec is None:
+        raise NotImplementedError(
+            f"{type(contribution).__name__} defines no `nonlimber_spec`, so it "
+            "is not supported by the beyond-Limber engine."
+        )
+    return spec
+
+
+def nonlimber_contributions(tracer):
+    """The contributions a tracer enters the beyond-Limber integral with.
+
+    `tracer.get_nonlimber_contributions()` if it defines one (e.g.
+    `PositionsTracer`, which adds RSD there but not to the Limber window),
+    otherwise the same `get_contributions()` as the Limber computation.
+    """
+    getter = getattr(tracer, "get_nonlimber_contributions", None)
+    return getter() if getter is not None else tracer.get_contributions()

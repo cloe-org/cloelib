@@ -60,6 +60,8 @@ from cloelib.observables.photo.contributions import (
     Contribution,
     contribution_field,
     unit_sigma,
+    NonLimberSpec,
+    ell_prefactor_spin2,
 )
 from cloelib.observables.photo.spectrum_engine import (
     SpectraBank,
@@ -87,6 +89,13 @@ _C_KM_S = SPEED_OF_LIGHT / 1000
 class LensingContribution:
     """Weak-lensing shear kernel term of `ShearTracer.get_window()`."""
 
+    nonlimber_spec = NonLimberSpec(
+        power=-1,
+        derivative=0,
+        ell_prefactor=ell_prefactor_spin2,
+        divide_by_chi2=True,
+    )
+
     def __init__(self, tracer: "ShearTracer") -> None:
         self._tracer = tracer
 
@@ -106,6 +115,13 @@ class NLAContribution(IntrinsicAlignmentContribution):
     distinct name; `get_window()` and `AngularTwoPoint` don't need to
     change either way.
     """
+
+    nonlimber_spec = NonLimberSpec(
+        power=-1,
+        derivative=0,
+        ell_prefactor=ell_prefactor_spin2,
+        divide_by_chi2=True,
+    )
 
     def __init__(self, tracer: "ShearTracer") -> None:
         self._tracer = tracer

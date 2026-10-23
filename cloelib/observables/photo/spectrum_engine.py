@@ -16,6 +16,13 @@ dependencies (no `equinox`/`plum`): plain dataclasses and a
 `getattr(..., default)` lookup, matching how `AngularTwoPoint` already
 dispatches on tracer type (`tracer_rules`, `angular_two_point.py`).
 
+The same bank also holds what the beyond-Limber computation shares between
+tracer pairs: the Chebyshev coefficients of the unequal-time *linear* power
+spectrum and, per T-tilde matrix, the projected matter density `w_ell`
+(`SpectraBank.nonlimber_cheb`, `SpectraBank.w_ell`). They are cosmology
+dependent but tracer independent, so a bank shared by the pairs of a 3x2pt
+computation evaluates each of them once.
+
 Nothing here changes behavior for any `Contribution` that doesn't declare
 extra requests: `needs_generalized_engine` returns `False` for them, and
 `AngularTwoPoint.get_Cl` keeps using its original, untouched fast path in
@@ -23,15 +30,22 @@ that case.
 """
 
 from dataclasses import dataclass
-from typing import Callable, Sequence
+from typing import Callable, Optional, Sequence
 
 import jax.numpy as jnp
 
+from cloelib.auxiliary.chebyshev import (
+    chebyshev_coefficients,
+    comoving_distance_to_redshift,
+)
 from cloelib.auxiliary.math_utils import safe_sqrt
+from cloelib.auxiliary.nonlimber_kernels import unequal_time_pk, w_ell
+from cloelib.auxiliary.t_tildes import TTildeStore
 from cloelib.cosmology.cosmology import (
     CB_CROSS_CORRELATED,
     CB_CROSS_LINEAR_NU,
     CB_CROSS_PRESCRIPTIONS,
+    Perturbations,
 )
 from cloelib.observables.photo.contributions import CB, MATTER
 
@@ -73,6 +87,26 @@ class SpectraBank:
     `from_perturbations`. Built directly from an already evaluated
     `matter_pk` instead (`SpectraBank(matter_pk, ks, zs)`), only the total
     matter is available: `base` raises for any pair involving cb.
+
+    When configured for it (`linear_perturbations` and `t_tildes`), it
+    also holds the grids of the beyond-Limber integration (`nonlimber_cheb`,
+    `w_ell`, built from the *linear* spectrum and the T-tilde matrices),
+    computed lazily as well. These depend on the cosmology only, not on the
+    tracers: one bank can serve every tracer pair of a 3x2pt computation,
+    so that what pairs have in common (the Chebyshev coefficients, each
+    `w_ell`) is computed once.
+
+    Args:
+      matter_pk: matter power spectrum on `(zs, ks)`, shape
+        `(len(zs), len(ks))`, or `None` to evaluate it from `perturbations`.
+      ks: wavenumber grid of every spectrum.
+      zs: redshift grid of every spectrum.
+      perturbations: backend the base spectra are evaluated from.
+      linear_perturbations: linear `Perturbations`, the beyond-Limber
+        spectrum (and the background that maps comoving distance to
+        redshift) comes from here. Needed for `nonlimber_cheb`/`w_ell` only.
+      t_tildes: the T-tilde matrices, and the grids they were computed on.
+        Needed for `nonlimber_cheb`/`w_ell` only.
     """
 
     def __init__(
@@ -81,21 +115,41 @@ class SpectraBank:
         ks: jnp.ndarray,
         zs: jnp.ndarray,
         perturbations=None,
+        *,
+        linear_perturbations: Optional[Perturbations] = None,
+        t_tildes: Optional[TTildeStore] = None,
     ):
         if matter_pk is None and perturbations is None:
             raise ValueError("SpectraBank needs `matter_pk` or `perturbations`.")
         self.ks = ks
         self.zs = zs
         self.perturbations = perturbations
+        self.linear_perturbations = linear_perturbations
+        self.t_tildes = t_tildes
         self._spectra: dict[str, jnp.ndarray] = {}
         if matter_pk is not None:
             self._spectra["P_mm"] = matter_pk
         self._grids: dict[str, jnp.ndarray] = {}
 
     @classmethod
-    def from_perturbations(cls, perturbations, ks, zs) -> "SpectraBank":
+    def from_perturbations(
+        cls,
+        perturbations,
+        ks,
+        zs,
+        *,
+        linear_perturbations: Optional[Perturbations] = None,
+        t_tildes: Optional[TTildeStore] = None,
+    ) -> "SpectraBank":
         """Bank evaluating every spectrum lazily from `perturbations`."""
-        return cls(None, ks, zs, perturbations=perturbations)
+        return cls(
+            None,
+            ks,
+            zs,
+            perturbations=perturbations,
+            linear_perturbations=linear_perturbations,
+            t_tildes=t_tildes,
+        )
 
     @property
     def matter_pk(self) -> jnp.ndarray:
@@ -210,6 +264,67 @@ class SpectraBank:
                 self.matter_pk, self.ks, self.zs
             )
         return self._grids[request.name]
+
+    # -- beyond Limber -------------------------------------------------------
+    def _require_nonlimber(self) -> tuple[Perturbations, TTildeStore]:
+        if self.linear_perturbations is None or self.t_tildes is None:
+            raise ValueError(
+                "Beyond-Limber quantities need a SpectraBank built with both "
+                "`linear_perturbations` and `t_tildes`."
+            )
+        return self.linear_perturbations, self.t_tildes
+
+    def _memoized(self, key: str, compute: Callable[[], jnp.ndarray]) -> jnp.ndarray:
+        if key not in self._grids:
+            self._grids[key] = compute()
+        return self._grids[key]
+
+    def z_of_chi(self) -> jnp.ndarray:
+        """Redshift of every comoving distance of the T-tilde grid, shape `(n_chi,)`."""
+        linear, store = self._require_nonlimber()
+        return self._memoized(
+            "nonlimber:z_of_chi",
+            lambda: comoving_distance_to_redshift(store.grid.chi, linear.background),
+        )
+
+    def nonlimber_cheb(self) -> jnp.ndarray:
+        r"""Chebyshev coefficients, in $\log k$, of the unequal-time *linear* Pk.
+
+        The linear spectrum is evaluated at the redshifts $z(\chi)$ and at
+        the Chebyshev nodes of the T-tilde grid, combined into
+        $P(k, \chi, R\chi)$ (`unequal_time_pk`) and expanded along $k$.
+        Shared by every pair of kernels: this is the cosmology-dependent
+        part of the beyond-Limber computation that the pairs have in common.
+
+        Returns:
+          Array: shape `(n_cheb, n_chi, n_R)`, the layout `w_ell` expects.
+        """
+        linear, store = self._require_nonlimber()
+
+        def compute():
+            grid = store.grid
+            k_nodes = 10.0**grid.k_cheb
+            Pk_chi = linear.matter_power_spectrum(self.z_of_chi(), k_nodes)
+            Pk = unequal_time_pk(Pk_chi, grid.chi, grid.R)
+            return jnp.apply_along_axis(chebyshev_coefficients, 0, Pk)
+
+        return self._memoized("nonlimber:cheb", compute)
+
+    def w_ell(self, t_name: str) -> jnp.ndarray:
+        r"""Projected matter density $w_\ell(\chi, R)$ for the T-tilde matrix `t_name`.
+
+        Contracts `nonlimber_cheb()` with the matrix (e.g. `"T_minus2_00"`);
+        computed once per name, and the matrix is only read from disk when
+        a name is first asked for.
+
+        Returns:
+          Array: shape `(n_ell, n_chi, n_R)`.
+        """
+        _, store = self._require_nonlimber()
+        return self._memoized(
+            f"nonlimber:w_ell:{t_name}",
+            lambda: w_ell(self.nonlimber_cheb(), store.get(t_name)),
+        )
 
 
 def _spectrum_requests(contribution) -> Sequence[SpectrumRequest]:

@@ -268,12 +268,6 @@ def _cosebi_einsum_perbin(kernel_array, ell_weight, cl_eb):
     return np.einsum("ml,l,ql->qm", kernel_array, ell_weight, cl_eb)
 
 
-def _growth_rate_on_grid(perturbations, zs_target):
-    # Growth rate for the RSD calculation. Every `Perturbations`
-    # implementation evaluates `growth_rate` at the requested redshifts.
-    return perturbations.growth_rate(zs_target)
-
-
 def _rad_to_arcmin(x):
     """Convert an angle from radians to arcmin, the unit of Euclid COSEBI products."""
     return float(x) * 180 * 60 / float(np.pi)
@@ -759,7 +753,7 @@ class AngularTwoPoint:
         terms2 = terms1 if same_tracer else window_terms(self.tracer2)
 
         if has_rsd(self.tracer1) or has_rsd(self.tracer2):
-            f = _growth_rate_on_grid(self.tracer1.perturbations, zs_calc)
+            f = self.tracer1.perturbations.growth_rate(zs_calc)
 
             def rsd_term(tracer):
                 # With use_Pcb the RSD term is integrated against the cb

@@ -11,101 +11,7 @@ import jax.numpy as jnp
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 
 
-class WeylLinearPerturbations:
-    """
-    Simplified wrapper that implements the Perturbations-like interface by delegating to
-    an inner `perturbations` object and replacing the power spectra by those at z_ini (no boost applied).
-    This class will be passed to WeylNonLinearPerturbations for compatibility with the TATT model.
-
-    Assumption: zs and ks passed into methods are array-like of the same array-library
-    (both numpy arrays or both jax arrays), and their shapes are compatible for elementwise
-    ops by the wrapped perturbations implementation.
-    """
-
-    def __init__(
-        self,
-        linearperturbations: Perturbations,
-        redshifts: T,
-        z_ini: float,
-    ):
-        self.linearperturbations = linearperturbations
-        self.z_ini = float(z_ini)
-        self.z = redshifts  # Note: These are the redshifts at which the Weyl potential measurement will be performed.
-
-        # Check that linearperturbations provides the required attribute 'k'
-        if hasattr(self.linearperturbations, "k"):
-            self.k = self.linearperturbations.k
-        else:
-            raise AttributeError(
-                "linearperturbations does not provide the required attribute 'k'."
-            )
-
-        # Check that linearperturbations provides the source redshifts
-        if hasattr(self.linearperturbations, "z"):
-            self.z_source = self.linearperturbations.z
-        else:
-            raise AttributeError(
-                "linearperturbations does not provide the required attribute 'z'."
-            )
-
-        # Check that z_ini is smaller or equal to the maximum redshift in linearperturbations.z, otherwise print error
-        z_max = np.max(self.z_source)
-        if z_max < self.z_ini:
-            raise ValueError(
-                f"z_ini={self.z_ini} is larger than the maximum available redshift "
-                f"in linearperturbations.z (z_max={z_max})."
-            )
-
-    @property
-    def background(self) -> Background:
-        return self.linearperturbations.background
-
-    def growth_factor(self, zs: T, ks: T) -> T:
-        return self.linearperturbations.growth_factor(zs, ks)
-
-    def growth_rate(self) -> T:
-        # Note: Current implementations of CAMB/CLASS pertrubations classes do not allow to specify a zs argument for growth_rate(), it is always calculated at self.z;
-
-        z_target = np.asarray(
-            self.z
-        )  # These are the redshifts at which the Weyl potential measurement will be performed, and at which the growth rate will be calculated for the RSD contribution to Cell.
-        z_source = np.asarray(
-            self.z_source
-        )  # These are the redshifts at which the growth rate is calculated in the linearperturbations object.
-
-        # Build pairwise comparison matrix
-        matches = np.isclose(z_target[:, None], z_source[None, :], rtol=0.0, atol=1e-12)
-
-        # Check that every target z has at least one match
-        if not np.all(matches.any(axis=1)):
-            missing = z_target[~matches.any(axis=1)]
-            raise ValueError(
-                f"Some redshifts in self.z are not in linearperturbations.z: {missing}"
-            )
-
-        # Take first match along each row → indices in z_source which match z_target entries
-        indices = np.argmax(matches, axis=1)
-
-        gr = (
-            self.linearperturbations.growth_rate()
-        )  # This is the growth rate at all redshifts in linearperturbations.z.
-        return gr[
-            indices
-        ]  # This is returning the growth rate at the redshifts corresponding to self.z.
-
-    def matter_power_spectrum(self, zs: T, ks: T) -> T:
-        z_ini_arr = zs * 0 + self.z_ini
-        return self.linearperturbations.matter_power_spectrum(z_ini_arr, ks)
-
-    def matter_power_spectrum_cb(self, zs: T, ks: T) -> T:
-        z_ini_arr = zs * 0 + self.z_ini
-        return self.linearperturbations.matter_power_spectrum_cb(z_ini_arr, ks)
-
-    def sigma8_0(self) -> float:
-        return self.linearperturbations.sigma8_0()
-
-
-class WeylNonLinearPerturbations:
+class WeylPerturbations:
     """
     Simplified wrapper that implements the Perturbations-like interface by delegating to
     an inner `perturbations` object and applying a boost.
@@ -118,9 +24,9 @@ class WeylNonLinearPerturbations:
     def __init__(
         self,
         nonlinearperturbations: Perturbations,
-        linearperturbations: WeylLinearPerturbations,  # Needs to be a WeylLinearPerturbations instance for compatibility with the TATT model.
+        linearperturbations: Perturbations,
         redshifts: T,
-        z_ini: float,  # Should this be taken over from linearperturbations instead?
+        z_ini: float,
     ):
         self.linearperturbations = linearperturbations
         self.nonlinearperturbations = nonlinearperturbations
@@ -200,14 +106,14 @@ class WeylNonLinearPerturbations:
         """
 
         # Evaluate the base power spectrum at z_ini and ks
+        z_ini_array = np.full_like(zs, self.z_ini)
+
         P_base = self.linearperturbations.matter_power_spectrum(
-            zs, ks
+            z_ini_array, ks
         )  # This is the base power spectrum evaluated at z_ini (no boost applied).
 
         # Evaluate the linear and nonlinear power spectra at zs and ks
-        pk_linear_growth = (
-            self.linearperturbations.linearperturbations.matter_power_spectrum(zs, ks)
-        )  # This is the linear power spectrum evaluated at zs and ks.
+        pk_linear_growth = self.linearperturbations.matter_power_spectrum(zs, ks)
         pk_nonlinear_growth = self.nonlinearperturbations.matter_power_spectrum(zs, ks)
 
         boost = pk_nonlinear_growth / pk_linear_growth
@@ -226,16 +132,13 @@ class WeylNonLinearPerturbations:
         """
 
         # Evaluate the base power spectrum at z_ini and ks
-        P_base = self.linearperturbations.matter_power_spectrum_cb(
-            zs, ks
-        )  # This is the base power spectrum evaluated at z_ini (no boost applied).
+        z_ini_array = np.full_like(zs, self.z_ini)
+
+        # Evaluate the base power spectrum at z_ini and ks
+        P_base = self.linearperturbations.matter_power_spectrum_cb(z_ini_array, ks)
 
         # Evaluate the linear and nonlinear power spectra at zs and ks
-        pk_linear_growth = (
-            self.linearperturbations.linearperturbations.matter_power_spectrum_cb(
-                zs, ks
-            )
-        )  # This is the linear power spectrum evaluated at zs and ks.
+        pk_linear_growth = self.linearperturbations.matter_power_spectrum_cb(zs, ks)
         pk_nonlinear_growth = self.nonlinearperturbations.matter_power_spectrum_cb(
             zs, ks
         )

@@ -6,8 +6,9 @@ Both classes are compatible with the Tracer protocol.
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.cosmology import Perturbations
+from cloelib.cosmology.cosmology import Perturbations
 from cloelib.observables.photo.positions import PositionsTracer, get_photo_rsd
+from cloelib.observables.photo.shear import ShearTracer
 
 # General imports
 import jax.numpy as np
@@ -232,3 +233,13 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         )
 
     # get_magnification_efficiency and get_window are inherited unchanged from PositionsTracer
+
+
+class ShearTracer_IAOnly(ShearTracer):
+    def __init__(self, *args, ia_model="NLA", **kwargs):
+        super().__init__(*args, ia_model=ia_model, **kwargs)
+        if self.ia is None:
+            raise ValueError("ShearTracer_IAOnly needs an IA model.")
+
+    def get_contributions(self):
+        return (self.ia,)

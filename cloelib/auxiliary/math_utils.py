@@ -66,40 +66,171 @@ def simpsons_weights_jax(num_el: int) -> jnp.ndarray:
 simpsons_weights_jit = jax.jit(simpsons_weights_jax, static_argnums=(0,))
 
 
+def _simpson_odd_np(num_el: int) -> np.ndarray:
+    """Composite Simpson weights (unit spacing) for an odd number of nodes >= 3."""
+    w = np.empty(num_el)
+    w[1::2] = 4 / 3
+    w[2::2] = 2 / 3
+    w[0] = w[-1] = 1 / 3
+    return w
+
+
+def _simpson_even_np(num_el: int) -> np.ndarray:
+    """Even-N Simpson weights (unit spacing): the average of Simpson on the first
+    and on the last N-1 nodes, each closed with a trapezoid on the remaining
+    interval. Same rule as `simpsons_weights_even`; N = 2 is the trapezoid rule."""
+    if num_el == 2:
+        return np.array([0.5, 0.5])
+    w_end = np.append(_simpson_odd_np(num_el - 1), 0.0)
+    w_end[-2:] += 0.5
+    w_start = np.append(0.0, _simpson_odd_np(num_el - 1))
+    w_start[:2] += 0.5
+    return (w_start + w_end) / 2.0
+
+
+def _simpsons_weights_avg_np(num_el: int) -> np.ndarray:
+    """Parity-robust Simpson weights (unit spacing), see `simpsons_weights_avg`."""
+    num_el = int(num_el)
+    if num_el < 1:
+        raise ValueError("num_el must be >= 1")
+    if num_el == 1:
+        return np.zeros(1)  # a single node spans no interval
+    if num_el % 2 == 0:
+        return _simpson_even_np(num_el)
+    # odd N: the same averaging, one level up - even-N Simpson on the first and on
+    # the last N-1 nodes, each closed with a trapezoid on the remaining interval
+    w_end = np.append(_simpson_even_np(num_el - 1), 0.0)
+    w_end[-2:] += 0.5
+    w_start = np.append(0.0, _simpson_even_np(num_el - 1))
+    w_start[:2] += 0.5
+    return (w_start + w_end) / 2.0
+
+
+@lru_cache(maxsize=None)
+def _simpsons_weights_avg_cached(num_el: int) -> jnp.ndarray:
+    # Built eagerly (concrete array, never a tracer), so caching it is safe even
+    # when the first call happens while JAX is tracing.
+    with jax.ensure_compile_time_eval():
+        return jnp.asarray(_simpsons_weights_avg_np(num_el))
+
+
+def simpsons_weights_avg(num_el: int) -> jnp.ndarray:
+    """Simpson-type quadrature weights (unit spacing) without the alternating
+    4/3, 2/3 pattern, for any number of nodes.
+
+    The composite Simpson rule (`simpsons_weights_odd`) alternates 4/3, 2/3 in the
+    interior. For an integrand that is under-resolved by the grid - e.g. the
+    Limber integrand of a narrow tomographic bin, which goes as n(z)^2 - that
+    makes the result depend on where a peak falls between nodes, and the error
+    oscillates with the number of nodes. `simpsons_weights_even` already avoids
+    this by averaging two shifted Simpson rules: its weights are 1 except at the
+    first and last two nodes (5/12, 13/12). This function uses that rule for even
+    `num_el` (unchanged) and, for odd `num_el`, the analogous average of two
+    shifted even-N rules, whose weights are 1 except at the first and last three
+    nodes (11/24, 1, 25/24). One node gives weight 0, two nodes the trapezoid rule.
+
+    Args:
+        num_el (int): number of nodes (a static Python int).
+
+    Returns:
+        jnp.ndarray: weights of length `num_el`; multiply by the grid spacing.
+    """
+    return _simpsons_weights_avg_cached(int(num_el))
+
+
+def quadrature_weights(x) -> jnp.ndarray:
+    """
+    Quadrature weights ``w`` on the grid ``x`` such that ``sum(w * f(x))``
+    approximates the integral of ``f`` over ``x``.
+
+    Simpson's rule is used for linearly spaced grids (``w = s * dx``) and for
+    logarithmically spaced grids (integrating in ``ln x``, ``w = s * dlnx * x``);
+    any other grid falls back to the trapezoidal rule.
+
+    Parameters
+    ----------
+    x : array-like
+        Strictly increasing integration grid (not traced by JAX).
+
+    Returns
+    -------
+    jnp.ndarray
+        Weights with the same length as ``x``.
+    """
+    x = np.asarray(x, dtype=float)
+    dx = np.diff(x)
+    if np.allclose(dx, dx[0], rtol=1e-8):
+        return simpsons_weights_jit(len(x)) * dx[0]
+    if x[0] > 0:
+        dlnx = np.diff(np.log(x))
+        if np.allclose(dlnx, dlnx[0], rtol=1e-8):
+            return simpsons_weights_jit(len(x)) * dlnx[0] * jnp.asarray(x)
+    w = np.zeros_like(x)
+    w[:-1] += dx / 2
+    w[1:] += dx / 2
+    return jnp.asarray(w)
+
+
 def stack_zeros_and_simpson(num_weights: int, num_zeros: int) -> jnp.ndarray:
-    """Simpson's rule weights."""
-    if num_weights % 2 == 1:
-        weights = simpsons_weights_odd(num_weights)
-    else:
-        weights = simpsons_weights_even(num_weights)
-    zeros_array = jnp.zeros(num_zeros)
-    return jnp.concatenate([zeros_array, weights], axis=0)
+    """Row of `stacked_simpson`: `num_zeros` zeros followed by the
+    `simpsons_weights_avg` weights for `num_weights` nodes."""
+    return jnp.asarray(
+        np.concatenate([np.zeros(num_zeros), _simpsons_weights_avg_np(num_weights)])
+    )
+
+
+def _stacked_simpson_np(n: int) -> np.ndarray:
+    w = np.zeros((n, n))
+    for i in range(n):
+        w[i, i:] = _simpsons_weights_avg_np(n - i)
+    return w
 
 
 def stacked_simpson(n: int) -> jnp.ndarray:
-    """Simpson's rule weights, with a stacking."""
-    rows = []
-    for i in range(n):
-        row = stack_zeros_and_simpson(n - i, i)
-        rows.append(row)
-    return jnp.vstack(rows)
+    """Matrix of quadrature weights (unit spacing) for cumulative integrals to the
+    end of the grid: row `i` integrates over nodes `i, ..., n-1` with
+    `simpsons_weights_avg` (zero weights before node `i`).
+
+    Row `i` therefore sums to the number of remaining intervals, `n - 1 - i`: the
+    last row (a single node) is zero and the one before it is the trapezoid rule.
+    """
+    return jnp.asarray(_stacked_simpson_np(int(n)))
 
 
 @lru_cache(maxsize=None)
 def _cached_stacked_simpson_py(n: int) -> jnp.ndarray:
-    return stacked_simpson(n)
+    # Built eagerly with numpy and materialised outside any trace, so the cache
+    # holds a concrete array. (Caching the output of a jitted function here used to
+    # store a tracer, which failed with `UnexpectedTracerError` on any re-trace
+    # for the same `n`, e.g. after `jax.clear_caches()`.)
+    with jax.ensure_compile_time_eval():
+        return jnp.asarray(_stacked_simpson_np(int(n)))
 
 
 def cached_stacked_simpson(n: int) -> jnp.ndarray:
-    """Cache the simpson weights calculation."""
-    return _cached_stacked_simpson_py(n)
-
-
-cached_stacked_simpson = jax.jit(cached_stacked_simpson, static_argnums=0)
+    """Cached `stacked_simpson(n)`. `n` must be a static Python int (e.g. `len(z)`);
+    safe to call inside jitted code."""
+    return _cached_stacked_simpson_py(int(n))
 
 
 def legendre(n, x):
-    """Write documentation (TODO)."""
+    """Evaluate the Legendre polynomial of degree ``n`` at ``x``.
+
+    The polynomial is evaluated with the three-term recurrence relation. ``x`` may
+    be a scalar or an array; the result is a JAX value with the corresponding shape.
+
+    Parameters
+    ----------
+    n : int
+        Non-negative degree of the polynomial.
+    x : array-like
+        Point or points at which to evaluate the polynomial.
+
+    Returns
+    -------
+    jax.Array
+        Values of the degree-``n`` Legendre polynomial at ``x``.
+    """
     if n == 0:
         return jnp.ones_like(x)
     elif n == 1:
@@ -114,7 +245,33 @@ def legendre(n, x):
 
 
 def simps(f, a, b, N=128):
-    """Write documentation (TODO)."""
+    """Compute Simpson's-rule integrals of ``f`` over ``[a, b]``.
+
+    ``f`` is evaluated at ``N + 1`` equally spaced points, and composite
+    Simpson's rule is applied along the leading axis of its result.
+
+    Parameters
+    ----------
+    f : callable
+        Function evaluated at the integration points. Its result must have a
+        leading dimension of length ``N + 1``.
+    a, b : float
+        Lower and upper integration limits.
+    N : int, optional
+        Number of equal subintervals; must be even. Defaults to 128.
+
+    Returns
+    -------
+    scalar or array-like
+        Integral value(s), with the shape of ``f``'s result after reducing its
+        leading dimension. The concrete array type follows the value returned by
+        ``f`` and ``numpy.sum``'s dispatch.
+
+    Raises
+    ------
+    ValueError
+        If ``N`` is odd.
+    """
     if N % 2 == 1:
         raise ValueError("N must be an even integer.")
     dx = (b - a) / N
@@ -122,3 +279,30 @@ def simps(f, a, b, N=128):
     y = f(x)
     S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
     return S
+
+
+def safe_sqrt(x):
+    """`sqrt` with a finite gradient at (and below) zero.
+
+    `jax.grad` of `sqrt(x)` is `inf` at `x = 0`, which turns into NaNs once
+    multiplied by a zero cotangent. The double-`where` keeps both the value
+    and the gradient finite where `x <= 0` (value and gradient set to 0).
+    """
+    positive = x > 0
+    return jnp.where(positive, jnp.sqrt(jnp.where(positive, x, 1.0)), 0.0)
+
+
+def check_nonzero_redshifts(z):
+    """Raise `ValueError` if the redshift grid `z` contains zero.
+
+    A zero redshift breaks the Limber integration. The check runs in plain
+    NumPy on a concrete grid, so a tracer constructor holding it can still be
+    traced by `jax.jit`, where even a constant `jnp` array would otherwise be
+    compared as a tracer. A traced `z` is not checked.
+    """
+    if isinstance(z, jax.core.Tracer):
+        return
+    if np.any(np.asarray(z) == 0.0):
+        raise ValueError(
+            "One of the z array elements is equal to zero, breaking Limber integration."
+        )

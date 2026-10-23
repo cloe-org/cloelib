@@ -1,4 +1,4 @@
-# Tracer Protocol (Photometric Observables)
+# Photometric Observables (Tracer Protocol)
 
 **Protocol Definition**: `cloelib.observables.photo.tracer.Tracer`
 
@@ -37,16 +37,16 @@ For weak gravitational lensing (cosmic shear) measurements.
 **Example**:
 
 ```python
-from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBPerturbations
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.photo import ShearTracer
 import numpy as np
 
 # Set up cosmology
 bg = CAMBBackground(H0=67.5, Omega_b0=0.0492, ...)
-pert = CAMBPerturbations(background=bg)
 
 # Define redshift distribution (normalized.)
 z = np.linspace(0.01, 3.0, 100)
+pert = CAMBLinearPerturbations(background=bg, redshifts=z)
 dndz = np.exp(-((z - 0.7) / 0.3)**2)  # Gaussian n(z)
 dndz = dndz / np.trapz(dndz, z)  # Normalize
 
@@ -302,15 +302,15 @@ __all__ = [
 # tests/test_my_new_tracer.py
 import pytest
 import numpy as np
-from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBPerturbations
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.my_new_tracer import CMBLensingTracer
 
 def test_cmb_lensing_tracer():
     """Test CMB lensing tracer."""
     bg = CAMBBackground(H0=67.5, ...)
-    pert = CAMBPerturbations(background=bg)
-
     z = np.linspace(0.1, 2.0, 50)
+    pert = CAMBLinearPerturbations(background=bg, redshifts=z)
+
     tracer = CMBLensingTracer(perturbations=pert, z=z)
 
     window = tracer.get_window(z)
@@ -395,5 +395,6 @@ Ready to compute final statistics with your observables?
 - [Perturbations](../perturbations.md) – Review structure formation
 - [Background](../background.md) – Review the foundation
 - [API Reference](../../api.md) – Full technical details
-- [Back to Observables](index.md) – Review all oobservables
+- [Gravitational-Wave Observables](gw.md) – Compute windows for GW sources
+- [Back to Observables](index.md) – Review all observables
 - [Back to Overview](../index.md) – Review the architecture

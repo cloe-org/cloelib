@@ -1,28 +1,27 @@
-"""
-This module provides CosmoPower-JAX-based emulators for linear and nonlinear matter power spectra.
+"""CosmoPower-JAX emulators for the linear and nonlinear matter power spectrum.
 
-Uses cosmopower_jax instead of tensorflow-based cosmopower for faster JAX-accelerated predictions.
-
-Supported models include:
-- w0waCDM with mass of the neutrino 0
-- w0waCDM with one massive neutrino
-- w0waCDM with 2 massive neutrinos
-- w0waCDM with three degenerate massive neutrinos
-- wCDM with mass of the neutrino 0
-- wCDM with one massive neutrino
-- wCDM with 2 massive neutrinos
-- wCDM with three massive neutrinos
-- LCDM with mass of the neutrinos 0
-- LCDM with one massive neutrino
-- LCDM with 2 massive neutrinos
-- LCDM with three massive neutrinos
-
-- LCDM with curvature
-- LCDM with running of the spectral index
+Uses ``cosmopower_jax`` (rather than the TensorFlow-based ``cosmopower``) for fast
+JAX-accelerated predictions. Covers LCDM, wCDM and w0waCDM, plus curvature and
+running-spectral-index extensions, each over neutrino configurations N_mnu = 0-3.
+Every cosmology exposes ``Linear`` and ``NonLinear`` inner classes; the baseline
+models additionally offer halofit nonlinear variants. Each provides both the
+total-matter spectrum (``matter_power_spectrum``) and the CDM+baryon spectrum
+(``matter_power_spectrum_cb``, built at construction from the paired cb emulator),
+along with ``sigma8``, ``fsigma8``, ``growth_factor``, ``growth_factor_cb`` and
+``growth_rate``, and validates inputs against ``CP_EMULATOR_BOUNDS``. The classes
+share one implementation (the private ``_CosmoPowerLinear``/``_CosmoPowerNonLinear``
+bases), parameterised by a per-cosmology ``_ModelSpec`` (emulator file prefix,
+supported N_mnu, extra parameters).
 """
 
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    Background,
+    Perturbations,
+    growth_rate_on_redshifts,
+)
 from cloelib.auxiliary.extrapolator import extend_spectra
+from cloelib.auxiliary.math_utils import ensure_z_zero_included
 
 import numpy as np
 from scipy import interpolate
@@ -32,27 +31,50 @@ import warnings
 from typing import Optional
 
 
-# Zenodo URL for emulator files
-ZENODO_URL = "https://zenodo.org/records/19678842/files"
+# GitHub repository hosting the emulator files, downloaded and cached on first use.
+# This is the raw-file base path; each .npz is fetched individually, not the whole repo.
+GITHUB_EMULATOR_URL = (
+    "https://raw.githubusercontent.com/cosmopower-organization/"
+    "Euclid-DR1-matter-emulators/main/emulators"
+)
 
 
-def emulator_data(filename: str, zenodo_url: Optional[str] = None) -> str:
+def _emulator_url_for(filename: str) -> str:
+    """Return the GitHub raw base URL, including subfolder, that hosts ``filename``.
+
+    Emulators are organised by cosmology family and nonlinear prescription:
+    ``<model>/hmcode``, ``<model>/halofit`` and ``extended/<variant>``. The
+    subfolder is derived from the filename prefix.
+    """
+    if filename.startswith("halofit-"):
+        subdir = f"{filename.split('-')[1]}/halofit"
+    elif filename.startswith("nrun-"):
+        subdir = "extended/running"
+    elif filename.startswith("curvature-"):
+        subdir = "extended/curvature"
+    else:
+        subdir = f"{filename.split('-')[0]}/hmcode"
+    return f"{GITHUB_EMULATOR_URL}/{subdir}"
+
+
+def emulator_data(filename: str, base_url: Optional[str] = None) -> str:
     """Download the emulator data file if it does not exist.
 
     Parameters
     ----------
     filename : str
         The name of the file to download.
-    zenodo_url : str, optional
-        The base URL from which to download the file. Defaults to ZENODO_URL.
+    base_url : str, optional
+        The base URL from which to download the file. Defaults to the GitHub
+        location derived from the filename.
 
     Returns
     -------
     str
         The path to the downloaded file.
     """
-    if zenodo_url is None:
-        zenodo_url = ZENODO_URL
+    if base_url is None:
+        base_url = _emulator_url_for(filename)
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DATA_DIR = os.path.join(BASE_DIR, "emulator-data-jax")
@@ -60,7 +82,7 @@ def emulator_data(filename: str, zenodo_url: Optional[str] = None) -> str:
     file_path = os.path.join(DATA_DIR, filename)
 
     if not os.path.exists(file_path):
-        url = f"{zenodo_url}/{filename}"
+        url = f"{base_url}/{filename}"
         print(f"Downloading {filename} from {url} ...")
         urllib.request.urlretrieve(url, file_path)
 
@@ -111,9 +133,404 @@ def load_sigma_emulator(filepath: str):
         return CosmoPowerJAX(probe="custom", filepath=filepath, verbose=False)
 
 
-# Download k-modes files at module load time
-k_modes_path = emulator_data("k-modes.txt", ZENODO_URL)
-k_modes_curvature_path = emulator_data("curvature-kmodes.txt", ZENODO_URL)
+CP_EMULATOR_BOUNDS = {
+    "ombh2": np.array([0.001, 0.1]),
+    "omch2": np.array([0.05, 0.9]),
+    "H0": np.array([20.0, 100.0]),
+    "ns": np.array([0.6, 1.3]),
+    "lnAs": np.array([1.61, 5.0]),
+    "mnu": np.array([0.0, 1.0]),
+    "logT_AGN": np.array([7.3, 8.5]),
+    "w0": np.array([-3.0, 1.0]),
+    "wa": np.array([-3.0, 3.0]),
+    "w": np.array([-3.0, 0.0]),
+    "omk": np.array([-0.3, 0.3]),
+    "alpha_s": np.array([-0.3, 0.3]),
+}
+
+
+def check_emulator_bounds(params: dict) -> None:
+    """Validate emulator input parameters against their training-box bounds.
+
+    Parameters
+    ----------
+    params : dict
+        Mapping of parameter name to its scalar value. Keys not present in
+        ``CP_EMULATOR_BOUNDS`` (e.g. ``z``) are skipped.
+
+    Raises
+    ------
+    ValueError
+        If any parameter lies outside its emulator training range.
+    """
+    for key, value in params.items():
+        if key not in CP_EMULATOR_BOUNDS:
+            continue
+        if np.prod(np.asarray(value) - CP_EMULATOR_BOUNDS[key]) > 0:
+            raise ValueError(f"Parameter {key} out of emulator range.")
+
+
+def _extended_pk_cb(cb_file, params, z_emu, extrap_z, ns):
+    """Predict and extend the cb P(k, z) grid from a CosmoPower-JAX cb emulator.
+
+    Built with the same ``extend_spectra`` options as the total-matter spectrum,
+    so the returned grid lands on the same ``(z, k)`` grid as ``Pk``.
+    """
+    emu = load_pk_emulator(emulator_data(cb_file))
+    Pk = np.array(emu.predict(params))
+    _, _, Pk_out = extend_spectra(
+        np.asarray(emu.modes),
+        z_emu,
+        Pk,
+        flag_range=True,
+        option_wavenumber="logk2",
+        option_redshift="power_law",
+        extrap_z=extrap_z,
+        option_cosmo="const",
+        ns=ns,
+    )
+    return Pk_out
+
+
+# --------------------------------------------------------------------------- #
+# Shared implementation of the emulator classes
+#
+# Every cosmology below exposes the same ``Linear`` / ``NonLinear`` (and, for the
+# baseline models, ``NonLinearHalofit``) classes. Their behaviour is identical up
+# to (i) which emulator files are loaded and (ii) which extra cosmological
+# parameters the emulator takes, so each method is implemented once in the
+# ``_CosmoPower*`` base classes below and the inner classes only name their spec.
+# --------------------------------------------------------------------------- #
+
+_SECTORS = {
+    # sector: (P(k) file, cb P(k) file, sigma8/fsigma8 file, takes log10TAGN)
+    "linear": (
+        "{p}-{n}mass-linear.npz",
+        "{p}-{n}mass-cb-linear.npz",
+        "{p}-{n}mass-s8-fs8.npz",
+        False,
+    ),
+    "nonlinear": (
+        "{p}-{n}mass-nonlinear.npz",
+        "{p}-{n}mass-cb-nonlinear.npz",
+        "{p}-{n}mass-s8-fs8.npz",
+        True,
+    ),
+    "halofit": (
+        "halofit-{p}-{n}mass-nonlinear.npz",
+        "halofit-{p}-{n}mass-cb-nonlinear.npz",
+        "halofit-{p}-{n}mass-s8-fs8.npz",
+        False,
+    ),
+}
+
+_NEUTRINOS = {
+    0: "no massive neutrinos",
+    1: "one massive neutrino with mnu={mnu}eV",
+    2: "two degenerate massive neutrinos with mnu={mnu}eV",
+    3: "three degenerate massive neutrinos with mnu={mnu}eV",
+}
+
+
+class _ModelSpec:
+    """What distinguishes one emulated cosmology from another.
+
+    Args:
+        label (str): Human-readable cosmology name used in ``__str__``.
+        prefix (str): Emulator file prefix, e.g. ``"lcdm"`` or ``"curvature-w0wa"``.
+        n_mnu (tuple): Supported numbers of massive neutrino species.
+        params (dict): Extra emulator inputs beyond the base LCDM set, mapping the
+            emulator parameter name to the ``Background`` attribute it is read from.
+        flat_only (bool): Whether the emulator only supports Omega_k0 = 0.
+    """
+
+    def __init__(self, label, prefix, n_mnu, params, flat_only):
+        """Store the model description."""
+        self.label = label
+        self.prefix = prefix
+        self.n_mnu = tuple(n_mnu)
+        self.params = dict(params)
+        self.flat_only = flat_only
+
+
+def _emulator_files(spec, sector, n_mnu):
+    """Return the (P(k), cb P(k), sigma8) emulator files for one configuration.
+
+    Args:
+        spec (_ModelSpec): The cosmology.
+        sector (str): One of ``"linear"``, ``"nonlinear"`` or ``"halofit"``.
+        n_mnu (int): Number of massive neutrino species.
+
+    Returns:
+        tuple: The three file names.
+
+    Raises:
+        ValueError: If ``n_mnu`` is not supported by this cosmology.
+    """
+    if n_mnu not in spec.n_mnu:
+        supported = ", ".join(str(n) for n in spec.n_mnu)
+        raise ValueError(f"Unsupported N_mnu={n_mnu}. Supported: {supported}")
+    pk, cb, sigma, _ = _SECTORS[sector]
+    return tuple(f.format(p=spec.prefix, n=n_mnu) for f in (pk, cb, sigma))
+
+
+class _CosmoPowerPerturbations:
+    """Shared implementation of every CosmoPower-JAX emulator class.
+
+    Subclasses set ``_spec`` (the cosmology) and ``_sector`` (``"linear"``,
+    ``"nonlinear"`` or ``"halofit"``); everything else is common.
+    """
+
+    _spec: _ModelSpec
+    _sector: str
+
+    def _setup(self, background, redshifts, log10TAGN=None):
+        """Load the emulators and build the P(k), P_cb(k) and sigma8 tables.
+
+        Shared by the linear, nonlinear and halofit ``__init__`` methods; the sector
+        and cosmology are read from the ``_sector``/``_spec`` class attributes.
+        """
+        spec, sector = self._spec, self._sector
+        pk_name, cb_name, sigma_name = _emulator_files(spec, sector, background.N_mnu)
+        cp_file = emulator_data(pk_name)
+        cp_file_sigma = emulator_data(sigma_name)
+        self.has_neutrinos = background.N_mnu > 0
+
+        emulator = load_pk_emulator(cp_file)
+        if sector == "linear":
+            self.cp_LIN = emulator
+        else:
+            self.cp_NONLIN = emulator
+        self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
+        self.k_emu = np.asarray(emulator.modes)
+        self.k_min = self.k_emu[0]
+        self.k_max = self.k_emu[-1]
+        self.background = background
+        if spec.flat_only:
+            assert background.Omega_k0 == 0, "Non flat geometries not supported"
+
+        self.z = ensure_z_zero_included(redshifts[redshifts <= 5])
+        self.params = {
+            "ombh2": self.background.Omega_b0 * self.background.h**2,
+            "omch2": self.background.Omega_cdm0 * self.background.h**2,
+            "H0": self.background.H0,
+            "ns": self.background.ns,
+            "lnAs": np.log(self.background.As * 1e10),
+        }
+        for name, attribute in spec.params.items():
+            self.params[name] = getattr(self.background, attribute)
+        baryons = _SECTORS[sector][3]
+        if baryons:
+            self.params["logT_AGN"] = log10TAGN if log10TAGN is not None else 7.6
+        if self.has_neutrinos:
+            self.params["mnu"] = self.background.mnu
+
+        check_emulator_bounds(self.params)
+
+        for key in self.params.keys():
+            self.params[key] = np.tile(self.params[key], len(self.z))
+        self.params["z"] = self.z
+
+        if baryons:
+            sigma_params = self.params
+        else:
+            # The linear sector shares the HMcode sigma8/fsigma8 emulator, which expects
+            # logT_AGN; sigma8/fsigma8 are (near) linear quantities, so they are
+            # evaluated at the fiducial logT_AGN=7.6. The halofit sigma8/fsigma8
+            # emulators take no logT_AGN and ignore it.
+            self.sigma_params = self.params.copy()
+            self.sigma_params["logT_AGN"] = np.tile(7.6, len(self.z))
+            sigma_params = self.sigma_params
+
+        Pk = np.array(emulator.predict(self.params))
+        k_out, z_out, Pk_out = extend_spectra(
+            self.k_emu,
+            self.z,
+            Pk,
+            flag_range=True,
+            option_wavenumber="logk2",
+            option_redshift="power_law",
+            extrap_z=redshifts,
+            option_cosmo="const",
+            ns=self.background.ns,
+        )
+        self.k, self.z, self.Pk = k_out, z_out, Pk_out
+        self.Pk_interp = interpolate.RectBivariateSpline(
+            self.z, self.k, Pk_out, kx=1, ky=1
+        )
+        self.Pk_cb = _extended_pk_cb(
+            cb_name, self.params, self.params["z"], redshifts, self.background.ns
+        )
+        self.Pk_cb_interp = interpolate.RectBivariateSpline(
+            self.z, self.k, self.Pk_cb, kx=1, ky=1
+        )
+
+        sigma_predictions = np.array(self.cp_SIGMA.predict(sigma_params))
+        self.sigma8 = sigma_predictions[:, 0]
+        self.fsigma8 = sigma_predictions[:, 1]
+
+    def __str__(self) -> str:
+        """Return emulator description."""
+        sector = {
+            "linear": "linear",
+            "nonlinear": "nonlinear",
+            "halofit": "nonlinear (halofit)",
+        }
+        n_mnu = self.background.N_mnu
+        neutrinos = _NEUTRINOS.get(n_mnu, "unsupported").format(mnu=self.background.mnu)
+        extra = "".join(
+            f", {name}={getattr(self.background, attribute)}"
+            for name, attribute in self._spec.params.items()
+        )
+        text = (
+            f"Cosmopower-JAX {sector[self._sector]} P(k) module for {self._spec.label} "
+            f"cosmology.\nConfiguration: N_mnu={n_mnu}, {neutrinos}{extra}."
+        )
+        if self._sector == "halofit":
+            text += " Dark-matter-only halofit (no baryonic feedback)."
+        return text
+
+    def matter_power_spectrum(self, zs, ks) -> np.ndarray:
+        """Compute the matter power spectrum P(k, z).
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            pk (numpy.ndarray): Total-matter power spectrum.
+        """
+        return self.Pk_interp(zs, ks)
+
+    def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
+        """Compute the CDM+baryon matter power spectrum P_cb(k, z).
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            pk (numpy.ndarray): CDM+baryon (no neutrino) power spectrum.
+        """
+        return self.Pk_cb_interp(zs, ks)
+
+    def growth_factor(self, zs, ks) -> np.ndarray:
+        """Compute the growth factor D(z, k) = sqrt[P(z, k) / P(0, k)].
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            (numpy.ndarray): The growth factor, normalised to D(z=0) = 1.
+        """
+        return np.sqrt(self.Pk_interp(zs, ks) / self.Pk_interp(0, ks))
+
+    def growth_factor_cb(self, zs, ks) -> np.ndarray:
+        """Compute the cb growth factor D_cb(z, k) = sqrt[P_cb(z, k) / P_cb(0, k)].
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+
+        Returns:
+            (numpy.ndarray): The cb growth factor, normalised to D_cb(z=0) = 1.
+        """
+        return np.sqrt(self.Pk_cb_interp(zs, ks) / self.Pk_cb_interp(0, ks))
+
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
+        """Compute the scale-independent growth rate f(z) = fsigma8 / sigma8.
+
+        Args:
+            zs (Optional[numpy.ndarray]): Redshifts, interpolated on the grid the
+                emulator was evaluated at. Defaults to that grid.
+            ks (Optional[numpy.ndarray]): Wavenumbers used to broadcast f.
+
+        Returns:
+            (numpy.ndarray): The growth rate, with shape (nz,) if ks is None
+                and (nz, nk) otherwise.
+        """
+        return growth_rate_on_redshifts(
+            self.params["z"], self.fsigma8 / self.sigma8, zs, ks
+        )
+
+    def sigma8_0(self) -> float:
+        """Compute sigma8 at z=0.
+
+        Returns:
+            float: The rms matter fluctuation sigma8 at z=0.
+        """
+        return self.sigma8[0]
+
+
+class _CosmoPowerLinear(_CosmoPowerPerturbations):
+    """Shared linear emulator class; built with ``(background, redshifts)``."""
+
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
+    def __init__(self, background: Background, redshifts: np.ndarray):
+        """Initialize the Linear instance."""
+        self._setup(background, redshifts)
+
+
+class _CosmoPowerNonLinear(_CosmoPowerPerturbations):
+    """Shared nonlinear emulator class (HMcode2020 or halofit sector)."""
+
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
+    def __init__(
+        self,
+        background: Background,
+        linearperturbations: Perturbations,
+        redshifts: np.ndarray,
+        log10TAGN: Optional[float] = None,
+    ):
+        """Initialize the NonLinear instance.
+
+        ``log10TAGN`` controls the HMcode2020 baryonic feedback; the halofit
+        prescription is dark-matter-only, so there it is accepted for interface
+        compatibility but ignored.
+        """
+        # Retained for downstream consumers that need the *linear* P(k) back from a
+        # tracer's (nonlinear) `perturbations` - same attribute/pattern as
+        # HMcode2020Emu, EE2, BACCOemu, Emantis and JAX.
+        self.linearperturbations = linearperturbations
+        self._setup(background, redshifts, log10TAGN)
+
+
+_BASE = (0, 1, 2, 3)
+_EXTENDED = (0, 1, 3)
+_W0WA = {"w0": "w0", "wa": "wa"}
+
+_LCDM = _ModelSpec("LCDM", "lcdm", _BASE, {}, flat_only=True)
+_WCDM = _ModelSpec("wCDM", "wcdm", _BASE, {"w": "w0"}, flat_only=True)
+_W0WACDM = _ModelSpec("w0waCDM", "w0wa", _BASE, _W0WA, flat_only=True)
+_LCDM_CURVATURE = _ModelSpec(
+    "LCDM+curvature", "curvature-lcdm", _EXTENDED, {"omk": "Omega_k0"}, flat_only=False
+)
+_W0WA_CURVATURE = _ModelSpec(
+    "w0waCDM+curvature",
+    "curvature-w0wa",
+    _EXTENDED,
+    {**_W0WA, "omk": "Omega_k0"},
+    flat_only=False,
+)
+_LCDM_RUNNING = _ModelSpec(
+    "LCDM+running spectral index",
+    "nrun-lcdm",
+    _EXTENDED,
+    {"alpha_s": "alpha_s"},
+    flat_only=False,
+)
+_W0WA_RUNNING = _ModelSpec(
+    "w0waCDM+running spectral index",
+    "nrun-w0wa",
+    _EXTENDED,
+    {**_W0WA, "alpha_s": "alpha_s"},
+    flat_only=False,
+)
 
 
 class CosmoPowerJAXw0waCDMPerturbations:
@@ -121,721 +538,20 @@ class CosmoPowerJAXw0waCDMPerturbations:
     Class for w0waCDM cosmology perturbations using CosmoPower-JAX emulators.
     """
 
-    class Linear:
-        """
-        Emulator for the linear matter power spectrum in the w0waCDM cosmology.
+    class Linear(_CosmoPowerLinear):
+        """Linear matter power spectrum."""
 
-        Uses CosmoPower-JAX for fast JAX-accelerated predictions.
-        """
+        _spec, _sector = _W0WACDM, "linear"
 
-        def __init__(self, background: Background, redshifts: np.ndarray):
-            """
-            Initialize the emulator with a given cosmological background and redshift array.
+    class NonLinear(_CosmoPowerNonLinear):
+        """Nonlinear matter power spectrum using HMcode2020."""
 
-            Parameters
-            ----------
-            background : Background
-                Background cosmology object.
-            redshifts : np.ndarray
-                Array of redshift values.
-            """
-            if background.N_mnu == 0:
-                cp_file = emulator_data("w0wa-linear.npz")
-                cp_file_sigma = emulator_data("w0wa-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file = emulator_data("w0wa-1mass-linear.npz")
-                cp_file_sigma = emulator_data("w0wa-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file = emulator_data("w0wa-2degen-linear.npz")
-                cp_file_sigma = emulator_data("w0wa-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file = emulator_data("w0wa-3degen-linear.npz")
-                cp_file_sigma = emulator_data("w0wa-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
+        _spec, _sector = _W0WACDM, "nonlinear"
 
-            self.cp_LIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
+    class NonLinearHalofit(_CosmoPowerNonLinear):
+        """Nonlinear matter power spectrum using halofit (Takahashi 2012)."""
 
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-            redshift_max = 5
-            self.z = redshifts[redshifts <= redshift_max]
-
-            cp_bounds = {
-                "ombh2": np.array([0.001, 0.1]),
-                "omch2": np.array([0.05, 0.9]),
-                "H0": np.array([20, 100]),
-                "ns": np.array([0.6, 1.3]),
-                "lnAs": np.array([1.61, 5]),
-                "w0": np.array([-3.0, -0.33]),
-                "wa": np.array([-3, 3]),
-                "z": np.array([0.0, 5.0]),
-            }
-            if self.has_neutrinos:
-                cp_bounds["mnu"] = np.array([0.00, 1.0])
-
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "w0": self.background.w0,
-                "wa": self.background.wa,
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
-
-            for key in self.params.keys():
-                if np.prod(self.params[key] - cp_bounds[key]) > 0:
-                    raise ValueError(f"Parameter {key} out of emulator range.")
-                else:
-                    self.params[key] = np.tile(self.params[key], len(redshifts))
-
-            self.params["z"] = redshifts
-
-            self.sigma_params = self.params.copy()
-            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
-
-            Pk_lin = np.array(self.cp_LIN.predict(self.params))
-
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_lin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-
-            self.k = k_out
-            self.z = z_out
-            self.Pk = Pk_out
-
-            pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
-            self.Pk_int = pk_int
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            """Return emulator description."""
-            if self.background.N_mnu == 0:
-                return (
-                    f"Cosmopower-JAX linear Pk module. Computes the linear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are no massive neutrinos in this model."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX linear Pk module. Computes the linear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Casas et al. 2023. "
-                    f"There is one massive neutrino, with a total mass described by the `mnu` parameter."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX linear Pk module. Computes the linear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are two massive neutrinos, with a total mass sum described by the `mnu` parameter."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX linear Pk module. Computes the linear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Archidiacono et al. (2024). There are three "
-                    f"degenerate massive neutrinos, with a total mass sum described by `mnu` parameter."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX linear Pk module for w0waCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            """Compute the linear matter power spectrum P(k, z).
-
-            Parameters
-            ----------
-            zs : np.ndarray
-                Redshifts at which to evaluate the power spectrum.
-            ks : np.ndarray
-                Wavenumbers in units of Mpc^-1.
-
-            Returns
-            -------
-            np.ndarray
-                Linear matter power spectrum in (Mpc/h)^3.
-            """
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks) -> np.ndarray:
-            r"""
-            Calculate the growth factor for given redshifts and wavenumbers.
-
-            .. math::
-                D(z, k) =\sqrt{P_{\rm \delta\delta}(z, k)\
-                /P_{\rm \delta\delta}(z=0, k)}\\
-
-            and normalizes as for :math:`D(z)/D(0)`.
-
-            Parameters:
-            -----------
-            zs : array_like
-                Redshifts at which to calculate the growth factor.
-            ks : array_like
-                Wavenumbers at which to calculate the growth factor.
-
-            Returns:
-            --------
-            np.ndarray
-                The growth factor as a function of redshift and wavenumber.
-            """
-            if hasattr(self, "Pk_int") and self.Pk_int is not None:
-                D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-            return D_z_k
-
-        def growth_rate(self) -> np.ndarray:
-            """
-            Calculate the growth rate f(z) = d ln D / d ln a.
-
-            This is computed as f = fsigma8 / sigma8.
-
-            Returns
-            -------
-            np.ndarray
-                The growth rate as a function of redshift.
-            """
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self) -> float:
-            """
-            Calculate the sigma8 value.
-
-            Returns:
-            --------
-            float
-                The sigma8 value.
-            """
-            return self.sigma8[0]
-
-    class LinearCB:
-        """
-        Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the w0waCDM cosmology.
-
-        This class uses a Cosmopower-JAX neural network to emulate the cb linear power spectrum
-        for a w0waCDM cosmology. Automatically selects the appropriate emulator based on neutrino configuration.
-        """
-
-        def __init__(self, background: Background, redshifts: np.ndarray):
-            if background.N_mnu == 0:
-                cp_file = emulator_data("w0wa-cb-linear.npz")
-                cp_file_sigma = emulator_data("w0wa-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file = emulator_data("w0wa-1mass-cb-linear.npz")
-                cp_file_sigma = emulator_data("w0wa-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file = emulator_data("w0wa-2degen-cb-linear.npz")
-                cp_file_sigma = emulator_data("w0wa-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file = emulator_data("w0wa-3degen-cb-linear.npz")
-                cp_file_sigma = emulator_data("w0wa-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
-
-            self.cp_LIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-            redshift_max = 5
-            self.z = redshifts[redshifts <= redshift_max]
-
-            cp_bounds = {
-                "ombh2": np.array([0.001, 0.1]),
-                "omch2": np.array([0.05, 0.9]),
-                "H0": np.array([20, 100]),
-                "ns": np.array([0.6, 1.3]),
-                "lnAs": np.array([1.61, 5]),
-                "w0": np.array([-3.0, -0.33]),
-                "wa": np.array([-3, 3]),
-                "z": np.array([0.0, 5.0]),
-            }
-            if self.has_neutrinos:
-                cp_bounds["mnu"] = np.array([0.00, 1.0])
-
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "w0": self.background.w0,
-                "wa": self.background.wa,
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
-
-            for key in self.params.keys():
-                if np.prod(self.params[key] - cp_bounds[key]) > 0:
-                    raise ValueError(f"Parameter {key} out of emulator range.")
-                else:
-                    self.params[key] = np.tile(self.params[key], len(redshifts))
-
-            self.params["z"] = redshifts
-
-            self.sigma_params = self.params.copy()
-            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
-
-            Pk_lin = np.array(self.cp_LIN.predict(self.params))
-
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_lin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-
-            self.k = k_out
-            self.z = z_out
-            self.Pk = Pk_out
-
-            pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
-            self.Pk_int = pk_int
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            """Return emulator description."""
-            if self.background.N_mnu == 0:
-                return (
-                    f"Cosmopower-JAX cb linear Pk module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are no massive neutrinos in this model."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Casas et al. 2023. "
-                    f"There is one massive neutrino, with a total mass described by the `mnu` parameter."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are two massive neutrinos, with a total mass sum described by the `mnu` parameter."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Archidiacono et al. (2024). There are three "
-                    f"degenerate massive neutrinos, with a total mass sum described by `mnu` parameter."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module for w0waCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            """Compute the cb linear matter power spectrum P_cb(k, z)."""
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks) -> np.ndarray:
-            """Calculate the growth factor D(z, k)."""
-            if hasattr(self, "Pk_int") and self.Pk_int is not None:
-                D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-            return D_z_k
-
-        def growth_rate(self) -> np.ndarray:
-            """Calculate the growth rate f(z) = fsigma8 / sigma8."""
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self) -> float:
-            """Return sigma8 at z=0."""
-            return self.sigma8[0]
-
-    class NonLinear:
-        """
-        Emulator for the nonlinear matter power spectrum in the w0waCDM cosmology.
-
-        This class uses a Cosmopower-JAX neural network to emulate the nonlinear power spectrum
-        for a w0waCDM cosmology. Automatically selects the appropriate emulator based on neutrino configuration.
-        Nonlinear corrections are applied using the mead2020 model in CAMB, with baryonic feedback
-        regulated using the `log10TAGN` parameter.
-        """
-
-        def __init__(
-            self,
-            background: Background,
-            linearperturbations: Perturbations,
-            redshifts: np.ndarray,
-            log10TAGN: Optional[float] = None,
-        ):
-            if background.N_mnu == 0:
-                cp_file_pk = emulator_data("w0wa-nonlinear.npz")
-                cp_file_sigma = emulator_data("w0wa-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file_pk = emulator_data("w0wa-1mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("w0wa-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file_pk = emulator_data("w0wa-2degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("w0wa-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file_pk = emulator_data("w0wa-3degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("w0wa-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
-
-            self.cp_NONLIN = load_pk_emulator(cp_file_pk)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-            redshift_max = 5
-            self.z = redshifts[redshifts <= redshift_max]
-
-            cp_bounds = {
-                "ombh2": np.array([0.001, 0.1]),
-                "omch2": np.array([0.05, 0.9]),
-                "H0": np.array([20, 100]),
-                "ns": np.array([0.6, 1.3]),
-                "lnAs": np.array([1.61, 5]),
-                "w0": np.array([-3.0, -0.33]),
-                "wa": np.array([-3, 3]),
-                "z": np.array([0.0, 5.0]),
-                "logT_AGN": np.array([7.3, 8.5]),
-            }
-            if self.has_neutrinos:
-                cp_bounds["mnu"] = np.array([0.00, 1.0])
-
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "w0": self.background.w0,
-                "wa": self.background.wa,
-                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
-
-            for key in self.params.keys():
-                if np.prod(self.params[key] - cp_bounds[key]) > 0:
-                    raise ValueError(f"Parameter {key} out of emulator range.")
-                else:
-                    self.params[key] = np.tile(self.params[key], len(redshifts))
-
-            self.params["z"] = redshifts
-
-            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
-
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_nonlin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-
-            self.k = k_out
-            self.z = z_out
-            self.Pk = Pk_out
-
-            pk_int = interpolate.RectBivariateSpline(self.z, self.k, Pk_out, kx=1, ky=1)
-            self.Pk_int = pk_int
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            """Return emulator description."""
-            if self.background.N_mnu == 0:
-                return (
-                    f"Cosmopower-JAX nonlinear Pk module. Computes the nonlinear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'logT_AGN']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are no massive neutrinos in this model. "
-                    f"Nonlinear corrections are applied using the mead2020 model in CAMB, "
-                    f"with baryonic feedback regulated using the `logT_AGN` parameter."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX nonlinear Pk module. Computes the nonlinear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu', 'logT_AGN']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Casas et al. 2023. "
-                    f"There is one massive neutrino, with a total mass described by the `mnu` parameter. "
-                    f"Nonlinear corrections are applied using the mead2020 model in CAMB, "
-                    f"with baryonic feedback regulated using the `logT_AGN` parameter."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX nonlinear Pk module. Computes the nonlinear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu', 'logT_AGN']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are two massive neutrinos, with a total mass sum described by the `mnu` parameter. "
-                    f"Nonlinear corrections are applied using the mead2020 model in CAMB, "
-                    f"with baryonic feedback regulated using the `logT_AGN` parameter."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX nonlinear Pk module. Computes the nonlinear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu', 'logT_AGN']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Archidiacono et al. (2024). There are three "
-                    f"degenerate massive neutrinos, with a total mass sum described by `mnu` parameter. "
-                    f"Nonlinear corrections are applied using the mead2020 model in CAMB, "
-                    f"with baryonic feedback regulated using the `logT_AGN` parameter."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX nonlinear Pk module for w0waCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            """Compute the nonlinear matter power spectrum P(k, z)."""
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks) -> np.ndarray:
-            """Calculate the growth factor D(z, k)."""
-            if hasattr(self, "Pk_int") and self.Pk_int is not None:
-                D_z_k = np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-            return D_z_k
-
-        def growth_rate(self) -> np.ndarray:
-            """Calculate the growth rate f(z) = fsigma8 / sigma8."""
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self) -> float:
-            """Return sigma8 at z=0."""
-            return self.sigma8[0]
-
-    class NonLinearCB:
-        """
-        Emulator for the cb [cold dark matter (c) + baryon (b)] nonlinear matter power spectrum in the w0waCDM cosmology.
-
-        This class uses a Cosmopower-JAX neural network to emulate the cb nonlinear power spectrum
-        for a w0waCDM cosmology. Automatically selects the appropriate emulator based on neutrino configuration.
-        Nonlinear corrections are applied using the mead2020 model in CAMB, with baryonic feedback
-        regulated using the `log10TAGN` parameter.
-        """
-
-        def __init__(
-            self,
-            background: Background,
-            linearperturbations: Perturbations,
-            redshifts: np.ndarray,
-            log10TAGN: Optional[float] = None,
-        ):
-            if background.N_mnu == 0:
-                cp_file = emulator_data("w0wa-cb-nonlinear.npz")
-                cp_file_sigma = emulator_data("w0wa-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file = emulator_data("w0wa-1mass-cb-nonlinear.npz")
-                cp_file_sigma = emulator_data("w0wa-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file = emulator_data("w0wa-2degen-cb-nonlinear.npz")
-                cp_file_sigma = emulator_data("w0wa-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file = emulator_data("w0wa-3degen-cb-nonlinear.npz")
-                cp_file_sigma = emulator_data("w0wa-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
-
-            self.cp_NONLIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "w0": self.background.w0,
-                "wa": self.background.wa,
-                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_nonlin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            """Return emulator description."""
-            if self.background.N_mnu == 0:
-                return (
-                    f"Cosmopower-JAX cb nonlinear Pk module. Computes the cb [cold dark matter (c) + baryon (b)] nonlinear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'logT_AGN']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are no massive neutrinos in this model. "
-                    f"Nonlinear corrections are applied using the mead2020 model in CAMB, "
-                    f"with baryonic feedback regulated using the `logT_AGN` parameter."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module. Computes the cb [cold dark matter (c) + baryon (b)] nonlinear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu', 'logT_AGN']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Casas et al. 2023. "
-                    f"There is one massive neutrino, with a total mass described by the `mnu` parameter. "
-                    f"Nonlinear corrections are applied using the mead2020 model in CAMB, "
-                    f"with baryonic feedback regulated using the `logT_AGN` parameter."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module. Computes the cb [cold dark matter (c) + baryon (b)] nonlinear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu', 'logT_AGN']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are two massive neutrinos, with a total mass sum described by the `mnu` parameter. "
-                    f"Nonlinear corrections are applied using the mead2020 model in CAMB, "
-                    f"with baryonic feedback regulated using the `logT_AGN` parameter."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module. Computes the cb [cold dark matter (c) + baryon (b)] nonlinear power spectrum "
-                    f"for a w0waCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'wa', 'mnu', 'logT_AGN']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Archidiacono et al. (2024). There are three "
-                    f"degenerate massive neutrinos, with a total mass sum described by `mnu` parameter. "
-                    f"Nonlinear corrections are applied using the mead2020 model in CAMB, "
-                    f"with baryonic feedback regulated using the `logT_AGN` parameter."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module for w0waCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            """Compute the cb nonlinear matter power spectrum P_cb(k, z)."""
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            """Calculate the growth factor D(z, k)."""
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            """Calculate the growth rate f(z) = fsigma8 / sigma8."""
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            """Return sigma8 at z=0."""
-            return self.sigma8[0]
+        _spec, _sector = _W0WACDM, "halofit"
 
 
 class CosmoPowerJAXwCDMPerturbations:
@@ -843,1579 +559,116 @@ class CosmoPowerJAXwCDMPerturbations:
     Class for wCDM cosmology perturbations using CosmoPower-JAX emulators.
     """
 
-    class Linear:
-        """
-        Emulator for the linear matter power spectrum in the wCDM cosmology.
+    class Linear(_CosmoPowerLinear):
+        """Linear matter power spectrum."""
 
-        This class uses a Cosmopower-JAX neural network to emulate the linear power spectrum
-        for a wCDM cosmology. Automatically selects the appropriate emulator based on neutrino configuration.
-        """
+        _spec, _sector = _WCDM, "linear"
 
-        def __init__(self, background: Background, redshifts: np.ndarray):
-            if background.N_mnu == 0:
-                cp_file = emulator_data("wcdm-linear.npz")
-                cp_file_sigma = emulator_data("wcdm-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file = emulator_data("wcdm-1mass-linear.npz")
-                cp_file_sigma = emulator_data("wcdm-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file = emulator_data("wcdm-2degen-linear.npz")
-                cp_file_sigma = emulator_data("wcdm-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file = emulator_data("wcdm-3degen-linear.npz")
-                cp_file_sigma = emulator_data("wcdm-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
+    class NonLinear(_CosmoPowerNonLinear):
+        """Nonlinear matter power spectrum using HMcode2020."""
 
-            self.cp_LIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
+        _spec, _sector = _WCDM, "nonlinear"
 
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "w": self.background.w0,
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
+    class NonLinearHalofit(_CosmoPowerNonLinear):
+        """Nonlinear matter power spectrum using halofit (Takahashi 2012)."""
 
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            self.sigma_params = self.params.copy()
-            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
-
-            Pk_lin = np.array(self.cp_LIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_lin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            """Return emulator description."""
-            if self.background.N_mnu == 0:
-                return (
-                    f"Cosmopower-JAX linear Pk module. Computes the linear power spectrum "
-                    f"for a wCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are no massive neutrinos in this model."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX linear Pk module. Computes the linear power spectrum "
-                    f"for a wCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Casas et al. 2023. "
-                    f"There is one massive neutrino, with a total mass described by the `mnu` parameter."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX linear Pk module. Computes the linear power spectrum "
-                    f"for a wCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are two massive neutrinos, with a total mass sum described by the `mnu` parameter."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX linear Pk module. Computes the linear power spectrum "
-                    f"for a wCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Archidiacono et al. (2024). There are three "
-                    f"degenerate massive neutrinos, with a total mass sum described by `mnu` parameter."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX linear Pk module for wCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            """Compute the linear matter power spectrum P(k, z)."""
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            """Calculate the growth factor D(z, k)."""
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            """Calculate the growth rate f(z) = fsigma8 / sigma8."""
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            """Return sigma8 at z=0."""
-            return self.sigma8[0]
-
-    class LinearCB:
-        """
-        Emulator for the cb [cold dark matter (c) + baryon (b)] linear matter power spectrum in the wCDM cosmology.
-
-        This class uses a Cosmopower-JAX neural network to emulate the cb linear power spectrum
-        for a wCDM cosmology. Automatically selects the appropriate emulator based on neutrino configuration.
-        """
-
-        def __init__(self, background: Background, redshifts: np.ndarray):
-            if background.N_mnu == 0:
-                cp_file = emulator_data("wcdm-cb-linear.npz")
-                cp_file_sigma = emulator_data("wcdm-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file = emulator_data("wcdm-1mass-cb-linear.npz")
-                cp_file_sigma = emulator_data("wcdm-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file = emulator_data("wcdm-2degen-cb-linear.npz")
-                cp_file_sigma = emulator_data("wcdm-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file = emulator_data("wcdm-3degen-cb-linear.npz")
-                cp_file_sigma = emulator_data("wcdm-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
-
-            self.cp_LIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "w": self.background.w0,
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            self.sigma_params = self.params.copy()
-            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
-
-            Pk_lin = np.array(self.cp_LIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_lin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            """Return emulator description."""
-            if self.background.N_mnu == 0:
-                return (
-                    f"Cosmopower-JAX cb linear Pk module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
-                    f"for a wCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are no massive neutrinos in this model."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
-                    f"for a wCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Casas et al. 2023. "
-                    f"There is one massive neutrino, with a total mass described by the `mnu` parameter."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
-                    f"for a wCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"There are two massive neutrinos, with a total mass sum described by the `mnu` parameter."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module. Computes the cb [cold dark matter (c) + baryon (b)] linear power spectrum "
-                    f"for a wCDM cosmology, using input cosmological parameters:\n"
-                    f"Inputs: ['ombh2', 'omch2', 'H0', 'ns', 'lnAs', 'z', 'w0', 'mnu']\n"
-                    f"Output: P(k) evaluated between k_min={self.k_min} and k_max={self.k_max}.\n"
-                    f"Neutrinos are modeled as in Archidiacono et al. (2024). There are three "
-                    f"degenerate massive neutrinos, with a total mass sum described by `mnu` parameter."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module for wCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            """Compute the cb linear matter power spectrum P_cb(k, z)."""
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
-
-    class NonLinear:
-        """Emulator for the nonlinear matter power spectrum in wCDM cosmology."""
-
-        def __init__(
-            self,
-            background: Background,
-            linearperturbations: Perturbations,
-            redshifts: np.ndarray,
-            log10TAGN: Optional[float] = None,
-        ):
-            if background.N_mnu == 0:
-                cp_file = emulator_data("wcdm-nonlinear.npz")
-                cp_file_sigma = emulator_data("wcdm-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file = emulator_data("wcdm-1mass-nolinear.npz")
-                cp_file_sigma = emulator_data("wcdm-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file = emulator_data("wcdm-2degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("wcdm-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file = emulator_data("wcdm-3degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("wcdm-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
-
-            self.cp_NONLIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "w": self.background.w0,
-                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_nonlin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            if self.background.N_mnu == 0:
-                return (
-                    "Cosmopower-JAX nonlinear P(k) module for wCDM cosmology.\n"
-                    "Configuration: N_mnu=0, no massive neutrinos."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX nonlinear P(k) module for wCDM cosmology.\n"
-                    f"Configuration: N_mnu=1, 1 massive neutrino with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX nonlinear P(k) module for wCDM cosmology.\n"
-                    f"Configuration: N_mnu=2, 2 massive neutrinos with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX nonlinear P(k) module for wCDM cosmology.\n"
-                    f"Configuration: N_mnu=3, 3 degenerate neutrinos with mnu={self.background.mnu}eV."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX nonlinear P(k) module for wCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
-
-    class NonLinearCB:
-        """Emulator for the cb nonlinear matter power spectrum in wCDM cosmology."""
-
-        def __init__(
-            self,
-            background: Background,
-            linearperturbations: Perturbations,
-            redshifts: np.ndarray,
-            log10TAGN: Optional[float] = None,
-        ):
-            if background.N_mnu == 0:
-                cp_file = emulator_data("wcdm-cb-nonlinear.npz")
-                cp_file_sigma = emulator_data("wcdm-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file = emulator_data("wcdm-1mass-cb-nolinear.npz")
-                cp_file_sigma = emulator_data("wcdm-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file = emulator_data("wcdm-2degen-cb-nonlinear.npz")
-                cp_file_sigma = emulator_data("wcdm-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file = emulator_data("wcdm-3degen-cb-nonlinear.npz")
-                cp_file_sigma = emulator_data("wcdm-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
-
-            self.cp_NONLIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "w": self.background.w0,
-                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_nonlin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            if self.background.N_mnu == 0:
-                return (
-                    "Cosmopower-JAX nonlinear P_cb(k) module for wCDM cosmology.\n"
-                    "Configuration: N_mnu=0, no massive neutrinos."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module for wCDM cosmology.\n"
-                    f"Configuration: N_mnu=1, 1 massive neutrino with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module for wCDM cosmology.\n"
-                    f"Configuration: N_mnu=2, 2 massive neutrinos with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module for wCDM cosmology.\n"
-                    f"Configuration: N_mnu=3, 3 degenerate neutrinos with mnu={self.background.mnu}eV."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module for wCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
+        _spec, _sector = _WCDM, "halofit"
 
 
 class CosmoPowerJAXLCDMPerturbations:
     """Class for LCDM cosmology perturbations using CosmoPower-JAX emulators."""
 
-    class Linear:
-        """Emulator for the linear matter power spectrum in LCDM cosmology."""
+    class Linear(_CosmoPowerLinear):
+        """Linear matter power spectrum."""
 
-        def __init__(self, background: Background, redshifts: np.ndarray):
-            if background.N_mnu == 0:
-                cp_file = emulator_data("lcdm-linear.npz")
-                cp_file_sigma = emulator_data("lcdm-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file = emulator_data("lcdm-1mass-linear.npz")
-                cp_file_sigma = emulator_data("lcdm-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file = emulator_data("lcdm-2degen-linear.npz")
-                cp_file_sigma = emulator_data("lcdm-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file = emulator_data("lcdm-3degen-linear.npz")
-                cp_file_sigma = emulator_data("lcdm-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
+        _spec, _sector = _LCDM, "linear"
 
-            self.cp_LIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
+    class NonLinear(_CosmoPowerNonLinear):
+        """Nonlinear matter power spectrum using HMcode2020."""
 
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
+        _spec, _sector = _LCDM, "nonlinear"
 
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
+    class NonLinearHalofit(_CosmoPowerNonLinear):
+        """Nonlinear matter power spectrum using halofit (Takahashi 2012)."""
 
-            self.sigma_params = self.params.copy()
-            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
-
-            Pk_lin = np.array(self.cp_LIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_lin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            if self.background.N_mnu == 0:
-                return (
-                    "Cosmopower-JAX linear P(k) module for LCDM cosmology.\n"
-                    "Configuration: N_mnu=0, no massive neutrinos."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX linear P(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=1, 1 massive neutrino with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX linear P(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=2, 2 massive neutrinos with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX linear P(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=3, 3 degenerate neutrinos with mnu={self.background.mnu}eV."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX linear P(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
-
-    class LinearCB:
-        """Emulator for the cb linear matter power spectrum in LCDM cosmology."""
-
-        def __init__(self, background: Background, redshifts: np.ndarray):
-            if background.N_mnu == 0:
-                cp_file = emulator_data("lcdm-cb-linear.npz")
-                cp_file_sigma = emulator_data("lcdm-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file = emulator_data("lcdm-1mass-cb-linear.npz")
-                cp_file_sigma = emulator_data("lcdm-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file = emulator_data("lcdm-2degen-cb-linear.npz")
-                cp_file_sigma = emulator_data("lcdm-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file = emulator_data("lcdm-3degen-cb-linear.npz")
-                cp_file_sigma = emulator_data("lcdm-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
-
-            self.cp_LIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            self.sigma_params = self.params.copy()
-            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
-
-            Pk_lin = np.array(self.cp_LIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_lin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            if self.background.N_mnu == 0:
-                return (
-                    "Cosmopower-JAX linear P_cb(k) module for LCDM cosmology.\n"
-                    "Configuration: N_mnu=0, no massive neutrinos."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=1, 1 massive neutrino with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=2, 2 massive neutrinos with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=3, 3 degenerate neutrinos with mnu={self.background.mnu}eV."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX linear P_cb(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
-
-    class NonLinear:
-        """Emulator for the nonlinear matter power spectrum in LCDM cosmology."""
-
-        def __init__(
-            self,
-            background: Background,
-            linearperturbations: Perturbations,
-            redshifts: np.ndarray,
-            log10TAGN: Optional[float] = None,
-        ):
-            if background.N_mnu == 0:
-                cp_file = emulator_data("lcdm-nonlinear.npz")
-                cp_file_sigma = emulator_data("lcdm-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file = emulator_data("lcdm-1mass-nonlinear.npz")
-                cp_file_sigma = emulator_data("lcdm-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file = emulator_data("lcdm-2degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("lcdm-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file = emulator_data("lcdm-3degen-nonlinear.npz")
-                cp_file_sigma = emulator_data("lcdm-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
-
-            self.cp_NONLIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_nonlin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            if self.background.N_mnu == 0:
-                return (
-                    "Cosmopower-JAX nonlinear P(k) module for LCDM cosmology.\n"
-                    "Configuration: N_mnu=0, no massive neutrinos."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX nonlinear P(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=1, 1 massive neutrino with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX nonlinear P(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=2, 2 massive neutrinos with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX nonlinear P(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=3, 3 degenerate neutrinos with mnu={self.background.mnu}eV."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX nonlinear P(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
-
-    class NonLinearCB:
-        """Emulator for the cb nonlinear matter power spectrum in LCDM cosmology."""
-
-        def __init__(
-            self,
-            background: Background,
-            linearperturbations: Perturbations,
-            redshifts: np.ndarray,
-            log10TAGN: Optional[float] = None,
-        ):
-            if background.N_mnu == 0:
-                cp_file = emulator_data("lcdm-cb-nonlinear.npz")
-                cp_file_sigma = emulator_data("lcdm-s8-fs8.npz")
-                self.has_neutrinos = False
-            elif background.N_mnu == 1:
-                cp_file = emulator_data("lcdm-1mass-cb-nonlinear.npz")
-                cp_file_sigma = emulator_data("lcdm-1mass-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 2:
-                cp_file = emulator_data("lcdm-2degen-cb-nonlinear.npz")
-                cp_file_sigma = emulator_data("lcdm-2degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            elif background.N_mnu == 3:
-                cp_file = emulator_data("lcdm-3degen-cb-nonlinear.npz")
-                cp_file_sigma = emulator_data("lcdm-3degen-s8-fs8.npz")
-                self.has_neutrinos = True
-            else:
-                raise ValueError(
-                    f"Unsupported N_mnu={background.N_mnu}. Supported: 0, 1, 2, 3"
-                )
-
-            self.cp_NONLIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-            assert background.Omega_k0 == 0, "Non flat geometries not supported"
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
-            }
-            if self.has_neutrinos:
-                self.params["mnu"] = self.background.mnu
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_nonlin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            if self.background.N_mnu == 0:
-                return (
-                    "Cosmopower-JAX nonlinear P_cb(k) module for LCDM cosmology.\n"
-                    "Configuration: N_mnu=0, no massive neutrinos."
-                )
-            elif self.background.N_mnu == 1:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=1, 1 massive neutrino with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 2:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=2, 2 massive neutrinos with mnu={self.background.mnu}eV."
-                )
-            elif self.background.N_mnu == 3:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu=3, 3 degenerate neutrinos with mnu={self.background.mnu}eV."
-                )
-            else:
-                return (
-                    f"Cosmopower-JAX nonlinear P_cb(k) module for LCDM cosmology.\n"
-                    f"Configuration: N_mnu={self.background.N_mnu} (unsupported in __str__)"
-                )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
+        _spec, _sector = _LCDM, "halofit"
 
 
-class CosmoPowerJAXCurvaturePerturbations:
-    """Class for LCDM+curvature cosmology perturbations using CosmoPower-JAX emulators.
+class CosmoPowerJAXLCDMCurvaturePerturbations:
+    """Class for LCDM+curvature cosmology perturbations using CosmoPower-JAX.
 
-    Supports non-zero spatial curvature (Omega_k0 != 0). Neutrino mass is fixed at
-    mnu=0.06 eV during training and is not a free parameter of these emulators.
-    Uses a dedicated k-mode grid (curvature-kmodes.txt) and emulator files:
-    - lcdm-curvature-linear.npz
-    - lcdm-curvature-nonlinear.npz
-    - lcdm-curvature-s8-fs8.npz
-
-    Emulator parameter ranges:
-        ombh2    in [0.019, 0.025]
-        omch2    in [0.09,  0.15]
-        H0       in [60,    80]
-        ns       in [0.8,   1.2]
-        lnAs     in [1.6,   4.0]
-        z        in [0,     5]
-        logT_AGN in [7.3,   8.5]  (nonlinear and sigma8/fsigma8 emulators only)
-        omk      in [-0.1,  0.1]
+    Emulators cover spatial curvature Omega_k0.
+    Neutrino configuration is selected by ``background.N_mnu``: 0 (massless), 1 (one massive), 3 (three degenerate).
+    The k-mode grid is read from each emulator (``.modes``); inputs are
+    validated against :data:`CP_EMULATOR_BOUNDS`.
     """
 
-    class Linear:
-        """Emulator for the linear matter power spectrum in LCDM+curvature cosmology."""
+    class Linear(_CosmoPowerLinear):
+        """Linear matter power spectrum."""
 
-        def __init__(self, background: Background, redshifts: np.ndarray):
-            cp_file = emulator_data("lcdm-curvature-linear.npz")
-            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
+        _spec, _sector = _LCDM_CURVATURE, "linear"
 
-            self.cp_LIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_curvature_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
+    class NonLinear(_CosmoPowerNonLinear):
+        """Nonlinear matter power spectrum using HMcode2020."""
 
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "omk": self.background.Omega_k0,
-            }
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            self.sigma_params = self.params.copy()
-            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
-
-            Pk_lin = np.array(self.cp_LIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_lin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            return (
-                "Cosmopower-JAX linear P(k) module for LCDM+curvature cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
-            )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
-
-    class NonLinear:
-        """Emulator for the nonlinear matter power spectrum in LCDM+curvature cosmology."""
-
-        def __init__(
-            self,
-            background: Background,
-            linearperturbations: Perturbations,
-            redshifts: np.ndarray,
-            log10TAGN: Optional[float] = None,
-        ):
-            cp_file = emulator_data("lcdm-curvature-nonlinear.npz")
-            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
-
-            self.cp_NONLIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_curvature_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
-                "omk": self.background.Omega_k0,
-            }
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_nonlin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            return (
-                "Cosmopower-JAX nonlinear P(k) module for LCDM+curvature cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
-            )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
-
-    class LinearCB:
-        """Emulator for the cb linear matter power spectrum in LCDM+curvature cosmology."""
-
-        def __init__(self, background: Background, redshifts: np.ndarray):
-            cp_file = emulator_data("lcdm-curvature-cb-linear.npz")
-            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
-
-            self.cp_LIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_curvature_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "omk": self.background.Omega_k0,
-            }
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            self.sigma_params = self.params.copy()
-            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
-
-            Pk_lin = np.array(self.cp_LIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_lin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            return (
-                "Cosmopower-JAX linear P_cb(k) module for LCDM+curvature cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
-            )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
-
-    class NonLinearCB:
-        """Emulator for the cb nonlinear matter power spectrum in LCDM+curvature cosmology."""
-
-        def __init__(
-            self,
-            background: Background,
-            linearperturbations: Perturbations,
-            redshifts: np.ndarray,
-            log10TAGN: Optional[float] = None,
-        ):
-            cp_file = emulator_data("lcdm-curvature-cb-nonlinear.npz")
-            cp_file_sigma = emulator_data("lcdm-curvature-s8-fs8.npz")
-
-            self.cp_NONLIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_curvature_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "omk": self.background.Omega_k0,
-                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
-            }
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_nonlin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            return (
-                "Cosmopower-JAX nonlinear P_cb(k) module for LCDM+curvature cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), Omega_k0={self.background.Omega_k0}."
-            )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
+        _spec, _sector = _LCDM_CURVATURE, "nonlinear"
 
 
-class CosmoPowerJAXRunningIndexPerturbations:
-    """Class for LCDM+running spectral index cosmology perturbations using CosmoPower-JAX emulators.
+class CosmoPowerJAXw0waCurvaturePerturbations:
+    """Class for w0waCDM+curvature cosmology perturbations using CosmoPower-JAX.
 
-    Supports a running spectral index alpha_s = d ns / d ln k. Neutrino mass is fixed at
-    mnu=0.06 eV during training and is not a free parameter of these emulators.
-    Uses the standard k-mode grid (k-modes.txt) and emulator files:
-    - lcdm-running-linear.npz
-    - lcdm-running-nonlinear.npz
-    - lcdm-running-s8-fs8.npz
-
-    Emulator parameter ranges:
-        ombh2    in [0.019, 0.025]
-        omch2    in [0.09,  0.15]
-        H0       in [60,    80]
-        ns       in [0.8,   1.2]
-        lnAs     in [1.6,   4.0]
-        z        in [0,     5]
-        alpha_s  in [-0.1,  0.1]
-        logT_AGN in [7.3,   8.5]  (nonlinear and sigma8/fsigma8 emulators only)
+    Emulators cover spatial curvature Omega_k0 together with a w0waCDM dark energy background (free w0, wa).
+    Neutrino configuration is selected by ``background.N_mnu``: 0 (massless), 1 (one massive), 3 (three degenerate).
+    The k-mode grid is read from each emulator (``.modes``); inputs are
+    validated against :data:`CP_EMULATOR_BOUNDS`.
     """
 
-    class Linear:
-        """Emulator for the linear matter power spectrum in LCDM+running spectral index cosmology."""
+    class Linear(_CosmoPowerLinear):
+        """Linear matter power spectrum."""
 
-        def __init__(self, background: Background, redshifts: np.ndarray):
-            cp_file = emulator_data("lcdm-nrun-linear.npz")
-            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
+        _spec, _sector = _W0WA_CURVATURE, "linear"
 
-            self.cp_LIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
+    class NonLinear(_CosmoPowerNonLinear):
+        """Nonlinear matter power spectrum using HMcode2020."""
 
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "alpha_s": self.background.alpha_s,
-            }
+        _spec, _sector = _W0WA_CURVATURE, "nonlinear"
 
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
 
-            self.sigma_params = self.params.copy()
-            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
+class CosmoPowerJAXLCDMRunningIndexPerturbations:
+    """Class for LCDM+running spectral index cosmology perturbations using CosmoPower-JAX.
 
-            Pk_lin = np.array(self.cp_LIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_lin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
+    Emulators cover running spectral index alpha_s.
+    Neutrino configuration is selected by ``background.N_mnu``: 0 (massless), 1 (one massive), 3 (three degenerate).
+    The k-mode grid is read from each emulator (``.modes``); inputs are
+    validated against :data:`CP_EMULATOR_BOUNDS`.
+    """
 
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
+    class Linear(_CosmoPowerLinear):
+        """Linear matter power spectrum."""
 
-        def __str__(self):
-            return (
-                "Cosmopower-JAX linear P(k) module for LCDM+running spectral index cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
-            )
+        _spec, _sector = _LCDM_RUNNING, "linear"
 
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
+    class NonLinear(_CosmoPowerNonLinear):
+        """Nonlinear matter power spectrum using HMcode2020."""
 
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
+        _spec, _sector = _LCDM_RUNNING, "nonlinear"
 
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
 
-        def sigma8_0(self):
-            return self.sigma8[0]
+class CosmoPowerJAXw0waRunningIndexPerturbations:
+    """Class for w0waCDM+running spectral index cosmology perturbations using CosmoPower-JAX.
 
-    class NonLinear:
-        """Emulator for the nonlinear matter power spectrum in LCDM+running spectral index cosmology."""
+    Emulators cover running spectral index alpha_s together with a w0waCDM dark energy background (free w0, wa).
+    Neutrino configuration is selected by ``background.N_mnu``: 0 (massless), 1 (one massive), 3 (three degenerate).
+    The k-mode grid is read from each emulator (``.modes``); inputs are
+    validated against :data:`CP_EMULATOR_BOUNDS`.
+    """
 
-        def __init__(
-            self,
-            background: Background,
-            linearperturbations: Perturbations,
-            redshifts: np.ndarray,
-            log10TAGN: Optional[float] = None,
-        ):
-            cp_file = emulator_data("lcdm-nrun-nonlinear.npz")
-            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
+    class Linear(_CosmoPowerLinear):
+        """Linear matter power spectrum."""
 
-            self.cp_NONLIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
+        _spec, _sector = _W0WA_RUNNING, "linear"
 
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "alpha_s": self.background.alpha_s,
-                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
-            }
+    class NonLinear(_CosmoPowerNonLinear):
+        """Nonlinear matter power spectrum using HMcode2020."""
 
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_nonlin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            return (
-                "Cosmopower-JAX nonlinear P(k) module for LCDM+running spectral index cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
-            )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
-
-    class LinearCB:
-        """Emulator for the cb linear matter power spectrum in LCDM+running spectral index cosmology."""
-
-        def __init__(self, background: Background, redshifts: np.ndarray):
-            cp_file = emulator_data("lcdm-nrun-cb-linear.npz")
-            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
-
-            self.cp_LIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "alpha_s": self.background.alpha_s,
-            }
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            self.sigma_params = self.params.copy()
-            self.sigma_params["logT_AGN"] = np.tile(7.6, len(redshifts))
-
-            Pk_lin = np.array(self.cp_LIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_lin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.sigma_params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            return (
-                "Cosmopower-JAX linear P_cb(k) module for LCDM+running spectral index cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
-            )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
-
-    class NonLinearCB:
-        """Emulator for the cb nonlinear matter power spectrum in LCDM+running spectral index cosmology."""
-
-        def __init__(
-            self,
-            background: Background,
-            linearperturbations: Perturbations,
-            redshifts: np.ndarray,
-            log10TAGN: Optional[float] = None,
-        ):
-            cp_file = emulator_data("lcdm-nrun-cb-nonlinear.npz")
-            cp_file_sigma = emulator_data("lcdm-nrun-s8-fs8.npz")
-
-            self.cp_NONLIN = load_pk_emulator(cp_file)
-            self.cp_SIGMA = load_sigma_emulator(cp_file_sigma)
-            self.k_emu = np.loadtxt(k_modes_path)
-            self.k_min = self.k_emu[0]
-            self.k_max = self.k_emu[-1]
-            self.background = background
-
-            self.z = redshifts[redshifts <= 5]
-            self.params = {
-                "ombh2": self.background.Omega_b0 * self.background.h**2,
-                "omch2": self.background.Omega_cdm0 * self.background.h**2,
-                "H0": self.background.H0,
-                "ns": self.background.ns,
-                "lnAs": np.log(self.background.As * 1e10),
-                "alpha_s": self.background.alpha_s,
-                "logT_AGN": log10TAGN if log10TAGN is not None else 7.6,
-            }
-
-            for key in self.params.keys():
-                self.params[key] = np.tile(self.params[key], len(redshifts))
-            self.params["z"] = redshifts
-
-            Pk_nonlin = np.array(self.cp_NONLIN.predict(self.params))
-            k_out, z_out, Pk_out = extend_spectra(
-                self.k_emu,
-                self.z,
-                Pk_nonlin,
-                flag_range=True,
-                option_wavenumber="logk2",
-                option_redshift="power_law",
-                extrap_z=redshifts,
-                option_cosmo="const",
-                ns=self.background.ns,
-            )
-            self.k, self.z, self.Pk = k_out, z_out, Pk_out
-            self.Pk_int = interpolate.RectBivariateSpline(
-                self.z, self.k, Pk_out, kx=1, ky=1
-            )
-
-            sigma_predictions = np.array(self.cp_SIGMA.predict(self.params))
-            self.sigma8 = sigma_predictions[:, 0]
-            self.fsigma8 = sigma_predictions[:, 1]
-
-        def __str__(self):
-            return (
-                "Cosmopower-JAX nonlinear P_cb(k) module for LCDM+running spectral index cosmology.\n"
-                f"Configuration: mnu=0.06 eV (fixed), alpha_s={self.background.alpha_s}."
-            )
-
-        def matter_power_spectrum(self, zs, ks):
-            return self.Pk_int(zs, ks)
-
-        def growth_factor(self, zs, ks):
-            return np.sqrt(self.Pk_int(zs, ks) / self.Pk_int(0, ks))
-
-        def growth_rate(self):
-            return self.fsigma8 / self.sigma8
-
-        def sigma8_0(self):
-            return self.sigma8[0]
+        _spec, _sector = _W0WA_RUNNING, "nonlinear"

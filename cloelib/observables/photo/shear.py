@@ -698,8 +698,18 @@ def _tatt_m_kernel_grid(bank, loop_computer, name):
     ]
 
 
-def _tatt_m_d4(loop_computer, zs):
-    return _growth_factor_1d(loop_computer.linear_perturbations, zs) ** 4
+def _tatt_m_d4(bank, loop_computer):
+    """`D(z)**4` on `bank.zs`, shape `(len(bank.zs), 1)` - memoized in `bank`
+    (see `_tatt_m_cached_term`) so the five derived terms below share one
+    growth-factor evaluation instead of computing it once each.
+    """
+
+    def _compute(matter_pk, ks, zs):
+        del matter_pk, ks
+        d = _growth_factor_1d(loop_computer.linear_perturbations, zs)
+        return (d**4)[:, None]
+
+    return bank.get(SpectrumRequest(name="tatt_m_d4", compute=_compute))
 
 
 def _tatt_m_cached_term(bank, name, compute_term):
@@ -721,7 +731,7 @@ def _tatt_m_cached_term(bank, name, compute_term):
 
 def _tatt_m_term_00e(bank, loop_computer):
     def _term(zs):
-        d4 = _tatt_m_d4(loop_computer, zs)[:, None]
+        d4 = _tatt_m_d4(bank, loop_computer)
         return d4 * (
             _tatt_m_kernel_grid(bank, loop_computer, "tatt_A_0_0E")
             + _tatt_m_kernel_grid(bank, loop_computer, "tatt_C_0_0E")
@@ -732,7 +742,7 @@ def _tatt_m_term_00e(bank, loop_computer):
 
 def _tatt_m_term_0e0e(bank, loop_computer):
     def _term(zs):
-        d4 = _tatt_m_d4(loop_computer, zs)[:, None]
+        d4 = _tatt_m_d4(bank, loop_computer)
         return d4 * _tatt_m_kernel_grid(bank, loop_computer, "tatt_A_0E_0E")
 
     return _tatt_m_cached_term(bank, "tatt_m_term_0e0e", _term)
@@ -740,7 +750,7 @@ def _tatt_m_term_0e0e(bank, loop_computer):
 
 def _tatt_m_term_e2e2(bank, loop_computer):
     def _term(zs):
-        d4 = _tatt_m_d4(loop_computer, zs)[:, None]
+        d4 = _tatt_m_d4(bank, loop_computer)
         return d4 * _tatt_m_kernel_grid(bank, loop_computer, "tatt_A_E2_E2")
 
     return _tatt_m_cached_term(bank, "tatt_m_term_e2e2", _term)
@@ -748,7 +758,7 @@ def _tatt_m_term_e2e2(bank, loop_computer):
 
 def _tatt_m_term_0e2(bank, loop_computer):
     def _term(zs):
-        d4 = _tatt_m_d4(loop_computer, zs)[:, None]
+        d4 = _tatt_m_d4(bank, loop_computer)
         return d4 * (
             _tatt_m_kernel_grid(bank, loop_computer, "tatt_A_0_E2")
             + _tatt_m_kernel_grid(bank, loop_computer, "tatt_B_0_E2")
@@ -759,7 +769,7 @@ def _tatt_m_term_0e2(bank, loop_computer):
 
 def _tatt_m_term_d0ee2(bank, loop_computer):
     def _term(zs):
-        d4 = _tatt_m_d4(loop_computer, zs)[:, None]
+        d4 = _tatt_m_d4(bank, loop_computer)
         return d4 * _tatt_m_kernel_grid(bank, loop_computer, "tatt_D_0E_E2")
 
     return _tatt_m_cached_term(bank, "tatt_m_term_d0ee2", _term)

@@ -9,6 +9,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 [![Docs](https://github.com/cloe-org/cloelib/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/cloe-org/cloelib/actions/workflows/docs.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
 [![Tests: pytest](https://img.shields.io/badge/tests-pytest-blue?logo=pytest)](https://docs.pytest.org/)
+[![codecov](https://codecov.io/gh/cloe-org/cloelib/branch/main/graph/badge.svg)](https://codecov.io/gh/cloe-org/cloelib)
 [![Linting: Ruff](https://img.shields.io/badge/linting-ruff-purple?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
 [![Code Style: Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg?logo=prettier&logoColor=white)](https://prettier.io/)
 [![Type Checking: ty](https://img.shields.io/badge/type%20checking-ty-8A2BE2?logo=ty&logoColor=white)](https://docs.astral.sh/ty/)

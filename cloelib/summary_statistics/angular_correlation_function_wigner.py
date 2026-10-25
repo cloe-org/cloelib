@@ -73,9 +73,9 @@ def _recurrence_value(beta, ell, l0, init, step):
     cos_beta = np.cos(beta)
     d_l0, d_l1 = init(beta)
 
-    def body(l, vals):
+    def body(ell_i, vals):
         prev, prev2 = vals
-        return step(cos_beta, l, prev, prev2), prev
+        return step(cos_beta, ell_i, prev, prev2), prev
 
     d_ell = jax.lax.fori_loop(l0 + 2, ell + 1, body, (d_l1, d_l0))[0]
     return np.where(ell == l0, d_l0, np.where(ell == l0 + 1, d_l1, d_ell))

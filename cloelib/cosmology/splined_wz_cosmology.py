@@ -4,10 +4,7 @@
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.cosmology.theta_h0 import (
-    resolve_background_densities,
-    theta_to_H0 as _theta_to_H0,
-)
+from cloelib.cosmology.theta_h0 import theta_to_H0 as _theta_to_H0
 
 # General imports
 import numpy as np
@@ -121,32 +118,16 @@ class DESplinedEoSBackground:
         """
         self.z_i = z_i
         self.w_i = w_i
-        densities = resolve_background_densities(
-            lambda z: get_de_density(z, self.z_i, self.w_i),
-            H0=cosmology_dict.get("H0"),
-            Omega_b0=cosmology_dict.get("Omega_b0"),
-            Omega_cdm0=cosmology_dict.get("Omega_cdm0"),
-            Omega_k0=cosmology_dict.get("Omega_k0", 0.0),
-            mnu=cosmology_dict.get("mnu", 0.06),
-            nnu=cosmology_dict.get("nnu", 3.044),
-            Omch2=cosmology_dict.get("Omch2"),
-            Ombh2=cosmology_dict.get("Ombh2"),
-            cosmomc_theta=cosmology_dict.get("cosmomc_theta"),
-        )
-        self.H0 = densities["H0"]
-        self.h = densities["h"]
-        self.Omega_b0 = densities["Omega_b0"]
-        self.Omega_cdm0 = densities["Omega_cdm0"]
-        self.Omega_m0 = densities["Omega_m0"]
-        self.Omega_k0 = densities["Omega_k0"]
-        self.mnu = densities["mnu"]
-        self.nnu = densities["nnu"]
+        
+        self.H0 = cosmology_dict["H0"]
+        self.h = self.H0 / 100.0
+        self.Omega_b0 = cosmology_dict["Omega_b0"]
+        self.Omega_cdm0 = cosmology_dict["Omega_cdm0"]
+        self.Omega_k0 = cosmology_dict["Omega_k0"]
+        self.mnu = cosmology_dict["mnu"]
         self.As = cosmology_dict["As"]
         self.ns = cosmology_dict["ns"]
-        if "Omch2" in cosmology_dict:
-            self.Omch2 = cosmology_dict["Omch2"]
-        if "Ombh2" in cosmology_dict:
-            self.Ombh2 = cosmology_dict["Ombh2"]
+        self.Omega_m0 = self.Omega_b0 + self.Omega_cdm0 + self.mnu / 93.14 / self.h**2
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

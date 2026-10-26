@@ -1,3 +1,4 @@
+import numpy as np
 import jax.numpy as jnp
 from jax.experimental.ode import odeint
 from jax import jit
@@ -260,12 +261,32 @@ def DE_D_derivatives(D, a, a_grid, w_vals, omega0):
 
 @jit
 def DE_fde_D_derivatives(D, a, fde_vals, omega0, zbin_edges):
-    """Original version - kept for backward compatibility if needed."""
+    """Growth ODE for binned ``f_DE``, with the same ``z = 0`` ramp as the background.
+
+    Above the first bin ``f_DE`` is piecewise constant, so ``f' = 0``. Inside
+    it, ``f_DE`` is the smoothstep used by ``get_de_density`` in
+    ``binned_fdez_cosmology``: 1 at ``z = 0`` and ``fde_vals[0]`` at the top
+    of the bin. The slope enters ``dlnH/dlna``.
+
+    The steps between later bins are discontinuities in ``H``. Their matching
+    condition is applied in ``fde_a.growth_parameters``, not in this derivative.
+    """
     D1, D2 = D
-    omegaL = (1.0 - omega0) * fde_vals[get_z_bin_jax(1.0 / a - 1.0, zbin_edges)]
+    z = 1.0 / a - 1.0
+    f_step = fde_vals[get_z_bin_jax(z, zbin_edges)]
+    z1 = zbin_edges[1]
+    f_hi = fde_vals[0]
+    x = jnp.clip(z / z1, 0.0, 1.0)
+    s = x * x * (3.0 - 2.0 * x)
+    f_ramp = 1.0 + (f_hi - 1.0) * s
+    # df/da = df/dz * dz/da, with dz/da = -1/a^2 and ds/dz = 6x(1-x)/z1.
+    df_da_ramp = (f_hi - 1.0) * (6.0 * x * (1.0 - x) / z1) * (-1.0 / a**2)
+    in_ramp = z < z1
+    fde = jnp.where(in_ramp, f_ramp, f_step)
+    df_da = jnp.where(in_ramp, df_da_ramp, 0.0)
+    omegaL = (1.0 - omega0) * fde
     E2 = omega0 / a**3 + omegaL
-    # f'=0 inside bins ⇒ like w_eff = -1
-    dlnH = -1.5 * (omega0 / a**3) / E2
+    dlnH = -1.5 * (omega0 / a**3) / E2 + 0.5 * a * (1.0 - omega0) * df_da / E2
     Om = (omega0 / a**3) / E2
     dD1 = D2
     dD2 = -D2 / a * (3.0 + dlnH) + 1.5 * D1 / a**2 * Om
@@ -506,7 +527,7 @@ class w_a(MGrowth):
     def __init__(self, CosmoDict=None):
         super().__init__(CosmoDict)
 
-    def growth_parameters(self, a_grid, w_vals, use_fast=True, n_fine=512):
+    def growth_parameters(self, a_grid, w_vals, use_fast=True, n_fine=512, mxstep=100000):
         """
         Computes growth parameters using optimized pre-computed integrals.
 
@@ -515,6 +536,9 @@ class w_a(MGrowth):
             w_vals: w(a) values on a_grid
             use_fast: If True, use pre-computed integrals (much faster). If False, use original method.
             n_fine: Number of points for fine integration grid (only used if use_fast=True)
+            mxstep: Maximum Runge-Kutta steps between output times. The JAX default
+                is infinite, so a stiff w(a) drawn from a wide prior never returns
+                and the sampler waits on that one point.
         """
         if use_fast:
             # Create fine grid for pre-computing integrals
@@ -531,6 +555,7 @@ class w_a(MGrowth):
                 a_grid,
                 w_vals,
                 self.omega0,
+                mxstep=mxstep,
             )
         else:
             # Original method (slower but kept for comparison)
@@ -541,6 +566,7 @@ class w_a(MGrowth):
                 a_grid,
                 w_vals,
                 self.omega0,
+                mxstep=mxstep,
             )
         D, dDda = D_sol.T
         f = self.aa * dDda / D
@@ -552,21 +578,83 @@ class fde_a(MGrowth):
 
     def growth_parameters(self, fde_vals, zbin_edges):
         """
-        Computes growth for piecewise-constant f_DE(z) (constant within redshift bins).
+        Computes growth for binned f_DE(z).
+
+        ``f_DE`` is constant in each bin above the first. The first bin is a
+        smoothstep from 1 at z = 0 to ``fde_vals[0]`` at the top of that bin,
+        matching the background expansion.
+
+        Each later bin edge is a jump in ``H``. ``D`` stays continuous.
+        MGCAMB also keeps the synchronous-gauge variable ``eta*k``
+        continuous, and the Einstein constraint then makes
+        ``d delta / d tau`` scale as ``1/H``. Combined with
+        ``d tau/da = 1/(a^2 H)`` this rescales ``dD/da`` by
+        ``(H_before/H_after)^2``.
 
         Args:
-            fde_vals: per-bin f_DE amplitudes, length = len(zbin_edges) - 1
+            fde_vals: per-bin f_DE amplitudes, length = len(zbin_edges) - 1.
+                The first entry is the value at the top of the first bin.
             zbin_edges: redshift bin edges (ascending)
         """
-        D_sol = odeint(
-            DE_fde_D_derivatives,
-            jnp.array([self.a_start, 1.0]),
-            self.aa,
-            fde_vals,
-            self.omega0,
-            zbin_edges,
-        )
-        D, dDda = D_sol.T
+        fde_vals = jnp.asarray(fde_vals)
+        zbin_edges = jnp.asarray(zbin_edges)
+        aa = np.asarray(self.aa, dtype=float)
+        fde = np.asarray(fde_vals, dtype=float)
+        edges = np.asarray(zbin_edges, dtype=float)
+        omega0 = float(self.omega0)
+
+        # Interior edges only. The outer edges are not jumps between bins.
+        a_jumps = []
+        for k in range(1, len(edges) - 1):
+            a_j = 1.0 / (1.0 + edges[k])
+            if aa[0] < a_j < aa[-1]:
+                a_jumps.append((a_j, k))
+        a_jumps.sort()
+
+        D_out = np.empty(len(aa))
+        dD_out = np.empty(len(aa))
+        D_out[0] = aa[0]
+        dD_out[0] = 1.0
+        y = jnp.array([aa[0], 1.0])
+        a_now = aa[0]
+
+        def run_to(a_now, y, a_end):
+            sel = np.where((aa > a_now) & (aa <= a_end + 1e-12))[0]
+            times = [a_now]
+            times.extend(aa[sel].tolist())
+            if times[-1] < a_end - 1e-12:
+                times.append(a_end)
+            sol = odeint(
+                DE_fde_D_derivatives,
+                y,
+                jnp.asarray(times),
+                fde_vals,
+                self.omega0,
+                zbin_edges,
+            )
+            for n, i in enumerate(sel):
+                D_out[i] = float(sol[n + 1, 0])
+                dD_out[i] = float(sol[n + 1, 1])
+            return sol[-1]
+
+        for a_j, k in a_jumps:
+            y = run_to(a_now, y, a_j)
+            # High-z side of this edge is bin k. Low-z side is the ramp
+            # limit fde[0] at the top of the first bin, otherwise bin k-1.
+            f_before = fde[k]
+            f_after = fde[0] if k == 1 else fde[k - 1]
+            matter = omega0 / a_j**3
+            E2_before = matter + (1.0 - omega0) * f_before
+            E2_after = matter + (1.0 - omega0) * f_after
+            # d delta/d tau scales as 1/H, and d tau/da scales as 1/H,
+            # so dD/da scales as 1/H^2 = E2_before/E2_after.
+            scale = E2_before / E2_after
+            y = jnp.array([float(y[0]), float(y[1]) * scale])
+            a_now = np.nextafter(a_j, np.inf)
+
+        run_to(a_now, y, aa[-1])
+        D = jnp.asarray(D_out)
+        dDda = jnp.asarray(dD_out)
         f = self.aa * dDda / D
         return D[1:], f[1:]
 

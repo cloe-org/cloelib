@@ -11,10 +11,7 @@ from typing import Optional
 from scipy import interpolate
 import jax.numpy as jnp
 
-from cloelib.cosmology.theta_h0 import (
-    resolve_background_densities,
-    theta_to_H0 as _theta_to_H0,
-)
+from cloelib.cosmology.theta_h0 import theta_to_H0 as _theta_to_H0
 
 # Gauss–Legendre nodes for the comoving-distance integral. Inside one f_DE bin
 # the integrand is analytic, and panels no wider than `_CHI_PANEL` stay at the
@@ -82,29 +79,43 @@ def get_z_bin(z, zbin_edges):
 
 
 def get_de_density(z, zbin_edges, fde_i):
+    """Piecewise-constant ``f_DE(z)``, anchored to 1 at ``z = 0``.
+
+    ``E^2(z) = Omega_m0 (1+z)^3 + (1 - Omega_m0) f_DE(z)`` equals 1 at
+    ``z = 0`` only if ``f_DE(0) = 1``. The first bin is therefore not a step:
+    ``f_DE`` follows a smoothstep from 1 at ``z = 0`` to ``fde_i[0]`` at the
+    top of that bin, with vanishing slope at both ends. Every later bin stays
+    at its constant ``fde_i``.
+
+    The same ramp is used by ``DE_fde_D_derivatives`` in
+    ``jaxmgrowth_de_descrete``. The growth integrator also rescales
+    ``dD/da`` by ``(H_before/H_after)^2`` at each later bin edge.
     """
-    Optimized version using pre-computation and vectorization.
-    """
-    z = np.asarray(z)
-    bins = get_z_bin(z, zbin_edges)
+    z_arr = np.asarray(z, dtype=float)
+    scalar = z_arr.ndim == 0
+    z_arr = np.atleast_1d(z_arr)
+    fde = np.asarray(fde_i, dtype=float)
+    edges = np.asarray(zbin_edges, dtype=float)
+    z1 = float(edges[1])
+    if z1 <= 0.0:
+        raise ValueError(
+            "the first f_DE bin must end at z > 0 so f_DE can transition to 1 at z=0"
+        )
 
-    # Vectorized computation
-    # For each z, get the product from cumulative products
-    # Use np.maximum to handle negative bin indices
-    bin_idx_safe = np.maximum(0, bins)
-
-
-    # Compute final density
-    rho = np.array([fde_i[bin_idx_safe_i] for bin_idx_safe_i in bin_idx_safe])
-
+    bins = np.maximum(get_z_bin(z_arr, edges), 0)
+    rho = fde[bins]
+    # C1 smoothstep on [0, 1]: s(0) = s'(0) = 0, s(1) = 1, s'(1) = 0.
+    x = np.clip(z_arr / z1, 0.0, 1.0)
+    s = x * x * (3.0 - 2.0 * x)
+    ramp = 1.0 + (fde[0] - 1.0) * s
+    rho = np.where(z_arr < z1, ramp, rho)
+    if scalar:
+        return rho[0]
     return rho
 
 
 def get_de_density_i(z, zbin_edges, fde_i):
-    bins = get_z_bin(z, zbin_edges)
-    # Handle bins as scalar (get_z_bin returns scalar for scalar input)
-    bin_idx = bins if isinstance(bins, (int, np.integer)) else bins[0]
-    return fde_i[bin_idx]
+    return get_de_density(z, zbin_edges, fde_i)
 
 def theta_to_H0(
     theta,
@@ -151,40 +162,30 @@ class DEBinnedDensityBackground:
             ns (float): Scalar spectral index.
             mnu (float): Total sum of neutrino mass in [eV].
             zbin_edges (np.ndarray): Array of bin edges for the redshift bins.
-            fde_i (np.ndarray): Array of density of dark energy parameters for the redshift bins.
+            fde_i (np.ndarray): ``f_DE`` in each redshift bin. The first entry is
+                the value at the top of the first bin; ``f_DE`` transitions
+                smoothly from that value to 1 at ``z = 0``.
             binning (str): Type of binning used for the redshift bins.
         """
-        self.zbin_edges = zbin_edges
-        self.zbin_widths = np.diff(zbin_edges)
-        self.zbin_centers = 0.5 * (zbin_edges[1:] + zbin_edges[:-1])
-        self.fde_i = fde_i
+        self.zbin_edges = np.asarray(zbin_edges, dtype=float)
+        if self.zbin_edges.size < 2 or self.zbin_edges[1] <= 0.0:
+            raise ValueError(
+                "zbin_edges must contain a first bin ending at z > 0, "
+                "so f_DE can transition to 1 at z=0."
+            )
+        self.zbin_widths = np.diff(self.zbin_edges)
+        self.zbin_centers = 0.5 * (self.zbin_edges[1:] + self.zbin_edges[:-1])
+        self.fde_i = np.asarray(fde_i, dtype=float)
 
-        densities = resolve_background_densities(
-            lambda z: get_de_density(z, self.zbin_edges, self.fde_i),
-            H0=cosmology_dict.get("H0"),
-            Omega_b0=cosmology_dict.get("Omega_b0"),
-            Omega_cdm0=cosmology_dict.get("Omega_cdm0"),
-            Omega_k0=cosmology_dict.get("Omega_k0", 0.0),
-            mnu=cosmology_dict.get("mnu", 0.06),
-            nnu=cosmology_dict.get("nnu", 3.044),
-            Omch2=cosmology_dict.get("Omch2"),
-            Ombh2=cosmology_dict.get("Ombh2"),
-            cosmomc_theta=cosmology_dict.get("cosmomc_theta"),
-        )
-        self.H0 = densities["H0"]
-        self.h = densities["h"]
-        self.Omega_b0 = densities["Omega_b0"]
-        self.Omega_cdm0 = densities["Omega_cdm0"]
-        self.Omega_m0 = densities["Omega_m0"]
-        self.Omega_k0 = densities["Omega_k0"]
-        self.mnu = densities["mnu"]
-        self.nnu = densities["nnu"]
+        self.H0 = cosmology_dict["H0"]
+        self.h = self.H0 / 100.0
+        self.Omega_b0 = cosmology_dict["Omega_b0"]
+        self.Omega_cdm0 = cosmology_dict["Omega_cdm0"]
+        self.Omega_k0 = cosmology_dict["Omega_k0"]
+        self.mnu = cosmology_dict["mnu"]
         self.As = cosmology_dict["As"]
         self.ns = cosmology_dict["ns"]
-        if "Omch2" in cosmology_dict:
-            self.Omch2 = cosmology_dict["Omch2"]
-        if "Ombh2" in cosmology_dict:
-            self.Ombh2 = cosmology_dict["Ombh2"]
+        self.Omega_m0 = self.Omega_b0 + self.Omega_cdm0 + self.mnu / 93.14 / self.h**2
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
@@ -200,6 +201,7 @@ class DEBinnedDensityBackground:
         DE_z_grid = get_de_density(
             zs, self.zbin_edges, self.fde_i
         )
+        # f_DE(0) = 1, so this radicand is 1 at z = 0.
         E_z_grid = np.sqrt(
             self.Omega_m0 * pow(1.0 + zs, 3) + (1 - self.Omega_m0) * DE_z_grid
         )
@@ -212,9 +214,8 @@ class DEBinnedDensityBackground:
         )
 
     def _expansion(self, zs: np.ndarray) -> np.ndarray:
-        """E(z) = H(z)/H0 for piecewise-constant f_DE."""
-        bins = np.maximum(get_z_bin(zs, self.zbin_edges), 0)
-        fde = np.asarray(self.fde_i, dtype=float)[bins]
+        """E(z) = H(z)/H0, with the same f_DE(z) as ``hubble_parameter``."""
+        fde = get_de_density(zs, self.zbin_edges, self.fde_i)
         return np.sqrt(self.Omega_m0 * (1.0 + zs) ** 3 + (1.0 - self.Omega_m0) * fde)
 
     def comoving_distance(self, zs: np.ndarray) -> np.ndarray:
@@ -388,9 +389,9 @@ class DEBinnedDensityLinearPerturbations:
         self.fde_i = background.fde_i
         self.a_grid = jnp.linspace(1e-4, 1.0, 512)
         z_grid = 1.0 / np.linspace(1e-4, 1.0, 512) - 1.0
-        bins = get_z_bin(z_grid, background.zbin_edges)
-        fde_vals = [self.fde_i[bins_i] for bins_i in bins]
-        self.fde_vals = jnp.array(fde_vals)
+        self.fde_vals = jnp.asarray(
+            get_de_density(z_grid, background.zbin_edges, self.fde_i)
+        )
 
         # Build background dict for MGrowth
         background_mgrowth = {

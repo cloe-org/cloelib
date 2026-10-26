@@ -4,10 +4,7 @@
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.cosmology.theta_h0 import (
-    resolve_background_densities,
-    theta_to_H0 as _theta_to_H0,
-)
+from cloelib.cosmology.theta_h0 import theta_to_H0 as _theta_to_H0
 
 # General imports
 import numpy as np
@@ -32,7 +29,25 @@ except ImportError:
     raise ImportError("HMcode2020emu could not be imported or initialised.")
 
 
+def _require_fde_unity_at_z0(z_i, fde_i):
+    """``E(0) = 1`` only if ``f_DE(0) = 1``.
+
+    A knot at ``z = 0`` is ``f_DE(0)``, so its amplitude has to be 1.
+    """
+    z_knots = np.asarray(z_i, dtype=float).reshape(-1)
+    fde = np.asarray(fde_i, dtype=float).reshape(-1)
+    if z_knots.size == 0 or fde.size == 0:
+        return
+    if z_knots[0] == 0.0 and not np.isclose(fde[0], 1.0):
+        raise ValueError(
+            "fde_i[0] must be 1 when z_i[0] == 0, so that "
+            "Omega_m0 + (1 - Omega_m0) * f_DE(0) = 1. "
+            f"Got fde_i[0] = {fde[0]}."
+        )
+
+
 def fde_of_z(z, z_i, fde_i):
+    _require_fde_unity_at_z0(z_i, fde_i)
     z = np.asarray(z)
     #spl_i = make_interp_spline(z_i, fde_i)
     spl_i = CubicSpline(z_i, fde_i)
@@ -95,36 +110,22 @@ class DESplinedDensityBackground:
         Args:
             cosmology_dict (dict): Cosmological parameters.
             z_i (np.ndarray): Redshift knots of the spline.
-            fde_i (np.ndarray): ``f_DE`` at those knots.
+            fde_i (np.ndarray): ``f_DE`` at those knots. If ``z_i[0] == 0``,
+                ``fde_i[0]`` must be 1.
         """
         self.z_i = z_i
         self.fde_i = fde_i
-        densities = resolve_background_densities(
-            lambda z: get_de_density(z, self.z_i, self.fde_i),
-            H0=cosmology_dict.get("H0"),
-            Omega_b0=cosmology_dict.get("Omega_b0"),
-            Omega_cdm0=cosmology_dict.get("Omega_cdm0"),
-            Omega_k0=cosmology_dict.get("Omega_k0", 0.0),
-            mnu=cosmology_dict.get("mnu", 0.06),
-            nnu=cosmology_dict.get("nnu", 3.044),
-            Omch2=cosmology_dict.get("Omch2"),
-            Ombh2=cosmology_dict.get("Ombh2"),
-            cosmomc_theta=cosmology_dict.get("cosmomc_theta"),
-        )
-        self.H0 = densities["H0"]
-        self.h = densities["h"]
-        self.Omega_b0 = densities["Omega_b0"]
-        self.Omega_cdm0 = densities["Omega_cdm0"]
-        self.Omega_m0 = densities["Omega_m0"]
-        self.Omega_k0 = densities["Omega_k0"]
-        self.mnu = densities["mnu"]
-        self.nnu = densities["nnu"]
+        _require_fde_unity_at_z0(self.z_i, self.fde_i)
+        
+        self.H0 = cosmology_dict["H0"]
+        self.h = self.H0 / 100.0
+        self.Omega_b0 = cosmology_dict["Omega_b0"]
+        self.Omega_cdm0 = cosmology_dict["Omega_cdm0"]
+        self.Omega_k0 = cosmology_dict["Omega_k0"]
+        self.mnu = cosmology_dict["mnu"]
         self.As = cosmology_dict["As"]
         self.ns = cosmology_dict["ns"]
-        if "Omch2" in cosmology_dict:
-            self.Omch2 = cosmology_dict["Omch2"]
-        if "Ombh2" in cosmology_dict:
-            self.Ombh2 = cosmology_dict["Ombh2"]
+        self.Omega_m0 = self.Omega_b0 + self.Omega_cdm0 + self.mnu / 93.14 / self.h**2
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """

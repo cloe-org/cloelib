@@ -11,10 +11,7 @@ from typing import Optional
 from scipy import interpolate
 import jax.numpy as jnp
 
-from cloelib.cosmology.theta_h0 import (
-    resolve_background_densities,
-    theta_to_H0 as _theta_to_H0,
-)
+from cloelib.cosmology.theta_h0 import theta_to_H0 as _theta_to_H0
 
 # Gauss–Legendre nodes for the comoving-distance integral. Within one w bin the
 # integrand is analytic, and panels no wider than `_CHI_PANEL` stay at the
@@ -186,34 +183,16 @@ class DEBinnedEoSBackground:
         self.zbin_centers = 0.5 * (zbin_edges[1:] + zbin_edges[:-1])
         self.w_i = w_i
 
-        densities = resolve_background_densities(
-            lambda z: get_de_density(
-                z, self.zbin_edges, self.zbin_widths, self.zbin_centers, self.w_i
-            ),
-            H0=cosmology_dict.get("H0"),
-            Omega_b0=cosmology_dict.get("Omega_b0"),
-            Omega_cdm0=cosmology_dict.get("Omega_cdm0"),
-            Omega_k0=cosmology_dict.get("Omega_k0", 0.0),
-            mnu=cosmology_dict.get("mnu", 0.06),
-            nnu=cosmology_dict.get("nnu", 3.044),
-            Omch2=cosmology_dict.get("Omch2"),
-            Ombh2=cosmology_dict.get("Ombh2"),
-            cosmomc_theta=cosmology_dict.get("cosmomc_theta"),
-        )
-        self.H0 = densities["H0"]
-        self.h = densities["h"]
-        self.Omega_b0 = densities["Omega_b0"]
-        self.Omega_cdm0 = densities["Omega_cdm0"]
-        self.Omega_m0 = densities["Omega_m0"]
-        self.Omega_k0 = densities["Omega_k0"]
-        self.mnu = densities["mnu"]
-        self.nnu = densities["nnu"]
+        self.H0 = cosmology_dict["H0"]
+        self.h = self.H0 / 100.0
+        self.Omega_b0 = cosmology_dict["Omega_b0"]
+        self.Omega_cdm0 = cosmology_dict["Omega_cdm0"]
+        self.Omega_k0 = cosmology_dict["Omega_k0"]
+        self.mnu = cosmology_dict["mnu"]
         self.As = cosmology_dict["As"]
         self.ns = cosmology_dict["ns"]
-        if "Omch2" in cosmology_dict:
-            self.Omch2 = cosmology_dict["Omch2"]
-        if "Ombh2" in cosmology_dict:
-            self.Ombh2 = cosmology_dict["Ombh2"]
+        self.Omega_m0 = self.Omega_b0 + self.Omega_cdm0 + self.mnu / 93.14 / self.h**2
+
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
@@ -438,6 +417,12 @@ class DEBinnedEoSLinearPerturbations:
         # D_mg, f_mg = self._compute_growth_w_interp()
         cosmo = mgrowth.w_a(bg_dict)
         D_raw, f_raw = cosmo.growth_parameters(self.a_grid, self.w_vals, use_fast=False)
+        D_raw = np.asarray(D_raw)
+        f_raw = np.asarray(f_raw)
+        # A stiff w(a) hits the step cap and comes back non-finite. Reject it
+        # here so the sampler gets an exception instead of waiting or storing NaN.
+        if not (np.isfinite(D_raw).all() and np.isfinite(f_raw).all()) or np.any(D_raw <= 0.0):
+            raise ValueError("binned growth integration failed")
         D_mg, f_mg = (
             np.repeat(D_raw[::-1, None], self.k_len, axis=1),
             np.repeat(f_raw[::-1, None], self.k_len, axis=1),

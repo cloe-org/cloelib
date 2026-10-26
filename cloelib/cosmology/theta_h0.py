@@ -78,14 +78,21 @@ def _comoving_distance_to_zstar(
     omega_c = omch2 / h**2
     omega_nu = omnuh2 / h**2
     omega_r = omega_r_h2(TCMB, nnu) / h**2
-    omega_de = 1.0 - omega_b - omega_c - omega_nu - omega_r - omega_k / h**2
+    # omega_k is Omega_k, the curvature density parameter, not Omega_k h^2.
+    omega_de = 1.0 - omega_b - omega_c - omega_nu - omega_r - omega_k
     nu_matter = _neutrino_matter_fraction(z_star_array, mnu)
     omega_m = omega_b + omega_c + omega_nu * nu_matter
-    E_grid = np.sqrt(
+    radicand = (
         omega_r * (1.0 + z_star_array) ** 4
         + omega_m * (1.0 + z_star_array) ** 3
+        + omega_k * (1.0 + z_star_array) ** 2
         + omega_de * de_density_factor
     )
+    # A negative or non-finite E^2 means the universe is not expanding on this
+    # grid. Returning NaN here lets a root finder wander; fail instead.
+    if not np.isfinite(radicand).all() or np.any(radicand <= 0.0):
+        raise ValueError("expansion history is not finite and expanding")
+    E_grid = np.sqrt(radicand)
     r_dimless = cumulative_trapezoid(1.0 / E_grid, z_star_array, initial=0.0)
     return r_dimless[-1] / H0mpc
 
@@ -113,12 +120,42 @@ def theta_to_H0(
     -------
     float
         Hubble parameter in km/s/Mpc.
+
+    Raises
+    ------
+    ValueError
+        If the inputs, the dark-energy density, or the expansion history cannot
+        produce a root inside ``h0_bracket``. Callers should treat that as an
+        invalid sample. A non-finite dark-energy density is rejected before
+        CAMB. A history that does not cross the target inside ``h0_bracket``
+        raises before the root finder iterates.
     """
+    if not np.isfinite([theta, omch2, ombh2, mnu, omega_k, TCMB, nnu]).all():
+        raise ValueError("non-finite cosmological input")
+    # CosmoMC theta is ~0.01. Values outside this range are prior tails, and
+    # CAMB's own search does not accept them.
+    if not (0.001 < theta < 0.1):
+        raise ValueError("theta is outside the range CAMB can solve")
+    if not (0.0 < omch2 < 0.5 and 0.005 < ombh2 < 0.1):
+        raise ValueError("omega_c or omega_b is outside the solvable range")
+
+    # f_DE does not depend on H0. Reject a broken history before the CAMB call.
+    z_check = _z_grid_to_zstar(1200.0)
+    de_check = np.asarray(de_density(z_check), dtype=float)
+    if de_check.shape != z_check.shape or not np.isfinite(de_check).all() or np.any(de_check <= 0.0):
+        raise ValueError("dark-energy density is not finite and positive")
+
     zstar, rstar = _camb_recombination_at_theta(
         theta, omch2, ombh2, omega_k, mnu, TCMB, nnu
     )
     z_star_array = _z_grid_to_zstar(zstar)
     de_density_factor = np.asarray(de_density(z_star_array), dtype=float)
+    if (
+        de_density_factor.shape != z_star_array.shape
+        or not np.isfinite(de_density_factor).all()
+        or np.any(de_density_factor <= 0.0)
+    ):
+        raise ValueError("dark-energy density is not finite and positive")
 
     def theta_residual(H0):
         distance = _comoving_distance_to_zstar(
@@ -132,71 +169,20 @@ def theta_to_H0(
             TCMB,
             nnu,
         )
+        if not np.isfinite(distance) or distance <= 0.0:
+            raise ValueError("comoving distance to last scattering is not finite")
         return rstar / distance - theta
 
-    return brentq(theta_residual, h0_bracket[0], h0_bracket[1])
-
-
-def resolve_background_densities(
-    de_density,
-    H0=None,
-    Omega_b0=None,
-    Omega_cdm0=None,
-    Omega_k0=0.0,
-    mnu=0.06,
-    nnu=3.044,
-    Omch2=None,
-    Ombh2=None,
-    cosmomc_theta=None,
-):
-    """Hubble parameter and density parameters from either small or big omegas.
-
-    With ``Omch2`` and ``Ombh2``, ``cosmomc_theta`` (CosmoMC's ``100 theta_*``)
-    is converted to ``H0`` through ``de_density``. Otherwise ``H0`` is used as
-    given. With ``Omega_b0`` and ``Omega_cdm0``, ``H0`` is required. Small
-    omegas take precedence when both sets are supplied.
-
-    Returns
-    -------
-    dict
-        ``H0``, ``h``, ``Omega_b0``, ``Omega_cdm0``, ``Omega_m0``, ``Omega_k0``,
-        ``mnu``, ``nnu``.
-    """
-    if Omch2 is not None and Ombh2 is not None:
-        if cosmomc_theta is not None:
-            H0 = theta_to_H0(
-                cosmomc_theta / 100.0,
-                Omch2,
-                Ombh2,
-                de_density,
-                mnu=mnu,
-                nnu=nnu,
-                omega_k=Omega_k0,
-            )
-        elif H0 is None:
-            raise ValueError(
-                "H0 or cosmomc_theta must be provided with Omch2 and Ombh2."
-            )
-        h = H0 / 100.0
-        Omega_b0 = Ombh2 / h**2
-        Omega_cdm0 = Omch2 / h**2
-    elif Omega_b0 is not None and Omega_cdm0 is not None:
-        if H0 is None:
-            raise ValueError(
-                "H0 must be provided if Omega_b0 and Omega_cdm0 are provided."
-            )
-        h = H0 / 100.0
-    else:
+    lo, hi = float(h0_bracket[0]), float(h0_bracket[1])
+    try:
+        residual_lo = theta_residual(lo)
+        residual_hi = theta_residual(hi)
+    except ValueError:
+        raise
+    if not (np.isfinite(residual_lo) and np.isfinite(residual_hi)) or residual_lo * residual_hi > 0.0:
         raise ValueError(
-            "Either Omch2 and Ombh2, or Omega_b0 and Omega_cdm0, must be provided."
+            f"no H0 root inside ({lo}, {hi}); residuals are {residual_lo}, {residual_hi}"
         )
-    return {
-        "H0": H0,
-        "h": h,
-        "Omega_b0": Omega_b0,
-        "Omega_cdm0": Omega_cdm0,
-        "Omega_m0": Omega_cdm0 + Omega_b0 + mnu / 93.14 / h**2,
-        "Omega_k0": Omega_k0,
-        "mnu": mnu,
-        "nnu": nnu,
-    }
+    return float(brentq(theta_residual, lo, hi, maxiter=50))
+
+

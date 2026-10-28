@@ -13,8 +13,8 @@ from cloelib.observables.photo.spectrum_engine import (
     needs_generalized_engine,
 )
 from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.math_utils import (
+from cloelib.utils.units import SPEED_OF_LIGHT
+from cloelib.utils.math import (
     quadrature_weights,
     simpsons_weights_avg,
 )

@@ -27,7 +27,7 @@ from typing import Callable, Sequence
 
 import jax.numpy as jnp
 
-from cloelib.auxiliary.math_utils import safe_sqrt
+from cloelib.utils.math import safe_sqrt
 from cloelib.cosmology.cosmology import (
     CB_CROSS_CORRELATED,
     CB_CROSS_LINEAR_NU,

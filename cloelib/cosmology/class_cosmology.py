@@ -7,7 +7,7 @@ from cloelib.cosmology.cosmology import (
     Background,
     Perturbations,
 )
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.utils.units import SPEED_OF_LIGHT
 
 # General imports
 import numpy as np

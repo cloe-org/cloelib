@@ -4,7 +4,7 @@ from jax import jit
 from cosmolib.data import TwoPointCorrelationFunction
 from cloelib.observables.photo import ShearTracer, PositionsTracer
 from .angular_correlation_function import AngularCorrelationFunction
-from cloelib.auxiliary.cache import memoize_jax
+from cloelib.utils.cache import memoize_jax
 
 
 @jit

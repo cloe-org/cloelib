@@ -1,6 +1,6 @@
 # cloelib imports
 from cloelib.cosmology.cosmology import Background, WithWavenumberGrid
-from cloelib.auxiliary.extrapolator import extend_spectra
+from cloelib.utils.extrapolator import extend_spectra
 
 
 # General imports

@@ -5,8 +5,8 @@ This class is compatible with the Tracer protocol.
 """
 
 # cloelib imports
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.math_utils import check_nonzero_redshifts
+from cloelib.utils.units import SPEED_OF_LIGHT
+from cloelib.utils.redshift import check_nonzero_redshifts
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.observables.photo.contributions import unit_sigma
 

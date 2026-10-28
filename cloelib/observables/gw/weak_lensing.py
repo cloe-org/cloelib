@@ -5,14 +5,14 @@ holds `GWNumberCountsTracer`.
 """
 
 # cloelib imports
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.utils.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.auxiliary.math_utils import (
+from cloelib.utils.math import (
     cached_stacked_simpson,
-    check_nonzero_redshifts,
     simps,
 )
-from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.utils.redshift import check_nonzero_redshifts
+from cloelib.utils.systematics import shift_dndz_jax, stretch_dndz_jax
 
 # General imports
 import jax.numpy as np

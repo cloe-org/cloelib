@@ -7,7 +7,7 @@ from cloelib.cosmology.cosmology import (
     Perturbations,
     growth_rate_on_redshifts,
 )
-from cloelib.auxiliary.math_utils import ensure_z_zero_included
+from cloelib.utils.redshift import ensure_z_zero_included
 
 # General imports
 import numpy as np

@@ -9,7 +9,7 @@ from cloelib.cosmology.cosmology import (
     Perturbations,
     with_baryon_boost,
 )
-from cloelib.auxiliary.extrapolator import extend_spectra
+from cloelib.utils.extrapolator import extend_spectra
 
 from scipy import interpolate
 

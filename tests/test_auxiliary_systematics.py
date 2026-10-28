@@ -1,4 +1,4 @@
-from cloelib.auxiliary.systematics import shift_dndz_jax
+from cloelib.utils.systematics import shift_dndz_jax
 
 import jax.numpy as jnp
 

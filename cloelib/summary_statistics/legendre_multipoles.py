@@ -4,8 +4,8 @@
 from cloelib.cosmology.cosmology import Background
 from cloelib.observables.spectro.spectro import SpectroPower
 from cloelib.summary_statistics.APDistortion import APDistortion
-from cloelib.auxiliary.math_utils import legendre
-from cloelib.auxiliary.fftlog import fftlog
+from cloelib.utils.math import legendre
+from cloelib.utils.fftlog import fftlog
 
 # General imports
 import functools

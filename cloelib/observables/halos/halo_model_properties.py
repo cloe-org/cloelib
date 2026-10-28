@@ -4,7 +4,7 @@ from scipy.integrate import quad_vec
 from scipy.special import j0, j1
 import importlib
 
-from cloelib.auxiliary.halo_helpers import convert_distance
+from cloelib.observables.halos.halo_helpers import convert_distance
 
 from cloelib.cosmology import derived_cosmology
 from cloelib.cosmology.cosmology import Perturbations

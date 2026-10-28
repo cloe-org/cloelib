@@ -7,7 +7,7 @@ All of the functions are completely differentiable.
 
 # cloelib imports
 from cloelib.cosmology.cosmology import CB_CROSS_CORRELATED, CB_CROSS_LINEAR_NU
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.utils.units import SPEED_OF_LIGHT
 from cloelib.cosmology.derived_cosmology import (
     rdrag_fitting_function,
     z_star_fitting_function,

@@ -3,7 +3,7 @@
 import numpy as np
 from scipy.special import erf
 
-from cloelib.auxiliary import units
+from cloelib.utils import units
 
 
 def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=0.0):
@@ -51,10 +51,10 @@ def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=
     if overdensity_type == "crit":
         return overdensity
 
-    elif overdensity_type == "mean":
+    elif overdensity_type == "mean" and background is not None:
         return overdensity * background.Omega_cb(z)
 
-    elif overdensity_type == "vir":
+    elif overdensity_type == "vir" and background is not None:
         x = background.Omega_cb(z) - 1.0
         return 18.0 * np.pi**2 + 82.0 * x - 39.0 * x**2
 

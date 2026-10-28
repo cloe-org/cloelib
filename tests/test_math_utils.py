@@ -1,4 +1,4 @@
-from cloelib.auxiliary.math_utils import (
+from cloelib.utils.math import (
     cached_stacked_simpson,
     simpsons_weights_avg,
     simpsons_weights_jit,

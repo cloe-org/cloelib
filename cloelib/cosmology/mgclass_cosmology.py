@@ -8,7 +8,7 @@ from cloelib.cosmology.cosmology import (
     Perturbations,
     growth_rate_on_redshifts,
 )
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.utils.units import SPEED_OF_LIGHT
 
 # General imports
 import numpy as np

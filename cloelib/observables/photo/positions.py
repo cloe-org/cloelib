@@ -45,13 +45,13 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all follows.
 # cloelib imports
 from typing import Any, Callable, Protocol
 
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.utils.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.auxiliary.math_utils import (
+from cloelib.utils.math import (
     cached_stacked_simpson,
-    check_nonzero_redshifts,
 )
-from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.utils.redshift import check_nonzero_redshifts
+from cloelib.utils.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,

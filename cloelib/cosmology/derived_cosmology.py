@@ -1,7 +1,7 @@
 """Common cosmology derived functions."""
 
 # cloelib imports
-from cloelib.auxiliary import units
+from cloelib.utils import units
 
 # General imports
 import numpy as np

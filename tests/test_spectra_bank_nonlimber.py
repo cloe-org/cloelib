@@ -14,6 +14,7 @@ from cloelib.auxiliary.chebyshev import chebyshev_points_interval
 from cloelib.auxiliary.nonlimber_kernels import unequal_time_pk, w_ell
 from cloelib.auxiliary.t_tildes import NonLimberGrid, TTildeStore, directory_name
 from cloelib.cosmology.jax_cosmology import JAXBackground, JAXLinearPerturbations
+from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.spectrum_engine import SpectraBank, SpectrumRequest
 
 jax.config.update("jax_enable_x64", True)
@@ -68,7 +69,7 @@ def store(tmp_path, grid):
 
 
 class CountingPerturbations:
-    """Wraps linear perturbations and counts the evaluations of the spectrum."""
+    """Wraps linear perturbations and counts the evaluations of the spectra."""
 
     def __init__(self, perturbations):
         self._perturbations = perturbations
@@ -78,6 +79,10 @@ class CountingPerturbations:
     def matter_power_spectrum(self, zs, ks, **kwargs):
         self.calls += 1
         return self._perturbations.matter_power_spectrum(zs, ks, **kwargs)
+
+    def matter_power_spectrum_cb(self, zs, ks, **kwargs):
+        self.calls += 1
+        return self._perturbations.matter_power_spectrum_cb(zs, ks, **kwargs)
 
 
 @pytest.fixture
@@ -125,6 +130,7 @@ def test_nonlimber_needs_both_linear_perturbations_and_t_tildes(cosmology, store
     ):
         for call in (
             bank.z_of_chi,
+            lambda: bank.nonlimber_transfer(MATTER),
             bank.nonlimber_cheb,
             lambda: bank.w_ell("T_2_00"),
         ):
@@ -171,8 +177,8 @@ def test_nonlimber_cheb_expands_the_unequal_time_linear_pk(bank, cosmology, grid
     coeffs = bank.nonlimber_cheb()
     assert coeffs.shape == (N_CHEB, N_CHI, N_R)
 
-    Pk_chi = linear.matter_power_spectrum(bank.z_of_chi(), 10.0**grid.k_cheb)
-    expected = np.asarray(unequal_time_pk(Pk_chi, grid.chi, grid.R))  # (k, chi, R)
+    T = jnp.sqrt(linear.matter_power_spectrum(bank.z_of_chi(), 10.0**grid.k_cheb))
+    expected = np.asarray(unequal_time_pk(T, T, grid.chi, grid.R))  # (k, chi, R)
 
     u = np.asarray(grid.k_cheb)
     u = (2 * u - (u.max() + u.min())) / (u.max() - u.min())  # -> [-1, 1]
@@ -242,3 +248,81 @@ def test_w_ell_unknown_matrix(bank):
     """Asking for a matrix the dataset does not hold is a FileNotFoundError."""
     with pytest.raises(FileNotFoundError, match="Missing T-tilde directory"):
         bank.w_ell("T_2_22")
+
+
+# ---------------------------------------------------------------------------
+# Transfer functions and pairs of fields
+# ---------------------------------------------------------------------------
+def test_nonlimber_transfer_is_the_sqrt_of_the_linear_pk(bank, cosmology, grid):
+    """T_X(k, chi) = sqrt(P_XX^lin(k, z(chi))) at the Chebyshev nodes, per field."""
+    _, linear = cosmology
+    z, k = bank.z_of_chi(), 10.0**grid.k_cheb
+    for field, method in (
+        (MATTER, linear.matter_power_spectrum),
+        (CB, linear.matter_power_spectrum_cb),
+    ):
+        T = bank.nonlimber_transfer(field)
+        assert T.shape == (N_CHI, N_CHEB)
+        np.testing.assert_allclose(T**2, method(z, k), rtol=1e-12)
+
+
+def test_same_field_is_the_geometric_mean(bank, cosmology, grid):
+    """For A = B the transfer-function form reproduces the geometric mean.
+
+    sqrt(P(k, chi) P(k, R chi)) with P(k, R chi) from the Akima interpolation
+    of log10 P: the formula used before the transfer functions were
+    introduced, so this pins the matter-matter result to the previous one.
+    """
+    from cloelib.auxiliary.akima import akima_interpolation
+
+    _, linear = cosmology
+    Pk_chi = linear.matter_power_spectrum(bank.z_of_chi(), 10.0**grid.k_cheb)
+    chi_R = jnp.outer(grid.chi, grid.R).flatten()
+    Pk_chi_R = 10 ** akima_interpolation(jnp.log10(Pk_chi), grid.chi, chi_R, axis=0)
+    Pk_chi_R = Pk_chi_R.reshape(N_CHI, N_R, N_CHEB)
+    geometric = np.sqrt(np.einsum("ck,crk->kcr", Pk_chi, Pk_chi_R))
+
+    T = bank.nonlimber_transfer(MATTER)
+    np.testing.assert_allclose(
+        unequal_time_pk(T, T, grid.chi, grid.R), geometric, rtol=1e-10
+    )
+
+
+def test_mixed_fields_need_both_orderings(bank):
+    """cb at chi and matter at R chi differs from the reverse ordering.
+
+    With massive neutrinos T_cb != T_m, and at R = 1 (equal times) the two
+    orderings must coincide.
+    """
+    cb_m = bank.nonlimber_cheb(CB, MATTER)
+    m_cb = bank.nonlimber_cheb(MATTER, CB)
+    assert not np.allclose(cb_m, m_cb, rtol=1e-6)
+    np.testing.assert_allclose(cb_m[:, :, -1], m_cb[:, :, -1], rtol=1e-10)
+
+
+def test_fields_are_memoized_separately(bank):
+    """Each ordered pair of fields has its own coefficients and w_ell.
+
+    The transfer functions are shared: two spectrum evaluations (one per
+    field) serve every pair.
+    """
+    w_mm = bank.w_ell("T_2_00")
+    w_cbm = bank.w_ell("T_2_00", CB, MATTER)
+    w_mcb = bank.w_ell("T_2_00", MATTER, CB)
+    assert w_mm is bank.w_ell("T_2_00", MATTER, MATTER)
+    assert w_cbm is bank.w_ell("T_2_00", CB, MATTER)
+    assert w_cbm is not w_mcb and w_cbm is not w_mm
+    bank.nonlimber_cheb(CB, CB)
+    assert bank.linear_perturbations.calls == 2
+
+
+def test_unknown_field(bank):
+    """A field other than MATTER/CB is rejected before anything is computed."""
+    for call in (
+        lambda: bank.nonlimber_transfer("gas"),
+        lambda: bank.nonlimber_cheb(MATTER, "gas"),
+        lambda: bank.w_ell("T_2_00", "gas", MATTER),
+    ):
+        with pytest.raises(ValueError, match="Unknown traced field"):
+            call()
+    assert bank.linear_perturbations.calls == 0

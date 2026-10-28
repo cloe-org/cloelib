@@ -1,8 +1,8 @@
 """Module for Chebyshev polynomials and related utilities."""
 
 import jax
-import numpy as np
 import jax.numpy as jnp
+import numpy as np
 from jax import Array
 
 from cloelib.auxiliary.akima import akima_interpolation

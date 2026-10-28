@@ -22,19 +22,19 @@ jax.config.update("jax_enable_x64", True)
 # unequal_time_pk
 # ---------------------------------------------------------------------------
 def test_unequal_time_pk_matches_geometric_mean():
-    """The unequal-time spectrum is the geometric mean of two equal-time ones.
+    """For a single field it is the geometric mean of two equal-time spectra.
 
-    P(k, chi, R chi) must equal sqrt(P(k, chi) P(k, R chi)). Taking log10 P
-    linear in chi makes the Akima interpolation of P(k, R chi) exact, even
-    below chi[0] where it extrapolates, so the closed form
+    With T = sqrt(P), T(k, chi) T(k, R chi) must equal sqrt(P(k, chi) P(k, R chi)).
+    Taking log10 P linear in chi makes the Akima interpolation of T(k, R chi)
+    exact, even below chi[0] where it extrapolates, so the closed form
     k^-1 10^(-chi (1 + R) / 1000) is matched to rounding error.
     """
     ks = jnp.logspace(-3, 0, 7)
     chi = jnp.linspace(200.0, 2000.0, 40)
     R = jnp.linspace(0.1, 1.0, 9)
-    Pk_chi = (1.0 / ks)[None, :] * 10 ** (-chi[:, None] / 500.0)
+    T = jnp.sqrt((1.0 / ks)[None, :] * 10 ** (-chi[:, None] / 500.0))
 
-    out = unequal_time_pk(Pk_chi, chi, R)
+    out = unequal_time_pk(T, T, chi, R)
 
     expected = (1.0 / ks)[:, None, None] * 10 ** (
         -(chi[None, :, None] * (1.0 + R[None, None, :])) / 1000.0
@@ -43,18 +43,43 @@ def test_unequal_time_pk_matches_geometric_mean():
     np.testing.assert_allclose(out, expected, rtol=1e-8)
 
 
-def test_unequal_time_pk_equal_time_limit_and_symmetry():
-    """At R = 1 the two times coincide, so the geometric mean is P(k, chi) itself.
+def test_unequal_time_pk_equal_time_limit():
+    """At R = 1 the two times coincide, so the result is T_A T_B = P_AB(k, chi).
 
     Also checks the output layout: (k, chi, R), i.e. the transpose of the
     (chi, k) input.
     """
     ks = jnp.logspace(-3, 0, 5)
     chi = jnp.linspace(100.0, 1000.0, 50)
-    Pk_chi = (1.0 / ks)[None, :] * (1.0 + 1e-3 * chi[:, None])
-    out = unequal_time_pk(Pk_chi, chi, jnp.array([1.0]))
-    # R = 1 is the equal-time spectrum
-    np.testing.assert_allclose(out[:, :, 0], Pk_chi.T, rtol=1e-10)
+    T_A = (1.0 / ks)[None, :] * (1.0 + 1e-3 * chi[:, None])
+    T_B = (2.0 / ks)[None, :] * (1.0 + 2e-3 * chi[:, None])
+    out = unequal_time_pk(T_A, T_B, chi, jnp.array([1.0]))
+    np.testing.assert_allclose(out[:, :, 0], (T_A * T_B).T, rtol=1e-10)
+
+
+def test_unequal_time_pk_field_order():
+    """Field A is evaluated at chi and field B at R chi: swapping them matters.
+
+    With log10 T linear in chi the interpolation is exact, so both orderings
+    are checked against their closed forms, which differ for R < 1.
+    """
+    ks = jnp.logspace(-3, 0, 4)
+    chi = jnp.linspace(200.0, 2000.0, 30)
+    R = jnp.linspace(0.2, 1.0, 5)
+    T_A = (1.0 / ks)[None, :] * 10 ** (-chi[:, None] / 1000.0)
+    T_B = (1.0 / ks)[None, :] * 10 ** (-chi[:, None] / 3000.0)
+
+    def closed_form(a, b):
+        return (1.0 / ks**2)[:, None, None] * 10 ** (
+            -chi[None, :, None] / a - chi[None, :, None] * R[None, None, :] / b
+        )
+
+    np.testing.assert_allclose(
+        unequal_time_pk(T_A, T_B, chi, R), closed_form(1000.0, 3000.0), rtol=1e-8
+    )
+    np.testing.assert_allclose(
+        unequal_time_pk(T_B, T_A, chi, R), closed_form(3000.0, 1000.0), rtol=1e-8
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -92,10 +117,10 @@ def test_chebyshev_coeffs_pipeline_shapes():
     ks = jnp.logspace(-4, 1, 300)
     chi = jnp.linspace(100.0, 1000.0, 12)
     R = jnp.linspace(0.1, 1.0, 5)
-    Pk_chi = (1.0 / ks)[None, :] * jnp.ones((len(chi), 1))
+    T = (1.0 / ks)[None, :] * jnp.ones((len(chi), 1))
     k_cheb = chebyshev_points_interval(32, -3.0, 0.0)  # log10 k nodes
 
-    Pk = unequal_time_pk(Pk_chi, chi, R)
+    Pk = unequal_time_pk(T, T, chi, R)
     coeffs = Pkl_chebyshev_coeffs(Pk, jnp.log10(ks), k_cheb)
     assert coeffs.shape == (33, len(chi), len(R))
 

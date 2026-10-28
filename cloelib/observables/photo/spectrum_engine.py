@@ -17,9 +17,11 @@ dependencies (no `equinox`/`plum`): plain dataclasses and a
 dispatches on tracer type (`tracer_rules`, `angular_two_point.py`).
 
 The same bank also holds what the beyond-Limber computation shares between
-tracer pairs: the Chebyshev coefficients of the unequal-time *linear* power
-spectrum and, per T-tilde matrix, the projected matter density `w_ell`
-(`SpectraBank.nonlimber_cheb`, `SpectraBank.w_ell`). They are cosmology
+tracer pairs: the linear transfer function of each traced field, the
+Chebyshev coefficients of the unequal-time *linear* power spectrum of each
+pair of fields and, per pair of fields and T-tilde matrix, the projected
+density `w_ell` (`SpectraBank.nonlimber_transfer`,
+`SpectraBank.nonlimber_cheb`, `SpectraBank.w_ell`). They are cosmology
 dependent but tracer independent, so a bank shared by the pairs of a 3x2pt
 computation evaluates each of them once.
 
@@ -48,6 +50,13 @@ from cloelib.cosmology.cosmology import (
     Perturbations,
 )
 from cloelib.observables.photo.contributions import CB, MATTER
+
+
+def _check_fields(*fields: str) -> None:
+    """Raise for a traced field other than `MATTER` and `CB`."""
+    unknown = set(fields) - {MATTER, CB}
+    if unknown:
+        raise ValueError(f"Unknown traced field(s) {sorted(unknown)}.")
 
 
 @dataclass(frozen=True)
@@ -89,12 +98,13 @@ class SpectraBank:
     matter is available: `base` raises for any pair involving cb.
 
     When configured for it (`linear_perturbations` and `t_tildes`), it
-    also holds the grids of the beyond-Limber integration (`nonlimber_cheb`,
-    `w_ell`, built from the *linear* spectrum and the T-tilde matrices),
+    also holds the grids of the beyond-Limber integration
+    (`nonlimber_transfer`, `nonlimber_cheb`, `w_ell`, built from the
+    *linear* spectra and the T-tilde matrices),
     computed lazily as well. These depend on the cosmology only, not on the
     tracers: one bank can serve every tracer pair of a 3x2pt computation,
-    so that what pairs have in common (the Chebyshev coefficients, each
-    `w_ell`) is computed once.
+    so that what pairs have in common (the transfer functions, the
+    Chebyshev coefficients, each `w_ell`) is computed once.
 
     Args:
       matter_pk: matter power spectrum on `(zs, ks)`, shape
@@ -245,10 +255,8 @@ class SpectraBank:
         Returns:
             Array: shape `(len(zs), len(ks))`.
         """
+        _check_fields(field1, field2)
         fields = {field1, field2}
-        unknown = fields - {MATTER, CB}
-        if unknown:
-            raise ValueError(f"Unknown traced field(s) {sorted(unknown)}.")
         if fields == {MATTER}:
             return self._spectrum("P_mm")
         if fields == {CB}:
@@ -287,43 +295,78 @@ class SpectraBank:
             lambda: comoving_distance_to_redshift(store.grid.chi, linear.background),
         )
 
-    def nonlimber_cheb(self) -> jnp.ndarray:
+    def nonlimber_transfer(self, field: str) -> jnp.ndarray:
+        r"""Linear transfer function of a traced field on the T-tilde grid.
+
+        $T_X(k, \chi) = \sqrt{P^{\rm lin}_{XX}(k, z(\chi))}$, at the
+        redshifts $z(\chi)$ and at the Chebyshev nodes in $k$; the primordial
+        spectrum is absorbed into $T$ (Eqs. 14-15 of arXiv:2609.01855).
+        `P_mm` for `MATTER`, `P_cb` for `CB`.
+
+        Returns:
+          Array: shape `(n_chi, n_cheb)`.
+        """
+        _check_fields(field)
+        linear, store = self._require_nonlimber()
+
+        def compute():
+            method = (
+                linear.matter_power_spectrum_cb
+                if field == CB
+                else linear.matter_power_spectrum
+            )
+            return jnp.sqrt(method(self.z_of_chi(), 10.0**store.grid.k_cheb))
+
+        return self._memoized(f"nonlimber:T:{field}", compute)
+
+    def nonlimber_cheb(
+        self, field_A: str = MATTER, field_B: str = MATTER
+    ) -> jnp.ndarray:
         r"""Chebyshev coefficients, in $\log k$, of the unequal-time *linear* Pk.
 
-        The linear spectrum is evaluated at the redshifts $z(\chi)$ and at
-        the Chebyshev nodes of the T-tilde grid, combined into
-        $P(k, \chi, R\chi)$ (`unequal_time_pk`) and expanded along $k$.
-        Shared by every pair of kernels: this is the cosmology-dependent
-        part of the beyond-Limber computation that the pairs have in common.
+        The spectrum is $P_{AB}(k, \chi, R\chi) = T_A(k, \chi)\,T_B(k, R\chi)$
+        (`unequal_time_pk`), with field A at $\chi$ and field B at $R\chi$,
+        expanded along $k$. For $A \neq B$ the two orderings differ, and
+        each is computed (and memoized) on its own. Shared by every pair of
+        kernels tracing these fields: this is the cosmology-dependent part
+        of the beyond-Limber computation that the pairs have in common.
 
         Returns:
           Array: shape `(n_cheb, n_chi, n_R)`, the layout `w_ell` expects.
         """
-        linear, store = self._require_nonlimber()
+        _check_fields(field_A, field_B)
+        _, store = self._require_nonlimber()
 
         def compute():
             grid = store.grid
-            k_nodes = 10.0**grid.k_cheb
-            Pk_chi = linear.matter_power_spectrum(self.z_of_chi(), k_nodes)
-            Pk = unequal_time_pk(Pk_chi, grid.chi, grid.R)
+            Pk = unequal_time_pk(
+                self.nonlimber_transfer(field_A),
+                self.nonlimber_transfer(field_B),
+                grid.chi,
+                grid.R,
+            )
             return jnp.apply_along_axis(chebyshev_coefficients, 0, Pk)
 
-        return self._memoized("nonlimber:cheb", compute)
+        return self._memoized(f"nonlimber:cheb:{field_A}:{field_B}", compute)
 
-    def w_ell(self, t_name: str) -> jnp.ndarray:
-        r"""Projected matter density $w_\ell(\chi, R)$ for the T-tilde matrix `t_name`.
+    def w_ell(
+        self, t_name: str, field_A: str = MATTER, field_B: str = MATTER
+    ) -> jnp.ndarray:
+        r"""Projected density $w_\ell(\chi, R)$ for the T-tilde matrix `t_name`.
 
-        Contracts `nonlimber_cheb()` with the matrix (e.g. `"T_minus2_00"`);
-        computed once per name, and the matrix is only read from disk when
-        a name is first asked for.
+        Contracts `nonlimber_cheb(field_A, field_B)` with the matrix (e.g.
+        `"T_minus2_00"`); computed once per `(field_A, field_B, t_name)`, and
+        the matrix is only read from disk when a name is first asked for.
+        Field A is the one at $\chi$, field B the one at $R\chi$.
 
         Returns:
           Array: shape `(n_ell, n_chi, n_R)`.
         """
+        _check_fields(field_A, field_B)
         _, store = self._require_nonlimber()
         return self._memoized(
-            f"nonlimber:w_ell:{t_name}",
-            lambda: w_ell(self.nonlimber_cheb(), store.get(t_name)),
+            f"nonlimber:w_ell:{field_A}:{field_B}:{t_name}",
+            lambda: w_ell(self.nonlimber_cheb(field_A, field_B), store.get(t_name)),
         )
 
 

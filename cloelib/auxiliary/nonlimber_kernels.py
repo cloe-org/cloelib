@@ -16,7 +16,8 @@ $\ell$-dependent prefactors of the two kernels.
 
 Pipeline, one function per step:
 
-1. `unequal_time_pk`: $P(k,\chi,R\chi)$ from the equal-time $P(k,\chi)$.
+1. `unequal_time_pk`: $P_{AB}(k,\chi,R\chi)$ from the transfer functions
+   $T_A(k,\chi)$, $T_B(k,\chi)$.
 2. `chebyshev.Pkl_chebyshev_coeffs`: Chebyshev coefficients in $\log k$.
 3. `w_ell`: contraction with a T-tilde matrix.
 4. `kernel_on_chi_R`: kernels on the $(\chi, R\chi)$ grids.
@@ -35,28 +36,37 @@ jax.config.update("jax_enable_x64", True)
 
 
 @jax.jit
-def unequal_time_pk(Pk_chi: Array, chi: Array, R: Array) -> Array:
-    r"""Unequal-time matter power spectrum, as the geometric mean of two equal-time ones.
+def unequal_time_pk(T_A: Array, T_B: Array, chi: Array, R: Array) -> Array:
+    r"""Unequal-time linear power spectrum of two fields, from their transfer functions.
 
     $$
-    P(k, \chi, R\chi) = \sqrt{P(k, \chi)\,P(k, R\chi)}
+    P_{AB}(k, \chi, R\chi) = T_A(k, \chi)\,T_B(k, R\chi)
     $$
 
-    $P(k, R\chi)$ is obtained by Akima interpolation of $\log_{10} P$ along
-    `chi` (extrapolating where $R\chi$ falls below `chi[0]`).
+    (Eqs. 14-15 of Chiarenza et al. 2026, arXiv:2609.01855), with the
+    convention $T_X(k, \chi) = \sqrt{P^{\rm lin}_{XX}(k, z(\chi))}$, i.e. the
+    primordial spectrum absorbed into the transfer functions. Field A is
+    evaluated at $\chi$, field B at $R\chi$: for $A \neq B$ the result is
+    not symmetric and both orderings are needed. For $A = B$ it is the
+    geometric mean $\sqrt{P(k, \chi)\,P(k, R\chi)}$, exact in linear theory.
+
+    $T_B(k, R\chi)$ is obtained by Akima interpolation of $\log_{10} T_B$
+    along `chi` (extrapolating where $R\chi$ falls below `chi[0]`).
 
     Parameters:
-      Pk_chi (Array): Equal-time (strictly positive) power spectrum, shape `(len(chi), n_k)`.
+      T_A (Array): Transfer function of field A, shape `(len(chi), n_k)`.
+      T_B (Array): Transfer function of field B (strictly positive), shape
+        `(len(chi), n_k)`.
       chi (Array): Comoving distance grid, shape `(n_chi,)`.
       R (Array): Ratios $\chi_2/\chi_1$, shape `(n_R,)`.
 
     Returns:
-      Array: $P(k, \chi, R\chi)$, shape `(n_k, n_chi, n_R)`.
+      Array: $P_{AB}(k, \chi, R\chi)$, shape `(n_k, n_chi, n_R)`.
     """
     chi_R = jnp.outer(chi, R).flatten()
-    Pk_chi_R = 10 ** akima_interpolation(jnp.log10(Pk_chi), chi, chi_R, axis=0)
-    Pk_chi_R = Pk_chi_R.reshape(len(chi), len(R), Pk_chi.shape[1])
-    return jnp.sqrt(jnp.einsum("ck,crk->kcr", Pk_chi, Pk_chi_R))
+    T_B_R = 10 ** akima_interpolation(jnp.log10(T_B), chi, chi_R, axis=0)
+    T_B_R = T_B_R.reshape(len(chi), len(R), T_B.shape[1])
+    return jnp.einsum("ck,crk->kcr", T_A, T_B_R)
 
 
 @jax.jit

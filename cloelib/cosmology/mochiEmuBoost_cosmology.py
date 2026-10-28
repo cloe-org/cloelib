@@ -10,7 +10,7 @@ from cloelib.auxiliary.extrapolator import extend_spectra
 # General imports
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
-from typing import Protocol, runtime_checkable
+from typing import Callable, Protocol, cast, runtime_checkable
 import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -22,6 +22,20 @@ REFERENCE_SPECTRUM_FILE = (
     "/home/bbose/cosmopower/data/npz/stable_new/"
     "stable_reference_spectrum_350k_b1_v1.npz"
 )
+
+# Fixed cosmology the emulator was trained at (Planck 2018). Only the MG
+# parameters and (w0, wa) were varied in training.
+EMU_TRAINING_COSMOLOGY = {
+    "H0": 67.4,
+    "Omega_b0": 0.049,
+    "Omega_cdm0": 0.266,
+    "Omega_k0": 0.0,
+    "As": 2.1e-9,
+    "ns": 0.9649,
+    "mnu": 0.0,
+    "N_mnu": 0,
+    "gamma_MG": 0.545,
+}
 
 
 @runtime_checkable
@@ -95,8 +109,9 @@ class mochiBoostLinearPerturbations:
         self.z_decay = float(z_decay)
         self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
 
-        self.k_emu = self.cp_LIN.modes.copy()
-        self.k_emu *= background.h
+        h_fid = EMU_TRAINING_COSMOLOGY["H0"] / 100.0
+        k_emu_fid = self.cp_LIN.modes * h_fid
+        self.k_emu = self.cp_LIN.modes * background.h
 
         self.k_min = self.k_emu[0]
         self.k_max = self.k_emu[-1]
@@ -121,17 +136,6 @@ class mochiBoostLinearPerturbations:
             "z": np.array([0.0, 5.0]),
         }
 
-        # CURRENTLY TRAINED WITH FIXED COSMOLOGY (PLANCK 2018):
-        # fixed_Omega_m = 0.315
-        # fixed_Omega_b = 0.049
-        # fixed_H0 = 67.4
-        # fixed_ns = 0.9649
-        # fixed_As = 2.1e-9
-        # fixed N_mnu = 0
-        # fixed mnu = 0
-
-        # The emulator is only queried at the redshifts inside its training
-        # range, so the MG parameters must be tiled to that same length.
         redshift_max = emu_bounds["z"][1]
         zvals_inrange = zs[zs <= redshift_max]
 
@@ -148,12 +152,24 @@ class mochiBoostLinearPerturbations:
         ref = np.load(REFERENCE_SPECTRUM_FILE)
         ref_spectrum = np.asarray(ref["reference_spectrum"], dtype=float)
 
-        pk_emu = ref_spectrum[None, :] * logratio_inrange / background.h**3
-        pk_base = np.asarray(
-            self.base_perturbations.matter_power_spectrum(zvals_inrange, self.k_emu),
+        pk_emu = ref_spectrum[None, :] * logratio_inrange / h_fid**3
+
+        # Rebuild the background and base perturbations at the training
+        # cosmology using the caller's concrete classes. Their constructors
+        # are not part of the protocols, so type them as generic callables.
+        background_cls = cast(Callable[..., Background], type(background))
+        perturbations_cls = cast(
+            Callable[..., LinearPerturbationsWithK], type(base_perturbations)
+        )
+        background_fid = background_cls(
+            **EMU_TRAINING_COSMOLOGY, w0=background.w0, wa=background.wa
+        )
+        base_fid = perturbations_cls(background_fid, zvals_inrange)
+        pk_base_fid = np.asarray(
+            base_fid.matter_power_spectrum(zvals_inrange, k_emu_fid),
             dtype=float,
         )
-        boost_inrange = pk_emu / pk_base
+        boost_inrange = pk_emu / pk_base_fid
 
         # Create the interpolator over the original grid
         boost_inrange_interp = RectBivariateSpline(

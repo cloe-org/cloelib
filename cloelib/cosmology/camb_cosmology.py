@@ -84,8 +84,11 @@ class CAMBBackground:
 
         if mnu_arg > 0 and self.N_mnu == 0:
             raise ValueError("If mnu is provided, N_mnu must be greater than 0.")
-        if self.N_mnu > 0 and np.sum(self.mnu) == 0:
-            raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
+        # N_mnu > 0 with mnu = 0 is allowed and equivalent to N_mnu = 0: camb
+        # gets no massive species and N_eff massless ones. It is needed by
+        # codes that require a fixed number of massive species (e.g.
+        # HMcode2020Emu, N_mnu = 1) to describe a massless-neutrino cosmology.
+        camb_N_mnu = self.N_mnu if mnu_arg > 0 else 0
 
         # Initialize CAMB parameters
         self.interface_args: dict = {"CAMBparams": camb.CAMBparams()}
@@ -96,13 +99,14 @@ class CAMBBackground:
             omch2=self.Omega_cdm0 * (self.h) ** 2,
             omk=self.Omega_k0,
             mnu=mnu_arg,
-            num_massive_neutrinos=self.N_mnu,
+            num_massive_neutrinos=camb_N_mnu,
         )
 
         # setting the neutrino parameters
         self.interface_args["CAMBparams"].share_delta_neff = True
-        self._set_neutrino_parameters()
-        self.interface_args["CAMBparams"].num_nu_massless = self.N_eff - self.N_mnu
+        if camb_N_mnu > 0:
+            self._set_neutrino_parameters()
+        self.interface_args["CAMBparams"].num_nu_massless = self.N_eff - camb_N_mnu
 
         # Set initial conditions and dark energy
         self.interface_args["CAMBparams"].set_dark_energy(
@@ -339,7 +343,7 @@ class CAMBLinearPerturbations:
         self.kmax = 300.0
 
         # Ensure z=0 is included for sigma8(z=0) computation and proper interpolation
-        self.z = ensure_z_zero_included(redshifts)
+        self.z, self._camb_z_order = ensure_z_zero_included(redshifts)
 
         self.background.interface_args["CAMBparams"].set_matter_power(
             redshifts=self.z, kmax=self.kmax
@@ -432,8 +436,8 @@ class CAMBLinearPerturbations:
             (np.ndarray): growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
         """
         f_z = self.results.get_fsigma8() / self.results.get_sigma8()
-        # Reversing array because camb re-sorts redshifts when power spectrum is computed
-        return growth_rate_on_redshifts(self.z, f_z[::-1], zs, ks)
+        # Reordering because camb re-sorts redshifts when power spectrum is computed
+        return growth_rate_on_redshifts(self.z, f_z[self._camb_z_order], zs, ks)
 
     def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         r"""
@@ -490,6 +494,15 @@ class CAMBLinearPerturbations:
 
         return self.results.get_sigma8().max()
 
+    def sigma12(self) -> np.ndarray:
+        r"""RMS linear matter fluctuation in spheres of radius R = 12 Mpc.
+
+        Returns:
+            (np.ndarray): sigma12 at each redshift in `self.z`, in that
+            order.
+        """
+        return self.results.get_sigmaR(12.0, hubble_units=False)[self._camb_z_order]
+
 
 class CAMBNonLinearPerturbations:
     """A wrapper for CAMB nonlinear perturbation calculations."""
@@ -527,7 +540,7 @@ class CAMBNonLinearPerturbations:
         self.kmax = 500
 
         # Ensure z=0 is included for sigma8(z=0) computation and proper interpolation
-        self.z = ensure_z_zero_included(redshifts)
+        self.z, self._camb_z_order = ensure_z_zero_included(redshifts)
 
         # Configure CAMB parameters for nonlinear calculations
         self.background.interface_args["CAMBparams"].NonLinear = model.NonLinear_both
@@ -643,8 +656,8 @@ class CAMBNonLinearPerturbations:
             (np.ndarray): growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
         """
         f_z = self.results.get_fsigma8() / self.results.get_sigma8()
-        # Reversing array because camb re-sorts redshifts when power spectrum is computed
-        return growth_rate_on_redshifts(self.z, f_z[::-1], zs, ks)
+        # Reordering because camb re-sorts redshifts when power spectrum is computed
+        return growth_rate_on_redshifts(self.z, f_z[self._camb_z_order], zs, ks)
 
     def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         r"""

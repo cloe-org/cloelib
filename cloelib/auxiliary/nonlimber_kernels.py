@@ -18,7 +18,8 @@ Pipeline, one function per step:
 
 1. `unequal_time_pk`: $P_{AB}(k,\chi,R\chi)$ from the transfer functions
    $T_A(k,\chi)$, $T_B(k,\chi)$.
-2. `chebyshev.Pkl_chebyshev_coeffs`: Chebyshev coefficients in $\log k$.
+2. `chebyshev.chebyshev_coefficients`: Chebyshev coefficients in $\log k$,
+   from $P$ evaluated at the Chebyshev nodes in $\log k$.
 3. `w_ell`: contraction with a T-tilde matrix.
 4. `kernel_on_chi_R`: kernels on the $(\chi, R\chi)$ grids.
 5. `pair_integral`: the double integral above for one pair of kernels.
@@ -31,8 +32,6 @@ import jax.numpy as jnp
 from jax import Array
 
 from cloelib.auxiliary.akima import akima_interpolation
-
-jax.config.update("jax_enable_x64", True)
 
 
 @jax.jit
@@ -76,7 +75,7 @@ def w_ell(cheb_coeffs: Array, T_tilde: Array) -> Array:
     Parameters:
       cheb_coeffs (Array): Chebyshev coefficients of $P(k,\chi,R\chi)$ in
         $\log k$, shape `(n_cheb, n_chi, n_R)`
-        (output of `chebyshev.Pkl_chebyshev_coeffs`).
+        (output of `chebyshev.chebyshev_coefficients`).
       T_tilde (Array): Shape `(n_ell, n_chi, n_R, n_cheb)`.
 
     Returns:

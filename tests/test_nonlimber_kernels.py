@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 
 from cloelib.auxiliary.chebyshev import (
+    chebyshev_coefficients,
     chebyshev_points_interval,
-    Pkl_chebyshev_coeffs,
 )
 from cloelib.auxiliary.math_utils import simpsons_weights_jit
 from cloelib.auxiliary.nonlimber_kernels import (
@@ -108,20 +108,20 @@ def test_w_ell_matches_explicit_loop():
 
 
 def test_chebyshev_coeffs_pipeline_shapes():
-    """unequal_time_pk and Pkl_chebyshev_coeffs fit together.
+    """unequal_time_pk and chebyshev_coefficients fit together.
 
-    The output of the first (n_k, n_chi, n_R) is the input of the second;
-    with 32 + 1 nodes it must return (33, n_chi, n_R) coefficients, the layout
-    w_ell and the T-tilde matrices (n_cheb last) expect.
+    With the spectrum evaluated at 32 + 1 Chebyshev nodes in log10 k, the
+    output of the first (n_k, n_chi, n_R) is the input of the second, which
+    must return (33, n_chi, n_R) coefficients: the layout w_ell and the
+    T-tilde matrices (n_cheb last) expect.
     """
-    ks = jnp.logspace(-4, 1, 300)
     chi = jnp.linspace(100.0, 1000.0, 12)
     R = jnp.linspace(0.1, 1.0, 5)
+    ks = 10.0 ** chebyshev_points_interval(32, -3.0, 0.0)
     T = (1.0 / ks)[None, :] * jnp.ones((len(chi), 1))
-    k_cheb = chebyshev_points_interval(32, -3.0, 0.0)  # log10 k nodes
 
     Pk = unequal_time_pk(T, T, chi, R)
-    coeffs = Pkl_chebyshev_coeffs(Pk, jnp.log10(ks), k_cheb)
+    coeffs = chebyshev_coefficients(Pk)
     assert coeffs.shape == (33, len(chi), len(R))
 
 

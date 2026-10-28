@@ -36,10 +36,7 @@ from typing import Callable, Optional, Sequence
 
 import jax.numpy as jnp
 
-from cloelib.auxiliary.chebyshev import (
-    chebyshev_coefficients,
-    comoving_distance_to_redshift,
-)
+from cloelib.auxiliary.chebyshev import chebyshev_coefficients
 from cloelib.auxiliary.math_utils import safe_sqrt
 from cloelib.auxiliary.nonlimber_kernels import unequal_time_pk, w_ell
 from cloelib.auxiliary.t_tildes import TTildeStore
@@ -49,6 +46,7 @@ from cloelib.cosmology.cosmology import (
     CB_CROSS_PRESCRIPTIONS,
     Perturbations,
 )
+from cloelib.cosmology.derived_cosmology import redshift_of_comoving_distance
 from cloelib.observables.photo.contributions import CB, MATTER
 
 
@@ -352,7 +350,7 @@ class SpectraBank:
         linear, store = self._require_nonlimber()
         return self._memoized(
             "nonlimber:z_of_chi",
-            lambda: comoving_distance_to_redshift(store.grid.chi, linear.background),
+            lambda: redshift_of_comoving_distance(linear.background, store.grid.chi),
         )
 
     def nonlimber_transfer(self, field: str) -> jnp.ndarray:
@@ -405,7 +403,7 @@ class SpectraBank:
                 grid.chi,
                 grid.R,
             )
-            return jnp.apply_along_axis(chebyshev_coefficients, 0, Pk)
+            return chebyshev_coefficients(Pk)
 
         return self._memoized(f"nonlimber:cheb:{field_A}:{field_B}", compute)
 

@@ -34,18 +34,15 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import Array
 
 from cloelib.auxiliary.chebyshev import (
     chebyshev_points_interval,
-    clenshaws_curtis_quadrature,
+    clenshaw_curtis_quadrature,
 )
 from cloelib.auxiliary.math_utils import simpsons_weights_jit
-
-jax.config.update("jax_enable_x64", True)
 
 DEFAULT_DATA_DIR = Path(__file__).resolve().parent / "t-tildes-data"
 
@@ -117,7 +114,7 @@ class NonLimberGrid:
         chi, d_chi = jnp.linspace(26.0, 7000.0, n_chi, retstep=True)
         w_chi = chi * simpsons_weights_jit(n_chi) * d_chi
 
-        R_all, w_all = clenshaws_curtis_quadrature(2 * n_R + 1, -1.0, 1.0)
+        R_all, w_all = clenshaw_curtis_quadrature(2 * n_R + 1, -1.0, 1.0)
         R = jnp.flip(R_all[:n_R])
         w_R = jnp.flip(w_all[:n_R]).at[0].multiply(0.5)
 

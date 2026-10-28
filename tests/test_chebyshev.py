@@ -1,36 +1,12 @@
 import numpy as np
 import jax.numpy as jnp
 
-from cloelib.cosmology.jax_cosmology import JAXBackground
-
 from cloelib.auxiliary.chebyshev import (
-    comoving_distance_to_redshift,
     chebyshev_points,
     chebyshev_points_interval,
     chebyshev_coefficients,
-    clenshaws_curtis_quadrature,
+    clenshaw_curtis_quadrature,
 )
-
-
-def test_comoving_distance_to_redshift():
-    background = JAXBackground(
-        H0=70.0,
-        Omega_cdm0=0.25,
-        Omega_b0=0.05,
-        w0=-1,
-        wa=0,
-        Omega_k0=0.0,
-        ns=0.96,
-        As=2e-9,
-        mnu=0.06,
-        gamma_MG=0.545,
-        N_mnu=1,
-    )
-    chi_true = np.linspace(26.0, 7000.0, 100)
-    z_from_chi = comoving_distance_to_redshift(chi_true, background)
-    chi_reconstructed = background.comoving_distance(z_from_chi)
-
-    np.testing.assert_allclose(chi_true, chi_reconstructed, rtol=1e-6)
 
 
 def test_chebyshev_points():
@@ -131,11 +107,40 @@ def test_chebyshev_coefficients():
     np.testing.assert_allclose(coeffs, blast_coeffs, rtol=1e-5)
 
 
+def test_chebyshev_coefficients_along_the_first_axis():
+    """On an n-d array the expansion runs along axis 0, column by column.
+
+    Matches the 1D expansion of every column, and the series evaluated with
+    numpy reproduces the values at the nodes.
+    """
+    n = 12
+    x = chebyshev_points_interval(n, -2.0, 3.0)
+    f = jnp.stack(
+        [jnp.sin(x)[:, None] * jnp.arange(1.0, 4.0), jnp.exp(x)[:, None] * jnp.ones(3)],
+        axis=-1,
+    )  # shape (n + 1, 3, 2)
+
+    coeffs = chebyshev_coefficients(f)
+
+    assert coeffs.shape == f.shape
+    u = np.asarray(chebyshev_points(n))
+    for i in range(3):
+        for j in range(2):
+            np.testing.assert_allclose(
+                coeffs[:, i, j], chebyshev_coefficients(f[:, i, j]), rtol=1e-12
+            )
+            np.testing.assert_allclose(
+                np.polynomial.chebyshev.chebval(u, np.asarray(coeffs[:, i, j])),
+                f[:, i, j],
+                rtol=1e-10,
+            )
+
+
 def test_clenshaw_curtis_weights():
     n = 10
     a, b = -42, 55
 
-    _, weights = clenshaws_curtis_quadrature(n, a, b)
+    _, weights = clenshaw_curtis_quadrature(n, a, b)
     expected_weights = jnp.array(
         [
             0.5987654320987654,
@@ -158,7 +163,7 @@ def test_clenshaw_curtis_quadrature():
     n = 10000
     a, b = 0.0, np.pi / 2
 
-    clenshaw_curtis_grid, clenshaw_curtis_weights = clenshaws_curtis_quadrature(n, a, b)
+    clenshaw_curtis_grid, clenshaw_curtis_weights = clenshaw_curtis_quadrature(n, a, b)
     y = np.sin(clenshaw_curtis_grid)
     integral_approx = jnp.einsum("i,i->", y, clenshaw_curtis_weights)
 

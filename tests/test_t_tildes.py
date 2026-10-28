@@ -170,9 +170,9 @@ def test_blast_grid_R_weights_follow_blast(blast_grid):
     The halving follows Blast.jl (a numerical correction for dropping R < 0, not
     the analytic solution); every other weight is the plain CC one.
     """
-    from cloelib.auxiliary.chebyshev import clenshaws_curtis_quadrature
+    from cloelib.auxiliary.chebyshev import clenshaw_curtis_quadrature
 
-    _, w_all = clenshaws_curtis_quadrature(129, -1.0, 1.0)
+    _, w_all = clenshaw_curtis_quadrature(129, -1.0, 1.0)
     w_positive = np.flip(np.asarray(w_all)[:64])  # increasing R
     w_R = np.asarray(blast_grid.w_R)
     # smallest R has its weight halved (Blast.jl), the others are plain CC

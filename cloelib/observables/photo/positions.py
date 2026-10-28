@@ -55,6 +55,10 @@ from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
+    NonLimberSpec,
+    ell_prefactor_magnification,
+    ell_prefactor_one,
+    ell_prefactor_rsd,
     unit_sigma,
 )
 from cloelib.observables.photo.spectrum_engine import (
@@ -202,6 +206,13 @@ class GalaxyBiasContribution:
     `AngularTwoPoint` don't need to change either way.
     """
 
+    nonlimber_spec = NonLimberSpec(
+        power=1,
+        derivative=0,
+        ell_prefactor=ell_prefactor_one,
+        divide_by_chi2=False,
+    )
+
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
 
@@ -221,6 +232,13 @@ class MagnificationContribution:
     Lensing by the total matter, so it traces `MATTER` even with
     `use_Pcb=True` (the default `field`).
     """
+
+    nonlimber_spec = NonLimberSpec(
+        power=-1,
+        derivative=0,
+        ell_prefactor=ell_prefactor_magnification,
+        divide_by_chi2=True,
+    )
 
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
@@ -679,6 +697,37 @@ class NonLinearGalaxyBiasContribution:
         )
 
 
+class RSDContribution:
+    """Redshift-space-distortion kernel term, beyond Limber only.
+
+    $$
+        W_i^{\\rm RSD}(z) = n_i(z)\\,\\frac{H(z)\\,f(z)}{c}
+    $$
+
+    with $n_i$ the shifted/stretched redshift distribution. Not part of
+    `PositionsTracer.get_contributions()` (hence of `get_window()` and the
+    Limber computation, which treat RSD through the `ell`-dependent
+    `get_window_rsd` instead): it enters the beyond-Limber integral via
+    `PositionsTracer.get_nonlimber_contributions()`, only when the tracer
+    was built with `include_rsd=True`.
+    """
+
+    nonlimber_spec = NonLimberSpec(
+        power=1,
+        derivative=2,
+        ell_prefactor=ell_prefactor_rsd,
+        divide_by_chi2=False,
+    )
+
+    def __init__(self, tracer: "PositionsTracer") -> None:
+        self._tracer = tracer
+
+    def compute_kernel(self, z):
+        H = self._tracer.background.hubble_parameter(z, units="km/s/Mpc")
+        f = self._tracer.perturbations.growth_rate(z)
+        return self._tracer.dndz_shifted * (H * f / c_0)[None, :]
+
+
 class PositionsTracer:
     """Class to define the kernel for angular (galaxy) clustering."""
 
@@ -864,6 +913,7 @@ class PositionsTracer:
             self.bias = GalaxyBiasContribution(self)
 
         self.magnification = MagnificationContribution(self)
+        self.rsd = RSDContribution(self) if include_rsd else None
 
     def get_contributions(self):
         """Return this tracer's window as its separable Contribution terms.
@@ -875,6 +925,22 @@ class PositionsTracer:
             `galaxy_bias_model="nonlinear"`.
         """
         return (self.bias, self.magnification)
+
+    def get_nonlimber_contributions(self):
+        """Return the contributions entering the beyond-Limber integral.
+
+        Same as `get_contributions()`, plus `self.rsd` when the tracer was
+        built with `include_rsd=True`. Kept separate from
+        `get_contributions()` so `get_window()` and the Limber computation
+        are untouched.
+
+        Returns:
+          contributions (tuple): `(bias, magnification)` or
+            `(bias, magnification, rsd)`.
+        """
+        if self.rsd is None:
+            return self.get_contributions()
+        return (*self.get_contributions(), self.rsd)
 
     def get_window_positions(self, z) -> np.ndarray:
         r"""Return the bias-weighted positions kernel at redshifts ``z``.

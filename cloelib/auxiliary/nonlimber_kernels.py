@@ -1,0 +1,184 @@
+r"""Pure array-level building blocks of the beyond-Limber angular power spectrum.
+
+The beyond-Limber C_ell of a pair of kernels (A, B) is written as
+
+$$
+C_\ell^{AB} = \frac{2}{\pi}\,\mathcal{P}_\ell \int \mathrm{d}\chi\,\chi
+\int_0^1 \mathrm{d}R\;
+\Big[ K_A(\chi)\,K_B(R\chi)\,w^{12}_\ell(\chi, R)
+     + K_B(\chi)\,K_A(R\chi)\,w^{21}_\ell(\chi, R) \Big],
+$$
+
+where $w_\ell(\chi, R)$ is obtained by contracting the Chebyshev expansion
+(in $\log k$) of the unequal-time power spectrum $P(k, \chi, R\chi)$ with
+the precomputed T-tilde matrices, and $\mathcal{P}_\ell$ collects the
+$\ell$-dependent prefactors of the two kernels.
+
+Pipeline, one function per step:
+
+1. `unequal_time_pk`: $P_{AB}(k,\chi,R\chi)$ from the transfer functions
+   $T_A(k,\chi)$, $T_B(k,\chi)$.
+2. `chebyshev.chebyshev_coefficients`: Chebyshev coefficients in $\log k$,
+   from $P$ evaluated at the Chebyshev nodes in $\log k$.
+3. `w_ell`: contraction with a T-tilde matrix.
+4. `kernel_on_chi_R`: kernels on the $(\chi, R\chi)$ grids.
+5. `pair_integral`: the double integral above for one pair of kernels.
+"""
+
+from functools import partial
+
+import jax
+import jax.numpy as jnp
+from jax import Array
+
+from cloelib.auxiliary.akima import akima_interpolation
+
+
+@jax.jit
+def unequal_time_pk(T_A: Array, T_B: Array, chi: Array, R: Array) -> Array:
+    r"""Unequal-time linear power spectrum of two fields, from their transfer functions.
+
+    $$
+    P_{AB}(k, \chi, R\chi) = T_A(k, \chi)\,T_B(k, R\chi)
+    $$
+
+    (Eqs. 14-15 of Chiarenza et al. 2026, arXiv:2609.01855), with the
+    convention $T_X(k, \chi) = \sqrt{P^{\rm lin}_{XX}(k, z(\chi))}$, i.e. the
+    primordial spectrum absorbed into the transfer functions. Field A is
+    evaluated at $\chi$, field B at $R\chi$: for $A \neq B$ the result is
+    not symmetric and both orderings are needed. For $A = B$ it is the
+    geometric mean $\sqrt{P(k, \chi)\,P(k, R\chi)}$, exact in linear theory.
+
+    $T_B(k, R\chi)$ is obtained by Akima interpolation of $\log_{10} T_B$
+    along `chi` (extrapolating where $R\chi$ falls below `chi[0]`).
+
+    Parameters:
+      T_A (Array): Transfer function of field A, shape `(len(chi), n_k)`.
+      T_B (Array): Transfer function of field B (strictly positive), shape
+        `(len(chi), n_k)`.
+      chi (Array): Comoving distance grid, shape `(n_chi,)`.
+      R (Array): Ratios $\chi_2/\chi_1$, shape `(n_R,)`.
+
+    Returns:
+      Array: $P_{AB}(k, \chi, R\chi)$, shape `(n_k, n_chi, n_R)`.
+    """
+    chi_R = jnp.outer(chi, R).flatten()
+    T_B_R = 10 ** akima_interpolation(jnp.log10(T_B), chi, chi_R, axis=0)
+    T_B_R = T_B_R.reshape(len(chi), len(R), T_B.shape[1])
+    return jnp.einsum("ck,crk->kcr", T_A, T_B_R)
+
+
+@jax.jit
+def w_ell(cheb_coeffs: Array, T_tilde: Array) -> Array:
+    r"""Contract the Chebyshev coefficients of the Pk with a T-tilde matrix.
+
+    Parameters:
+      cheb_coeffs (Array): Chebyshev coefficients of $P(k,\chi,R\chi)$ in
+        $\log k$, shape `(n_cheb, n_chi, n_R)`
+        (output of `chebyshev.chebyshev_coefficients`).
+      T_tilde (Array): Shape `(n_ell, n_chi, n_R, n_cheb)`.
+
+    Returns:
+      Array: $w_\ell(\chi, R)$, shape `(n_ell, n_chi, n_R)`.
+    """
+    return jnp.einsum("ijk,ljki->ljk", cheb_coeffs, T_tilde)
+
+
+@partial(jax.jit, static_argnames=("divide_by_chi2",))
+def kernel_on_chi_R(
+    W_z: Array,
+    z: Array,
+    z_of_chi: Array,
+    chi: Array,
+    R: Array,
+    divide_by_chi2: bool,
+) -> tuple[Array, Array]:
+    r"""Resample a kernel from the redshift grid to the $\chi$ and $R\chi$ grids.
+
+    The kernel is first interpolated to `z_of_chi` (and set to zero outside
+    `[z[0], z[-1]]`), then interpolated to $R\chi$. When `divide_by_chi2`
+    (kernels defined per unit $\chi^2$, e.g. lensing; positions are not),
+    both are divided by the square of the distance they are evaluated at,
+    $\chi^2$ and $(R\chi)^2$, *after* the interpolation, as in Blast.jl.
+
+    Parameters:
+      W_z (Array): Kernel on the redshift grid, shape `(n_bins, len(z))`.
+      z (Array): Redshift grid `W_z` is defined on, shape `(len(z),)`.
+      z_of_chi (Array): Redshift corresponding to each `chi`, shape `(n_chi,)`.
+      chi (Array): Comoving distance grid, shape `(n_chi,)`.
+      R (Array): Ratios $\chi_2/\chi_1$, shape `(n_R,)`.
+      divide_by_chi2 (bool): Static. Whether to divide the kernel by the
+        squared comoving distance.
+
+    Returns:
+      tuple[Array, Array]: $K(\chi)$ with shape `(n_bins, n_chi)` and
+        $K(R\chi)$ with shape `(n_bins, n_chi, n_R)`.
+    """
+    W_chi = akima_interpolation(W_z, z, z_of_chi, axis=-1)
+    # Beyond the redshift range the kernel was built on there is no signal:
+    # an Akima extrapolation there would be arbitrary, not physical.
+    inside = (z_of_chi >= z[0]) & (z_of_chi <= z[-1])
+    W_chi = jnp.where(inside, W_chi, 0.0)
+
+    chi_R = jnp.outer(chi, R)
+    W_chi_R = akima_interpolation(W_chi, chi, chi_R.flatten(), axis=-1)
+    W_chi_R = W_chi_R.reshape(W_chi.shape[0], len(chi), len(R))
+    if divide_by_chi2:
+        W_chi = W_chi / chi**2
+        W_chi_R = W_chi_R / chi_R**2
+    return W_chi, W_chi_R
+
+
+@jax.jit
+def pair_integral(
+    K_A: Array,
+    K_B: Array,
+    K_A_R: Array,
+    K_B_R: Array,
+    w_12: Array,
+    w_21: Array,
+    ell_prefactor: Array,
+    w_chi: Array,
+    w_R: Array,
+) -> Array:
+    r"""Beyond-Limber $C_\ell$ of one pair of kernels (A, B).
+
+    The $\chi$ and $R$ integrals and the sum over the two orderings are
+    done in a single contraction.
+
+    Parameters:
+      K_A, K_B (Array): $K(\chi)$ of each kernel, shape `(n_bin, n_chi)`.
+      K_A_R, K_B_R (Array): $K(R\chi)$ of each kernel, shape `(n_bin, n_chi, n_R)`.
+      w_12, w_21 (Array): $w_\ell(\chi, R)$ of the two orderings, shape
+        `(n_ell, n_chi, n_R)`. Equal for symmetric pairs; they differ only
+        for pairs involving RSD.
+      ell_prefactor (Array): Product of the two kernels' $\ell$-dependent
+        prefactors, shape `(n_ell,)`.
+      w_chi (Array): Quadrature weights of the $\chi$ integral, *including*
+        the $\chi$ measure factor (`chi * simpson * dchi`), shape `(n_chi,)`.
+      w_R (Array): Quadrature weights of the $R$ integral, shape `(n_R,)`.
+
+    Returns:
+      Array: $C_\ell$, shape `(n_ell, n_bin_A, n_bin_B)`.
+    """
+    left = jnp.einsum(
+        "l,ik,jkr,lkr,k,r->lij",
+        ell_prefactor,
+        K_A,
+        K_B_R,
+        w_12,
+        w_chi,
+        w_R,
+        optimize="optimal",
+    )
+    right = jnp.einsum(
+        "l,jk,ikr,lkr,k,r->lij",
+        ell_prefactor,
+        K_B,
+        K_A_R,
+        w_21,
+        w_chi,
+        w_R,
+        optimize="optimal",
+    )
+    return 2.0 / jnp.pi * (left + right)

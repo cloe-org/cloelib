@@ -60,11 +60,14 @@ from cloelib.observables.photo.contributions import (
     Contribution,
     contribution_field,
     unit_sigma,
+    NonLimberSpec,
+    ell_prefactor_spin2,
 )
 from cloelib.observables.photo.spectrum_engine import (
     SpectraBank,
     SpectrumRequest,
     compute_effective_pk,
+    linear_source,
 )
 
 # General imports
@@ -87,6 +90,13 @@ _C_KM_S = SPEED_OF_LIGHT / 1000
 class LensingContribution:
     """Weak-lensing shear kernel term of `ShearTracer.get_window()`."""
 
+    nonlimber_spec = NonLimberSpec(
+        power=-1,
+        derivative=0,
+        ell_prefactor=ell_prefactor_spin2,
+        divide_by_chi2=True,
+    )
+
     def __init__(self, tracer: "ShearTracer") -> None:
         self._tracer = tracer
 
@@ -106,6 +116,13 @@ class NLAContribution(IntrinsicAlignmentContribution):
     distinct name; `get_window()` and `AngularTwoPoint` don't need to
     change either way.
     """
+
+    nonlimber_spec = NonLimberSpec(
+        power=-1,
+        derivative=0,
+        ell_prefactor=ell_prefactor_spin2,
+        divide_by_chi2=True,
+    )
 
     def __init__(self, tracer: "ShearTracer") -> None:
         self._tracer = tracer
@@ -131,29 +148,6 @@ _BB_ONLY_KERNELS = (
 )
 _GI_KERNELS = ("tatt_A_0_0E", "tatt_C_0_0E", "tatt_A_0_E2", "tatt_B_0_E2")
 _ALL_KERNELS = _EE_ONLY_KERNELS + _SHARED_KERNELS + _BB_ONLY_KERNELS
-
-
-def _is_known_linear_perturbations(perturbations) -> bool:
-    """Whether `perturbations` is itself one of cloelib's own linear-only
-    backends (`HMemuLinearPerturbations`, `CAMBLinearPerturbations`, ...).
-
-    Identified by cloelib's own `*LinearPerturbations` naming convention
-    (consistently followed across every cosmology backend module) rather
-    than an `isinstance` check against every concrete class: several
-    backends (CAMB, CLASS, BACCOemu, MGCLASS, mochi_class, hi_class, ...)
-    are optional dependencies, so importing all of them here just to check
-    would make this module require every optional extra. Used only as the
-    fallback when `perturbations` has no `.linearperturbations` attribute
-    of its own - see `PBJTATTLoopComputer.__init__`.
-
-    Deliberately not a plain `.endswith("LinearPerturbations")`: a
-    `*NonLinearPerturbations` class name (e.g. `CAMBNonLinearPerturbations`)
-    also ends with that suffix (`"NonLinearPerturbations"` itself ends with
-    `"LinearPerturbations"`) - excluding any name containing `"NonLinear"`
-    is what actually distinguishes the two conventions.
-    """
-    name = type(perturbations).__name__
-    return name.endswith("LinearPerturbations") and "NonLinear" not in name
 
 
 class TATTLoopComputer(Protocol):
@@ -198,7 +192,7 @@ class PBJTATTLoopComputer:
     `BACCOemuNonLinearPerturbations`, `EmantisFofrNonLinearPerturbations`,
     `JAXNonLinearPerturbations`), else `perturbations` itself *if and only
     if* it's itself a recognized `*LinearPerturbations` backend (see
-    `_is_known_linear_perturbations`) - raises `ValueError` otherwise (PR
+    `spectrum_engine.linear_source`) - raises `ValueError` otherwise (PR
     #569 review): the absence of a `.linearperturbations` attribute does
     not by itself mean the object passed in *is* linear, and silently
     treating an unrecognized nonlinear backend as linear would be a
@@ -257,12 +251,8 @@ class PBJTATTLoopComputer:
         # source if it has one; else, only accept `perturbations` itself if
         # it's a recognized linear backend - fail loudly otherwise rather
         # than silently treating an unrecognized object as linear.
-        linear = getattr(perturbations, "linearperturbations", None)
-        if linear is not None:
-            self.linear_perturbations = linear
-        elif _is_known_linear_perturbations(perturbations):
-            self.linear_perturbations = perturbations
-        else:
+        linear = linear_source(perturbations)
+        if linear is None:
             raise ValueError(
                 "PBJTATTLoopComputer requires a linear matter-power-"
                 f"spectrum source, but {type(perturbations).__name__!r} "
@@ -273,6 +263,7 @@ class PBJTATTLoopComputer:
                 "sets `.linearperturbations` (e.g. "
                 "HMemuNonLinearPerturbations)."
             )
+        self.linear_perturbations = linear
         self._cached_ks: Optional[_numpy.ndarray] = None
         self._cached_kernels: Optional[Dict[str, _numpy.ndarray]] = None
 

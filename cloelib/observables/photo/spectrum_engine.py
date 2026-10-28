@@ -16,6 +16,15 @@ dependencies (no `equinox`/`plum`): plain dataclasses and a
 `getattr(..., default)` lookup, matching how `AngularTwoPoint` already
 dispatches on tracer type (`tracer_rules`, `angular_two_point.py`).
 
+The same bank also holds what the beyond-Limber computation shares between
+tracer pairs: the linear transfer function of each traced field, the
+Chebyshev coefficients of the unequal-time *linear* power spectrum of each
+pair of fields and, per pair of fields and T-tilde matrix, the projected
+density `w_ell` (`SpectraBank.nonlimber_transfer`,
+`SpectraBank.nonlimber_cheb`, `SpectraBank.w_ell`). They are cosmology
+dependent but tracer independent, so a bank shared by the pairs of a 3x2pt
+computation evaluates each of them once.
+
 Nothing here changes behavior for any `Contribution` that doesn't declare
 extra requests: `needs_generalized_engine` returns `False` for them, and
 `AngularTwoPoint.get_Cl` keeps using its original, untouched fast path in
@@ -23,17 +32,67 @@ that case.
 """
 
 from dataclasses import dataclass
-from typing import Callable, Sequence
+from typing import Callable, Optional, Sequence
 
 import jax.numpy as jnp
 
+from cloelib.auxiliary.chebyshev import chebyshev_coefficients
 from cloelib.auxiliary.math_utils import safe_sqrt
+from cloelib.auxiliary.nonlimber_kernels import unequal_time_pk, w_ell
+from cloelib.auxiliary.t_tildes import TTildeStore
 from cloelib.cosmology.cosmology import (
     CB_CROSS_CORRELATED,
     CB_CROSS_LINEAR_NU,
     CB_CROSS_PRESCRIPTIONS,
+    Perturbations,
 )
+from cloelib.cosmology.derived_cosmology import redshift_of_comoving_distance
 from cloelib.observables.photo.contributions import CB, MATTER
+
+
+def _is_known_linear_perturbations(perturbations) -> bool:
+    """Whether `perturbations` is itself one of cloelib's own linear-only
+    backends (`HMemuLinearPerturbations`, `CAMBLinearPerturbations`, ...).
+
+    Identified by cloelib's own `*LinearPerturbations` naming convention
+    (consistently followed across every cosmology backend module) rather
+    than an `isinstance` check against every concrete class: several
+    backends (CAMB, CLASS, BACCOemu, MGCLASS, mochi_class, hi_class, ...)
+    are optional dependencies, so importing all of them here just to check
+    would make this module require every optional extra. Used only as the
+    fallback when `perturbations` has no `.linearperturbations` attribute
+    of its own - see `linear_source` and `PBJTATTLoopComputer.__init__`.
+
+    Deliberately not a plain `.endswith("LinearPerturbations")`: a
+    `*NonLinearPerturbations` class name (e.g. `CAMBNonLinearPerturbations`)
+    also ends with that suffix (`"NonLinearPerturbations"` itself ends with
+    `"LinearPerturbations"`) - excluding any name containing `"NonLinear"`
+    is what actually distinguishes the two conventions.
+    """
+    name = type(perturbations).__name__
+    return name.endswith("LinearPerturbations") and "NonLinear" not in name
+
+
+def linear_source(perturbations) -> Optional[Perturbations]:
+    """The linear perturbations behind `perturbations`, or `None`.
+
+    `perturbations.linearperturbations` when the backend exposes one;
+    otherwise `perturbations` itself if it is one of cloelib's linear
+    backends (`_is_known_linear_perturbations`); otherwise `None`.
+    """
+    linear = getattr(perturbations, "linearperturbations", None)
+    if linear is not None:
+        return linear
+    if _is_known_linear_perturbations(perturbations):
+        return perturbations
+    return None
+
+
+def _check_fields(*fields: str) -> None:
+    """Raise for a traced field other than `MATTER` and `CB`."""
+    unknown = set(fields) - {MATTER, CB}
+    if unknown:
+        raise ValueError(f"Unknown traced field(s) {sorted(unknown)}.")
 
 
 @dataclass(frozen=True)
@@ -73,6 +132,30 @@ class SpectraBank:
     `from_perturbations`. Built directly from an already evaluated
     `matter_pk` instead (`SpectraBank(matter_pk, ks, zs)`), only the total
     matter is available: `base` raises for any pair involving cb.
+
+    When configured for it (`t_tildes`, and a linear spectrum: see
+    `linear_perturbations` below), it also holds the grids of the beyond-Limber integration
+    (`nonlimber_transfer`, `nonlimber_cheb`, `w_ell`, built from the
+    *linear* spectra and the T-tilde matrices),
+    computed lazily as well. These depend on the cosmology only, not on the
+    tracers: one bank can serve every tracer pair of a 3x2pt computation,
+    so that what pairs have in common (the transfer functions, the
+    Chebyshev coefficients, each `w_ell`) is computed once.
+
+    Args:
+      matter_pk: matter power spectrum on `(zs, ks)`, shape
+        `(len(zs), len(ks))`, or `None` to evaluate it from `perturbations`.
+      ks: wavenumber grid of every spectrum.
+      zs: redshift grid of every spectrum.
+      perturbations: backend the base spectra are evaluated from.
+      linear_perturbations: optional override of the linear `Perturbations`
+        the beyond-Limber spectra (and the background that maps comoving
+        distance to redshift) come from. By default they are resolved from
+        `perturbations` (`linear_source`): its `linearperturbations`, or
+        itself if it is a linear backend. Needed only for backends that do
+        not expose their linear spectrum (e.g. `CAMBNonLinearPerturbations`).
+      t_tildes: the T-tilde matrices, and the grids they were computed on.
+        Needed for `nonlimber_cheb`/`w_ell` only.
     """
 
     def __init__(
@@ -80,22 +163,42 @@ class SpectraBank:
         matter_pk: jnp.ndarray | None,
         ks: jnp.ndarray,
         zs: jnp.ndarray,
-        perturbations=None,
+        perturbations: Optional[Perturbations] = None,
+        *,
+        linear_perturbations: Optional[Perturbations] = None,
+        t_tildes: Optional[TTildeStore] = None,
     ):
         if matter_pk is None and perturbations is None:
             raise ValueError("SpectraBank needs `matter_pk` or `perturbations`.")
         self.ks = ks
         self.zs = zs
         self.perturbations = perturbations
+        self.linear_perturbations = linear_perturbations
+        self.t_tildes = t_tildes
         self._spectra: dict[str, jnp.ndarray] = {}
         if matter_pk is not None:
             self._spectra["P_mm"] = matter_pk
         self._grids: dict[str, jnp.ndarray] = {}
 
     @classmethod
-    def from_perturbations(cls, perturbations, ks, zs) -> "SpectraBank":
+    def from_perturbations(
+        cls,
+        perturbations: Perturbations,
+        ks,
+        zs,
+        *,
+        linear_perturbations: Optional[Perturbations] = None,
+        t_tildes: Optional[TTildeStore] = None,
+    ) -> "SpectraBank":
         """Bank evaluating every spectrum lazily from `perturbations`."""
-        return cls(None, ks, zs, perturbations=perturbations)
+        return cls(
+            None,
+            ks,
+            zs,
+            perturbations=perturbations,
+            linear_perturbations=linear_perturbations,
+            t_tildes=t_tildes,
+        )
 
     @property
     def matter_pk(self) -> jnp.ndarray:
@@ -191,10 +294,8 @@ class SpectraBank:
         Returns:
             Array: shape `(len(zs), len(ks))`.
         """
+        _check_fields(field1, field2)
         fields = {field1, field2}
-        unknown = fields - {MATTER, CB}
-        if unknown:
-            raise ValueError(f"Unknown traced field(s) {sorted(unknown)}.")
         if fields == {MATTER}:
             return self._spectrum("P_mm")
         if fields == {CB}:
@@ -210,6 +311,121 @@ class SpectraBank:
                 self.matter_pk, self.ks, self.zs
             )
         return self._grids[request.name]
+
+    # -- beyond Limber -------------------------------------------------------
+    def _require_nonlimber(self) -> tuple[Perturbations, TTildeStore]:
+        """The linear perturbations and T-tilde matrices of the beyond-Limber grids.
+
+        The linear perturbations are the `linear_perturbations` override if
+        given, else resolved from `perturbations` (`linear_source`).
+        """
+        if self.t_tildes is None:
+            raise ValueError(
+                "Beyond-Limber quantities need a SpectraBank built with `t_tildes`."
+            )
+        linear = self.linear_perturbations
+        if linear is None and self.perturbations is not None:
+            linear = linear_source(self.perturbations)
+        if linear is None:
+            name = type(self.perturbations).__name__
+            raise ValueError(
+                "Beyond-Limber quantities need the linear power spectrum, but "
+                + (
+                    "this SpectraBank has no `perturbations`"
+                    if self.perturbations is None
+                    else f"{name!r} exposes no `.linearperturbations` and is not "
+                    "itself a linear backend"
+                )
+                + "; pass it with `linear_perturbations=`."
+            )
+        return linear, self.t_tildes
+
+    def _memoized(self, key: str, compute: Callable[[], jnp.ndarray]) -> jnp.ndarray:
+        if key not in self._grids:
+            self._grids[key] = compute()
+        return self._grids[key]
+
+    def z_of_chi(self) -> jnp.ndarray:
+        """Redshift of every comoving distance of the T-tilde grid, shape `(n_chi,)`."""
+        linear, store = self._require_nonlimber()
+        return self._memoized(
+            "nonlimber:z_of_chi",
+            lambda: redshift_of_comoving_distance(linear.background, store.grid.chi),
+        )
+
+    def nonlimber_transfer(self, field: str) -> jnp.ndarray:
+        r"""Linear transfer function of a traced field on the T-tilde grid.
+
+        $T_X(k, \chi) = \sqrt{P^{\rm lin}_{XX}(k, z(\chi))}$, at the
+        redshifts $z(\chi)$ and at the Chebyshev nodes in $k$; the primordial
+        spectrum is absorbed into $T$ (Eqs. 14-15 of arXiv:2609.01855).
+        `P_mm` for `MATTER`, `P_cb` for `CB`.
+
+        Returns:
+          Array: shape `(n_chi, n_cheb)`.
+        """
+        _check_fields(field)
+        linear, store = self._require_nonlimber()
+
+        def compute():
+            method = (
+                linear.matter_power_spectrum_cb
+                if field == CB
+                else linear.matter_power_spectrum
+            )
+            return jnp.sqrt(method(self.z_of_chi(), 10.0**store.grid.k_cheb))
+
+        return self._memoized(f"nonlimber:T:{field}", compute)
+
+    def nonlimber_cheb(
+        self, field_A: str = MATTER, field_B: str = MATTER
+    ) -> jnp.ndarray:
+        r"""Chebyshev coefficients, in $\log k$, of the unequal-time *linear* Pk.
+
+        The spectrum is $P_{AB}(k, \chi, R\chi) = T_A(k, \chi)\,T_B(k, R\chi)$
+        (`unequal_time_pk`), with field A at $\chi$ and field B at $R\chi$,
+        expanded along $k$. For $A \neq B$ the two orderings differ, and
+        each is computed (and memoized) on its own. Shared by every pair of
+        kernels tracing these fields: this is the cosmology-dependent part
+        of the beyond-Limber computation that the pairs have in common.
+
+        Returns:
+          Array: shape `(n_cheb, n_chi, n_R)`, the layout `w_ell` expects.
+        """
+        _check_fields(field_A, field_B)
+        _, store = self._require_nonlimber()
+
+        def compute():
+            grid = store.grid
+            Pk = unequal_time_pk(
+                self.nonlimber_transfer(field_A),
+                self.nonlimber_transfer(field_B),
+                grid.chi,
+                grid.R,
+            )
+            return chebyshev_coefficients(Pk)
+
+        return self._memoized(f"nonlimber:cheb:{field_A}:{field_B}", compute)
+
+    def w_ell(
+        self, t_name: str, field_A: str = MATTER, field_B: str = MATTER
+    ) -> jnp.ndarray:
+        r"""Projected density $w_\ell(\chi, R)$ for the T-tilde matrix `t_name`.
+
+        Contracts `nonlimber_cheb(field_A, field_B)` with the matrix (e.g.
+        `"T_minus2_00"`); computed once per `(field_A, field_B, t_name)`, and
+        the matrix is only read from disk when a name is first asked for.
+        Field A is the one at $\chi$, field B the one at $R\chi$.
+
+        Returns:
+          Array: shape `(n_ell, n_chi, n_R)`.
+        """
+        _check_fields(field_A, field_B)
+        _, store = self._require_nonlimber()
+        return self._memoized(
+            f"nonlimber:w_ell:{field_A}:{field_B}:{t_name}",
+            lambda: w_ell(self.nonlimber_cheb(field_A, field_B), store.get(t_name)),
+        )
 
 
 def _spectrum_requests(contribution) -> Sequence[SpectrumRequest]:

@@ -2,6 +2,7 @@
 
 # cloelib imports
 from cloelib.auxiliary import units
+from cloelib.auxiliary.akima import akima_interpolation
 
 # General imports
 import numpy as np
@@ -26,6 +27,25 @@ def rho_crit(background, zs: np.ndarray) -> np.ndarray:
     return (3.0 / 8.0 / np.pi) * 10 ** (
         2.0 * log10_h_in_seconds - _log10_GRAVITATIONAL_CONSTANT
     )
+
+
+def redshift_of_comoving_distance(background, chi):
+    """
+    Return the redshift at which the comoving distance equals `chi`.
+
+    Inverts `background.comoving_distance` by Akima interpolation on a
+    tabulated grid of 10000 redshifts, log-spaced in [1e-6, 20].
+
+    Args:
+      background (Background): Background class containing cosmology.
+      chi (np.ndarray): Comoving distances, in Mpc.
+
+    Returns:
+      (np.ndarray): Redshifts, same shape as `chi`.
+    """
+    zs = np.logspace(np.log10(1e-6), np.log10(20.0), 10000)
+    chi_of_z = background.comoving_distance(zs)
+    return akima_interpolation(zs, chi_of_z, chi)
 
 
 def dV_dzdO(background, zs: np.ndarray, hubble_units=False) -> np.ndarray:

@@ -84,32 +84,38 @@ These are not included in the default installation but can be installed as shown
 
 **Quick Start** 🎯
 
-1. **Set up your environment** – Create a fresh conda/mamba environment using the [cloe-org-environments](https://github.com/cloe-org/cloe-org-environments) repository. Then, clone `cloelib`:
+1. **Set up your environment** – Create a fresh conda/mamba environment using the [cloe-org-environments](https://github.com/cloe-org/cloe-org-environments) repository.
+
+2. **Install cloelib** - Get the core library up and running:
+
+- **Directly from [PyPI](https://pypi.org/project/cloelib/)** (no clone needed):
+
+```sh
+pip install cloelib
+```
+
+_or_
+
+- **Clone `cloelib`**:
 
 ```sh
 git clone https://github.com/cloe-org/cloelib.git
 cd cloelib
 ```
 
-2. **Check out the latest release** (optional but recommended):
+- **Check out the latest release** (optional but recommended):
 
 ```sh
 git checkout <latest-tag>  # Find tags in "Releases"
 ```
 
-3. **Install cloelib** – Get the core library up and running, either from your clone:
+- **And install cloelib**:
 
 ```sh
 pip install .
 ```
 
-or directly from [PyPI](https://pypi.org/project/cloelib/) (no clone needed):
-
-```sh
-pip install cloelib
-```
-
-4. **Add optional superpowers** – Enhance with external dependencies and tools:
+3. **Add optional superpowers** – Enhance with external dependencies and tools:
 
 ```sh
 pip install .[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,tf-keras,cosmopower-jax,baccoemu,hiclassy,emantis,pbjcosmo,fastpt,react,mgclassy,FlamingoBaryonResponseEmulator]
@@ -123,7 +129,7 @@ pip install .[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,tf-kera
 
 The `react` extra installs the TensorFlow support needed by the ReACT modified-gravity boost module; [`MGEmu`](https://github.com/nebblu/MGEmus.git) itself is installed in step 5.
 
-5. **Install backends not available on PyPI** – HMcode2020Emu, MGEmu (needed by the `react` module) and mochi_class are only distributed from GitHub, so they cannot be declared as extras of a package published on PyPI. Install the ones you need directly:
+4. **Install backends not available on PyPI** – HMcode2020Emu, MGEmu (needed by the `react` module) and mochi_class are only distributed from GitHub, so they cannot be declared as extras of a package published on PyPI. Install the ones you need directly:
 
 ```sh
 pip install "HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"

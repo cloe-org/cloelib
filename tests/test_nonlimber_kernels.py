@@ -185,6 +185,27 @@ def test_kernel_on_chi_R_divide_by_chi2(linear_kernel_setup):
     np.testing.assert_allclose(W_div_R[:, :, -1], W_div, rtol=1e-10)
 
 
+def test_kernel_on_chi_R_divides_by_chi2_after_interpolating():
+    """A lensing-like kernel, W proportional to chi, gives K(R chi) = 1 / (R chi).
+
+    W(z(chi)) = chi is linear, so its interpolation (and extrapolation below
+    chi[0]) is exact, and dividing by (R chi)^2 afterwards gives 1 / (R chi)
+    down to the smallest R chi. Interpolating W / chi^2 instead, a 1/chi
+    curve extrapolated with a cubic, misses it below chi[0] by up to ~95%
+    here (regression guard, see `notebooks/diag_chi_min.py`).
+    """
+    z = jnp.linspace(0.0, 2.0, 60)
+    chi = jnp.linspace(26.0, 500.0, 50)
+    z_of_chi = chi / 250.0
+    W_z = (250.0 * z)[None, :]  # W(z(chi)) = chi
+    R = jnp.array([0.025, 0.1, 0.5, 1.0])  # R chi down to 0.65, below chi[0]
+
+    K, K_R = kernel_on_chi_R(W_z, z, z_of_chi, chi, R, divide_by_chi2=True)
+
+    np.testing.assert_allclose(K[0], 1.0 / chi, rtol=1e-10)
+    np.testing.assert_allclose(K_R[0], 1.0 / jnp.outer(chi, R), rtol=1e-8)
+
+
 def test_kernel_on_chi_R_zero_outside_redshift_range(linear_kernel_setup):
     """There is no signal beyond the redshift range the kernel was built on.
 

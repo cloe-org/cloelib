@@ -96,8 +96,10 @@ def kernel_on_chi_R(
     r"""Resample a kernel from the redshift grid to the $\chi$ and $R\chi$ grids.
 
     The kernel is first interpolated to `z_of_chi` (and set to zero outside
-    `[z[0], z[-1]]`), optionally divided by $\chi^2$ (kernels defined per unit
-    $\chi^2$, e.g. lensing; positions are not), then interpolated to $R\chi$.
+    `[z[0], z[-1]]`), then interpolated to $R\chi$. When `divide_by_chi2`
+    (kernels defined per unit $\chi^2$, e.g. lensing; positions are not),
+    both are divided by the square of the distance they are evaluated at,
+    $\chi^2$ and $(R\chi)^2$, *after* the interpolation, as in Blast.jl.
 
     Parameters:
       W_z (Array): Kernel on the redshift grid, shape `(n_bins, len(z))`.
@@ -105,7 +107,8 @@ def kernel_on_chi_R(
       z_of_chi (Array): Redshift corresponding to each `chi`, shape `(n_chi,)`.
       chi (Array): Comoving distance grid, shape `(n_chi,)`.
       R (Array): Ratios $\chi_2/\chi_1$, shape `(n_R,)`.
-      divide_by_chi2 (bool): Static. Whether to divide the kernel by $\chi^2$.
+      divide_by_chi2 (bool): Static. Whether to divide the kernel by the
+        squared comoving distance.
 
     Returns:
       tuple[Array, Array]: $K(\chi)$ with shape `(n_bins, n_chi)` and
@@ -116,12 +119,14 @@ def kernel_on_chi_R(
     # an Akima extrapolation there would be arbitrary, not physical.
     inside = (z_of_chi >= z[0]) & (z_of_chi <= z[-1])
     W_chi = jnp.where(inside, W_chi, 0.0)
+
+    chi_R = jnp.outer(chi, R)
+    W_chi_R = akima_interpolation(W_chi, chi, chi_R.flatten(), axis=-1)
+    W_chi_R = W_chi_R.reshape(W_chi.shape[0], len(chi), len(R))
     if divide_by_chi2:
         W_chi = W_chi / chi**2
-
-    chi_R = jnp.outer(chi, R).flatten()
-    W_chi_R = akima_interpolation(W_chi, chi, chi_R, axis=-1)
-    return W_chi, W_chi_R.reshape(W_chi.shape[0], len(chi), len(R))
+        W_chi_R = W_chi_R / chi_R**2
+    return W_chi, W_chi_R
 
 
 @jax.jit

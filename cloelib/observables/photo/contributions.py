@@ -140,8 +140,9 @@ class NonLimberSpec:
         multiplies ($0$ for all but RSD, which has $2$).
       ell_prefactor: `ell_prefactor(ells) -> Array`, the kernel's own
         $\\ell$-dependent factor.
-      divide_by_chi2: whether the kernel is divided by $\\chi^2$ when moved
-        to the $\\chi$ grid (`nonlimber_kernels.kernel_on_chi_R`).
+      divide_by_chi2: whether the kernel is divided by the squared comoving
+        distance it is evaluated at, $\\chi^2$ or $(R\\chi)^2$
+        (`nonlimber_kernels.kernel_on_chi_R`).
     """
 
     power: int

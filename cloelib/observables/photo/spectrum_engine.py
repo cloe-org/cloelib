@@ -165,7 +165,7 @@ class SpectraBank:
         matter_pk: jnp.ndarray | None,
         ks: jnp.ndarray,
         zs: jnp.ndarray,
-        perturbations=None,
+        perturbations: Optional[Perturbations] = None,
         *,
         linear_perturbations: Optional[Perturbations] = None,
         t_tildes: Optional[TTildeStore] = None,
@@ -185,7 +185,7 @@ class SpectraBank:
     @classmethod
     def from_perturbations(
         cls,
-        perturbations,
+        perturbations: Perturbations,
         ks,
         zs,
         *,

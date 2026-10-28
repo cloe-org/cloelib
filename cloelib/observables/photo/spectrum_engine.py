@@ -35,6 +35,7 @@ from dataclasses import dataclass
 from typing import Callable, Optional, Sequence
 
 import jax.numpy as jnp
+import numpy as np
 
 from cloelib.auxiliary.chebyshev import chebyshev_coefficients
 from cloelib.auxiliary.math_utils import safe_sqrt
@@ -361,6 +362,11 @@ class SpectraBank:
         spectrum is absorbed into $T$ (Eqs. 14-15 of arXiv:2609.01855).
         `P_mm` for `MATTER`, `P_cb` for `CB`.
 
+        The spectrum is evaluated at increasing $k$ and reordered to the
+        Chebyshev order of the nodes (from $k_{\max}$ to $k_{\min}$): the
+        backends interpolating a tabulated $P(k, z)$ with scipy's
+        `RectBivariateSpline` (CAMB, the emulators) reject non-increasing $k$.
+
         Returns:
           Array: shape `(n_chi, n_cheb)`.
         """
@@ -373,7 +379,11 @@ class SpectraBank:
                 if field == CB
                 else linear.matter_power_spectrum
             )
-            return jnp.sqrt(method(self.z_of_chi(), 10.0**store.grid.k_cheb))
+            # z(chi) is already increasing, as the chi grid is.
+            k_cheb = np.asarray(store.grid.k_cheb)
+            order = np.argsort(k_cheb)
+            Pk = method(self.z_of_chi(), 10.0 ** k_cheb[order])
+            return jnp.sqrt(jnp.asarray(Pk))[:, np.argsort(order)]
 
         return self._memoized(f"nonlimber:T:{field}", compute)
 

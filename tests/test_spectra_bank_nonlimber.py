@@ -340,6 +340,50 @@ def test_nonlimber_transfer_is_the_sqrt_of_the_linear_pk(bank, cosmology, grid):
         np.testing.assert_allclose(T**2, method(z, k), rtol=1e-12)
 
 
+class IncreasingOnlyPerturbations:
+    """Rejects non-increasing z or k, like scipy's `RectBivariateSpline`.
+
+    The interpolator behind CAMB and the emulator backends (HMcode, BACCO,
+    CosmoPower); the JAX backend accepts any order, which hid the problem.
+    """
+
+    def __init__(self, perturbations):
+        self._perturbations = perturbations
+        self.background = perturbations.background
+
+    @staticmethod
+    def _check(zs, ks):
+        for name, x in (("z", zs), ("k", ks)):
+            if np.any(np.diff(np.atleast_1d(np.asarray(x))) <= 0):
+                raise ValueError(f"{name} must be strictly increasing")
+
+    def matter_power_spectrum(self, zs, ks):
+        self._check(zs, ks)
+        return self._perturbations.matter_power_spectrum(zs, ks)
+
+    def matter_power_spectrum_cb(self, zs, ks):
+        self._check(zs, ks)
+        return self._perturbations.matter_power_spectrum_cb(zs, ks)
+
+
+def test_nonlimber_transfer_with_backends_needing_increasing_k(cosmology, store, bank):
+    """Backends that only accept increasing k give the same T as the others.
+
+    The Chebyshev nodes run from k_max to k_min: the bank evaluates the
+    spectrum at increasing k and puts it back in node order.
+    """
+    _, linear = cosmology
+    strict = SpectraBank(
+        *LIMBER_ARGS,
+        perturbations=NonLinearStub(IncreasingOnlyPerturbations(linear)),
+        t_tildes=store,
+    )
+    for field in (MATTER, CB):
+        np.testing.assert_allclose(
+            strict.nonlimber_transfer(field), bank.nonlimber_transfer(field), rtol=1e-12
+        )
+
+
 def test_same_field_is_the_geometric_mean(bank, cosmology, grid):
     """For A = B the transfer-function form reproduces the geometric mean.
 

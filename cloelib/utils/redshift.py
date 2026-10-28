@@ -2,7 +2,6 @@
 
 import jax
 import numpy as np
-from functools import lru_cache
 
 
 def ensure_z_zero_included(redshifts: np.ndarray) -> np.ndarray:

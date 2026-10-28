@@ -52,6 +52,44 @@ from cloelib.cosmology.cosmology import (
 from cloelib.observables.photo.contributions import CB, MATTER
 
 
+def _is_known_linear_perturbations(perturbations) -> bool:
+    """Whether `perturbations` is itself one of cloelib's own linear-only
+    backends (`HMemuLinearPerturbations`, `CAMBLinearPerturbations`, ...).
+
+    Identified by cloelib's own `*LinearPerturbations` naming convention
+    (consistently followed across every cosmology backend module) rather
+    than an `isinstance` check against every concrete class: several
+    backends (CAMB, CLASS, BACCOemu, MGCLASS, mochi_class, hi_class, ...)
+    are optional dependencies, so importing all of them here just to check
+    would make this module require every optional extra. Used only as the
+    fallback when `perturbations` has no `.linearperturbations` attribute
+    of its own - see `linear_source` and `PBJTATTLoopComputer.__init__`.
+
+    Deliberately not a plain `.endswith("LinearPerturbations")`: a
+    `*NonLinearPerturbations` class name (e.g. `CAMBNonLinearPerturbations`)
+    also ends with that suffix (`"NonLinearPerturbations"` itself ends with
+    `"LinearPerturbations"`) - excluding any name containing `"NonLinear"`
+    is what actually distinguishes the two conventions.
+    """
+    name = type(perturbations).__name__
+    return name.endswith("LinearPerturbations") and "NonLinear" not in name
+
+
+def linear_source(perturbations) -> Optional[Perturbations]:
+    """The linear perturbations behind `perturbations`, or `None`.
+
+    `perturbations.linearperturbations` when the backend exposes one;
+    otherwise `perturbations` itself if it is one of cloelib's linear
+    backends (`_is_known_linear_perturbations`); otherwise `None`.
+    """
+    linear = getattr(perturbations, "linearperturbations", None)
+    if linear is not None:
+        return linear
+    if _is_known_linear_perturbations(perturbations):
+        return perturbations
+    return None
+
+
 def _check_fields(*fields: str) -> None:
     """Raise for a traced field other than `MATTER` and `CB`."""
     unknown = set(fields) - {MATTER, CB}
@@ -97,8 +135,8 @@ class SpectraBank:
     `matter_pk` instead (`SpectraBank(matter_pk, ks, zs)`), only the total
     matter is available: `base` raises for any pair involving cb.
 
-    When configured for it (`linear_perturbations` and `t_tildes`), it
-    also holds the grids of the beyond-Limber integration
+    When configured for it (`t_tildes`, and a linear spectrum: see
+    `linear_perturbations` below), it also holds the grids of the beyond-Limber integration
     (`nonlimber_transfer`, `nonlimber_cheb`, `w_ell`, built from the
     *linear* spectra and the T-tilde matrices),
     computed lazily as well. These depend on the cosmology only, not on the
@@ -112,9 +150,12 @@ class SpectraBank:
       ks: wavenumber grid of every spectrum.
       zs: redshift grid of every spectrum.
       perturbations: backend the base spectra are evaluated from.
-      linear_perturbations: linear `Perturbations`, the beyond-Limber
-        spectrum (and the background that maps comoving distance to
-        redshift) comes from here. Needed for `nonlimber_cheb`/`w_ell` only.
+      linear_perturbations: optional override of the linear `Perturbations`
+        the beyond-Limber spectra (and the background that maps comoving
+        distance to redshift) come from. By default they are resolved from
+        `perturbations` (`linear_source`): its `linearperturbations`, or
+        itself if it is a linear backend. Needed only for backends that do
+        not expose their linear spectrum (e.g. `CAMBNonLinearPerturbations`).
       t_tildes: the T-tilde matrices, and the grids they were computed on.
         Needed for `nonlimber_cheb`/`w_ell` only.
     """
@@ -275,12 +316,31 @@ class SpectraBank:
 
     # -- beyond Limber -------------------------------------------------------
     def _require_nonlimber(self) -> tuple[Perturbations, TTildeStore]:
-        if self.linear_perturbations is None or self.t_tildes is None:
+        """The linear perturbations and T-tilde matrices of the beyond-Limber grids.
+
+        The linear perturbations are the `linear_perturbations` override if
+        given, else resolved from `perturbations` (`linear_source`).
+        """
+        if self.t_tildes is None:
             raise ValueError(
-                "Beyond-Limber quantities need a SpectraBank built with both "
-                "`linear_perturbations` and `t_tildes`."
+                "Beyond-Limber quantities need a SpectraBank built with `t_tildes`."
             )
-        return self.linear_perturbations, self.t_tildes
+        linear = self.linear_perturbations
+        if linear is None and self.perturbations is not None:
+            linear = linear_source(self.perturbations)
+        if linear is None:
+            name = type(self.perturbations).__name__
+            raise ValueError(
+                "Beyond-Limber quantities need the linear power spectrum, but "
+                + (
+                    "this SpectraBank has no `perturbations`"
+                    if self.perturbations is None
+                    else f"{name!r} exposes no `.linearperturbations` and is not "
+                    "itself a linear backend"
+                )
+                + "; pass it with `linear_perturbations=`."
+            )
+        return linear, self.t_tildes
 
     def _memoized(self, key: str, compute: Callable[[], jnp.ndarray]) -> jnp.ndarray:
         if key not in self._grids:

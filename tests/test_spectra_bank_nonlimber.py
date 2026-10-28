@@ -85,19 +85,31 @@ class CountingPerturbations:
         return self._perturbations.matter_power_spectrum_cb(zs, ks, **kwargs)
 
 
+class NonLinearStub:
+    """Stands in for a non-linear backend: only exposes `linearperturbations`."""
+
+    def __init__(self, linearperturbations):
+        self.linearperturbations = linearperturbations
+
+
+LIMBER_ARGS = (jnp.ones((4, 5)), jnp.logspace(-3, 0, 5), jnp.linspace(0.1, 2.0, 4))
+
+
 @pytest.fixture
 def bank(cosmology, store):
-    """A bank configured for beyond-Limber (the Limber arguments are dummies)."""
+    """A bank configured for beyond-Limber (the Limber arguments are dummies).
+
+    The linear spectrum is resolved from the backend's `linearperturbations`,
+    wrapped to count the evaluations (`linear_calls`).
+    """
     _, linear = cosmology
-    ks = jnp.logspace(-3, 0, 5)
-    zs = jnp.linspace(0.1, 2.0, 4)
-    return SpectraBank(
-        jnp.ones((4, 5)),
-        ks,
-        zs,
-        linear_perturbations=CountingPerturbations(linear),
-        t_tildes=store,
-    )
+    backend = NonLinearStub(CountingPerturbations(linear))
+    return SpectraBank(*LIMBER_ARGS, perturbations=backend, t_tildes=store)
+
+
+def linear_calls(bank):
+    """Evaluations of the linear spectra made by `bank` so far."""
+    return bank.perturbations.linearperturbations.calls
 
 
 # ---------------------------------------------------------------------------
@@ -119,23 +131,85 @@ def test_limber_bank_is_built_and_works_as_before():
     assert bank.linear_perturbations is None and bank.t_tildes is None
 
 
-def test_nonlimber_needs_both_linear_perturbations_and_t_tildes(cosmology, store):
-    """Beyond-Limber methods fail clearly when the bank is not configured for them."""
+def test_nonlimber_needs_t_tildes(cosmology):
+    """Without T-tilde matrices the beyond-Limber methods fail clearly."""
     _, linear = cosmology
-    args = (jnp.ones((2, 3)), jnp.arange(3.0), jnp.arange(2.0))
-    for bank in (
-        SpectraBank(*args),
-        SpectraBank(*args, linear_perturbations=linear),
-        SpectraBank(*args, t_tildes=store),
+    bank = SpectraBank(*LIMBER_ARGS, perturbations=NonLinearStub(linear))
+    for call in (
+        bank.z_of_chi,
+        lambda: bank.nonlimber_transfer(MATTER),
+        bank.nonlimber_cheb,
+        lambda: bank.w_ell("T_2_00"),
     ):
-        for call in (
-            bank.z_of_chi,
-            lambda: bank.nonlimber_transfer(MATTER),
-            bank.nonlimber_cheb,
-            lambda: bank.w_ell("T_2_00"),
-        ):
-            with pytest.raises(ValueError, match="linear_perturbations.*t_tildes"):
-                call()
+        with pytest.raises(ValueError, match="t_tildes"):
+            call()
+
+
+# ---------------------------------------------------------------------------
+# Where the linear spectrum comes from
+# ---------------------------------------------------------------------------
+def test_linear_from_the_backend_linearperturbations(bank):
+    """By default the linear spectrum is the backend's `linearperturbations`."""
+    bank.nonlimber_transfer(MATTER)
+    assert linear_calls(bank) == 1
+
+
+def test_linear_backend_is_its_own_linear_source(cosmology, store, grid):
+    """A linear backend passed as `perturbations` is used directly."""
+    _, linear = cosmology
+    bank = SpectraBank(*LIMBER_ARGS, perturbations=linear, t_tildes=store)
+    np.testing.assert_allclose(
+        bank.nonlimber_transfer(MATTER) ** 2,
+        linear.matter_power_spectrum(bank.z_of_chi(), 10.0**grid.k_cheb),
+        rtol=1e-12,
+    )
+
+
+def test_override_takes_precedence(cosmology, store):
+    """`linear_perturbations=` wins over what the backend exposes."""
+    _, linear = cosmology
+    override = CountingPerturbations(linear)
+    backend = NonLinearStub(CountingPerturbations(linear))
+    bank = SpectraBank(
+        *LIMBER_ARGS,
+        perturbations=backend,
+        linear_perturbations=override,
+        t_tildes=store,
+    )
+    bank.nonlimber_transfer(MATTER)
+    assert override.calls == 1 and backend.linearperturbations.calls == 0
+
+
+def test_override_covers_backends_without_a_linear_source(cosmology, store):
+    """A backend exposing no linear spectrum needs the override, and works with it.
+
+    Mimics `CAMBNonLinearPerturbations`: no `linearperturbations`, and not
+    a linear backend itself.
+    """
+    _, linear = cosmology
+    opaque = object()
+    bank = SpectraBank(*LIMBER_ARGS, perturbations=opaque, t_tildes=store)
+    with pytest.raises(ValueError, match="exposes no `.linearperturbations`"):
+        bank.nonlimber_transfer(MATTER)
+
+    bank = SpectraBank(
+        *LIMBER_ARGS,
+        perturbations=opaque,
+        linear_perturbations=linear,
+        t_tildes=store,
+    )
+    assert bank.nonlimber_transfer(MATTER).shape == (N_CHI, N_CHEB)
+
+
+def test_bank_without_perturbations_needs_the_override(cosmology, store):
+    """A bank built from `matter_pk` alone has nothing to resolve from."""
+    _, linear = cosmology
+    bank = SpectraBank(*LIMBER_ARGS, t_tildes=store)
+    with pytest.raises(ValueError, match="no `perturbations`"):
+        bank.nonlimber_transfer(MATTER)
+
+    bank = SpectraBank(*LIMBER_ARGS, linear_perturbations=linear, t_tildes=store)
+    assert bank.nonlimber_transfer(MATTER).shape == (N_CHI, N_CHEB)
 
 
 # ---------------------------------------------------------------------------
@@ -192,7 +266,7 @@ def test_nonlimber_cheb_is_computed_once(bank):
     """The coefficients (and the linear Pk behind them) are shared and memoized."""
     first = bank.nonlimber_cheb()
     assert bank.nonlimber_cheb() is first
-    assert bank.linear_perturbations.calls == 1
+    assert linear_calls(bank) == 1
 
 
 def test_w_ell_contracts_the_coefficients_with_the_t_tilde(bank, store):
@@ -239,7 +313,7 @@ def test_w_ell_is_memoized_per_name_and_loads_only_what_is_asked(
     assert bank.w_ell("T_2_00") is first
     bank.w_ell("T_minus2_00")
 
-    assert bank.linear_perturbations.calls == 1  # one shared set of coefficients
+    assert linear_calls(bank) == 1  # one shared set of coefficients
     assert len(loads) == 2 * N_ELL
     assert not any(directory_name("T_0_20") in f for f in loads)
 
@@ -313,7 +387,7 @@ def test_fields_are_memoized_separately(bank):
     assert w_cbm is bank.w_ell("T_2_00", CB, MATTER)
     assert w_cbm is not w_mcb and w_cbm is not w_mm
     bank.nonlimber_cheb(CB, CB)
-    assert bank.linear_perturbations.calls == 2
+    assert linear_calls(bank) == 2
 
 
 def test_unknown_field(bank):
@@ -325,4 +399,4 @@ def test_unknown_field(bank):
     ):
         with pytest.raises(ValueError, match="Unknown traced field"):
             call()
-    assert bank.linear_perturbations.calls == 0
+    assert linear_calls(bank) == 0

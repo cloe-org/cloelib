@@ -854,8 +854,8 @@ class AngularTwoPoint:
 
         Does not support RSD (`PositionsTracer(..., include_rsd=True)`)
         paired with a generalized-engine-requiring contribution - that
-        combination isn't exercised by TATT and is left as a documented gap
-        rather than guessed at.
+        combination isn't exercised by TATT or TATT-M (both reach this
+        method) and is left as a documented gap rather than guessed at.
         """
         if (
             isinstance(self.tracer1, PositionsTracer)
@@ -866,8 +866,8 @@ class AngularTwoPoint:
         ):
             raise NotImplementedError(
                 "The generalized Cl engine (contributions declaring extra "
-                "SpectrumRequests, e.g. TATTContribution) does not support "
-                "PositionsTracer(include_rsd=True) yet."
+                "SpectrumRequests, e.g. TATTContribution/TATTMContribution) "
+                "does not support PositionsTracer(include_rsd=True) yet."
             )
 
         c_0 = SPEED_OF_LIGHT / 1000
@@ -891,6 +891,42 @@ class AngularTwoPoint:
         n_bin1 = self.tracer1.n_z_bins
         n_bin2 = self.tracer2.n_z_bins
         C_ell_calc = np.zeros((len(ells), n_bin1, n_bin2))
+
+        # Every contribution's kernel, and every distinct effective Pk's
+        # Limber interpolation, is computed once per call rather than once
+        # per `(c1, c2)` pairing: a contribution appears in
+        # `len(contributions2)` pairings (in both loops, for an auto-
+        # correlation), and several pairings share one effective-Pk grid
+        # (e.g. TATT-M's `(Ta, Tb)` and `(Tb, Ta)` - `SpectraBank.get`
+        # memoizes it, so it is literally the same array object). Keyed by
+        # `id`, keeping the keyed object alive in the cache so the id can't
+        # be reused mid-call.
+        kernel_cache = {}
+        signed_pkl_cache = {}
+
+        def kernel(contribution):
+            key = id(contribution)
+            if key not in kernel_cache:
+                kernel_cache[key] = (contribution, contribution.compute_kernel(zs_calc))
+            return kernel_cache[key][1]
+
+        def signed_limber_pk(pk_eff):
+            # Effective spectra (e.g. TATT's GI/II terms) are generically
+            # signed - see `Pkl_interp_signed`'s docstring - so they can't go
+            # through the log-log `Pkl_interp` the always-positive base
+            # spectra use.
+            key = id(pk_eff)
+            if key not in signed_pkl_cache:
+                signed_pkl_cache[key] = (
+                    pk_eff,
+                    Pkl_interp_signed_vmap(k_lz, zs_calc, ks, pert_zs, pk_eff.T),
+                )
+            return signed_pkl_cache[key][1]
+
+        # Single-pk pairings are collected and integrated in one batched
+        # einsum at the end (`Cl_integration_batched`) instead of one
+        # `Cl_integration` call each.
+        W1_terms, W2_terms, Pkl_terms = [], [], []
 
         for c1 in contributions1:
             for c2 in contributions2:
@@ -921,19 +957,21 @@ class AngularTwoPoint:
                 if pk_eff is None:
                     Pkl_pair = limber_pk(contribution_field(c1), contribution_field(c2))
                 else:
-                    # Effective spectra (e.g. TATT's GI/II terms) are
-                    # generically signed - see `Pkl_interp_signed`'s
-                    # docstring - so they can't go through the log-log
-                    # `Pkl_interp` the always-positive base spectra use above.
-                    Pkl_pair = Pkl_interp_signed_vmap(
-                        k_lz, zs_calc, ks, pert_zs, pk_eff.T
-                    )
+                    Pkl_pair = signed_limber_pk(pk_eff)
 
-                W1 = c1.compute_kernel(zs_calc)
-                W2 = c2.compute_kernel(zs_calc)
-                C_ell_calc = C_ell_calc + Cl_integration(
-                    W1, W2, Pkl_pair, H, chi2, weights
-                )
+                W1_terms.append(kernel(c1))
+                W2_terms.append(kernel(c2))
+                Pkl_terms.append(Pkl_pair)
+
+        if Pkl_terms:
+            C_ell_calc = C_ell_calc + Cl_integration_batched(
+                np.stack(W1_terms),
+                np.stack(W2_terms),
+                np.stack(Pkl_terms),
+                H,
+                chi2,
+                weights,
+            )
 
         C_ell_calc = C_ell_calc * c_0 * dz
 

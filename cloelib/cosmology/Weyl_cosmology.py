@@ -64,6 +64,18 @@ class WeylPerturbations:
 
         return bg_lin
 
+    @property
+    def cb_cross_prescription(self) -> str | None:
+        """
+        Cross-spectrum prescription inherited from the
+        nonlinear perturbations backend (necessary for unit tests).
+        """
+        return getattr(
+            self.nonlinearperturbations,
+            "cb_cross_prescription",
+            None,
+        )
+
     def growth_factor(self, zs: T, ks: T) -> T:
         return self.nonlinearperturbations.growth_factor(zs, ks)
 

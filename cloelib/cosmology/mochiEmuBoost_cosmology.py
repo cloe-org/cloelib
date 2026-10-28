@@ -18,11 +18,6 @@ os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 import cosmopower as cp
 
-REFERENCE_SPECTRUM_FILE = (
-    "/home/bbose/cosmopower/data/npz/stable_new/"
-    "stable_reference_spectrum_350k_b1_v1.npz"
-)
-
 # Fixed cosmology the emulator was trained at (Planck 2018). Only the MG
 # parameters and (w0, wa) were varied in training.
 EMU_TRAINING_COSMOLOGY = {
@@ -60,6 +55,7 @@ class mochiBoostLinearPerturbations:
         base_perturbations: LinearPerturbationsWithK,
         zs: np.ndarray,
         cp_file: str,
+        ref_spec_file: str,
         stable_MG_dict: dict,
         high_z_policy: str = "taper",
         z_decay: float = 0.75,
@@ -78,6 +74,8 @@ class mochiBoostLinearPerturbations:
             Must be sorted in ascending order.
         cp_file : str
             Path to the file containing the trained Cosmopower emulator for linear perturbations.
+        ref_spec_file : str
+            Path to the file containing the reference power spectrum the emulator was trained on.
         stable_MG_dict : dict
             Dictionary containing the MG stable basis parameters.
         high_z_policy : str
@@ -149,7 +147,7 @@ class mochiBoostLinearPerturbations:
 
         logratio_inrange = self.cp_LIN.ten_to_predictions_np(self.params)
 
-        ref = np.load(REFERENCE_SPECTRUM_FILE)
+        ref = np.load(ref_spec_file)
         ref_spectrum = np.asarray(ref["reference_spectrum"], dtype=float)
 
         pk_emu = ref_spectrum[None, :] * logratio_inrange / h_fid**3

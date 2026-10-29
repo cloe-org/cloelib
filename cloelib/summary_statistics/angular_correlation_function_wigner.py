@@ -1,5 +1,6 @@
 from functools import partial
 
+import interpax
 import jax.numpy as np
 import jax
 from jax import jit
@@ -228,10 +229,37 @@ d_2_m2_vmap = memoize_jax(_d_2_m2_vmap_compute)
 d_2_0_vmap = memoize_jax(_d_2_0_vmap_compute)
 
 
+@jit
+def _interp_cl_log_ell(ells, ell_nodes, Cl_nodes):
+    r"""
+    Interpolate Cl from ``ell_nodes`` onto ``ells``.
+
+    Uses a C2 cubic spline of \(\ell^2 C_\ell\) in \(\log\ell\), which is
+    smooth for Limber spectra. The interpolation is linear in ``Cl_nodes``,
+    so signed spectra (e.g. galaxy-galaxy lensing) are handled.
+
+    Parameters:
+        ells (jnp.ndarray): Multipoles at which Cl is wanted, shape (Nell,).
+        ell_nodes (jnp.ndarray): Multipoles at which Cl was computed, shape (Nnodes,).
+        Cl_nodes (jnp.ndarray): Cl at ``ell_nodes``, shape (Nnodes, ...).
+
+    Returns:
+        (jnp.ndarray): Cl at ``ells``, shape (Nell, ...).
+    """
+    extra_dims = (1,) * (Cl_nodes.ndim - 1)
+    l2_Cl = interpax.interp1d(
+        np.log(ells),
+        np.log(ell_nodes),
+        Cl_nodes * ell_nodes.reshape((-1,) + extra_dims) ** 2,
+        method="cubic2",
+    )
+    return l2_Cl / ells.reshape((-1,) + extra_dims) ** 2
+
+
 class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
     """Correlation function implementation using Wigner small-d matrices."""
 
-    def __init__(self, angular_two_point, ells, ks):
+    def __init__(self, angular_two_point, ells, ks, n_ell_interp=None):
         """
         Initialize CorrelationFunction with an AngularTwoPoint instance.
 
@@ -244,10 +272,18 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             angular_two_point (AngularTwoPoint): Object providing Cl evaluation and tracers.
             ells (jnp.ndarray): Multipole moments at which the Cl spectrum is evaluated.
             ks (jnp.ndarray): Wavenumber grid (only needed for computing Cl via angular_two_point).
+            n_ell_interp (int, optional): If given, Cl is computed only at this many
+                log-spaced multipoles between ``min(ells)`` and ``max(ells)`` and
+                interpolated onto ``ells`` (cubic spline of ell^2 Cl in log ell).
+                This makes `get_xi` much faster for dense ``ells``
+                (e.g. ``arange(2, 60000)``) at a small accuracy cost; check the
+                number of nodes for your setup. Defaults to None, which computes
+                Cl at every multipole in ``ells``.
         """
         self.angular_two_point = angular_two_point
         self.ells = ells
         self.ks = ks
+        self.n_ell_interp = n_ell_interp
 
         # Determine spin values based on tracer type
         self.s1 = 2 if isinstance(angular_two_point.tracer1, ShearTracer) else 0
@@ -313,6 +349,17 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
                 )
         return xi_dict
 
+    def _get_Cl(self):
+        """Cl at ``self.ells``, either computed directly or interpolated from nodes."""
+        if self.n_ell_interp is None:
+            self.angular_two_point.get_Cl(self.ells, nl=0, ks=self.ks)
+            return self.angular_two_point.C_ell_calc
+
+        ells = np.asarray(self.ells, dtype=float)
+        ell_nodes = np.geomspace(ells.min(), ells.max(), self.n_ell_interp)
+        self.angular_two_point.get_Cl(ell_nodes, nl=0, ks=self.ks)
+        return _interp_cl_log_ell(ells, ell_nodes, self.angular_two_point.C_ell_calc)
+
     def get_xi(self, theta):
         """
         Compute the angular correlation function xi(theta) using the Wigner d-matrices.
@@ -328,10 +375,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
                 (`jax.numpy.ndarray`) or Computed xi_+(theta) and xi_-(theta) (`jax.numpy.ndarray`, `jax.numpy.ndarray`) if both tracers are spin 2 (cosmic shear)
 
         """
-        # Compute Cl using the AngularTwoPoint instance
-        self.angular_two_point.get_Cl(self.ells, nl=0, ks=self.ks)
-
-        Cl_EE = self.angular_two_point.C_ell_calc
+        Cl_EE = self._get_Cl()
         Cl_BB = np.zeros_like(Cl_EE)  # No B-modes included, set to zero for now
         Cl_EB = np.zeros_like(Cl_EE)
         Cl_BE = np.zeros_like(Cl_EE)

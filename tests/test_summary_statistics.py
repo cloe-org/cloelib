@@ -70,3 +70,50 @@ def test_wigner_ell_matches_vmap(element):
         onp.testing.assert_allclose(
             onp.asarray(d_ell(theta, ell)), d_vmap[:, ell - 2], rtol=1e-12, atol=1e-14
         )
+
+
+class _AnalyticTwoPoint:
+    """Minimal AngularTwoPoint stand-in with a smooth analytic Cl (2 x 2 bins)."""
+
+    def __init__(self, tracer1, tracer2):
+        self.tracer1 = tracer1
+        self.tracer2 = tracer2
+
+    def get_Cl(self, ells, nl, ks):
+        ells = onp.asarray(ells, dtype=float)
+        shape = 1e-9 * (ells / 100.0) ** -1.2 / (1.0 + (ells / 3000.0) ** 2)
+        amplitude = onp.array([[1.0, 0.5], [0.5, 2.0]])
+        self.C_ell_calc = shape[:, None, None] * amplitude[None]
+        return {}
+
+
+@pytest.mark.parametrize(
+    "tracer_types",
+    [("POS", "POS"), ("SHE", "POS"), ("SHE", "SHE")],
+)
+def test_wigner_xi_n_ell_interp(tracer_types):
+    from cloelib.observables.photo import PositionsTracer, ShearTracer
+
+    cls = {"POS": PositionsTracer, "SHE": ShearTracer}
+    tracer1, tracer2 = (cls[t].__new__(cls[t]) for t in tracer_types)
+    ells = onp.arange(2, 20000)
+    theta = onp.radians(onp.geomspace(5.0, 100.0, 10) / 60)
+
+    def xi(n_ell_interp):
+        acf = angular_correlation_function_wigner.AngularCorrelationFunctionWigner(
+            _AnalyticTwoPoint(tracer1, tracer2), ells, None, n_ell_interp=n_ell_interp
+        )
+        return acf.get_xi(theta)
+
+    xi_exact, xi_interp = xi(None), xi(120)
+    assert xi_exact.keys() == xi_interp.keys()
+    for key in xi_exact:
+        exact, interp = onp.asarray(xi_exact[key]), onp.asarray(xi_interp[key])
+        onp.testing.assert_allclose(interp, exact, rtol=0, atol=1e-4 * abs(exact).max())
+
+
+def test_interp_cl_log_ell_reproduces_nodes():
+    nodes = onp.geomspace(2.0, 1e4, 50)
+    Cl_nodes = onp.stack([nodes**-1.0, -(nodes**-1.5)], axis=-1)  # signed spectrum
+    Cl = angular_correlation_function_wigner._interp_cl_log_ell(nodes, nodes, Cl_nodes)
+    onp.testing.assert_allclose(onp.asarray(Cl), Cl_nodes, rtol=1e-10)

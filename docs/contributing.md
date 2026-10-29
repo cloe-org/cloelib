@@ -56,6 +56,16 @@ Submit a pull request to the main repository. Please use the PR template and ens
 
 Our maintainers will review your contribution, and we'll work together to get it merged!
 
+### Previewing the documentation of a pull request
+
+For every pull request, the `Docs` workflow builds the documentation with `mkdocs build --strict` and uploads the resulting static site as a workflow artifact named `docs-site-pr-<PR number>`. Reviewers (and authors) can inspect the rendered pages without building them locally:
+
+1. Open the pull request, go to the **Checks** tab and select the **Docs** workflow run (or click **Details** next to the `Docs` check).
+2. Scroll to the **Artifacts** section of the run summary and download `docs-site-pr-<PR number>`.
+3. Unzip it and serve it locally, for example with `python -m http.server --directory <unzipped folder> 8000`, then open <http://localhost:8000>.
+
+The artifact is kept for 14 days and is only a preview: the published documentation is still deployed only when changes are merged into `main` or a release tag is pushed. Opening `index.html` directly with `file://` can break search and some links, so use the local server.
+
 ---
 
 ## Code Standards

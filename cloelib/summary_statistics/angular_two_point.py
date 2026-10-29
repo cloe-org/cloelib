@@ -298,6 +298,32 @@ def _resolve_w_ell(w_ell, bin_key, ns):
     return kernel_array, thmin, thmax
 
 
+def _check_ell_coverage(ell_nodes, ells, rtol=1e-6):
+    if not bool(np.all(np.diff(ell_nodes) > 0)):
+        raise ValueError("The multipoles of the C_ell must be strictly increasing.")
+    lo, hi = float(ell_nodes[0]), float(ell_nodes[-1])
+    ell_min, ell_max = float(np.min(ells)), float(np.max(ells))
+    if lo > ell_min * (1 + rtol) or hi < ell_max * (1 - rtol):
+        raise ValueError(
+            f"The C_ell nodes span [{lo:.10g}, {hi:.10g}] but must cover the "
+            f"integration multipoles [{ell_min:.10g}, {ell_max:.10g}]."
+        )
+
+
+def interp_cl_log_ell(ells, ell_nodes, cl_nodes):
+    """
+    Interpolate C_ell from `ell_nodes` to `ells` along the last axis.
+
+    C^2 cubic spline in log(ell) (interpax "cubic2", not-a-knot ends), linear in
+    C_ell so that sign changes (e.g. from intrinsic alignments) are fine. Raises a
+    ValueError if `ell_nodes` is not increasing or does not cover `ells`.
+    """
+    _check_ell_coverage(ell_nodes, ells)
+    return interpax.interp1d(
+        np.log(ells), np.log(ell_nodes), cl_nodes, method="cubic2", axis=-1, extrap=True
+    )
+
+
 def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     """
     Compute EE and BB COSEBIs for all SHE-SHE keys in `cells`.
@@ -313,7 +339,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     ells : jax.numpy.ndarray
         Multipoles at which the integration is performed. Any strictly
         increasing grid is accepted (see ``quadrature_weights``); it must be
-        fine enough to resolve the oscillations of the kernels.
+        fine enough to resolve the oscillations of the kernels. Spectra in
+        `cells` on another grid are interpolated with :func:`interp_cl_log_ell`.
     w_ell : dict
         Harmonic-space COSEBIs kernels.  Two layouts are accepted:
 
@@ -363,16 +390,25 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
 
     tomo_cosebis = {}
 
-    def _interp_cl(cl_map):
-        """Interpolate or return EE/BB slices onto `ells`."""
+    def _cl_on_ells(cl_maps):
+        """EE and BB of each map in `cl_maps` on `ells`, shape ``(len(cl_maps), 2, n_ell)``."""
+        ell_grids = [cl_map.ell for cl_map in cl_maps]
+        cl_eb = [
+            np.stack([cl_map.array[0, 0], cl_map.array[1, 1]]) for cl_map in cl_maps
+        ]
         # Fast path: skip interp when ells is literally the same array object
         # (common when called from get_cosebis which passes the same ells it
         # used to compute the Cls).
-        if cl_map.ell is ells:
-            return cl_map.array[0, 0], cl_map.array[1, 1]
-        return (
-            np.interp(ells, cl_map.ell, cl_map.array[0, 0]),
-            np.interp(ells, cl_map.ell, cl_map.array[1, 1]),
+        if all(ell is ells for ell in ell_grids):
+            return np.stack(cl_eb)
+        # One interpolation for all maps on a common grid (as returned by get_Cl)
+        if all(ell is ell_grids[0] for ell in ell_grids):
+            return interp_cl_log_ell(ells, ell_grids[0], np.stack(cl_eb))
+        return np.stack(
+            [
+                eb if ell is ells else interp_cl_log_ell(ells, ell, eb)
+                for ell, eb in zip(ell_grids, cl_eb)
+            ]
         )
 
     if is_global:
@@ -381,9 +417,7 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
         n_pairs = len(she_she)
 
         # Stack EE and BB for all pairs: (n_pairs, 2, n_ell)
-        cl_stack = np.stack(
-            [np.stack(list(_interp_cl(cl_map))) for _, cl_map in she_she]
-        )
+        cl_stack = _cl_on_ells([cl_map for _, cl_map in she_she])
 
         # Single JIT'd einsum: (n_pairs, 2, n_modes)
         vals_all = _cosebi_einsum_global(kernel_array, ell_weight, cl_stack)
@@ -409,7 +443,7 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
             kernel_array, thmin, thmax = _resolve_w_ell(w_ell, key, ns)
 
             # Stack EE and BB: (2, n_ell)
-            cl_eb = np.stack(list(_interp_cl(cl_map)))
+            cl_eb = _cl_on_ells([cl_map])[0]
 
             # JIT'd einsum: (2, n_modes)
             vals = _cosebi_einsum_perbin(kernel_array, ell_weight, cl_eb)
@@ -1126,13 +1160,18 @@ class AngularTwoPoint:
             for key, array in C_ell_out.items()
         }
 
-    def get_cosebis(self, ells, nl, ks, w_ell, ns):
+    def get_cosebis(self, ells, nl, ks, w_ell, ns, ells_interpolation=None):
         """Compute EE and BB COSEBIs from angular power spectra.
 
         Delegates to the module-level :func:`get_cosebis_from_cl`. See that
-        function for full parameter documentation.
+        function for full parameter documentation. If `ells_interpolation` is
+        given, the C_ell are computed there and interpolated onto `ells`.
         """
-        cells = self.get_Cl(ells, nl, ks)
+        if ells_interpolation is None:
+            cells = self.get_Cl(ells, nl, ks)
+        else:
+            _check_ell_coverage(ells_interpolation, ells)
+            cells = self.get_Cl(ells_interpolation, nl, ks)
 
         return get_cosebis_from_cl(
             cells,

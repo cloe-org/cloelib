@@ -46,6 +46,7 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all follows.
 from typing import Any, Callable, Protocol
 
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.geometry import curvature, is_flat, transverse_distance
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import (
     cached_stacked_simpson,
@@ -192,6 +193,79 @@ def get_photo_rsd(ells, chi, S_bin_z):
     )
 
 
+def get_photo_rsd_curved(ells, f_K, K, S_bin_z):
+    r"""Curved-space version of :func:`get_photo_rsd`.
+
+    Args:
+        ells (array_like): Multipoles, shape ``(n_ell,)``.
+        f_K (array_like): Transverse comoving distance on the z-grid,
+            shape ``(n_z,)``, used as the interpolation coordinate.
+        K (float): Spatial curvature in Mpc$^{-2}$.
+        S_bin_z (array_like): Source term sampled on the z-grid, shape
+            ``(n_bin, n_z)``.
+
+    Returns the RSD kernel indexed by multipole, tomographic bin, and
+    redshift. Shifted queries outside the grid and multipoles below two
+    contribute zero.
+    """
+    ell = ells.astype(np.float64)
+    ell_s = np.maximum(ell, 2.0)[:, None]
+    am1, _, ap1 = _alpha_coeffs(ells)
+
+    q2 = ((ell_s + 0.5) / f_K[None, :]) ** 2
+    k2 = q2 - K
+
+    def s2(j):
+        return np.maximum(q2 - K * j**2, 0.0)
+
+    b_m1 = (
+        ell_s * (ell_s - 1.0) / ((2.0 * ell_s + 1.0) * (2.0 * ell_s - 1.0))
+    ) * np.sqrt(s2(ell_s) * s2(ell_s - 1.0))
+    b_p1 = (
+        (ell_s + 1.0) * (ell_s + 2.0) / ((2.0 * ell_s + 1.0) * (2.0 * ell_s + 3.0))
+    ) * np.sqrt(s2(ell_s + 1.0) * s2(ell_s + 2.0))
+    b_0 = (
+        ell_s
+        * (ell_s - 1.0)
+        / (2.0 * ell_s + 1.0)
+        * (s2(ell_s + 1.0) / (2.0 * ell_s + 3.0) + s2(ell_s) / (2.0 * ell_s - 1.0))
+        + 2.0 * s2(ell_s + 1.0) / (2.0 * ell_s + 3.0)
+        + ell_s * (ell_s + 1.0) * K
+        - k2
+    )
+
+    cos_0 = np.sqrt(np.maximum(1.0 - K * f_K**2, 1e-12))[None, :]
+    fK_m1 = am1[:, None] * f_K[None, :]
+    fK_p1 = ap1[:, None] * f_K[None, :]
+    cos_m1 = np.sqrt(np.maximum(1.0 - K * fK_m1**2, 1e-12))
+    cos_p1 = np.sqrt(np.maximum(1.0 - K * fK_p1**2, 1e-12))
+
+    mask = (ell >= 2.0)[:, None]
+    Lm1 = np.where(
+        mask,
+        -b_m1
+        / k2
+        * np.sqrt((2.0 * ell_s + 1.0) / (2.0 * ell_s - 3.0))
+        * np.sqrt(cos_0 / cos_m1),
+        0.0,
+    )
+    L0 = np.where(mask, -b_0 / k2, 0.0)
+    Lp1 = np.where(
+        mask,
+        -b_p1
+        / k2
+        * np.sqrt((2.0 * ell_s + 1.0) / (2.0 * ell_s + 5.0))
+        * np.sqrt(cos_0 / cos_p1),
+        0.0,
+    )
+
+    S_m1 = _interp_linear_2d_queries(f_K, S_bin_z, fK_m1)
+    S_0 = np.broadcast_to(S_bin_z[None, :, :], S_m1.shape)
+    S_p1 = _interp_linear_2d_queries(f_K, S_bin_z, fK_p1)
+
+    return Lm1[:, None, :] * S_m1 + L0[:, None, :] * S_0 + Lp1[:, None, :] * S_p1
+
+
 class GalaxyBiasContribution:
     """Galaxy-bias-weighted positions kernel term of `PositionsTracer.get_window()`.
 
@@ -221,6 +295,8 @@ class MagnificationContribution:
     Lensing by the total matter, so it traces `MATTER` even with
     `use_Pcb=True` (the default `field`).
     """
+
+    traces_potential = True
 
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
@@ -955,7 +1031,6 @@ class PositionsTracer:
         -----
         - `chi` is used purely as an interpolation coordinate so `get_photo_rsd` can evaluate
           the shifted arguments efficiently.
-
         Parameters
         ----------
         ells : array_like
@@ -972,7 +1047,11 @@ class PositionsTracer:
         """
         # S_i(z) = H(z) f(z) n_i(z) / c
         S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted
-        return get_photo_rsd(ells, chi, S)
+        Ok, H0 = self.background.Omega_k0, self.background.H0
+        if is_flat(Ok):
+            return get_photo_rsd(ells, chi, S)
+        f_K = transverse_distance(chi, Ok, H0)
+        return get_photo_rsd_curved(ells, f_K, curvature(Ok, H0), S)
 
     def get_magnification_efficiency(self, z):
         r"""
@@ -995,7 +1074,11 @@ class PositionsTracer:
         """
         dz = z[1] - z[0]  # assuming equispaced!
         rz = self.background.comoving_distance(z)
-        rzrz = 1 - np.outer(rz, 1 / rz)
+        Ok, H0 = self.background.Omega_k0, self.background.H0
+        rzrz = (
+            transverse_distance(rz[None, :] - rz[:, None], Ok, H0)
+            / transverse_distance(rz, Ok, H0)[None, :]
+        )
         w_matrix = cached_stacked_simpson(len(z))
         result = np.einsum("ik, jk, jk->ij", self.dndz_shifted, rzrz, w_matrix) * dz
         return result
@@ -1005,7 +1088,8 @@ class PositionsTracer:
 
         The geometric efficiency is evaluated on the supplied redshift grid
         using the shifted source distribution and Simpson weights; its
-        distance-ratio factor is ``1 - chi(z_lens) / chi(z_source)``. The
+        distance-ratio factor is ``f_K(chi(z_source) - chi(z_lens)) /
+        f_K(chi(z_source))``. The
         resulting efficiency is multiplied by the usual matter-lensing
         prefactor and the per-bin ``magnification_bias`` value.
 
@@ -1023,7 +1107,11 @@ class PositionsTracer:
             * (self.background.H0 / c_0) ** 2
             * Omega_m0
             * (1 + z)
-            * self.background.comoving_distance(z)
+            * transverse_distance(
+                self.background.comoving_distance(z),
+                self.background.Omega_k0,
+                self.background.H0,
+            )
         )
         efficiency = self.get_magnification_efficiency(z)
         # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.

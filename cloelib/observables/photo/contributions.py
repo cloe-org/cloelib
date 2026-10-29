@@ -34,6 +34,11 @@ def contribution_field(contribution) -> str:
     return getattr(contribution, "field", MATTER)
 
 
+def traces_potential(contribution) -> bool:
+    """`contribution.traces_potential` if defined, else `False`."""
+    return getattr(contribution, "traces_potential", False)
+
+
 class Contribution(Protocol):
     """A single additive term of a tracer's window function.
 
@@ -59,7 +64,8 @@ class Contribution(Protocol):
     An optional `field` attribute (`MATTER` or `CB`, read through
     `contribution_field`) states which density field the contribution
     traces; it selects the base power spectrum of each contribution pair
-    in `AngularTwoPoint` (default: `MATTER`).
+    in `AngularTwoPoint` (default: `MATTER`). An optional `traces_potential`
+    attribute marks potential-sourced kernels (default: `False`).
     """
 
     def compute_kernel(self, z: T) -> T:
@@ -94,3 +100,5 @@ class IntrinsicAlignmentContribution:
     / `.positions` - this module holds only the generic, tracer-agnostic
     base types `spectrum_engine.py` and both submodules share.
     """
+
+    traces_potential = True

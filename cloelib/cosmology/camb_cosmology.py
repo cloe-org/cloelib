@@ -336,7 +336,7 @@ class CAMBLinearPerturbations:
         self.background.interface_args["CAMBparams"].Want_cl_2D_array = False
         self.background.interface_args["CAMBparams"].WantTransfer = True
 
-        self.kmax = 100.0
+        self.kmax = 300.0
 
         # Ensure z=0 is included for sigma8(z=0) computation and proper interpolation
         self.z = ensure_z_zero_included(redshifts)

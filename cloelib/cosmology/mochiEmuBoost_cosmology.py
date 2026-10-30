@@ -9,6 +9,7 @@ from cloelib.auxiliary.extrapolator import extend_spectra
 
 # General imports
 import numpy as np
+from functools import lru_cache
 from scipy.interpolate import RectBivariateSpline
 from typing import Callable, Protocol, cast, runtime_checkable
 import os
@@ -19,9 +20,22 @@ os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 import cosmopower as cp
 
 REFERENCE_SPECTRUM_FILE = (
-    "/home/bbose/cosmopower/data/npz/stable_new/"
+    "/home/bbose/cosmopower/data/npz/stable_new/b1/"
     "stable_reference_spectrum_350k_b1_v1.npz"
 )
+
+
+# The network and reference spectrum are fixed for a run, so load them from
+# disk once per process rather than on every likelihood evaluation.
+@lru_cache(maxsize=None)
+def _load_emulator(cp_file: str) -> cp.cosmopower_NN:
+    return cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+
+
+@lru_cache(maxsize=None)
+def _load_reference_spectrum(filename: str) -> np.ndarray:
+    return np.asarray(np.load(filename)["reference_spectrum"], dtype=float)
+
 
 # Fixed cosmology the emulator was trained at (Planck 2018). Only the MG
 # parameters and (w0, wa) were varied in training.
@@ -107,7 +121,7 @@ class mochiBoostLinearPerturbations:
         self.background = background
         self.base_perturbations = base_perturbations
         self.z_decay = float(z_decay)
-        self.cp_LIN = cp.cosmopower_NN(restore=True, restore_filename=cp_file)
+        self.cp_LIN = _load_emulator(cp_file)
 
         h_fid = EMU_TRAINING_COSMOLOGY["H0"] / 100.0
         k_emu_fid = self.cp_LIN.modes * h_fid
@@ -149,8 +163,7 @@ class mochiBoostLinearPerturbations:
 
         logratio_inrange = self.cp_LIN.ten_to_predictions_np(self.params)
 
-        ref = np.load(REFERENCE_SPECTRUM_FILE)
-        ref_spectrum = np.asarray(ref["reference_spectrum"], dtype=float)
+        ref_spectrum = _load_reference_spectrum(REFERENCE_SPECTRUM_FILE)
 
         pk_emu = ref_spectrum[None, :] * logratio_inrange / h_fid**3
 

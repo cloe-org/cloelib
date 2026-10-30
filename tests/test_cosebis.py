@@ -9,6 +9,7 @@ from cloelib.auxiliary.math_utils import quadrature_weights, simpsons_weights_ji
 from cloelib.summary_statistics.angular_two_point import (
     get_cosebis_from_cl,
     get_cosebis_from_2pcf,
+    interp_cl_log_ell,
 )
 
 pytest.importorskip("pylevin")
@@ -28,6 +29,7 @@ KEY = ("SHE", "SHE", 1, 1)
 THETA = np.radians(np.geomspace(1.0, 400.0, 400) / 60)
 ELLS_LIN = np.arange(1, 5001).astype(float)
 ELLS_LOG = np.geomspace(1, 5000, 2000)
+ELLS_NODES = np.geomspace(1, 5000, 64)
 
 
 def cl_ee(ells):
@@ -35,10 +37,17 @@ def cl_ee(ells):
     return 1e-9 * (ells / 100.0) ** -1.2 * np.exp(-((ells / 1000.0) ** 2))
 
 
-def cosebis_from_cl(ells):
+def cl_signed(ells):
+    """Toy spectrum negative for 300 < ell < 2000, like a shear cross-spectrum with IA."""
+    return cl_ee(ells) * (1 - ells / 300.0) * (1 - ells / 2000.0)
+
+
+def cosebis_from_cl(ells, cl=cl_ee, ell_cl=None):
+    # Integrated on `ells`; with `ell_cl`, the spectrum is given there and interpolated
+    ell_cl = ells if ell_cl is None else ell_cl
     w_ell = get_W_ell(THETA, N_MODES, ells, 4)
-    arr = jnp.zeros((2, 2, ells.size)).at[0, 0].set(cl_ee(ells))
-    cells = {KEY: AngularPowerSpectrum(array=arr, ell=jnp.asarray(ells))}
+    arr = jnp.zeros((2, 2, ell_cl.size)).at[0, 0].set(cl(ell_cl))
+    cells = {KEY: AngularPowerSpectrum(array=arr, ell=jnp.asarray(ell_cl))}
     ns = jnp.arange(1, N_MODES + 1)
     return get_cosebis_from_cl(cells, jnp.asarray(ells), w_ell, ns)[KEY]
 
@@ -101,6 +110,30 @@ def test_cosebis_from_cl_independent_of_ell_grid(cosebis_lin):
     np.testing.assert_allclose(
         cosebis_log.array[0, 0], cosebis_lin.array[0, 0], rtol=1e-4
     )
+
+
+@pytest.mark.parametrize("cl", [cl_ee, cl_signed])
+def test_cosebis_from_interpolated_cl(cl):
+    # C_ell at 64 log-spaced nodes, interpolated onto the integration grid
+    exact = cosebis_from_cl(ELLS_LIN, cl).array[0, 0]
+    interp = cosebis_from_cl(ELLS_LIN, cl, ell_cl=ELLS_NODES).array[0, 0]
+    np.testing.assert_allclose(interp, exact, rtol=0, atol=1e-4 * np.abs(exact).max())
+
+
+def test_interp_cl_log_ell_checks_nodes():
+    # jnp.geomspace misses its end points by rounding; that must still be accepted
+    nodes = jnp.geomspace(ELLS_LIN[0], ELLS_LIN[-1], 64)
+    assert jnp.isfinite(
+        interp_cl_log_ell(jnp.asarray(ELLS_LIN), nodes, cl_ee(nodes))
+    ).all()
+
+    nodes = np.geomspace(10, 5000, 64)
+    with pytest.raises(ValueError, match="must cover"):
+        interp_cl_log_ell(jnp.asarray(ELLS_LIN), jnp.asarray(nodes), cl_ee(nodes))
+    with pytest.raises(ValueError, match="strictly increasing"):
+        interp_cl_log_ell(
+            jnp.asarray(ELLS_LIN), jnp.asarray(nodes[::-1]), cl_ee(nodes[::-1])
+        )
 
 
 def test_cosebis_from_cl_thetas_in_arcmin(cosebis_lin):

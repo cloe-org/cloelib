@@ -362,20 +362,23 @@ Stay within these training ranges when sampling. Outside them, the implementatio
 
 ### WeylPerturbations
 
-Wrapper for Weyl-potential measurements that expects an existing linear perturbations object (and a nonlinear perturbations object for the WeylNonLinearPerturbations class), replacing the power spectra with those at `z_ini` (with a boost in the nonlinear case).
+Wrapper for Weyl-potential measurements that takes existing linear and nonlinear perturbations objects and replaces the matter power spectra with those evaluated at an initial redshift `z_ini`, multiplied by the late-time nonlinear boost.
 
 **Location**: `cloelib/cosmology/Weyl_cosmology.py`
 
-**When to use**: You want a matter power spectrum at a chosen initial redshift (applying a late-time non-linear boost to it); this is required when using the tracer classes in `cloelib/observables/photo_Weyl.py`.
+**When to use**: You want a matter power spectrum at a chosen initial redshift (applying a late-time non-linear boost to it); this is required when using the tracer classes in `cloelib/observables/photo/positions_Weyl.py`.
 
 **Features**:
 
-- Wraps a linear perturbations object (and a nonlinear one for the WeylNonLinearPerturbations class)
+- Single `WeylPerturbations` class wrapping both a linear and a nonlinear perturbations object
 - Requires both objects to share the same `Background` instance
-- Checks that `z_ini` is within the linear perturbation redshift coverage
-- Returns boosted `matter_power_spectrum` and `matter_power_spectrum_cb` values using the ratio `P_nl / P_lin`
-- Delegates `growth_rate` to the wrapped linear (or nonlinear) perturbations object
-- Exposes `sigma8_0()` from the wrapped linear (or nonlinear) perturbations object
+- Checks that `z_ini` does not exceed the maximum redshift available in the nonlinear perturbations object
+- Returns boosted `matter_power_spectrum` and `matter_power_spectrum_cb` values using the ratio `P_nl(z, k) / P_lin(z, k)`, multiplied by the corresponding linear power spectrum at `z_ini`
+- Delegates `growth_factor` to the nonlinear perturbations object
+- Returns `growth_rate` from the nonlinear perturbations object, restricted to the redshifts specified when constructing `WeylPerturbations`
+- Exposes `sigma8_0()` from the nonlinear perturbations object
+- Provides `sigma8_zini()`, calculated from `sigma8_0()` and the linear growth factor evaluated at `z_ini`
+- Inherits `cb_cross_prescription` from the nonlinear perturbations object
 
 ### TabulatedBoost / TabulatedBoostedPerturbations
 

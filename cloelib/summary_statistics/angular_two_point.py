@@ -319,8 +319,10 @@ def interp_cl_log_ell(ells, ell_nodes, cl_nodes):
     ValueError if `ell_nodes` is not increasing or does not cover `ells`.
     """
     _check_ell_coverage(ell_nodes, ells)
+    x = np.log(ell_nodes)
+    fx = interpax.approx_df(x, cl_nodes, "cubic2", -1, bc_type="not-a-knot")
     return interpax.interp1d(
-        np.log(ells), np.log(ell_nodes), cl_nodes, method="cubic2", axis=-1, extrap=True
+        np.log(ells), x, cl_nodes, method="cubic2", axis=-1, extrap=True, fx=fx
     )
 
 

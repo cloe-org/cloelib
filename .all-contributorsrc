@@ -718,7 +718,9 @@
       "profile": "https://github.com/zuzannakr",
       "contributions": [
         "code",
-        "maintenance"
+        "maintenance",
+        "bug",
+        "doc"
       ]
     },
     {

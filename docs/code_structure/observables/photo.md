@@ -158,6 +158,100 @@ tracer = PositionsTracer(
 window = tracer.get_window(z)
 ```
 
+### PositionsTracer_Weyl_GC
+
+Weyl-specific galaxy-clustering tracer built on top of `PositionsTracer`.
+
+**Location**: `cloelib/observables/photo/positions_Weyl.py`
+
+**What it does**:
+
+- Inherits from `PositionsTracer` and accepts a `Perturbations` object
+- Requires the perturbations object to provide a `z_ini` attribute and a callable `sigma8_zini()` method
+- Forces the per-bin galaxy bias model (`galaxy_bias_model="per_bin"`)
+- Uses `bhat_binN` nuisance parameters for the galaxy bias times the matter fluctuation amplitude
+- Normalizes the clustering window by `sigma8_ini`
+- Computes the growth factor relative to `z_ini` through `growth_since_zini(z)`
+- Modifies the RSD and magnification windows by including one power of the growth factor normalized to `z_ini`
+
+**Usage for Weyl galaxy clustering**:
+
+`PositionsTracer_Weyl_GC` is intended to be combined with another `PositionsTracer_Weyl_GC` for galaxy clustering using the `bhat_binN` parameterization. This bias parameterization is shared with `PositionsTracer_Weyl_GGL`, allowing the two tracers to be used in a joint galaxy clusering + galaxy-galaxy lensing Weyl-potential analysis.
+
+**Notes**:
+
+- The tracer accepts any `Perturbations` object providing the required Weyl-specific attributes and methods. In practice, `WeylPerturbations` provides these.
+- The `z_ini` attribute and callable `sigma8_zini()` method are checked during initialization; an `AttributeError` is raised if either is missing.
+- The redshift `z_ini` is taken directly from the perturbations object.
+- The growth factor is normalized as `D(z, k=0.1) / D(z_ini, k=0.1)`, with `k` in 1/Mpc.
+- The `include_rsd` argument controls whether redshift-space distortions are included (default `False`).
+- This is a photometric tracer and still conforms to the `Tracer` protocol.
+- It reuses the parent `PositionsTracer` machinery for the inherited window pieces, including the magnification efficiency and `get_window`.
+
+### PositionsTracer_Weyl_GGL
+
+Weyl-specific galaxy-galaxy lensing tracer built on top of `PositionsTracer`.
+
+**Location**: `cloelib/observables/photo/positions_Weyl.py`
+
+**What it does**:
+
+- Inherits from `PositionsTracer` and accepts a `Perturbations` object
+- Requires the perturbations object to provide a `z_ini` attribute and a callable `sigma8_zini()` method
+- Forces the per-bin galaxy bias model (`galaxy_bias_model="per_bin"`)
+- Uses `bhat_binN` nuisance parameters for the galaxy bias times the matter fluctuation amplitude
+- Uses `Jhat_binN` parameters, provided through the separate `Jhat_params` dictionary, for the per-bin Weyl potential amplitude
+- Modifies the clustering window with `Jhat`, `bhat`, `Omega_m(z)^{-1}`, and `sigma8_ini^{-2}`
+- Computes the growth factor relative to `z_ini` through `growth_since_zini(z)`
+- Modifies the RSD and magnification windows by including the square of the growth factor normalized to `z_ini`
+
+**Usage for Weyl galaxy-galaxy lensing**:
+
+`PositionsTracer_Weyl_GGL` is intended to be combined with a `ShearTracer` (constructed with `ia_model=None`) for a galaxy-galaxy lensing analysis sensitive to the Weyl potential parameters `Jhat_binN` as well as to `bhat_binN`.
+
+The intrinsic-alignment contribution can then be calculated separately using the standard `PositionsTracer` together with `ShearTracer_IAOnly`. This allows the Weyl-modified lensing contribution and the standard intrinsic-alignment contribution to be treated independently.
+
+**Notes**:
+
+- The tracer accepts any `Perturbations` object providing the required Weyl-specific attributes and methods. In practice, `WeylPerturbations` provides these.
+- The `z_ini` attribute and callable `sigma8_zini()` method are checked during initialization; an `AttributeError` is raised if either is missing.
+- The redshift `z_ini` is taken directly from the perturbations object.
+- The growth factor is normalized as `D(z, k=0.1) / D(z_ini, k=0.1)`, with `k` in 1/Mpc.
+- The `include_rsd` argument controls whether redshift-space distortions are included (default `False`).
+- This is a photometric tracer and still conforms to the `Tracer` protocol.
+- It inherits the remaining tracer behavior from `PositionsTracer`.
+
+### ShearTracer_IAOnly
+
+Shear tracer that computes only the intrinsic-alignment contribution, without the gravitational lensing contribution.
+
+**Location**: `cloelib/observables/photo/positions_Weyl.py`
+
+**What it does**:
+
+- Inherits from the standard `ShearTracer` class
+- Uses the same initialization arguments and intrinsic-alignment models as `ShearTracer`
+- Uses the NLA intrinsic-alignment model by default (`ia_model="NLA"`)
+- Supports other intrinsic-alignment models available in `ShearTracer`, including TATT
+- Overrides `get_contributions()` to return only the intrinsic-alignment contribution
+- Excludes the gravitational lensing contribution from the tracer's contributions
+- Raises a `ValueError` if no intrinsic-alignment model is provided (`ia_model=None`)
+
+**Usage for Weyl galaxy-galaxy lensing**:
+
+The Weyl galaxy-galaxy lensing contribution is computed using `PositionsTracer_Weyl_GGL` combined with a standard `ShearTracer` without intrinsic alignments (`ia_model=None`).
+
+The intrinsic-alignment contribution is computed separately using the standard `PositionsTracer` combined with `ShearTracer_IAOnly`.
+
+This separation allows the gravitational lensing contribution to follow the Weyl prescription, while the intrinsic-alignment contribution is calculated using the standard prescription.
+
+**Notes**:
+
+- Unlike `ShearTracer`, `ShearTracer_IAOnly` requires an intrinsic-alignment model.
+- All intrinsic-alignment calculations are inherited from `ShearTracer`; only the selection of contributions is changed.
+- For the TATT model, the same `tatt_loop_computer` requirements as in `ShearTracer` apply.
+- The class remains compatible with the `Tracer` protocol.
+
 ### CMBLensingTracer
 
 For CMB weak gravitational lensing (convergence) measurements.

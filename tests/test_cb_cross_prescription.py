@@ -79,6 +79,9 @@ EXPECTED = {
         "_CosmoPowerLinear": "CB_CROSS_CORRELATED",
         "_CosmoPowerNonLinear": "CB_CROSS_CORRELATED",
     },
+    "Weyl_cosmology.py": {
+        "WeylPerturbations": PROPERTY,
+    },
 }
 
 

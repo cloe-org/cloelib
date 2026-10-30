@@ -135,12 +135,13 @@ class WeylPerturbations:
 
     def matter_power_spectrum_cb(self, zs: T, ks: T) -> T:
         """
-        Added for consistency with perturbations protocol; we apply a boost equivalently to the implementation in matter_power_spectrum.
+        This method applies the same rescaling prescription as
+        matter_power_spectrum(), but uses the CDM+baryon spectra
+        of the underlying perturbation objects.
 
-        Return boosted matter power spectrum of cold dark matter + baryons:
-          P_boosted(zs, ks) = boost(zs, ks) * P_base(z_ini_array, ks)
-
-        Here z_ini_array is an array matching zs (type & shape) where every entry == self.z_ini.
+        It is provided for compatibility with the Perturbations
+        protocol and is not currently used in the Weyl-potential
+        analysis.
         """
 
         # Evaluate the base power spectrum at z_ini and ks

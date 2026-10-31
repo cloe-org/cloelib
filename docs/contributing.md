@@ -60,7 +60,7 @@ Our maintainers will review your contribution, and we'll work together to get it
 
 For every pull request, the `Docs` workflow builds the documentation with `mkdocs build --strict` and uploads the resulting static site as a workflow artifact named `docs-site-pr-<PR number>`. Reviewers (and authors) can inspect the rendered pages without building them locally:
 
-1. Open the pull request, go to the **Checks** tab and select the **Docs** workflow run (or click **Details** next to the `Docs` check).
+1. Open the pull request's **Checks** tab and click **Docs** (the name, not the expand arrow) to open the workflow run summary.
 2. Scroll to the **Artifacts** section of the run summary and download `docs-site-pr-<PR number>`.
 3. Unzip it and serve it locally, for example with `python -m http.server --directory <unzipped folder> 8000`, then open <http://localhost:8000>.
 

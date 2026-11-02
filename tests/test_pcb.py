@@ -38,7 +38,7 @@ import pytest
 from numpy.testing import assert_allclose
 
 from cloelib.cosmology.cosmology import CB_CROSS_LINEAR_NU
-from cloelib.observables.cmb import CMBLensingTracer
+from cloelib.observables.cmb.lensing import CMBLensingTracer
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.spectrum_engine import SpectraBank

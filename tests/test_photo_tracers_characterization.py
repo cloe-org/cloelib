@@ -32,7 +32,7 @@ from cloelib.cosmology.camb_cosmology import (
     CAMBNonLinearPerturbations,
 )
 from cloelib.cosmology.jax_cosmology import JAXBackground, JAXLinearPerturbations
-from cloelib.observables.cmb import CMBLensingTracer
+from cloelib.observables.cmb.lensing import CMBLensingTracer
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 

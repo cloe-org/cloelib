@@ -10,7 +10,7 @@ JAX background, Eisenstein-Hu linear P(k) and halofit, and provides:
   baryonic response P_DMB / P_NFW;
 - the halo-model spectra of matter (``"m"``), Compton-y (``"y"``, tSZ) and HOD
   galaxies (``"g"``), through ``power_spectrum(field1, field2, zs, ks)``. These
-  are used by `cloelib.observables.tsz.tSZTracer` and by
+  are used by `cloelib.observables.cmb.tsz.tSZTracer` and by
   `PositionsTracer(..., galaxy_bias_model="hod")`.
 
 ## Units

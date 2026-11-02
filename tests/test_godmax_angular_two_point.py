@@ -28,12 +28,12 @@ from cloelib.cosmology.jax_cosmology import (
     JAXLinearPerturbations,
     JAXNonLinearPerturbations,
 )
-from cloelib.observables.cmb import CMBLensingTracer
+from cloelib.observables.cmb.lensing import CMBLensingTracer
 from cloelib.observables.kernel_conventions import kernel_convention
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.observables.photo.contributions import contribution_field
 from cloelib.observables.photo.spectrum_engine import needs_generalized_engine
-from cloelib.observables.tsz import tSZTracer
+from cloelib.observables.cmb.tsz import tSZTracer
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 
 if importlib.util.find_spec("godmax") is None:

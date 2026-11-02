@@ -4,8 +4,8 @@
 from cloelib.observables.photo.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
-from cloelib.observables.cmb import CMBLensingTracer
-from cloelib.observables.tsz import tSZTracer
+from cloelib.observables.cmb.lensing import CMBLensingTracer
+from cloelib.observables.cmb.tsz import tSZTracer
 from cloelib.observables.photo.contributions import (
     CB,
     HALO_MODEL_FIELDS,

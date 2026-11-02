@@ -440,7 +440,7 @@ def test_generalized_cl_finite_with_cmb_lensing(cosmo_setup):
     generalized engine (`CMBLensingContribution`, `cloelib/observables/
     cmb.py`) rather than silently falling back to the legacy path with an
     amplitude-free (and therefore wrong) window."""
-    from cloelib.observables.cmb import CMBLensingTracer
+    from cloelib.observables.cmb.lensing import CMBLensingTracer
 
     perturbations, z = cosmo_setup
     n_z_bins = 1

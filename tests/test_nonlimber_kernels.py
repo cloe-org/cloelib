@@ -12,7 +12,7 @@ from cloelib.auxiliary.nonlimber_kernels import (
     kernel_on_chi_R,
     pair_integral,
     unequal_time_pk,
-    w_ell,
+    projected_density,
 )
 
 jax.config.update("jax_enable_x64", True)
@@ -83,10 +83,10 @@ def test_unequal_time_pk_field_order():
 
 
 # ---------------------------------------------------------------------------
-# w_ell
+# projected_density
 # ---------------------------------------------------------------------------
-def test_w_ell_matches_explicit_loop():
-    """w_ell(chi, R) is the sum over Chebyshev index n of c_n(chi, R) T_tilde(ell, chi, R, n).
+def test_projected_density_matches_explicit_loop():
+    """projected_density(chi, R) is the sum over Chebyshev index n of c_n(chi, R) T_tilde(ell, chi, R, n).
 
     Compared with explicit Python loops on random data: guards the einsum
     index order, which silently transposes if axes are swapped.
@@ -102,7 +102,7 @@ def test_w_ell_matches_explicit_loop():
             for k in range(n_R):
                 expected[ell, j, k] = np.sum(c[:, j, k] * T[ell, j, k, :])
 
-    out = w_ell(jnp.asarray(c), jnp.asarray(T))
+    out = projected_density(jnp.asarray(c), jnp.asarray(T))
     assert out.shape == (n_ell, n_chi, n_R)
     np.testing.assert_allclose(out, expected, rtol=1e-12)
 
@@ -112,7 +112,7 @@ def test_chebyshev_coeffs_pipeline_shapes():
 
     With the spectrum evaluated at 32 + 1 Chebyshev nodes in log10 k, the
     output of the first (n_k, n_chi, n_R) is the input of the second, which
-    must return (33, n_chi, n_R) coefficients: the layout w_ell and the
+    must return (33, n_chi, n_R) coefficients: the layout projected_density and the
     T-tilde matrices (n_cheb last) expect.
     """
     chi = jnp.linspace(100.0, 1000.0, 12)
@@ -235,8 +235,8 @@ def _random_pair_inputs(n_ell=4, n_a=3, n_b=2, n_chi=7, n_R=5, seed=1):
         "K_B": jnp.asarray(rng.normal(size=(n_b, n_chi))),
         "K_A_R": jnp.asarray(rng.normal(size=(n_a, n_chi, n_R))),
         "K_B_R": jnp.asarray(rng.normal(size=(n_b, n_chi, n_R))),
-        "w_12": jnp.asarray(rng.normal(size=(n_ell, n_chi, n_R))),
-        "w_21": jnp.asarray(rng.normal(size=(n_ell, n_chi, n_R))),
+        "dens_12": jnp.asarray(rng.normal(size=(n_ell, n_chi, n_R))),
+        "dens_21": jnp.asarray(rng.normal(size=(n_ell, n_chi, n_R))),
         "ell_prefactor": jnp.asarray(rng.uniform(0.5, 2.0, size=n_ell)),
         "w_chi": jnp.asarray(rng.uniform(0.5, 2.0, size=n_chi)),
         "w_R": jnp.asarray(rng.uniform(0.5, 2.0, size=n_R)),
@@ -244,11 +244,11 @@ def _random_pair_inputs(n_ell=4, n_a=3, n_b=2, n_chi=7, n_R=5, seed=1):
 
 
 def _pair_integral_reference(
-    K_A, K_B, K_A_R, K_B_R, w_12, w_21, ell_prefactor, w_chi, w_R
+    K_A, K_B, K_A_R, K_B_R, dens_12, dens_21, ell_prefactor, w_chi, w_R
 ):
     """Straightforward five-index implementation of the same formula."""
-    left = jnp.einsum("ik,jkr,lkr->lijkr", K_A, K_B_R, w_12)
-    right = jnp.einsum("jk,ikr,lkr->lijkr", K_B, K_A_R, w_21)
+    left = jnp.einsum("ik,jkr,lkr->lijkr", K_A, K_B_R, dens_12)
+    right = jnp.einsum("jk,ikr,lkr->lijkr", K_B, K_A_R, dens_21)
     integrand = jnp.einsum("l,lijkr->lijkr", ell_prefactor, left + right)
     return 2.0 / jnp.pi * jnp.einsum("lijkr,k,r->lij", integrand, w_chi, w_R)
 
@@ -258,7 +258,7 @@ def test_pair_integral_matches_reference():
 
     The reference builds the full (ell, i, j, chi, R) integrand and sums it
     afterwards; pair_integral must give the same numbers from random inputs,
-    including different weights for the two orderings (w_12 != w_21, as for RSD).
+    including different weights for the two orderings (dens_12 != dens_21, as for RSD).
     """
     inputs = _random_pair_inputs()
     out = pair_integral(**inputs)
@@ -269,14 +269,14 @@ def test_pair_integral_matches_reference():
 
 
 def test_pair_integral_symmetric_pair_is_symmetric_in_bins():
-    """With A = B (same kernels, w_12 = w_21) C_ell[i, j] = C_ell[j, i].
+    """With A = B (same kernels, dens_12 = dens_21) C_ell[i, j] = C_ell[j, i].
 
     A property of the physics, not of the implementation: it fails if the two
     orderings are not combined consistently.
     """
     inputs = _random_pair_inputs(n_a=4, n_b=4)
     inputs["K_B"], inputs["K_B_R"] = inputs["K_A"], inputs["K_A_R"]
-    inputs["w_21"] = inputs["w_12"]
+    inputs["dens_21"] = inputs["dens_12"]
 
     out = np.asarray(pair_integral(**inputs))
     np.testing.assert_allclose(out, np.swapaxes(out, 1, 2), rtol=1e-10)
@@ -285,7 +285,7 @@ def test_pair_integral_symmetric_pair_is_symmetric_in_bins():
 def test_pair_integral_analytic_constant_integrand():
     """Constant integrand: C_ell = 2/pi * 2 * prefactor_ell * (int dchi) * (int dR).
 
-    With unit kernels and w_ell, chi in [0, 4] and R in [0, 1] (Simpson
+    With unit kernels and projected densities, chi in [0, 4] and R in [0, 1] (Simpson
     weights), this pins the overall normalization, including the 2/pi and the
     factor 2 from adding the two orderings.
     """
@@ -301,8 +301,8 @@ def test_pair_integral_analytic_constant_integrand():
         K_B=jnp.ones((n_bin, n_chi)),
         K_A_R=jnp.ones((n_bin, n_chi, n_R)),
         K_B_R=jnp.ones((n_bin, n_chi, n_R)),
-        w_12=jnp.ones((n_ell, n_chi, n_R)),
-        w_21=jnp.ones((n_ell, n_chi, n_R)),
+        dens_12=jnp.ones((n_ell, n_chi, n_R)),
+        dens_21=jnp.ones((n_ell, n_chi, n_R)),
         ell_prefactor=pref,
         w_chi=w_chi,
         w_R=w_R,
@@ -318,13 +318,13 @@ def test_pair_integral_analytic_constant_integrand():
 def test_pair_integral_is_jittable_and_differentiable():
     """pair_integral is usable inside a jitted, differentiated likelihood.
 
-    jax.value_and_grad of a scalar function of w_12 must trace and give a
+    jax.value_and_grad of a scalar function of dens_12 must trace and give a
     finite value and gradient.
     """
     inputs = _random_pair_inputs()
 
     def total(scale):
-        return pair_integral(**{**inputs, "w_12": inputs["w_12"] * scale}).sum()
+        return pair_integral(**{**inputs, "dens_12": inputs["dens_12"] * scale}).sum()
 
     value, grad = jax.value_and_grad(total)(1.0)
     assert np.isfinite(value) and np.isfinite(grad)

@@ -11,7 +11,10 @@ import numpy as np
 import pytest
 
 from cloelib.auxiliary.chebyshev import chebyshev_points_interval
-from cloelib.auxiliary.nonlimber_kernels import unequal_time_pk, w_ell
+from cloelib.auxiliary.nonlimber_kernels import (
+    projected_density,
+    unequal_time_pk,
+)
 from cloelib.auxiliary.t_tildes import NonLimberGrid, TTildeStore, directory_name
 from cloelib.cosmology.jax_cosmology import JAXBackground, JAXLinearPerturbations
 from cloelib.observables.photo.contributions import CB, MATTER
@@ -139,7 +142,7 @@ def test_nonlimber_needs_t_tildes(cosmology):
         bank.z_of_chi,
         lambda: bank.nonlimber_transfer(MATTER),
         bank.nonlimber_cheb,
-        lambda: bank.w_ell("T_2_00"),
+        lambda: bank.projected_density("T_2_00"),
     ):
         with pytest.raises(ValueError, match="t_tildes"):
             call()
@@ -229,7 +232,7 @@ def test_from_perturbations_evaluates_the_matter_pk(cosmology):
 
 
 # ---------------------------------------------------------------------------
-# z(chi), Chebyshev coefficients, w_ell
+# z(chi), Chebyshev coefficients, projected densities
 # ---------------------------------------------------------------------------
 def test_z_of_chi_inverts_the_comoving_distance(bank, cosmology, grid):
     """z(chi) is the redshift at which the background's comoving distance is chi."""
@@ -269,17 +272,21 @@ def test_nonlimber_cheb_is_computed_once(bank):
     assert linear_calls(bank) == 1
 
 
-def test_w_ell_contracts_the_coefficients_with_the_t_tilde(bank, store):
-    """w_ell(name) is the contraction of the shared coefficients with that matrix."""
-    out = bank.w_ell("T_minus2_00")
+def test_projected_density_contracts_the_coefficients_with_the_t_tilde(bank, store):
+    """projected_density(name) is the contraction of the shared coefficients with that matrix."""
+    out = bank.projected_density("T_minus2_00")
     assert out.shape == (N_ELL, N_CHI, N_R)
     np.testing.assert_allclose(
-        out, w_ell(bank.nonlimber_cheb(), store.get("T_minus2_00")), rtol=1e-12
+        out,
+        projected_density(bank.nonlimber_cheb(), store.get("T_minus2_00")),
+        rtol=1e-12,
     )
 
 
-def test_w_ell_with_a_unit_t_tilde_picks_the_first_coefficient(bank, grid, tmp_path):
-    """A T-tilde that is 1 for n = 0 and 0 otherwise gives w_ell = c_0(chi, R).
+def test_projected_density_with_a_unit_t_tilde_picks_the_first_coefficient(
+    bank, grid, tmp_path
+):
+    """A T-tilde that is 1 for n = 0 and 0 otherwise gives a projected density c_0(chi, R).
 
     Pins the axes of the contraction (the Chebyshev index of the coefficients
     is the last one of the matrix) with a case that is known by inspection.
@@ -292,15 +299,15 @@ def test_w_ell_with_a_unit_t_tilde_picks_the_first_coefficient(bank, grid, tmp_p
         np.save(folder / f"T_tilde_l_{ell:.1f}.npy", unit)
     bank.t_tildes = TTildeStore(tmp_path / "unit", grid=grid)
 
-    out = bank.w_ell("T_2_00")
+    out = bank.projected_density("T_2_00")
     for ell in range(N_ELL):
         np.testing.assert_allclose(out[ell], bank.nonlimber_cheb()[0], rtol=1e-12)
 
 
-def test_w_ell_is_memoized_per_name_and_loads_only_what_is_asked(
+def test_projected_density_is_memoized_per_name_and_loads_only_what_is_asked(
     bank, store, monkeypatch
 ):
-    """Each w_ell is computed once, and untouched matrices are never read."""
+    """Each projected density is computed once, and untouched matrices are never read."""
     loads = []
     original = np.load
     monkeypatch.setattr(
@@ -309,19 +316,19 @@ def test_w_ell_is_memoized_per_name_and_loads_only_what_is_asked(
         lambda path, *a, **k: loads.append(str(path)) or original(path, *a, **k),
     )
 
-    first = bank.w_ell("T_2_00")
-    assert bank.w_ell("T_2_00") is first
-    bank.w_ell("T_minus2_00")
+    first = bank.projected_density("T_2_00")
+    assert bank.projected_density("T_2_00") is first
+    bank.projected_density("T_minus2_00")
 
     assert linear_calls(bank) == 1  # one shared set of coefficients
     assert len(loads) == 2 * N_ELL
     assert not any(directory_name("T_0_20") in f for f in loads)
 
 
-def test_w_ell_unknown_matrix(bank):
+def test_projected_density_unknown_matrix(bank):
     """Asking for a matrix the dataset does not hold is a FileNotFoundError."""
     with pytest.raises(FileNotFoundError, match="Missing T-tilde directory"):
-        bank.w_ell("T_2_22")
+        bank.projected_density("T_2_22")
 
 
 # ---------------------------------------------------------------------------
@@ -419,17 +426,17 @@ def test_mixed_fields_need_both_orderings(bank):
 
 
 def test_fields_are_memoized_separately(bank):
-    """Each ordered pair of fields has its own coefficients and w_ell.
+    """Each ordered pair of fields has its own coefficients and projected densities.
 
     The transfer functions are shared: two spectrum evaluations (one per
     field) serve every pair.
     """
-    w_mm = bank.w_ell("T_2_00")
-    w_cbm = bank.w_ell("T_2_00", CB, MATTER)
-    w_mcb = bank.w_ell("T_2_00", MATTER, CB)
-    assert w_mm is bank.w_ell("T_2_00", MATTER, MATTER)
-    assert w_cbm is bank.w_ell("T_2_00", CB, MATTER)
-    assert w_cbm is not w_mcb and w_cbm is not w_mm
+    dens_mm = bank.projected_density("T_2_00")
+    dens_cbm = bank.projected_density("T_2_00", CB, MATTER)
+    dens_mcb = bank.projected_density("T_2_00", MATTER, CB)
+    assert dens_mm is bank.projected_density("T_2_00", MATTER, MATTER)
+    assert dens_cbm is bank.projected_density("T_2_00", CB, MATTER)
+    assert dens_cbm is not dens_mcb and dens_cbm is not dens_mm
     bank.nonlimber_cheb(CB, CB)
     assert linear_calls(bank) == 2
 
@@ -439,7 +446,7 @@ def test_unknown_field(bank):
     for call in (
         lambda: bank.nonlimber_transfer("gas"),
         lambda: bank.nonlimber_cheb(MATTER, "gas"),
-        lambda: bank.w_ell("T_2_00", "gas", MATTER),
+        lambda: bank.projected_density("T_2_00", "gas", MATTER),
     ):
         with pytest.raises(ValueError, match="Unknown traced field"):
             call()

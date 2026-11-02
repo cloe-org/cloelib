@@ -20,8 +20,8 @@ The same bank also holds what the beyond-Limber computation shares between
 tracer pairs: the linear transfer function of each traced field, the
 Chebyshev coefficients of the unequal-time *linear* power spectrum of each
 pair of fields and, per pair of fields and T-tilde matrix, the projected
-density `w_ell` (`SpectraBank.nonlimber_transfer`,
-`SpectraBank.nonlimber_cheb`, `SpectraBank.w_ell`). They are cosmology
+density (`SpectraBank.nonlimber_transfer`, `SpectraBank.nonlimber_cheb`,
+`SpectraBank.projected_density`). They are cosmology
 dependent but tracer independent, so a bank shared by the pairs of a 3x2pt
 computation evaluates each of them once.
 
@@ -39,7 +39,10 @@ import numpy as np
 
 from cloelib.auxiliary.chebyshev import chebyshev_coefficients
 from cloelib.auxiliary.math_utils import safe_sqrt
-from cloelib.auxiliary.nonlimber_kernels import unequal_time_pk, w_ell
+from cloelib.auxiliary.nonlimber_kernels import (
+    projected_density,
+    unequal_time_pk,
+)
 from cloelib.auxiliary.t_tildes import TTildeStore
 from cloelib.cosmology.cosmology import (
     CB_CROSS_CORRELATED,
@@ -136,12 +139,12 @@ class SpectraBank:
 
     When configured for it (`t_tildes`, and a linear spectrum: see
     `linear_perturbations` below), it also holds the grids of the beyond-Limber integration
-    (`nonlimber_transfer`, `nonlimber_cheb`, `w_ell`, built from the
+    (`nonlimber_transfer`, `nonlimber_cheb`, `projected_density`, built from the
     *linear* spectra and the T-tilde matrices),
     computed lazily as well. These depend on the cosmology only, not on the
     tracers: one bank can serve every tracer pair of a 3x2pt computation,
     so that what pairs have in common (the transfer functions, the
-    Chebyshev coefficients, each `w_ell`) is computed once.
+    Chebyshev coefficients, each projected density) is computed once.
 
     Args:
       matter_pk: matter power spectrum on `(zs, ks)`, shape
@@ -156,7 +159,7 @@ class SpectraBank:
         itself if it is a linear backend. Needed only for backends that do
         not expose their linear spectrum (e.g. `CAMBNonLinearPerturbations`).
       t_tildes: the T-tilde matrices, and the grids they were computed on.
-        Needed for `nonlimber_cheb`/`w_ell` only.
+        Needed for `nonlimber_cheb`/`projected_density` only.
     """
 
     def __init__(
@@ -400,7 +403,7 @@ class SpectraBank:
         of the beyond-Limber computation that the pairs have in common.
 
         Returns:
-          Array: shape `(n_cheb, n_chi, n_R)`, the layout `w_ell` expects.
+          Array: shape `(n_cheb, n_chi, n_R)`, the layout `projected_density` expects.
         """
         _check_fields(field_A, field_B)
         _, store = self._require_nonlimber()
@@ -417,10 +420,10 @@ class SpectraBank:
 
         return self._memoized(f"nonlimber:cheb:{field_A}:{field_B}", compute)
 
-    def w_ell(
+    def projected_density(
         self, t_name: str, field_A: str = MATTER, field_B: str = MATTER
     ) -> jnp.ndarray:
-        r"""Projected density $w_\ell(\chi, R)$ for the T-tilde matrix `t_name`.
+        r"""Projected (matter) density $w_\ell(\chi, R)$ for the T-tilde matrix `t_name`.
 
         Contracts `nonlimber_cheb(field_A, field_B)` with the matrix (e.g.
         `"T_minus2_00"`); computed once per `(field_A, field_B, t_name)`, and
@@ -433,8 +436,10 @@ class SpectraBank:
         _check_fields(field_A, field_B)
         _, store = self._require_nonlimber()
         return self._memoized(
-            f"nonlimber:w_ell:{field_A}:{field_B}:{t_name}",
-            lambda: w_ell(self.nonlimber_cheb(field_A, field_B), store.get(t_name)),
+            f"nonlimber:projected_density:{field_A}:{field_B}:{t_name}",
+            lambda: projected_density(
+                self.nonlimber_cheb(field_A, field_B), store.get(t_name)
+            ),
         )
 
 

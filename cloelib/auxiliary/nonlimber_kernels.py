@@ -9,7 +9,8 @@ C_\ell^{AB} = \frac{2}{\pi}\,\mathcal{P}_\ell \int \mathrm{d}\chi\,\chi
      + K_B(\chi)\,K_A(R\chi)\,w^{21}_\ell(\chi, R) \Big],
 $$
 
-where $w_\ell(\chi, R)$ is obtained by contracting the Chebyshev expansion
+where the projected density $w_\ell(\chi, R)$ (the projected matter density
+of Chiarenza et al., Eq. 18) is obtained by contracting the Chebyshev expansion
 (in $\log k$) of the unequal-time power spectrum $P(k, \chi, R\chi)$ with
 the precomputed T-tilde matrices, and $\mathcal{P}_\ell$ collects the
 $\ell$-dependent prefactors of the two kernels.
@@ -20,7 +21,7 @@ Pipeline, one function per step:
    $T_A(k,\chi)$, $T_B(k,\chi)$.
 2. `chebyshev.chebyshev_coefficients`: Chebyshev coefficients in $\log k$,
    from $P$ evaluated at the Chebyshev nodes in $\log k$.
-3. `w_ell`: contraction with a T-tilde matrix.
+3. `projected_density`: contraction with a T-tilde matrix.
 4. `kernel_on_chi_R`: kernels on the $(\chi, R\chi)$ grids.
 5. `pair_integral`: the double integral above for one pair of kernels.
 """
@@ -69,7 +70,7 @@ def unequal_time_pk(T_A: Array, T_B: Array, chi: Array, R: Array) -> Array:
 
 
 @jax.jit
-def w_ell(cheb_coeffs: Array, T_tilde: Array) -> Array:
+def projected_density(cheb_coeffs: Array, T_tilde: Array) -> Array:
     r"""Contract the Chebyshev coefficients of the Pk with a T-tilde matrix.
 
     Parameters:
@@ -79,7 +80,7 @@ def w_ell(cheb_coeffs: Array, T_tilde: Array) -> Array:
       T_tilde (Array): Shape `(n_ell, n_chi, n_R, n_cheb)`.
 
     Returns:
-      Array: $w_\ell(\chi, R)$, shape `(n_ell, n_chi, n_R)`.
+      Array: projected density $w_\ell(\chi, R)$, shape `(n_ell, n_chi, n_R)`.
     """
     return jnp.einsum("ijk,ljki->ljk", cheb_coeffs, T_tilde)
 
@@ -135,8 +136,8 @@ def pair_integral(
     K_B: Array,
     K_A_R: Array,
     K_B_R: Array,
-    w_12: Array,
-    w_21: Array,
+    dens_12: Array,
+    dens_21: Array,
     ell_prefactor: Array,
     w_chi: Array,
     w_R: Array,
@@ -149,8 +150,8 @@ def pair_integral(
     Parameters:
       K_A, K_B (Array): $K(\chi)$ of each kernel, shape `(n_bin, n_chi)`.
       K_A_R, K_B_R (Array): $K(R\chi)$ of each kernel, shape `(n_bin, n_chi, n_R)`.
-      w_12, w_21 (Array): $w_\ell(\chi, R)$ of the two orderings, shape
-        `(n_ell, n_chi, n_R)`. Equal for symmetric pairs; they differ only
+      dens_12, dens_21 (Array): projected densities $w_\ell(\chi, R)$ of the
+        two orderings, shape `(n_ell, n_chi, n_R)`. Equal for symmetric pairs; they differ only
         for pairs involving RSD.
       ell_prefactor (Array): Product of the two kernels' $\ell$-dependent
         prefactors, shape `(n_ell,)`.
@@ -166,7 +167,7 @@ def pair_integral(
         ell_prefactor,
         K_A,
         K_B_R,
-        w_12,
+        dens_12,
         w_chi,
         w_R,
         optimize="optimal",
@@ -176,7 +177,7 @@ def pair_integral(
         ell_prefactor,
         K_B,
         K_A_R,
-        w_21,
+        dens_21,
         w_chi,
         w_R,
         optimize="optimal",

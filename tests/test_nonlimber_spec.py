@@ -70,7 +70,7 @@ REFERENCE_NAMES = {
 def test_t_tilde_names_match_reference_table(pair):
     """t_tilde_names picks the same T-tilde as the reference implementation.
 
-    REFERENCE_NAMES is the w_ell assignment of notebooks/my_utils.py for every
+    REFERENCE_NAMES is the T-tilde assignment (`W_ELL_CONFIG`) of notebooks/my_utils.py for every
     pair of kernels (GG, LL and GL), including the asymmetric RSD pairs where
     the two orderings need different matrices.
     """
@@ -324,8 +324,8 @@ def _ll(ells):
     return ells * (ells + 1)
 
 
-# (A, B): (ell prefactor, power of k in the integrand, w_ell IDs in the order
-# the paper lists them). The sign of the RSD prefactor is not compared (see
+# (A, B): (ell prefactor, power of k in the integrand, T-tilde names, the
+# "w ell ID" column, in the order the paper lists them). The sign of the RSD prefactor is not compared (see
 # `test_rsd_prefactor_sign_is_the_kaiser_one`).
 PAPER_TABLE_A1 = {
     ("pos", "pos"): (lambda ells: 1.0 + 0 * ells, 2, ["T_2_00"]),
@@ -350,7 +350,7 @@ PAPER_TABLE_A1 = {
 def test_matches_paper_table_a1(pair):
     """Each pair of kernels agrees with its row of Table A1 (Chiarenza et al.).
 
-    Checks the w_ell IDs in the paper's order, the product of the ell
+    Checks the T-tilde names ("w ell ID") in the paper's order, the product of the ell
     prefactors (up to the RSD sign) and the power of k in the integrand,
     which has to equal the summed powers p_a + p_b of the two specs.
     """
@@ -358,7 +358,7 @@ def test_matches_paper_table_a1(pair):
     prefactor, k_power, w_ids = PAPER_TABLE_A1[pair]
     ells = jnp.array([2.0, 3.0, 10.0, 100.0, 1000.0])
 
-    # w_ell IDs, in the paper's order (without repetitions)
+    # T-tilde names, in the paper's order (without repetitions)
     name_12, name_21 = t_tilde_names(SPECS[a], SPECS[b])
     assert list(dict.fromkeys([name_12, name_21])) == w_ids
 
@@ -370,10 +370,10 @@ def test_matches_paper_table_a1(pair):
     assert SPECS[a].power + SPECS[b].power == k_power
 
 
-def test_every_pair_of_blast_needs_only_the_papers_eight_w_ell():
+def test_every_pair_of_blast_needs_only_the_papers_eight_t_tildes():
     # (delta + RSD + mu)^2, (gamma + IA)^2 and (delta + RSD + mu)(gamma + IA),
-    # Eqs. A4-A6 without the f_NL terms: exactly these w_ell, no others.
-    """Eqs. A4-A6 (without f_NL) involve exactly the eight w_ell of the paper.
+    # Eqs. A4-A6 without the f_NL terms: exactly these T-tildes, no others.
+    """Eqs. A4-A6 (without f_NL) involve exactly the eight T-tildes of the paper.
 
     All pairs of (delta, RSD, mu) x (delta, RSD, mu), (gamma, IA) x (gamma, IA)
     and the mixed ones, in both orders, use these matrices and no others, so

@@ -722,6 +722,15 @@ class RSDContribution:
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
 
+    @property
+    def field(self) -> str:
+        """The same field as the galaxy-bias term, as in the Limber RSD window.
+
+        With `use_Pcb=True` the growth rate is still that of the total
+        matter, not the (scale-dependent) one of cb.
+        """
+        return CB if self._tracer.use_Pcb else MATTER
+
     def compute_kernel(self, z):
         H = self._tracer.background.hubble_parameter(z, units="km/s/Mpc")
         f = self._tracer.perturbations.growth_rate(z)

@@ -23,8 +23,10 @@ from cloelib.observables.photo.contributions import (
     ell_prefactor_one,
     ell_prefactor_rsd,
 )
+from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.observables.photo.positions import RSDContribution
 from cloelib.observables.photo.spectrum_engine import SpectraBank
+from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 from cloelib.summary_statistics.beyond_limber import nonlimber_cl
 
 jax.config.update("jax_enable_x64", True)
@@ -214,3 +216,116 @@ def test_rsd_traces_the_galaxy_field(use_Pcb, field):
     tracer = Tracer()
     tracer.use_Pcb = use_Pcb
     assert RSDContribution(tracer).field == field
+
+
+# ---------------------------------------------------------------------------
+# AngularTwoPoint: multiplicative shear bias
+# ---------------------------------------------------------------------------
+KS = jnp.logspace(-4, 1, 100)
+M_BIAS = (0.01, -0.02)
+# Tracer grid: `PositionsTracer`/`ShearTracer` reject z = 0.
+Z_TRACER = jnp.linspace(0.01, 1.0, 200)
+
+
+@pytest.fixture(scope="module")
+def tracer_perturbations(perturbations):
+    """Linear backend with the `.z`/`.k` grids `AngularTwoPoint` reads."""
+    linear = JAXLinearPerturbations(perturbations.background)
+    linear.z = jnp.linspace(0.0, 1.5, 40)
+    linear.k = KS
+    return linear
+
+
+def _dndz():
+    dndz = jnp.exp(
+        -0.5 * ((Z_TRACER[None, :] - jnp.array([0.3, 0.6])[:, None]) / 0.1) ** 2
+    )
+    return dndz / jnp.trapezoid(dndz, Z_TRACER, axis=1)[:, None]
+
+
+def _positions(perturbations):
+    nuisance = {
+        **{f"dz_pos_{i + 1}": 0.0 for i in range(2)},
+        **{f"width_pos_{i + 1}": 1.0 for i in range(2)},
+        **{f"magnification_bias_{i + 1}": 0.4 for i in range(2)},
+        **{f"b1_photo_bin{i}": b for i, b in enumerate((1.3, 1.7))},
+    }
+    return PositionsTracer(perturbations, _dndz(), Z_TRACER, "per_bin", nuisance)
+
+
+def _shear(perturbations, m_bias):
+    nuisance = {
+        **{f"multiplicative_bias_{i + 1}": m for i, m in enumerate(m_bias)},
+        **{f"dz_shear_{i + 1}": 0.0 for i in range(2)},
+        **{f"width_shear_{i + 1}": 1.0 for i in range(2)},
+        "AIA": 1.0,
+        "CIA": 0.0134,
+        "EtaIA": -0.41,
+    }
+    return ShearTracer(
+        perturbations=perturbations,
+        dndz=_dndz(),
+        z=Z_TRACER,
+        nuisance_params=nuisance,
+        ia_model="NLA",
+    )
+
+
+def _two_point(kind, perturbations, m_bias):
+    if kind == "gg":
+        g = _positions(perturbations)
+        return AngularTwoPoint(g, g)
+    if kind == "gs":
+        return AngularTwoPoint(_positions(perturbations), _shear(perturbations, m_bias))
+    s = _shear(perturbations, m_bias)
+    return AngularTwoPoint(s, s)
+
+
+def _calibration(kind):
+    """(1 + m1_i)(1 + m2_j) of the pair `kind`, shape `(1, 2, 2)`."""
+    one_plus_m = 1.0 + np.array(M_BIAS)
+    m1 = one_plus_m if kind == "ss" else np.ones(2)
+    m2 = np.ones(2) if kind == "gg" else one_plus_m
+    return (m1[:, None] * m2[None, :])[None]
+
+
+@pytest.mark.parametrize("kind", ["gg", "gs", "ss"])
+def test_nonlimber_cl_method_applies_the_multiplicative_bias(
+    kind, tracer_perturbations, store
+):
+    """`_nonlimber_cl` is `nonlimber_cl` of the raw kernels times (1+m_i)(1+m_j)."""
+    two_point = _two_point(kind, tracer_perturbations, M_BIAS)
+    bank = two_point._linear_bank(KS, t_tildes=store)
+
+    raw = nonlimber_cl(
+        two_point.tracer1.get_contributions(),
+        two_point.tracer2.get_contributions(),
+        Z_TRACER,
+        bank,
+    )
+    np.testing.assert_allclose(
+        two_point._nonlimber_cl(bank), raw * _calibration(kind), rtol=1e-12
+    )
+
+
+@pytest.mark.parametrize("kind", ["gs", "ss"])
+def test_limber_and_nonlimber_have_the_same_calibration(
+    kind, tracer_perturbations, store
+):
+    """The multiplicative bias scales the two Cl, hence their difference, alike.
+
+    The linear Limber Cl gets it from `ShearTracer.get_window`, the
+    beyond-Limber one from `_apply_multiplicative_bias`.
+    """
+    ells = store.grid.ells
+    out = {}
+    for label, m_bias in [("m", M_BIAS), ("no_m", (0.0, 0.0))]:
+        two_point = _two_point(kind, tracer_perturbations, m_bias)
+        bank = two_point._linear_bank(KS, t_tildes=store)
+        out[label] = (
+            two_point._nonlimber_cl(bank),
+            two_point._limber_linear_cl(ells, KS, bank),
+        )
+
+    for with_m, without_m in zip(out["m"], out["no_m"]):
+        np.testing.assert_allclose(with_m, without_m * _calibration(kind), rtol=1e-12)

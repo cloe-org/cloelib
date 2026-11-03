@@ -14,6 +14,7 @@ from cloelib.observables.photo.spectrum_engine import (
     needs_generalized_engine,
 )
 from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
+from cloelib.summary_statistics.beyond_limber import nonlimber_cl
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import (
     quadrature_weights,
@@ -992,19 +993,53 @@ class AngularTwoPoint:
         prefactor_cell = self._angular_prefactor(ells)
         C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
 
-        # Multiplicative shear calibration (PR #569 review): the legacy path
-        # applies `1 + m_bias` inside `ShearTracer.get_window` before the
-        # Limber integral; this path integrates each Contribution's raw
-        # `compute_kernel` directly, bypassing `get_window` (and its m_bias
-        # factor) entirely. `1 + m_bias` is a per-bin, z/k-independent
-        # scalar, so it factors cleanly out of the (bilinear) Limber
-        # integral onto the final per-bin-pair Cl tensor - applied here
-        # instead, once, rather than inside every Contribution.
-        # `PositionsTracer`/`CMBLensingTracer` have no `m_bias` of their own
-        # - `getattr(..., "m_bias", zeros)` leaves those sides unscaled.
+        return self._apply_multiplicative_bias(C_ell_calc)
+
+    def _apply_multiplicative_bias(self, C_ell):
+        """Multiplicative shear calibration of a Cl built from raw kernels.
+
+        The legacy path applies `1 + m_bias` inside `ShearTracer.get_window`
+        before the Limber integral (PR #569 review); the generalized and the
+        beyond-Limber paths integrate each Contribution's raw
+        `compute_kernel` directly, bypassing `get_window` (and its m_bias
+        factor) entirely. `1 + m_bias` is a per-bin, z/k-independent
+        scalar, so it factors cleanly out of the (bilinear) integral onto
+        the final per-bin-pair Cl tensor - applied here instead, once,
+        rather than inside every Contribution. `PositionsTracer`/
+        `CMBLensingTracer` have no `m_bias` of their own -
+        `getattr(..., "m_bias", zeros)` leaves those sides unscaled.
+
+        Parameters:
+            C_ell (jax.numpy.ndarray): shape `(n_ell, n_bins1, n_bins2)`.
+
+        Returns:
+            (jax.numpy.ndarray): `C_ell * (1 + m1_i) * (1 + m2_j)`.
+        """
+        n_bin1, n_bin2 = C_ell.shape[1:]
         m1 = 1.0 + np.asarray(getattr(self.tracer1, "m_bias", np.zeros(n_bin1)))
         m2 = 1.0 + np.asarray(getattr(self.tracer2, "m_bias", np.zeros(n_bin2)))
-        return C_ell_calc * m1[None, :, None] * m2[None, None, :]
+        return C_ell * m1[None, :, None] * m2[None, None, :]
+
+    def _nonlimber_cl(self, bank):
+        """Linear beyond-Limber Cl of the two tracers, on the T-tilde nodes.
+
+        `beyond_limber.nonlimber_cl` of the contributions of the two tracers,
+        with the kernels on `tracer1.z` (the grid of the Limber windows) and
+        the multiplicative shear bias applied (`_apply_multiplicative_bias`):
+        the beyond-Limber counterpart of `_limber_linear_cl`, with the same
+        calibration.
+
+        Parameters:
+            bank (SpectraBank): linear bank with `t_tildes` (`_linear_bank`).
+
+        Returns:
+            (jax.numpy.ndarray): Cl at `bank.t_tildes.grid.ells`, shape
+            `(n_ell, n_bins1, n_bins2)`.
+        """
+        contributions1 = getattr(self.tracer1, "get_contributions", lambda: ())()
+        contributions2 = getattr(self.tracer2, "get_contributions", lambda: ())()
+        C_ell = nonlimber_cl(contributions1, contributions2, self.tracer1.z, bank)
+        return self._apply_multiplicative_bias(C_ell)
 
     def _package_cl(self, C_ell_calc, ells) -> dict:
         """Slice/reshape `C_ell_calc` into the cosmolib-format output dict.

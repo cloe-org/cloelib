@@ -5,7 +5,12 @@ from cloelib.observables.photo.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
 from cloelib.observables.cmb import CMBLensingTracer
-from cloelib.observables.photo.contributions import CB, MATTER, contribution_field
+from cloelib.observables.photo.contributions import (
+    CB,
+    MATTER,
+    contribution_field,
+    nonlimber_contributions,
+)
 from cloelib.observables.photo.spectrum_engine import (
     SpectraBank,
     get_effective_pk,
@@ -14,7 +19,10 @@ from cloelib.observables.photo.spectrum_engine import (
     needs_generalized_engine,
 )
 from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
-from cloelib.summary_statistics.beyond_limber import nonlimber_cl
+from cloelib.summary_statistics.beyond_limber import (
+    interpolate_correction,
+    nonlimber_cl,
+)
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import (
     quadrature_weights,
@@ -1023,8 +1031,9 @@ class AngularTwoPoint:
     def _nonlimber_cl(self, bank):
         """Linear beyond-Limber Cl of the two tracers, on the T-tilde nodes.
 
-        `beyond_limber.nonlimber_cl` of the contributions of the two tracers,
-        with the kernels on `tracer1.z` (the grid of the Limber windows) and
+        `beyond_limber.nonlimber_cl` of the beyond-Limber contributions of
+        the two tracers (`nonlimber_contributions`: with RSD for a
+        `PositionsTracer(include_rsd=True)`, as the Limber window), with the kernels on `tracer1.z` (the grid of the Limber windows) and
         the multiplicative shear bias applied (`_apply_multiplicative_bias`):
         the beyond-Limber counterpart of `_limber_linear_cl`, with the same
         calibration.
@@ -1036,10 +1045,34 @@ class AngularTwoPoint:
             (jax.numpy.ndarray): Cl at `bank.t_tildes.grid.ells`, shape
             `(n_ell, n_bins1, n_bins2)`.
         """
-        contributions1 = getattr(self.tracer1, "get_contributions", lambda: ())()
-        contributions2 = getattr(self.tracer2, "get_contributions", lambda: ())()
-        C_ell = nonlimber_cl(contributions1, contributions2, self.tracer1.z, bank)
+        C_ell = nonlimber_cl(
+            nonlimber_contributions(self.tracer1),
+            nonlimber_contributions(self.tracer2),
+            self.tracer1.z,
+            bank,
+        )
         return self._apply_multiplicative_bias(C_ell)
+
+    def _nonlimber_correction(self, ells, ks, bank, ell_max):
+        """Beyond-Limber correction to the Limber Cl, at `ells`.
+
+        `Delta C = _nonlimber_cl - _limber_linear_cl` on the T-tilde nodes,
+        both linear and with the same windows and calibration, interpolated
+        to `ells` (`beyond_limber.interpolate_correction`): zero above
+        `ell_max` and below the first node.
+
+        Parameters:
+            ells (jax.numpy.ndarray): Multipoles of the Cl.
+            ks (jax.numpy.ndarray): Wavenumber grid of the spectra.
+            bank (SpectraBank): linear bank with `t_tildes` (`_linear_bank`).
+            ell_max (float): largest multipole the correction is applied at.
+
+        Returns:
+            (jax.numpy.ndarray): shape `(len(ells), n_bins1, n_bins2)`.
+        """
+        nodes = bank.t_tildes.grid.ells
+        delta = self._nonlimber_cl(bank) - self._limber_linear_cl(nodes, ks, bank)
+        return interpolate_correction(delta, nodes, ells, ell_max)
 
     def _package_cl(self, C_ell_calc, ells) -> dict:
         """Slice/reshape `C_ell_calc` into the cosmolib-format output dict.

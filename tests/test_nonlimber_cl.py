@@ -1,9 +1,11 @@
-"""Tests for `beyond_limber.nonlimber_cl`.
+"""Tests for `beyond_limber.nonlimber_cl` and `beyond_limber.interpolate_correction`.
 
 Built, like `test_spectra_bank_nonlimber.py`, from a real (JAX) linear
 cosmology and a tiny fake T-tilde dataset with random matrices: these tests
 check how the pairs of contributions are assembled (T-tilde names, fields,
-orderings, prefactors), not the physics of the matrices.
+orderings, prefactors), not the physics of the matrices. The
+`interpolate_correction` tests at the end are pure array tests on the
+multipole nodes of the standard dataset.
 """
 
 import jax
@@ -19,6 +21,7 @@ from cloelib.observables.photo.contributions import (
     CB,
     MATTER,
     NonLimberSpec,
+    nonlimber_contributions,
     ell_prefactor_magnification,
     ell_prefactor_one,
     ell_prefactor_rsd,
@@ -27,7 +30,10 @@ from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.observables.photo.positions import RSDContribution
 from cloelib.observables.photo.spectrum_engine import SpectraBank
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
-from cloelib.summary_statistics.beyond_limber import nonlimber_cl
+from cloelib.summary_statistics.beyond_limber import (
+    interpolate_correction,
+    nonlimber_cl,
+)
 
 jax.config.update("jax_enable_x64", True)
 
@@ -243,14 +249,21 @@ def _dndz():
     return dndz / jnp.trapezoid(dndz, Z_TRACER, axis=1)[:, None]
 
 
-def _positions(perturbations):
+def _positions(perturbations, include_rsd=False):
     nuisance = {
         **{f"dz_pos_{i + 1}": 0.0 for i in range(2)},
         **{f"width_pos_{i + 1}": 1.0 for i in range(2)},
         **{f"magnification_bias_{i + 1}": 0.4 for i in range(2)},
         **{f"b1_photo_bin{i}": b for i, b in enumerate((1.3, 1.7))},
     }
-    return PositionsTracer(perturbations, _dndz(), Z_TRACER, "per_bin", nuisance)
+    return PositionsTracer(
+        perturbations,
+        _dndz(),
+        Z_TRACER,
+        "per_bin",
+        nuisance,
+        include_rsd=include_rsd,
+    )
 
 
 def _shear(perturbations, m_bias):
@@ -273,10 +286,12 @@ def _shear(perturbations, m_bias):
 
 def _two_point(kind, perturbations, m_bias):
     if kind == "gg":
-        g = _positions(perturbations)
+        g = _positions(perturbations, include_rsd=True)
         return AngularTwoPoint(g, g)
     if kind == "gs":
-        return AngularTwoPoint(_positions(perturbations), _shear(perturbations, m_bias))
+        return AngularTwoPoint(
+            _positions(perturbations, include_rsd=True), _shear(perturbations, m_bias)
+        )
     s = _shear(perturbations, m_bias)
     return AngularTwoPoint(s, s)
 
@@ -293,13 +308,17 @@ def _calibration(kind):
 def test_nonlimber_cl_method_applies_the_multiplicative_bias(
     kind, tracer_perturbations, store
 ):
-    """`_nonlimber_cl` is `nonlimber_cl` of the raw kernels times (1+m_i)(1+m_j)."""
+    """`_nonlimber_cl` is `nonlimber_cl` of the raw kernels times (1+m_i)(1+m_j).
+
+    The galaxy tracers have RSD: it enters the beyond-Limber Cl through
+    `nonlimber_contributions`, as it enters the Limber one through its window.
+    """
     two_point = _two_point(kind, tracer_perturbations, M_BIAS)
     bank = two_point._linear_bank(KS, t_tildes=store)
 
     raw = nonlimber_cl(
-        two_point.tracer1.get_contributions(),
-        two_point.tracer2.get_contributions(),
+        nonlimber_contributions(two_point.tracer1),
+        nonlimber_contributions(two_point.tracer2),
         Z_TRACER,
         bank,
     )
@@ -329,3 +348,115 @@ def test_limber_and_nonlimber_have_the_same_calibration(
 
     for with_m, without_m in zip(out["m"], out["no_m"]):
         np.testing.assert_allclose(with_m, without_m * _calibration(kind), rtol=1e-12)
+
+
+def test_nonlimber_cl_method_includes_rsd(tracer_perturbations, store):
+    """With `include_rsd=True` the RSD term changes the beyond-Limber Cl."""
+    g_rsd = _positions(tracer_perturbations, include_rsd=True)
+    g = _positions(tracer_perturbations)
+    bank = AngularTwoPoint(g, g)._linear_bank(KS, t_tildes=store)
+    with_rsd = AngularTwoPoint(g_rsd, g_rsd)._nonlimber_cl(bank)
+    without_rsd = AngularTwoPoint(g, g)._nonlimber_cl(bank)
+    assert not np.allclose(with_rsd, without_rsd, rtol=1e-6, atol=0.0)
+
+
+def test_nonlimber_correction_is_the_difference_on_the_nodes(
+    tracer_perturbations, store
+):
+    """On the nodes up to ell_max: nonlimber - linear Limber; zero above and below."""
+    two_point = _two_point("gs", tracer_perturbations, M_BIAS)
+    bank = two_point._linear_bank(KS, t_tildes=store)
+    nodes = store.grid.ells
+    ell_max = float(nodes[1])
+
+    delta = two_point._nonlimber_cl(bank) - two_point._limber_linear_cl(nodes, KS, bank)
+    ells = jnp.concatenate([jnp.array([0.0, 1.0]), nodes])
+    out = two_point._nonlimber_correction(ells, KS, bank, ell_max)
+
+    assert out.shape == (len(ells), 2, 2)
+    np.testing.assert_array_equal(out[:2], 0.0)
+    np.testing.assert_allclose(out[2:4], delta[:2], rtol=1e-10)
+    np.testing.assert_array_equal(out[4:], 0.0)
+
+
+# ---------------------------------------------------------------------------
+# interpolate_correction
+# ---------------------------------------------------------------------------
+# Multipole nodes of the standard dataset (no matrices are read).
+BLAST_NODES = NonLimberGrid.blast_128_64_161().ells
+ELL_MAX = 200.0
+
+
+def smooth(ells):
+    """Smooth in log ell, decaying and changing sign (as a cross spectrum can)."""
+    x = jnp.log(ells)
+    return jnp.cos(x) * jnp.exp(-0.3 * x)
+
+
+def test_interpolation_reproduces_the_nodes_up_to_ell_max():
+    delta = smooth(BLAST_NODES)
+    nodes_in = BLAST_NODES[BLAST_NODES <= ELL_MAX]
+    np.testing.assert_allclose(
+        interpolate_correction(delta, BLAST_NODES, nodes_in, ELL_MAX),
+        delta[BLAST_NODES <= ELL_MAX],
+        rtol=1e-12,
+        atol=1e-15,
+    )
+
+
+def test_interpolation_zero_outside_the_range():
+    """Zero above ell_max and below the first node (ell = 0, 1)."""
+    ells = jnp.array([0.0, 1.0, 1.5, 200.5, 211.0, 500.0])
+    out = interpolate_correction(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX)
+    np.testing.assert_array_equal(out, 0.0)
+
+
+def test_interpolation_accurate_between_the_nodes():
+    """Values, not logs: fine where the function crosses zero."""
+    ells = jnp.arange(2.0, ELL_MAX + 1.0)
+    out = interpolate_correction(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX)
+    np.testing.assert_allclose(out, smooth(ells), atol=5e-3)
+    assert np.any(np.diff(np.sign(np.asarray(smooth(ells)))) != 0)
+
+
+def test_interpolation_of_bins_is_independent():
+    """Extra axes are carried along: each bin pair is its own function."""
+    delta = jnp.stack(
+        [smooth(BLAST_NODES), 2.0 * smooth(BLAST_NODES), -smooth(BLAST_NODES)], axis=-1
+    )
+    delta = delta[:, None, :] * jnp.array([1.0, 3.0])[None, :, None]
+    ells = jnp.array([0.0, 2.0, 7.3, 150.0, 300.0])
+    out = interpolate_correction(delta, BLAST_NODES, ells, ELL_MAX)
+    assert out.shape == (len(ells), 2, 3)
+    single = interpolate_correction(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX)
+    np.testing.assert_allclose(out[:, 1, 2], -3.0 * single, rtol=1e-12)
+
+
+def test_interpolation_gradient_is_finite_with_masked_queries():
+    """jax.grad through the mask stays finite at ell = 0 (log ell = -inf)."""
+    ells = jnp.arange(0.0, 300.0)
+
+    def loss(delta):
+        return jnp.sum(interpolate_correction(delta, BLAST_NODES, ells, ELL_MAX) ** 2)
+
+    grad = jax.grad(loss)(smooth(BLAST_NODES))
+    assert np.all(np.isfinite(grad))
+    assert np.any(grad != 0.0)
+
+
+def test_interpolation_jittable():
+    ells = jnp.arange(0.0, 300.0)
+    f = jax.jit(lambda d, e: interpolate_correction(d, BLAST_NODES, e, ELL_MAX))
+    np.testing.assert_allclose(
+        f(smooth(BLAST_NODES), ells),
+        interpolate_correction(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX),
+        rtol=1e-12,
+    )
+
+
+@pytest.mark.parametrize("ell_max", [1.9, 211.7, 1000.0])
+def test_interpolation_ell_max_must_lie_within_the_nodes(ell_max):
+    with pytest.raises(ValueError, match="ell_max"):
+        interpolate_correction(
+            smooth(BLAST_NODES), BLAST_NODES, jnp.array([10.0]), ell_max
+        )

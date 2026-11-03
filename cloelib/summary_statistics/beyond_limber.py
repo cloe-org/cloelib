@@ -11,8 +11,15 @@ contributions $a$ and $b$ (e.g. galaxy bias, magnification, RSD, lensing,
 NLA). What each contribution brings is read from its `nonlimber_spec`
 (`NonLimberSpec`); the cosmology-dependent part (the projected densities $w_\ell$) comes from a
 `SpectraBank` built with `t_tildes`, shared by every pair.
+
+`interpolate_correction` brings the beyond-Limber correction
+$\Delta C_\ell = C_\ell^{\rm nonLimber} - C_\ell^{\rm Limber}$ (both linear)
+from the nodes to the requested multipoles.
 """
 
+import interpax
+import jax.numpy as jnp
+import numpy as np
 from jax import Array
 
 from cloelib.auxiliary.nonlimber_kernels import kernel_on_chi_R, pair_integral
@@ -93,3 +100,48 @@ def nonlimber_cl(contributions1, contributions2, z: Array, bank: SpectraBank) ->
                 grid.w_R,
             )
     return C_ell
+
+
+def interpolate_correction(
+    delta: Array, ell_nodes: Array, ells: Array, ell_max: float
+) -> Array:
+    r"""Beyond-Limber correction $\Delta C_\ell$ from the nodes to `ells`.
+
+    Akima interpolation in $\log \ell$ of the values (not of their log:
+    cross spectra can change sign). The correction is applied on
+    `[ell_nodes[0], ell_max]` and is zero outside it: above `ell_max` the
+    Limber approximation is kept, and below the first node there is no
+    beyond-Limber information (the standard dataset starts at $\ell = 2$,
+    so $\ell = 0, 1$ keep the Limber value). A dataset with more nodes,
+    e.g. at low integer multipoles, extends the range with no other change.
+
+    The queries are clipped to that range before the interpolation, so that
+    the masked ones (e.g. $\ell = 0$, where $\log \ell$ diverges) are
+    finite and do not spoil `jax.grad` through `jnp.where`.
+
+    Args:
+      delta (Array): $\Delta C_\ell$ on the nodes, shape `(n_nodes, ...)`.
+      ell_nodes (Array): increasing multipole nodes, shape `(n_nodes,)`.
+        Must be concrete (not traced): it fixes the validity range.
+      ells (Array): multipoles to evaluate the correction at, shape `(n_ell,)`.
+      ell_max (float): largest multipole the correction is applied at.
+
+    Returns:
+      Array: shape `(n_ell, ...)`.
+
+    Raises:
+      ValueError: if `ell_max` is outside `[ell_nodes[0], ell_nodes[-1]]`.
+    """
+    ell_nodes = np.asarray(ell_nodes)
+    ell_min, ell_last = float(ell_nodes[0]), float(ell_nodes[-1])
+    if not ell_min <= ell_max <= ell_last:
+        raise ValueError(
+            f"ell_max = {ell_max} must lie within the beyond-Limber nodes "
+            f"[{ell_min}, {ell_last}]."
+        )
+    ells = jnp.asarray(ells)
+    inside = (ells >= ell_min) & (ells <= ell_max)
+    log_ells = jnp.log(jnp.clip(ells, ell_min, ell_max))
+    values = interpax.interp1d(log_ells, np.log(ell_nodes), delta, method="akima")
+    mask = inside.reshape(inside.shape + (1,) * (values.ndim - 1))
+    return jnp.where(mask, values, 0.0)

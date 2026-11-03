@@ -10,6 +10,7 @@ from cloelib.observables.photo.spectrum_engine import (
     SpectraBank,
     get_effective_pk,
     get_pk_terms,
+    linear_source,
     needs_generalized_engine,
 )
 from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
@@ -709,7 +710,7 @@ class AngularTwoPoint:
 
         return self._package_cl(C_ell_calc, ells)
 
-    def _compute_cl_legacy(self, ells, nl, ks):
+    def _compute_cl_legacy(self, ells, nl, ks, bank=None):
         """Fast path: tracer-level windows, one Limber integral per pair of fields.
 
         Exercised whenever neither tracer's contributions declare any extra
@@ -725,6 +726,11 @@ class AngularTwoPoint:
         single total-matter window per tracer, hence a single `P_mm`
         integral. The RSD window of a `PositionsTracer` traces the same field
         as its galaxy-bias term.
+
+        The spectra enter only through `bank`, built from
+        `tracer1.perturbations` when not given: passing a bank of the linear
+        spectra (`_linear_bank`) gives the linear Limber Cl with the
+        same windows, quadrature and prefactors.
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
@@ -769,9 +775,10 @@ class AngularTwoPoint:
             elif has_rsd(self.tracer2):
                 terms2 = terms2 + [rsd_term(self.tracer2)]
 
-        bank = SpectraBank.from_perturbations(
-            self.tracer1.perturbations, ks, self.tracer1.perturbations.z
-        )
+        if bank is None:
+            bank = SpectraBank.from_perturbations(
+                self.tracer1.perturbations, ks, self.tracer1.perturbations.z
+            )
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
         limber_pk = self._limber_base_spectra(bank, k_lz, zs_calc)
 
@@ -803,6 +810,57 @@ class AngularTwoPoint:
         prefactor_cell = self._angular_prefactor(ells)
         C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
         return C_ell_calc
+
+    def _linear_bank(self, ks, t_tildes=None) -> SpectraBank:
+        """Bank of the linear spectra behind `tracer1.perturbations`.
+
+        Its base spectra are the linear `P_mm`, `P_cb` and cb x matter
+        spectra (the linear backends are all `CB_CROSS_CORRELATED`, so the
+        cross spectrum is `sqrt(P_cb^lin P_mm^lin)`, as in the beyond-Limber
+        transfer functions). With `t_tildes`, the same bank also provides
+        the beyond-Limber grids, so the linear Limber and beyond-Limber
+        Cl share the linear spectra.
+
+        Parameters:
+            ks (jax.numpy.ndarray): Wavenumber grid of the spectra.
+            t_tildes (TTildeStore, optional): T-tilde matrices for the
+                beyond-Limber grids.
+
+        Returns:
+            (SpectraBank): on the `(perturbations.z, ks)` grid of `tracer1`.
+
+        Raises:
+            ValueError: if `tracer1.perturbations` exposes no
+                `.linearperturbations` and is not itself a linear backend.
+        """
+        perturbations = self.tracer1.perturbations
+        linear = linear_source(perturbations)
+        if linear is None:
+            raise ValueError(
+                f"The linear Limber Cl needs the linear power spectrum, but "
+                f"{type(perturbations).__name__!r} exposes no "
+                f"`.linearperturbations` and is not itself a linear backend."
+            )
+        return SpectraBank.from_perturbations(
+            linear,
+            ks,
+            perturbations.z,
+            linear_perturbations=linear,
+            t_tildes=t_tildes,
+        )
+
+    def _limber_linear_cl(self, ells, ks, bank):
+        """Limber Cl of the linear spectra of `bank` (`_linear_bank`).
+
+        The same computation as `_compute_cl_legacy`, windows included
+        (RSD, multiplicative shear bias), with only the spectra swapped:
+        the Limber counterpart of `beyond_limber.nonlimber_cl`, so that
+        their difference is the beyond-Limber correction alone.
+
+        Returns:
+            (jax.numpy.ndarray): shape `(len(ells), n_bins1, n_bins2)`.
+        """
+        return self._compute_cl_legacy(ells, None, ks, bank=bank)
 
     def _angular_prefactor(self, ells):
         """Product of field responses, shared by both integration engines."""

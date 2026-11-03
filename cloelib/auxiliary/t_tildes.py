@@ -32,6 +32,7 @@ import re
 import tarfile
 import urllib.request
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 import jax.numpy as jnp
@@ -293,3 +294,14 @@ class TTildeStore:
                 )
             blocks.append(block[0])
         return jnp.asarray(np.stack(blocks))
+
+
+@lru_cache(maxsize=None)
+def default_t_tildes() -> TTildeStore:
+    """The store of the standard dataset, shared by the whole process.
+
+    Created on first call (downloading the dataset if missing, see
+    `ensure_dataset`) and reused afterwards, so each matrix is read from
+    disk at most once for every `AngularTwoPoint` that needs it.
+    """
+    return TTildeStore()

@@ -29,6 +29,7 @@ from cloelib.observables.photo.contributions import (
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.observables.photo.positions import RSDContribution
 from cloelib.observables.photo.spectrum_engine import SpectraBank
+import cloelib.summary_statistics.angular_two_point as angular_two_point
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 from cloelib.summary_statistics.beyond_limber import (
     interpolate_correction,
@@ -377,6 +378,103 @@ def test_nonlimber_correction_is_the_difference_on_the_nodes(
     np.testing.assert_array_equal(out[:2], 0.0)
     np.testing.assert_allclose(out[2:4], delta[:2], rtol=1e-10)
     np.testing.assert_array_equal(out[4:], 0.0)
+
+
+# ---------------------------------------------------------------------------
+# AngularTwoPoint(ell_nonlimber_max=...)
+# ---------------------------------------------------------------------------
+@pytest.fixture
+def fake_default_store(monkeypatch, store):
+    """The fake dataset in place of the standard one."""
+    monkeypatch.setattr(angular_two_point, "default_t_tildes", lambda: store)
+    return store
+
+
+@pytest.fixture
+def no_default_store(monkeypatch):
+    """Fail if the standard dataset is asked for."""
+
+    def fail():
+        raise AssertionError("default_t_tildes must not be called")
+
+    monkeypatch.setattr(angular_two_point, "default_t_tildes", fail)
+
+
+def test_limber_only_by_default(tracer_perturbations, no_default_store):
+    """Without ell_nonlimber_max: the Limber Cl, and the dataset is never read."""
+    two_point = _two_point("gs", tracer_perturbations, M_BIAS)
+    ells = jnp.array([0.0, 2.0, 14.3, 300.0])
+    assert two_point.ell_nonlimber_max is None
+    np.testing.assert_array_equal(
+        two_point.get_Cl_tensor(ells, None, KS),
+        two_point._compute_cl_legacy(ells, None, KS),
+    )
+
+
+def test_constructor_does_not_read_the_dataset(tracer_perturbations, no_default_store):
+    g = _positions(tracer_perturbations, include_rsd=True)
+    AngularTwoPoint(g, g, ell_nonlimber_max=100.0)
+
+
+@pytest.mark.parametrize("kind", ["gg", "gs", "ss"])
+def test_get_cl_tensor_adds_the_correction(
+    kind, tracer_perturbations, fake_default_store
+):
+    """Limber Cl + `_nonlimber_correction`; the Limber Cl outside [2, ell_max]."""
+    nodes = fake_default_store.grid.ells
+    ell_max = float(nodes[1])
+    limber = _two_point(kind, tracer_perturbations, M_BIAS)
+    two_point = AngularTwoPoint(
+        limber.tracer1, limber.tracer2, ell_nonlimber_max=ell_max
+    )
+    ells = jnp.concatenate([jnp.array([0.0, 1.0]), nodes, jnp.array([300.0])])
+
+    out = two_point.get_Cl_tensor(ells, None, KS)
+    C_limber = limber.get_Cl_tensor(ells, None, KS)
+    bank = two_point._linear_bank(KS, t_tildes=fake_default_store)
+    np.testing.assert_allclose(
+        out,
+        C_limber + two_point._nonlimber_correction(ells, KS, bank, ell_max),
+        rtol=1e-12,
+    )
+    outside = np.asarray((ells < 2.0) | (ells > ell_max))
+    np.testing.assert_array_equal(out[outside], C_limber[outside])
+    assert not np.allclose(out[~outside], C_limber[~outside], rtol=1e-8, atol=0.0)
+
+
+def test_get_cl_has_the_correction(tracer_perturbations, fake_default_store):
+    """`get_Cl` packages the corrected `get_Cl_tensor`."""
+    s = _shear(tracer_perturbations, M_BIAS)
+    two_point = AngularTwoPoint(s, s, ell_nonlimber_max=float(FAKE_ELLS[1]))
+    ells = jnp.asarray(FAKE_ELLS)
+    tensor = two_point.get_Cl_tensor(ells, None, KS)
+    packaged = two_point.get_Cl(ells, None, KS)
+    np.testing.assert_allclose(
+        packaged[("SHE", "SHE", 1, 2)].array[0, 0], tensor[:, 0, 1], rtol=1e-12
+    )
+
+
+@pytest.mark.parametrize("ell_max", [1.0, 211.7, 1000.0])
+def test_ell_nonlimber_max_must_lie_within_the_nodes(ell_max, tracer_perturbations):
+    g = _positions(tracer_perturbations)
+    with pytest.raises(ValueError, match="ell_nonlimber_max"):
+        AngularTwoPoint(g, g, ell_nonlimber_max=ell_max)
+
+
+def test_contribution_without_spec_raises_in_the_constructor(tracer_perturbations):
+    """D3: e.g. TATT or non-linear bias, rejected before any computation."""
+
+    class NoSpec:
+        pass
+
+    class Tracer:
+        def get_contributions(self):
+            return (NoSpec(),)
+
+    g = _positions(tracer_perturbations)
+    AngularTwoPoint(g, Tracer())  # Limber only: accepted
+    with pytest.raises(NotImplementedError, match="NoSpec"):
+        AngularTwoPoint(g, Tracer(), ell_nonlimber_max=100.0)
 
 
 # ---------------------------------------------------------------------------

@@ -13,6 +13,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
+import cloelib.auxiliary.t_tildes as t_tildes
 from cloelib.auxiliary.t_tildes import (
     BLAST_128_64_161,
     DEFAULT_DATA_DIR,
@@ -386,3 +387,21 @@ def test_real_dataset_has_the_eight_matrices_the_rule_needs():
     ]
     for name in names:
         assert (REAL_DATASET / directory_name(name)).is_dir(), name
+
+
+def test_default_t_tildes_is_created_once(monkeypatch):
+    """One store per process, created on the first call."""
+    created = []
+
+    class FakeStore:
+        def __init__(self):
+            created.append(self)
+
+    monkeypatch.setattr(t_tildes, "TTildeStore", FakeStore)
+    t_tildes.default_t_tildes.cache_clear()
+    try:
+        first = t_tildes.default_t_tildes()
+        assert t_tildes.default_t_tildes() is first
+        assert created == [first]
+    finally:
+        t_tildes.default_t_tildes.cache_clear()

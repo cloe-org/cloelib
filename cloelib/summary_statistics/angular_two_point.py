@@ -10,6 +10,7 @@ from cloelib.observables.photo.contributions import (
     MATTER,
     contribution_field,
     nonlimber_contributions,
+    nonlimber_spec_of,
 )
 from cloelib.observables.photo.spectrum_engine import (
     SpectraBank,
@@ -23,6 +24,7 @@ from cloelib.summary_statistics.beyond_limber import (
     interpolate_correction,
     nonlimber_cl,
 )
+from cloelib.auxiliary.t_tildes import NonLimberGrid, default_t_tildes
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import (
     quadrature_weights,
@@ -556,7 +558,12 @@ def _uses_pcb(tracer) -> bool:
 class AngularTwoPoint:
     """Two point asbtract class to compute two point functions."""
 
-    def __init__(self, tracer1: Tracer = None, tracer2: Tracer = None):
+    def __init__(
+        self,
+        tracer1: Tracer = None,
+        tracer2: Tracer = None,
+        ell_nonlimber_max: float | None = None,
+    ):
         """
         Initialize the AngularTwoPoint instance.
 
@@ -566,9 +573,40 @@ class AngularTwoPoint:
         Parameters:
             tracer1 (Tracer, optional): The first tracer for the two-point function. Defaults to None.
             tracer2 (Tracer, optional): The second tracer for the two-point function. Defaults to None.
+            ell_nonlimber_max (float, optional): Largest multipole at which the
+                Limber Cl is corrected beyond Limber, with the linear
+                correction `C_nonLimber^lin - C_Limber^lin` computed on the
+                multipole nodes of the T-tilde dataset and interpolated (see
+                `get_Cl_tensor`). Must lie within the nodes, `[2, 211.6]` for the
+                standard dataset, which is downloaded on the first `get_Cl` if
+                missing. `None` (default): Limber only.
+
+        Raises:
+            ValueError: if `ell_nonlimber_max` lies outside the T-tilde nodes.
+            NotImplementedError: if `ell_nonlimber_max` is set and a
+                contribution of the tracers has no `nonlimber_spec` (e.g. TATT,
+                non-linear galaxy bias, CMB lensing, GW).
         """
         self.tracer1 = tracer1
         self.tracer2 = tracer2
+        self.ell_nonlimber_max = ell_nonlimber_max
+        if ell_nonlimber_max is not None:
+            self._check_nonlimber(ell_nonlimber_max)
+
+    def _check_nonlimber(self, ell_max):
+        """Validate the beyond-Limber configuration when it is set.
+
+        Only the grid of the standard dataset is used, so no file is read.
+        """
+        nodes = np.asarray(NonLimberGrid.blast_128_64_161().ells)
+        if not float(nodes[0]) <= ell_max <= float(nodes[-1]):
+            raise ValueError(
+                f"ell_nonlimber_max = {ell_max} must lie within the beyond-Limber "
+                f"nodes [{float(nodes[0])}, {float(nodes[-1])}]."
+            )
+        for tracer in (self.tracer1, self.tracer2):
+            for contribution in nonlimber_contributions(tracer):
+                nonlimber_spec_of(contribution)
 
     def _software_tag(self, method):
         """
@@ -668,6 +706,13 @@ class AngularTwoPoint:
         in `playground/tutorials/observables/photo_autodiff.ipynb` and
         `validation/photo_autodiff.ipynb`.
 
+        With `ell_nonlimber_max` set, the linear beyond-Limber correction
+        `C_nonLimber^lin - C_Limber^lin` (`_nonlimber_correction`) is added
+        for `2 <= ell <= ell_nonlimber_max`: computed on the T-tilde nodes
+        and interpolated (Akima in log ell), with the same windows and
+        multiplicative shear bias as the Limber Cl. Outside that range the
+        Cl is the Limber one.
+
         Parameters:
             ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
             nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
@@ -686,10 +731,18 @@ class AngularTwoPoint:
         contributions2 = getattr(self.tracer2, "get_contributions", lambda: ())()
 
         if needs_generalized_engine(contributions1, contributions2):
-            return self._compute_cl_generalized(
+            C_ell = self._compute_cl_generalized(
                 ells, ks, contributions1, contributions2
             )
-        return self._compute_cl_legacy(ells, nl, ks)
+        else:
+            C_ell = self._compute_cl_legacy(ells, nl, ks)
+
+        if self.ell_nonlimber_max is not None:
+            bank = self._linear_bank(ks, t_tildes=default_t_tildes())
+            C_ell = C_ell + self._nonlimber_correction(
+                ells, ks, bank, self.ell_nonlimber_max
+            )
+        return C_ell
 
     @profile_function
     def get_Cl(self, ells, nl, ks) -> dict:

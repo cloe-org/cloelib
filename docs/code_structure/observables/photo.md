@@ -150,13 +150,13 @@ tracer = ShearTracer(
 )
 ```
 
-Unlike TATT, `TATTMContribution` isn't itself the `Contribution` integrated
-against the Limber kernel: per-bin amplitudes can't be expressed as one
-shared effective-Pk grid the way TATT's single global amplitude can (see
-its own docstring in `shear.py` for why), so it's built from three
-rank-1 sub-`Contribution`s instead, flattened into the tracer's window sum
-via the `get_components()` hook - transparent to everything downstream
-(`get_window`, `AngularTwoPoint.get_Cl`), same as TATT.
+Because its amplitudes vary per bin, `TATTMContribution` hands the Limber
+engine one `PkTerm` (a per-bin-weighted kernel pair and a power spectrum)
+per term of TATT's P_II/P_deltaI through `get_pk_terms`, the same mechanism
+`NonLinearGalaxyBiasContribution` uses for its per-bin biases. Use
+`tracer.get_ia_effective_spectra(bin_i=..., bin_j=...)` to inspect one bin
+pair's P_II/P_deltaI. Pairing a TATT-M tracer with an NLA or TATT tracer
+raises `ValueError`.
 
 ### PositionsTracer
 

@@ -1,17 +1,4 @@
-"""Shared pytest fixtures used across more than one test module.
-
-`cosmo_setup`/`linear_perturbations` live here (rather than being defined
-in one test module and imported into another) specifically so
-`test_tatt.py` and `test_tatt_m.py` can share them with no import at all -
-pytest auto-discovers fixtures in `conftest.py` for every test module in
-this directory. Importing a fixture function by name instead (the
-previous approach) makes every test function that takes it as a
-parameter look, to `ruff`, like it's shadowing an unused import (F811) -
-a parameter name coincidentally matching a fixture isn't something a
-linter can distinguish from an actual bug, so that approach needed a
-file-level `noqa`. Defining the fixture here avoids the import
-(and the lint problem) entirely.
-"""
+"""Fixtures shared by `test_tatt.py` and `test_tatt_m.py`."""
 
 import numpy as np
 import pytest
@@ -49,10 +36,6 @@ def cosmo_setup():
 
 @pytest.fixture(scope="module")
 def linear_perturbations(cosmo_setup):
-    """A *linear* Perturbations object, as `PBJTATTLoopComputer` requires
-    (FAST-PT's one-loop integrals are only valid starting from the linear
-    Pk - see its docstring) - `cosmo_setup`'s own `perturbations` is
-    nonlinear.
-    """
+    """Linear perturbations, as `PBJTATTLoopComputer` requires."""
     perturbations, z = cosmo_setup
     return CAMBLinearPerturbations(perturbations.background, perturbations.z)

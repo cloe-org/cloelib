@@ -79,6 +79,11 @@ jobs:
             "mochi_classy @ git+https://github.com/mcataneo/mochi_class_public.git@mochi_classy"
       - name: Run tests
         run: mamba run -n $ENV_NAME python -m pytest
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
   build:
     name: Build
     runs-on: ubuntu-latest

@@ -46,7 +46,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/29857945?v=4",
       "profile": "https://github.com/DavidNavarroG",
       "contributions": [
-        "doc"
+        "doc",
+        "code"
       ]
     },
     {
@@ -209,7 +210,8 @@
         "code",
         "ideas",
         "bug",
-        "review"
+        "review",
+        "mentoring"
       ]
     },
     {
@@ -716,7 +718,9 @@
       "profile": "https://github.com/zuzannakr",
       "contributions": [
         "code",
-        "maintenance"
+        "maintenance",
+        "bug",
+        "doc"
       ]
     },
     {
@@ -724,6 +728,36 @@
       "name": "Guillermo Franco Abellán",
       "avatar_url": "https://avatars.githubusercontent.com/u/59618978?v=4",
       "profile": "https://gfabellan.github.io/",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "GiorgioLesci",
+      "name": "Giorgio Francesco Lesci",
+      "avatar_url": "https://avatars.githubusercontent.com/u/47445231?v=4",
+      "profile": "https://github.com/GiorgioLesci",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "AlessandraFumagalli",
+      "name": "AlessandraFumagalli",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78204603?v=4",
+      "profile": "https://github.com/AlessandraFumagalli",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "MCostanzi",
+      "name": "MCostanzi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17427602?v=4",
+      "profile": "https://github.com/MCostanzi",
       "contributions": [
         "code",
         "ideas"

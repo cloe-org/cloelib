@@ -17,6 +17,8 @@ $\Delta C_\ell = C_\ell^{\rm nonLimber} - C_\ell^{\rm Limber}$ (both linear)
 from the nodes to the requested multipoles.
 """
 
+from typing import Callable
+
 import interpax
 import jax.numpy as jnp
 import numpy as np
@@ -31,7 +33,13 @@ from cloelib.observables.photo.contributions import (
 from cloelib.observables.photo.spectrum_engine import SpectraBank
 
 
-def nonlimber_cl(contributions1, contributions2, z: Array, bank: SpectraBank) -> Array:
+def nonlimber_cl(
+    contributions1,
+    contributions2,
+    z: Array,
+    bank: SpectraBank,
+    raw_kernel: Callable | None = None,
+) -> Array:
     r"""Linear beyond-Limber $C_\ell$ of two sets of contributions, on the T-tilde nodes.
 
     For every pair $(a, b)$ of contributions: the two T-tilde matrices of
@@ -53,6 +61,9 @@ def nonlimber_cl(contributions1, contributions2, z: Array, bank: SpectraBank) ->
         The kernels vanish outside it.
       bank (SpectraBank): bank built with `t_tildes`; it provides the grids,
         $z(\chi)$ and the projected densities $w_\ell$.
+      raw_kernel (callable, optional): `contribution -> kernel on z`, e.g.
+        a cache shared with the Limber windows; defaults to
+        `contribution.compute_kernel(z)`.
 
     Returns:
       Array: $C_\ell$ at `bank.t_tildes.grid.ells`, shape
@@ -64,12 +75,16 @@ def nonlimber_cl(contributions1, contributions2, z: Array, bank: SpectraBank) ->
     grid = bank.t_tildes.grid
     z_of_chi = bank.z_of_chi()
     kernels = {}
+    if raw_kernel is None:
+
+        def raw_kernel(contribution):
+            return contribution.compute_kernel(z)
 
     def kernels_of(contribution, spec):
         key = id(contribution)
         if key not in kernels:
             kernels[key] = kernel_on_chi_R(
-                contribution.compute_kernel(z),
+                raw_kernel(contribution),
                 z,
                 z_of_chi,
                 grid.chi,

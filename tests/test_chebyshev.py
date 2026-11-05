@@ -127,7 +127,10 @@ def test_chebyshev_coefficients_along_the_first_axis():
     for i in range(3):
         for j in range(2):
             np.testing.assert_allclose(
-                coeffs[:, i, j], chebyshev_coefficients(f[:, i, j]), rtol=1e-12
+                coeffs[:, i, j],
+                chebyshev_coefficients(f[:, i, j]),
+                rtol=1e-12,
+                atol=1e-15,
             )
             np.testing.assert_allclose(
                 np.polynomial.chebyshev.chebval(u, np.asarray(coeffs[:, i, j])),

@@ -82,7 +82,7 @@ def projected_density(cheb_coeffs: Array, T_tilde: Array) -> Array:
     Returns:
       Array: projected density $w_\ell(\chi, R)$, shape `(n_ell, n_chi, n_R)`.
     """
-    return jnp.einsum("ijk,ljki->ljk", cheb_coeffs, T_tilde)
+    return jnp.sum(T_tilde * jnp.moveaxis(cheb_coeffs, 0, -1)[None], axis=-1)
 
 
 @partial(jax.jit, static_argnames=("divide_by_chi2",))

@@ -3,20 +3,34 @@ r"""Chebyshev nodes, Chebyshev expansions and Clenshaw-Curtis quadrature.
 The nodes are the Chebyshev extrema $x_k = \cos(\pi k / n)$, $k = 0, \dots, n$
 (Chebyshev-Lobatto nodes, including the endpoints), ordered from $+1$ to $-1$.
 On these nodes the Chebyshev coefficients of a function are given by a
-discrete cosine transform of type I, computed here with a real FFT.
+discrete cosine transform of type I, computed here as a matrix product.
 """
+
+from functools import lru_cache
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 from jax import Array
+
+
+@lru_cache(maxsize=None)
+def _dct_type1_matrix(n_points: int) -> np.ndarray:
+    """M[j, k] = s_k cos(pi j k / n), s_0 = s_n = 1/2, else 1: DCT-I as a matrix."""
+    n = n_points - 1
+    k = np.arange(n_points)
+    M = 2.0 * np.cos(np.pi * np.outer(k, k) / n)
+    M[:, [0, -1]] *= 0.5
+    return M
 
 
 @jax.jit
 def dct_type1(f_values: Array) -> Array:
     """Discrete cosine transform of type I along the first axis.
 
-    Computed as the real FFT of the even extension
-    `[f_0, ..., f_n, f_{n-1}, ..., f_1]` (no normalization).
+    Computed as the product with the DCT-I matrix (no normalization), the
+    same as the real FFT of the even extension
+    `[f_0, ..., f_n, f_{n-1}, ..., f_1]`.
 
     Args:
         f_values: Input values, shape `(n + 1, ...)` with `n >= 1`.
@@ -24,11 +38,8 @@ def dct_type1(f_values: Array) -> Array:
     Returns:
         DCT-I of the input along the first axis, same shape as `f_values`.
     """
-    internal_reversed = jnp.flip(f_values[1:-1], axis=0)
-    x_ext = jnp.concatenate([f_values, internal_reversed], axis=0)
-    X = jnp.fft.rfft(x_ext, axis=0)
-
-    return jnp.real(X[: f_values.shape[0]])
+    M = _dct_type1_matrix(f_values.shape[0])
+    return jnp.tensordot(M, f_values, axes=1, precision=jax.lax.Precision.HIGHEST)
 
 
 def chebyshev_points(n: int) -> Array:

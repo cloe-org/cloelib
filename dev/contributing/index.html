@@ -1083,6 +1083,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#previewing-the-documentation-of-a-pull-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Previewing the documentation of a pull request
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1249,6 +1260,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#previewing-the-documentation-of-a-pull-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Previewing the documentation of a pull request
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1339,6 +1361,14 @@
 <li>Tests demonstrating the fix or feature</li>
 </ul>
 <p>Our maintainers will review your contribution, and we'll work together to get it merged!</p>
+<h3 id="previewing-the-documentation-of-a-pull-request">Previewing the documentation of a pull request<a class="headerlink" href="#previewing-the-documentation-of-a-pull-request" title="Permanent link">&para;</a></h3>
+<p>For every pull request, the <code>Docs</code> workflow builds the documentation with <code>mkdocs build --strict</code> and uploads the resulting static site as a workflow artifact named <code>docs-site-pr-&lt;PR number&gt;</code>. Reviewers (and authors) can inspect the rendered pages without building them locally:</p>
+<ol>
+<li>Open the pull request's <strong>Checks</strong> tab and click <strong>Docs</strong> (the name, not the expand arrow) to open the workflow run summary.</li>
+<li>Scroll to the <strong>Artifacts</strong> section of the run summary and download <code>docs-site-pr-&lt;PR number&gt;</code>.</li>
+<li>Unzip it and serve it locally, for example with <code>python -m http.server --directory &lt;unzipped folder&gt; 8000</code>, then open <a href="http://localhost:8000">http://localhost:8000</a>.</li>
+</ol>
+<p>The artifact is kept for 14 days and is only a preview: the published documentation is still deployed only when changes are merged into <code>main</code> or a release tag is pushed. Opening <code>index.html</code> directly with <code>file://</code> can break search and some links, so use the local server.</p>
 <hr />
 <h2 id="code-standards">Code Standards<a class="headerlink" href="#code-standards" title="Permanent link">&para;</a></h2>
 <p>We maintain high code quality using automated tools via <a href="https://pre-commit.com/">pre-commit</a>:</p>

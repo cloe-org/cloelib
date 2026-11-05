@@ -53,15 +53,15 @@ def redshift_of_comoving_distance(background, chi, n_intervals=2048, z_max=20.0)
     """
     x = np.linspace(0.0, np.log1p(z_max), 2 * n_intervals + 1)  # nodes and midpoints
     zs = np.expm1(x)
-    integrand = (1.0 + zs) / jnp.asarray(
-        background.hubble_parameter(zs, units="1/Mpc")
-    )
+    integrand = (1.0 + zs) / jnp.asarray(background.hubble_parameter(zs, units="1/Mpc"))
     step = x[2] - x[0]
     chi_of_z = jnp.concatenate(
         [
             jnp.zeros(1),
             jnp.cumsum(
-                step / 6.0 * (integrand[:-1:2] + 4.0 * integrand[1::2] + integrand[2::2])
+                step
+                / 6.0
+                * (integrand[:-1:2] + 4.0 * integrand[1::2] + integrand[2::2])
             ),
         ]
     )

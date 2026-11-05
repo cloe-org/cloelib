@@ -157,7 +157,7 @@ class SpectraBank:
         distance to redshift) come from. By default they are resolved from
         `perturbations` (`linear_source`): its `linearperturbations`, or
         itself if it is a linear backend. Needed only for backends that do
-        not expose their linear spectrum (e.g. `CAMBNonLinearPerturbations`).
+        not expose their linear spectrum (every cloelib backend does).
       t_tildes: the T-tilde matrices, and the grids they were computed on.
         Needed for `nonlimber_cheb`/`projected_density` only.
     """

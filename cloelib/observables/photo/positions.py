@@ -284,9 +284,7 @@ class PBJNonlinearBiasLoopComputer:
     Takes the *same* `perturbations` object you'd pass to `PositionsTracer` -
     typically nonlinear, so this class resolves the actual linear source
     itself: `perturbations.linearperturbations` if that attribute exists,
-    else `perturbations` itself (assumed already linear). Same known gap as
-    `PBJTATTLoopComputer`: `CAMBNonLinearPerturbations` does not (yet) set
-    `.linearperturbations`.
+    else `perturbations` itself (assumed already linear).
 
     `sig4` (FAST-PT's `_get_sig4`) is a single k-independent normalisation
     constant (a UV-sensitive loop integral, not itself a function of k),

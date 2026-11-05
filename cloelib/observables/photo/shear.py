@@ -190,7 +190,9 @@ class PBJTATTLoopComputer:
     that's built *from* a separate linear one sets it -
     `HMemuNonLinearPerturbations`, `EE2NonLinearPerturbations`,
     `BACCOemuNonLinearPerturbations`, `EmantisFofrNonLinearPerturbations`,
-    `JAXNonLinearPerturbations`), else `perturbations` itself *if and only
+    `JAXNonLinearPerturbations`; `CAMBNonLinearPerturbations` sets the
+    given one, or the linear spectra of its own CAMB run when given None),
+    else `perturbations` itself *if and only
     if* it's itself a recognized `*LinearPerturbations` backend (see
     `spectrum_engine.linear_source`) - raises `ValueError` otherwise (PR
     #569 review): the absence of a `.linearperturbations` attribute does
@@ -198,17 +200,9 @@ class PBJTATTLoopComputer:
     treating an unrecognized nonlinear backend as linear would be a
     physical error, not a numerical one (FAST-PT would still return
     finite-looking, wrong spectra) - the kind that shouldn't fail silently.
-    `CAMBNonLinearPerturbations` is the concrete case this currently
-    excludes: it does not set `.linearperturbations` (its own
-    `matter_power_spectrum` is always nonlinear), so it now raises here
-    instead of being misused - pass `CAMBLinearPerturbations` directly
-    instead.
-
-    TODO (PR #569 review): standardize access to the corresponding linear
-    perturbations object across nonlinear cosmology backends (e.g. also
-    wiring it up for `CAMBNonLinearPerturbations`), so PT-based observables
-    can retrieve a linear P(k,z) through one common interface instead of
-    this getattr-plus-name-check fallback.
+    Every cloelib nonlinear backend sets `.linearperturbations` (PR #569
+    review: `CAMBNonLinearPerturbations` was the last one); the name check
+    remains for backends defined outside cloelib.
 
     FAST-PT requires its input k-grid to be evenly log-spaced (an FFTLog
     requirement); `TATTContribution`'s own `ks` (whatever grid the calling

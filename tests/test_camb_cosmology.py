@@ -586,3 +586,38 @@ def test_camb_linear_pk_uses_its_own_results(
         np.exp(np.interp(np.log(k_high), np.log(k_nodes), np.log(pk_nodes[i0]))),
         rtol=1e-2,
     )
+
+
+def test_camb_nonlinear_exposes_linear_of_same_run(camb_background_instance, zs):
+    """With `linearperturbations=None` the linear spectra of the same CAMB run
+    are exposed as `.linearperturbations` (the linear source of the linear and
+    beyond-Limber Cl, TATT and nonlinear-bias loops)."""
+    from cloelib.observables.photo.spectrum_engine import linear_source
+
+    nonlinear = CAMBNonLinearPerturbations(
+        camb_background_instance, None, zs, nonlinear_model="mead2020"
+    )
+    linear = nonlinear.linearperturbations
+    assert isinstance(linear, CAMBLinearPerturbations)
+    assert linear.results is nonlinear.results
+    assert linear_source(nonlinear) is linear
+    assert isinstance(linear, Perturbations)
+
+    ks = np.geomspace(1e-4, 5.0, 50)
+    z = np.array([0.0, 1.0])
+    separate = CAMBLinearPerturbations(camb_background_instance, zs)
+    assert_allclose(
+        linear.matter_power_spectrum(z, ks), separate.matter_power_spectrum(z, ks), rtol=1e-4
+    )
+    assert_allclose(linear.growth_factor(z, ks), separate.growth_factor(z, ks), rtol=1e-5)
+    # It is the linear spectrum, not the nonlinear one.
+    ratio = nonlinear.matter_power_spectrum(z, ks) / linear.matter_power_spectrum(z, ks)
+    assert np.max(ratio[0, ks > 1.0]) > 2.0
+
+
+def test_camb_nonlinear_keeps_given_linear(camb_background_instance, zs):
+    linear = CAMBLinearPerturbations(camb_background_instance, zs)
+    nonlinear = CAMBNonLinearPerturbations(
+        camb_background_instance, linear, zs, nonlinear_model="mead2020"
+    )
+    assert nonlinear.linearperturbations is linear

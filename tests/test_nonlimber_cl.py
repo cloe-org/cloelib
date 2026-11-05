@@ -442,6 +442,56 @@ def test_get_cl_tensor_adds_the_correction(
     assert not np.allclose(out[~outside], C_limber[~outside], rtol=1e-8, atol=0.0)
 
 
+@pytest.fixture(scope="module")
+def camb_nonlinear():
+    """`CAMBNonLinearPerturbations` built without a linear backend, as usual."""
+    from cloelib.cosmology.camb_cosmology import (
+        CAMBBackground,
+        CAMBNonLinearPerturbations,
+    )
+
+    background = CAMBBackground(
+        H0=67.7,
+        Omega_b0=0.05,
+        Omega_cdm0=0.25,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=0.06,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+        N_mnu=1,
+    )
+    return CAMBNonLinearPerturbations(
+        background, None, np.linspace(0.0, 1.5, 40), nonlinear_model="mead2020"
+    )
+
+
+@pytest.mark.parametrize("kind", ["gg", "gs", "ss"])
+def test_get_cl_tensor_with_camb_nonlinear(kind, camb_nonlinear, fake_default_store):
+    """The correction works with the CAMB nonlinear backend: its linear
+    spectra (of the same CAMB run) are the ones of the correction."""
+    nodes = fake_default_store.grid.ells
+    ell_max = float(nodes[1])
+    limber = _two_point(kind, camb_nonlinear, M_BIAS)
+    two_point = AngularTwoPoint(
+        limber.tracer1, limber.tracer2, ell_nonlimber_max=ell_max
+    )
+    ells = jnp.concatenate([nodes, jnp.array([300.0])])
+
+    bank = two_point._linear_bank(KS, t_tildes=fake_default_store)
+    assert bank is not None
+    out = two_point.get_Cl_tensor(ells, None, KS)
+    assert np.all(np.isfinite(out))
+    np.testing.assert_allclose(
+        out,
+        limber.get_Cl_tensor(ells, None, KS)
+        + two_point._nonlimber_correction(ells, KS, bank, ell_max),
+        rtol=1e-12,
+    )
+
+
 def test_get_cl_has_the_correction(tracer_perturbations, fake_default_store):
     """`get_Cl` packages the corrected `get_Cl_tensor`."""
     s = _shear(tracer_perturbations, M_BIAS)

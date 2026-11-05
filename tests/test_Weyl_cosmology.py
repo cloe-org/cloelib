@@ -278,3 +278,41 @@ def test_Weyl_sigma8_zini(
     result = Weyl_perturbation_instance.sigma8_zini()
 
     np.testing.assert_allclose(result, expected, rtol=1e-6)
+
+
+def test_Weyl_growth_since_zini(
+    Weyl_perturbation_instance,
+    class_perturbation_instances,
+    zs,
+    z_ini,
+):
+    """Test growth normalized to the initial redshift."""
+
+    class_lin = class_perturbation_instances["Linear"]
+
+    k = np.array([0.1])
+
+    # Linear growth factor at the requested redshifts
+    D_z = np.squeeze(class_lin.growth_factor(zs, k))
+
+    # Linear growth factor at z_ini
+    D_ini = np.squeeze(class_lin.growth_factor(np.array([z_ini]), k))
+
+    # Expected normalized growth
+    expected = D_z / D_ini
+
+    # Result returned by the Weyl wrapper
+    result = Weyl_perturbation_instance.growth_since_zini(zs)
+
+    np.testing.assert_allclose(result, expected, rtol=1e-6)
+
+
+def test_Weyl_growth_since_zini_normalization(
+    Weyl_perturbation_instance,
+    z_ini,
+):
+    """Test that growth normalized at z_ini equals unity."""
+
+    result = Weyl_perturbation_instance.growth_since_zini(np.array([z_ini]))
+
+    np.testing.assert_allclose(result, 1.0, rtol=1e-6)

@@ -40,12 +40,16 @@ def tracer_setup():
         zs, ks = np.atleast_1d(zs), np.atleast_1d(ks)
         return np.broadcast_to((1.0 / (1.0 + zs))[:, None], (len(zs), len(ks)))
 
+    z_ini = 4.0
+
     perturbations = SimpleNamespace(
         background=background,
-        z_ini=3.0,
+        z_ini=z_ini,
         sigma8_zini=lambda: 0.4,
         growth_factor=growth_factor,
+        growth_since_zini=lambda z: (1.0 + z_ini) / (1.0 + np.asarray(z)),
     )
+
     nuisance = {
         **{f"dz_pos_{i + 1}": 0.0 for i in range(2)},
         **{f"width_pos_{i + 1}": 1.0 for i in range(2)},
@@ -77,7 +81,7 @@ def test_initialization_and_bias(tracer_setup, name):
     assert isinstance(tracer, PositionsTracer)
     assert tracer.flags["galaxy_bias_model"] == "per_bin"
     assert tracer.perturbations is s.perturbations
-    assert tracer.z_ini == pytest.approx(3.0)
+    assert tracer.z_ini == pytest.approx(s.perturbations.z_ini)
     assert tracer.sigma8_ini == pytest.approx(0.4)
     assert tracer.n_z_bins == 2
     np.testing.assert_allclose(np.asarray(tracer.bias_array)[:2], [1.2, 1.5])
@@ -88,7 +92,10 @@ def test_initialization_and_bias(tracer_setup, name):
 
 # The next part is to verify that both Weyl tracer classes raise an AttributeError if the supplied perturbations object is missing either z_ini or sigma8_zini().
 @pytest.mark.parametrize("cls", [PositionsTracer_Weyl_GC, PositionsTracer_Weyl_GGL])
-@pytest.mark.parametrize("missing", ["z_ini", "sigma8_zini"])
+@pytest.mark.parametrize(
+    "missing",
+    ["z_ini", "sigma8_zini", "growth_since_zini"],
+)
 def test_required_perturbation_attributes(tracer_setup, cls, missing):
     """Fail clearly when a Weyl-specific perturbation capability is absent."""
     s = tracer_setup
@@ -100,16 +107,26 @@ def test_required_perturbation_attributes(tracer_setup, cls, missing):
         cls(perturbations, s.dndz, s.z, s.nuisance, **kwargs)
 
 
-@pytest.mark.parametrize("name", ["gc", "ggl"])
-def test_growth_since_zini(tracer_setup, name):
-    """D(z)/D(z_ini) has the correct normalization and redshift dependence."""
+@pytest.mark.parametrize(
+    "cls",
+    [PositionsTracer_Weyl_GC, PositionsTracer_Weyl_GGL],
+)
+def test_growth_since_zini_delegation(tracer_setup, cls):
+    """Test that Weyl tracers use the perturbations growth method."""
+
     s = tracer_setup
-    tracer = getattr(s, name)
-    expected = (1.0 + tracer.z_ini) / (1.0 + s.z)
-    np.testing.assert_allclose(np.asarray(tracer.growth_since_zini(s.z)), expected)
-    np.testing.assert_allclose(
-        np.asarray(tracer.growth_since_zini(np.array([tracer.z_ini]))), 1.0
+
+    kwargs = {"Jhat_params": s.jhat} if cls is PositionsTracer_Weyl_GGL else {}
+
+    tracer = cls(
+        s.perturbations,
+        s.dndz,
+        s.z,
+        s.nuisance,
+        **kwargs,
     )
+
+    assert tracer.growth_since_zini is s.perturbations.growth_since_zini
 
 
 @pytest.mark.parametrize("name", ["gc", "ggl"])

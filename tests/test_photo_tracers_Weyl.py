@@ -203,7 +203,7 @@ def test_ia_only_contributions(monkeypatch):
 
     ia = object()
 
-    def fake_parent_init(self):
+    def fake_parent_init(self, *args, **kwargs):
         self.ia = ia
 
     monkeypatch.setattr(ShearTracer, "__init__", fake_parent_init)
@@ -215,7 +215,7 @@ def test_ia_only_rejects_missing_ia(monkeypatch):
     """An IA-only shear tracer cannot be constructed without an IA term."""
     from cloelib.observables.photo.shear import ShearTracer
 
-    def fake_parent_init(self):
+    def fake_parent_init(self, *args, **kwargs):
         self.ia = None
 
     monkeypatch.setattr(ShearTracer, "__init__", fake_parent_init)

@@ -13,6 +13,7 @@ class FakeBackground:
     """Minimal background implementation needed by the GW tracers."""
 
     H0 = 70.0
+    Omega_k0 = 0.0
 
     def Omega_m(self, z):
         return 0.3 + 0.0 * z

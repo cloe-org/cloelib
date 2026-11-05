@@ -5,7 +5,12 @@ from cloelib.observables.photo.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
 from cloelib.observables.cmb import CMBLensingTracer
-from cloelib.observables.photo.contributions import CB, MATTER, contribution_field
+from cloelib.observables.photo.contributions import (
+    CB,
+    MATTER,
+    contribution_field,
+    traces_potential,
+)
 from cloelib.observables.photo.spectrum_engine import (
     SpectraBank,
     get_effective_pk,
@@ -14,6 +19,13 @@ from cloelib.observables.photo.spectrum_engine import (
 )
 from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.geometry import (
+    curvature,
+    is_flat,
+    limber_wavenumber,
+    potential_response,
+    transverse_distance,
+)
 from cloelib.auxiliary.math_utils import (
     quadrature_weights,
     simpsons_weights_avg,
@@ -589,8 +601,8 @@ class AngularTwoPoint:
 
         Parameters:
             bank (SpectraBank): The spectra of this `get_Cl` call.
-            k_lz (jax.numpy.ndarray): Limber wavenumbers `(ell + 1/2) / chi(z)`,
-                shape `(len(ells), len(z_l))`.
+            k_lz (jax.numpy.ndarray): Limber wavenumbers, shape
+                `(len(ells), len(z_l))`.
             z_l (jax.numpy.ndarray): Redshift grid of the Limber integral.
 
         Returns:
@@ -609,33 +621,37 @@ class AngularTwoPoint:
         return limber_pk
 
     @staticmethod
-    def _windows_by_field(tracer, z) -> dict:
+    def _windows_by_field(tracer, z, by_potential=False) -> dict:
         """
         Window of `tracer` split by the field its contributions trace.
 
-        `{field: tracer.get_window(z)}` when all contributions trace the same
-        field (every tracer except `PositionsTracer(use_Pcb=True)`, whose
+        `{key: tracer.get_window(z)}` when all contributions share the same
+        key (every tracer except `PositionsTracer(use_Pcb=True)`, whose
         galaxy-bias term traces cb and magnification term the total matter);
-        otherwise the contribution kernels are summed per field. Going
+        otherwise the contribution kernels are summed per key. Going
         through `get_window` whenever possible keeps any tracer-level factor
         it applies (e.g. `ShearTracer`'s multiplicative bias), so a tracer
-        with mixed fields must not apply one.
+        with mixed keys must not apply one.
 
         Parameters:
             tracer (Tracer): The tracer.
             z (jax.numpy.ndarray): Redshift grid of the Limber integral.
+            by_potential (bool): Also split by `traces_potential`.
 
         Returns:
-            (dict): Field (`MATTER` or `CB`) -> window, shape `(n_bins, len(z))`.
+            (dict): `(field, potential)` -> window, shape `(n_bins, len(z))`.
         """
         contributions = getattr(tracer, "get_contributions", lambda: ())()
-        fields = [contribution_field(c) for c in contributions]
-        if len(set(fields)) <= 1:
-            return {fields[0] if fields else MATTER: tracer.get_window(z)}
+        keys = [
+            (contribution_field(c), by_potential and traces_potential(c))
+            for c in contributions
+        ]
+        if len(set(keys)) <= 1:
+            return {keys[0] if keys else (MATTER, False): tracer.get_window(z)}
         windows = {}
-        for field, contribution in zip(fields, contributions):
+        for key, contribution in zip(keys, contributions):
             kernel = contribution.compute_kernel(z)
-            windows[field] = windows[field] + kernel if field in windows else kernel
+            windows[key] = windows[key] + kernel if key in windows else kernel
         return windows
 
     @profile_function
@@ -738,14 +754,25 @@ class AngularTwoPoint:
         H = self.tracer1.perturbations.background.hubble_parameter(
             zs_calc, units="km/s/Mpc"
         )
-        chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
-        chi2 = chi**2
+        background = self.tracer1.perturbations.background
+        chi = background.comoving_distance(zs_calc)
+        Ok, H0 = background.Omega_k0, background.H0
+        curved = not is_flat(Ok)
+        f_K = transverse_distance(chi, Ok, H0)
+        K = curvature(Ok, H0)
+        chi2 = f_K**2
+        response = potential_response(ells, f_K, K) if curved else None
 
         # Window terms of each tracer as (traced field, window, depends on ell).
         def window_terms(tracer):
+            windows = self._windows_by_field(tracer, zs_calc, by_potential=curved)
             return [
-                (field, window, False)
-                for field, window in self._windows_by_field(tracer, zs_calc).items()
+                (
+                    (field, response[:, None, :] * window[None, :, :], True)
+                    if potential
+                    else (field, window, False)
+                )
+                for (field, potential), window in windows.items()
             ]
 
         def has_rsd(tracer):
@@ -778,7 +805,10 @@ class AngularTwoPoint:
         bank = SpectraBank.from_perturbations(
             self.tracer1.perturbations, ks, self.tracer1.perturbations.z
         )
-        k_lz = np.expand_dims((ells + 0.5), 1) / chi
+        if curved:
+            k_lz = limber_wavenumber(ells, f_K, K)
+        else:
+            k_lz = np.expand_dims((ells + 0.5), 1) / f_K
         limber_pk = self._limber_base_spectra(bank, k_lz, zs_calc)
 
         # Redshift quadrature of the Limber integral: no alternating Simpson weights, so
@@ -876,8 +906,21 @@ class AngularTwoPoint:
         H = self.tracer1.perturbations.background.hubble_parameter(
             zs_calc, units="km/s/Mpc"
         )
-        chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
-        chi2 = chi**2
+        background = self.tracer1.perturbations.background
+        chi = background.comoving_distance(zs_calc)
+        Ok, H0 = background.Omega_k0, background.H0
+        curved = not is_flat(Ok)
+        f_K = transverse_distance(chi, Ok, H0)
+        K = curvature(Ok, H0)
+        chi2 = f_K**2
+        response = potential_response(ells, f_K, K) if curved else None
+
+        def pair_response(c1, c2):
+            if not curved:
+                return None
+            n_potential = traces_potential(c1) + traces_potential(c2)
+            return response**n_potential if n_potential else None
+
         # Redshift quadrature of the Limber integral: no alternating Simpson weights, so
         # the result does not depend on the parity of the number of redshift nodes
         # (see `simpsons_weights_avg`).
@@ -885,7 +928,10 @@ class AngularTwoPoint:
 
         pert_zs = self.tracer1.perturbations.z
         bank = SpectraBank.from_perturbations(self.tracer1.perturbations, ks, pert_zs)
-        k_lz = np.expand_dims((ells + 0.5), 1) / chi
+        if curved:
+            k_lz = limber_wavenumber(ells, f_K, K)
+        else:
+            k_lz = np.expand_dims((ells + 0.5), 1) / f_K
         limber_pk = self._limber_base_spectra(bank, k_lz, zs_calc)
 
         n_bin1 = self.tracer1.n_z_bins
@@ -894,6 +940,7 @@ class AngularTwoPoint:
 
         for c1 in contributions1:
             for c2 in contributions2:
+                pair_resp = pair_response(c1, c2)
                 terms = get_pk_terms(c1, c2, zs_calc, bank)
                 if terms is not None:
                     # Per-bin-varying amplitudes (e.g.
@@ -912,6 +959,8 @@ class AngularTwoPoint:
                     Pkl_stack = Pkl_interp_signed_vmap_terms(
                         k_lz, zs_calc, ks, pert_zs, pk_stack
                     )
+                    if pair_resp is not None:
+                        Pkl_stack = Pkl_stack * pair_resp[None, :, :]
                     C_ell_calc = C_ell_calc + Cl_integration_batched(
                         kernel1_stack, kernel2_stack, Pkl_stack, H, chi2, weights
                     )
@@ -928,6 +977,9 @@ class AngularTwoPoint:
                     Pkl_pair = Pkl_interp_signed_vmap(
                         k_lz, zs_calc, ks, pert_zs, pk_eff.T
                     )
+
+                if pair_resp is not None:
+                    Pkl_pair = Pkl_pair * pair_resp
 
                 W1 = c1.compute_kernel(zs_calc)
                 W2 = c2.compute_kernel(zs_calc)

@@ -5,6 +5,7 @@ Module with one class to compute the BNT matrix.
 import numpy as np
 import jax.numpy as jnp
 from cloelib.cosmology.cosmology import Background
+from cloelib.auxiliary.geometry import cos_K, transverse_distance
 from typing import List, TypeVar, Union
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
@@ -56,6 +57,10 @@ class BNTMatrixCalculator:
                 )
 
         self.chi = self.background.comoving_distance(self.z)
+        Ok, H0 = self.background.Omega_k0, self.background.H0
+        self.cot_K = np.asarray(cos_K(self.chi, Ok, H0)) / np.asarray(
+            transverse_distance(self.chi, Ok, H0)
+        )
 
     def get_bnt_matrix(self) -> np.ndarray:
         """
@@ -76,7 +81,7 @@ class BNTMatrixCalculator:
 
         nz_arr = np.stack(self.dndz_list, axis=0)
         A = trapz(nz_arr, self.z, axis=1)
-        B = trapz(nz_arr / self.chi[None, :], self.z, axis=1)
+        B = trapz(nz_arr * self.cot_K[None, :], self.z, axis=1)
 
         BNT_matrix = np.eye(self.nbins)
         BNT_matrix[1, 0] = -1.0

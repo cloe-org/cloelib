@@ -2,6 +2,7 @@
 
 # cloelib imports
 from cloelib.auxiliary import units
+from cloelib.auxiliary.geometry import transverse_distance
 
 # General imports
 import numpy as np
@@ -48,7 +49,10 @@ def dV_dzdO(background, zs: np.ndarray, hubble_units=False) -> np.ndarray:
     _dV_dzdO = (
         units.SPEED_OF_LIGHT
         / 1.0e3
-        * background.comoving_distance(zs) ** 2.0
+        * transverse_distance(
+            background.comoving_distance(zs), background.Omega_k0, background.H0
+        )
+        ** 2.0
         / background.hubble_parameter(zs)
     )
     if hubble_units:

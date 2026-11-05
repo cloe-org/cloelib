@@ -35,6 +35,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 from jax import Array
@@ -109,19 +110,22 @@ class NonLimberGrid:
         """
         n_chi, n_R, n_k = 128, 64, 160
 
-        ells = jnp.flip(chebyshev_points_interval(100, 2.0, 2000.0))
-        ells = ells[ells < 220.0]
+        # Fixed grids, concrete also when called under `jax.jit` (the
+        # boolean mask on the ells needs concrete values).
+        with jax.ensure_compile_time_eval():
+            ells = jnp.flip(chebyshev_points_interval(100, 2.0, 2000.0))
+            ells = ells[ells < 220.0]
 
-        chi, d_chi = jnp.linspace(26.0, 7000.0, n_chi, retstep=True)
-        w_chi = chi * simpsons_weights_jit(n_chi) * d_chi
+            chi, d_chi = jnp.linspace(26.0, 7000.0, n_chi, retstep=True)
+            w_chi = chi * simpsons_weights_jit(n_chi) * d_chi
 
-        R_all, w_all = clenshaw_curtis_quadrature(2 * n_R + 1, -1.0, 1.0)
-        R = jnp.flip(R_all[:n_R])
-        w_R = jnp.flip(w_all[:n_R]).at[0].multiply(0.5)
+            R_all, w_all = clenshaw_curtis_quadrature(2 * n_R + 1, -1.0, 1.0)
+            R = jnp.flip(R_all[:n_R])
+            w_R = jnp.flip(w_all[:n_R]).at[0].multiply(0.5)
 
-        k_cheb = chebyshev_points_interval(
-            n_k, float(np.log10(5e-5)), float(np.log10(16.0))
-        )
+            k_cheb = chebyshev_points_interval(
+                n_k, float(np.log10(5e-5)), float(np.log10(16.0))
+            )
         return cls(ells=ells, chi=chi, R=R, k_cheb=k_cheb, w_chi=w_chi, w_R=w_R)
 
 

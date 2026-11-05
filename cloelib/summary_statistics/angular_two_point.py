@@ -36,6 +36,7 @@ from cloelib.profiling import profile_function
 import interpax
 import jax.numpy as np
 import jax
+import numpy as _numpy
 
 # results imports
 from cosmolib.data import AngularPowerSpectrum, COSEBI
@@ -637,7 +638,7 @@ class AngularTwoPoint:
 
         Only the grid of the standard dataset is used, so no file is read.
         """
-        nodes = np.asarray(NonLimberGrid.blast_128_64_161().ells)
+        nodes = _numpy.asarray(NonLimberGrid.blast_128_64_161().ells)
         if not float(nodes[0]) <= ell_max <= float(nodes[-1]):
             raise ValueError(
                 f"ell_nonlimber_max = {ell_max} must lie within the beyond-Limber "

@@ -47,7 +47,7 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
         else:
             raise AttributeError(
                 "The perturbations object must have a 'z_ini' attribute for Weyl calculations. "
-                "Please ensure that the perturbations object is an instance of WeylNonLinearPerturbations or WeylLinearPerturbations."
+                "Please ensure that the perturbations object is an instance of WeylPerturbations."
             )
 
         # Get sigma8 at z_ini
@@ -58,7 +58,19 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
             raise AttributeError(
                 "The perturbations object must have a callable 'sigma8_zini' method "
                 "for Weyl calculations. Please ensure that the perturbations object "
-                "is an instance of WeylNonLinearPerturbations or WeylLinearPerturbations."
+                "is an instance of WeylPerturbations."
+            )
+
+        # Get function growth_since_zini from perturbations object
+        growth_since_zini = getattr(self.perturbations, "growth_since_zini", None)
+
+        if callable(growth_since_zini):
+            self.growth_since_zini = growth_since_zini
+        else:
+            raise AttributeError(
+                "The perturbations object must have a callable 'growth_since_zini' method "
+                "for Weyl calculations. Please ensure that the perturbations object "
+                "is an instance of WeylPerturbations."
             )
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z))
@@ -66,14 +78,6 @@ class PositionsTracer_Weyl_GC(PositionsTracer):
             [nuisance_params["bhat_bin%d" % bin] for bin in range(self.n_z_bins)]
         )
         self.bias_array = np.pad(bias_vals, (0, self.z.shape[0] - self.n_z_bins))
-
-    def growth_since_zini(self, z) -> np.ndarray:
-        """New function to account for the growth (in GR) since z_ini"""
-        k = np.array([0.1])
-        growth = np.squeeze(self.perturbations.growth_factor(z, k)) / np.squeeze(
-            self.perturbations.growth_factor(np.array([self.z_ini]), k)
-        )
-        return growth
 
     def get_window_positions(self, z) -> np.ndarray:
         """Weyl GC positions window: uses bhat and divides by sigma8_ini (single power)."""
@@ -151,7 +155,7 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
         else:
             raise AttributeError(
                 "The perturbations object must have a 'z_ini' attribute for Weyl calculations. "
-                "Please ensure that the perturbations object is an instance of WeylNonLinearPerturbations or WeylLinearPerturbations."
+                "Please ensure that the perturbations object is an instance of WeylPerturbations."
             )
 
         # Get sigma8 at z_ini
@@ -162,7 +166,19 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
             raise AttributeError(
                 "The perturbations object must have a callable 'sigma8_zini' method "
                 "for Weyl calculations. Please ensure that the perturbations object "
-                "is an instance of WeylNonLinearPerturbations or WeylLinearPerturbations."
+                "is an instance of WeylPerturbations."
+            )
+
+        # Get function growth_since_zini from perturbations object
+        growth_since_zini = getattr(self.perturbations, "growth_since_zini", None)
+
+        if callable(growth_since_zini):
+            self.growth_since_zini = growth_since_zini
+        else:
+            raise AttributeError(
+                "The perturbations object must have a callable 'growth_since_zini' method "
+                "for Weyl calculations. Please ensure that the perturbations object "
+                "is an instance of WeylPerturbations."
             )
 
         # Override bias_array to use bhat_binN naming (bhat = b(z)*sigma8(z) in your scheme)
@@ -177,14 +193,6 @@ class PositionsTracer_Weyl_GGL(PositionsTracer):
             [Jhat_params["Jhat_bin%d" % bin] for bin in range(self.n_z_bins)]
         )
         self.Jhat_array = np.pad(jhat_vals, (0, self.z.shape[0] - self.n_z_bins))
-
-    def growth_since_zini(self, z) -> np.ndarray:
-        """New function to account for the growth (in GR) since z_ini"""
-        k = np.array([0.1])
-        growth = np.squeeze(self.perturbations.growth_factor(z, k)) / np.squeeze(
-            self.perturbations.growth_factor(np.array([self.z_ini]), k)
-        )
-        return growth
 
     def get_window_positions(self, z) -> np.ndarray:
         """Weyl-modified positions window: multiplies by Jhat and by bhat; removes Omega_m^{-1}(z) factor;

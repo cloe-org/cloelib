@@ -175,3 +175,11 @@ class WeylPerturbations:
         )  # this is already normalized to 1 at z=0
         sigma8_zini = self.sigma8_0() * D_zini
         return sigma8_zini
+
+    def growth_since_zini(self, z) -> np.ndarray:
+        """New function to account for the growth (in GR) since z_ini"""
+        k = np.array([0.1])
+        growth = np.squeeze(self.linearperturbations.growth_factor(z, k)) / np.squeeze(
+            self.linearperturbations.growth_factor(np.array([self.z_ini]), k)
+        )
+        return growth

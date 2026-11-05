@@ -526,6 +526,10 @@ class mochiCLASSBackground:
         """Redshift of photon decoupling."""
         return self.results.get_current_derived_parameters(["z_star"])["z_star"]
 
+    def theta_star_100(self) -> float:
+        """Angular size of the sound horizon at last scattering in degrees."""
+        return self.results.theta_star_100()
+
 
 ####################################
 ############## LINEAR ##############

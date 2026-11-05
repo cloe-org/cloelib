@@ -1,3 +1,6 @@
+from functools import partial
+
+import interpax
 import jax.numpy as np
 import jax
 from jax import jit
@@ -7,50 +10,120 @@ from .angular_correlation_function import AngularCorrelationFunction
 from cloelib.auxiliary.cache import memoize_jax
 
 
+# Each Wigner small-d element d^l_{m m'}(beta) is computed with an upward
+# three-term recurrence in l, seeded by closed-form expressions at the two
+# lowest multipoles l0 and l0 + 1. Each element is defined by
+#   - l0: the lowest multipole (max(|m|, |m'|)),
+#   - an ``init`` function returning (d^{l0}, d^{l0+1}),
+#   - a ``step`` function returning d^l from (cos(beta), l, d^{l-1}, d^{l-2}).
+# The same definitions are used for single-multipole evaluation
+# (``_d_*_ell_compute``) and for full tables over all multipoles
+# (``_d_*_vmap_compute``).
+
+
+def _d_0_0_init(beta):
+    return np.ones_like(beta), np.cos(beta)
+
+
+def _d_0_0_step(cos_beta, ell, prev, prev2):
+    return (2 * ell - 1) / ell * cos_beta * prev - (ell - 1) / ell * prev2
+
+
+def _d_2_2_init(beta):
+    return (1 / 4) * (1 + np.cos(beta)) ** 2, np.cos(beta / 2) ** 4 * (
+        3 * np.cos(beta) - 2
+    )
+
+
+def _d_2_2_step(cos_beta, ell, prev, prev2):
+    return (ell * (2 * ell - 1) / (ell**2 - 4)) * (
+        (cos_beta - (4 / (ell * (ell - 1)))) * prev
+        - (((ell - 1) ** 2 - 4) / ((ell - 1) * (2 * ell - 1))) * prev2
+    )
+
+
+def _d_2_m2_init(beta):
+    return (1 / 4) * (1 - np.cos(beta)) ** 2, np.sin(beta / 2) ** 4 * (
+        3 * np.cos(beta) + 2
+    )
+
+
+def _d_2_m2_step(cos_beta, ell, prev, prev2):
+    return (ell * (2 * ell - 1) / (ell**2 - 4)) * (
+        (cos_beta + (4 / (ell * (ell - 1)))) * prev
+        - (((ell - 1) ** 2 - 4) / ((ell - 1) * (2 * ell - 1))) * prev2
+    )
+
+
+def _d_2_0_init(beta):
+    return np.sqrt(3 / 8) * np.sin(beta) ** 2, (np.sqrt(30) / 4) * np.sin(
+        beta
+    ) ** 2 * np.cos(beta)
+
+
+def _d_2_0_step(cos_beta, ell, prev, prev2):
+    sqrt_l2_4 = np.sqrt(ell**2 - 4)
+    sqrt_lm1_2_4 = np.sqrt((ell - 1) ** 2 - 4)
+    return ((2 * ell - 1) / sqrt_l2_4) * (
+        cos_beta * prev - (sqrt_lm1_2_4 / (2 * ell - 1)) * prev2
+    )
+
+
+def _recurrence_value(beta, ell, l0, init, step):
+    """Evaluate d^ell(beta) for a single (possibly traced) multipole ``ell >= l0``."""
+    cos_beta = np.cos(beta)
+    d_l0, d_l1 = init(beta)
+
+    def body(ell_i, vals):
+        prev, prev2 = vals
+        return step(cos_beta, ell_i, prev, prev2), prev
+
+    d_ell = jax.lax.fori_loop(l0 + 2, ell + 1, body, (d_l1, d_l0))[0]
+    return np.where(ell == l0, d_l0, np.where(ell == l0 + 1, d_l1, d_ell))
+
+
+def _recurrence_table(beta, lmax, l0, init, step):
+    """
+    Evaluate d^l(beta) for all multipoles 0 <= l <= lmax in a single pass.
+
+    Returns an array of shape ``(lmax + 1,) + beta.shape``. Entries with
+    ``l < l0`` (where the element is not defined) are set to zero.
+    """
+    beta = np.asarray(beta, dtype=float)
+    cos_beta = np.cos(beta)
+    d_l0, d_l1 = init(beta)
+
+    def body(vals, ell):
+        prev, prev2 = vals
+        new_val = step(cos_beta, ell, prev, prev2)
+        return (new_val, prev), new_val
+
+    ells = np.arange(l0 + 2, lmax + 1, dtype=beta.dtype)
+    _, d_rest = jax.lax.scan(body, (d_l1, d_l0), ells)
+    table = np.concatenate(
+        [np.zeros((l0,) + beta.shape, beta.dtype), d_l0[None], d_l1[None], d_rest]
+    )
+    return table[: lmax + 1]
+
+
 @jit
 def _d_0_0_ell_compute(beta: float, ell: int) -> float:
     r"""
     Evaluate the Wigner small-d matrix element \(d^{\ell}_{0\,0}(\beta)\).
 
-    For the two lowest multipoles (ℓ = 0, 1) the element is returned from
-    closed-form expressions.  Higher orders are computed with a stable
-    three-term recurrence that is compatible with ``jax.jit`` tracing.
-
     Parameters
     ----------
     beta : float or jax.numpy.ndarray
-        Polar angle in **radians**.  May be a scalar or an array
-        broadcastable to the shape of *ell*.
+        Polar angle in **radians**.
     ell : int or jax.numpy.ndarray
-        Total angular-momentum quantum number ``ℓ ≥ 0``.  Accepts a Python
-        ``int`` (known at compile time) or a 0-D JAX array.
+        Multipole ``ℓ ≥ 0``. Can be a Python ``int`` or a 0-D JAX array.
 
     Returns
     -------
     d00_ell : same type as *beta*
-        The value of \(d^{\ell}_{0\,0}(\beta)\), with dtype promotions
-        governed by JAX’s standard casting rules.
+        The value of \(d^{\ell}_{0\,0}(\beta)\).
     """
-    base_case_0 = np.ones_like(beta)
-    base_case_1 = np.cos(beta)
-
-    def recurrence_fn(ell, vals):
-        prev, prev2 = vals
-        new_val = (2 * ell - 1) / (ell) * base_case_1 * prev - (
-            (ell - 1) / (ell)
-        ) * prev2
-
-        return new_val, prev
-
-    return np.where(
-        ell == 0,
-        base_case_0,
-        np.where(
-            ell == 1,
-            base_case_1,
-            jax.lax.fori_loop(2, ell + 1, recurrence_fn, (base_case_1, base_case_0))[0],
-        ),
-    )
+    return _recurrence_value(beta, ell, 0, _d_0_0_init, _d_0_0_step)
 
 
 @jit
@@ -58,64 +131,19 @@ def _d_2_2_ell_compute(beta: float, ell: int) -> float:
     r"""
     Evaluate the Wigner small-d matrix element \(d^{\ell}_{2\,2}(\beta)\).
 
-    Closed-form expressions are returned for the first two multipoles
-    (ℓ = 2, 3).  For higher orders a numerically stable three-term
-    recurrence is used, and once ℓ exceeds a configurable threshold
-    (ℓ ≈ 30 000) the algorithm switches to an asymptotic two-term
-    approximation that remains compatible with ``jax.jit``.
-
     Parameters
     ----------
-    beta : float
-        Polar angle in **radians** at which the element is evaluated.
-        May be a scalar or an array broadcastable to the shape of
-        *ell*.
-    ell : int
-        Total angular-momentum quantum number ``ℓ ≥ 2``.  Can be a Python
-        ``int`` (traced at compile time) or a 0-D JAX array.
+    beta : float or jax.numpy.ndarray
+        Polar angle in **radians**.
+    ell : int or jax.numpy.ndarray
+        Multipole ``ℓ ≥ 2``. Can be a Python ``int`` or a 0-D JAX array.
 
     Returns
     -------
     d22_ell : same type as *beta*
-        The value of \(d^{\ell}_{2\,2}(\beta)\), with dtype promoted by
-        JAX according to its standard casting rules.
+        The value of \(d^{\ell}_{2\,2}(\beta)\).
     """
-    # Base cases
-    base_case_2 = (1 / 4) * (1 + np.cos(beta)) ** 2
-    base_case_3 = np.cos(beta / 2) ** 4 * (3 * np.cos(beta) - 2)
-
-    # Recurrence relation for small ell
-    def recurrence_fn(ell, vals):
-        prev, prev2 = vals
-        new_val = (ell * (2 * ell - 1) / (ell**2 - 4)) * (
-            (_d_0_0_ell_compute(beta, 1) - (4 / (ell * (ell - 1)))) * prev
-            - (((ell - 1) ** 2 - 4) / ((ell - 1) * (2 * ell - 1))) * prev2
-        )
-        return new_val, prev
-
-    # Approximation for large ell (fixed to explicitly pass `beta`)
-    def approximation_fn(ell, vals):
-        prev, prev2 = vals
-        new_val = 2 * _d_0_0_ell_compute(beta, 1) * prev - prev2
-        return new_val, prev
-
-    # Compute using a JIT-compatible conditional switch
-    def compute_d_2_2(ell):
-        return jax.lax.cond(
-            ell < 30000,
-            lambda: jax.lax.fori_loop(
-                4, ell + 1, recurrence_fn, (base_case_3, base_case_2)
-            )[0],
-            lambda: jax.lax.fori_loop(
-                50, ell + 1, approximation_fn, (base_case_3, base_case_2)
-            )[0],
-        )
-
-    return jax.lax.cond(
-        ell == 2,
-        lambda: base_case_2,
-        lambda: jax.lax.cond(ell == 3, lambda: base_case_3, lambda: compute_d_2_2(ell)),
-    )
+    return _recurrence_value(beta, ell, 2, _d_2_2_init, _d_2_2_step)
 
 
 @jit
@@ -123,64 +151,19 @@ def _d_2_m2_ell_compute(beta: float, ell: int) -> float:
     r"""
     Evaluate the Wigner small-d matrix element \(d^{\ell}_{2,\,-2}(\beta)\).
 
-    For the first two multipoles (ℓ = 2, 3) the value is returned from
-    closed-form expressions.  Higher orders are obtained with a stable
-    three-term recurrence.  When ℓ exceeds a configurable threshold
-    (ℓ ≈ 30 000) the algorithm switches to an asymptotic two-term
-    approximation that remains compatible with ``jax.jit``.
-
     Parameters
     ----------
-    beta : float
-        Polar angle in **radians** at which the element is evaluated.
-        May be a scalar or an array broadcastable to the shape of
-        *ell*.
-    ell : int
-        Total angular-momentum quantum number ``ℓ ≥ 2``.  Can be a
-        Python ``int`` (traced at compile time) or a 0-D JAX array.
+    beta : float or jax.numpy.ndarray
+        Polar angle in **radians**.
+    ell : int or jax.numpy.ndarray
+        Multipole ``ℓ ≥ 2``. Can be a Python ``int`` or a 0-D JAX array.
 
     Returns
     -------
     d2m2_ell : same type as *beta*
-        The value of \(d^{\ell}_{2,\,-2}(\beta)\), with dtype promoted
-        by JAX according to its standard casting rules.
+        The value of \(d^{\ell}_{2,\,-2}(\beta)\).
     """
-    # Base cases
-    base_case_2 = (1 / 4) * (1 - np.cos(beta)) ** 2
-    base_case_3 = np.sin(beta / 2) ** 4 * (3 * np.cos(beta) + 2)
-
-    # Recurrence relation for small ell
-    def recurrence_fn(ell, vals):
-        prev, prev2 = vals
-        new_val = (ell * (2 * ell - 1) / (ell**2 - 4)) * (
-            (_d_0_0_ell_compute(beta, 1) + (4 / (ell * (ell - 1)))) * prev
-            - (((ell - 1) ** 2 - 4) / ((ell - 1) * (2 * ell - 1))) * prev2
-        )
-        return new_val, prev
-
-    # Approximation for large ell (fixed to explicitly pass `beta`)
-    def approximation_fn(ell, vals):
-        prev, prev2 = vals
-        new_val = 2 * _d_0_0_ell_compute(beta, 1) * prev - prev2
-        return new_val, prev
-
-    # Compute using a JIT-compatible conditional switch
-    def compute_d_2_2(ell):
-        return jax.lax.cond(
-            ell < 30000,
-            lambda: jax.lax.fori_loop(
-                4, ell + 1, recurrence_fn, (base_case_3, base_case_2)
-            )[0],
-            lambda: jax.lax.fori_loop(
-                50, ell + 1, approximation_fn, (base_case_3, base_case_2)
-            )[0],
-        )
-
-    return jax.lax.cond(
-        ell == 2,
-        lambda: base_case_2,
-        lambda: jax.lax.cond(ell == 3, lambda: base_case_3, lambda: compute_d_2_2(ell)),
-    )
+    return _recurrence_value(beta, ell, 2, _d_2_m2_init, _d_2_m2_step)
 
 
 @jit
@@ -188,67 +171,19 @@ def _d_2_0_ell_compute(beta: float, ell: int) -> float:
     r"""
     Evaluate the Wigner small-d matrix element \(d^{\ell}_{20}(\beta)\).
 
-    For the lowest multipoles (ℓ = 2, 3) the value is returned from a closed–
-    form expression; higher orders are obtained recursively from
-    \(d^{\ell-1}_{20}\) and \(d^{\ell-2}_{20}\).
-    Beyond a configurable threshold (ℓ ≈ 30 000) the stable three-term
-    *approximation*
-    \(d^{\ell}_{20} ≈ 2\,d^{1}_{00}\,d^{\ell-1}_{20}-d^{\ell-2}_{20}\)
-    is used to avoid numerical overflow while remaining compatible with
-    `jax.jit`.
-
     Parameters
     ----------
-    beta : float
-        Polar angle in radians at which the element is evaluated.  May be a
-        scalar or an array broadcastable to the shape of *ell*.
-    ell : int
-        Total angular-momentum quantum number ℓ ≥ 2.  Can be a Python `int`
-        (traced at compile time) or a 0-D JAX array.
+    beta : float or jax.numpy.ndarray
+        Polar angle in **radians**.
+    ell : int or jax.numpy.ndarray
+        Multipole ``ℓ ≥ 2``. Can be a Python ``int`` or a 0-D JAX array.
 
     Returns
     -------
     d20_ell : same type as *beta*
-        The value of \(d^{\ell}_{20}(\beta)\), with dtype promoted by JAX
-        according to standard casting rules.
+        The value of \(d^{\ell}_{20}(\beta)\).
     """
-    # Base cases
-    base_case_2 = np.sqrt(3 / 8) * np.sin(beta) ** 2
-    base_case_3 = (np.sqrt(30) / 4) * np.sin(beta) ** 2 * np.cos(beta)
-
-    # Recurrence relation for small ell
-    def recurrence_fn(ell, vals):
-        prev, prev2 = vals
-        sqrt_l2_4 = np.sqrt(ell**2 - 4)
-        sqrt_lm1_2_4 = np.sqrt((ell - 1) ** 2 - 4)
-        new_val = ((2 * ell - 1) / sqrt_l2_4) * (
-            _d_0_0_ell_compute(beta, 1) * prev - (sqrt_lm1_2_4 / (2 * ell - 1)) * prev2
-        )
-        return new_val, prev
-
-    # Approximation for large ell (fixed to explicitly pass `beta`)
-    def approximation_fn(ell, vals):
-        prev, prev2 = vals
-        new_val = 2 * _d_0_0_ell_compute(beta, 1) * prev - prev2
-        return new_val, prev
-
-    # Compute using a JIT-compatible conditional switch
-    def compute_d_2_0(ell):
-        return jax.lax.cond(
-            ell < 30000,
-            lambda: jax.lax.fori_loop(
-                4, ell + 1, recurrence_fn, (base_case_3, base_case_2)
-            )[0],
-            lambda: jax.lax.fori_loop(
-                50, ell + 1, approximation_fn, (base_case_3, base_case_2)
-            )[0],
-        )
-
-    return jax.lax.cond(
-        ell == 2,
-        lambda: base_case_2,
-        lambda: jax.lax.cond(ell == 3, lambda: base_case_3, lambda: compute_d_2_0(ell)),
-    )
+    return _recurrence_value(beta, ell, 2, _d_2_0_init, _d_2_0_step)
 
 
 # define memoized versions of the Wigner d-matrix functions
@@ -257,11 +192,35 @@ d_2_2_ell = memoize_jax(_d_2_2_ell_compute)
 d_2_m2_ell = memoize_jax(_d_2_m2_ell_compute)
 d_2_0_ell = memoize_jax(_d_2_0_ell_compute)
 
-# define vectorized version of the Wigner d-matrix functions
-_d_0_0_vmap_compute = jax.vmap(jax.vmap(_d_0_0_ell_compute, (None, 0)), (0, None))
-_d_2_2_vmap_compute = jax.vmap(jax.vmap(_d_2_2_ell_compute, (None, 0)), (0, None))
-_d_2_m2_vmap_compute = jax.vmap(jax.vmap(_d_2_m2_ell_compute, (None, 0)), (0, None))
-_d_2_0_vmap_compute = jax.vmap(jax.vmap(_d_2_0_ell_compute, (None, 0)), (0, None))
+
+@partial(jit, static_argnums=(1, 2, 3, 4))
+def _recurrence_table_jit(theta, lmax, l0, init, step):
+    return _recurrence_table(theta, lmax, l0, init, step)
+
+
+def _make_table_compute(l0, init, step):
+    """
+    Build a function ``(theta, ells) -> d`` with ``d`` of shape ``(Ntheta, Nell)``.
+
+    The recurrence is run once up to ``max(ells)`` for all angles, and the
+    requested multipoles are then selected, so the cost scales as
+    ``Ntheta * max(ells)``. ``ells`` must be concrete (not traced).
+    """
+
+    def compute(theta, ells):
+        ells = np.asarray(ells).astype(int)
+        lmax = int(np.max(ells))
+        table = _recurrence_table_jit(np.atleast_1d(theta), lmax, l0, init, step)
+        return table[ells].T
+
+    return compute
+
+
+# define vectorized versions of the Wigner d-matrix functions, of shape (Ntheta, Nell)
+_d_0_0_vmap_compute = _make_table_compute(0, _d_0_0_init, _d_0_0_step)
+_d_2_2_vmap_compute = _make_table_compute(2, _d_2_2_init, _d_2_2_step)
+_d_2_m2_vmap_compute = _make_table_compute(2, _d_2_m2_init, _d_2_m2_step)
+_d_2_0_vmap_compute = _make_table_compute(2, _d_2_0_init, _d_2_0_step)
 
 # define memoized versions of the vectorized Wigner d-matrix functions
 d_0_0_vmap = memoize_jax(_d_0_0_vmap_compute)
@@ -270,10 +229,37 @@ d_2_m2_vmap = memoize_jax(_d_2_m2_vmap_compute)
 d_2_0_vmap = memoize_jax(_d_2_0_vmap_compute)
 
 
+@jit
+def _interp_cl_log_ell(ells, ell_nodes, Cl_nodes):
+    r"""
+    Interpolate Cl from ``ell_nodes`` onto ``ells``.
+
+    Uses a C2 cubic spline of \(\ell^2 C_\ell\) in \(\log\ell\), which is
+    smooth for Limber spectra. The interpolation is linear in ``Cl_nodes``,
+    so signed spectra (e.g. galaxy-galaxy lensing) are handled.
+
+    Parameters:
+        ells (jnp.ndarray): Multipoles at which Cl is wanted, shape (Nell,).
+        ell_nodes (jnp.ndarray): Multipoles at which Cl was computed, shape (Nnodes,).
+        Cl_nodes (jnp.ndarray): Cl at ``ell_nodes``, shape (Nnodes, ...).
+
+    Returns:
+        (jnp.ndarray): Cl at ``ells``, shape (Nell, ...).
+    """
+    extra_dims = (1,) * (Cl_nodes.ndim - 1)
+    l2_Cl = interpax.interp1d(
+        np.log(ells),
+        np.log(ell_nodes),
+        Cl_nodes * ell_nodes.reshape((-1,) + extra_dims) ** 2,
+        method="cubic2",
+    )
+    return l2_Cl / ells.reshape((-1,) + extra_dims) ** 2
+
+
 class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
     """Correlation function implementation using Wigner small-d matrices."""
 
-    def __init__(self, angular_two_point, ells, ks):
+    def __init__(self, angular_two_point, ells, ks, n_ell_interp=None):
         """
         Initialize CorrelationFunction with an AngularTwoPoint instance.
 
@@ -286,10 +272,18 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
             angular_two_point (AngularTwoPoint): Object providing Cl evaluation and tracers.
             ells (jnp.ndarray): Multipole moments at which the Cl spectrum is evaluated.
             ks (jnp.ndarray): Wavenumber grid (only needed for computing Cl via angular_two_point).
+            n_ell_interp (int, optional): If given, Cl is computed only at this many
+                log-spaced multipoles between ``min(ells)`` and ``max(ells)`` and
+                interpolated onto ``ells`` (cubic spline of ell^2 Cl in log ell).
+                This makes `get_xi` much faster for dense ``ells``
+                (e.g. ``arange(2, 60000)``) at a small accuracy cost; check the
+                number of nodes for your setup. Defaults to None, which computes
+                Cl at every multipole in ``ells``.
         """
         self.angular_two_point = angular_two_point
         self.ells = ells
         self.ks = ks
+        self.n_ell_interp = n_ell_interp
 
         # Determine spin values based on tracer type
         self.s1 = 2 if isinstance(angular_two_point.tracer1, ShearTracer) else 0
@@ -355,6 +349,17 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
                 )
         return xi_dict
 
+    def _get_Cl(self):
+        """Cl at ``self.ells``, either computed directly or interpolated from nodes."""
+        if self.n_ell_interp is None:
+            self.angular_two_point.get_Cl(self.ells, nl=0, ks=self.ks)
+            return self.angular_two_point.C_ell_calc
+
+        ells = np.asarray(self.ells, dtype=float)
+        ell_nodes = np.geomspace(ells.min(), ells.max(), self.n_ell_interp)
+        self.angular_two_point.get_Cl(ell_nodes, nl=0, ks=self.ks)
+        return _interp_cl_log_ell(ells, ell_nodes, self.angular_two_point.C_ell_calc)
+
     def get_xi(self, theta):
         """
         Compute the angular correlation function xi(theta) using the Wigner d-matrices.
@@ -370,10 +375,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
                 (`jax.numpy.ndarray`) or Computed xi_+(theta) and xi_-(theta) (`jax.numpy.ndarray`, `jax.numpy.ndarray`) if both tracers are spin 2 (cosmic shear)
 
         """
-        # Compute Cl using the AngularTwoPoint instance
-        self.angular_two_point.get_Cl(self.ells, nl=0, ks=self.ks)
-
-        Cl_EE = self.angular_two_point.C_ell_calc
+        Cl_EE = self._get_Cl()
         Cl_BB = np.zeros_like(Cl_EE)  # No B-modes included, set to zero for now
         Cl_EB = np.zeros_like(Cl_EE)
         Cl_BE = np.zeros_like(Cl_EE)

@@ -243,14 +243,12 @@ def tracer_perturbations(perturbations):
     return linear
 
 
-def _dndz():
-    dndz = jnp.exp(
-        -0.5 * ((Z_TRACER[None, :] - jnp.array([0.3, 0.6])[:, None]) / 0.1) ** 2
-    )
-    return dndz / jnp.trapezoid(dndz, Z_TRACER, axis=1)[:, None]
+def _dndz(z=Z_TRACER):
+    dndz = jnp.exp(-0.5 * ((z[None, :] - jnp.array([0.3, 0.6])[:, None]) / 0.1) ** 2)
+    return dndz / jnp.trapezoid(dndz, z, axis=1)[:, None]
 
 
-def _positions(perturbations, include_rsd=False):
+def _positions(perturbations, include_rsd=False, z=Z_TRACER):
     nuisance = {
         **{f"dz_pos_{i + 1}": 0.0 for i in range(2)},
         **{f"width_pos_{i + 1}": 1.0 for i in range(2)},
@@ -259,15 +257,15 @@ def _positions(perturbations, include_rsd=False):
     }
     return PositionsTracer(
         perturbations,
-        _dndz(),
-        Z_TRACER,
+        _dndz(z),
+        z,
         "per_bin",
         nuisance,
         include_rsd=include_rsd,
     )
 
 
-def _shear(perturbations, m_bias):
+def _shear(perturbations, m_bias, z=Z_TRACER):
     nuisance = {
         **{f"multiplicative_bias_{i + 1}": m for i, m in enumerate(m_bias)},
         **{f"dz_shear_{i + 1}": 0.0 for i in range(2)},
@@ -278,8 +276,8 @@ def _shear(perturbations, m_bias):
     }
     return ShearTracer(
         perturbations=perturbations,
-        dndz=_dndz(),
-        z=Z_TRACER,
+        dndz=_dndz(z),
+        z=z,
         nuisance_params=nuisance,
         ia_model="NLA",
     )
@@ -502,6 +500,87 @@ def test_get_cl_has_the_correction(tracer_perturbations, fake_default_store):
     np.testing.assert_allclose(
         packaged[("SHE", "SHE", 1, 2)].array[0, 0], tensor[:, 0, 1], rtol=1e-12
     )
+
+
+# ---------------------------------------------------------------------------
+# jax.jit and jax.grad, with the cosmology built inside the function
+# ---------------------------------------------------------------------------
+ELLS_JIT = jnp.array([2.0, 5.0, 14.3, 50.0])
+# Fewer than 100 points: `JAXBackground.comoving_distance` loops in Python over
+# the redshifts, and under `jax.jit` JAX cannot iterate over a concrete array
+# of 100 or more elements (as in `test_get_cl_tensor.py`, which uses 15).
+Z_JIT = jnp.linspace(0.01, 1.0, 20)
+
+
+def _linear_perturbations(H0):
+    background = JAXBackground(
+        H0=H0,
+        Omega_b0=0.05,
+        Omega_cdm0=0.25,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        mnu=0.06,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+        N_mnu=1,
+    )
+    linear = JAXLinearPerturbations(background)
+    linear.z = jnp.linspace(0.0, 1.5, 40)
+    linear.k = KS
+    return linear
+
+
+def _cl_gs(H0, *ell_maxes):
+    """gs at `ELLS_JIT` for each `ell_nonlimber_max`, cosmology and tracers
+    (built once) included; shape `(len(ell_maxes), n_ell, 2, 2)`.
+
+    gs alone has every kind of contribution (density, magnification and RSD
+    against lensing and NLA), hence also the asymmetric RSD x lensing pairs;
+    a single probe keeps the compilation time down.
+    """
+    perturbations = _linear_perturbations(H0)
+    g = _positions(perturbations, include_rsd=True, z=Z_JIT)
+    s = _shear(perturbations, M_BIAS, z=Z_JIT)
+    return jnp.stack(
+        [
+            AngularTwoPoint(g, s, ell_nonlimber_max=ell_max).get_Cl_tensor(
+                ELLS_JIT, None, KS
+            )
+            for ell_max in ell_maxes
+        ]
+    )
+
+
+def test_beyond_limber_jit_matches_eager(fake_default_store):
+    """The beyond-Limber Cl, cosmology and tracers included, traces under
+    `jax.jit` and gives the eager numbers (as the Limber 3x2pt in
+    `test_get_cl_tensor.py`)."""
+    ell_max = float(FAKE_ELLS[1])
+    eager = _cl_gs(67.7, ell_max)
+    jitted = jax.jit(lambda H0: _cl_gs(H0, ell_max))(67.7)
+    assert np.all(np.isfinite(jitted))
+    # XLA reorders the floating-point operations: ~2e-10 on single elements.
+    np.testing.assert_allclose(jitted, eager, rtol=1e-9, atol=0.0)
+
+
+def test_beyond_limber_correction_gradient_matches_finite_differences(
+    fake_default_store,
+):
+    """`jax.grad` with respect to H0 flows through the beyond-Limber correction
+    (beyond-Limber minus Limber Cl) and matches central finite differences."""
+    ell_max = float(FAKE_ELLS[1])
+
+    def loss(H0):
+        beyond, limber = _cl_gs(H0, ell_max, None)
+        return jnp.sum((beyond - limber) ** 2)
+
+    grad = jax.grad(loss)(67.7)
+    eps = 1e-3
+    finite_diff = (loss(67.7 + eps) - loss(67.7 - eps)) / (2 * eps)
+    assert np.isfinite(grad) and grad != 0.0
+    np.testing.assert_allclose(grad, finite_diff, rtol=1e-6)
 
 
 @pytest.mark.parametrize("ell_max", [1.0, 211.7, 1000.0])

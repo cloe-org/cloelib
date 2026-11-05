@@ -200,6 +200,48 @@ bg = hi_classBackground(
 )
 ```
 
+### obDDMBackground
+
+Background of the **1-body decaying dark matter** (1bDDM) model, in which a fraction `f_dcdm` of the cold dark matter decays into dark radiation (DR) with decay rate `Gamma_dcdm = Gamma_times_f / f_dcdm`. It uses [CLASS](https://github.com/lesgourg/class_public) or CosmoPower-JAX emulators.
+
+**Location**: `cloelib/cosmology/class_DDM_cosmology.py`
+
+**When to use**: Decaying dark matter (DCDM → DR) models, with fast emulated distances for sampling
+
+**Features**:
+
+- Two extra parameters with respect to ΛCDM: `f_dcdm` and `Gamma_times_f` (decay rate times `f_dcdm`, in 1/Gyr)
+- The `Omega_cdm0` argument is the **total** cold dark matter density parameter, stable plus _initial_ decaying. Afterwards, `bg.Omega_cdm0` is the stable part and `bg.Omega_ini_dcdm` the initial decaying part
+- `use_emulator=True` (default): distances, H(z), σ₈ and r_drag come from the CosmoPower-JAX `ddm-1body-neutrino-*` emulators, downloaded on first use from the Euclid-DR1-matter-emulators GitHub repository; `use_emulator=False`: CLASS
+- The emulators assume three degenerate massive neutrinos (`N_mnu=3`) with `mnu` the sum of their masses, in [0, 1] eV, and give `Omega_m` only at z = 0
+- The emulators are trained for ω_b ∈ [0.019, 0.026], ω_cdm,tot ∈ [0.064, 0.26] (`ω = Ω h²`, initial total CDM) and `Gamma_dcdm` ≤ 0.0316 1/Gyr; outside the training ranges they extrapolate silently
+
+**Example**:
+
+```python
+from cloelib.cosmology.class_DDM_cosmology import obDDMBackground
+
+bg = obDDMBackground(
+    H0=67.3,
+    Omega_b0=0.0494,
+    Omega_cdm0=0.265,  # total CDM (stable + initial decaying)
+    Omega_k0=0.0,
+    As=2.1e-9,
+    ns=0.966,
+    mnu=0.06,  # Sum of neutrino masses
+    w0=-1.0,
+    wa=0.0,
+    gamma_MG=0.55,
+    N_mnu=3,
+    f_dcdm=1.0,  # all the CDM decays
+    Gamma_times_f=0.0123,  # f_dcdm * Gamma_dcdm [1/Gyr]
+)
+
+z = np.array([0.5, 1.0, 1.5])
+chi = bg.comoving_distance(z)  # Distances in Mpc
+H_z = bg.hubble_parameter(z)  # H(z) in km/s/Mpc
+```
+
 ## Adding Your Own Background Implementation
 
 To add a new Background implementation, follow these steps.

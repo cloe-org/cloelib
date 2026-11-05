@@ -680,6 +680,57 @@ Accurate and fast emulator of the nonlinear matter power spectrum in modified gr
 - Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;
 - Limited to the Hu & Sawicki model (n=1) with fR0 as free parameter;
 
+### Decaying Dark Matter Perturbations
+
+Linear and nonlinear matter power spectra for decaying dark matter (DDM) cosmologies, built on the [obDDMBackground](background.md#obddmbackground) (1bDDM) or on a standard CLASS background (2bDDM).
+
+**Location**: `cloelib/cosmology/class_DDM_cosmology.py`
+
+**When to use**: Decaying dark matter models, with fast emulator-based predictions for sampling
+
+#### 1-body decay (1bDDM): DCDM → DR
+
+- `obDDMLinearPerturbations(background, redshifts, use_emulator=True)`: linear P(k) from the CosmoPower-JAX `ddm-1body-neutrino-linear` emulator (inputs: ω_b, ω_cdm,tot, h, n_s, ln10¹⁰A_s, `f_dcdm`, `Gamma_times_f`, Σm_ν, z; the k grid is the one of the emulator), or from CLASS with `use_emulator=False`
+- `obDDMNonLinearPerturbations(background, linearperturbations, redshifts, use_emulator=True, log10TAGN=None, non_linear_lcdm="hmcode")`: nonlinear P(k) as the nonlinear P(k) of the **equivalent ΛCDM** cosmology (same initial total CDM, no decay) times a DDM boost. The ΛCDM part is HMcode2020 with baryonic feedback (`log10TAGN`, default 7.6) or halofit (`non_linear_lcdm="halofit"`, `log10TAGN` ignored), emulated or from CLASS. The boost is the ratio of the linear DDM and ΛCDM spectra times the nonlinear suppression fit of [Hubert et al. (2104.07675)](https://arxiv.org/abs/2104.07675), following eq. 16 of [Lesgourgues et al. (2406.18274)](https://arxiv.org/abs/2406.18274)
+- Both provide `matter_power_spectrum`, `growth_factor`, `growth_rate` and `sigma8_0`
+- The fit is calibrated for ω_b ∈ [0.019, 0.026], h ∈ [0.6, 0.8], ω_m = ω_b + ω_cdm,ini ∈ [0.09, 0.28], decay time 1/Γ ≥ 31.6 Gyr, z ≤ 2.35 and k ≲ 13 h/Mpc. A message is printed if the parameters are outside these ranges
+- It assumes that DDM and baryonic feedback effects are separable
+
+#### 2-body decay (2bDDM): DCDM → DR + WDM
+
+- `tbDDMNonLinearPerturbations(background, redshifts, f_dcdm, epsilon, Gamma, use_emulator=True, log10TAGN=None, non_linear_lcdm="hmcode")`: equivalent ΛCDM nonlinear P(k), as above, times the boost from the neural-network emulator of [Bucko et al. (2307.03222)](https://arxiv.org/abs/2307.03222). `epsilon` is the fraction of the rest mass energy of the mother particle given to the massless daughter particle and `Gamma` the decay rate in 1/Gyr
+- It takes a standard `CLASSBackground`; there are no dedicated 2bDDM background and linear classes yet
+- Requires the optional `DMemu` package (`pip install ".[dmemu]"`)
+
+**Example**:
+
+```python
+import numpy as np
+from cloelib.cosmology.class_DDM_cosmology import (
+    obDDMBackground,
+    obDDMLinearPerturbations,
+    obDDMNonLinearPerturbations,
+)
+
+zs = np.array([0.0, 0.5, 1.0])
+ks = np.logspace(-3, 1, 100)
+
+bg = obDDMBackground(
+    H0=67.3, Omega_b0=0.0494, Omega_cdm0=0.265, Omega_k0=0.0,
+    As=2.1e-9, ns=0.966, mnu=0.06, N_mnu=3, w0=-1.0, wa=0.0, gamma_MG=0.55,
+    f_dcdm=1.0, Gamma_times_f=0.0123,  # Gamma_times_f in 1/Gyr
+)
+
+lin = obDDMLinearPerturbations(background=bg, redshifts=zs)
+nl = obDDMNonLinearPerturbations(
+    background=bg, linearperturbations=lin, redshifts=zs, log10TAGN=7.8
+)
+
+Pk_lin = lin.matter_power_spectrum(zs, ks)  # shape (len(zs), len(ks))
+Pk_nl = nl.matter_power_spectrum(zs, ks)
+sigma8 = nl.sigma8_0()
+```
+
 ## Baryonic Boost Mixin Framework
 
 `cloelib` provides a composable `BaryonBoostMixin` Protocol that decouples the baryonic suppression from the underlying nonlinear solver. This makes it easy to combine any nonlinear backend with any baryonic model.

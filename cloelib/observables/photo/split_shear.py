@@ -823,7 +823,7 @@ class ShearTracer:
         Omega_m0 = self.Omega_m_IA
         Hz = self.perturbations.background.hubble_parameter(z)
         ks: Any = getattr(self.perturbations, "k", None)
-        Dz_raw = self.perturbations.growth_factor(z)
+        Dz_raw = self.perturbations.growth_factor(z, ks)
         Dz = Dz_raw[:, 1] if getattr(Dz_raw, "ndim", 1) == 2 else Dz_raw
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]

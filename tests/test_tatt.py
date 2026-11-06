@@ -743,9 +743,8 @@ def test_pbj_tatt_resolves_linear_source_from_nonlinear_perturbations(
 
     class _FakeUnrecognizedNonLinear:
         """No `.linearperturbations` and a name that doesn't end in
-        `LinearPerturbations` - e.g. `CAMBNonLinearPerturbations`, which
-        genuinely never sets `.linearperturbations` (see shear.py's
-        `_is_known_linear_perturbations` docstring)."""
+        `LinearPerturbations`: an unrecognized (e.g. user-defined) nonlinear
+        backend (see `spectrum_engine._is_known_linear_perturbations`)."""
 
     computer_with_nonlinear = PBJTATTLoopComputer(_FakeNonLinear(linear_perturbations))
     assert computer_with_nonlinear.linear_perturbations is linear_perturbations
@@ -758,13 +757,12 @@ def test_pbj_tatt_resolves_linear_source_from_nonlinear_perturbations(
 
 
 @pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
-def test_pbj_tatt_rejects_camb_nonlinear_without_linear_source(cosmo_setup):
-    """The concrete case PR #569's review flagged: `CAMBNonLinearPerturbations`
-    never sets `.linearperturbations` (its own `matter_power_spectrum` is
-    always nonlinear - see camb_cosmology.py), so passing one here must
-    raise rather than silently feed FAST-PT the nonlinear Pk.
+def test_pbj_tatt_uses_camb_nonlinear_linear_source(cosmo_setup):
+    """The case PR #569's review flagged: `CAMBNonLinearPerturbations` built
+    with `linearperturbations=None` exposes the linear spectra of its own CAMB
+    run, which FAST-PT then uses (not the nonlinear Pk).
     """
     perturbations, _ = cosmo_setup  # cosmo_setup's own CAMBNonLinearPerturbations
-    assert not hasattr(perturbations, "linearperturbations")
-    with pytest.raises(ValueError, match="linear matter-power-spectrum source"):
-        PBJTATTLoopComputer(perturbations)
+    assert isinstance(perturbations.linearperturbations, CAMBLinearPerturbations)
+    computer = PBJTATTLoopComputer(perturbations)
+    assert computer.linear_perturbations is perturbations.linearperturbations

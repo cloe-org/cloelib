@@ -93,6 +93,27 @@ def test_derived_cosmology():
             assert_allclose(background.rdrag, 147.50225, rtol=1e-1)
 
 
+def test_redshift_of_comoving_distance():
+    background = JAXBackground(
+        H0=70.0,
+        Omega_cdm0=0.25,
+        Omega_b0=0.05,
+        w0=-1,
+        wa=0,
+        Omega_k0=0.0,
+        ns=0.96,
+        As=2e-9,
+        mnu=0.06,
+        gamma_MG=0.545,
+        N_mnu=1,
+    )
+    chi_true = np.linspace(26.0, 7000.0, 100)
+    z_from_chi = derived_cosmology.redshift_of_comoving_distance(background, chi_true)
+    chi_reconstructed = background.comoving_distance(z_from_chi)
+
+    np.testing.assert_allclose(chi_true, chi_reconstructed, rtol=1e-6)
+
+
 def test_Omega_cb():
     # Cosmology parameters
     print("# Cosmology parameters")

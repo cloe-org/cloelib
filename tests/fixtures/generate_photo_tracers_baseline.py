@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBNonLinearPerturbations
-from cloelib.observables.cmb import CMBLensingTracer
+from cloelib.observables.cmb.lensing import CMBLensingTracer
 from cloelib.observables.photo import ShearTracer, PositionsTracer
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 

@@ -18,7 +18,7 @@ def ell_grid(ell_max=DEFAULT_ELL_MAX, n_ell=DEFAULT_N_ELL):
         n_ell (int): Number of multipoles.
 
     Returns:
-        ells (numpy.ndarray): Multipoles.
+        (numpy.ndarray): Multipoles.
     """
     return np.geomspace(2.0, float(ell_max), int(n_ell))
 
@@ -41,8 +41,7 @@ def hankel_fftlog(x, f, nu, q=1.0, padding=2):
         padding (int): Zero-padding factor.
 
     Returns:
-        y (numpy.ndarray): Log-spaced ordinates.
-        g (numpy.ndarray): Transform on ``y``.
+        (numpy.ndarray, numpy.ndarray): Log-spaced ordinates y and the transform g(y).
     """
     x = np.asarray(x, float)
     f = np.asarray(f, float)
@@ -66,17 +65,7 @@ def hankel_fftlog(x, f, nu, q=1.0, padding=2):
 
 
 class CorrelationTransform:
-    """Angular power spectra to correlation functions.
-
-    Args:
-        ells (numpy.ndarray): Increasing multipoles of the spectra.
-        theta (numpy.ndarray): Separations in radians.
-        theta_edges (numpy.ndarray): Bin edges in radians, needed if ``n_sub > 1``.
-        n_sub (int): Points averaged per bin; 1 evaluates at ``theta``.
-        log_bins (bool): Space the points in log(theta).
-        taper (float): Width of the Gaussian taper above the largest multipole,
-            in units of it.
-    """
+    """FFTLog transform of angular power spectra to correlation functions."""
 
     def __init__(
         self,
@@ -87,6 +76,17 @@ class CorrelationTransform:
         log_bins=True,
         taper=DEFAULT_TAPER,
     ):
+        """
+        Initialize the transform on fixed multipoles and angles.
+
+        Parameters:
+            ells (numpy.ndarray): Increasing multipoles of the spectra.
+            theta (numpy.ndarray): Angles in radians.
+            theta_edges (numpy.ndarray): Angular bin edges in radians, needed if n_sub > 1.
+            n_sub (int): Points averaged per angular bin; 1 evaluates at theta.
+            log_bins (bool): Space the points in log(theta).
+            taper (float): Width of the Gaussian taper above the largest multipole, in units of it.
+        """
         self.ells = np.asarray(ells, float)
         if (
             self.ells.ndim != 1
@@ -163,7 +163,7 @@ class CorrelationTransform:
             nu (int): Bessel order: 0 for xi_+ and w, 2 for gamma_t, 4 for xi_-.
 
         Returns:
-            xi (numpy.ndarray): Correlation function.
+            (numpy.ndarray): Correlation function.
         """
         y, g = hankel_fftlog(self._ells_wide, self._widen(c_ell), nu)
         values = np.interp(self._points, y, g) / (2.0 * np.pi)
@@ -175,15 +175,7 @@ class CorrelationTransform:
 
 
 class AngularCorrelationFunctionFFTLog(AngularCorrelationFunctionWigner):
-    """Correlation functions by flat-sky FFTLog, with the output of
-    `AngularCorrelationFunctionWigner`.
-
-    Args:
-        angular_two_point (AngularTwoPoint): Cl and tracers.
-        ells (numpy.ndarray): Multipoles of the Cl, e.g. `ell_grid`.
-        ks (numpy.ndarray): Wavenumbers of the matter power spectrum.
-        theta_edges, n_sub, log_bins, taper: As in `CorrelationTransform`.
-    """
+    """Correlation function implementation using the flat-sky FFTLog transform."""
 
     def __init__(
         self,
@@ -195,6 +187,18 @@ class AngularCorrelationFunctionFFTLog(AngularCorrelationFunctionWigner):
         log_bins=True,
         taper=DEFAULT_TAPER,
     ):
+        """
+        Initialize CorrelationFunction with an AngularTwoPoint instance.
+
+        Parameters:
+            angular_two_point (AngularTwoPoint): Object providing Cl evaluation and tracers.
+            ells (numpy.ndarray): Log-spaced multipoles at which the Cl spectrum is evaluated, e.g. `ell_grid`.
+            ks (jnp.ndarray): Wavenumber grid (only needed for computing Cl via angular_two_point).
+            theta_edges (numpy.ndarray): Angular bin edges in radians, needed if n_sub > 1.
+            n_sub (int): Points averaged per angular bin; 1 evaluates at theta.
+            log_bins (bool): Space the points in log(theta).
+            taper (float): Width of the Gaussian taper above the largest multipole, in units of it.
+        """
         super().__init__(angular_two_point, ells, ks)
         self.theta_edges = theta_edges
         self.n_sub = n_sub
@@ -202,13 +206,16 @@ class AngularCorrelationFunctionFFTLog(AngularCorrelationFunctionWigner):
         self.taper = taper
 
     def get_xi(self, theta):
-        """Compute xi(theta), assuming no B-modes.
+        """
+        Compute the angular correlation function xi(theta) using FFTLog.
+
+        WARNING: Currently assumes B-modes are zero, as they are not passed on from AngularTwoPoint
 
         Args:
-            theta (numpy.ndarray): Separations in radians.
+            theta (numpy.ndarray): Angles in radians.
 
         Returns:
-            xi (dict): `TwoPointCorrelationFunction` per pair of bins.
+            (dict): TwoPointCorrelationFunction objects for each pair of tomographic bins.
         """
         theta = np.asarray(theta, float)
         transform = CorrelationTransform(

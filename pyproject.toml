@@ -25,7 +25,7 @@ dependencies = [
     "scipy>1.14",
     "pytest",
     "pytest-cov",
-    "ty",
+    "ty==0.0.99",
     "pyinstrument",
     "cosmolib"
 ]
@@ -78,4 +78,4 @@ include = ["cloelib/cosmology", "cloelib/observables"]
 # [project.optional-dependencies]) that aren't installed in every
 # environment ty runs in; each is already guarded by its own
 # `try/except ImportError` at runtime.
-unresolved-import = "ignore"
+import-not-found = "ignore"

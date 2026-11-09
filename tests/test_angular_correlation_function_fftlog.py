@@ -15,7 +15,6 @@ def _log_bins(theta_min, theta_max, n):
 
 
 def _gaussian_closed_form(theta, nu, amplitude, sigma):
-    # Hankel transform of C_l = A exp(-l^2 / 2 sigma^2) (Gradshteyn & Ryzhik 6.631.1).
     p = 0.5 / sigma**2
     return (
         amplitude
@@ -28,7 +27,6 @@ def _gaussian_closed_form(theta, nu, amplitude, sigma):
 
 
 def test_hankel_gaussian_pair():
-    # exp(-x^2/2) is its own Hankel transform of order 0.
     x = np.logspace(-3, 3, 4096)
     y, g = hankel_fftlog(x, np.exp(-0.5 * x**2), nu=0)
     inside = (y > 0.1) & (y < 3.0)
@@ -72,9 +70,7 @@ def test_bin_average():
 def test_widen_tail_and_sign():
     theta, _ = _log_bins(2.5, 250.0, 20)
     transform = CorrelationTransform(ell_grid(40000, 512), theta)
-    # A spectrum crossing zero at the top of the grid must not blow up.
     c_ell = 1e-9 / (1 + (transform.ells / 500.0) ** 2) - 2e-14
     assert np.isfinite(transform._widen(c_ell)).all()
     assert np.isfinite(transform(c_ell, 0)).all()
-    # The transform is linear.
     np.testing.assert_allclose(transform(2 * c_ell, 4), 2 * transform(c_ell, 4))

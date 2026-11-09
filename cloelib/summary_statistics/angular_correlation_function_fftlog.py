@@ -1,20 +1,4 @@
-"""Real-space angular correlation functions from angular power spectra by the
-FFTLog Hankel transform, following the configuration-space implementation of
-A. Spurio Mancini, which uses `mcfit`.
-
-In the flat-sky approximation the correlation functions are Hankel
-transforms of the spectra,
-
-    xi(theta) = 1 / (2 pi) int dl l C_l J_nu(l theta),
-
-with ``nu = 0`` for xi_+ and w(theta), ``nu = 2`` for gamma_t and ``nu = 4``
-for xi_-. FFTLog (Hamilton 2000) evaluates them from C_l on a sparse
-multipole grid: the integral is a convolution in log l, done with one FFT
-and the analytic Mellin transform of the Bessel kernel. Unlike the full-sky
-Wigner-d sum of `angular_correlation_function_wigner`, which needs every
-integer multipole up to the top of the sum and loses accuracy above
-l ~ 26000, it needs the spectra on a log grid of a few thousand multipoles.
-"""
+"""Flat-sky angular correlation functions from angular power spectra by FFTLog."""
 
 import numpy as np
 from scipy.special import loggamma
@@ -27,45 +11,38 @@ DEFAULT_TAPER = 5.0
 
 
 def ell_grid(ell_max=DEFAULT_ELL_MAX, n_ell=DEFAULT_N_ELL):
-    """Log-spaced multipoles from 2 to ``ell_max``, the default grid of the
-    spectra behind `AngularCorrelationFunctionFFTLog`.
+    """Log-spaced multipoles from 2 to ``ell_max``.
 
-    Parameters:
+    Args:
         ell_max (float): Largest multipole.
         n_ell (int): Number of multipoles.
 
     Returns:
-        (numpy.ndarray): The multipoles.
+        ells (numpy.ndarray): Multipoles.
     """
     return np.geomspace(2.0, float(ell_max), int(n_ell))
 
 
 def _mellin_bessel(z, nu):
-    """Mellin transform of ``J_nu``, ``int_0^inf t^(z-1) J_nu(t) dt``, by
-    analytic continuation."""
+    """Mellin transform of J_nu."""
     return np.exp(
         np.log(2.0) * (z - 1) + loggamma(0.5 * (nu + z)) - loggamma(0.5 * (nu + 2 - z))
     )
 
 
 def hankel_fftlog(x, f, nu, q=1.0, padding=2):
-    """Hankel transform ``g(y) = int_0^inf f(x) J_nu(x y) x dx`` by FFTLog.
+    """Hankel transform ``g(y) = int f(x) J_nu(x y) x dx`` by FFTLog.
 
-    Same algorithm and conventions as `mcfit.transforms.Hankel`: power-law
-    bias ``q``, low-ringing output grid, and symmetric zero padding of the
-    input to ``padding`` times its size (rounded up to a power of two).
-
-    Parameters:
-        x (numpy.ndarray): Log-spaced abscissae, ``x[i+1] / x[i]`` constant.
-        f (numpy.ndarray): Function values on ``x``.
-        nu (int): Order of the Bessel function.
-        q (float): Power-law bias of the transform.
-        padding (int): Zero-padding factor, 1 for none.
+    Args:
+        x (numpy.ndarray): Log-spaced abscissae.
+        f (numpy.ndarray): Function on ``x``.
+        nu (int): Bessel order.
+        q (float): Power-law bias.
+        padding (int): Zero-padding factor.
 
     Returns:
-        (numpy.ndarray, numpy.ndarray): Log-spaced ordinates ``y``, with the
-        spacing of ``x`` and as many as the abscissae, and the transform on
-        ``y``.
+        y (numpy.ndarray): Log-spaced ordinates.
+        g (numpy.ndarray): Transform on ``y``.
     """
     x = np.asarray(x, float)
     f = np.asarray(f, float)
@@ -77,47 +54,28 @@ def hankel_fftlog(x, f, nu, q=1.0, padding=2):
     f_pad = np.zeros(n)
     f_pad[left : left + n_in] = f
 
-    # Low-ringing condition: the kernel coefficient at the Nyquist frequency
-    # is real, which fixes ln(x * y) of the paired abscissae and ordinates.
     lnxy = dlnx / np.pi * np.angle(_mellin_bessel(q + 1j * np.pi / dlnx, nu))
     y_pad = np.exp(lnxy) / x_pad[::-1]
     k = 2.0 * np.pi * np.fft.fftfreq(n, d=dlnx)
-    # The x of the Hankel measure goes with f; the bias shifts a power of x
-    # from f to the kernel.
     phi = np.fft.fft(f_pad * x_pad ** (2.0 - q))
     coefficients = _mellin_bessel(q - 1j * k, nu) * np.exp(1j * k * lnxy)
     g_biased = np.roll(np.fft.ifft(np.conj(phi) * coefficients).real, -1)
     g_pad = g_biased * y_pad ** (-q)
-    # Drop the padding of the output, whose ordinates pair with the reversed
-    # abscissae.
     right = n - n_in - left
     return y_pad[right : right + n_in], g_pad[right : right + n_in]
 
 
 class CorrelationTransform:
-    """Angular power spectra on given multipoles to correlation functions at
-    given separations.
+    """Angular power spectra to correlation functions.
 
-    The spectra are extended to a wide log grid before the transform:
-    interpolated in log-log inside the grid of the spectra, flat below it, and
-    above it a falling power law with a Gaussian taper,
-    ``exp(-((ell - ell_max) / (taper * ell_max))^2)``, so that the spectrum
-    reaches zero well before the end of the grid (a step there rings through
-    the whole transform).
-
-    Parameters:
-        ells (numpy.ndarray): Increasing multipoles of the spectra, e.g.
-            `ell_grid`.
-        theta (numpy.ndarray): Separations, in radians.
-        theta_edges (numpy.ndarray|None): Edges of the angular bins, in
-            radians, needed when ``n_sub > 1``.
-        n_sub (int): Number of points per angular bin the correlation
-            functions are averaged over, weighted by the area
-            ``theta dtheta``; 1 evaluates them at ``theta``.
-        log_bins (bool): Whether the sub-points of a bin are spaced in
-            log(theta) (True) or in theta.
-        taper (float): Scale of the Gaussian taper of the tail, in units of
-            the largest multipole.
+    Args:
+        ells (numpy.ndarray): Increasing multipoles of the spectra.
+        theta (numpy.ndarray): Separations in radians.
+        theta_edges (numpy.ndarray): Bin edges in radians, needed if ``n_sub > 1``.
+        n_sub (int): Points averaged per bin; 1 evaluates at ``theta``.
+        log_bins (bool): Space the points in log(theta).
+        taper (float): Width of the Gaussian taper above the largest multipole,
+            in units of it.
     """
 
     def __init__(
@@ -174,8 +132,7 @@ class CorrelationTransform:
         self._weights = np.asarray(weights)
 
     def _widen(self, c_ell):
-        """Spectrum on the wide grid: interpolated in log-log inside the grid
-        of the spectra, flat below it and a falling power law above it."""
+        """Spectrum on the FFTLog grid: flat below ``ells``, tapered power law above."""
         c_ell = np.asarray(c_ell, float)
         log_ells_wide = np.log(self._ells_wide)
         magnitude = np.exp(
@@ -191,8 +148,6 @@ class CorrelationTransform:
             slope = -3.0
         if not np.isfinite(slope):
             slope = -3.0
-        # The spectra fall at high multipoles: a spurious rising tail (e.g. a
-        # cross-spectrum crossing zero at the grid edge) would blow up.
         slope = float(np.clip(slope, -8.0, -0.5))
         wide[self._above] = (
             c_ell[-1] * (self._ells_wide[self._above] / self.ells[-1]) ** slope
@@ -201,16 +156,14 @@ class CorrelationTransform:
         return wide * self._taper
 
     def __call__(self, c_ell, nu):
-        """Correlation function of a spectrum at the separations.
+        """Correlation function of a spectrum.
 
-        Parameters:
-            c_ell (numpy.ndarray): Spectrum on `ells`.
-            nu (int): Order of the Bessel function: 0 for xi_+ and w(theta),
-                2 for gamma_t, 4 for xi_-.
+        Args:
+            c_ell (numpy.ndarray): Spectrum on ``ells``.
+            nu (int): Bessel order: 0 for xi_+ and w, 2 for gamma_t, 4 for xi_-.
 
         Returns:
-            (numpy.ndarray): The correlation function, averaged over each
-            angular bin when ``n_sub > 1``.
+            xi (numpy.ndarray): Correlation function.
         """
         y, g = hankel_fftlog(self._ells_wide, self._widen(c_ell), nu)
         values = np.interp(self._points, y, g) / (2.0 * np.pi)
@@ -222,29 +175,14 @@ class CorrelationTransform:
 
 
 class AngularCorrelationFunctionFFTLog(AngularCorrelationFunctionWigner):
-    """Correlation function implementation using the flat-sky FFTLog Hankel
-    transform.
+    """Correlation functions by flat-sky FFTLog, with the output of
+    `AngularCorrelationFunctionWigner`.
 
-    Drop-in alternative to `AngularCorrelationFunctionWigner`, whose tracer
-    handling and output format it shares: `get_xi` returns the same
-    dictionary of `TwoPointCorrelationFunction`, with xi_+ and xi_- in the
-    ``[0, 0]`` and ``[1, 1]`` entries of a shear pair and gamma_t in the
-    ``[0]`` entry of a positions-shear pair.
-
-    Parameters:
-        angular_two_point (AngularTwoPoint): Object providing Cl evaluation
-            and tracers.
-        ells (numpy.ndarray): Increasing multipoles at which the Cl are
-            evaluated, e.g. `ell_grid`.
-        ks (jax.numpy.ndarray): Wavenumber grid of the matter power spectrum.
-        theta_edges (numpy.ndarray|None): Edges of the angular bins, in
-            radians, needed when ``n_sub > 1``.
-        n_sub (int): Number of points per angular bin the correlation
-            functions are averaged over; 1 evaluates them at the separations.
-        log_bins (bool): Whether the sub-points of a bin are spaced in
-            log(theta) (True) or in theta.
-        taper (float): Scale of the Gaussian taper of the spectra above the
-            largest multipole, in units of that multipole.
+    Args:
+        angular_two_point (AngularTwoPoint): Cl and tracers.
+        ells (numpy.ndarray): Multipoles of the Cl, e.g. `ell_grid`.
+        ks (numpy.ndarray): Wavenumbers of the matter power spectrum.
+        theta_edges, n_sub, log_bins, taper: As in `CorrelationTransform`.
     """
 
     def __init__(
@@ -264,17 +202,13 @@ class AngularCorrelationFunctionFFTLog(AngularCorrelationFunctionWigner):
         self.taper = taper
 
     def get_xi(self, theta):
-        """
-        Compute the angular correlation function xi(theta) by FFTLog.
-
-        WARNING: Assumes B-modes are zero, as they are not passed on from AngularTwoPoint
+        """Compute xi(theta), assuming no B-modes.
 
         Args:
-            theta (numpy.ndarray): Angles in radians.
+            theta (numpy.ndarray): Separations in radians.
 
         Returns:
-            (dict): `TwoPointCorrelationFunction` of every pair of tomographic
-            bins, as `AngularCorrelationFunctionWigner.get_xi`.
+            xi (dict): `TwoPointCorrelationFunction` per pair of bins.
         """
         theta = np.asarray(theta, float)
         transform = CorrelationTransform(

@@ -58,6 +58,7 @@ from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
     Contribution,
+    check_supported_model,
     contribution_field,
     unit_sigma,
 )
@@ -619,6 +620,8 @@ class ShearTracer:
         nuisance_params: dict,
         ia_model: "str | Contribution | None" = None,
         tatt_loop_computer: Optional[TATTLoopComputer] = None,
+        *,
+        spin2_prefactor: bool = True,
     ):
         r"""Construct a tomographic cosmic-shear tracer.
 
@@ -652,18 +655,30 @@ class ShearTracer:
             kernels, or any other object with the same `.compute(name)`
             interface. Passing this with any `ia_model` other than
             `"TATT"` raises `ValueError`.
+          spin2_prefactor (bool): Keyword-only. Whether `AngularTwoPoint`
+            multiplies each shear leg by the spin-2 factor
+            ``sqrt((l+2)(l+1)l(l-1)) / (l+1/2)**2`` (default, the shear
+            E-mode spectrum). `False` gives the convergence spectrum, as
+            GODMAX computes it.
 
         Raises:
           ValueError: If ``z`` contains zero, ``ia_model`` is unknown, or the
             TATT loop-computer argument is inconsistent with ``ia_model``.
         """
         check_nonzero_redshifts(z)
+        if ia_model is None or isinstance(ia_model, str):
+            ia_name = ia_model
+        else:
+            ia_name = {NLAContribution: "NLA", TATTContribution: "TATT"}.get(
+                type(ia_model), type(ia_model).__name__
+            )
+        check_supported_model(perturbations, "ia", ia_name)
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z
         self.nuisance_params = nuisance_params
         # This is to add the necessary prefactor to shear, while avoiding it in GC
-        self.prefact_toggle = 1
+        self.prefact_toggle = 1 if spin2_prefactor else 0
         # Set multiplicative bias (m_bias)
         self.m_bias = [
             self.nuisance_params[f"multiplicative_bias_{i + 1}"]

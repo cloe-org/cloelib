@@ -217,12 +217,15 @@ class JAXBackground:
         Calculate the comoving distance for given redshifts.
 
         Args:
-          zs (array_like): Redshifts at which to calculate the comoving distance.
+          zs (array_like): Redshifts at which to calculate the comoving distance
+            (an array or a single value).
 
         Returns:
-          (np.ndarray): The comoving distance as a function of redshift.
+          (np.ndarray): The comoving distance as a function of redshift, a
+            single value for a single redshift.
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
+        zs = jnp.asarray(zs)
 
         def fun(x):
             return 1 / self.hubble_parameter(x)
@@ -231,8 +234,8 @@ class JAXBackground:
             y, _ = quadgk(fun, jnp.array([0.0, x]))
             return y
 
-        y = jnp.array([myquad(myz, fun) for myz in zs])
-        return y * c_0
+        y = jnp.array([myquad(myz, fun) for myz in jnp.atleast_1d(zs)]) * c_0
+        return y if zs.ndim else y[0]
 
     def transverse_comoving_distance(self, zs: jnp.ndarray) -> jnp.ndarray:
         """

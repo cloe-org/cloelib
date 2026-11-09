@@ -1,4 +1,4 @@
-from typing import Protocol, TypeVar, Union
+from typing import Any, Optional, Protocol, TypeVar, Union
 
 import numpy as np
 import jax.numpy as jnp
@@ -21,15 +21,23 @@ T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])
 # (CB, CB) -> P_cb, mixed -> the cb x matter cross spectrum.
 MATTER = "m"
 CB = "cb"
+# Fields only a halo model provides (e.g. `GODMAXNonLinearPerturbations`): HOD
+# galaxies and Compton-y. A pair involving one of them is integrated against
+# `perturbations.power_spectrum(field1, field2, zs, ks)`.
+GALAXY = "g"
+COMPTON_Y = "y"
+HALO_MODEL_FIELDS = (GALAXY, COMPTON_Y)
 
 
 def contribution_field(contribution) -> str:
     """`contribution.field` if defined, else `MATTER`.
 
     Only contributions that can trace the cold dark matter + baryons field
-    (e.g. `GalaxyBiasContribution` of a `PositionsTracer(use_Pcb=True)`)
-    define `field`; everything else (lensing, magnification, intrinsic
-    alignments, ...) traces the total matter and needs no change.
+    (e.g. `GalaxyBiasContribution` of a `PositionsTracer(use_Pcb=True)`) or
+    a halo-model field (`GALAXY` for `HODGalaxyContribution`, `COMPTON_Y`
+    for `ComptonYContribution`) define `field`; everything else (lensing,
+    magnification, RSD, intrinsic alignments, ...) traces the total matter
+    and needs no change.
     """
     return getattr(contribution, "field", MATTER)
 
@@ -94,3 +102,41 @@ class IntrinsicAlignmentContribution:
     / `.positions` - this module holds only the generic, tracer-agnostic
     base types `spectrum_engine.py` and both submodules share.
     """
+
+
+def check_halo_model_field(perturbations: Any, field: str, needed_for: str) -> None:
+    """Raise if `perturbations` cannot provide halo-model spectra of `field`.
+
+    Args:
+      perturbations: The perturbations object of a tracer.
+      field: `GALAXY` (HOD galaxies) or `COMPTON_Y` (Compton-y).
+      needed_for: What requires the field, used in the error message.
+    """
+    spectra = getattr(perturbations, "spectra", None)
+    if spectra is None or (field, field) not in spectra:
+        option = {GALAXY: "galaxies=...", COMPTON_Y: "model_tSZ=True"}[field]
+        raise ValueError(
+            f"{needed_for} needs halo-model power spectra: build the perturbations "
+            "with cloelib.cosmology.godmax_cosmology.GODMAXNonLinearPerturbations"
+            f"(..., {option})."
+        )
+
+
+def check_supported_model(perturbations: Any, kind: str, model: Optional[str]) -> None:
+    """Raise if `perturbations` declares that it does not support `model`.
+
+    A backend may declare `supported_ia_models` / `supported_galaxy_bias_models`
+    (e.g. `GODMAXNonLinearPerturbations`); backends that declare nothing
+    support every model.
+
+    Args:
+      perturbations: The perturbations object of a tracer.
+      kind: `"ia"` or `"galaxy_bias"`.
+      model: The requested model name (`None` for no IA).
+    """
+    supported = getattr(perturbations, f"supported_{kind}_models", None)
+    if supported is not None and model not in supported:
+        raise NotImplementedError(
+            f"{type(perturbations).__name__} does not support {kind}_model="
+            f"{model!r}; supported: {list(supported)}."
+        )

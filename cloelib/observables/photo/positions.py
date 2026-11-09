@@ -52,9 +52,11 @@ from cloelib.auxiliary.math_utils import (
     check_nonzero_redshifts,
 )
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
-from cloelib.observables.photo.contributions import CB, MATTER
+from cloelib.observables.photo.contributions import CB, GALAXY, MATTER
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
+    check_halo_model_field,
+    check_supported_model,
     unit_sigma,
 )
 from cloelib.observables.photo.spectrum_engine import (
@@ -212,6 +214,25 @@ class GalaxyBiasContribution:
 
     def compute_kernel(self, z):
         """Return the raw galaxy-bias kernel, shape ``(n_bin, n_z)``."""
+        return self._tracer.get_window_positions(z)
+
+
+class HODGalaxyContribution:
+    """HOD galaxy kernel term of `PositionsTracer.get_window()`.
+
+    Selected with `galaxy_bias_model="hod"`. The kernel carries no bias: it
+    traces the halo-model galaxy field (`GALAXY`), so its pairings are
+    integrated against the halo-model spectra P_gg, P_gm and P_gy, where the
+    bias follows from the HOD.
+    """
+
+    field = GALAXY
+
+    def __init__(self, tracer: "PositionsTracer") -> None:
+        self._tracer = tracer
+
+    def compute_kernel(self, z):
+        """Return the bias-free positions kernel, shape ``(n_bin, n_z)``."""
         return self._tracer.get_window_positions(z)
 
 
@@ -713,7 +734,10 @@ class PositionsTracer:
                 values between each distribution's peak; ``"poly"`` uses
                 ``b1_photo_poly0`` through ``b1_photo_poly3``; ``"nonlinear"``
                 selects the one-loop bias contribution and requires
-                ``nl_bias_loop_computer``. Linear bias defaults to 1.0;
+                ``nl_bias_loop_computer``; ``"hod"`` uses the galaxy spectra
+                of a halo model instead of a bias parameter, and requires
+                ``GODMAXNonLinearPerturbations`` built with ``galaxies=...``
+                (no ``use_Pcb``). Linear bias defaults to 1.0;
                 nonlinear ``b1`` defaults to 1.0 and ``b2``, ``bs2``,
                 ``b3nl``, and ``bk2`` default to 0.0. Bias nuisance bin
                 indices are zero-based.
@@ -739,6 +763,7 @@ class PositionsTracer:
         if not isinstance(use_Pcb, bool):
             raise TypeError(f"use_Pcb must be a bool, got {type(use_Pcb).__name__}.")
         check_nonzero_redshifts(z)
+        check_supported_model(perturbations, "galaxy_bias", galaxy_bias_model)
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z
@@ -854,6 +879,8 @@ class PositionsTracer:
                 "per_bin": per_bin_case,
                 "per_bin_int": per_bin_int_case,
                 "poly": poly_case,
+                # No bias in the kernel: it is inside the halo-model galaxy spectra.
+                "hod": lambda: np.ones(self.z.shape[0]),
             }
             if galaxy_bias_model not in bias_cases:
                 raise ValueError(
@@ -861,7 +888,15 @@ class PositionsTracer:
                     f"one of {sorted(bias_cases) + ['nonlinear']}."
                 )
             self.bias_array = bias_cases[galaxy_bias_model]()
-            self.bias = GalaxyBiasContribution(self)
+            if galaxy_bias_model == "hod":
+                check_halo_model_field(perturbations, GALAXY, "galaxy_bias_model='hod'")
+                if use_Pcb:
+                    raise NotImplementedError(
+                        "galaxy_bias_model='hod' does not support use_Pcb=True."
+                    )
+                self.bias = HODGalaxyContribution(self)
+            else:
+                self.bias = GalaxyBiasContribution(self)
 
         self.magnification = MagnificationContribution(self)
 

@@ -13,7 +13,7 @@ from cloelib.cosmology.camb_cosmology import (
     CAMBBackground,
     CAMBNonLinearPerturbations,
 )
-from cloelib.observables.cmb import CMBLensingTracer
+from cloelib.observables.cmb.lensing import CMBLensingTracer
 from cloelib.observables.photo import ShearTracer, PositionsTracer
 
 

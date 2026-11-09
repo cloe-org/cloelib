@@ -359,7 +359,7 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         """
         Compute the angular correlation function xi(theta) using the Wigner d-matrices.
 
-        TODO: Also implement FFTLog which is likely faster
+        `AngularCorrelationFunctionFFTLog` is a faster flat-sky alternative.
         WARNING: Currently assumes B-modes are zero, as they are not passed on from AngularTwoPoint
 
         Args:

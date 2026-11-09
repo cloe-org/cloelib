@@ -136,6 +136,49 @@ Alternative implementation using Wigner 3j symbols for computing real-space angu
 
 **Location**: `cloelib/summary_statistics/angular_correlation_function_wigner.py`
 
+## AngularCorrelationFunctionFFTLog
+
+Flat-sky alternative to `AngularCorrelationFunctionWigner`, with the same interface and output. The correlation functions are Hankel transforms of the angular power spectra,
+
+$$
+\xi(\theta) = \frac{1}{2\pi} \int_0^\infty \mathrm{d}\ell \, \ell \, C_\ell \, J_\nu(\ell\theta),
+$$
+
+with $\nu = 0$ for $\xi_+$ and $w(\theta)$, $\nu = 2$ for $\gamma_t$ and $\nu = 4$ for $\xi_-$, evaluated with FFTLog (Hamilton 2000). The spectra are needed only on a log-spaced grid of a few thousand multipoles (`ell_grid`) instead of every integer multipole up to $\ell_{\max}$, and the transform stays accurate above $\ell \approx 26\,000$, where the Wigner-d recurrence loses accuracy.
+
+**Location**: `cloelib/summary_statistics/angular_correlation_function_fftlog.py`
+
+**Example**:
+
+```python
+import numpy as np
+from cloelib.summary_statistics.angular_correlation_function_fftlog import (
+    AngularCorrelationFunctionFFTLog,
+    ell_grid,
+)
+
+theta_edges = np.radians(np.geomspace(2.5, 250.0, 21) / 60)  # arcmin -> rad
+theta = np.sqrt(theta_edges[:-1] * theta_edges[1:])
+
+xi = AngularCorrelationFunctionFFTLog(
+    AngularTwoPoint(shear_tracer, shear_tracer),
+    ell_grid(40000, 2048),
+    pert.k,
+    theta_edges=theta_edges,
+    n_sub=8,
+).get_xi(theta)
+xi_plus = xi[("SHE", "SHE", 1, 1)].array[0, 0]
+xi_minus = xi[("SHE", "SHE", 1, 1)].array[1, 1]
+```
+
+**Options**:
+
+- `n_sub`, `theta_edges`, `log_bins`: with `n_sub > 1` each correlation function is averaged over its angular bin, weighted by $\theta \, \mathrm{d}\theta$ (proportional to the number of pairs), as a measurement in a finite bin is. The default `n_sub = 1` evaluates it at `theta`.
+- `taper`: beyond the grid the spectra are held flat below its first multipole and continued as a falling power law above its last, multiplied by $\exp\{-[(\ell - \ell_{\max}) / (\mathrm{taper} \, \ell_{\max})]^2\}$. Without the taper, a slowly falling spectrum is cut off abruptly at the end of the FFT grid and the result rings.
+
+!!! note
+FFTLog uses the flat-sky approximation. Use `AngularCorrelationFunctionWigner` where full-sky accuracy at large separations matters.
+
 ## Next Steps
 
 The pipeline is now complete.

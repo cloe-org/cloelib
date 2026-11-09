@@ -10,6 +10,8 @@ on:
   push:
     branches:
       - main
+      # TEMPORARY: remove before merging; only used to test the workflow in PR #685
+      - 528-fair-badge-for-public-repo
   schedule:
     # Weekly, Monday 06:00 UTC
     - cron: "0 6 * * 1"

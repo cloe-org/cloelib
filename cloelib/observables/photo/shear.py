@@ -706,9 +706,12 @@ class TATTMContribution(IntrinsicAlignmentContribution):
 
     Args:
       tracer: the owning `ShearTracer`.
-      alpha_M, beta_M: normalisation and slope of the A1-halo mass relation.
+      alpha_M: normalisation of the A1-halo mass relation.
+      beta_M: slope of the A1-halo mass relation.
       loop_computer: one-loop kernel backend, as for `TATTContribution`.
-      k1, k2, k3: A2/A1 ratio and bTA slope/intercept (Herle et al. defaults).
+      k1: A2/A1 ratio at z=0 (Herle et al. default).
+      k2: slope of bTA in log10(Mh/M0) (Herle et al. default).
+      k3: intercept of bTA (Herle et al. default).
       log10_M0: halo-mass pivot, log10(Msun/h).
       C_IA: IA normalisation, as for `NLAContribution`/`TATTContribution`.
     """

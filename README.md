@@ -14,6 +14,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 [![Code Style: Prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg?logo=prettier&logoColor=white)](https://prettier.io/)
 [![Type Checking: ty](https://img.shields.io/badge/type%20checking-ty-8A2BE2?logo=ty&logoColor=white)](https://docs.astral.sh/ty/)
 [![PyPI version](https://img.shields.io/pypi/v/cloelib.svg?logo=pypi&logoColor=white)](https://pypi.org/project/cloelib/)
+[![fair-software.eu](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow)](https://fair-software.eu)
 [![CRediT](https://img.shields.io/badge/contributions-CRediT-using?color=%23cd2653)](https://credit.niso.org/implementing-credit/)
 [![All Contributors](https://img.shields.io/github/all-contributors/cloe-org/cloelib?color=ee8449)](#contributors-)
 

@@ -744,7 +744,6 @@ class TATTMContribution(IntrinsicAlignmentContribution):
             k3,
             log10_M0,
         )
-        self._kernel_cache = None
 
     def _C(self, zs):
         """`(C1, C1delta, C2)` per bin, each shape `(n_bins, len(zs))`."""
@@ -763,15 +762,21 @@ class TATTMContribution(IntrinsicAlignmentContribution):
         h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / _C_KM_S
         return self._tracer.dndz_shifted * h_over_c[None, :]
 
-    def _weighted_kernels(self, zs):
-        """`C * compute_kernel` for C1, C1delta, C2, cached on `zs` identity."""
-        cached = self._kernel_cache
-        if cached is not None and cached[0] is zs:
-            return cached[1]
-        base = self.compute_kernel(zs)
-        kernels = tuple(c * base for c in self._C(zs))
-        self._kernel_cache = (zs, kernels)
-        return kernels
+    def _weighted_kernels(self, zs, bank: SpectraBank):
+        """`C * compute_kernel` for C1, C1delta, C2 on `zs`.
+
+        Memoized in `bank`, not on `self`: the bank lives for one `get_Cl`
+        call, so a cached value can never outlive a `jax.jit`/`jax.grad`
+        trace and leak a tracer into a later call.
+        """
+
+        def _compute(matter_pk, ks, bank_zs):
+            del matter_pk, ks, bank_zs
+            base = self.compute_kernel(zs)
+            return tuple(c * base for c in self._C(zs))
+
+        name = f"tatt_m_kernels_{id(self)}_{id(zs)}"
+        return bank.get(SpectrumRequest(name=name, compute=_compute))
 
     def get_spectrum_requests(self):
         return tuple(
@@ -802,7 +807,7 @@ class TATTMContribution(IntrinsicAlignmentContribution):
         def term(key):
             return _tatt_m_term(bank, self._loop_computer, key)
 
-        k1, k1d, k2 = self._weighted_kernels(zs)
+        k1, k1d, k2 = self._weighted_kernels(zs, bank)
 
         if not isinstance(other, TATTMContribution):
             return (
@@ -811,7 +816,7 @@ class TATTMContribution(IntrinsicAlignmentContribution):
                 PkTerm(k2, None, term("0e2")),
             )
 
-        o1, o1d, o2 = other._weighted_kernels(zs)
+        o1, o1d, o2 = other._weighted_kernels(zs, bank)
         return (
             PkTerm(k1, o1, None),
             PkTerm(k1, o1d, term("00e")),

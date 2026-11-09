@@ -254,6 +254,44 @@ def test_get_cl_tensor_differentiable_tatt_m(grids):
     assert jnp.allclose(grad_alpha, fd_alpha, rtol=1e-2)
 
 
+class _StubTATTLoopComputer:
+    """Pure-JAX stand-in for `PBJTATTLoopComputer` (FAST-PT can't run
+    under `jax.jit`)."""
+
+    def __init__(self, linear_perturbations):
+        self.linear_perturbations = linear_perturbations
+
+    def compute(self, name):
+        return lambda matter_pk, ks, zs: 1e-2 * matter_pk[0]
+
+
+def test_tatt_m_tracer_reusable_after_jit(grids):
+    """A TATT-M tracer built outside `jax.jit` must still work eagerly after
+    a jitted `get_Cl_tensor`: nothing computed inside the trace may be kept
+    on the tracer (a leaked tracer raises `UnexpectedTracerError`)."""
+    perturbations = _build_perturbations(grids["z_grid"], grids["ks"])
+    dndz = jnp.ones((1, len(grids["z_tracer"])))
+    dndz = dndz / jnp.trapezoid(dndz, grids["z_tracer"], axis=1)[:, None]
+    tracer = ShearTracer(
+        perturbations=perturbations,
+        dndz=dndz,
+        z=grids["z_tracer"],
+        nuisance_params=_nuisance_shear(
+            alphaM=1.0, betaM=0.5, log10_Mh_1=13.8, f_r_1=0.8
+        ),
+        ia_model="TATT-M",
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
+    )
+
+    def cl(ells):
+        return AngularTwoPoint(tracer, tracer).get_Cl_tensor(ells, 0, grids["ks"])
+
+    jitted = jax.jit(cl)(grids["ells"])
+    eager = cl(grids["ells"])
+    assert jnp.all(jnp.isfinite(eager))
+    assert jnp.allclose(jitted, eager, rtol=1e-10, atol=0.0)
+
+
 def _nuisance_positions(**extra):
     return {
         "dz_pos_1": 0.0,

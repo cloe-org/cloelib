@@ -19,6 +19,58 @@ GODMAX works in h-units (k in h/Mpc, P in (Mpc/h)^3, distances in Mpc/h);
 cloelib works in Mpc (k in 1/Mpc, P in Mpc^3). The conversion is done in this
 module only (`_spectra_in_cloelib_units`).
 
+## Per-bin HOD
+
+Any HOD parameter in `galaxies["hod"]` can be an array of length n_bins + 1
+instead of a scalar. The first entry is the default; entry i + 1 applies to the
+true-redshift interval `galaxies["z_edges"][i]`. Scalars and arrays can be mixed.
+
+This is one galaxy field whose HOD changes piecewise with true redshift, not
+independent galaxy populations per tomographic bin: every tomographic n(z), and
+every cross-bin pair, uses the same P_gg(k, z) at a given z. It equals an HOD per
+tomographic bin only when the bins do not overlap in true redshift.
+
+The intervals are passed to GODMAX unchanged, and GODMAX assigns them as follows:
+
+- edges are exclusive (lower < z < upper);
+- redshifts below the first interval, above the last, in a gap between intervals
+  or exactly on an edge use the default entry;
+- where intervals overlap, the later interval's values are used.
+
+The interval is chosen at each halo-model redshift node (`redshifts`); between
+nodes the spectra are interpolated, so a change of HOD at an edge is spread over
+one node spacing. Place nodes close to the edges if the transition matters.
+
+## Halo-model spectra
+
+Each spectrum is the sum of a 1-halo and a 2-halo term, combined in one of two
+ways, chosen per spectrum in `godmax_config["analysis"]`:
+
+- `poweradd` (default): P = (P_1h^alpha + P_2h^alpha)^(1/alpha); alpha = 1 (the
+  default) is the plain sum P_1h + P_2h;
+- `response`: the `poweradd` result times P_halofit / P_NFW, where P_NFW is the
+  gravity-only (NFW) halo-model matter spectrum.
+
+| Spectrum | Fields | Prescription | Parameters |
+|---|---|---|---|
+| matter-matter | `"m", "m"` | cloelib halofit x P_DMB / P_NFW, each a plain 1h + 2h sum | halo and gas parameters (`SIM_PARAMETERS`) |
+| matter-y | `"m", "y"` | `poweradd` or `response` | `alpha_ky`, `tSZ_transition_model` |
+| y-y | `"y", "y"` | always the plain sum P_1h + P_2h | none |
+| galaxy-matter | `"g", "m"` | `poweradd` or `response` | `alpha_gm`, `gm_transition_model` |
+| galaxy-y | `"g", "y"` | `poweradd` or `response` | `alpha_gy`, `tSZ_transition_model` |
+| galaxy-galaxy | `"g", "g"` | `poweradd`; `response` is the plain sum x P_halofit / P_NFW | `alpha_gg` (unused with `response`), `gg_transition_model` |
+
+Notes:
+
+- `alpha_ky` and `tSZ_transition_model` do not affect y-y.
+- `tSZ_transition_model` sets both matter-y and galaxy-y.
+- The matter leg of matter-y is baryonified (DMB) with
+  `baryonification_tSZ=True` (default) and gravity-only (NFW) otherwise.
+- `alpha_ge` is passed to GODMAX but has no effect here: cloelib does not use
+  the galaxy-electron spectrum.
+- The alpha values are fixed settings: GODMAX converts them with `float()`, so
+  they cannot be JAX-traced (sampled with gradients or varied inside `jit`).
+
 ## Notes
 
 - GODMAX is not on PyPI. Install it from GitHub (see the README); it needs the
@@ -107,11 +159,13 @@ SIM_PARAMETERS = (
 )
 
 #: GODMAX `other_params` keys accepted as keyword arguments (1-halo/2-halo
-#: transition smoothing of each spectrum).
+#: transition smoothing of each spectrum). See "Halo-model spectra" in the
+#: module docstring for which spectrum each one controls.
 OTHER_PARAMETERS = ("alpha_ky", "alpha_gy", "alpha_gg", "alpha_gm", "alpha_ge")
 
 #: HOD parameters accepted in `galaxies["hod"]`; each is a scalar or, for a
-#: per-bin HOD, an array of length n_bins + 1 (default value first).
+#: per-bin HOD, an array of length n_bins + 1 (default value first). See
+#: "Per-bin HOD" in the module docstring for how the bins are assigned.
 HOD_PARAMETERS = (
     "log10M1_fshmr",
     "log10M1_a_fshmr",
@@ -180,18 +234,43 @@ def _galaxy_config(galaxies: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, 
         raise ValueError(
             f"Unknown HOD parameters {sorted(unknown)}; expected {HOD_PARAMETERS}."
         )
+    z_edges = galaxies.get("z_edges")
+    if z_edges is not None:
+        z_edges = jnp.asarray(z_edges, dtype=float)
+        if z_edges.ndim != 2 or z_edges.shape[0] == 0 or z_edges.shape[1] != 2:
+            raise ValueError(
+                f"galaxies['z_edges'] must have shape (n_bins, 2), got {z_edges.shape}."
+            )
+        if not bool(jnp.all(z_edges[:, 0] < z_edges[:, 1])):
+            raise ValueError(
+                "galaxies['z_edges'] must have a lower edge below the upper edge "
+                "in every bin."
+            )
+
+    # GODMAX reads per-bin arrays at min(bin index, length - 1), so a short array
+    # would silently reuse its last entry: only length 1 or n_bins + 1 is allowed.
     per_bin = False
     for name, value in hod.items():
-        value = jnp.atleast_1d(jnp.asarray(value, dtype=float))
-        per_bin = per_bin or value.shape[0] > 1
+        value = jnp.asarray(value, dtype=float)
+        if value.ndim > 1 or value.size == 0:
+            raise ValueError(
+                f"HOD parameter {name!r} must be a scalar or a non-empty 1D array, got "
+                f"shape {value.shape}."
+            )
+        value = jnp.atleast_1d(value)
+        if value.shape[0] > 1:
+            per_bin = True
+            if z_edges is None:
+                raise ValueError("galaxies['z_edges'] is required for a per-bin HOD.")
+            if value.shape[0] != z_edges.shape[0] + 1:
+                raise ValueError(
+                    f"HOD parameter {name!r} has {value.shape[0]} entries; a "
+                    f"per-bin HOD with {z_edges.shape[0]} bins needs "
+                    f"{z_edges.shape[0] + 1} (default value first, then one per bin)."
+                )
         sim[f"{name}_array"] = value
 
-    z_edges = galaxies.get("z_edges")
-    if z_edges is None:
-        if per_bin:
-            raise ValueError("galaxies['z_edges'] is required for a per-bin HOD.")
-    else:
-        z_edges = jnp.asarray(z_edges, dtype=float).reshape(-1, 2)
+    if z_edges is not None:
         n_bins = z_edges.shape[0]
         # GODMAX reads the bin edges from the lens n(z) block; the n(z) itself
         # (flat here) only enters its C_ell kernels, which are not built.
@@ -397,7 +476,10 @@ class GODMAXNonLinearPerturbations:
                 (comoving number density in (h/Mpc)^3, scalar or array), `nbar_z`
                 (redshifts of an `nbar` array), `z_edges` (bin edges, shape
                 `(n_bins, 2)`), `hod` (HOD parameters by GODMAX name, scalar or
-                per-bin array of length `n_bins + 1`).
+                per-bin array of length `n_bins + 1`). A per-bin HOD varies with
+                true redshift over the `z_edges` intervals; it is not a separate
+                population per tomographic bin (see "Per-bin HOD" in the module
+                docstring).
             godmax_config: Overrides of the GODMAX settings, keyed by section
                 (`sim_params`, `halo_params`, `analysis`, `other_params`).
             **halo_params: Halo-model parameters by GODMAX name, e.g.

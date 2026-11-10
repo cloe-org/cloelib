@@ -86,12 +86,11 @@ class HaloModelProperties:
                 A default interpolation is set when class is instanciated with interpolate_da=True.
                 For a more customized interpolation, check the set_angular_diameter_distance_interpolation function.
 
-        Notes
-        ----------
-        In the current implementation, the matter power spectrum never includes
-        the contribution of massive neutrinos. Halo mass function, halo bias, and
-        2-halo profile models implemented in this subpackage require
-        cold dark matter + baryons (no neutrinos) power spectra.
+        Notes:
+            In the current implementation, the matter power spectrum never includes
+            the contribution of massive neutrinos. Halo mass function, halo bias, and
+            2-halo profile models implemented in this subpackage require
+            cold dark matter + baryons (no neutrinos) power spectra.
         """
         self.perturbations = perturbations
         self.k = k

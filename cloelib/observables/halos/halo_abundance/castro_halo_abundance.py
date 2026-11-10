@@ -92,9 +92,8 @@ class CastroHaloAbundance(HaloAbundanceBase):
         Returns:
             bias(numpy.ndarray): bias[i,j], where i is the redshift axis and j the mass axis
 
-        Notes
-        -------
-        If the mass array has less than 4 entries, this causes problem with the derivative
+        Notes:
+            If the mass array has less than 4 entries, this causes problem with the derivative
         """
         # Format mass shape
         if not hasattr(M, "__len__"):

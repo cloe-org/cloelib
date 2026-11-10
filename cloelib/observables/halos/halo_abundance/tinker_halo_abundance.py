@@ -40,6 +40,9 @@ class TinkerHaloAbundance(HaloAbundanceBase):
 
         Returns:
             f_sigma_nu (numpy.ndarray): f_sigma_nu[i,j], where i is the redshift axis and j the mass axis
+
+        Notes:
+            Not implemented yet.
         """
         raise NotImplementedError
 

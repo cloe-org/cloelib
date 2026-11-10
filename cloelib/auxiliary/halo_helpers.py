@@ -51,7 +51,9 @@ def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=
         return 18.0 * np.pi**2 + 82.0 * x - 39.0 * x**2
 
 
-def convert_distance(distance, units_in, units_out, angular_diameter_distance=None):
+def convert_distance(
+    distance, units_in, units_out, angular_diameter_distance=None
+) -> np.ndarray:
     r"""Convert distances
 
     Parameters:
@@ -166,7 +168,7 @@ def photoz_rsd_correction(
     return corr0, corr1, corr2
 
 
-def tophat_window(kr):
+def tophat_window(kr) -> np.ndarray:
     r"""compute top-hat window and its derivative.
 
     Parameters:
@@ -178,7 +180,7 @@ def tophat_window(kr):
     return 3.0 * (np.sin(kr) - kr * np.cos(kr)) / kr**3.0
 
 
-def tophat_window_derivative(kr):
+def tophat_window_derivative(kr) -> np.ndarray:
     r"""Compute derivative of the top-hat window.
 
     Parameters:
@@ -190,7 +192,7 @@ def tophat_window_derivative(kr):
     return 3.0 * (np.sin(kr) * (kr**2.0 - 3.0) + 3.0 * kr * np.cos(kr)) / kr**4.0
 
 
-def isotropic_volume_distance(z, da, hz):
+def isotropic_volume_distance(z, da, hz) -> np.ndarray:
     """Compute isotropic volume distance
 
     Parameters:
@@ -204,7 +206,7 @@ def isotropic_volume_distance(z, da, hz):
     return ((1 + z) ** 2 * da**2 * units.SPEED_OF_LIGHT * z / hz) ** (1 / 3.0)
 
 
-def tabulated_return(reference_table, func, func_kwargs):
+def tabulated_return(reference_table, func, func_kwargs) -> np.ndarray:
     """Check if arguments given are the same from the reference table.
     If true, returns the tabulated value. Otherwise, recomputes the output
     value and stores it (and inputs) back in reference table.

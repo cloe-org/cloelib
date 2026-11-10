@@ -7,6 +7,28 @@ from cloelib.auxiliary.units import SPEED_OF_LIGHT
 _C_KM_S = SPEED_OF_LIGHT / 1000
 
 
+def _curved(x, Omega_k0, H0, open_form, closed_form, series):
+    r"""Evaluate a function of $u = \Omega_K (x H_0/c)^2$ for any sign of $\Omega_K$.
+
+    Args:
+        x (array_like): Distance(s) in Mpc.
+        Omega_k0 (float): Curvature density parameter today.
+        H0 (float): Hubble constant in km/s/Mpc.
+        open_form (callable): Exact form in $a = \sqrt{u}$ for $u > 0$.
+        closed_form (callable): Exact form in $a = \sqrt{-u}$ for $u < 0$.
+        series (callable): Taylor series in $u$ about $u = 0$.
+
+    Returns:
+        (jax.numpy.ndarray): Same shape as ``x``.
+    """
+    u = Omega_k0 * (jnp.asarray(x) * H0 / _C_KM_S) ** 2
+    # The exact forms are 0/0 at u = 0 and sqrt(|u|) has an infinite derivative
+    # there, so the series is used for |u| < 1e-4 (truncation error < 1e-13).
+    small = jnp.abs(u) < 1e-4
+    a = jnp.sqrt(jnp.where(small, 1.0, jnp.abs(u)))
+    return jnp.where(small, series(u), jnp.where(u > 0, open_form(a), closed_form(a)))
+
+
 def transverse_distance(chi, Omega_k0, H0):
     r"""Return the transverse comoving distance $f_K(\chi)$ in Mpc.
 
@@ -18,13 +40,14 @@ def transverse_distance(chi, Omega_k0, H0):
     Returns:
         (jax.numpy.ndarray): $f_K(\chi)$ in Mpc, same shape as ``chi``.
     """
-    chi = jnp.asarray(chi)
-    u = Omega_k0 * (chi * H0 / _C_KM_S) ** 2
-    small = jnp.abs(u) < 1e-4
-    a = jnp.sqrt(jnp.where(small, 1.0, jnp.abs(u)))
-    exact = jnp.where(u > 0, jnp.sinh(a), jnp.sin(a)) / a
-    series = 1 + u / 6 + u**2 / 120
-    return chi * jnp.where(small, series, exact)
+    return jnp.asarray(chi) * _curved(
+        chi,
+        Omega_k0,
+        H0,
+        lambda a: jnp.sinh(a) / a,
+        lambda a: jnp.sin(a) / a,
+        lambda u: 1 + u / 6 + u**2 / 120,
+    )
 
 
 def radial_distance(d_M, Omega_k0, H0):
@@ -38,13 +61,14 @@ def radial_distance(d_M, Omega_k0, H0):
     Returns:
         (jax.numpy.ndarray): $\chi$ in Mpc, same shape as ``d_M``.
     """
-    d_M = jnp.asarray(d_M)
-    u = Omega_k0 * (d_M * H0 / _C_KM_S) ** 2
-    small = jnp.abs(u) < 1e-4
-    a = jnp.sqrt(jnp.where(small, 1.0, jnp.abs(u)))
-    exact = jnp.where(u > 0, jnp.arcsinh(a), jnp.arcsin(a)) / a
-    series = 1 - u / 6 + 3 * u**2 / 40
-    return d_M * jnp.where(small, series, exact)
+    return jnp.asarray(d_M) * _curved(
+        d_M,
+        Omega_k0,
+        H0,
+        lambda a: jnp.arcsinh(a) / a,
+        lambda a: jnp.arcsin(a) / a,
+        lambda u: 1 - u / 6 + 3 * u**2 / 40,
+    )
 
 
 def cos_K(chi, Omega_k0, H0):
@@ -58,13 +82,14 @@ def cos_K(chi, Omega_k0, H0):
     Returns:
         (jax.numpy.ndarray): Dimensionless, same shape as ``chi``.
     """
-    chi = jnp.asarray(chi)
-    u = Omega_k0 * (chi * H0 / _C_KM_S) ** 2
-    small = jnp.abs(u) < 1e-4
-    a = jnp.sqrt(jnp.where(small, 1.0, jnp.abs(u)))
-    exact = jnp.where(u > 0, jnp.cosh(a), jnp.cos(a))
-    series = 1 + u / 2 + u**2 / 24
-    return jnp.where(small, series, exact)
+    return _curved(
+        chi,
+        Omega_k0,
+        H0,
+        jnp.cosh,
+        jnp.cos,
+        lambda u: 1 + u / 2 + u**2 / 24,
+    )
 
 
 def curvature(Omega_k0, H0):

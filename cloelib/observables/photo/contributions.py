@@ -101,4 +101,6 @@ class IntrinsicAlignmentContribution:
     base types `spectrum_engine.py` and both submodules share.
     """
 
+    # Exact for NLA (linear in the tidal field). For TATT the quadratic tidal
+    # terms get the same linear curved-Poisson factor, an approximation.
     traces_potential = True

@@ -131,3 +131,35 @@ def test_gw_windows_and_angular_power_spectra():
     assert len(cells_reverse.keys()) == 1
     assert ("GWNC", "GWWL", 1, 1) in cells_reverse.keys()
     assert cells_reverse[("GWNC", "GWWL", 1, 1)].shape == (nl,)
+
+
+def _gw_cells(Omega_k0):
+    z = np.linspace(0.1, 1.1, 21)
+    dndz = np.ones((1, len(z)))
+    dndz /= np.trapezoid(dndz, z, axis=1)[:, None]
+    perturbations = FakePerturbations(z)
+    perturbations.background.Omega_k0 = Omega_k0
+    nuisance_gw = {"b1_gw_bin0": 1.7, "dz_gw_1": 0.0, "width_gw_1": 1.0}
+    kwargs = dict(
+        perturbations=perturbations, dndz=dndz, z=z, nuisance_params=nuisance_gw
+    )
+    number_counts = GWNumberCountsTracer(gw_bias_model="per_bin", **kwargs)
+    weak_lensing = GWWeakLensingTracer(**kwargs)
+    ells = np.logspace(1.0, 2.0, 10)
+    return {
+        **AngularTwoPoint(number_counts, number_counts).get_Cl(
+            ells, 0, perturbations.k
+        ),
+        **AngularTwoPoint(weak_lensing, weak_lensing).get_Cl(ells, 0, perturbations.k),
+        **AngularTwoPoint(number_counts, weak_lensing).get_Cl(ells, 0, perturbations.k),
+    }
+
+
+def test_gw_angular_power_spectra_curved():
+    flat = _gw_cells(0.0)
+    near_flat = _gw_cells(1e-7)
+    curved = _gw_cells(0.1)
+    for key, cl in flat.items():
+        np.testing.assert_allclose(near_flat[key], cl, rtol=1e-5)
+        assert np.all(np.isfinite(curved[key]))
+        assert not np.allclose(curved[key], cl, rtol=1e-3, atol=0.0)

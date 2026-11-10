@@ -2,10 +2,14 @@ import numpy as np
 import pytest
 from scipy.special import gamma, hyp1f1
 
+from cloelib.observables.photo import ShearTracer
 from cloelib.summary_statistics.angular_correlation_function_fftlog import (
     CorrelationTransform,
     ell_grid,
     hankel_fftlog,
+)
+from cloelib.summary_statistics.angular_correlation_function_wigner import (
+    AngularCorrelationFunctionWigner,
 )
 
 
@@ -37,7 +41,7 @@ def test_hankel_gaussian_pair():
 @pytest.mark.parametrize("nu", [0, 2, 4])
 def test_closed_form(nu):
     theta, _ = _log_bins(0.5, 20.0, 12)
-    transform = CorrelationTransform(ell_grid(40000, 2048), theta)
+    transform = CorrelationTransform(ell_grid(40000, 2048), theta, ell_shift=0.0)
     amplitude, sigma = 1e-8, 600.0
     c_ell = amplitude * np.exp(-0.5 * (transform.ells / sigma) ** 2)
     exact = _gaussian_closed_form(theta, nu, amplitude, sigma)
@@ -53,7 +57,9 @@ def test_ell_grid():
 def test_bin_average():
     theta, edges = _log_bins(0.5, 20.0, 12)
     amplitude, sigma = 1e-8, 600.0
-    averaged = CorrelationTransform(ell_grid(), theta, theta_edges=edges, n_sub=16)
+    averaged = CorrelationTransform(
+        ell_grid(), theta, theta_edges=edges, n_sub=16, ell_shift=0.0
+    )
     c_ell = amplitude * np.exp(-0.5 * (averaged.ells / sigma) ** 2)
     expected = []
     for low, high in zip(edges[:-1], edges[1:]):
@@ -85,3 +91,25 @@ def test_ell_nodes_converged(nu):
         c_ell = 1e-9 / (1 + (transform.ells / 300.0) ** 2) ** 0.65
         xi[n_ell] = transform(c_ell, nu)
     np.testing.assert_allclose(xi[120], xi[2048], atol=1e-4 * np.abs(xi[2048]).max())
+
+
+def test_matches_wigner_sum():
+    def spectrum(ell):
+        return 1e-9 / (1 + (ell / 300.0) ** 2) ** 0.65 * np.exp(-((ell / 2000.0) ** 2))
+
+    class _TwoPoint:
+        tracer1 = ShearTracer.__new__(ShearTracer)
+        tracer2 = ShearTracer.__new__(ShearTracer)
+
+        def get_Cl(self, ells, nl, ks):
+            self.C_ell_calc = spectrum(np.asarray(ells, float))[:, None, None]
+
+    theta = np.radians(np.geomspace(5.0, 200.0, 10) / 60)
+    wigner = AngularCorrelationFunctionWigner(_TwoPoint(), np.arange(2, 10001), None)
+    xi = np.asarray(wigner.get_xi(theta)[("SHE", "SHE", 1, 1)].array)
+    ells = ell_grid(10000, 120)
+    transform = CorrelationTransform(ells, theta)
+    for nu, exact in ((0, xi[0, 0]), (4, xi[1, 1])):
+        np.testing.assert_allclose(
+            transform(spectrum(ells), nu), exact, atol=1e-4 * np.abs(exact).max()
+        )

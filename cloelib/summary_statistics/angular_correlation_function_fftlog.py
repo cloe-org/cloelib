@@ -87,6 +87,7 @@ class CorrelationTransform:
         log_bins=True,
         taper=DEFAULT_TAPER,
         n_grid=DEFAULT_N_GRID,
+        ell_shift=0.5,
     ):
         """
         Initialize the transform on fixed multipoles and angles.
@@ -99,6 +100,7 @@ class CorrelationTransform:
             log_bins (bool): Space the points in log(theta).
             taper (float): Width of the Gaussian taper above the largest multipole, in units of it.
             n_grid (int): Number of points of the FFTLog grid, before padding.
+            ell_shift (float): The spectrum enters at ell - ell_shift; 0.5 matches the full-sky sum, 0 gives the flat-sky Hankel transform.
         """
         self.ells = np.asarray(ells, float)
         if (
@@ -111,11 +113,12 @@ class CorrelationTransform:
         self.theta = np.asarray(theta, float)
         self._log_ells = np.log(self.ells)
         self._ells_wide = np.logspace(-2.0, 6.0, int(n_grid))
-        self._above = self._ells_wide > self.ells[-1]
-        self._below = self._ells_wide < self.ells[0]
+        self._ells_shifted = self._ells_wide - float(ell_shift)
+        self._above = self._ells_shifted > self.ells[-1]
+        self._below = self._ells_shifted < self.ells[0]
         self._inside = ~(self._above | self._below)
         self._kernels = {}
-        excess = np.clip(self._ells_wide - self.ells[-1], 0.0, None)
+        excess = np.clip(self._ells_shifted - self.ells[-1], 0.0, None)
         self._taper = np.exp(-((excess / (float(taper) * self.ells[-1])) ** 2))
         self.n_sub = int(n_sub)
         if self.n_sub < 1:
@@ -147,10 +150,10 @@ class CorrelationTransform:
         self._weights = np.asarray(weights)
 
     def _widen(self, c_ell):
-        """Spectrum on the FFTLog grid: cubic spline of ell^2 C_ell in log(ell), flat below ``ells``, tapered power law above."""
+        """Spectrum at ell - ell_shift on the FFTLog grid: cubic spline of ell^2 C_ell in log(ell), flat below ``ells``, tapered power law above."""
         c_ell = np.asarray(c_ell, float)
         wide = np.empty_like(self._ells_wide)
-        ells_inside = self._ells_wide[self._inside]
+        ells_inside = self._ells_shifted[self._inside]
         spline = CubicSpline(self._log_ells, self.ells**2 * c_ell)
         wide[self._inside] = spline(np.log(ells_inside)) / ells_inside**2
         last, previous = abs(float(c_ell[-1])), abs(float(c_ell[-2]))
@@ -162,7 +165,7 @@ class CorrelationTransform:
             slope = -3.0
         slope = float(np.clip(slope, -8.0, -0.5))
         wide[self._above] = (
-            c_ell[-1] * (self._ells_wide[self._above] / self.ells[-1]) ** slope
+            c_ell[-1] * (self._ells_shifted[self._above] / self.ells[-1]) ** slope
         )
         wide[self._below] = c_ell[0]
         return wide * self._taper

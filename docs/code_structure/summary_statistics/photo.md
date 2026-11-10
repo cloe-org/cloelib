@@ -138,7 +138,7 @@ Alternative implementation using Wigner 3j symbols for computing real-space angu
 
 ## AngularCorrelationFunctionFFTLog
 
-Flat-sky alternative to `AngularCorrelationFunctionWigner` using FFTLog, with the same interface and output. The spectra are evaluated on a log-spaced multipole grid (`ell_grid`, 120 multipoles by default) and interpolated by a cubic spline.
+Flat-sky alternative to `AngularCorrelationFunctionWigner` using FFTLog, with the same interface and output. The spectra are evaluated on a log-spaced multipole grid (`ell_grid`, 120 multipoles by default) and interpolated by a cubic spline. They enter the transform at `ell - 1/2`, which matches the full-sky Wigner sum.
 
 **Location**: `cloelib/summary_statistics/angular_correlation_function_fftlog.py`
 

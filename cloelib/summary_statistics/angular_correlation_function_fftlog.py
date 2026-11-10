@@ -1,12 +1,14 @@
 """Flat-sky angular correlation functions from angular power spectra by FFTLog."""
 
 import numpy as np
+from scipy.interpolate import CubicSpline
 from scipy.special import loggamma
 
 from .angular_correlation_function_wigner import AngularCorrelationFunctionWigner
 
 DEFAULT_ELL_MAX = 40000
-DEFAULT_N_ELL = 2048
+DEFAULT_N_ELL = 120
+DEFAULT_N_GRID = 8192
 DEFAULT_TAPER = 5.0
 
 
@@ -30,6 +32,33 @@ def _mellin_bessel(z, nu):
     )
 
 
+def _fftlog_kernel(x, nu, q, padding):
+    """Padded grid, ordinates and Mellin coefficients of `hankel_fftlog`, which depend only on x and nu."""
+    x = np.asarray(x, float)
+    n_in = x.size
+    dlnx = np.log(x[-1] / x[0]) / (n_in - 1)
+    n = int(2 ** np.ceil(np.log2(padding * n_in))) if padding > 1 else n_in
+    left = (n - n_in) // 2
+    x_pad = x[0] * np.exp((np.arange(n) - left) * dlnx)
+    lnxy = dlnx / np.pi * np.angle(_mellin_bessel(q + 1j * np.pi / dlnx, nu))
+    y_pad = np.exp(lnxy) / x_pad[::-1]
+    k = 2.0 * np.pi * np.fft.fftfreq(n, d=dlnx)
+    coefficients = _mellin_bessel(q - 1j * k, nu) * np.exp(1j * k * lnxy)
+    return x_pad ** (2.0 - q), y_pad, y_pad ** (-q), coefficients, left
+
+
+def _fftlog_apply(f, kernel):
+    """Hankel transform of ``f`` with a kernel of `_fftlog_kernel`."""
+    bias, y_pad, unbias, coefficients, left = kernel
+    n, n_in = y_pad.size, f.size
+    f_pad = np.zeros(n)
+    f_pad[left : left + n_in] = f
+    phi = np.fft.fft(f_pad * bias)
+    g_pad = np.roll(np.fft.ifft(np.conj(phi) * coefficients).real, -1) * unbias
+    right = n - n_in - left
+    return y_pad[right : right + n_in], g_pad[right : right + n_in]
+
+
 def hankel_fftlog(x, f, nu, q=1.0, padding=2):
     """Hankel transform ``g(y) = int f(x) J_nu(x y) x dx`` by FFTLog.
 
@@ -43,25 +72,7 @@ def hankel_fftlog(x, f, nu, q=1.0, padding=2):
     Returns:
         (numpy.ndarray, numpy.ndarray): Log-spaced ordinates y and the transform g(y).
     """
-    x = np.asarray(x, float)
-    f = np.asarray(f, float)
-    n_in = x.size
-    dlnx = np.log(x[-1] / x[0]) / (n_in - 1)
-    n = int(2 ** np.ceil(np.log2(padding * n_in))) if padding > 1 else n_in
-    left = (n - n_in) // 2
-    x_pad = x[0] * np.exp((np.arange(n) - left) * dlnx)
-    f_pad = np.zeros(n)
-    f_pad[left : left + n_in] = f
-
-    lnxy = dlnx / np.pi * np.angle(_mellin_bessel(q + 1j * np.pi / dlnx, nu))
-    y_pad = np.exp(lnxy) / x_pad[::-1]
-    k = 2.0 * np.pi * np.fft.fftfreq(n, d=dlnx)
-    phi = np.fft.fft(f_pad * x_pad ** (2.0 - q))
-    coefficients = _mellin_bessel(q - 1j * k, nu) * np.exp(1j * k * lnxy)
-    g_biased = np.roll(np.fft.ifft(np.conj(phi) * coefficients).real, -1)
-    g_pad = g_biased * y_pad ** (-q)
-    right = n - n_in - left
-    return y_pad[right : right + n_in], g_pad[right : right + n_in]
+    return _fftlog_apply(np.asarray(f, float), _fftlog_kernel(x, nu, q, padding))
 
 
 class CorrelationTransform:
@@ -75,6 +86,7 @@ class CorrelationTransform:
         n_sub=1,
         log_bins=True,
         taper=DEFAULT_TAPER,
+        n_grid=DEFAULT_N_GRID,
     ):
         """
         Initialize the transform on fixed multipoles and angles.
@@ -86,6 +98,7 @@ class CorrelationTransform:
             n_sub (int): Points averaged per angular bin; 1 evaluates at theta.
             log_bins (bool): Space the points in log(theta).
             taper (float): Width of the Gaussian taper above the largest multipole, in units of it.
+            n_grid (int): Number of points of the FFTLog grid, before padding.
         """
         self.ells = np.asarray(ells, float)
         if (
@@ -97,9 +110,11 @@ class CorrelationTransform:
             raise ValueError("'ells' must be positive and strictly increasing")
         self.theta = np.asarray(theta, float)
         self._log_ells = np.log(self.ells)
-        self._ells_wide = np.logspace(-2.0, 6.0, 4 * self.ells.size)
+        self._ells_wide = np.logspace(-2.0, 6.0, int(n_grid))
         self._above = self._ells_wide > self.ells[-1]
         self._below = self._ells_wide < self.ells[0]
+        self._inside = ~(self._above | self._below)
+        self._kernels = {}
         excess = np.clip(self._ells_wide - self.ells[-1], 0.0, None)
         self._taper = np.exp(-((excess / (float(taper) * self.ells[-1])) ** 2))
         self.n_sub = int(n_sub)
@@ -132,15 +147,12 @@ class CorrelationTransform:
         self._weights = np.asarray(weights)
 
     def _widen(self, c_ell):
-        """Spectrum on the FFTLog grid: flat below ``ells``, tapered power law above."""
+        """Spectrum on the FFTLog grid: cubic spline of ell^2 C_ell in log(ell), flat below ``ells``, tapered power law above."""
         c_ell = np.asarray(c_ell, float)
-        log_ells_wide = np.log(self._ells_wide)
-        magnitude = np.exp(
-            np.interp(log_ells_wide, self._log_ells, np.log(np.abs(c_ell) + 1e-300))
-        )
-        sign = np.sign(np.interp(log_ells_wide, self._log_ells, c_ell))
-        sign[sign == 0] = 1.0
-        wide = magnitude * sign
+        wide = np.empty_like(self._ells_wide)
+        ells_inside = self._ells_wide[self._inside]
+        spline = CubicSpline(self._log_ells, self.ells**2 * c_ell)
+        wide[self._inside] = spline(np.log(ells_inside)) / ells_inside**2
         last, previous = abs(float(c_ell[-1])), abs(float(c_ell[-2]))
         if last > 1e-300 and previous > 1e-300:
             slope = np.log(last / previous) / (self._log_ells[-1] - self._log_ells[-2])
@@ -165,7 +177,9 @@ class CorrelationTransform:
         Returns:
             (numpy.ndarray): Correlation function.
         """
-        y, g = hankel_fftlog(self._ells_wide, self._widen(c_ell), nu)
+        if nu not in self._kernels:
+            self._kernels[nu] = _fftlog_kernel(self._ells_wide, nu, 1.0, 2)
+        y, g = _fftlog_apply(self._widen(c_ell), self._kernels[nu])
         values = np.interp(self._points, y, g) / (2.0 * np.pi)
         if self._weights is None:
             return values
@@ -204,6 +218,21 @@ class AngularCorrelationFunctionFFTLog(AngularCorrelationFunctionWigner):
         self.n_sub = n_sub
         self.log_bins = log_bins
         self.taper = taper
+        self._transforms = {}
+
+    def _transform(self, theta):
+        """`CorrelationTransform` of ``theta``, built once per set of angles."""
+        key = theta.tobytes()
+        if key not in self._transforms:
+            self._transforms[key] = CorrelationTransform(
+                self.ells,
+                theta,
+                theta_edges=self.theta_edges,
+                n_sub=self.n_sub,
+                log_bins=self.log_bins,
+                taper=self.taper,
+            )
+        return self._transforms[key]
 
     def get_xi(self, theta):
         """
@@ -218,14 +247,7 @@ class AngularCorrelationFunctionFFTLog(AngularCorrelationFunctionWigner):
             (dict): TwoPointCorrelationFunction objects for each pair of tomographic bins.
         """
         theta = np.asarray(theta, float)
-        transform = CorrelationTransform(
-            self.ells,
-            theta,
-            theta_edges=self.theta_edges,
-            n_sub=self.n_sub,
-            log_bins=self.log_bins,
-            taper=self.taper,
-        )
+        transform = self._transform(theta)
         c_ell = np.asarray(
             self.angular_two_point.get_Cl_tensor(self.ells, 0, self.ks), float
         )

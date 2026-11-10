@@ -74,3 +74,14 @@ def test_widen_tail_and_sign():
     assert np.isfinite(transform._widen(c_ell)).all()
     assert np.isfinite(transform(c_ell, 0)).all()
     np.testing.assert_allclose(transform(2 * c_ell, 4), 2 * transform(c_ell, 4))
+
+
+@pytest.mark.parametrize("nu", [0, 2, 4])
+def test_ell_nodes_converged(nu):
+    theta, _ = _log_bins(2.5, 250.0, 20)
+    xi = {}
+    for n_ell in (120, 2048):
+        transform = CorrelationTransform(ell_grid(40000, n_ell), theta)
+        c_ell = 1e-9 / (1 + (transform.ells / 300.0) ** 2) ** 0.65
+        xi[n_ell] = transform(c_ell, nu)
+    np.testing.assert_allclose(xi[120], xi[2048], atol=1e-4 * np.abs(xi[2048]).max())

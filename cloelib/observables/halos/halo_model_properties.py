@@ -76,21 +76,10 @@ class HaloModelProperties:
         If requested, cosmological functions (e.g., the matter power spectrum)
         are interpolated.
 
-        Parameters
-        ----------
-        perturbations : Perturbations
-            An object from the `LinearPerturbations` class containing cosmological
-            perturbation data (e.g., power spectrum, growth function).
-        interpolate_pk : bool, optional
-            If true, the class interpolates the matter power spectrum.
-            A default interpolation is set when class is instanciated with
-            interpolate_pk=True. For a more customized interpolation, check
-            the set_matter_power_spectrum_interpolation function.
-        interpolate_da : bool, optional
-            If true, the class interpolates the angular diameter distance.
-            A default interpolation is set when class is instanciated with
-            interpolate_da=True. For a more customized interpolation, check
-            the set_angular_diameter_distance_interpolation function.
+        Parameters:
+            perturbations (Perturbations): An object from the `LinearPerturbations` class containing cosmological perturbation data (e.g., power spectrum, growth function).
+            interpolate_pk (bool): If true, the class interpolates the matter power spectrum. A default interpolation is set when class is instanciated with interpolate_pk=True. For a more customized interpolation, check the set_matter_power_spectrum_interpolation function.
+            interpolate_da (bool): If true, the class interpolates the angular diameter distance. A default interpolation is set when class is instanciated with interpolate_da=True. For a more customized interpolation, check the set_angular_diameter_distance_interpolation function.
 
         Notes
         ----------
@@ -130,15 +119,11 @@ class HaloModelProperties:
         """
         Return the angular diameter distance as a function of redshift.
 
-        Parameters
-        ----------
-        z : np.ndarray
-            Array of redshifts.
+        Parameters:
+            z (np.ndarray): Array of redshifts.
 
-        Returns
-        -------
-        np.ndarray
-            Angular diameter distance values.
+        Returns:
+            (np.ndarray): Angular diameter distance values.
         """
         if self.interpolate_da:
             _angular_diameter_distance_func = self.da_interp
@@ -156,18 +141,12 @@ class HaloModelProperties:
         This function computes the cold dark matter + baryons power spectrum,
         not including the massive neutrino contribution.
 
-        Parameters
-        ----------
-        z: float or np.ndarray
-            Redshift.
-        k: float or np.ndarray
-            Wavenumber where W(kR) is evaluated.
-            Units: h Mpc^{-1}
+        Parameters:
+            z (float or np.ndarray): Redshift.
+            k (float or np.ndarray): Wavenumber where W(kR) is evaluated. Units: h Mpc^{-1}
 
-        Returns
-        -------
-        float or np.ndarray
-            Matter power spectrum.
+        Returns:
+            (float or np.ndarray): Matter power spectrum.
         """
         if self.interpolate_pk:
             _matter_power_spectrum_cb_func = self.Pk_interp_cb
@@ -201,13 +180,9 @@ class HaloModelProperties:
         This function interpolates the cold dark matter + baryons power spectrum,
         not including the massive neutrino contribution.
 
-        Parameters
-        ----------
-        z: float or np.ndarray
-            Redshift.
-        k: float or np.ndarray
-            Wavenumber where W(kR) is evaluated.
-            Units: h Mpc^{-1}
+        Parameters:
+            z (float or np.ndarray): Redshift.
+            k (float or np.ndarray): Wavenumber where W(kR) is evaluated. Units: h Mpc^{-1}
         """
         # Power spectrum interpolation
         self.Pk_interp_cb = interpolate.RectBivariateSpline(
@@ -219,10 +194,8 @@ class HaloModelProperties:
     def set_angular_diameter_distance_interpolation(self, z):
         r"""Create internal interpolation of angular diameter distance.
 
-        Parameters
-        ----------
-        z: float or np.ndarray
-            Redshift.
+        Parameters:
+            z (float or np.ndarray): Redshift.
         """
         self.da_interp = interpolate.InterpolatedUnivariateSpline(
             x=z,
@@ -237,22 +210,13 @@ class HaloModelProperties:
         Computes either the cosmological unbiased surface or excess surface
         (depending on the input Bessel function) 2-halo density profile.
 
-        Parameters
-        ----------
-        R: np.ndarray
-            Radial points (units : Mpc / h)
-        z: np.ndarray
-            Redshift.
-        bessel_function: function
-            Bessel function that goes in the integrand with the power spectrum.
-            Used to return the surface density or the excess surface density.
-            It should take (ll*theta) as input.
+        Parameters:
+            R (np.ndarray): Radial points (units: Mpc / h)
+            z (np.ndarray): Redshift.
+            bessel_function (function): Bessel function that goes in the integrand with the power spectrum. Used to return the surface density or the excess surface density. It should take (ll*theta) as input.
 
-        Returns
-        -------
-        profile: np.ndarray
-            2-halo surface mass density profile (units : h * Msun / pc**2).
-            Shape: (z.size, R.size).
+        Returns:
+            profile (np.ndarray): 2-halo surface mass density profile (units: h * Msun / pc**2). Shape: (z.size, R.size).
         """
         # Calculate all redshift base quantities and shape them (nz, 1)
         z_plus_1 = np.asarray(z)[:, np.newaxis] + 1.0
@@ -295,22 +259,13 @@ class HaloModelProperties:
 
         Computes the cosmological unbiased surface 2-halo density profile at radius R.
 
-        Parameters
-        ----------
-        R: np.ndarray
-            Radial points (units : Mpc / h)
-        z: np.ndarray
-            Redshift.
-        radius_units: str
-            Unit for the input radius. Accepted values are:
-            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
+        Parameters:
+            R (np.ndarray): Radial points (units: Mpc / h)
+            z (np.ndarray): Redshift.
+            radius_units (str): Unit for the input radius. Accepted values are: "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
 
-        Returns
-        -------
-        Sigma: np.ndarray
-            2-halo surface mass density profile (units : h * Msun / pc**2).
-            Shape: (z.size, R.size).
-        """
+        Returns:
+            Sigma (np.ndarray): 2-halo surface mass density profile (units: h * Msun / pc**2). Shape: (z.size, R.size)."""
         return self._generic_mass_density_2h(
             R, z, bessel_function=j0, radius_units=radius_units
         )
@@ -322,21 +277,13 @@ class HaloModelProperties:
         Computes the cosmological unbiased excess surface 2-halo
         density profile at radius R.
 
-        Parameters
-        ----------
-        R: np.ndarray
-            Radial points (units : Mpc / h)
-        z: np.ndarray
-            Redshift.
-        radius_units: str
-            Unit for the input radius. Accepted values are:
-            "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
+        Parameters:
+            R (np.ndarray): Radial points (units: Mpc / h)
+            z (np.ndarray): Redshift.
+            radius_units (str): Unit for the input radius. Accepted values are: "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
 
-        Returns
-        -------
-        DeltaSigma: np.ndarray
-            2-halo surface mass density profile (units : h * Msun / pc**2).
-            Shape: (z.size, R.size).
+        Returns:
+            DeltaSigma (np.ndarray): 2-halo surface mass density profile (units: h * Msun / pc**2). Shape: (z.size, R.size).
         """
         return self._generic_mass_density_2h(
             R, z, bessel_function=_bessel_j2, radius_units=radius_units

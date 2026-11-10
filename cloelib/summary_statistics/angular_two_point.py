@@ -13,6 +13,7 @@ from cloelib.observables.photo.contributions import (
     nonlimber_spec_of,
 )
 from cloelib.observables.photo.spectrum_engine import (
+    PkTerm,
     SpectraBank,
     get_effective_pk,
     get_pk_terms,
@@ -203,14 +204,10 @@ Pkl_interp_signed_vmap = jax.jit(
 )
 
 # Batches `Pkl_interp_signed_vmap` over an extra leading "term" axis on
-# `Pk` - lets `_compute_cl_generalized` interpolate every `PkTerm.pk` for
-# one contribution pairing (e.g. `NonLinearGalaxyBiasContribution`'s up to
-# thirteen terms per pairing - see `spectrum_engine.PkTerm`) in one batched
-# XLA call instead of one Python-level `Pkl_interp_signed_vmap` call per
-# term. Purely a performance change - each term's own interpolation is
-# identical either way (`vmap` batches independent per-term work, it
-# doesn't combine terms' `Pk`s before interpolating), so this changes no
-# numerics, only how many dispatches it takes.
+# `Pk` - lets `_compute_cl_generalized` interpolate every distinct signed
+# grid of a `get_Cl` call in one XLA call. Each grid's interpolation is
+# identical to a separate `Pkl_interp_signed_vmap` call; only the number of
+# dispatches changes.
 Pkl_interp_signed_vmap_terms = jax.jit(
     jax.vmap(Pkl_interp_signed_vmap, in_axes=(None, None, None, None, 0))
 )
@@ -1021,12 +1018,12 @@ class AngularTwoPoint:
         physics separation `toy_cloelib.engine.compute_angular_power_
         spectrum` uses, reusing cloelib's own existing jitted Limber
         kernels (`Pkl_interp_vmap`, `Cl_integration`) unchanged for each
-        pair's integral. A pair whose bias amplitudes vary per tomographic
-        bin (e.g. `NonLinearGalaxyBiasContribution`) instead declares
-        `get_pk_terms` - several additive `(kernel1, kernel2, pk)` triples
-        rather than one shared pair (see `spectrum_engine.PkTerm`'s
-        docstring); checked first, per `(c1, c2)`, before falling back to
-        `get_effective_pk`.
+        pair's integral. A pair whose amplitudes vary per tomographic bin
+        (e.g. `NonLinearGalaxyBiasContribution`, `TATTMContribution`)
+        instead declares `get_pk_terms` - several additive `(kernel1,
+        kernel2, pk)` triples rather than one shared pair (see
+        `spectrum_engine.PkTerm`'s docstring); checked first, per `(c1, c2)`,
+        before falling back to `get_effective_pk`.
 
         The base spectrum of a pair follows from the fields the two
         contributions trace (`SpectraBank.base`). A single `SpectraBank`
@@ -1036,8 +1033,8 @@ class AngularTwoPoint:
 
         Does not support RSD (`PositionsTracer(..., include_rsd=True)`)
         paired with a generalized-engine-requiring contribution - that
-        combination isn't exercised by TATT and is left as a documented gap
-        rather than guessed at.
+        combination isn't exercised by TATT or TATT-M (both reach this
+        method) and is left as a documented gap rather than guessed at.
         """
         if (
             isinstance(self.tracer1, PositionsTracer)
@@ -1048,8 +1045,8 @@ class AngularTwoPoint:
         ):
             raise NotImplementedError(
                 "The generalized Cl engine (contributions declaring extra "
-                "SpectrumRequests, e.g. TATTContribution) does not support "
-                "PositionsTracer(include_rsd=True) yet."
+                "SpectrumRequests, e.g. TATTContribution/TATTMContribution) "
+                "does not support PositionsTracer(include_rsd=True) yet."
             )
 
         c_0 = SPEED_OF_LIGHT / 1000
@@ -1072,50 +1069,67 @@ class AngularTwoPoint:
 
         n_bin1 = self.tracer1.n_z_bins
         n_bin2 = self.tracer2.n_z_bins
-        C_ell_calc = np.zeros((len(ells), n_bin1, n_bin2))
+
+        # Every pairing is reduced to `PkTerm`s (a plain `get_effective_pk`
+        # pairing is one term), then all terms are integrated in a single
+        # batched einsum. Kernels and signed-Pk interpolations are computed
+        # once per object (keyed by `id`, holding a reference so the id can't
+        # be reused): a contribution appears in many pairings, and memoized
+        # `SpectraBank` grids (e.g. TATT-M's one-loop terms) are shared
+        # between pairings. All distinct signed grids are interpolated in one
+        # batched call.
+        kernel_cache = {}
+        signed_index = {}
+        signed_pks = []
+
+        def kernel(contribution):
+            key = id(contribution)
+            if key not in kernel_cache:
+                kernel_cache[key] = (contribution, contribution.compute_kernel(zs_calc))
+            return kernel_cache[key][1]
+
+        def signed_slot(pk):
+            # Effective spectra (e.g. TATT's GI/II terms) are generically
+            # signed - see `Pkl_interp_signed`'s docstring - so they can't go
+            # through the log-log `Pkl_interp` the always-positive base
+            # spectra use.
+            key = id(pk)
+            if key not in signed_index:
+                signed_index[key] = len(signed_pks)
+                signed_pks.append(pk)
+            return signed_index[key]
+
+        W1_terms, W2_terms, Pkl_terms = [], [], []
 
         for c1 in contributions1:
             for c2 in contributions2:
                 terms = get_pk_terms(c1, c2, zs_calc, bank)
-                if terms is not None:
-                    # Per-bin-varying amplitudes (e.g.
-                    # `NonLinearGalaxyBiasContribution`): several additive
-                    # (kernel1, kernel2, pk) triples instead of one shared
-                    # pair - see `PkTerm`'s docstring. Stacked and batched
-                    # (`Pkl_interp_signed_vmap_terms`/`Cl_integration_
-                    # batched`) into one interpolation call and one summed
-                    # einsum per pairing, rather than looping
-                    # `Pkl_interp_signed_vmap`/`Cl_integration` once per
-                    # term - a pure performance change (see those
-                    # functions' docstrings), not a numerical one.
-                    kernel1_stack = np.stack([t.kernel1 for t in terms])
-                    kernel2_stack = np.stack([t.kernel2 for t in terms])
-                    pk_stack = np.stack([t.pk.T for t in terms])
-                    Pkl_stack = Pkl_interp_signed_vmap_terms(
-                        k_lz, zs_calc, ks, pert_zs, pk_stack
-                    )
-                    C_ell_calc = C_ell_calc + Cl_integration_batched(
-                        kernel1_stack, kernel2_stack, Pkl_stack, H, chi2, weights
-                    )
-                    continue
+                if terms is None:
+                    terms = (PkTerm(None, None, get_effective_pk(c1, c2, bank)),)
+                for t in terms:
+                    W1_terms.append(kernel(c1) if t.kernel1 is None else t.kernel1)
+                    W2_terms.append(kernel(c2) if t.kernel2 is None else t.kernel2)
+                    if t.pk is None:
+                        Pkl_terms.append(
+                            limber_pk(contribution_field(c1), contribution_field(c2))
+                        )
+                    else:
+                        Pkl_terms.append(signed_slot(t.pk))
 
-                pk_eff = get_effective_pk(c1, c2, bank)
-                if pk_eff is None:
-                    Pkl_pair = limber_pk(contribution_field(c1), contribution_field(c2))
-                else:
-                    # Effective spectra (e.g. TATT's GI/II terms) are
-                    # generically signed - see `Pkl_interp_signed`'s
-                    # docstring - so they can't go through the log-log
-                    # `Pkl_interp` the always-positive base spectra use above.
-                    Pkl_pair = Pkl_interp_signed_vmap(
-                        k_lz, zs_calc, ks, pert_zs, pk_eff.T
-                    )
+        if signed_pks:
+            signed_Pkl = Pkl_interp_signed_vmap_terms(
+                k_lz, zs_calc, ks, pert_zs, np.stack([pk.T for pk in signed_pks])
+            )
+            Pkl_terms = [signed_Pkl[p] if isinstance(p, int) else p for p in Pkl_terms]
 
-                W1 = c1.compute_kernel(zs_calc)
-                W2 = c2.compute_kernel(zs_calc)
-                C_ell_calc = C_ell_calc + Cl_integration(
-                    W1, W2, Pkl_pair, H, chi2, weights
-                )
+        C_ell_calc = Cl_integration_batched(
+            np.stack(W1_terms),
+            np.stack(W2_terms),
+            np.stack(Pkl_terms),
+            H,
+            chi2,
+            weights,
+        )
 
         C_ell_calc = C_ell_calc * c_0 * dz
 

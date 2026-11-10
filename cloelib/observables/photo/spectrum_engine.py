@@ -554,22 +554,22 @@ class PkTerm:
     bin-dependence lives in *different bias-weighted kernels* per term, not
     in one amplitude-free kernel times one Pk. Contributions whose
     amplitudes are global (not per-bin), e.g. `TATTContribution`, have no
-    need for this and keep using `get_effective_pk`.
+    need for this and keep using `get_effective_pk`; per-bin IA amplitudes
+    (`TATTMContribution`) use it too.
 
     Attributes:
-      kernel1: window kernel for the first tracer, shape `(n_bin1, len(zs))` -
-        not necessarily this term's own contribution's `compute_kernel(z)`
-        output.
-      kernel2: window kernel for the second tracer, shape `(n_bin2, len(zs))` -
-        same caveat as `kernel1`.
-      pk: the power spectrum this term should be integrated against,
-        shape `(len(bank.zs), len(bank.ks))` - as `get_effective_pk`
-        returns, but scoped to just this one additive term.
+      kernel1: window kernel for the first tracer, shape `(n_bin1, len(zs))`,
+        or `None` for that contribution's own `compute_kernel(zs)`.
+      kernel2: same for the second tracer, shape `(n_bin2, len(zs))`.
+      pk: the power spectrum of this term, shape `(len(bank.zs),
+        len(bank.ks))`, or `None` for the pair's base spectrum
+        (`SpectraBank.base`). Passing `None` rather than the array lets the
+        engine reuse kernels and interpolations it already has.
     """
 
-    kernel1: jnp.ndarray
-    kernel2: jnp.ndarray
-    pk: jnp.ndarray
+    kernel1: jnp.ndarray | None
+    kernel2: jnp.ndarray | None
+    pk: jnp.ndarray | None
 
 
 def get_pk_terms(c1, c2, zs, bank: SpectraBank):

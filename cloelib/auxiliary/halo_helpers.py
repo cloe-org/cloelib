@@ -12,28 +12,20 @@ def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=
     Converts the input overdensity factor into a critical one.
     The contribution from massive neutrinos is not included in the matter density parameter.
 
-    Parameters
-    ----------
-    overdensity_type : str
-        Overdensity definition for halo mass calculation. Must be one of:
-        - "crit": Relative to critical density of the universe.
-        - "mean": Relative to mean matter density.
-        - "vir": Virial overdensity from spherical collapse.
-    overdensity : int, optional
-        Value of the overdensity. Effective for non-virial overdensities.
-        Example: If it equals 200, halos are defined as regions with density
-        200 times the chosen reference (`crit` or `mean`).
-    background : Background
-        Background object.
-    z: float or np.ndarray
-        Redshift.
+    Parameters:
+        overdensity_type  (str): Overdensity definition for halo mass calculation. Must be one of:
+            `crit` - Relative to critical density of the universe;
+            `mean` - Relative to mean matter density;
+            `vir` - Virial overdensity from spherical collapse;
+        overdensity  (int, optional): Value of the overdensity. Effective for non-virial overdensities.
+            Example (If it equals 200, halos are defined as regions with density):
+            200 times the chosen reference (`crit` or `mean`).
+        background (Background): Background object.
+        z (float or np.ndarray): Redshift.
 
-    Returns
-    -------
-    overdensity: float or np.ndarray
-        The overdensity factor which needs
-        to be multiplied to the critical
-        density in order to define an overdensity.
+    Returns:
+        overdensity (float or np.ndarray): The overdensity factor which needs to be multiplied
+            to the critical density in order to define an overdensity.
 
     Notes
     -----
@@ -62,26 +54,19 @@ def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=
 def convert_distance(distance, units_in, units_out, angular_diameter_distance=None):
     r"""Convert distances
 
-    Parameters
-    ----------
-    distance: np.ndarray
-        Input projected distances
-    units_in: str
-        Unit for the input projected distance. Accepted values are:
-        "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
-    units_out: str
-        Unit for the output projected distance. Accepted values are:
-        "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
-    angular_diameter_distance: float, np.ndarray
-        Angular diameter distance (units: Mpc/h) to be used for converting
-        between angular and physical units. If array, it
-        should be in the shape (z.size, 1).
+    Parameters:
+        distance (np.ndarray): Input projected distances
+        units_in (str): Unit for the input projected distance.
+            Accepted values are: "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
+        units_out (str): Unit for the output projected distance.
+            Accepted values are: "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
+        angular_diameter_distance (float, np.ndarray):
+            Angular diameter distance (units (Mpc/h) to be used for converting)
+                between angular and physical units. If array, it should be in the shape (z.size, 1).
 
-    Returns
-    -------
-    np.ndarray
-        Distance in output units. If z is array and physical to
-        angular conversion used, output shape is (z.size, distance.size).
+    Returns:
+        (np.ndarray) :  Distance in output units.
+            If z is array and physical to angular conversion used, output shape is (z.size, distance.size).
     """
     ang_to_rad = {
         "radians": 1,
@@ -122,22 +107,15 @@ def photoz_rsd_correction(
     Compute the correction that accounts for photo-z uncertainty and RSD (Kaiser effect),
     from `(Kaiser (1987)) <(https://doi.org/10.1093/mnras/227.1.1>`_.
 
-    Parameters
-    ----------
-    background: Background
-        Background class containing cosmology
-    k:  np.ndarray
-        wavenumber
-    z:  np.ndarray
-        redshift
-    z_obs_scatter: float, numpy.ndarray
-        Observed redshift scatter. If array, first dimension must be z.
+    Parameters:
+        background (Background): Background class containing cosmology
+        k ( np.ndarray): wavenumber
+        z ( np.ndarray): redshift
+        z_obs_scatter (float, numpy.ndarray): Observed redshift scatter. If array, first dimension must be z.
 
-    Returns
-    -------
-    corr0, corr1, corr2: np.ndarray
-        Correction terms to the power spectrum monopole
-        Shape (z.size, k.size, other dimensions of z_obs_scatter)
+    Returns:
+        corr0, corr1, corr2 (np.ndarray): Correction terms to the power spectrum monopole.
+            Shape (z.size, k.size, other dimensions of z_obs_scatter)
     """
     ks = np.atleast_1d(k)
     zs = np.atleast_1d(z)
@@ -191,15 +169,11 @@ def photoz_rsd_correction(
 def tophat_window(kr):
     r"""compute top-hat window and its derivative.
 
-    Parameters
-    ----------
-    kr: numpy.ndarray
-           Wavenumber times radius.
+    Parameters:
+        kr (numpy.ndarray): Wavenumber times radius.
 
-    Returns
-    -------
-    numpy.ndarray
-        Top-hat window function
+    Returns:
+        (numpy.ndarray) :  Top-hat window function
     """
     return 3.0 * (np.sin(kr) - kr * np.cos(kr)) / kr**3.0
 
@@ -207,15 +181,11 @@ def tophat_window(kr):
 def tophat_window_derivative(kr):
     r"""Compute derivative of the top-hat window.
 
-    Parameters
-    ----------
-    kr: numpy.ndarray
-           Wavenumber times radius.
+    Parameters:
+        kr (numpy.ndarray): Wavenumber times radius.
 
-    Returns
-    -------
-    numpy.ndarray
-        Derivative of top-hat window function
+    Returns:
+        (numpy.ndarray) :  Derivative of top-hat window function
     """
     return 3.0 * (np.sin(kr) * (kr**2.0 - 3.0) + 3.0 * kr * np.cos(kr)) / kr**4.0
 
@@ -223,18 +193,12 @@ def tophat_window_derivative(kr):
 def isotropic_volume_distance(z, da, hz):
     """Compute isotropic volume distance
 
-    Parameters
-    ----------
-    z : np.ndarray
-        redshift
-    da : np.ndarray
-        Angular diameter distance
-    hz : np.ndarray
-        Hubble parameter as a function of redshift.
+    Parameters:
+        z (np.ndarray): redshift
+        da (np.ndarray): Angular diameter distance
+        hz (np.ndarray): Hubble parameter as a function of redshift.
 
-    Returns
-    -------
-    np.ndarray
+    Returns: (np.ndarray) :
         Isotropic volume distance
     """
     return ((1 + z) ** 2 * da**2 * units.SPEED_OF_LIGHT * z / hz) ** (1 / 3.0)
@@ -245,20 +209,16 @@ def tabulated_return(reference_table, func, func_kwargs):
     If true, returns the tabulated value. Otherwise, recomputes the output
     value and stores it (and inputs) back in reference table.
 
-    Parameters
-    ----------
-    reference_table: dict
-        Dictionary with the tabulated function. It must contain a `inputs`
-        key with the dictionary of arguments or `function` and a `values`
-        key with the computed value of said function with those arguments.
-    func: function
-        Function to be tabulated
-    func_kwargs: dict
-        Dictionary with named arguments for the function.
+    Parameters:
+        reference_table (dict): Dictionary with the tabulated function.
+            It must contain a `inputs` key with the dictionary of arguments
+            or `function` and a `values` key with the computed value of
+            said function with those arguments.
+        func (function): Function to be tabulated
+        func_kwargs (dict): Dictionary with named arguments for the function.
 
-    Returns
-    -------
-    Output of `func(**func_kwargs)`
+    Returns:
+        Output of `func(**func_kwargs)`
     """
 
     # Check if names of parameters given are the same as in reference_table

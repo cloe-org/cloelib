@@ -62,5 +62,5 @@ Resolves #IssueNumber
 - [ ] No data files have been included in the commits
 - [ ] Implementation follows the agreed task description point by point
 - [ ] Check that any added folder/file has been added to the `README.md` file
-- [ ] Check that the documentation has been updated accordantly (docstrings & instructions in `cloelib/docs/`)
+- [ ] Check that the documentation has been updated where appropriate (docstrings and instructions in `cloelib/docs/`). To preview it, go to the PR's **Checks** tab and click **Docs** (the name, not the expand arrow). Under **Artifacts**, download `docs-site-pr-<PR number>`. Unzip it, run `python -m http.server --directory <unzipped-folder> 8000`, and open http://localhost:8000.
 - [ ] Check that the corresponding branch has been deleted after merging. If not, delete it

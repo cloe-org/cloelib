@@ -50,6 +50,19 @@ jobs:
         if: github.event_name == 'pull_request'
         run: mkdocs build --strict
 
+      # Reviewers can preview the built site of a PR without building it locally:
+      # open the workflow run of this PR (Checks tab -> Docs), scroll to "Artifacts"
+      # and download "docs-site-pr-<PR number>". See docs/contributing.md.
+      # Only the static site is uploaded; this step is skipped if the build failed.
+      - name: Upload built docs as PR artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v5
+        with:
+          name: docs-site-pr-${{ github.event.pull_request.number }}
+          path: site/
+          if-no-files-found: error
+          retention-days: 14
+
       # Deploy only on Push
       # This runs ONLY on Pushes (merges to main or tags).
       # It is skipped entirely for PRs.

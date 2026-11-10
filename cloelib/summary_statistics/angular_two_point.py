@@ -1067,9 +1067,6 @@ class AngularTwoPoint:
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
         limber_pk = self._limber_base_spectra(bank, k_lz, zs_calc)
 
-        n_bin1 = self.tracer1.n_z_bins
-        n_bin2 = self.tracer2.n_z_bins
-
         # Every pairing is reduced to `PkTerm`s (a plain `get_effective_pk`
         # pairing is one term), then all terms are integrated in a single
         # batched einsum. Kernels and signed-Pk interpolations are computed

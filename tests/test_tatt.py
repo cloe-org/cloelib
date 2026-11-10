@@ -22,6 +22,7 @@ that specifically validate the real backend use `PBJTATTLoopComputer`
 import numpy as np
 import pytest
 
+from cloelib.cosmology.camb_cosmology import CAMBLinearPerturbations
 from cloelib.observables.photo.contributions import (
     CB,
     MATTER,

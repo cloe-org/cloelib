@@ -62,7 +62,7 @@ version-file = "cloelib/_version.py"
 addopts = "--verbose --cov=cloelib --cov-report=xml"
 
 [tool.ty.environment]
-python-version = "3.10"
+python-version = "3.12"
 
 [tool.ty.src]
 # Enforced on the Background/Perturbations protocol implementations in

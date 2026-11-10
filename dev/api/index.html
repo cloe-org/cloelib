@@ -25765,7 +25765,7 @@ The SpectroPower protocol is used to define Spectroscopic observables.</p>
         <p>Photometric probe tracers: cosmic shear and angular galaxy clustering.</p>
 <p><code>ShearTracer</code> and everything related to its intrinsic-alignment models
 (<code>LensingContribution</code>, <code>NLAContribution</code>,
-<code>TATTContribution</code>, <code>PBJTATTLoopComputer</code>) live together in <code>photo.shear</code>.
+<code>TATTContribution</code>, <code>TATTMContribution</code>, <code>PBJTATTLoopComputer</code>) live together in <code>photo.shear</code>.
 <code>PositionsTracer</code> and its Contributions
 (<code>GalaxyBiasContribution</code>, <code>MagnificationContribution</code>,
 <code>NonLinearGalaxyBiasContribution</code>, <code>PBJNonlinearBiasLoopComputer</code>) live
@@ -25832,7 +25832,8 @@ intrinsic-alignment options - lives in this one module:</p>
 <li><code>ShearTracer</code> itself. By default (<code>ia_model=None</code>) it has no
   intrinsic-alignment contribution at all - only <code>LensingContribution</code>.
   Pass <code>ia_model="NLA"</code> explicitly for <code>NLAContribution</code> (the nonlinear
-  alignment model), or <code>ia_model="TATT"</code> for <code>TATTContribution</code> below.</li>
+  alignment model), <code>ia_model="TATT"</code> for <code>TATTContribution</code>, or
+  <code>ia_model="TATT-M"</code> for <code>TATTMContribution</code>.</li>
 <li><code>LensingContribution</code>, <code>NLAContribution</code>: two of the <code>Contribution</code>s a
   <code>ShearTracer</code> can be built from.</li>
 <li><code>TATTContribution</code> (Eqs. 9-16 of Navarro-Gironés et al. 2026,
@@ -25857,10 +25858,15 @@ intrinsic-alignment options - lives in this one module:</p>
   reports kernel values it can stand behind as real physics - passing any
   other object exposing the same <code>.compute(name) -&gt; callable(matter_pk,
   ks, zs)</code> interface is also supported, for a different PT backend.</li>
+<li><code>TATTMContribution</code> (Herle et al. 2026, arXiv:2601.15851): ties TATT's
+  C1/C2/C1delta amplitudes to per-tomographic-bin halo mass and
+  red-galaxy fraction instead of <code>TATTContribution</code>'s single global
+  A1/A2/bTA. Its per-bin amplitudes reach the Limber engine through
+  <code>get_pk_terms</code> (<code>spectrum_engine.PkTerm</code>).</li>
 </ul>
 <p>Pass <code>loop_computer=PBJTATTLoopComputer(perturbations)</code> directly to
-<code>ShearTracer(..., ia_model="TATT", tatt_loop_computer=...)</code> - one
-constructor call, not build-then-replace <code>.ia</code>.</p>
+<code>ShearTracer(..., ia_model="TATT"</code> (or <code>"TATT-M"</code>) <code>, tatt_loop_computer=
+...)</code> - one constructor call, not build-then-replace <code>.ia</code>.</p>
 <p>See <code>CONTRIBUTION_ARCHITECTURE.md</code> for the design this all
 follows.</p>
 
@@ -26619,6 +26625,275 @@ happen given <code>get_requirements_for_interaction</code>.</p>
 
 
 
+<h5 id="cloelib.observables.photo.shear.TATTMContribution" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">TATTMContribution</span>
+
+
+<a href="#cloelib.observables.photo.shear.TATTMContribution" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">TATTMContribution</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTMContribution(tracer)">tracer</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer">ShearTracer</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTMContribution(alpha_M)">alpha_M</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTMContribution(beta_M)">beta_M</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTMContribution(loop_computer)">loop_computer</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTLoopComputer">TATTLoopComputer</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTMContribution(k1)">k1</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.073</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTMContribution(k2)">k2</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.268</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTMContribution(k3)">k3</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.038</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTMContribution(log10_M0)">log10_M0</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">13.5</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTMContribution(C_IA)">C_IA</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.0134</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTMContribution" id="mermaid-link-cloelib.observables.photo.shear.TATTMContribution"></a>
+                  <a class="autorefs autorefs-internal" href="#cloelib.observables.photo.contributions.IntrinsicAlignmentContribution" id="mermaid-link-cloelib.observables.photo.contributions.IntrinsicAlignmentContribution"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-cloelib.observables.photo.shear.TATTMContribution">
+              flowchart TD
+              cloelib.observables.photo.shear.TATTMContribution[TATTMContribution]
+              cloelib.observables.photo.contributions.IntrinsicAlignmentContribution[IntrinsicAlignmentContribution]
+
+                              cloelib.observables.photo.contributions.IntrinsicAlignmentContribution --> cloelib.observables.photo.shear.TATTMContribution
+                
+
+
+              click cloelib.observables.photo.shear.TATTMContribution href "" "cloelib.observables.photo.shear.TATTMContribution"
+              click cloelib.observables.photo.contributions.IntrinsicAlignmentContribution href "" "cloelib.observables.photo.contributions.IntrinsicAlignmentContribution"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-cloelib.observables.photo.shear.TATTMContribution');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>TATT-M intrinsic alignments (Herle et al. 2026, arXiv:2601.15851).</p>
+<p>TATT with per-bin amplitudes set by halo mass and red fraction:</p>
+<div class="highlight"><pre><span></span><code>A1^i     = alphaM * (Mh^i/M0)^betaM
+A2^i(z)  = k1 * D(z) * A1^i
+bTA^i    = k2 * log10(Mh^i/M0) - k3
+
+C1^i(z)      = -f_r^i * A1^i * C_IA * Omega_m0 / D(z)
+C2^i(z)      =  5 * f_r^i * k1 * A1^i * C_IA * Omega_m0 / D(z)
+C1delta^i(z) =  bTA^i * C1^i(z)
+</code></pre></div>
+<p>The growth factor in <code>A2^i(z)</code> keeps <code>C2/C1 = -5*k1</code> constant in
+redshift (as found for the quadratic shape biases in simulations, e.g.
+Akitsu, Li &amp; Okumura 2023). There is no <code>(1+z)^eta</code> evolution: bins
+differ only through <code>Mh^i</code> and <code>f_r^i</code>. <code>D(0) = 1</code>.</p>
+<p>P_II and P_deltaI are TATT's bilinear formulas (see <code>TATTContribution</code>)
+with per-bin C's. Because the amplitudes vary per bin, they are handed
+to the Limber engine as <code>PkTerm</code>s (<code>get_pk_terms</code>): one per-bin
+weighted kernel pair per term, as <code>NonLinearGalaxyBiasContribution</code>
+does for its per-bin biases.</p>
+<p>Pairing with a different IA model (NLA, TATT) raises <code>ValueError</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.shear.TATTMContribution(tracer)" class="doc doc-heading doc-heading-parameter">              <b><code>tracer</code></b>
+<a href="#cloelib.observables.photo.shear.TATTMContribution(tracer)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer">ShearTracer</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>the owning <code>ShearTracer</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.shear.TATTMContribution(alpha_M)" class="doc doc-heading doc-heading-parameter">              <b><code>alpha_M</code></b>
+<a href="#cloelib.observables.photo.shear.TATTMContribution(alpha_M)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>normalisation of the A1-halo mass relation.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.shear.TATTMContribution(beta_M)" class="doc doc-heading doc-heading-parameter">              <b><code>beta_M</code></b>
+<a href="#cloelib.observables.photo.shear.TATTMContribution(beta_M)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>slope of the A1-halo mass relation.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.shear.TATTMContribution(loop_computer)" class="doc doc-heading doc-heading-parameter">              <b><code>loop_computer</code></b>
+<a href="#cloelib.observables.photo.shear.TATTMContribution(loop_computer)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.TATTLoopComputer">TATTLoopComputer</a></code>)
+          –
+          <div class="doc-md-description">
+            <p>one-loop kernel backend, as for <code>TATTContribution</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.shear.TATTMContribution(k1)" class="doc doc-heading doc-heading-parameter">              <b><code>k1</code></b>
+<a href="#cloelib.observables.photo.shear.TATTMContribution(k1)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>, default:
+                  <code>0.073</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>A2/A1 ratio at z=0 (Herle et al. default).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.shear.TATTMContribution(k2)" class="doc doc-heading doc-heading-parameter">              <b><code>k2</code></b>
+<a href="#cloelib.observables.photo.shear.TATTMContribution(k2)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>, default:
+                  <code>0.268</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>slope of bTA in log10(Mh/M0) (Herle et al. default).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.shear.TATTMContribution(k3)" class="doc doc-heading doc-heading-parameter">              <b><code>k3</code></b>
+<a href="#cloelib.observables.photo.shear.TATTMContribution(k3)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>, default:
+                  <code>-0.038</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>intercept of bTA (Herle et al. default).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.shear.TATTMContribution(log10_M0)" class="doc doc-heading doc-heading-parameter">              <b><code>log10_M0</code></b>
+<a href="#cloelib.observables.photo.shear.TATTMContribution(log10_M0)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>, default:
+                  <code>13.5</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>halo-mass pivot, log10(Msun/h).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.shear.TATTMContribution(C_IA)" class="doc doc-heading doc-heading-parameter">              <b><code>C_IA</code></b>
+<a href="#cloelib.observables.photo.shear.TATTMContribution(C_IA)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="float">float</span></code>, default:
+                  <code>0.0134</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>IA normalisation, as for <code>NLAContribution</code>/<code>TATTContribution</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.shear.TATTMContribution.compute_kernel" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">compute_kernel</span>
+
+
+<a href="#cloelib.observables.photo.shear.TATTMContribution.compute_kernel" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute_kernel</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.shear.TATTMContribution.compute_kernel(z)">z</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Amplitude-free IA kernel <code>n_i(z) * H(z)/c</code>, as <code>TATTContribution</code>'s.</p>
+<p>The per-bin amplitudes enter through <code>get_pk_terms</code> instead.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.shear.TATTMContribution.get_requirements_for_interaction" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_requirements_for_interaction</span>
+
+
+<a href="#cloelib.observables.photo.shear.TATTMContribution.get_requirements_for_interaction" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_requirements_for_interaction</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.shear.TATTMContribution.get_requirements_for_interaction(other)">other</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>All E-mode kernels against IA; only the GI ones otherwise.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.shear.TATTMContribution.get_pk_terms" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_pk_terms</span>
+
+
+<a href="#cloelib.observables.photo.shear.TATTMContribution.get_pk_terms" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_pk_terms</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.shear.TATTMContribution.get_pk_terms(other)">other</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.shear.TATTMContribution.get_pk_terms(zs)">zs</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.shear.TATTMContribution.get_pk_terms(bank)">bank</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank">SpectraBank</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p><code>PkTerm</code>s for P_II (against TATT-M) or P_deltaI (anything non-IA).</p>
+<p>A <code>None</code> kernel or pk means the engine uses that side's own
+<code>compute_kernel</code> or the pair's base spectrum (see <code>PkTerm</code>).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.shear.TATTMContribution.effective_pk_for_bin_pair" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">effective_pk_for_bin_pair</span>
+
+
+<a href="#cloelib.observables.photo.shear.TATTMContribution.effective_pk_for_bin_pair" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">effective_pk_for_bin_pair</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.shear.TATTMContribution.effective_pk_for_bin_pair(bank)">bank</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank">SpectraBank</a></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.shear.TATTMContribution.effective_pk_for_bin_pair(bin_i)">bin_i</span></span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.shear.TATTMContribution.effective_pk_for_bin_pair(bin_j)">bin_j</span></span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p><code>{"II": P_II^{ij}(k,z), "deltaI": P_deltaI^{i}(k,z)}</code> on <code>bank</code>'s grid.</p>
+<p>For inspection only; <code>bin_i</code>/<code>bin_j</code> are 1-indexed.</p>
+
+          
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h5 id="cloelib.observables.photo.shear.ShearTracer" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">ShearTracer</span>
 
@@ -26691,8 +26966,17 @@ term. <code>"NLA"</code> builds <code>NLAContribution</code> (<code>get_window_I
 <code>nuisance_params["AIA"/"CIA"/"EtaIA"]</code>). <code>"TATT"</code> builds a
 <code>TATTContribution</code> from <code>nuisance_params["AIA"]</code> (=A1),
 <code>nuisance_params["A2IA"]</code>, <code>nuisance_params["bTA"]</code>, and optionally
-<code>nuisance_params["Eta2IA"]</code>/<code>["z0IA"]</code> (default 0.0/0.62). Advanced
-use: pass a <code>Contribution</code> instance directly to use any other model.</p>
+<code>nuisance_params["Eta2IA"]</code>/<code>["z0IA"]</code> (default 0.0/0.62).
+<code>"TATT-M"</code> builds a <code>TATTMContribution</code> (Herle et al. 2026,
+arXiv:2601.15851 - per-bin IA amplitude tied to halo mass/red
+fraction) from <code>nuisance_params["alphaM"]</code>, <code>["betaM"]</code>,
+optionally <code>.get("k1", 0.073)</code>/<code>.get("k2", 0.268)</code>/
+<code>.get("k3", -0.038)</code>/<code>.get("log10_M0", 13.5)</code> (Herle et al.'s
+fiducial values, freeable like any other nuisance parameter),
+and per-bin <code>nuisance_params[f"log10_Mh_{i+1}"]</code>/
+<code>[f"f_r_{i+1}"]</code> for every tomographic bin - requires
+<code>tatt_loop_computer</code> like <code>"TATT"</code> does. Advanced use: pass a
+<code>Contribution</code> instance directly to use any other model.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -26702,13 +26986,12 @@ use: pass a <code>Contribution</code> instance directly to use any other model.<
 )
           –
           <div class="doc-md-description">
-            <p>required when <code>ia_model="TATT"</code> (raises
-<code>ValueError</code> if omitted) - the <code>TATTContribution</code>'s one-loop
-kernel backend (see <code>TATTContribution</code>'s docstring). Pass
+            <p>required when <code>ia_model="TATT"</code> or <code>"TATT-M"</code>
+(raises <code>ValueError</code> if omitted) - the one-loop kernel backend
+(see <code>TATTContribution</code>'s docstring). Pass
 <code>PBJTATTLoopComputer(perturbations)</code> for real FAST-PT-computed
 kernels, or any other object with the same <code>.compute(name)</code>
-interface. Passing this with any <code>ia_model</code> other than
-<code>"TATT"</code> raises <code>ValueError</code>.</p>
+interface. Passing this with any other <code>ia_model</code> raises <code>ValueError</code>.</p>
           </div>
         </li>
     </ul>
@@ -26791,7 +27074,7 @@ default - no intrinsic-alignment contribution), otherwise
 
 
 <a href="#cloelib.observables.photo.shear.ShearTracer.get_ia_effective_spectra" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_ia_effective_spectra</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer.get_ia_effective_spectra(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer.get_ia_effective_spectra(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_ia_effective_spectra</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer.get_ia_effective_spectra(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer.get_ia_effective_spectra(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer.get_ia_effective_spectra(bin_i)">bin_i</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.shear.ShearTracer.get_ia_effective_spectra(bin_j)">bin_j</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -26801,12 +27084,17 @@ default - no intrinsic-alignment contribution), otherwise
 generalized</code> integrates internally, exposed directly for
 inspection/plotting/validation (e.g. against an external code's own
 tabulated TATT spectra) without building a <code>SpectraBank</code> by hand.</p>
-<p>Only meaningful for an IA model that defines its own effective
-spectra (currently <code>TATTContribution</code>) - raises <code>ValueError</code> for
-<code>ia_model=None</code> (no IA contribution) or <code>ia_model="NLA"</code> (whose
-P_II/P_deltaI share the matter Pk's k-shape by construction: the
-amplitude is applied directly inside <code>get_window_IA</code>, not exposed
-as a separate grid).</p>
+<p>Raises <code>ValueError</code> for <code>ia_model=None</code> (no IA contribution) or
+<code>ia_model="NLA"</code> (whose P_II/P_deltaI share the matter Pk's
+k-shape by construction: the amplitude is applied directly inside
+<code>compute_kernel</code>, not exposed as a separate grid) - neither has
+any effective-Pk grid to return, with or without <code>bin_i</code>/<code>bin_j</code>.</p>
+<p>For <code>ia_model="TATT"</code> (bin-independent amplitude): <code>bin_i</code>/<code>bin_j</code>
+must be left <code>None</code> (raises otherwise - this model has one grid,
+shared by every bin pair, so naming a pair doesn't apply).</p>
+<p>For <code>ia_model="TATT-M"</code> (per-bin amplitude): <code>bin_i</code>/<code>bin_j</code>
+(1-indexed) are required (raises if either is omitted), since each
+bin pair has its own <code>P_II^{bin_i,bin_j}(k,z)</code>/<code>P_deltaI^{bin_i}(k,z)</code>.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -26831,6 +27119,29 @@ as a separate grid).</p>
           <div class="doc-md-description">
             <p>redshift grid to evaluate on. Defaults to
 <code>self.perturbations.z</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h7 id="cloelib.observables.photo.shear.ShearTracer.get_ia_effective_spectra(bin_i)" class="doc doc-heading doc-heading-parameter">              <b><code>bin_i</code></b>
+<a href="#cloelib.observables.photo.shear.ShearTracer.get_ia_effective_spectra(bin_i)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>first tomographic bin (1-indexed). Required for
+<code>ia_model="TATT-M"</code>; must be omitted otherwise.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h7 id="cloelib.observables.photo.shear.ShearTracer.get_ia_effective_spectra(bin_j)" class="doc doc-heading doc-heading-parameter">              <b><code>bin_j</code></b>
+<a href="#cloelib.observables.photo.shear.ShearTracer.get_ia_effective_spectra(bin_j)" class="headerlink" title="Permanent link">&para;</a></h7>              (<code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>second tomographic bin (1-indexed, may equal <code>bin_i</code> for
+the auto-correlation). Required for <code>ia_model="TATT-M"</code>; must
+be omitted otherwise.</p>
           </div>
         </li>
     </ul>
@@ -27561,7 +27872,9 @@ against.</p>
 kernel, ...) except an <code>IntrinsicAlignmentContribution</code> (NLA or TATT):
 there, only the <em>linear</em>-bias term <code>b1 P_dd</code> is used (<code>get_pk_terms</code>
 returns a single <code>b1 * matter_pk</code> term, deferring the rest of the
-amplitude to the IA side's own kernel) - matching production CLOE's
+amplitude to the IA side's own kernel; an IA model with its own
+<code>get_pk_terms</code>, e.g. TATT-M, builds the cross itself against the <code>b1</code>
+kernel) - matching production CLOE's
 <code>Pgi_phot_halo_nla</code>/<code>_tatt</code> (<code>cloe/non_linear/pgL_phot.py</code>,
 github.com/cloe-org/CLOE), which likewise never applies its own
 <code>_add_NLbias_contributions_gL</code> to the galaxy-intrinsic cross (a
@@ -28712,9 +29025,9 @@ in <code>AngularTwoPoint</code> (default: <code>MATTER</code>).</p>
 
 
         <p>Base class for every intrinsic-alignment model - the general "this is
-an IA contribution" type. <code>NLAContribution</code> and <code>TATTContribution</code>
-(<code>photo/shear.py</code>) are its two concrete models today; a future IA model
-would be a third subclass here, not a fourth unrelated name.</p>
+an IA contribution" type. <code>NLAContribution</code>, <code>TATTContribution</code> and
+<code>TATTMContribution</code> (<code>photo/shear.py</code>) are its concrete models today; a
+future IA model would be another subclass here, not an unrelated name.</p>
 <p>Lets a contribution ask "is the other side of this pairing also IA?" -
 e.g. TATT needs its II-only one-loop terms (Eq. 14 of Navarro-Gironés
 et al. 2026) only when paired with another IA contribution, not with a
@@ -29123,7 +29436,7 @@ strings, so the choice is resolved at trace time and is safe under
   </span>
 
 <a href="#cloelib.observables.photo.spectrum_engine.PkTerm" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PkTerm</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.PkTerm(kernel1)">kernel1</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.PkTerm(kernel2)">kernel2</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.PkTerm(pk)">pk</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">PkTerm</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.PkTerm(kernel1)">kernel1</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.PkTerm(kernel2)">kernel2</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.PkTerm(pk)">pk</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -29143,38 +29456,38 @@ effective Pk (the standard <code>get_effective_pk</code> contract) because the
 bin-dependence lives in <em>different bias-weighted kernels</em> per term, not
 in one amplitude-free kernel times one Pk. Contributions whose
 amplitudes are global (not per-bin), e.g. <code>TATTContribution</code>, have no
-need for this and keep using <code>get_effective_pk</code>.</p>
+need for this and keep using <code>get_effective_pk</code>; per-bin IA amplitudes
+(<code>TATTMContribution</code>) use it too.</p>
 
 
 <p><span class="doc-section-title">Attributes:</span></p>
     <ul>
         <li class="doc-section-item field-body">
           <b><code><span title="cloelib.observables.photo.spectrum_engine.PkTerm.kernel1">kernel1</span></code></b>
-              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+              (<code><span title="jax.numpy.ndarray">ndarray</span> | None</code>)
           –
           <div class="doc-md-description">
-            <p>window kernel for the first tracer, shape <code>(n_bin1, len(zs))</code> -
-not necessarily this term's own contribution's <code>compute_kernel(z)</code>
-output.</p>
+            <p>window kernel for the first tracer, shape <code>(n_bin1, len(zs))</code>,
+or <code>None</code> for that contribution's own <code>compute_kernel(zs)</code>.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
           <b><code><span title="cloelib.observables.photo.spectrum_engine.PkTerm.kernel2">kernel2</span></code></b>
-              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+              (<code><span title="jax.numpy.ndarray">ndarray</span> | None</code>)
           –
           <div class="doc-md-description">
-            <p>window kernel for the second tracer, shape <code>(n_bin2, len(zs))</code> -
-same caveat as <code>kernel1</code>.</p>
+            <p>same for the second tracer, shape <code>(n_bin2, len(zs))</code>.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
           <b><code><span title="cloelib.observables.photo.spectrum_engine.PkTerm.pk">pk</span></code></b>
-              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+              (<code><span title="jax.numpy.ndarray">ndarray</span> | None</code>)
           –
           <div class="doc-md-description">
-            <p>the power spectrum this term should be integrated against,
-shape <code>(len(bank.zs), len(bank.ks))</code> - as <code>get_effective_pk</code>
-returns, but scoped to just this one additive term.</p>
+            <p>the power spectrum of this term, shape <code>(len(bank.zs),
+len(bank.ks))</code>, or <code>None</code> for the pair's base spectrum
+(<code>SpectraBank.base</code>). Passing <code>None</code> rather than the array lets the
+engine reuse kernels and interpolations it already has.</p>
           </div>
         </li>
     </ul>

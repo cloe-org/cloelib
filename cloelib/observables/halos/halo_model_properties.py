@@ -77,9 +77,14 @@ class HaloModelProperties:
         are interpolated.
 
         Parameters:
-            perturbations (Perturbations): An object from the `LinearPerturbations` class containing cosmological perturbation data (e.g., power spectrum, growth function).
-            interpolate_pk (bool): If true, the class interpolates the matter power spectrum. A default interpolation is set when class is instanciated with interpolate_pk=True. For a more customized interpolation, check the set_matter_power_spectrum_interpolation function.
-            interpolate_da (bool): If true, the class interpolates the angular diameter distance. A default interpolation is set when class is instanciated with interpolate_da=True. For a more customized interpolation, check the set_angular_diameter_distance_interpolation function.
+            perturbations (Perturbations): An object from the `LinearPerturbations` class
+                containing cosmological perturbation data (e.g., power spectrum, growth function).
+            interpolate_pk (bool): If true, the class interpolates the matter power spectrum.
+                A default interpolation is set when class is instanciated with interpolate_pk=True.
+                For a more customized interpolation, check the set_matter_power_spectrum_interpolation function.
+            interpolate_da (bool): If true, the class interpolates the angular diameter distance.
+                A default interpolation is set when class is instanciated with interpolate_da=True.
+                For a more customized interpolation, check the set_angular_diameter_distance_interpolation function.
 
         Notes
         ----------
@@ -213,7 +218,9 @@ class HaloModelProperties:
         Parameters:
             R (np.ndarray): Radial points (units: Mpc / h)
             z (np.ndarray): Redshift.
-            bessel_function (function): Bessel function that goes in the integrand with the power spectrum. Used to return the surface density or the excess surface density. It should take (ll*theta) as input.
+            bessel_function (function): Bessel function that goes in the integrand with
+                the power spectrum. Used to return the surface density or the excess surface density.
+                It should take (ll*theta) as input.
 
         Returns:
             profile (np.ndarray): 2-halo surface mass density profile (units: h * Msun / pc**2). Shape: (z.size, R.size).
@@ -262,10 +269,13 @@ class HaloModelProperties:
         Parameters:
             R (np.ndarray): Radial points (units: Mpc / h)
             z (np.ndarray): Redshift.
-            radius_units (str): Unit for the input radius. Accepted values are: "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
+            radius_units (str): Unit for the input radius.
+                Accepted values are: "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
 
         Returns:
-            Sigma (np.ndarray): 2-halo surface mass density profile (units: h * Msun / pc**2). Shape: (z.size, R.size)."""
+            Sigma (np.ndarray): 2-halo surface mass density profile (units: h * Msun / pc**2).
+                Shape: (z.size, R.size).
+        """
         return self._generic_mass_density_2h(
             R, z, bessel_function=j0, radius_units=radius_units
         )
@@ -280,10 +290,12 @@ class HaloModelProperties:
         Parameters:
             R (np.ndarray): Radial points (units: Mpc / h)
             z (np.ndarray): Redshift.
-            radius_units (str): Unit for the input radius. Accepted values are: "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
+            radius_units (str): Unit for the input radius.
+                Accepted values are: "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
 
         Returns:
-            DeltaSigma (np.ndarray): 2-halo surface mass density profile (units: h * Msun / pc**2). Shape: (z.size, R.size).
+            DeltaSigma (np.ndarray): 2-halo surface mass density profile (units: h * Msun / pc**2).
+                Shape: (z.size, R.size).
         """
         return self._generic_mass_density_2h(
             R, z, bessel_function=_bessel_j2, radius_units=radius_units

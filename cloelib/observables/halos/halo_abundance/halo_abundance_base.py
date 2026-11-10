@@ -69,7 +69,8 @@ class HaloAbundanceBase:
             fsigmanu (numpy.ndarray): Multiplicity function.
 
         Returns:
-            dn_dm (numpy.ndarray): dn_dm[i,j], where i is the redshift axis and j the mass axis. Units: h^4 Mpc^{-3} Ms^{-1}.
+            dn_dm (numpy.ndarray): dn_dm[i,j], where i is the redshift axis and j the mass axis.
+                Units: h^4 Mpc^{-3} Ms^{-1}.
         """
         rho_mean_0 = self.halo_model_properties.Omega_cb_0 * derived_cosmology.rho_crit(
             self.halo_model_properties.background, 0.0
@@ -267,7 +268,8 @@ class HaloAbundanceBase:
             M (numpy.ndarray): Mass points in h^{-1} Msun.
 
         Returns:
-            dn_dm (numpy.ndarray): dn_dm[i,j], where i is the redshift axis and j the mass axis. Units: h^4 Mpc^{-3} Ms^{-1}.
+            dn_dm (numpy.ndarray): dn_dm[i,j], where i is the redshift axis and j the mass axis.
+                Units: h^4 Mpc^{-3} Ms^{-1}.
         """
         return self.dn_dm_fsigmanu(z, M, self.f_sigma_nu(z, M))
 

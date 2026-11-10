@@ -34,17 +34,12 @@ class TinkerHaloAbundance(HaloAbundanceBase):
         Computes the Tinker et al. (2008) multiplicity function
         at the requested redshift and mass points.
 
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points.
-        M: numpy.ndarray
-            Mass points in h^{-1} Msun.
+        Parameters:
+            z (numpy.ndarray): Redshift points.
+            M (numpy.ndarray): Mass points in h^{-1} Msun.
 
-        Returns
-        -------
-        f_sigma_nu: numpy.ndarray
-            f_sigma_nu[i,j], where i is the redshift axis and j the mass axis
+        Returns:
+            f_sigma_nu (numpy.ndarray): f_sigma_nu[i,j], where i is the redshift axis and j the mass axis
         """
         raise NotImplementedError
 
@@ -55,17 +50,12 @@ class TinkerHaloAbundance(HaloAbundanceBase):
         Computes the Tinker et al. (2010) halo bias
         at the requested redshift and mass points.
 
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points
-        M: numpy.ndarray
-            Mass points in h^{-1} Msun
+        Parameters:
+            z (numpy.ndarray): Redshift points
+            M (numpy.ndarray): Mass points in h^{-1} Msun
 
-        Returns
-        -------
-        bias: numpy.ndarray
-            bias[i,j], where i is the redshift axis and j the mass axis
+        Returns:
+            bias (numpy.ndarray): bias[i,j], where i is the redshift axis and j the mass axis
         """
         # compute inputs
         delta_c = self.delta_c(z)

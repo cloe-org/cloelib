@@ -19,8 +19,7 @@ class HaloAbundanceBase:
 
         Initialize the class with given perturbations and overdensity definition.
 
-        Parameters
-        ----------
+        Parameters:
         halo_model_properties : HaloModelProperties
             An object from the `HaloModelProperties` class.
         """
@@ -64,20 +63,13 @@ class HaloAbundanceBase:
         at the requested redshift and mass points. This implementation follows
         the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).
 
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points.
-        M: numpy.ndarray
-            Mass points in h^{-1} Msun.
-        fsigmanu: numpy.ndarray
-            Multiplicity function.
+        Parameters:
+            z (numpy.ndarray): Redshift points.
+            M (numpy.ndarray): Mass points in h^{-1} Msun.
+            fsigmanu (numpy.ndarray): Multiplicity function.
 
-        Returns
-        -------
-        dn_dm: numpy.ndarray
-            dn_dm[i,j], where i is the redshift axis and j the mass axis.
-            Units: h^4 Mpc^{-3} Ms^{-1}.
+        Returns:
+            dn_dm (numpy.ndarray): dn_dm[i,j], where i is the redshift axis and j the mass axis. Units: h^4 Mpc^{-3} Ms^{-1}.
         """
         rho_mean_0 = self.halo_model_properties.Omega_cb_0 * derived_cosmology.rho_crit(
             self.halo_model_properties.background, 0.0
@@ -91,21 +83,15 @@ class HaloAbundanceBase:
 
         Computes the top-hat window function and its derivative.
 
-        Parameters
-        ----------
-        k: numpy.ndarray
-               Wavenumber where W(kR) is evaluated.
-               Units: h Mpc^{-1}
-        R: numpy.ndarray
-               Radius where W(kR) is evaluated.
-               Units: h^{-1} Mpc
+        Parameters:
+            k (numpy.ndarray): Wavenumber where W(kR) is evaluated.
+                   Units (h Mpc^{-1}):
+            R (numpy.ndarray): Radius where W(kR) is evaluated.
+                   Units (h^{-1} Mpc):
 
-        Returns
-        -------
-        W: numpy.ndarray
-            W[i,j], where i is the wavenumber axis and j the radius axis
-        dWdx: numpy.ndarray
-            dWdx[i,j], where i is the wavenumber axis and j the radius axis
+        Returns:
+            W (numpy.ndarray): W[i,j], where i is the wavenumber axis and j the radius axis
+            dWdx (numpy.ndarray): dWdx[i,j], where i is the wavenumber axis and j the radius axis
         """
         kr = k * R[:, np.newaxis]
         return tophat_window(kr), tophat_window_derivative(kr)
@@ -116,15 +102,11 @@ class HaloAbundanceBase:
         Converts a mass into a radius. This implementation follows
         the cold dark matter prescription by Costanzi+13 (https://arxiv.org/abs/1311.1514).
 
-        Parameters
-        ----------
-        M: numpy.ndarray
-            Mass in h^{-1} Msun
+        Parameters:
+            M (numpy.ndarray): Mass in h^{-1} Msun
 
-        Returns
-        -------
-        radius_M: array
-            Radius in h^{-1} Mpc
+        Returns:
+            radius_M (array): Radius in h^{-1} Mpc
         """
         rho_m_0 = (
             derived_cosmology.rho_crit(self.halo_model_properties.background, 0.0)
@@ -141,17 +123,12 @@ class HaloAbundanceBase:
         The contribution from massive neutrinos is not included in the power
         spectrum.
 
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points.
-        R: numpy.ndarray
-            Radius points in h^{-1} Mpc.
+        Parameters:
+            z (numpy.ndarray): Redshift points.
+            R (numpy.ndarray): Radius points in h^{-1} Mpc.
 
-        Returns
-        -------
-        sigma_z_R: numpy.ndarray
-            sigma_z_R[i,j], where i is the redshift axis and j the radius axis.
+        Returns:
+            sigma_z_R (numpy.ndarray): sigma_z_R[i,j], where i is the redshift axis and j the radius axis.
         """
         k = self.halo_model_properties.k  # h/Mpc
         W, _ = self.window(k, R)
@@ -179,17 +156,12 @@ class HaloAbundanceBase:
         The contribution from massive neutrinos is not included in the power
         spectrum.
 
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points.
-        M: numpy.ndarray
-            Mass points in h^{-1} Msun.
+        Parameters:
+            z (numpy.ndarray): Redshift points.
+            M (numpy.ndarray): Mass points in h^{-1} Msun.
 
-        Returns
-        -------
-        sigma_z_M: numpy.ndarray
-            sigma_z_M[i,j], where i is the redshift axis and j the mass axis.
+        Returns:
+            sigma_z_M (numpy.ndarray): sigma_z_M[i,j], where i is the redshift axis and j the mass axis.
         """
         return tabulated_return(
             self._tabulated_sigma,
@@ -205,15 +177,11 @@ class HaloAbundanceBase:
         The contribution from massive neutrinos is not included in the
         matter density parameter.
 
-        Parameters
-        ----------
-        z: float or np.ndarray
-            Redshift at which to evaluate the delta_c
+        Parameters:
+            z (float or np.ndarray): Redshift at which to evaluate the delta_c
 
-        Returns
-        -------
-        delta_c:  float or numpy.ndarray
-            Value of the critical overdensity a given redshift.
+        Returns:
+            delta_c ( float or numpy.ndarray): Value of the critical overdensity a given redshift.
         """
         return (
             3.0
@@ -233,17 +201,12 @@ class HaloAbundanceBase:
         The contribution from massive neutrinos is not included in the power
         spectrum and in the matter density parameter.
 
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points.
-        M: numpy.ndarray
-            Mass points.
+        Parameters:
+            z (numpy.ndarray): Redshift points.
+            M (numpy.ndarray): Mass points.
 
-        Returns
-        -------
-        nu_z_M: numpy.ndarray
-            nu_z_M[i,j], where i is the redshift axis and j the mass axis.
+        Returns:
+            nu_z_M (numpy.ndarray): nu_z_M[i,j], where i is the redshift axis and j the mass axis.
         """
         return self.delta_c(z)[:, np.newaxis] / self.sigma_z_M(z, M)
 
@@ -280,17 +243,12 @@ class HaloAbundanceBase:
         with respect to the ln of mass
         at the requested redshift and mass points.
 
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points.
-        M: numpy.ndarray
-            Mass points in h^{-1} Msun.
+        Parameters:
+            z (numpy.ndarray): Redshift points.
+            M (numpy.ndarray): Mass points in h^{-1} Msun.
 
-        Returns
-        -------
-        dlns_dlnM: numpy.ndarray
-            dlns_dlnM[i,j], where i is the redshift axis and j the mass axis.
+        Returns:
+            dlns_dlnM (numpy.ndarray): dlns_dlnM[i,j], where i is the redshift axis and j the mass axis.
         """
         return tabulated_return(
             self._tabulated_dlnsigmadlnM,
@@ -304,18 +262,12 @@ class HaloAbundanceBase:
         Computes the derivative of the number density
         at the requested redshift and mass points.
 
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points.
-        M: numpy.ndarray
-            Mass points in h^{-1} Msun.
+        Parameters:
+            z (numpy.ndarray): Redshift points.
+            M (numpy.ndarray): Mass points in h^{-1} Msun.
 
-        Returns
-        -------
-        dn_dm: numpy.ndarray
-            dn_dm[i,j], where i is the redshift axis and j the mass axis.
-            Units: h^4 Mpc^{-3} Ms^{-1}.
+        Returns:
+            dn_dm (numpy.ndarray): dn_dm[i,j], where i is the redshift axis and j the mass axis. Units: h^4 Mpc^{-3} Ms^{-1}.
         """
         return self.dn_dm_fsigmanu(z, M, self.f_sigma_nu(z, M))
 
@@ -323,16 +275,11 @@ class HaloAbundanceBase:
         r"""
         Computation of the multiplicity function.
 
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points.
-        M: numpy.ndarray
-            Mass points in h^{-1} Msun.
+        Parameters:
+            z (numpy.ndarray): Redshift points.
+            M (numpy.ndarray): Mass points in h^{-1} Msun.
 
-        Returns
-        -------
-        f_sigma_nu: numpy.ndarray
-            f_sigma_nu[i,j], where i is the redshift axis and j the mass axis
+        Returns:
+            f_sigma_nu (numpy.ndarray): f_sigma_nu[i,j], where i is the redshift axis and j the mass axis
         """
         raise NotImplementedError("Function not implemented in base function")

@@ -120,6 +120,44 @@ tracer = ShearTracer(
 `TATTContribution` and `PBJTATTLoopComputer` both live in
 `cloelib.observables.photo.shear`, alongside `ShearTracer` itself.
 
+**Per-bin IA amplitude (TATT-M)**: `ia_model="TATT-M"` switches to TATT-M
+(Herle et al. 2026, arXiv:2601.15851), a generalization of TATT where the
+IA amplitude (C1/C2/C1delta) is tied to each tomographic bin's halo mass
+and red-galaxy fraction instead of being one global value shared by every
+bin. It reads `nuisance_params["alphaM"/"betaM"]` (required, global) plus
+one `"log10_Mh_{i}"`/`"f_r_{i}"` pair per bin (1-indexed, required -
+matching `"multiplicative_bias_{i}"`'s own convention; `log10_Mh_{i}` in
+log10(Msun/h)), and optionally `"k1"/"k2"/"k3"/"log10_M0"/"CIA"` (all
+default to the values above/Herle et al. 2026's fixed choices). It needs
+the same `tatt_loop_computer` as `"TATT"`:
+
+```python
+tracer = ShearTracer(
+    perturbations=pert,
+    dndz=dndz_bins,
+    z=z,
+    nuisance_params={
+        **nuisance,
+        "alphaM": 1.0,
+        "betaM": 0.5,
+        "log10_Mh_1": 13.5,
+        "f_r_1": 1.0,
+        "log10_Mh_2": 14.0,
+        "f_r_2": 0.5,
+    },
+    ia_model="TATT-M",
+    tatt_loop_computer=PBJTATTLoopComputer(pert),
+)
+```
+
+Because its amplitudes vary per bin, `TATTMContribution` hands the Limber
+engine one `PkTerm` (a per-bin-weighted kernel pair and a power spectrum)
+per term of TATT's P_II/P_deltaI through `get_pk_terms`, the same mechanism
+`NonLinearGalaxyBiasContribution` uses for its per-bin biases. Use
+`tracer.get_ia_effective_spectra(bin_i=..., bin_j=...)` to inspect one bin
+pair's P_II/P_deltaI. Pairing a TATT-M tracer with an NLA or TATT tracer
+raises `ValueError`.
+
 ### PositionsTracer
 
 For galaxy clustering (galaxy positions) measurements.

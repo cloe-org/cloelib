@@ -256,10 +256,36 @@ def _interp_cl_log_ell(ells, ell_nodes, Cl_nodes):
     return l2_Cl / ells.reshape((-1,) + extra_dims) ** 2
 
 
+def _cosine_taper(ells, ell_start):
+    r"""
+    Cosine window that switches Cl off smoothly towards the largest multipole.
+
+    \(W(\ell) = 1\) for \(\ell \le \ell_{\rm start}\) and
+    \(W(\ell) = [1 + \cos(\pi x)]/2\) with
+    \(x = (\ell - \ell_{\rm start}) / (\ell_{\rm max} - \ell_{\rm start})\)
+    above it, so that \(W(\ell_{\rm max}) = 0\). A sharp truncation of the
+    Hankel-type sum at \(\ell_{\rm max}\) leaves an oscillating boundary term
+    \(\sim \sin(\ell_{\rm max}\theta)/\theta\) in \(\xi(\theta)\); the
+    window removes it.
+
+    Parameters:
+        ells (jnp.ndarray): Multipoles, shape (Nell,).
+        ell_start (float): Multipole at which the taper starts.
+
+    Returns:
+        (jnp.ndarray): Window W(ell), shape (Nell,).
+    """
+    ells = np.asarray(ells, dtype=float)
+    x = np.clip((ells - ell_start) / (ells.max() - ell_start), 0.0, 1.0)
+    return 0.5 * (1.0 + np.cos(np.pi * x))
+
+
 class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
     """Correlation function implementation using Wigner small-d matrices."""
 
-    def __init__(self, angular_two_point, ells, ks, n_ell_interp=None):
+    def __init__(
+        self, angular_two_point, ells, ks, n_ell_interp=None, ell_taper_start=None
+    ):
         """
         Initialize CorrelationFunction with an AngularTwoPoint instance.
 
@@ -279,11 +305,26 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
                 (e.g. ``arange(2, 60000)``) at a small accuracy cost; check the
                 number of nodes for your setup. Defaults to None, which computes
                 Cl at every multipole in ``ells``.
+            ell_taper_start (float, optional): If given, Cl is multiplied by a
+                cosine window that is 1 below ``ell_taper_start`` and goes smoothly
+                to 0 at ``max(ells)``. This removes the ringing caused by sharply
+                truncating the sum over multipoles and greatly improves the
+                convergence of xi(theta) with ``max(ells)``, e.g.
+                ``ells = arange(2, 60001)`` with ``ell_taper_start=30000``.
+                Must be smaller than ``max(ells)``. Defaults to None (no taper).
         """
         self.angular_two_point = angular_two_point
         self.ells = ells
         self.ks = ks
         self.n_ell_interp = n_ell_interp
+        self.ell_taper_start = ell_taper_start
+        if ell_taper_start is not None and not ell_taper_start < float(
+            np.max(np.asarray(ells))
+        ):
+            raise ValueError(
+                f"ell_taper_start ({ell_taper_start}) must be smaller than "
+                f"max(ells) ({float(np.max(np.asarray(ells)))})."
+            )
 
         # Determine spin values based on tracer type
         self.s1 = 2 if isinstance(angular_two_point.tracer1, ShearTracer) else 0
@@ -350,15 +391,23 @@ class AngularCorrelationFunctionWigner(AngularCorrelationFunction):
         return xi_dict
 
     def _get_Cl(self):
-        """Cl at ``self.ells``, either computed directly or interpolated from nodes."""
+        """Cl at ``self.ells`` (computed directly or interpolated), optionally tapered."""
         if self.n_ell_interp is None:
             self.angular_two_point.get_Cl(self.ells, nl=0, ks=self.ks)
-            return self.angular_two_point.C_ell_calc
+            Cl = self.angular_two_point.C_ell_calc
+        else:
+            ells = np.asarray(self.ells, dtype=float)
+            ell_nodes = np.geomspace(ells.min(), ells.max(), self.n_ell_interp)
+            # geomspace can put the end nodes an epsilon inside [min, max], which
+            # makes interpolation at the end points return NaN; pin them exactly.
+            ell_nodes = ell_nodes.at[0].set(ells.min()).at[-1].set(ells.max())
+            self.angular_two_point.get_Cl(ell_nodes, nl=0, ks=self.ks)
+            Cl = _interp_cl_log_ell(ells, ell_nodes, self.angular_two_point.C_ell_calc)
 
-        ells = np.asarray(self.ells, dtype=float)
-        ell_nodes = np.geomspace(ells.min(), ells.max(), self.n_ell_interp)
-        self.angular_two_point.get_Cl(ell_nodes, nl=0, ks=self.ks)
-        return _interp_cl_log_ell(ells, ell_nodes, self.angular_two_point.C_ell_calc)
+        if self.ell_taper_start is not None:
+            W = _cosine_taper(self.ells, self.ell_taper_start)
+            Cl = Cl * W.reshape((-1,) + (1,) * (Cl.ndim - 1))
+        return Cl
 
     def get_xi(self, theta):
         """

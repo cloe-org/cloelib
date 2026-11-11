@@ -117,3 +117,49 @@ def test_interp_cl_log_ell_reproduces_nodes():
     Cl_nodes = onp.stack([nodes**-1.0, -(nodes**-1.5)], axis=-1)  # signed spectrum
     Cl = angular_correlation_function_wigner._interp_cl_log_ell(nodes, nodes, Cl_nodes)
     onp.testing.assert_allclose(onp.asarray(Cl), Cl_nodes, rtol=1e-10)
+
+
+def test_cosine_taper():
+    ells = onp.arange(2, 101)
+    W = onp.asarray(angular_correlation_function_wigner._cosine_taper(ells, 50))
+    onp.testing.assert_array_equal(W[ells <= 50], 1.0)
+    assert W[-1] == pytest.approx(0.0, abs=1e-15)
+    assert onp.all(onp.diff(W) <= 0)
+    assert W[ells == 75][0] == pytest.approx(0.5)
+
+
+@pytest.mark.parametrize("n_ell_interp", [None, 120])
+def test_wigner_xi_taper_improves_convergence(n_ell_interp):
+    """Tapered xi with a modest lmax is closer to a high-lmax reference than a sharp cut."""
+    from cloelib.observables.photo import ShearTracer
+
+    tracer = ShearTracer.__new__(ShearTracer)
+    theta = onp.radians(onp.geomspace(5.0, 100.0, 10) / 60)
+
+    def xi_plus(lmax, ell_taper_start=None):
+        acf = angular_correlation_function_wigner.AngularCorrelationFunctionWigner(
+            _AnalyticTwoPoint(tracer, tracer),
+            onp.arange(2, lmax + 1),
+            None,
+            n_ell_interp=n_ell_interp,
+            ell_taper_start=ell_taper_start,
+        )
+        return onp.asarray(acf.get_xi(theta)[("SHE", "SHE", 1, 1)])[0, 0]
+
+    ref = xi_plus(60000)
+    err_sharp = abs(xi_plus(10000) - ref).max()
+    err_taper = abs(xi_plus(20000, ell_taper_start=10000) - ref).max()
+    assert err_taper < 0.1 * err_sharp
+
+
+def test_wigner_taper_start_validation():
+    from cloelib.observables.photo import ShearTracer
+
+    tracer = ShearTracer.__new__(ShearTracer)
+    with pytest.raises(ValueError, match="ell_taper_start"):
+        angular_correlation_function_wigner.AngularCorrelationFunctionWigner(
+            _AnalyticTwoPoint(tracer, tracer),
+            onp.arange(2, 1000),
+            None,
+            ell_taper_start=1000,
+        )

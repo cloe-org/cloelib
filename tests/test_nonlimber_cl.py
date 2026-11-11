@@ -583,6 +583,48 @@ def test_beyond_limber_correction_gradient_matches_finite_differences(
     np.testing.assert_allclose(grad, finite_diff, rtol=1e-6)
 
 
+def _cl_with_amplitude(perturbations, kind, amplitude):
+    """Beyond-Limber Cl with the IA ("ss") or magnification ("gg") amplitude
+    set to `amplitude` (zero amplitude: a kernel that vanishes everywhere)."""
+    if kind == "ss":
+        s = _shear(perturbations, M_BIAS)
+        s.nuisance_params = {**s.nuisance_params, "AIA": amplitude}
+        a, b = s, s
+    else:
+        g = _positions(perturbations)
+        g.magnification_bias = [amplitude, 0.5 * amplitude]
+        a, b = g, g
+    two_point = AngularTwoPoint(a, b, ell_nonlimber_max=float(FAKE_ELLS[1]))
+    return two_point.get_Cl_tensor(ELLS_JIT, None, KS)
+
+
+@pytest.mark.parametrize("kind", ["ss", "gg"])
+def test_gradient_wrt_vanishing_amplitude_is_finite(
+    kind, tracer_perturbations, fake_default_store
+):
+    """At zero IA or magnification amplitude the kernel resampled to
+    (chi, R chi) vanishes, where the Akima weights are 0/0: the gradient
+    with respect to the amplitude must stay finite (it was NaN), and away
+    from zero it matches central finite differences."""
+    # Every element in units of its size at amplitude 1, with random signs.
+    scale = np.abs(np.asarray(_cl_with_amplitude(tracer_perturbations, kind, 1.0)))
+    signs = np.random.default_rng(0).choice([-1.0, 1.0], size=scale.shape)
+    weights = jnp.asarray(signs / scale)
+
+    def loss(amplitude):
+        cl = _cl_with_amplitude(tracer_perturbations, kind, amplitude)
+        return jnp.sum(weights * cl)
+
+    assert np.isfinite(loss(0.0))
+    assert np.isfinite(jax.grad(loss)(0.0))
+
+    eps = 1e-4
+    grad = jax.grad(loss)(1.0)
+    finite_diff = (loss(1.0 + eps) - loss(1.0 - eps)) / (2 * eps)
+    assert np.isfinite(grad) and grad != 0.0
+    np.testing.assert_allclose(grad, finite_diff, rtol=1e-6)
+
+
 @pytest.mark.parametrize("ell_max", [1.0, 211.7, 1000.0])
 def test_ell_nonlimber_max_must_lie_within_the_nodes(ell_max, tracer_perturbations):
     g = _positions(tracer_perturbations)

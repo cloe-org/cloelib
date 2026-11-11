@@ -98,7 +98,11 @@ def _akima_coefficients(t: jnp.ndarray, m: jnp.ndarray, axis: int = 0):
     f12 = f1 + f2
     mask = f12 > eps_akima
 
-    weighted_b = (f1 * m[1 : n + 1, ...] + f2 * m[2 : n + 2, ...]) / f12
+    # Divide by a safe denominator where the weights vanish (constant or
+    # locally linear data): `jnp.where` alone would hide the 0/0 in the
+    # values but not in the gradients, which would turn NaN.
+    safe_f12 = jnp.where(mask, f12, 1.0)
+    weighted_b = (f1 * m[1 : n + 1, ...] + f2 * m[2 : n + 2, ...]) / safe_f12
     b = jnp.where(mask, weighted_b, b)
 
     m3 = m[2 : n + 1, ...]

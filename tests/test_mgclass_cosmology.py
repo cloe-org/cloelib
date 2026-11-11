@@ -77,6 +77,18 @@ def test_mgclass_background_implements_protocol(mgclass_background_instance):
     assert isinstance(mgclass_background_instance, Background)
 
 
+@pytest.mark.parametrize("method", ["Omega_m", "Omega_cb", "Omega_b"])
+def test_mgclass_background_densities_accept_scalars(
+    mgclass_background_instance, method
+):
+    """`Omega_*(0.0)` is how the observables call them: a scalar gives the
+    same value as a one-element array."""
+    density = getattr(mgclass_background_instance, method)
+    scalar = density(0.0)
+    assert np.ndim(scalar) == 0
+    np.testing.assert_allclose(scalar, density(np.array([0.0]))[0], rtol=1e-12)
+
+
 def test_mgclass_background_H0(mgclass_background_instance):
     assert hasattr(mgclass_background_instance, "H0")
     assert isinstance(mgclass_background_instance.H0, float)

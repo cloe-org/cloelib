@@ -14,17 +14,17 @@ Compute angular power spectra $C_\ell$, pseudo-$C_\ell$ and COSEBIs from two tra
 **Example**:
 
 ```python
-from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBPerturbations
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.photo import ShearTracer, PositionsTracer
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 import numpy as np
 
 # Set up cosmology
 bg = CAMBBackground(H0=67.5, Omega_b0=0.0492, ...)
-pert = CAMBPerturbations(background=bg)
 
 # Create tracers
 z = np.linspace(0.01, 3.0, 100)
+pert = CAMBLinearPerturbations(background=bg, redshifts=z)
 dndz = np.exp(-((z - 0.7) / 0.3)**2)
 dndz = dndz / np.trapz(dndz, z)
 

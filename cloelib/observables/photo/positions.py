@@ -47,9 +47,16 @@ from typing import Any, Callable, Protocol
 
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.auxiliary.math_utils import cached_stacked_simpson
+from cloelib.auxiliary.math_utils import (
+    cached_stacked_simpson,
+    check_nonzero_redshifts,
+)
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
-from cloelib.observables.photo.contributions import IntrinsicAlignmentContribution
+from cloelib.observables.photo.contributions import CB, MATTER
+from cloelib.observables.photo.contributions import (
+    IntrinsicAlignmentContribution,
+    unit_sigma,
+)
 from cloelib.observables.photo.spectrum_engine import (
     PkTerm,
     SpectraBank,
@@ -158,6 +165,18 @@ def _interp_linear_2d_queries(chi, y_bz, xq_lz):
 
 @jax.jit
 def get_photo_rsd(ells, chi, S_bin_z):
+    """Evaluate the shifted-distance approximation to the photo-RSD kernel.
+
+    Args:
+        ells (array_like): Multipoles, shape ``(n_ell,)``.
+        chi (array_like): Comoving-distance grid, shape ``(n_z)``, used as the
+            interpolation coordinate.
+        S_bin_z (array_like): Source term sampled on ``chi``, shape ``(n_bin, n_z)``.
+
+    The returned RSD kernel is indexed by multipole, tomographic bin, and
+    redshift. Shifted queries outside the supplied distance grid contribute
+    zero; multipoles below two also have zero contribution.
+    """
     Lm1, L0, Lp1 = _L_coeffs(ells)
     am1, _, ap1 = _alpha_coeffs(ells)
 
@@ -186,17 +205,28 @@ class GalaxyBiasContribution:
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
 
+    @property
+    def field(self) -> str:
+        """Galaxies trace cb with `use_Pcb=True`, the total matter otherwise."""
+        return CB if self._tracer.use_Pcb else MATTER
+
     def compute_kernel(self, z):
+        """Return the raw galaxy-bias kernel, shape ``(n_bin, n_z)``."""
         return self._tracer.get_window_positions(z)
 
 
 class MagnificationContribution:
-    """Magnification-bias kernel term of `PositionsTracer.get_window()`."""
+    """Magnification-bias kernel term of `PositionsTracer.get_window()`.
+
+    Lensing by the total matter, so it traces `MATTER` even with
+    `use_Pcb=True` (the default `field`).
+    """
 
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
 
     def compute_kernel(self, z):
+        """Return the raw magnification kernel, shape ``(n_bin, n_z)``."""
         return self._tracer.get_window_magnification(z)
 
 
@@ -275,10 +305,11 @@ class PBJNonlinearBiasLoopComputer:
             )
         self._fpt = fpt
         # See class docstring: use the nonlinear backend's own linear
-        # source if it has one, else assume `perturbations` is linear.
-        self.linear_perturbations = getattr(
-            perturbations, "linearperturbations", perturbations
-        )
+        # source if it has one, else assume `perturbations` is linear. A
+        # `linearperturbations` set to None (e.g. a CLASS backend built
+        # without one) counts as missing.
+        linear = getattr(perturbations, "linearperturbations", None)
+        self.linear_perturbations = perturbations if linear is None else linear
         self._cached_ks: _numpy.ndarray | None = None
         self._cached_kernels: dict[str, _numpy.ndarray] | None = None
 
@@ -355,6 +386,15 @@ class PBJNonlinearBiasLoopComputer:
         return kernels
 
     def compute(self, name: str):
+        """Return the cached FAST-PT callable for a nonlinear-bias kernel.
+
+        ``name`` must be one of the kernel names in ``_NLBIAS_KERNELS``.
+        The returned ``SpectrumRequest.compute(matter_pk, ks, zs)`` callable
+        ignores ``matter_pk`` and ``zs`` because these kernels depend only on
+        k, and returns shape ``(len(ks),)``. Kernels are cached while the
+        requested k grid is unchanged.
+        """
+
         def _compute(matter_pk, ks, zs):
             del matter_pk, zs  # pure k-kernel; no z-dependence at all
             return jnp.asarray(self._kernels_for(ks)[name])
@@ -414,7 +454,9 @@ class NonLinearGalaxyBiasContribution:
     kernel, ...) except an `IntrinsicAlignmentContribution` (NLA or TATT):
     there, only the *linear*-bias term `b1 P_dd` is used (`get_pk_terms`
     returns a single `b1 * matter_pk` term, deferring the rest of the
-    amplitude to the IA side's own kernel) - matching production CLOE's
+    amplitude to the IA side's own kernel; an IA model with its own
+    `get_pk_terms`, e.g. TATT-M, builds the cross itself against the `b1`
+    kernel) - matching production CLOE's
     `Pgi_phot_halo_nla`/`_tatt` (`cloe/non_linear/pgL_phot.py`,
     github.com/cloe-org/CLOE), which likewise never applies its own
     `_add_NLbias_contributions_gL` to the galaxy-intrinsic cross (a
@@ -433,6 +475,11 @@ class NonLinearGalaxyBiasContribution:
     *within* a bin is not supported (each bias parameter is one constant
     per bin, matching `GalaxyBiasContribution`'s `"per_bin"` model, not its
     `"per_bin_int"`/`"poly"` ones) - a real, deliberate scope limit.
+
+    Every term is built from the total matter power spectrum (`P_dd` =
+    `P_mm`, one-loop kernels from the linear `P_mm`), so this class traces
+    `MATTER` only: `PositionsTracer(use_Pcb=True)` raises
+    `NotImplementedError` for `galaxy_bias_model="nonlinear"`.
 
     Args:
       tracer: the owning `PositionsTracer`.
@@ -514,6 +561,11 @@ class NonLinearGalaxyBiasContribution:
         return result
 
     def get_spectrum_requests(self):
+        """Return one spectrum request per FAST-PT bias kernel.
+
+        Interaction-specific requirements may prune these requests when the
+        other contribution is intrinsic alignment.
+        """
         return tuple(
             SpectrumRequest(name=name, compute=self._loop_computer.compute(name))
             for name in _NLBIAS_KERNELS
@@ -578,6 +630,10 @@ class NonLinearGalaxyBiasContribution:
         k_b1 = self._bias_kernel(self.b1, zs)
 
         if isinstance(other, IntrinsicAlignmentContribution):
+            if getattr(other, "get_pk_terms", None) is not None:
+                # The IA side builds the cross itself (e.g. TATT-M), against
+                # this contribution's `compute_kernel` (the b1 part).
+                return None
             return (PkTerm(k_b1, other.compute_kernel(zs), matter_pk),)
 
         pd1d2 = self._loop_pk(bank, "nlbias_Pd1d2")
@@ -641,42 +697,54 @@ class PositionsTracer:
         nuisance_params: dict,
         include_rsd: bool = False,
         nl_bias_loop_computer: NonlinearBiasLoopComputer | None = None,
+        *,
+        use_Pcb: bool = False,
     ):
-        r"""
-        Initialize the class instance.
+        r"""Construct a tomographic photometric-position tracer.
 
-        ### This docstring should be checked. I replaced LinearPerturbations or NonLinearPerturbations with Perturbations as the type of perturbations in the parameters list doc.
+        ``dndz`` is expected to have shape ``(n_bin, len(z))``. Per-bin
+        width transformations are applied before redshift shifts. The redshift
+        grid must not contain zero; the window integrations assume a suitably
+        sampled grid.
 
-        Parameters:
-          perturbations (Perturbations): An object from NonLinearPerturbations class
-          dndz (np.ndarray): A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
-            It is expected to be normalised.
-          z (np.ndarray): A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
-          galaxy_bias_model (str): One of `"per_bin"`, `"per_bin_int"`, `"poly"`
-            (`GalaxyBiasContribution`'s three linear models, read from
-            `nuisance_params["b1_photo_bin{i}"/"b1_photo_poly{i}"]`) or
-            `"nonlinear"` (`NonLinearGalaxyBiasContribution`, the standard
-            McDonald & Roy 2009 one-loop expansion plus a `bk2` counterterm -
-            requires `nl_bias_loop_computer`, and reads, per tomographic bin
-            `i` (`i = 0..dndz.shape[0]-1`),
-            `nuisance_params["b1_photo_nl_bin{i}"/"b2_photo_nl_bin{i}"/
-            "bs2_photo_nl_bin{i}"/"b3nl_photo_nl_bin{i}"/"bk2_photo_nl_bin{i}"]`,
-            each defaulting to the value that drops it from the expansion -
-            see `NonLinearGalaxyBiasContribution`'s docstring for what it
-            does and does not support).
-          nuisance_params (dict): A dictionary containing additional parameters that are not directly related to the cosmological model but may affect the observations.
-          nl_bias_loop_computer: required when `galaxy_bias_model="nonlinear"`
-            (raises `ValueError` if omitted) - `NonLinearGalaxyBiasContribution`'s
-            one-loop kernel backend. Pass
-            `PBJNonlinearBiasLoopComputer(perturbations)` for real
-            FAST-PT-computed kernels, or any other object with the same
-            `.compute(name)` interface. Passing this with any
-            `galaxy_bias_model` other than `"nonlinear"` raises `ValueError`.
+        Args:
+            perturbations: Backend providing the background and perturbation
+                quantities required by this tracer.
+            dndz: Normalized tomographic redshift distributions, shape
+                ``(n_bin, len(z))``.
+            z: One-dimensional redshift grid matching the second axis of
+                ``dndz``.
+            galaxy_bias_model: ``"per_bin"`` uses constant per-bin
+                ``b1_photo_bin{i}``; ``"per_bin_int"`` interpolates those
+                values between each distribution's peak; ``"poly"`` uses
+                ``b1_photo_poly0`` through ``b1_photo_poly3``; ``"nonlinear"``
+                selects the one-loop bias contribution and requires
+                ``nl_bias_loop_computer``. Linear bias defaults to 1.0;
+                nonlinear ``b1`` defaults to 1.0 and ``b2``, ``bs2``,
+                ``b3nl``, and ``bk2`` default to 0.0. Bias nuisance bin
+                indices are zero-based.
+            nuisance_params: Mapping containing required one-based
+                ``dz_pos_{i+1}``, ``width_pos_{i+1}``, and
+                ``magnification_bias_{i+1}`` values, plus optional bias
+                parameters described above.
+            include_rsd: Whether to include the linear photo-RSD window in
+                legacy ``AngularTwoPoint`` calculations. The generalized
+                contribution engine does not support RSD.
+            nl_bias_loop_computer: Required for ``galaxy_bias_model="nonlinear"``
+                and must implement ``compute(name)``. Supplying it for another
+                model, or omitting it for nonlinear bias, raises ``ValueError``.
+            use_Pcb (bool): Keyword-only. A flag indicating whether to use
+                the power spectrum of cold dark matter + baryons (no neutrinos).
+                Must be a Python `bool` (raises `TypeError` otherwise).
+                Not supported with `galaxy_bias_model="nonlinear"` (raises `NotImplementedError`).
+
+        Raises:
+            ValueError: If the redshift grid contains zero or the nonlinear
+                loop-computer argument is inconsistent with the bias model.
         """
-        if 0.0 in z:
-            raise ValueError(
-                "One of the z array elements is equal to zero, breaking Limber integration."
-            )
+        if not isinstance(use_Pcb, bool):
+            raise TypeError(f"use_Pcb must be a bool, got {type(use_Pcb).__name__}.")
+        check_nonzero_redshifts(z)
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z
@@ -702,6 +770,7 @@ class PositionsTracer:
             for i in range(dndz.shape[0])
         ]
         self.include_rsd = include_rsd
+        self.use_Pcb = use_Pcb
 
         # Using dict.get so I can provide a default since lax has to compile every branch of the conditional
         def per_bin_case():
@@ -752,6 +821,13 @@ class PositionsTracer:
                     "NonLinearGalaxyBiasContribution has no illustrative "
                     "default."
                 )
+            if use_Pcb:
+                raise NotImplementedError(
+                    "galaxy_bias_model='nonlinear' does not support "
+                    "use_Pcb=True yet: NonLinearGalaxyBiasContribution's "
+                    "tree-level, k^2 counterterm and one-loop terms are all "
+                    "built from the total matter power spectrum."
+                )
 
             def nlbias_bin_array(prefix, default):
                 return np.asarray(
@@ -778,16 +854,19 @@ class PositionsTracer:
                     "galaxy_bias_model='nonlinear' (got "
                     f"galaxy_bias_model={galaxy_bias_model!r})."
                 )
-            conditions = np.array(
-                [
-                    self.flags["galaxy_bias_model"] == "per_bin",
-                    self.flags["galaxy_bias_model"] == "per_bin_int",
-                    self.flags["galaxy_bias_model"] == "poly",
-                ]
-            )
-            index = np.argwhere(conditions, size=1).squeeze()
-
-            self.bias_array = [per_bin_case, per_bin_int_case, poly_case][index]()
+            # Plain Python dispatch on the static model string: a `jnp`-computed
+            # index would be a tracer under `jax.jit` and can't index a list.
+            bias_cases = {
+                "per_bin": per_bin_case,
+                "per_bin_int": per_bin_int_case,
+                "poly": poly_case,
+            }
+            if galaxy_bias_model not in bias_cases:
+                raise ValueError(
+                    f"Unknown galaxy_bias_model {galaxy_bias_model!r}; expected "
+                    f"one of {sorted(bias_cases) + ['nonlinear']}."
+                )
+            self.bias_array = bias_cases[galaxy_bias_model]()
             self.bias = GalaxyBiasContribution(self)
 
         self.magnification = MagnificationContribution(self)
@@ -804,19 +883,20 @@ class PositionsTracer:
         return (self.bias, self.magnification)
 
     def get_window_positions(self, z) -> np.ndarray:
-        r"""Galaxy Positions window function.
+        r"""Return the bias-weighted positions kernel at redshifts ``z``.
 
-        Implements the galaxy clustering photometric window function.
+        For each bin the kernel is ``b_i(z) * dndz_shifted_i(z) * H(z)/c``.
+        The bias is constant per bin for ``per_bin`` and redshift-dependent
+        for ``per_bin_int`` and ``poly``. In nonlinear mode this window is a
+        diagnostic using the linear ``b1`` component; the full spectrum is
+        formed by the generalized contribution engine.
 
-        $$
-            W_i^G(z) = \frac{n_i(z)}{\bar{n_i}}\frac{H(z)}{c}\\
-        $$
+        Args:
+            z (array_like): Redshift evaluation grid compatible with the tracer's
+                distributions.
 
-        Parameters:
-          z (numpy.ndarray|float): Redshift at which to evaluate distribution (array of `float` or `float`)
-
-        Returns:
-          window_positions (numpy.ndarray): Window function for angular photometric galaxy clustering
+        Returns an array with one row per tomographic bin and one column per
+        redshift.
         """
 
         def per_bin_case():
@@ -837,17 +917,10 @@ class PositionsTracer:
             )
             return window
 
-        conditions = np.array(
-            [
-                self.flags["galaxy_bias_model"] == "per_bin",
-                self.flags["galaxy_bias_model"] in ["per_bin_int", "poly"],
-            ]
-        )
-        index = np.argwhere(conditions, size=1).squeeze()
-
-        window_positions = [per_bin_case, z_func_case][index]()
-
-        return window_positions
+        # Static Python branch (see `__init__`), safe under `jax.jit`.
+        if self.flags["galaxy_bias_model"] == "per_bin":
+            return per_bin_case()
+        return z_func_case()
 
     def get_window_rsd(self, ells, H, f, chi) -> np.ndarray:
         r"""
@@ -860,8 +933,8 @@ class PositionsTracer:
         W^{\rm RSD}_i(\ell,z)
         =
         A_\ell\,S_i(z)
-        +B_\ell\,S_i\!\left(z_{-2}(\ell,z)\right)
-        +C_\ell\,S_i\!\left(z_{+2}(\ell,z)\right),
+        +B_\ell\,S_i\!\left(z_{-1}(\ell,z)\right)
+        +C_\ell\,S_i\!\left(z_{+1}(\ell,z)\right),
         $$
 
         with
@@ -869,18 +942,19 @@ class PositionsTracer:
         S_i(z)=\frac{H(z)\,f(z)}{c}\,n_i(z),
         $$
 
-        and the shifted redshifts defined implicitly via comoving distance (here :math:`\chi \equiv r`):
+        and shifted distances defined by the ``_alpha_coeffs`` factors:
         $$
-        \chi\!\left(z_m(\ell,z)\right)=
-        \frac{\ell+m+\tfrac12}{\ell+\tfrac12}\,\chi(z),
-        \qquad m\in\{-2,+2\}.
+        \chi_{-}=\frac{2\ell-3}{2\ell+1}\chi(z),\qquad
+        \chi_{+}=\frac{2\ell+5}{2\ell+1}\chi(z).
         $$
 
-        The coefficients are
+        The coefficients match ``_L_coeffs``. Multipoles below 2 are set to
+        zero, and shifted-distance queries outside the tabulated ``chi`` grid
+        contribute zero.
         $$
         A_\ell=\frac{2\ell^2+2\ell-1}{(2\ell-1)(2\ell+3)},\quad
-        B_\ell=-\frac{\ell(\ell-1)}{(2\ell-1)(2\ell+1)},\quad
-        C_\ell=-\frac{(\ell+1)(\ell+2)}{(2\ell+1)(2\ell+3)}.
+        B_\ell=-\frac{\ell(\ell-1)}{(2\ell-1)\sqrt{(2\ell-3)(2\ell+1)}},\quad
+        C_\ell=-\frac{(\ell+1)(\ell+2)}{(2\ell+3)\sqrt{(2\ell+1)(2\ell+5)}}.
         $$
 
         Notes
@@ -900,7 +974,7 @@ class PositionsTracer:
         Returns
         -------
         ndarray
-            The RSD window sampled on the z-grid (shape as returned by `get_photo_rsd`).
+            The RSD window with shape ``(len(ells), n_bin, len(chi))``.
         """
         # S_i(z) = H(z) f(z) n_i(z) / c
         S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted
@@ -908,10 +982,7 @@ class PositionsTracer:
 
     def get_magnification_efficiency(self, z):
         r"""
-        Compute the magnification efficiency kernel for each redshift bin.
-
-        This function calculates the geometric lensing kernel W(χ), which weights the contribution
-        of matter at different redshifts to the weak lensing signal, for a given redshift grid `z`.
+        Compute magnification efficiency for each bin from shifted ``dndz``.
 
         Parameters:
           z (np.ndarray): 1D array of redshift values (must be evenly spaced). Used to compute comoving distances
@@ -925,7 +996,7 @@ class PositionsTracer:
         -----
         - Assumes `z` is evenly spaced; spacing is inferred as `z[1] - z[0]`.
         - Uses a precomputed Simpson rule weight matrix (`cached_stacked_simpson`) for integration.
-        - `self.dndz` is expected to have shape (N_bins, len(z)) and be normalized.
+        - `self.dndz_shifted` has shape ``(n_bin, len(z))``.
         - Efficiency is evaluated using `np.einsum`.
         """
         dz = z[1] - z[0]  # assuming equispaced!
@@ -936,29 +1007,20 @@ class PositionsTracer:
         return result
 
     def get_window_magnification(self, z):
-        r"""Magnification photometric galaxy kernel.
+        r"""Return the magnification-bias contribution to the positions window.
 
-        Calculates the weak lensing shear kernel for a given tomographic bin
-        distribution.
-        Uses broadcasting to compute a 2D-array of integrands and then applies
-        `np.trapz` on the array along one axis.
+        The geometric efficiency is evaluated on the supplied redshift grid
+        using the shifted source distribution and Simpson weights; its
+        distance-ratio factor is ``1 - chi(z_lens) / chi(z_source)``. The
+        resulting efficiency is multiplied by the usual matter-lensing
+        prefactor and the per-bin ``magnification_bias`` value.
 
-        $$
-            W_{i}^{\gamma}(\ell, z, k) =
-            \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
-            \Omega_{{\rm m},0} b_{\rm mag, i} (1 + z)
-            f_K\left[\tilde{r}(z)\right]
-            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
-            \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
-        $$
+        Args:
+          z (array_like): One-dimensional, evenly spaced redshift evaluation grid.
 
-        Parameters:
-          z (numpy.ndarray): Redshift at which weight is evaluated (array of `float`).
-
-        Returns:
-          (numpy.ndarray): 1-D Numpy array of shear kernel values for specified bin
-            at specified scale for the redshifts defined in z
+        The returned two-dimensional kernel has one row per bin and one
+        column per redshift; each bin is multiplied by its
+        ``magnification_bias_{i+1}`` nuisance parameter.
         """
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (
@@ -970,23 +1032,24 @@ class PositionsTracer:
             * self.background.comoving_distance(z)
         )
         efficiency = self.get_magnification_efficiency(z)
+        # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.
+        Sigma = getattr(self.perturbations, "Sigma", unit_sigma)(z)
         return (
             np.einsum("ij, j->ij", efficiency, factor)
             * np.array(self.magnification_bias)[:, None]
+            * Sigma[np.newaxis, :]
         )
 
     def get_window(self, z) -> np.ndarray:
         """
-        Compute the angular photometric galaxy clustering window function.
+        Sum the bias and magnification contribution kernels.
 
-        This function combines the galaxy clustering window and the magnification
-        bias window to produce the final window function.
+        Args:
+          z (array_like): Redshift evaluation grid.
 
-        Parameters:
-          z (float): Redshift at which window kernel is being evaluated
-
-        Returns:
-          window (np.ndarray):
+        Returns an array with one row per bin and one column per redshift. In
+        nonlinear-bias mode this is diagnostic; the generalized engine forms
+        the full bias spectrum from contribution terms.
         """
         window = sum(c.compute_kernel(z) for c in self.get_contributions())
         return window

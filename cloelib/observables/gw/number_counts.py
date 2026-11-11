@@ -6,6 +6,7 @@ holds `GWWeakLensingTracer`.
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.math_utils import check_nonzero_redshifts
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 
@@ -59,10 +60,7 @@ class GWNumberCountsTracer:
           nuisance_params (dict): Redshift-shift and width parameters for every
             bin, plus parameters for the selected GW bias model.
         """
-        if 0.0 in z:
-            raise ValueError(
-                "One of the z array elements is equal to zero, breaking Limber integration."
-            )
+        check_nonzero_redshifts(z)
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z
@@ -125,16 +123,19 @@ class GWNumberCountsTracer:
                 + bias_array[3] * z**3
             )
 
-        conditions = np.array(
-            [
-                self.flags["gw_bias_model"] == "per_bin",
-                self.flags["gw_bias_model"] == "per_bin_int",
-                self.flags["gw_bias_model"] == "poly",
-            ]
-        )
-        index = np.argwhere(conditions, size=1).squeeze()
-
-        self.bias_array = [per_bin_case, per_bin_int_case, poly_case][index]()
+        # Plain Python dispatch on the static model string: a `jnp`-computed
+        # index would be a tracer under `jax.jit` and can't index a list.
+        bias_cases = {
+            "per_bin": per_bin_case,
+            "per_bin_int": per_bin_int_case,
+            "poly": poly_case,
+        }
+        if gw_bias_model not in bias_cases:
+            raise ValueError(
+                f"Unknown gw_bias_model {gw_bias_model!r}; expected one of "
+                f"{sorted(bias_cases)}."
+            )
+        self.bias_array = bias_cases[gw_bias_model]()
         self.bias = GWSourceBiasContribution(self)
 
     def get_contributions(self):
@@ -185,17 +186,10 @@ class GWNumberCountsTracer:
             )
             return window
 
-        conditions = np.array(
-            [
-                self.flags["gw_bias_model"] == "per_bin",
-                self.flags["gw_bias_model"] in ["per_bin_int", "poly"],
-            ]
-        )
-        index = np.argwhere(conditions, size=1).squeeze()
-
-        window_number_counts = [per_bin_case, z_func_case][index]()
-
-        return window_number_counts
+        # Static Python branch (see `__init__`), safe under `jax.jit`.
+        if self.flags["gw_bias_model"] == "per_bin":
+            return per_bin_case()
+        return z_func_case()
 
     def get_window(self, z) -> np.ndarray:
         """

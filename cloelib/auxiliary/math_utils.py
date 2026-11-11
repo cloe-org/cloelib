@@ -6,13 +6,18 @@ import jax
 import jax.numpy as jnp
 
 
-def ensure_z_zero_included(redshifts: np.ndarray) -> np.ndarray:
+def ensure_z_zero_included(redshifts: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Ensure z=0 is in redshift array for sigma8(z=0) computation.
 
     This utility function checks if z=0 is present in the redshift array,
     and adds it if missing. This is necessary for computing sigma8(z=0)
     which is required for cosmological analyses.
+
+    Also returns the index array needed to reorder a per-redshift quantity
+    computed by camb (which always internally re-sorts redshifts by
+    descending z, regardless of input order) to align with the returned
+    redshift array, whatever order that happens to be in.
 
     Parameters
     ----------
@@ -21,14 +26,20 @@ def ensure_z_zero_included(redshifts: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    np.ndarray
-        Redshift array with z=0 included (sorted)
+    z : np.ndarray
+        Redshift array with z=0 included, not necessarily sorted.
+    order : np.ndarray
+        Index array such that ``camb_quantity[order]`` reorders a
+        per-redshift quantity computed by camb (sorted by descending z) to
+        align with ``z``.
     """
     z_min = redshifts.min()
     if z_min > 0.001:
-        return np.sort(np.append(redshifts, 0.0))
+        z = np.sort(np.append(redshifts, 0.0))
     else:
-        return redshifts
+        z = redshifts
+    order = len(z) - 1 - np.argsort(np.argsort(z))
+    return z, order
 
 
 def simpsons_weights_odd(num_el: int) -> jnp.ndarray:
@@ -214,7 +225,23 @@ def cached_stacked_simpson(n: int) -> jnp.ndarray:
 
 
 def legendre(n, x):
-    """Write documentation (TODO)."""
+    """Evaluate the Legendre polynomial of degree ``n`` at ``x``.
+
+    The polynomial is evaluated with the three-term recurrence relation. ``x`` may
+    be a scalar or an array; the result is a JAX value with the corresponding shape.
+
+    Parameters
+    ----------
+    n : int
+        Non-negative degree of the polynomial.
+    x : array-like
+        Point or points at which to evaluate the polynomial.
+
+    Returns
+    -------
+    jax.Array
+        Values of the degree-``n`` Legendre polynomial at ``x``.
+    """
     if n == 0:
         return jnp.ones_like(x)
     elif n == 1:
@@ -229,7 +256,33 @@ def legendre(n, x):
 
 
 def simps(f, a, b, N=128):
-    """Write documentation (TODO)."""
+    """Compute Simpson's-rule integrals of ``f`` over ``[a, b]``.
+
+    ``f`` is evaluated at ``N + 1`` equally spaced points, and composite
+    Simpson's rule is applied along the leading axis of its result.
+
+    Parameters
+    ----------
+    f : callable
+        Function evaluated at the integration points. Its result must have a
+        leading dimension of length ``N + 1``.
+    a, b : float
+        Lower and upper integration limits.
+    N : int, optional
+        Number of equal subintervals; must be even. Defaults to 128.
+
+    Returns
+    -------
+    scalar or array-like
+        Integral value(s), with the shape of ``f``'s result after reducing its
+        leading dimension. The concrete array type follows the value returned by
+        ``f`` and ``numpy.sum``'s dispatch.
+
+    Raises
+    ------
+    ValueError
+        If ``N`` is odd.
+    """
     if N % 2 == 1:
         raise ValueError("N must be an even integer.")
     dx = (b - a) / N
@@ -237,3 +290,30 @@ def simps(f, a, b, N=128):
     y = f(x)
     S = dx / 3 * np.sum(y[0:-1:2] + 4 * y[1::2] + y[2::2], axis=0)
     return S
+
+
+def safe_sqrt(x):
+    """`sqrt` with a finite gradient at (and below) zero.
+
+    `jax.grad` of `sqrt(x)` is `inf` at `x = 0`, which turns into NaNs once
+    multiplied by a zero cotangent. The double-`where` keeps both the value
+    and the gradient finite where `x <= 0` (value and gradient set to 0).
+    """
+    positive = x > 0
+    return jnp.where(positive, jnp.sqrt(jnp.where(positive, x, 1.0)), 0.0)
+
+
+def check_nonzero_redshifts(z):
+    """Raise `ValueError` if the redshift grid `z` contains zero.
+
+    A zero redshift breaks the Limber integration. The check runs in plain
+    NumPy on a concrete grid, so a tracer constructor holding it can still be
+    traced by `jax.jit`, where even a constant `jnp` array would otherwise be
+    compared as a tracer. A traced `z` is not checked.
+    """
+    if isinstance(z, jax.core.Tracer):
+        return
+    if np.any(np.asarray(z) == 0.0):
+        raise ValueError(
+            "One of the z array elements is equal to zero, breaking Limber integration."
+        )

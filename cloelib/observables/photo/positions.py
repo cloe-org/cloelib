@@ -457,7 +457,9 @@ class NonLinearGalaxyBiasContribution:
     kernel, ...) except an `IntrinsicAlignmentContribution` (NLA or TATT):
     there, only the *linear*-bias term `b1 P_dd` is used (`get_pk_terms`
     returns a single `b1 * matter_pk` term, deferring the rest of the
-    amplitude to the IA side's own kernel) - matching production CLOE's
+    amplitude to the IA side's own kernel; an IA model with its own
+    `get_pk_terms`, e.g. TATT-M, builds the cross itself against the `b1`
+    kernel) - matching production CLOE's
     `Pgi_phot_halo_nla`/`_tatt` (`cloe/non_linear/pgL_phot.py`,
     github.com/cloe-org/CLOE), which likewise never applies its own
     `_add_NLbias_contributions_gL` to the galaxy-intrinsic cross (a
@@ -631,6 +633,10 @@ class NonLinearGalaxyBiasContribution:
         k_b1 = self._bias_kernel(self.b1, zs)
 
         if isinstance(other, IntrinsicAlignmentContribution):
+            if getattr(other, "get_pk_terms", None) is not None:
+                # The IA side builds the cross itself (e.g. TATT-M), against
+                # this contribution's `compute_kernel` (the b1 part).
+                return None
             return (PkTerm(k_b1, other.compute_kernel(zs), matter_pk),)
 
         pd1d2 = self._loop_pk(bank, "nlbias_Pd1d2")

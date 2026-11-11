@@ -2,7 +2,7 @@
 
 `ShearTracer` and everything related to its intrinsic-alignment models
 (`LensingContribution`, `NLAContribution`,
-`TATTContribution`, `PBJTATTLoopComputer`) live together in `photo.shear`.
+`TATTContribution`, `TATTMContribution`, `PBJTATTLoopComputer`) live together in `photo.shear`.
 `PositionsTracer` and its Contributions
 (`GalaxyBiasContribution`, `MagnificationContribution`,
 `NonLinearGalaxyBiasContribution`, `PBJNonlinearBiasLoopComputer`) live

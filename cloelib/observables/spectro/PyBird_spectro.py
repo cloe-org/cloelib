@@ -131,11 +131,6 @@ class PyBirdSpectroPower:
         else:
             if "mg_model" not in mg_settings:
                 raise KeyError("mg_settings must contain 'mg_model'.")
-            if np.any(np.asarray(self.background.mnu) > 0):
-                raise NotImplementedError(
-                    "Massive neutrinos are not passed to CLASS in the beyond-LCDM "
-                    "PyBird route."
-                )
             # Always re-set: the Correlator keeps the redshift of its last CLASS call
             _set_correlator(
                 {**PYBIRD_CONFIG, "with_exact_time": True, **mg_settings}, force=True
@@ -182,7 +177,7 @@ class PyBirdSpectroPower:
     def _class_parameters(self, z: float) -> dict:
         """CLASS input parameters of the background cosmology, at redshift z."""
         bg = self.background
-        return {
+        params = {
             "h": bg.h,
             "Omega_b": bg.Omega_b0,
             "Omega_cdm": bg.Omega_cdm0,
@@ -195,6 +190,19 @@ class PyBirdSpectroPower:
             "Omega_Lambda": 0.0,
             "z": z,
         }
+        mnu = float(np.sum(bg.mnu))
+        if mnu > 0:
+            # N_mnu degenerate massive species, as in the CAMB background; each contributes
+            # 1.0132 to N_eff with the CLASS default T_ncdm, the massless ones make up the rest
+            n = int(bg.N_mnu)
+            params.update(
+                {
+                    "N_ncdm": n,
+                    "m_ncdm": ",".join([str(mnu / n)] * n),
+                    "N_ur": bg.N_eff - 1.0132 * n,
+                }
+            )
+        return params
 
     def _check_k_range(self, k: np.ndarray):
         """Warn if k goes well beyond the range PyBird was evaluated on."""

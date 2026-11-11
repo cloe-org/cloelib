@@ -109,22 +109,3 @@ def test_photo_rsd_flat_coefficients():
     interior = _rsd_interior(CHI)
     rsd = np.asarray(get_photo_rsd(ELLS, CHI, S))[:, 0, interior]
     assert_allclose(rsd, np.broadcast_to(A + B + C, rsd.shape), rtol=1e-12, atol=1e-14)
-
-
-def test_photo_rsd_continuous_in_curvature():
-    S = np.exp(-0.5 * ((CHI - 3000.0) / 800.0) ** 2)[None, :]
-    flat = np.asarray(get_photo_rsd(ELLS, CHI, S))
-    for Omega_k0 in (-1e-8, 1e-8):
-        f_K = transverse_distance(CHI, Omega_k0, H0)
-        curved = np.asarray(get_photo_rsd(ELLS, f_K, S, curvature(Omega_k0, H0)))
-        assert_allclose(curved, flat, rtol=1e-6, atol=1e-10 * np.abs(flat).max())
-
-
-@pytest.mark.parametrize("Omega_k0", [-0.3, 0.3])
-def test_photo_rsd_curvature_terms(Omega_k0):
-    S = np.exp(-0.5 * ((CHI - 3000.0) / 800.0) ** 2)[None, :]
-    f_K = transverse_distance(CHI, Omega_k0, H0)
-    without_K = np.asarray(get_photo_rsd(ELLS, f_K, S))
-    curved = np.asarray(get_photo_rsd(ELLS, f_K, S, curvature(Omega_k0, H0)))
-    assert np.all(np.isfinite(curved))
-    assert not np.allclose(curved, without_K, rtol=1e-3, atol=0.0)

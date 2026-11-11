@@ -46,7 +46,7 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all follows.
 from typing import Any, Callable, Protocol
 
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.geometry import curvature, transverse_distance
+from cloelib.auxiliary.geometry import transverse_distance
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import (
     cached_stacked_simpson,
@@ -89,6 +89,33 @@ _NLBIAS_KERNELS = (
     "nlbias_sig4",
     "nlbias_sig3nl",
 )
+
+
+@jax.jit
+def _L_coeffs(ells):
+    ell = ells.astype(np.float64)
+    # Avoid invalid sqrt for ell<2 by using a safe ell in the algebra
+    ell_s = np.maximum(ell, 2.0)
+
+    Lm1 = (
+        -ell_s
+        * (ell_s - 1.0)
+        / ((2.0 * ell_s - 1.0) * np.sqrt((2.0 * ell_s - 3.0) * (2.0 * ell_s + 1.0)))
+    )
+    L0 = (2.0 * ell_s**2 + 2.0 * ell_s - 1.0) / (
+        (2.0 * ell_s - 1.0) * (2.0 * ell_s + 3.0)
+    )
+    Lp1 = (
+        -(ell_s + 1.0)
+        * (ell_s + 2.0)
+        / ((2.0 * ell_s + 3.0) * np.sqrt((2.0 * ell_s + 1.0) * (2.0 * ell_s + 5.0)))
+    )
+
+    mask = ell >= 2.0
+    Lm1 = np.where(mask, Lm1, 0.0)
+    L0 = np.where(mask, L0, 0.0)
+    Lp1 = np.where(mask, Lp1, 0.0)
+    return Lm1, L0, Lp1
 
 
 @jax.jit
@@ -138,77 +165,32 @@ def _interp_linear_2d_queries(chi, y_bz, xq_lz):
 
 
 @jax.jit
-def get_photo_rsd(ells, f_K, S_bin_z, K=0.0):
-    r"""Evaluate the shifted-distance approximation to the photo-RSD kernel.
+def get_photo_rsd(ells, chi, S_bin_z):
+    """Evaluate the shifted-distance approximation to the photo-RSD kernel.
 
     Args:
         ells (array_like): Multipoles, shape ``(n_ell,)``.
-        f_K (array_like): Transverse comoving distance on the z-grid,
-            shape ``(n_z,)``, used as the interpolation coordinate.
-        S_bin_z (array_like): Source term sampled on the z-grid, shape
-            ``(n_bin, n_z)``.
-        K (float): Spatial curvature in Mpc$^{-2}$.
+        chi (array_like): Comoving-distance grid, shape ``(n_z)``, used as the
+            interpolation coordinate.
+        S_bin_z (array_like): Source term sampled on ``chi``, shape ``(n_bin, n_z)``.
 
-    Returns the RSD kernel indexed by multipole, tomographic bin, and
-    redshift. Shifted queries outside the grid and multipoles below two
-    contribute zero.
+    The returned RSD kernel is indexed by multipole, tomographic bin, and
+    redshift. Shifted queries outside the supplied distance grid contribute
+    zero; multipoles below two also have zero contribution.
     """
-    ell = ells.astype(np.float64)
-    ell_s = np.maximum(ell, 2.0)[:, None]
+    Lm1, L0, Lp1 = _L_coeffs(ells)
     am1, _, ap1 = _alpha_coeffs(ells)
 
-    q2 = ((ell_s + 0.5) / f_K[None, :]) ** 2
-    k2 = q2 - K
+    chi_q_m1 = am1[:, None] * chi[None, :]
+    chi_q_p1 = ap1[:, None] * chi[None, :]
 
-    def s2(j):
-        return np.maximum(q2 - K * j**2, 0.0)
-
-    b_m1 = (
-        ell_s * (ell_s - 1.0) / ((2.0 * ell_s + 1.0) * (2.0 * ell_s - 1.0))
-    ) * np.sqrt(s2(ell_s) * s2(ell_s - 1.0))
-    b_p1 = (
-        (ell_s + 1.0) * (ell_s + 2.0) / ((2.0 * ell_s + 1.0) * (2.0 * ell_s + 3.0))
-    ) * np.sqrt(s2(ell_s + 1.0) * s2(ell_s + 2.0))
-    b_0 = (
-        ell_s
-        * (ell_s - 1.0)
-        / (2.0 * ell_s + 1.0)
-        * (s2(ell_s + 1.0) / (2.0 * ell_s + 3.0) + s2(ell_s) / (2.0 * ell_s - 1.0))
-        + 2.0 * s2(ell_s + 1.0) / (2.0 * ell_s + 3.0)
-        + ell_s * (ell_s + 1.0) * K
-        - k2
-    )
-
-    cos_0 = np.sqrt(np.maximum(1.0 - K * f_K**2, 1e-12))[None, :]
-    fK_m1 = am1[:, None] * f_K[None, :]
-    fK_p1 = ap1[:, None] * f_K[None, :]
-    cos_m1 = np.sqrt(np.maximum(1.0 - K * fK_m1**2, 1e-12))
-    cos_p1 = np.sqrt(np.maximum(1.0 - K * fK_p1**2, 1e-12))
-
-    mask = (ell >= 2.0)[:, None]
-    Lm1 = np.where(
-        mask,
-        -b_m1
-        / k2
-        * np.sqrt((2.0 * ell_s + 1.0) / (2.0 * ell_s - 3.0))
-        * np.sqrt(cos_0 / cos_m1),
-        0.0,
-    )
-    L0 = np.where(mask, -b_0 / k2, 0.0)
-    Lp1 = np.where(
-        mask,
-        -b_p1
-        / k2
-        * np.sqrt((2.0 * ell_s + 1.0) / (2.0 * ell_s + 5.0))
-        * np.sqrt(cos_0 / cos_p1),
-        0.0,
-    )
-
-    S_m1 = _interp_linear_2d_queries(f_K, S_bin_z, fK_m1)
+    S_m1 = _interp_linear_2d_queries(chi, S_bin_z, chi_q_m1)
     S_0 = np.broadcast_to(S_bin_z[None, :, :], S_m1.shape)
-    S_p1 = _interp_linear_2d_queries(f_K, S_bin_z, fK_p1)
+    S_p1 = _interp_linear_2d_queries(chi, S_bin_z, chi_q_p1)
 
-    return Lm1[:, None, :] * S_m1 + L0[:, None, :] * S_0 + Lp1[:, None, :] * S_p1
+    return (
+        Lm1[:, None, None] * S_m1 + L0[:, None, None] * S_0 + Lp1[:, None, None] * S_p1
+    )
 
 
 class GalaxyBiasContribution:
@@ -963,10 +945,10 @@ class PositionsTracer:
         f_{K,+}=\frac{2\ell+5}{2\ell+1}f_K(z).
         $$
 
-        In flat space the coefficients are as below; for $K \neq 0$ they carry
-        curvature corrections (see `get_photo_rsd`). Multipoles below 2 are set
-        to zero, and shifted-distance queries outside the tabulated grid
-        contribute zero.
+        The coefficients match ``_L_coeffs`` and are also used for $K \neq 0$,
+        as in the CLASS Limber RSD transfer (``transfer_limber``). Multipoles
+        below 2 are set to zero, and shifted-distance queries outside the
+        tabulated grid contribute zero.
         $$
         A_\ell=\frac{2\ell^2+2\ell-1}{(2\ell-1)(2\ell+3)},\quad
         B_\ell=-\frac{\ell(\ell-1)}{(2\ell-1)\sqrt{(2\ell-3)(2\ell+1)}},\quad
@@ -994,9 +976,7 @@ class PositionsTracer:
         # S_i(z) = H(z) f(z) n_i(z) / c
         S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted
         Ok, H0 = self.background.Omega_k0, self.background.H0
-        return get_photo_rsd(
-            ells, transverse_distance(chi, Ok, H0), S, curvature(Ok, H0)
-        )
+        return get_photo_rsd(ells, transverse_distance(chi, Ok, H0), S)
 
     def get_magnification_efficiency(self, z):
         r"""

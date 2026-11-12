@@ -22,7 +22,8 @@ from cloelib.observables.photo.spectrum_engine import (
 )
 from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
 from cloelib.summary_statistics.beyond_limber import (
-    interpolate_correction,
+    interpolate_from_nodes,
+    nodes_range_mask,
     nonlimber_cl,
 )
 from cloelib.auxiliary.t_tildes import NonLimberGrid, default_t_tildes
@@ -761,10 +762,11 @@ class AngularTwoPoint:
 
         With `ell_nonlimber_max` set, the linear beyond-Limber correction
         `C_nonLimber^lin - C_Limber^lin` (`_nonlimber_correction`) is added
-        for `2 <= ell <= ell_nonlimber_max`: computed on the T-tilde nodes
-        and interpolated (Akima in log ell), with the same windows and
-        multiplicative shear bias as the Limber Cl. Outside that range the
-        Cl is the Limber one.
+        for `2 <= ell <= ell_nonlimber_max`: `C_nonLimber^lin` computed on
+        the T-tilde nodes and interpolated (cubic spline in log ell),
+        `C_Limber^lin` at `ells`, with the same windows and multiplicative
+        shear bias as the Limber Cl. Outside that range the Cl is the Limber
+        one.
 
         Parameters:
             ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
@@ -1189,10 +1191,13 @@ class AngularTwoPoint:
     def _nonlimber_correction(self, ells, ks, bank, ell_max, cache=None):
         """Beyond-Limber correction to the Limber Cl, at `ells`.
 
-        `Delta C = _nonlimber_cl - _limber_linear_cl` on the T-tilde nodes,
-        both linear and with the same windows and calibration, interpolated
-        to `ells` (`beyond_limber.interpolate_correction`): zero above
-        `ell_max` and below the first node.
+        `Delta C = C_nonLimber^lin - C_Limber^lin`, both linear and with the
+        same windows and calibration: `_nonlimber_cl` on the T-tilde nodes,
+        interpolated to `ells` (`beyond_limber.interpolate_from_nodes`),
+        minus `_limber_linear_cl` at `ells`. Zero above `ell_max` and below
+        the first node. Interpolating the beyond-Limber Cl, not Delta C,
+        keeps the Limber approximation of RSD (poor at low ell) out of the
+        interpolated quantity; on the nodes the two coincide.
 
         Parameters:
             ells (jax.numpy.ndarray): Multipoles of the Cl.
@@ -1204,10 +1209,17 @@ class AngularTwoPoint:
             (jax.numpy.ndarray): shape `(len(ells), n_bins1, n_bins2)`.
         """
         nodes = bank.t_tildes.grid.ells
-        delta = self._nonlimber_cl(bank, cache) - self._limber_linear_cl(
-            nodes, ks, bank, cache
+        ells = np.asarray(ells)
+        beyond = interpolate_from_nodes(
+            self._nonlimber_cl(bank, cache), nodes, ells, ell_max
         )
-        return interpolate_correction(delta, nodes, ells, ell_max)
+        # The linear Limber Cl only where the correction applies; elsewhere
+        # it is evaluated at a valid multipole and masked, so that it cannot
+        # spoil the values or the gradients (e.g. at ell = 0).
+        inside = nodes_range_mask(ells, nodes, ell_max)
+        clipped = np.clip(ells, float(_numpy.asarray(nodes)[0]), ell_max)
+        limber = self._limber_linear_cl(clipped, ks, bank, cache)
+        return beyond - np.where(inside[:, None, None], limber, 0.0)
 
     def _package_cl(self, C_ell_calc, ells) -> dict:
         """Slice/reshape `C_ell_calc` into the cosmolib-format output dict.

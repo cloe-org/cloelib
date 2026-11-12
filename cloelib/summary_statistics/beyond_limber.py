@@ -12,9 +12,8 @@ NLA). What each contribution brings is read from its `nonlimber_spec`
 (`NonLimberSpec`); the cosmology-dependent part (the projected densities $w_\ell$) comes from a
 `SpectraBank` built with `t_tildes`, shared by every pair.
 
-`interpolate_correction` brings the beyond-Limber correction
-$\Delta C_\ell = C_\ell^{\rm nonLimber} - C_\ell^{\rm Limber}$ (both linear)
-from the nodes to the requested multipoles.
+`interpolate_from_nodes` brings the linear beyond-Limber $C_\ell$ from the
+nodes to the requested multipoles.
 """
 
 from typing import Callable
@@ -117,32 +116,42 @@ def nonlimber_cl(
     return C_ell
 
 
-def interpolate_correction(
-    delta: Array, ell_nodes: Array, ells: Array, ell_max: float
+def interpolate_from_nodes(
+    values: Array, ell_nodes: Array, ells: Array, ell_max: float
 ) -> Array:
-    r"""Beyond-Limber correction $\Delta C_\ell$ from the nodes to `ells`.
+    r"""Values on the beyond-Limber multipole nodes, interpolated to `ells`.
 
-    Akima interpolation in $\log \ell$ of the values (not of their log:
-    cross spectra can change sign). The correction is applied on
-    `[ell_nodes[0], ell_max]` and is zero outside it: above `ell_max` the
-    Limber approximation is kept, and below the first node there is no
-    beyond-Limber information (the standard dataset starts at $\ell = 2$,
-    so $\ell = 0, 1$ keep the Limber value). A dataset with more nodes,
-    e.g. at low integer multipoles, extends the range with no other change.
+    A C2 cubic spline in $\log \ell$ of the values (not of their log: cross
+    spectra can change sign), applied on `[ell_nodes[0], ell_max]` and zero
+    outside it: above `ell_max` the Limber approximation is kept, and below the
+    first node there is no beyond-Limber information (the standard dataset
+    starts at $\ell = 2$, so $\ell = 0, 1$ keep the Limber value). A dataset
+    with more nodes, e.g. at low integer multipoles, extends the range with no
+    other change.
+
+    `AngularTwoPoint` interpolates the linear beyond-Limber $C_\ell$ itself,
+    not the correction $C^{\rm nonLimber} - C^{\rm Limber}$: the latter
+    inherits the Limber approximation of RSD, poorly behaved at low $\ell$
+    and hard to interpolate between the sparse nodes (validation against the
+    exact $C_\ell$: RSD error 8.9e-3 -> 6.2e-4 of $\sqrt{C_{ii}C_{jj}}$ at
+    $\ell \le 10$). The spline is also more accurate than an Akima
+    interpolation on these smooth values, and linear in them: sums of
+    contributions and amplitudes go through it unchanged, and so do their
+    derivatives.
 
     The queries are clipped to that range before the interpolation, so that
     the masked ones (e.g. $\ell = 0$, where $\log \ell$ diverges) are
     finite and do not spoil `jax.grad` through `jnp.where`.
 
     Args:
-      delta (Array): $\Delta C_\ell$ on the nodes, shape `(n_nodes, ...)`.
+      values (Array): values on the nodes, shape `(n_nodes, ...)`.
       ell_nodes (Array): increasing multipole nodes, shape `(n_nodes,)`.
         Must be concrete (not traced): it fixes the validity range.
-      ells (Array): multipoles to evaluate the correction at, shape `(n_ell,)`.
-      ell_max (float): largest multipole the correction is applied at.
+      ells (Array): multipoles to evaluate at, shape `(n_ell,)`.
+      ell_max (float): largest multipole the values are applied at.
 
     Returns:
-      Array: shape `(n_ell, ...)`.
+      Array: shape `(n_ell, ...)`, zero outside `[ell_nodes[0], ell_max]`.
 
     Raises:
       ValueError: if `ell_max` is outside `[ell_nodes[0], ell_nodes[-1]]`.
@@ -155,8 +164,15 @@ def interpolate_correction(
             f"[{ell_min}, {ell_last}]."
         )
     ells = jnp.asarray(ells)
-    inside = (ells >= ell_min) & (ells <= ell_max)
+    inside = nodes_range_mask(ells, ell_nodes, ell_max)
     log_ells = jnp.log(jnp.clip(ells, ell_min, ell_max))
-    values = interpax.interp1d(log_ells, np.log(ell_nodes), delta, method="akima")
-    mask = inside.reshape(inside.shape + (1,) * (values.ndim - 1))
-    return jnp.where(mask, values, 0.0)
+    out = interpax.interp1d(log_ells, np.log(ell_nodes), values, method="cubic2")
+    mask = inside.reshape(inside.shape + (1,) * (out.ndim - 1))
+    return jnp.where(mask, out, 0.0)
+
+
+def nodes_range_mask(ells: Array, ell_nodes: Array, ell_max: float) -> Array:
+    """Whether each of `ells` lies in `[ell_nodes[0], ell_max]`, the range
+    where the beyond-Limber values are applied."""
+    ells = jnp.asarray(ells)
+    return (ells >= float(np.asarray(ell_nodes)[0])) & (ells <= ell_max)

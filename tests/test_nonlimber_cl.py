@@ -1,10 +1,10 @@
-"""Tests for `beyond_limber.nonlimber_cl` and `beyond_limber.interpolate_correction`.
+"""Tests for `beyond_limber.nonlimber_cl` and `beyond_limber.interpolate_from_nodes`.
 
 Built, like `test_spectra_bank_nonlimber.py`, from a real (JAX) linear
 cosmology and a tiny fake T-tilde dataset with random matrices: these tests
 check how the pairs of contributions are assembled (T-tilde names, fields,
 orderings, prefactors), not the physics of the matrices. The
-`interpolate_correction` tests at the end are pure array tests on the
+`interpolate_from_nodes` tests at the end are pure array tests on the
 multipole nodes of the standard dataset.
 """
 
@@ -32,7 +32,7 @@ from cloelib.observables.photo.spectrum_engine import SpectraBank
 import cloelib.summary_statistics.angular_two_point as angular_two_point
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 from cloelib.summary_statistics.beyond_limber import (
-    interpolate_correction,
+    interpolate_from_nodes,
     nonlimber_cl,
 )
 
@@ -378,6 +378,26 @@ def test_nonlimber_correction_is_the_difference_on_the_nodes(
     np.testing.assert_array_equal(out[4:], 0.0)
 
 
+def test_nonlimber_correction_interpolates_the_beyond_limber_cl(
+    tracer_perturbations, store
+):
+    """Between the nodes, Limber + correction is the interpolated linear
+    beyond-Limber Cl: the Limber Cl, with its RSD approximation, is not
+    interpolated (it is computed at the requested ells and cancels)."""
+    two_point = _two_point("gg", tracer_perturbations, M_BIAS)
+    bank = two_point._linear_bank(KS, t_tildes=store)
+    nodes = store.grid.ells
+    ell_max = float(nodes[1])
+    ells = jnp.array([2.0, 3.0, 5.5, 9.0, ell_max])
+
+    out = two_point._nonlimber_correction(ells, KS, bank, ell_max)
+    beyond = interpolate_from_nodes(two_point._nonlimber_cl(bank), nodes, ells, ell_max)
+
+    np.testing.assert_allclose(
+        out + two_point._limber_linear_cl(ells, KS, bank), beyond, rtol=1e-10
+    )
+
+
 # ---------------------------------------------------------------------------
 # AngularTwoPoint(ell_nonlimber_max=...)
 # ---------------------------------------------------------------------------
@@ -658,7 +678,7 @@ def test_contribution_without_spec_raises_in_the_constructor(tracer_perturbation
 
 
 # ---------------------------------------------------------------------------
-# interpolate_correction
+# interpolate_from_nodes
 # ---------------------------------------------------------------------------
 # Multipole nodes of the standard dataset (no matrices are read).
 BLAST_NODES = NonLimberGrid.blast_128_64_161().ells
@@ -675,7 +695,7 @@ def test_interpolation_reproduces_the_nodes_up_to_ell_max():
     delta = smooth(BLAST_NODES)
     nodes_in = BLAST_NODES[BLAST_NODES <= ELL_MAX]
     np.testing.assert_allclose(
-        interpolate_correction(delta, BLAST_NODES, nodes_in, ELL_MAX),
+        interpolate_from_nodes(delta, BLAST_NODES, nodes_in, ELL_MAX),
         delta[BLAST_NODES <= ELL_MAX],
         rtol=1e-12,
         atol=1e-15,
@@ -685,14 +705,14 @@ def test_interpolation_reproduces_the_nodes_up_to_ell_max():
 def test_interpolation_zero_outside_the_range():
     """Zero above ell_max and below the first node (ell = 0, 1)."""
     ells = jnp.array([0.0, 1.0, 1.5, 200.5, 211.0, 500.0])
-    out = interpolate_correction(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX)
+    out = interpolate_from_nodes(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX)
     np.testing.assert_array_equal(out, 0.0)
 
 
 def test_interpolation_accurate_between_the_nodes():
     """Values, not logs: fine where the function crosses zero."""
     ells = jnp.arange(2.0, ELL_MAX + 1.0)
-    out = interpolate_correction(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX)
+    out = interpolate_from_nodes(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX)
     np.testing.assert_allclose(out, smooth(ells), atol=5e-3)
     assert np.any(np.diff(np.sign(np.asarray(smooth(ells)))) != 0)
 
@@ -704,10 +724,22 @@ def test_interpolation_of_bins_is_independent():
     )
     delta = delta[:, None, :] * jnp.array([1.0, 3.0])[None, :, None]
     ells = jnp.array([0.0, 2.0, 7.3, 150.0, 300.0])
-    out = interpolate_correction(delta, BLAST_NODES, ells, ELL_MAX)
+    out = interpolate_from_nodes(delta, BLAST_NODES, ells, ELL_MAX)
     assert out.shape == (len(ells), 2, 3)
-    single = interpolate_correction(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX)
+    single = interpolate_from_nodes(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX)
     np.testing.assert_allclose(out[:, 1, 2], -3.0 * single, rtol=1e-12)
+
+
+def test_interpolation_is_linear_in_the_values():
+    """A spline is a fixed linear map of the node values: sums of
+    contributions and amplitudes (and their derivatives) go through it."""
+    ells = jnp.arange(2.0, ELL_MAX + 1.0, 0.7)
+    f, g = smooth(BLAST_NODES), jnp.sin(jnp.log(BLAST_NODES)) ** 2
+    combined = interpolate_from_nodes(2.5 * f - 0.7 * g, BLAST_NODES, ells, ELL_MAX)
+    parts = 2.5 * interpolate_from_nodes(
+        f, BLAST_NODES, ells, ELL_MAX
+    ) - 0.7 * interpolate_from_nodes(g, BLAST_NODES, ells, ELL_MAX)
+    np.testing.assert_allclose(combined, parts, rtol=1e-12, atol=1e-14)
 
 
 def test_interpolation_gradient_is_finite_with_masked_queries():
@@ -715,7 +747,7 @@ def test_interpolation_gradient_is_finite_with_masked_queries():
     ells = jnp.arange(0.0, 300.0)
 
     def loss(delta):
-        return jnp.sum(interpolate_correction(delta, BLAST_NODES, ells, ELL_MAX) ** 2)
+        return jnp.sum(interpolate_from_nodes(delta, BLAST_NODES, ells, ELL_MAX) ** 2)
 
     grad = jax.grad(loss)(smooth(BLAST_NODES))
     assert np.all(np.isfinite(grad))
@@ -724,10 +756,10 @@ def test_interpolation_gradient_is_finite_with_masked_queries():
 
 def test_interpolation_jittable():
     ells = jnp.arange(0.0, 300.0)
-    f = jax.jit(lambda d, e: interpolate_correction(d, BLAST_NODES, e, ELL_MAX))
+    f = jax.jit(lambda d, e: interpolate_from_nodes(d, BLAST_NODES, e, ELL_MAX))
     np.testing.assert_allclose(
         f(smooth(BLAST_NODES), ells),
-        interpolate_correction(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX),
+        interpolate_from_nodes(smooth(BLAST_NODES), BLAST_NODES, ells, ELL_MAX),
         rtol=1e-12,
     )
 
@@ -735,6 +767,6 @@ def test_interpolation_jittable():
 @pytest.mark.parametrize("ell_max", [1.9, 211.7, 1000.0])
 def test_interpolation_ell_max_must_lie_within_the_nodes(ell_max):
     with pytest.raises(ValueError, match="ell_max"):
-        interpolate_correction(
+        interpolate_from_nodes(
             smooth(BLAST_NODES), BLAST_NODES, jnp.array([10.0]), ell_max
         )

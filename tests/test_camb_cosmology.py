@@ -222,6 +222,35 @@ def test_camb_set_neutrino_parameters_zero():
     assert list(params.nu_mass_numbers) == []
 
 
+def test_camb_massless_species_declared_massive_equals_no_massive():
+    """N_mnu=1 with mnu=0 (needed e.g. by HMcode2020Emu) is a massless-neutrino
+    cosmology, so it must reproduce N_mnu=0, while keeping N_mnu=1 itself."""
+    kwargs = dict(
+        H0=67.7,
+        Omega_b0=0.022 / 0.677**2,
+        Omega_cdm0=0.12 / 0.677**2,
+        Omega_k0=0.0,
+        As=2e-9,
+        ns=0.96,
+        alpha_s=0.0,
+        mnu=0.0,
+        w0=-1,
+        wa=0,
+        gamma_MG=0,
+    )
+    bg_none = CAMBBackground(**kwargs, N_mnu=0)
+    bg_zero = CAMBBackground(**kwargs, N_mnu=1)
+    assert bg_zero.N_mnu == 1
+    assert bg_zero.interface_args["CAMBparams"].num_nu_massive == 0
+    zs = np.array([0.5, 1.0, 2.0])
+    assert_allclose(
+        bg_zero.hubble_parameter(zs), bg_none.hubble_parameter(zs), rtol=1e-8
+    )
+    sigma12_none = CAMBLinearPerturbations(bg_none, zs).sigma12()
+    sigma12_zero = CAMBLinearPerturbations(bg_zero, zs).sigma12()
+    assert_allclose(sigma12_zero, sigma12_none, rtol=1e-5)
+
+
 def test_camb_set_neutrino_parameters_wrong_length():
     with pytest.raises(ValueError):
         bg = CAMBBackground(
@@ -415,6 +444,53 @@ def test_camb_linear_perturbations_z_zero_automatic_inclusion(camb_background_in
     assert hasattr(linear_pert, "sigma8_0")
     assert isinstance(linear_pert.sigma8_0(), (float, np.floating))
     assert linear_pert.sigma8_0() > 0  # Physical value
+
+
+def test_camb_sigma12(camb_background_instance):
+    """Test CAMB sigma12: one value per redshift, aligned with `self.z`
+    (z=0 first, then the requested redshifts in ascending order),
+    decreasing with redshift, and close to but not equal to sigma8_0
+    (same integral, different smoothing scale/units)."""
+    redshifts = np.array([1.0, 1.2, 1.4, 1.65])
+    linear_pert = CAMBLinearPerturbations(camb_background_instance, redshifts)
+
+    assert hasattr(linear_pert, "sigma12")
+    assert callable(linear_pert.sigma12)
+    result = linear_pert.sigma12()
+
+    assert isinstance(result, np.ndarray)
+    assert result.shape == linear_pert.z.shape
+    assert np.all(result > 0)
+    assert np.all(np.diff(result) < 0)  # decreasing with increasing z
+
+    # result[0] is sigma12 at z=0 (self.z[0] == 0.0)
+    assert result[0] == pytest.approx(linear_pert.sigma8_0(), rel=0.1)
+    assert result[0] != pytest.approx(linear_pert.sigma8_0(), rel=1e-6)
+
+
+def test_camb_sigma12_unsorted_redshifts_still_align(camb_background_instance):
+    """sigma12 (and growth_rate) must align with `self.z` even when the
+    input redshifts are unsorted and already include z=0 -- the case where
+    `ensure_z_zero_included` leaves `z` as-is instead of sorting it, and
+    camb's own always-descending-sorted output would otherwise get paired
+    with the wrong redshift by a plain reversal."""
+    sorted_pert = CAMBLinearPerturbations(
+        camb_background_instance, np.array([0.0, 1.0, 1.2, 1.4, 1.65])
+    )
+    sorted_sigma12_by_z = dict(zip(sorted_pert.z, sorted_pert.sigma12()))
+    sorted_growth_rate_by_z = dict(zip(sorted_pert.z, sorted_pert.growth_rate()))
+
+    unsorted_pert = CAMBLinearPerturbations(
+        camb_background_instance, np.array([1.4, 1.0, 1.65, 1.2, 0.0])
+    )
+    unsorted_sigma12 = unsorted_pert.sigma12()
+    unsorted_growth_rate = unsorted_pert.growth_rate()
+
+    for z, sigma12, growth_rate in zip(
+        unsorted_pert.z, unsorted_sigma12, unsorted_growth_rate
+    ):
+        assert sigma12 == pytest.approx(sorted_sigma12_by_z[z], rel=1e-6)
+        assert growth_rate == pytest.approx(sorted_growth_rate_by_z[z], rel=1e-6)
 
 
 def test_camb_nonlinear_perturbations_z_zero_automatic_inclusion(

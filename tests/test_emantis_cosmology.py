@@ -133,3 +133,83 @@ def test_mg_boost_cloelib_vs_external(
 
     # Mean absolute relative difference is smaller than 0.01%.
     assert np.mean(abs_rel_diff) < 1e-4
+
+
+@pytest.mark.skipif(
+    not _EMANTIS_INSTALLED,
+    reason="emantis is not installed",
+)
+@pytest.mark.parametrize("prescription", ["correlated", "linear_neutrinos", None])
+def test_cb_cross_prescription_is_the_baseline_one(prescription):
+    """The boost rescales the baseline P_mm and P_cb alike, so the cb x matter
+    prescription is the one of the LCDM baseline (`None` if it declares none)."""
+
+    class _Baseline:
+        pass
+
+    if prescription is not None:
+        _Baseline.cb_cross_prescription = prescription
+    # Skip the emulator set-up: the prescription only needs the baseline.
+    emantis_cloe = object.__new__(EmantisFofrNonLinearPerturbations)
+    emantis_cloe.nonlinearpertubations_lcdm = _Baseline()
+    assert emantis_cloe.cb_cross_prescription == prescription
+
+
+class _FakeBoost:
+    """Constant e-MANTIS boost, standing in for `boost_interp`."""
+
+    def __call__(self, zs, log_ks):
+        return np.full((np.size(zs), np.size(log_ks)), 1.5)
+
+
+class _FakeBaselineLCDM:
+    """LCDM baseline with distinct total matter and CDM+baryons spectra."""
+
+    def matter_power_spectrum(self, zs, ks):
+        return np.outer(1.0 + np.atleast_1d(zs), np.atleast_1d(ks) ** -1)
+
+    def matter_power_spectrum_cb(self, zs, ks):
+        return 0.9 * self.matter_power_spectrum(zs, ks)
+
+
+def _emantis_without_emulator(mnu):
+    """Instance with a constant boost and a fake baseline, skipping the emulator."""
+
+    class _Background:
+        pass
+
+    _Background.mnu = mnu
+    emantis_cloe = object.__new__(EmantisFofrNonLinearPerturbations)
+    emantis_cloe._background = _Background()
+    emantis_cloe.boost_interp = _FakeBoost()
+    emantis_cloe.nonlinearpertubations_lcdm = _FakeBaselineLCDM()
+    return emantis_cloe
+
+
+@pytest.mark.skipif(
+    not _EMANTIS_INSTALLED,
+    reason="emantis is not installed",
+)
+def test_pcb_boosts_baseline_pcb():
+    """Without massive neutrinos, P_cb = boost x baseline P_cb (not P_mm)."""
+    zs, ks = np.array([0.0, 1.0]), np.logspace(-2, 0, 5)
+    emantis_cloe = _emantis_without_emulator(mnu=0.0)
+    np.testing.assert_allclose(
+        emantis_cloe.matter_power_spectrum_cb(zs, ks),
+        1.5 * _FakeBaselineLCDM().matter_power_spectrum_cb(zs, ks),
+        rtol=1e-12,
+    )
+
+
+@pytest.mark.skipif(
+    not _EMANTIS_INSTALLED,
+    reason="emantis is not installed",
+)
+@pytest.mark.parametrize("mnu", [0.06, np.array([0.06, 0.0, 0.0])])
+def test_pcb_raises_with_massive_neutrinos(mnu):
+    """emantis is calibrated without massive neutrinos: P_cb raises, P_mm doesn't."""
+    zs, ks = np.array([0.0, 1.0]), np.logspace(-2, 0, 5)
+    emantis_cloe = _emantis_without_emulator(mnu)
+    with pytest.raises(ValueError, match="massive neutrinos"):
+        emantis_cloe.matter_power_spectrum_cb(zs, ks)
+    assert np.all(np.isfinite(emantis_cloe.matter_power_spectrum(zs, ks)))

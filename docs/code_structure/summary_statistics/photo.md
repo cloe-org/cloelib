@@ -14,17 +14,17 @@ Compute angular power spectra $C_\ell$, pseudo-$C_\ell$ and COSEBIs from two tra
 **Example**:
 
 ```python
-from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBPerturbations
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.photo import ShearTracer, PositionsTracer
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 import numpy as np
 
 # Set up cosmology
 bg = CAMBBackground(H0=67.5, Omega_b0=0.0492, ...)
-pert = CAMBPerturbations(background=bg)
 
 # Create tracers
 z = np.linspace(0.01, 3.0, 100)
+pert = CAMBLinearPerturbations(background=bg, redshifts=z)
 dndz = np.exp(-((z - 0.7) / 0.3)**2)
 dndz = dndz / np.trapz(dndz, z)
 
@@ -132,7 +132,27 @@ Protocol to set up how to compute real-space angular correlation functions $\xi(
 
 ## AngularCorrelationFunctionWigner
 
-Alternative implementation using Wigner 3j symbols for computing real-space angular correlation functions $\xi(\theta)$ from harmonic angular power spectra.
+Alternative implementation using Wigner small-d matrices for computing real-space angular correlation functions $\xi(\theta)$ from harmonic angular power spectra.
+
+By default $C_\ell$ is computed at every multipole in `ells`. For dense multipole grids (e.g. `np.arange(2, 60000)`), pass `n_ell_interp` to compute $C_\ell$ only at that many log-spaced multipoles and interpolate (cubic spline of $\ell^2 C_\ell$ in $\log\ell$) onto `ells`:
+
+```python
+acf = AngularCorrelationFunctionWigner(two_point, ells, ks, n_ell_interp=120)
+xi = acf.get_xi(theta)
+```
+
+This is roughly 10× faster per call for 3x2pt with `ells = np.arange(2, 60000)`. With about 80 nodes or more, the interpolated 3x2pt data vector stays within $\Delta\chi^2 < 0.2$ of the exact one in our tests; check the number of nodes for your own setup.
+
+Truncating the sum over multipoles sharply at $\ell_{\rm max}$ leaves an oscillating boundary term $\sim \sin(\ell_{\rm max}\theta)/\theta$ in $\xi(\theta)$, so $\xi_\pm$ converge slowly with $\ell_{\rm max}$. Pass `ell_taper_start` to multiply $C_\ell$ by a cosine window that is 1 below `ell_taper_start` and goes smoothly to 0 at `max(ells)`:
+
+```python
+ells = np.arange(2, 60001)
+acf = AngularCorrelationFunctionWigner(
+    two_point, ells, ks, n_ell_interp=120, ell_taper_start=30000
+)
+```
+
+This converges much faster than a sharp cut, even one at a much higher $\ell_{\rm max}$. The window is applied after the optional interpolation, so it costs almost nothing.
 
 **Location**: `cloelib/summary_statistics/angular_correlation_function_wigner.py`
 

@@ -10,7 +10,8 @@ intrinsic-alignment options - lives in this one module:
 - `ShearTracer` itself. By default (`ia_model=None`) it has no
   intrinsic-alignment contribution at all - only `LensingContribution`.
   Pass `ia_model="NLA"` explicitly for `NLAContribution` (the nonlinear
-  alignment model), or `ia_model="TATT"` for `TATTContribution` below.
+  alignment model), `ia_model="TATT"` for `TATTContribution`, or
+  `ia_model="TATT-M"` for `TATTMContribution`.
 - `LensingContribution`, `NLAContribution`: two of the `Contribution`s a
   `ShearTracer` can be built from.
 - `TATTContribution` (Eqs. 9-16 of Navarro-Gironés et al. 2026,
@@ -35,10 +36,15 @@ intrinsic-alignment options - lives in this one module:
   reports kernel values it can stand behind as real physics - passing any
   other object exposing the same `.compute(name) -> callable(matter_pk,
   ks, zs)` interface is also supported, for a different PT backend.
+- `TATTMContribution` (Herle et al. 2026, arXiv:2601.15851): ties TATT's
+  C1/C2/C1delta amplitudes to per-tomographic-bin halo mass and
+  red-galaxy fraction instead of `TATTContribution`'s single global
+  A1/A2/bTA. Its per-bin amplitudes reach the Limber engine through
+  `get_pk_terms` (`spectrum_engine.PkTerm`).
 
 Pass `loop_computer=PBJTATTLoopComputer(perturbations)` directly to
-`ShearTracer(..., ia_model="TATT", tatt_loop_computer=...)` - one
-constructor call, not build-then-replace `.ia`.
+`ShearTracer(..., ia_model="TATT"` (or `"TATT-M"`) `, tatt_loop_computer=
+...)` - one constructor call, not build-then-replace `.ia`.
 
 See `CONTRIBUTION_ARCHITECTURE.md` for the design this all
 follows.
@@ -49,13 +55,20 @@ from typing import Any, Callable, Dict, Optional, Protocol
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.auxiliary.math_utils import cached_stacked_simpson, simps
+from cloelib.auxiliary.math_utils import (
+    cached_stacked_simpson,
+    check_nonzero_redshifts,
+    simps,
+)
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
     Contribution,
+    contribution_field,
+    unit_sigma,
 )
 from cloelib.observables.photo.spectrum_engine import (
+    PkTerm,
     SpectraBank,
     SpectrumRequest,
     compute_effective_pk,
@@ -72,6 +85,8 @@ from scipy import interpolate as _scipy_interpolate
 
 # UNITS
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
+
+
 # Same convention: SPEED_OF_LIGHT is in m/s.
 _C_KM_S = SPEED_OF_LIGHT / 1000
 
@@ -83,6 +98,7 @@ class LensingContribution:
         self._tracer = tracer
 
     def compute_kernel(self, z):
+        """Return the uncalibrated lensing kernel, shape ``(n_bin, n_z)``."""
         return self._tracer.get_window_lensing(z)
 
 
@@ -102,6 +118,7 @@ class NLAContribution(IntrinsicAlignmentContribution):
         self._tracer = tracer
 
     def compute_kernel(self, z):
+        """Return the uncalibrated NLA kernel, shape ``(n_bin, n_z)``."""
         return self._tracer.get_window_IA(z)
 
 
@@ -340,6 +357,14 @@ class PBJTATTLoopComputer:
         return kernels
 
     def compute(self, name: str):
+        """Return the FAST-PT callable for one named TATT kernel.
+
+        ``name`` must be present in ``_ALL_KERNELS``. The returned
+        ``SpectrumRequest.compute(matter_pk, ks, zs)`` ignores ``matter_pk``
+        and ``zs`` because the cached kernel depends only on k, and returns
+        shape ``(len(ks),)``.
+        """
+
         def _compute(matter_pk, ks, zs):
             del matter_pk, zs  # pure k-kernel; z-dependence lives elsewhere
             return jnp.asarray(self._kernels_for(ks)[name])
@@ -500,6 +525,11 @@ class TATTContribution(IntrinsicAlignmentContribution):
         return _growth_factor_1d(self._loop_computer.linear_perturbations, zs) ** 4
 
     def get_spectrum_requests(self):
+        """Return requests for the ten TATT kernels.
+
+        ``get_requirements_for_interaction`` retains only the GI kernels when
+        paired with a non-IA contribution; an IA-IA pairing needs all ten.
+        """
         return tuple(
             SpectrumRequest(name=name, compute=self._loop_computer.compute(name))
             for name in _ALL_KERNELS
@@ -533,6 +563,11 @@ class TATTContribution(IntrinsicAlignmentContribution):
         this contribution's full TATT terms rather than assuming both sides
         are identical.
 
+        The `P_dd(z,k)` terms use the base spectrum of the fields the two
+        sides trace (`bank.base`): `P_mm` against IA or lensing, the cb x
+        matter cross spectrum against the galaxy-bias term of a
+        `PositionsTracer(use_Pcb=True)`.
+
         Returns `None` (defers to the plain matter Pk) only if this call is
         somehow reached with neither side being IA-like, which shouldn't
         happen given `get_requirements_for_interaction`.
@@ -540,7 +575,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
         zs = bank.zs
         d4 = self._D4(zs)[:, None]
         c1_self = self._C1(zs)
-        matter_pk = bank.matter_pk
+        matter_pk = bank.base(contribution_field(self), contribution_field(other))
 
         def _kernel(name):
             return bank.get(
@@ -580,6 +615,251 @@ class TATTContribution(IntrinsicAlignmentContribution):
         )
 
 
+# ---------------------------------------------------------------------------
+# TATT-M (Herle et al. 2026, arXiv:2601.15851): TATT with per-tomographic-bin
+# amplitudes set by halo mass and red-galaxy fraction.
+# ---------------------------------------------------------------------------
+
+# One-loop kernels TATT-M reads: the E-mode subset of `_ALL_KERNELS`.
+_TATT_M_KERNELS = _EE_ONLY_KERNELS + _SHARED_KERNELS + ("tatt_D_0E_E2",)
+
+# Shared one-loop shapes of the bilinear TATT formula (see `TATTContribution`),
+# each `D(z)**4` times the sum of the named kernels.
+_TATT_M_TERMS = {
+    "00e": ("tatt_A_0_0E", "tatt_C_0_0E"),
+    "0e2": ("tatt_A_0_E2", "tatt_B_0_E2"),
+    "0e0e": ("tatt_A_0E_0E",),
+    "e2e2": ("tatt_A_E2_E2",),
+    "d0ee2": ("tatt_D_0E_E2",),
+}
+
+
+def _tatt_m_per_bin_amplitudes(
+    nuisance_params, n_bins, alpha_M, beta_M, k1, k2, k3, log10_M0
+):
+    """Per-bin amplitudes `(a1, a2, a1delta)`, each shape `(n_bins,)`.
+
+        A1^i  = alphaM * (Mh^i/M0)^betaM
+        bTA^i = k2 * log10(Mh^i/M0) - k3
+        a1^i = f_r^i * A1^i,  a2^i = k1 * a1^i,  a1delta^i = bTA^i * a1^i
+
+    Reads the 1-indexed `log10_Mh_{i}` and `f_r_{i}` from `nuisance_params`.
+    `log10_Mh_{i}` and `log10_M0` must be in the same units (Msun/h).
+    """
+    log10_mh = jnp.asarray(
+        [nuisance_params[f"log10_Mh_{i + 1}"] for i in range(n_bins)]
+    )
+    f_r = jnp.asarray([nuisance_params[f"f_r_{i + 1}"] for i in range(n_bins)])
+    delta = log10_mh - log10_M0
+    a1 = f_r * alpha_M * 10.0 ** (delta * beta_M)
+    b_ta = k2 * delta - k3
+    return a1, k1 * a1, b_ta * a1
+
+
+def _tatt_m_term(bank, loop_computer, key):
+    """`D(z)**4 * sum(kernels)` for `_TATT_M_TERMS[key]` on `bank`'s grid.
+
+    Memoized in `bank` under `tatt_m_<key>` (and `D(z)**4` under
+    `tatt_m_d4`), so every pairing that needs a term gets the same array
+    object and the engine interpolates it once.
+    """
+
+    def _d4(matter_pk, ks, zs):
+        return _growth_factor_1d(loop_computer.linear_perturbations, zs) ** 4
+
+    def _compute(matter_pk, ks, zs):
+        d4 = bank.get(SpectrumRequest(name="tatt_m_d4", compute=_d4))
+        total = sum(
+            bank.get(SpectrumRequest(name=n, compute=loop_computer.compute(n)))
+            for n in _TATT_M_TERMS[key]
+        )
+        return d4[:, None] * total[None, :]
+
+    return bank.get(SpectrumRequest(name=f"tatt_m_{key}", compute=_compute))
+
+
+class TATTMContribution(IntrinsicAlignmentContribution):
+    r"""TATT-M intrinsic alignments (Herle et al. 2026, arXiv:2601.15851).
+
+    TATT with per-bin amplitudes set by halo mass and red fraction:
+
+        A1^i     = alphaM * (Mh^i/M0)^betaM
+        A2^i(z)  = k1 * D(z) * A1^i
+        bTA^i    = k2 * log10(Mh^i/M0) - k3
+
+        C1^i(z)      = -f_r^i * A1^i * C_IA * Omega_m0 / D(z)
+        C2^i(z)      =  5 * f_r^i * k1 * A1^i * C_IA * Omega_m0 / D(z)
+        C1delta^i(z) =  bTA^i * C1^i(z)
+
+    The growth factor in `A2^i(z)` keeps `C2/C1 = -5*k1` constant in
+    redshift (as found for the quadratic shape biases in simulations, e.g.
+    Akitsu, Li & Okumura 2023). There is no `(1+z)^eta` evolution: bins
+    differ only through `Mh^i` and `f_r^i`. `D(0) = 1`.
+
+    P_II and P_deltaI are TATT's bilinear formulas (see `TATTContribution`)
+    with per-bin C's. Because the amplitudes vary per bin, they are handed
+    to the Limber engine as `PkTerm`s (`get_pk_terms`): one per-bin
+    weighted kernel pair per term, as `NonLinearGalaxyBiasContribution`
+    does for its per-bin biases.
+
+    Pairing with a different IA model (NLA, TATT) raises `ValueError`.
+
+    Args:
+      tracer: the owning `ShearTracer`.
+      alpha_M: normalisation of the A1-halo mass relation.
+      beta_M: slope of the A1-halo mass relation.
+      loop_computer: one-loop kernel backend, as for `TATTContribution`.
+      k1: A2/A1 ratio at z=0 (Herle et al. default).
+      k2: slope of bTA in log10(Mh/M0) (Herle et al. default).
+      k3: intercept of bTA (Herle et al. default).
+      log10_M0: halo-mass pivot, log10(Msun/h).
+      C_IA: IA normalisation, as for `NLAContribution`/`TATTContribution`.
+    """
+
+    def __init__(
+        self,
+        tracer: "ShearTracer",
+        alpha_M: float,
+        beta_M: float,
+        loop_computer: TATTLoopComputer,
+        k1: float = 0.073,
+        k2: float = 0.268,
+        k3: float = -0.038,
+        log10_M0: float = 13.5,
+        C_IA: float = 0.0134,
+    ) -> None:
+        self._tracer = tracer
+        self._loop_computer = loop_computer
+        self.alpha_M = alpha_M
+        self.beta_M = beta_M
+        self.k1 = k1
+        self.k2 = k2
+        self.k3 = k3
+        self.log10_M0 = log10_M0
+        self.C_IA = C_IA
+        self.a1, self.a2, self.a1delta = _tatt_m_per_bin_amplitudes(
+            tracer.nuisance_params,
+            tracer.n_z_bins,
+            alpha_M,
+            beta_M,
+            k1,
+            k2,
+            k3,
+            log10_M0,
+        )
+
+    def _C(self, zs):
+        """`(C1, C1delta, C2)` per bin, each shape `(n_bins, len(zs))`."""
+        d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
+        shape = -self.C_IA * self._tracer.background.Omega_m(0.0) / d
+        c1 = self.a1[:, None] * shape[None, :]
+        c1d = self.a1delta[:, None] * shape[None, :]
+        c2 = -5.0 * self.a2[:, None] * shape[None, :]
+        return c1, c1d, c2
+
+    def compute_kernel(self, z):
+        """Amplitude-free IA kernel `n_i(z) * H(z)/c`, as `TATTContribution`'s.
+
+        The per-bin amplitudes enter through `get_pk_terms` instead.
+        """
+        h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / _C_KM_S
+        return self._tracer.dndz_shifted * h_over_c[None, :]
+
+    def _weighted_kernels(self, zs, bank: SpectraBank):
+        """`C * compute_kernel` for C1, C1delta, C2 on `zs`.
+
+        Memoized in `bank`, not on `self`: the bank lives for one `get_Cl`
+        call, so a cached value can never outlive a `jax.jit`/`jax.grad`
+        trace and leak a tracer into a later call.
+        """
+
+        def _compute(matter_pk, ks, bank_zs):
+            del matter_pk, ks, bank_zs
+            base = self.compute_kernel(zs)
+            return tuple(c * base for c in self._C(zs))
+
+        name = f"tatt_m_kernels_{id(self)}_{id(zs)}"
+        return bank.get(SpectrumRequest(name=name, compute=_compute))
+
+    def get_spectrum_requests(self):
+        return tuple(
+            SpectrumRequest(name=name, compute=self._loop_computer.compute(name))
+            for name in _TATT_M_KERNELS
+        )
+
+    def get_requirements_for_interaction(self, other):
+        """All E-mode kernels against IA; only the GI ones otherwise."""
+        if isinstance(other, IntrinsicAlignmentContribution):
+            return self.get_spectrum_requests()
+        return tuple(r for r in self.get_spectrum_requests() if r.name in _GI_KERNELS)
+
+    def get_pk_terms(self, other, zs, bank: SpectraBank):
+        """`PkTerm`s for P_II (against TATT-M) or P_deltaI (anything non-IA).
+
+        A `None` kernel or pk means the engine uses that side's own
+        `compute_kernel` or the pair's base spectrum (see `PkTerm`).
+        """
+        if isinstance(other, IntrinsicAlignmentContribution) and not isinstance(
+            other, TATTMContribution
+        ):
+            raise ValueError(
+                f"TATTMContribution cannot be paired with {type(other).__name__}: "
+                "build both shear tracers with ia_model='TATT-M'."
+            )
+
+        def term(key):
+            return _tatt_m_term(bank, self._loop_computer, key)
+
+        k1, k1d, k2 = self._weighted_kernels(zs, bank)
+
+        if not isinstance(other, TATTMContribution):
+            return (
+                PkTerm(k1, None, None),
+                PkTerm(k1d, None, term("00e")),
+                PkTerm(k2, None, term("0e2")),
+            )
+
+        o1, o1d, o2 = other._weighted_kernels(zs, bank)
+        return (
+            PkTerm(k1, o1, None),
+            PkTerm(k1, o1d, term("00e")),
+            PkTerm(k1d, o1, term("00e")),
+            PkTerm(k1d, o1d, term("0e0e")),
+            PkTerm(k2, o2, term("e2e2")),
+            PkTerm(k1, o2, term("0e2")),
+            PkTerm(k2, o1, term("0e2")),
+            PkTerm(k1d, o2, term("d0ee2")),
+            PkTerm(k2, o1d, term("d0ee2")),
+        )
+
+    def effective_pk_for_bin_pair(self, bank: SpectraBank, bin_i: int, bin_j: int):
+        """`{"II": P_II^{ij}(k,z), "deltaI": P_deltaI^{i}(k,z)}` on `bank`'s grid.
+
+        For inspection only; `bin_i`/`bin_j` are 1-indexed.
+        """
+        c1, c1d, c2 = self._C(bank.zs)
+        i, j = bin_i - 1, bin_j - 1
+        pdd = bank.matter_pk
+
+        def term(key):
+            return _tatt_m_term(bank, self._loop_computer, key)
+
+        p_ii = (
+            (c1[i] * c1[j])[:, None] * pdd
+            + (c1[i] * c1d[j] + c1[j] * c1d[i])[:, None] * term("00e")
+            + (c1d[i] * c1d[j])[:, None] * term("0e0e")
+            + (c2[i] * c2[j])[:, None] * term("e2e2")
+            + (c1[i] * c2[j] + c1[j] * c2[i])[:, None] * term("0e2")
+            + (c1d[i] * c2[j] + c1d[j] * c2[i])[:, None] * term("d0ee2")
+        )
+        p_delta_i = (
+            c1[i][:, None] * pdd
+            + c1d[i][:, None] * term("00e")
+            + c2[i][:, None] * term("0e2")
+        )
+        return {"II": p_ii, "deltaI": p_delta_i}
+
+
 class ShearTracer:
     """Class for the kernel for Cosmic Shear."""
 
@@ -592,14 +872,22 @@ class ShearTracer:
         ia_model: "str | Contribution | None" = None,
         tatt_loop_computer: Optional[TATTLoopComputer] = None,
     ):
-        r"""
-        Initialize the class instance.
+        r"""Construct a tomographic cosmic-shear tracer.
+
+        ``dndz`` is expected to have shape ``(n_bin, len(z))`` with
+        normalized distributions. Per-bin width transformations are applied
+        before redshift shifts. ``z`` must not contain zero.
 
         Args:
-          perturbations (object): An object from NonLinearPerturbations class
-          dndz (np.ndarray): A n-dimensional array representing the number density distribution of galaxies as a function of redshift.
-            It is expected to be normalised.
-          z (np.ndarray): A 1-dimensional array representing the redshift values corresponding to the `dndz` array.
+          perturbations: Backend supplying background and perturbation
+            quantities used by the kernels.
+          dndz: Normalized tomographic distributions, shape
+            ``(n_bin, len(z))``.
+          z: One-dimensional redshift grid corresponding to the second axis
+            of ``dndz``.
+          nuisance_params: Mapping requiring one-based keys
+            ``multiplicative_bias_{i+1}``, ``dz_shear_{i+1}``, and
+            ``width_shear_{i+1}`` for each bin.
           ia_model (str | Contribution | None): Which intrinsic-alignment
             contribution to use. `None` (default) means no intrinsic-alignment
             contribution at all - `get_window()`/`get_Cl` use only the lensing
@@ -607,20 +895,29 @@ class ShearTracer:
             `nuisance_params["AIA"/"CIA"/"EtaIA"]`). `"TATT"` builds a
             `TATTContribution` from `nuisance_params["AIA"]` (=A1),
             `nuisance_params["A2IA"]`, `nuisance_params["bTA"]`, and optionally
-            `nuisance_params["Eta2IA"]`/`["z0IA"]` (default 0.0/0.62). Advanced
-            use: pass a `Contribution` instance directly to use any other model.
-          tatt_loop_computer: required when `ia_model="TATT"` (raises
-            `ValueError` if omitted) - the `TATTContribution`'s one-loop
-            kernel backend (see `TATTContribution`'s docstring). Pass
+            `nuisance_params["Eta2IA"]`/`["z0IA"]` (default 0.0/0.62).
+            `"TATT-M"` builds a `TATTMContribution` (Herle et al. 2026,
+            arXiv:2601.15851 - per-bin IA amplitude tied to halo mass/red
+            fraction) from `nuisance_params["alphaM"]`, `["betaM"]`,
+            optionally `.get("k1", 0.073)`/`.get("k2", 0.268)`/
+            `.get("k3", -0.038)`/`.get("log10_M0", 13.5)` (Herle et al.'s
+            fiducial values, freeable like any other nuisance parameter),
+            and per-bin `nuisance_params[f"log10_Mh_{i+1}"]`/
+            `[f"f_r_{i+1}"]` for every tomographic bin - requires
+            `tatt_loop_computer` like `"TATT"` does. Advanced use: pass a
+            `Contribution` instance directly to use any other model.
+          tatt_loop_computer: required when `ia_model="TATT"` or `"TATT-M"`
+            (raises `ValueError` if omitted) - the one-loop kernel backend
+            (see `TATTContribution`'s docstring). Pass
             `PBJTATTLoopComputer(perturbations)` for real FAST-PT-computed
             kernels, or any other object with the same `.compute(name)`
-            interface. Passing this with any `ia_model` other than
-            `"TATT"` raises `ValueError`.
+            interface. Passing this with any other `ia_model` raises `ValueError`.
+
+        Raises:
+          ValueError: If ``z`` contains zero, ``ia_model`` is unknown, or the
+            TATT loop-computer argument is inconsistent with ``ia_model``.
         """
-        if 0.0 in z:
-            raise ValueError(
-                "One of the z array elements is equal to zero, breaking Limber integration."
-            )
+        check_nonzero_redshifts(z)
         self.perturbations = perturbations
         self.background = self.perturbations.background
         self.z = z
@@ -666,6 +963,8 @@ class ShearTracer:
         self,
         ks: Optional[np.ndarray] = None,
         zs: Optional[np.ndarray] = None,
+        bin_i: Optional[int] = None,
+        bin_j: Optional[int] = None,
     ) -> Dict[str, np.ndarray]:
         """The IA model's own effective power spectra - `P_II(k,z)` and
         `P_deltaI(k,z)` - the same grids `AngularTwoPoint._compute_cl_
@@ -673,40 +972,86 @@ class ShearTracer:
         inspection/plotting/validation (e.g. against an external code's own
         tabulated TATT spectra) without building a `SpectraBank` by hand.
 
-        Only meaningful for an IA model that defines its own effective
-        spectra (currently `TATTContribution`) - raises `ValueError` for
-        `ia_model=None` (no IA contribution) or `ia_model="NLA"` (whose
-        P_II/P_deltaI share the matter Pk's k-shape by construction: the
-        amplitude is applied directly inside `get_window_IA`, not exposed
-        as a separate grid).
+        Raises `ValueError` for `ia_model=None` (no IA contribution) or
+        `ia_model="NLA"` (whose P_II/P_deltaI share the matter Pk's
+        k-shape by construction: the amplitude is applied directly inside
+        `compute_kernel`, not exposed as a separate grid) - neither has
+        any effective-Pk grid to return, with or without `bin_i`/`bin_j`.
+
+        For `ia_model="TATT"` (bin-independent amplitude): `bin_i`/`bin_j`
+        must be left `None` (raises otherwise - this model has one grid,
+        shared by every bin pair, so naming a pair doesn't apply).
+
+        For `ia_model="TATT-M"` (per-bin amplitude): `bin_i`/`bin_j`
+        (1-indexed) are required (raises if either is omitted), since each
+        bin pair has its own `P_II^{bin_i,bin_j}(k,z)`/`P_deltaI^{bin_i}(k,z)`.
 
         Args:
           ks: wavenumber grid to evaluate on. Defaults to
             `self.perturbations.k`.
           zs: redshift grid to evaluate on. Defaults to
             `self.perturbations.z`.
+          bin_i: first tomographic bin (1-indexed). Required for
+            `ia_model="TATT-M"`; must be omitted otherwise.
+          bin_j: second tomographic bin (1-indexed, may equal `bin_i` for
+            the auto-correlation). Required for `ia_model="TATT-M"`; must
+            be omitted otherwise.
 
         Returns:
           dict: `{"II": P_II(k,z), "deltaI": P_deltaI(k,z)}`, each shape
             `(len(zs), len(ks))`.
         """
-        if self.ia is None or getattr(self.ia, "get_effective_pk", None) is None:
+        per_bin = isinstance(self.ia, TATTMContribution)
+        has_single_grid = (
+            self.ia is not None
+            and getattr(self.ia, "get_effective_pk", None) is not None
+        )
+
+        if not per_bin and not has_single_grid:
             ia_name = type(self.ia).__name__ if self.ia is not None else None
             raise ValueError(
                 "get_ia_effective_spectra() needs an IA model that defines "
-                "its own effective power spectra (currently ia_model="
-                f"'TATT'); this tracer's ia is {ia_name!r}, which has no "
-                "separate P_II/P_deltaI - either no IA contribution at "
-                "all, or NLA, whose IA amplitude is applied directly "
-                "inside get_window_IA rather than as a separate "
-                "effective-Pk grid."
+                "an effective power spectrum (currently ia_model='TATT' or "
+                f"'TATT-M'); this tracer's ia is {ia_name!r}, which has "
+                "none - either no IA contribution at all, or NLA "
+                "(amplitude applied directly inside compute_kernel, not "
+                "exposed as a separate grid)."
+            )
+
+        if per_bin:
+            if bin_i is None or bin_j is None:
+                raise ValueError(
+                    f"{type(self.ia).__name__} varies its IA amplitude per "
+                    "tomographic bin, so get_ia_effective_spectra() needs "
+                    "bin_i and bin_j (1-indexed) to know which bin pair's "
+                    "P_II(k,z)/P_deltaI(k,z) to return "
+                    f"(got bin_i={bin_i!r}, bin_j={bin_j!r})."
+                )
+            # `.k`/`.z` aren't part of the `Perturbations` protocol (see its
+            # docstring), so read them defensively and fail with a clear error.
+            ks = getattr(self.perturbations, "k", None) if ks is None else ks
+            zs = getattr(self.perturbations, "z", None) if zs is None else zs
+            if ks is None or zs is None:
+                raise ValueError(
+                    "get_ia_effective_spectra() needs explicit ks/zs when "
+                    f"{type(self.perturbations).__name__} does not expose its "
+                    "own `.k`/`.z` grid."
+                )
+            matter_pk = self.perturbations.matter_power_spectrum(zs, ks)
+            bank = SpectraBank(matter_pk, ks, zs)
+            return self.ia.effective_pk_for_bin_pair(bank, bin_i, bin_j)
+
+        # Single, bin-independent grid (currently only TATTContribution).
+        if bin_i is not None or bin_j is not None:
+            raise ValueError(
+                f"{type(self.ia).__name__} doesn't vary its IA amplitude "
+                "per bin, so get_ia_effective_spectra() doesn't take "
+                f"bin_i/bin_j (got bin_i={bin_i!r}, bin_j={bin_j!r})."
             )
         # `.k`/`.z` aren't part of the `Perturbations` protocol (see its
         # docstring), so read them defensively and fail with a clear error.
-        if ks is None:
-            ks = getattr(self.perturbations, "k", None)
-        if zs is None:
-            zs = getattr(self.perturbations, "z", None)
+        ks = getattr(self.perturbations, "k", None) if ks is None else ks
+        zs = getattr(self.perturbations, "z", None) if zs is None else zs
         if ks is None or zs is None:
             raise ValueError(
                 "get_ia_effective_spectra() needs explicit ks/zs when "
@@ -726,13 +1071,15 @@ class ShearTracer:
         `"NLA"` builds `NLAContribution`; `"TATT"` builds a
         `TATTContribution`, which requires `tatt_loop_computer`
         (no illustrative default - see `TATTContribution`'s docstring);
-        anything else must already be a `Contribution` instance, used as-is.
-        `tatt_loop_computer` is only meaningful for `"TATT"`.
+        `"TATT-M"` builds a `TATTMContribution` (also requires
+        `tatt_loop_computer`); anything else must already be a
+        `Contribution` instance, used as-is. `tatt_loop_computer` is only
+        meaningful for `"TATT"`/`"TATT-M"`.
         """
-        if ia_model != "TATT" and tatt_loop_computer is not None:
+        if ia_model not in ("TATT", "TATT-M") and tatt_loop_computer is not None:
             raise ValueError(
-                "tatt_loop_computer is only used when ia_model='TATT' "
-                f"(got ia_model={ia_model!r})."
+                "tatt_loop_computer is only used when ia_model='TATT' or "
+                f"'TATT-M' (got ia_model={ia_model!r})."
             )
         if ia_model is None:
             return None
@@ -757,23 +1104,46 @@ class ShearTracer:
                 z0=nuisance_params.get("z0IA", 0.62),
                 C_IA=nuisance_params.get("CIA", 0.0134),
             )
+        if ia_model == "TATT-M":
+            if tatt_loop_computer is None:
+                raise ValueError(
+                    "ia_model='TATT-M' requires tatt_loop_computer (e.g. "
+                    "PBJTATTLoopComputer(perturbations), from "
+                    "cloelib.observables.photo.shear) - TATTMContribution "
+                    "has no illustrative default, same as ia_model='TATT'."
+                )
+            return TATTMContribution(
+                self,
+                alpha_M=nuisance_params["alphaM"],
+                beta_M=nuisance_params["betaM"],
+                loop_computer=tatt_loop_computer,
+                k1=nuisance_params.get("k1", 0.073),
+                k2=nuisance_params.get("k2", 0.268),
+                k3=nuisance_params.get("k3", -0.038),
+                log10_M0=nuisance_params.get("log10_M0", 13.5),
+                C_IA=nuisance_params.get("CIA", 0.0134),
+            )
         if isinstance(ia_model, str):
             raise ValueError(
-                f"Unknown ia_model {ia_model!r}: expected 'NLA', 'TATT', or a "
-                "Contribution instance."
+                f"Unknown ia_model {ia_model!r}: expected 'NLA', 'TATT', "
+                "'TATT-M', or a Contribution instance."
             )
         return ia_model
 
     def get_window_IA(self, z):
-        r"""Window integrand.
+        r"""Return the NLA intrinsic-alignment kernel on ``z``.
 
-        Calculates IA window
+        The per-bin kernel is ``-H(z)/c * AIA * CIA * Omega_m0 *
+        (1+z)**EtaIA / D(z) * dndz_shifted``. If the backend returns a
+        scale-dependent growth factor, the second tabulated k column is used;
+        otherwise its scale-independent result is used. TATT amplitudes are
+        represented in effective spectra rather than by this NLA window.
 
         Args:
-          z (float): Redshift at which kernel is being evaluated
+            z (array_like): Redshift evaluation grid.
 
-        Returns:
-          window_IA (np.ndarray):
+        Returns a two-dimensional NLA kernel with one row per tomographic
+        bin and one column per redshift.
         """
         Omega_m0 = self.background.Omega_m(0.0)
         Hz = self.perturbations.background.hubble_parameter(z)
@@ -787,7 +1157,12 @@ class ShearTracer:
         return np.einsum("ij, j->ij", self.dndz_shifted, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
-        """Compute the lensing efficiency in a redshift bin."""
+        """Compute the legacy single-bin lensing efficiency.
+
+        Uses Akima interpolation of the shifted bin distribution and a fixed
+        integration grid from redshift 0 to 4. The vectorized production
+        window path uses :meth:`get_lensing_efficiency` instead.
+        """
         interpolator = interpax.Akima1DInterpolator(
             self.z, self.dndz_shifted[bin_idx, :]
         )
@@ -803,24 +1178,24 @@ class ShearTracer:
 
     def get_lensing_efficiency(self, z):
         r"""
-        Compute the lensing efficiency kernel for each redshift bin.
+        Compute the discretized lensing efficiency for every bin.
 
-        This function calculates the geometric lensing kernel W(χ), which weights the contribution
-        of matter at different redshifts to the weak lensing signal, for a given redshift grid `z`.
+        The efficiency uses ``dndz_shifted`` and the grid distance-ratio
+        factor ``1 - chi(z_lens) / chi(z_source)``, contracted with cached
+        stacked Simpson weights. The supplied redshift grid is used as both
+        the lens and source grid; this implementation assumes uniform spacing.
 
         Args:
-          z (np.ndarray): 1D array of redshift values (must be evenly spaced). Used to compute comoving distances
-            and define integration domain.
+          z (np.ndarray): 1D, evenly spaced redshift evaluation grid.
 
-        Returns:
-          (np.ndarray): 2D array of shape (N_bins, len(z)) representing the lensing efficiency kernel W(z)
-            for each redshift bin over the evaluation grid.
+        Returns a two-dimensional lensing efficiency with one row per
+        tomographic bin and one column per redshift.
 
         Notes
         -----
         - Assumes `z` is evenly spaced; spacing is inferred as `z[1] - z[0]`.
         - Uses a precomputed Simpson rule weight matrix (`cached_stacked_simpson`) for integration.
-        - `self.dndz` is expected to have shape (N_bins, len(z)) and be normalized.
+        - `self.dndz_shifted` has shape ``(n_bin, len(z))``.
         - Efficiency is evaluated using `np.einsum`.
         """
         dz = z[1] - z[0]  # assuming equispaced!
@@ -831,29 +1206,18 @@ class ShearTracer:
         return result
 
     def get_window_lensing(self, z):
-        r"""Weak Lensing shear kernel.
+        r"""Return the radial weak-lensing kernel for the supplied redshifts.
 
-        Calculates the weak lensing shear kernel for a given tomographic bin
-        distribution.
-        Uses broadcasting to compute a 2D-array of integrands and then applies
-        `np.trapz` on the array along one axis.
-
-        $$
-            W_{i}^{\gamma}(\ell, z, k) =
-            \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
-            \Omega_{{\rm m},0} (1 + z)
-            f_K\left[\tilde{r}(z)\right]
-            \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm L}(z^{\prime})
-            \frac{f_K\left[\tilde{r}(z^{\prime}) - \tilde{r}(z)\right]}
-            {f_K\left[\tilde{r}(z^{\prime})\right]}}\\
-        $$
+        It multiplies the discretized efficiency from
+        :meth:`get_lensing_efficiency` by
+        ``3/2 * (H0/c)**2 * Omega_m0 * (1+z) * chi(z)``. The harmonic shear
+        response is applied by ``AngularTwoPoint``.
 
         Args:
-          z (numpy.ndarray): Redshift at which weight is evaluated (`float` type).
+          z (numpy.ndarray): Redshift evaluation grid.
 
-        Returns:
-          (numpy.ndarray): 1-D Numpy array of shear kernel values for specified bin
-            at specified scale for the redshifts defined in z
+        Returns a two-dimensional kernel with one row per bin and one column
+        per redshift.
         """
         Omega_m0 = self.background.Omega_m(0.0)
         factor = (
@@ -865,18 +1229,19 @@ class ShearTracer:
             * self.background.comoving_distance(z)
         )
         efficiency = self.get_lensing_efficiency(z)
-        return np.einsum("ij, j->ij", efficiency, factor)
+        # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.
+        Sigma = getattr(self.perturbations, "Sigma", unit_sigma)(z)
+        return np.einsum("ij, j->ij", efficiency, factor) * Sigma[np.newaxis, :]
 
     def get_window(self, z):
-        r"""Compute the Window.
+        r"""Sum lensing and optional IA kernels, then apply multiplicative bias.
 
-        Computes general window given the selected tracer
+        Args:
+          z (array_like): Redshift evaluation grid.
 
-        Parameters:
-          z (float): Redshift at which window kernel is being evaluated
-
-        Returns:
-          window (np.ndarray):
+        Returns a two-dimensional window with one row per bin and one column
+        per redshift. Each bin is multiplied once by
+        ``1 + multiplicative_bias_{i+1}``.
         """
         total_window = sum(c.compute_kernel(z) for c in self.get_contributions())
         # Apply multiplicative bias

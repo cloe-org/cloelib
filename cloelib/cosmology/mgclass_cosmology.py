@@ -2,6 +2,8 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    CB_CROSS_LINEAR_NU,
     Background,
     Perturbations,
     growth_rate_on_redshifts,
@@ -291,7 +293,7 @@ class MGCLASSBackground:
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
-    def Omega_cb(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_cb(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the cold dark matter + baryons (no neutrinos) as a function of redshift.
 
@@ -301,23 +303,13 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values (no neutrinos).
         """
-
-        try:
-            Omegacb = np.array(
-                [
-                    (self.results.Omega_b() + self.results.Omega0_cdm())
-                    * (1 + z) ** 3.0
-                    / (self.hubble_parameter(z) / self.H0) ** 2.0
-                    for z in zs
-                ]
-            )
-        except TypeError:
-            Omegacb = (
-                (self.results.Omega_b() + self.results.Omega0_cdm())
-                * (1 + zs) ** 3.0
-                / (self.hubble_parameter(zs) / self.H0) ** 2.0
-            )
-        return Omegacb
+        z = np.atleast_1d(np.asarray(zs, dtype=float))
+        Omegacb = (
+            (self.results.Omega_b() + self.results.Omega0_cdm())
+            * (1 + z) ** 3.0
+            / (self.hubble_parameter(z) / self.H0) ** 2.0
+        )
+        return Omegacb[0] if np.ndim(zs) == 0 else Omegacb
 
     def Omega_m(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
@@ -333,7 +325,7 @@ class MGCLASSBackground:
             return self.results.Om_m(zs)
         return np.array([self.results.Om_m(z) for z in np.asarray(zs)])
 
-    def Omega_b(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_b(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the baryon density as a function of redshift.
 
@@ -343,22 +335,13 @@ class MGCLASSBackground:
         Returns:
             np.ndarray: Matter density values.
         """
-        try:
-            Omegab = np.array(
-                [
-                    self.results.Omega_b()
-                    * (1 + z) ** 3.0
-                    / (self.hubble_parameter(z) / self.H0) ** 2.0
-                    for z in zs
-                ]
-            )
-        except TypeError:
-            Omegab = (
-                self.results.Omega_b()
-                * (1 + zs) ** 3.0
-                / (self.hubble_parameter(zs) / self.H0) ** 2.0
-            )
-        return Omegab
+        z = np.atleast_1d(np.asarray(zs, dtype=float))
+        Omegab = (
+            self.results.Omega_b()
+            * (1 + z) ** 3.0
+            / (self.hubble_parameter(z) / self.H0) ** 2.0
+        )
+        return Omegab[0] if np.ndim(zs) == 0 else Omegab
 
     @property
     def rdrag(self) -> float:
@@ -373,6 +356,8 @@ class MGCLASSBackground:
 
 class MGCLASSLinearPerturbations:
     """Class for perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
+
+    cb_cross_prescription = CB_CROSS_CORRELATED
 
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the MGCLASSLinearPerturbation instance."""
@@ -564,6 +549,12 @@ class MGCLASSLinearPerturbations:
 class MGCLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using MGCLASS, inheriting from Perturbations parent class."""
 
+    # MGCLASS runs its nonlinear model (halofit/HMcode) on P_cb separately from
+    # P_mm, so the cb x matter cross spectrum follows neither prescription
+    # exactly: they differ by ~1% at mnu = 0.15 eV with HMcode2020.
+    # CB_CROSS_LINEAR_NU only uses MGCLASS's own nonlinear P_cb and linear spectra.
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
+
     def __init__(
         self,
         background: Background,
@@ -575,14 +566,15 @@ class MGCLASSNonLinearPerturbations:
 
         Args:
             background: Background cosmology object.
-            linearperturbations: Linear perturbations object (unused by MGCLASS, which computes
-                nonlinear corrections internally; accepted for interface compatibility with
-                emulator-based NonLinPerturbations classes).
+            linearperturbations: Linear perturbations object (MGCLASS computes the nonlinear
+                corrections internally). Only needed for the cb x matter cross spectrum,
+                e.g. `MGCLASSLinearPerturbations` on the same background.
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
         """
         self.background = background
         self.z = redshifts
+        self.linearperturbations = linearperturbations
         self.kmax = 100
 
         if nonlinear_model is None:

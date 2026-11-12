@@ -25,6 +25,37 @@ except ImportError:
 
 
 class MGemuNonlinearBoost:
+    """Build a redshift- and wavenumber-dependent nonlinear power boost.
+
+    The MGEmu backend supplies the boost relative to its GR baseline. This
+    class interpolates that boost as ``B(z, k)`` and resamples it onto the
+    supplied linear perturbation wavenumber grid. Wavenumbers are represented
+    internally in ``1/Mpc``. Supported ``gravity_model`` tags are ``fr``,
+    ``dgp``, ``gamma``, ``mu``, ``wCDM``, ``w0waCDM``, and ``ide``; the first
+    four map to matching MGEmu backends, while the last three use its ``ds``
+    The ``mgpars`` keys read by the adapter are ``fr0``, ``omega_rc``,
+    ``gamma0``, ``mu0``, ``sigma0``, ``c1``, ``lam``, ``q1``, ``q2``,
+    ``q3``, and ``xi``; omitted values use the defaults in the implementation.
+
+    The input redshifts and ``linearperturbations.k`` must be suitable for
+    spline construction and extrapolation; the constructor does not validate
+    their ordering or sampling. Emulator training bounds are clipped in the
+    parameter dictionary, and the emulator neutrino density is fixed to
+    ``1e-10``. For models other than ``wCDM``, ``w0waCDM``, ``ide``, and
+    ``mu``, the background is required by an assertion to have ``w0=-1`` and
+    ``wa=0``. The boost is extended toward unity at low k, extrapolated to
+    high k (up to the extension grid used by ``extend_spectra``), and given
+    one of the ``power_law``, ``freeze``, ``one``, or ``taper`` high-redshift
+    continuations. The latter policies return to a boost of unity according
+    to the selected rule and ``z_decay``.
+
+    Raises:
+        ImportError: If MGEmu cannot be imported.
+        ValueError: If the gravity model or high-redshift policy is unknown.
+        AssertionError: If a model's assumed background equation of state is
+            not satisfied.
+    """
+
     def __init__(
         self,
         background: Background,
@@ -374,21 +405,26 @@ class MGemuNonlinearBoost:
         self.MGboost_interp = RectBivariateSpline(z_out, k_out, boost_out, kx=1, ky=1)
 
     def mg_spectrum_boost(self, zs, ks) -> np.ndarray:
-        r"""Computes the nonlinear matter power spectrum boost.
+        r"""Evaluate the dimensionless nonlinear power-spectrum boost.
 
         Parameters
         ----------
-        ks: numpy.ndarray
-            Wave number in Mpc^{-1}
-
-        zs: numpy.ndarray
-            redshifts
+        zs : array_like
+            Redshifts at which to evaluate the boost.
+        ks : array_like
+            Wavenumbers in ``1/Mpc``.
 
         Returns
         -------
-        MGboost_interp: numpy.ndarray
-            Nonlinear matter power spectrum boost at the specified scale
-            and redshift
+        numpy.ndarray
+            Boost values. With array inputs, ``RectBivariateSpline`` uses
+            grid semantics and returns shape ``(len(zs), len(ks))``.
+
+        Notes
+        -----
+        Values outside the constructed interpolation grid use the spline's
+        extrapolation behavior. For paired-point rather than grid evaluation,
+        call ``MGboost_interp(zs, ks, grid=False)`` directly.
 
         """
 
@@ -396,6 +432,17 @@ class MGemuNonlinearBoost:
 
 
 class BoostedPerturbations:
+    """Adapt a baseline perturbation backend by multiplying its nonlinear P(k,z).
+
+    ``base_perturbations`` supplies ``background``, ``matter_power_spectrum``
+    and ``sigma8_0``; ``base_lin_perturbations`` supplies ``growth_rate`` and
+    may supply ``sigma_lensing``. ``boost_interp`` is a callable ``B(z, k)``;
+    grid-shaped spectra require a callable accepting the ``grid=False``
+    keyword for paired-point evaluation. The wrapper exposes ``k`` and ``z``
+    from the nonlinear base when present. It asserts a flat background, but
+    does not check that the linear and nonlinear bases share one.
+    """
+
     def __init__(self, base_lin_perturbations, base_perturbations, boost_interp):
         """
         Applies the nonlinear boost to the LCDM nonlinear spectrum given in base_perturbations
@@ -447,9 +494,11 @@ class BoostedPerturbations:
         Returns
         -------
         float or np.ndarray
-            Boosted matter power spectrum. The output is squeezed so scalar
-            inputs return a scalar, while array inputs return the corresponding
-            one- or two-dimensional array.
+            Boosted spectrum in the units returned by the base backend.
+            Inputs are promoted to 1D arrays; a base result shaped
+            ``(len(zs), len(ks))`` is multiplied by a pointwise boost, and
+            other shapes use the boost callable's ordinary argument handling.
+            The result is squeezed, removing all singleton axes.
         """
         z = np.atleast_1d(zs)
         k = np.atleast_1d(ks)
@@ -469,12 +518,15 @@ class BoostedPerturbations:
         return np.squeeze(P_boosted)
 
     def growth_factor(self, zs, ks=None):
-        r"""Calculate the growth factor.
+        r"""Estimate the growth factor from the boosted spectrum.
 
         If `ks` is provided:
             D(z,k) = sqrt( P(z,k) / P(0,k) )
-        If `ks` is None (linear growth via boost on large scales):
-            D(z)   = sqrt( B(z,k_lin) / B(0,k_lin) ), with a sensible default k_lin.
+        If ``ks`` is ``None``, use the boost-only large-scale estimate
+        ``sqrt(B(z,k_lin) / B(0,k_lin))``. Here ``k_lin`` is the smallest
+        available ``self.k``, or ``0.02 1/Mpc`` if no grid is exposed. This
+        branch does not use the base linear growth factor. Denominators are
+        floored at ``1e-300`` and the result is squeezed.
 
         Parameters
         ----------
@@ -534,13 +586,17 @@ class BoostedPerturbations:
         return self.base_lin.growth_rate(self.z if zs is None else zs, ks)
 
     def sigma8_0(self) -> float:
-        """
-        Calculate the sigma8 value for the current cosmology.
+        """Approximate the boosted ``sigma8(0)`` from one low-k boost value.
+
+        Returns ``base.sigma8_0() * sqrt(B(0, 0.02 1/Mpc))``. This is a
+        single-wavenumber approximation, not a re-integration of the boosted
+        power spectrum. The boost callable can make the result array-valued
+        (typically length one), despite the scalar return annotation.
 
         Returns:
         --------
-        float
-            The sigma8 value.
+        float or np.ndarray
+            The base value multiplied by the square root of the boost.
         """
         B0 = self.boost_interp(np.array([0.0]), np.array([2e-2]))  # shape (nz, 1)
         B0 = np.sqrt(B0[:, 0])

@@ -1,7 +1,12 @@
 """Implementation of Background and Perturbation cosmology using EuclidEmulator2."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, Perturbations, WithWavenumberGrid
+from cloelib.cosmology.cosmology import (
+    CB_CROSS_LINEAR_NU,
+    Background,
+    Perturbations,
+    WithWavenumberGrid,
+)
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 from scipy import interpolate
@@ -33,6 +38,8 @@ class LinearPerturbationsWithK(Perturbations, WithWavenumberGrid, Protocol):
 
 class EE2NonLinearPerturbations:
     """Class for nonlinear perturbations using EE2, compatible with the Perturbations protocol."""
+
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
 
     def __init__(
         self,

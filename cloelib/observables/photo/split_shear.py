@@ -384,7 +384,8 @@ def _growth_factor_1d(perturbations, z, k_pivot_hmpc: float = 0.03):
     cut), which otherwise disagrees with this one at the ~0.1% level for
     m_nu > 0.
     """
-    ks = getattr(perturbations, "k", None)
+#    ks = getattr(perturbations, "k", None)
+#    d_raw = perturbations.growth_factor(z, ks)
     d_raw = perturbations.growth_factor(z)
     if getattr(d_raw, "ndim", 1) != 2:
         return d_raw
@@ -822,7 +823,8 @@ class ShearTracer:
         """
         Omega_m0 = self.Omega_m_IA
         Hz = self.perturbations.background.hubble_parameter(z)
-        ks: Any = getattr(self.perturbations, "k", None)
+#        ks: Any = getattr(self.perturbations, "k", None)
+#        Dz_raw = self.perturbations.growth_factor(z, ks)
         Dz_raw = self.perturbations.growth_factor(z, ks)
         Dz = Dz_raw[:, 1] if getattr(Dz_raw, "ndim", 1) == 2 else Dz_raw
         A_IA = self.nuisance_params["AIA"]

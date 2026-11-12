@@ -5,15 +5,28 @@ from cloelib.observables.photo.tracer import Tracer
 from cloelib.observables.photo import PositionsTracer
 from cloelib.observables.photo import ShearTracer
 from cloelib.observables.cmb import CMBLensingTracer
-from cloelib.observables.photo.contributions import CB, MATTER, contribution_field
+from cloelib.observables.photo.contributions import (
+    CB,
+    MATTER,
+    contribution_field,
+    nonlimber_contributions,
+    nonlimber_spec_of,
+)
 from cloelib.observables.photo.spectrum_engine import (
     PkTerm,
     SpectraBank,
     get_effective_pk,
     get_pk_terms,
+    linear_source,
     needs_generalized_engine,
 )
 from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
+from cloelib.summary_statistics.beyond_limber import (
+    interpolate_from_nodes,
+    nodes_range_mask,
+    nonlimber_cl,
+)
+from cloelib.auxiliary.t_tildes import NonLimberGrid, default_t_tildes
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import (
     quadrature_weights,
@@ -25,6 +38,7 @@ from cloelib.profiling import profile_function
 import interpax
 import jax.numpy as np
 import jax
+import numpy as _numpy
 
 # results imports
 from cosmolib.data import AngularPowerSpectrum, COSEBI
@@ -263,12 +277,6 @@ def _cosebi_einsum_perbin(kernel_array, ell_weight, cl_eb):
     # kernel_array: (n_modes, n_ell), ell_weight: (n_ell,), cl_eb: (2, n_ell)
     # -> (2, n_modes)
     return np.einsum("ml,l,ql->qm", kernel_array, ell_weight, cl_eb)
-
-
-def _growth_rate_on_grid(perturbations, zs_target):
-    # Growth rate for the RSD calculation. Every `Perturbations`
-    # implementation evaluates `growth_rate` at the requested redshifts.
-    return perturbations.growth_rate(zs_target)
 
 
 def _rad_to_arcmin(x):
@@ -546,10 +554,54 @@ def _uses_pcb(tracer) -> bool:
     return isinstance(tracer, PositionsTracer) and getattr(tracer, "use_Pcb", False)
 
 
+class _WindowCache:
+    """Raw kernels and background of one beyond-Limber `get_Cl_tensor` call.
+
+    The non-linear Limber Cl, the linear Limber Cl on the nodes and the
+    beyond-Limber Cl all use the same contribution kernels, H, chi and f on
+    `tracer1.z`: each is computed once, on first use, and only lives as long
+    as the call, so no value outlives the cosmology it was computed for.
+    """
+
+    def __init__(self, tracer1):
+        self.z = tracer1.z
+        self._perturbations = tracer1.perturbations
+        self._values = {}
+
+    def _memoized(self, key, compute):
+        if key not in self._values:
+            self._values[key] = compute()
+        return self._values[key]
+
+    def kernel(self, contribution):
+        """`contribution.compute_kernel(z)`, shape `(n_bins, len(z))`."""
+        return self._memoized(
+            ("kernel", id(contribution)), lambda: contribution.compute_kernel(self.z)
+        )
+
+    def H(self):
+        background = self._perturbations.background
+        return self._memoized(
+            "H", lambda: background.hubble_parameter(self.z, units="km/s/Mpc")
+        )
+
+    def chi(self):
+        background = self._perturbations.background
+        return self._memoized("chi", lambda: background.comoving_distance(self.z))
+
+    def growth_rate(self):
+        return self._memoized("f", lambda: self._perturbations.growth_rate(self.z))
+
+
 class AngularTwoPoint:
     """Two point asbtract class to compute two point functions."""
 
-    def __init__(self, tracer1: Tracer = None, tracer2: Tracer = None):
+    def __init__(
+        self,
+        tracer1: Tracer = None,
+        tracer2: Tracer = None,
+        ell_nonlimber_max: float | None = None,
+    ):
         """
         Initialize the AngularTwoPoint instance.
 
@@ -559,9 +611,40 @@ class AngularTwoPoint:
         Parameters:
             tracer1 (Tracer, optional): The first tracer for the two-point function. Defaults to None.
             tracer2 (Tracer, optional): The second tracer for the two-point function. Defaults to None.
+            ell_nonlimber_max (float, optional): Largest multipole at which the
+                Limber Cl is corrected beyond Limber, with the linear
+                correction `C_nonLimber^lin - C_Limber^lin` computed on the
+                multipole nodes of the T-tilde dataset and interpolated (see
+                `get_Cl_tensor`). Must lie within the nodes, `[2, 211.6]` for the
+                standard dataset, which is downloaded on the first `get_Cl` if
+                missing. `None` (default): Limber only.
+
+        Raises:
+            ValueError: if `ell_nonlimber_max` lies outside the T-tilde nodes.
+            NotImplementedError: if `ell_nonlimber_max` is set and a
+                contribution of the tracers has no `nonlimber_spec` (e.g. TATT,
+                non-linear galaxy bias, CMB lensing, GW).
         """
         self.tracer1 = tracer1
         self.tracer2 = tracer2
+        self.ell_nonlimber_max = ell_nonlimber_max
+        if ell_nonlimber_max is not None:
+            self._check_nonlimber(ell_nonlimber_max)
+
+    def _check_nonlimber(self, ell_max):
+        """Validate the beyond-Limber configuration when it is set.
+
+        Only the grid of the standard dataset is used, so no file is read.
+        """
+        nodes = _numpy.asarray(NonLimberGrid.blast_128_64_161().ells)
+        if not float(nodes[0]) <= ell_max <= float(nodes[-1]):
+            raise ValueError(
+                f"ell_nonlimber_max = {ell_max} must lie within the beyond-Limber "
+                f"nodes [{float(nodes[0])}, {float(nodes[-1])}]."
+            )
+        for tracer in (self.tracer1, self.tracer2):
+            for contribution in nonlimber_contributions(tracer):
+                nonlimber_spec_of(contribution)
 
     def _software_tag(self, method):
         """
@@ -606,7 +689,7 @@ class AngularTwoPoint:
         return limber_pk
 
     @staticmethod
-    def _windows_by_field(tracer, z) -> dict:
+    def _windows_by_field(tracer, z, cache=None) -> dict:
         """
         Window of `tracer` split by the field its contributions trace.
 
@@ -618,15 +701,31 @@ class AngularTwoPoint:
         it applies (e.g. `ShearTracer`'s multiplicative bias), so a tracer
         with mixed fields must not apply one.
 
+        With `cache` (`_WindowCache`, beyond-Limber calls only, hence only
+        tracers whose `get_window` is the sum of their contribution kernels
+        times `1 + m_bias`), the windows are built from the cached kernels
+        and the multiplicative bias is applied here.
+
         Parameters:
             tracer (Tracer): The tracer.
             z (jax.numpy.ndarray): Redshift grid of the Limber integral.
+            cache (_WindowCache, optional): Kernels shared within the call.
 
         Returns:
             (dict): Field (`MATTER` or `CB`) -> window, shape `(n_bins, len(z))`.
         """
         contributions = getattr(tracer, "get_contributions", lambda: ())()
         fields = [contribution_field(c) for c in contributions]
+        if cache is not None:
+            windows = {}
+            for field, contribution in zip(fields, contributions):
+                kernel = cache.kernel(contribution)
+                windows[field] = windows[field] + kernel if field in windows else kernel
+            m_bias = getattr(tracer, "m_bias", None)
+            if m_bias is not None:
+                one_plus_m = 1 + np.asarray(m_bias)[:, None]
+                windows = {field: w * one_plus_m for field, w in windows.items()}
+            return windows
         if len(set(fields)) <= 1:
             return {fields[0] if fields else MATTER: tracer.get_window(z)}
         windows = {}
@@ -661,6 +760,14 @@ class AngularTwoPoint:
         in `playground/tutorials/observables/photo_autodiff.ipynb` and
         `validation/photo_autodiff.ipynb`.
 
+        With `ell_nonlimber_max` set, the linear beyond-Limber correction
+        `C_nonLimber^lin - C_Limber^lin` (`_nonlimber_correction`) is added
+        for `2 <= ell <= ell_nonlimber_max`: `C_nonLimber^lin` computed on
+        the T-tilde nodes and interpolated (cubic spline in log ell),
+        `C_Limber^lin` at `ells`, with the same windows and multiplicative
+        shear bias as the Limber Cl. Outside that range the Cl is the Limber
+        one.
+
         Parameters:
             ells (jax.numpy.ndarray): Multipole moments for the angular power spectrum.
             nl (jax.numpy.ndarray): Noise power spectrum (not used yet, reserved for future use).
@@ -678,11 +785,21 @@ class AngularTwoPoint:
         contributions1 = getattr(self.tracer1, "get_contributions", lambda: ())()
         contributions2 = getattr(self.tracer2, "get_contributions", lambda: ())()
 
+        # Beyond Limber, the Cl of the call share the kernels (`_WindowCache`).
+        cache = None if self.ell_nonlimber_max is None else _WindowCache(self.tracer1)
         if needs_generalized_engine(contributions1, contributions2):
-            return self._compute_cl_generalized(
+            C_ell = self._compute_cl_generalized(
                 ells, ks, contributions1, contributions2
             )
-        return self._compute_cl_legacy(ells, nl, ks)
+        else:
+            C_ell = self._compute_cl_legacy(ells, nl, ks, cache=cache)
+
+        if self.ell_nonlimber_max is not None:
+            bank = self._linear_bank(ks, t_tildes=default_t_tildes())
+            C_ell = C_ell + self._nonlimber_correction(
+                ells, ks, bank, self.ell_nonlimber_max, cache
+            )
+        return C_ell
 
     @profile_function
     def get_Cl(self, ells, nl, ks) -> dict:
@@ -712,7 +829,7 @@ class AngularTwoPoint:
 
         return self._package_cl(C_ell_calc, ells)
 
-    def _compute_cl_legacy(self, ells, nl, ks):
+    def _compute_cl_legacy(self, ells, nl, ks, bank=None, cache=None):
         """Fast path: tracer-level windows, one Limber integral per pair of fields.
 
         Exercised whenever neither tracer's contributions declare any extra
@@ -728,21 +845,33 @@ class AngularTwoPoint:
         single total-matter window per tracer, hence a single `P_mm`
         integral. The RSD window of a `PositionsTracer` traces the same field
         as its galaxy-bias term.
+
+        The spectra enter only through `bank`, built from
+        `tracer1.perturbations` when not given: passing a bank of the linear
+        spectra (`_linear_bank`) gives the linear Limber Cl with the
+        same windows, quadrature and prefactors. With `cache`
+        (`_WindowCache`) the windows, H, chi and f are shared with the
+        other Cl of the same beyond-Limber call.
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
         dz = self.tracer1.z[1] - self.tracer1.z[0]
-        H = self.tracer1.perturbations.background.hubble_parameter(
-            zs_calc, units="km/s/Mpc"
-        )
-        chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
+        if cache is not None:
+            H, chi = cache.H(), cache.chi()
+        else:
+            H = self.tracer1.perturbations.background.hubble_parameter(
+                zs_calc, units="km/s/Mpc"
+            )
+            chi = self.tracer1.perturbations.background.comoving_distance(zs_calc)
         chi2 = chi**2
 
         # Window terms of each tracer as (traced field, window, depends on ell).
         def window_terms(tracer):
             return [
                 (field, window, False)
-                for field, window in self._windows_by_field(tracer, zs_calc).items()
+                for field, window in self._windows_by_field(
+                    tracer, zs_calc, cache
+                ).items()
             ]
 
         def has_rsd(tracer):
@@ -756,7 +885,10 @@ class AngularTwoPoint:
         terms2 = terms1 if same_tracer else window_terms(self.tracer2)
 
         if has_rsd(self.tracer1) or has_rsd(self.tracer2):
-            f = _growth_rate_on_grid(self.tracer1.perturbations, zs_calc)
+            if cache is not None:
+                f = cache.growth_rate()
+            else:
+                f = self.tracer1.perturbations.growth_rate(zs_calc)
 
             def rsd_term(tracer):
                 # With use_Pcb the RSD term is integrated against the cb
@@ -772,9 +904,10 @@ class AngularTwoPoint:
             elif has_rsd(self.tracer2):
                 terms2 = terms2 + [rsd_term(self.tracer2)]
 
-        bank = SpectraBank.from_perturbations(
-            self.tracer1.perturbations, ks, self.tracer1.perturbations.z
-        )
+        if bank is None:
+            bank = SpectraBank.from_perturbations(
+                self.tracer1.perturbations, ks, self.tracer1.perturbations.z
+            )
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
         limber_pk = self._limber_base_spectra(bank, k_lz, zs_calc)
 
@@ -806,6 +939,57 @@ class AngularTwoPoint:
         prefactor_cell = self._angular_prefactor(ells)
         C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
         return C_ell_calc
+
+    def _linear_bank(self, ks, t_tildes=None) -> SpectraBank:
+        """Bank of the linear spectra behind `tracer1.perturbations`.
+
+        Its base spectra are the linear `P_mm`, `P_cb` and cb x matter
+        spectra (the linear backends are all `CB_CROSS_CORRELATED`, so the
+        cross spectrum is `sqrt(P_cb^lin P_mm^lin)`, as in the beyond-Limber
+        transfer functions). With `t_tildes`, the same bank also provides
+        the beyond-Limber grids, so the linear Limber and beyond-Limber
+        Cl share the linear spectra.
+
+        Parameters:
+            ks (jax.numpy.ndarray): Wavenumber grid of the spectra.
+            t_tildes (TTildeStore, optional): T-tilde matrices for the
+                beyond-Limber grids.
+
+        Returns:
+            (SpectraBank): on the `(perturbations.z, ks)` grid of `tracer1`.
+
+        Raises:
+            ValueError: if `tracer1.perturbations` exposes no
+                `.linearperturbations` and is not itself a linear backend.
+        """
+        perturbations = self.tracer1.perturbations
+        linear = linear_source(perturbations)
+        if linear is None:
+            raise ValueError(
+                f"The linear Limber Cl needs the linear power spectrum, but "
+                f"{type(perturbations).__name__!r} exposes no "
+                f"`.linearperturbations` and is not itself a linear backend."
+            )
+        return SpectraBank.from_perturbations(
+            linear,
+            ks,
+            perturbations.z,
+            linear_perturbations=linear,
+            t_tildes=t_tildes,
+        )
+
+    def _limber_linear_cl(self, ells, ks, bank, cache=None):
+        """Limber Cl of the linear spectra of `bank` (`_linear_bank`).
+
+        The same computation as `_compute_cl_legacy`, windows included
+        (RSD, multiplicative shear bias), with only the spectra swapped:
+        the Limber counterpart of `beyond_limber.nonlimber_cl`, so that
+        their difference is the beyond-Limber correction alone.
+
+        Returns:
+            (jax.numpy.ndarray): shape `(len(ells), n_bins1, n_bins2)`.
+        """
+        return self._compute_cl_legacy(ells, None, ks, bank=bank, cache=cache)
 
     def _angular_prefactor(self, ells):
         """Product of field responses, shared by both integration engines."""
@@ -885,9 +1069,6 @@ class AngularTwoPoint:
         k_lz = np.expand_dims((ells + 0.5), 1) / chi
         limber_pk = self._limber_base_spectra(bank, k_lz, zs_calc)
 
-        n_bin1 = self.tracer1.n_z_bins
-        n_bin2 = self.tracer2.n_z_bins
-
         # Every pairing is reduced to `PkTerm`s (a plain `get_effective_pk`
         # pairing is one term), then all terms are integrated in a single
         # batched einsum. Kernels and signed-Pk interpolations are computed
@@ -954,19 +1135,91 @@ class AngularTwoPoint:
         prefactor_cell = self._angular_prefactor(ells)
         C_ell_calc = C_ell_calc * prefactor_cell[:, None, None]
 
-        # Multiplicative shear calibration (PR #569 review): the legacy path
-        # applies `1 + m_bias` inside `ShearTracer.get_window` before the
-        # Limber integral; this path integrates each Contribution's raw
-        # `compute_kernel` directly, bypassing `get_window` (and its m_bias
-        # factor) entirely. `1 + m_bias` is a per-bin, z/k-independent
-        # scalar, so it factors cleanly out of the (bilinear) Limber
-        # integral onto the final per-bin-pair Cl tensor - applied here
-        # instead, once, rather than inside every Contribution.
-        # `PositionsTracer`/`CMBLensingTracer` have no `m_bias` of their own
-        # - `getattr(..., "m_bias", zeros)` leaves those sides unscaled.
+        return self._apply_multiplicative_bias(C_ell_calc)
+
+    def _apply_multiplicative_bias(self, C_ell):
+        """Multiplicative shear calibration of a Cl built from raw kernels.
+
+        The legacy path applies `1 + m_bias` inside `ShearTracer.get_window`
+        before the Limber integral (PR #569 review); the generalized and the
+        beyond-Limber paths integrate each Contribution's raw
+        `compute_kernel` directly, bypassing `get_window` (and its m_bias
+        factor) entirely. `1 + m_bias` is a per-bin, z/k-independent
+        scalar, so it factors cleanly out of the (bilinear) integral onto
+        the final per-bin-pair Cl tensor - applied here instead, once,
+        rather than inside every Contribution. `PositionsTracer`/
+        `CMBLensingTracer` have no `m_bias` of their own -
+        `getattr(..., "m_bias", zeros)` leaves those sides unscaled.
+
+        Parameters:
+            C_ell (jax.numpy.ndarray): shape `(n_ell, n_bins1, n_bins2)`.
+
+        Returns:
+            (jax.numpy.ndarray): `C_ell * (1 + m1_i) * (1 + m2_j)`.
+        """
+        n_bin1, n_bin2 = C_ell.shape[1:]
         m1 = 1.0 + np.asarray(getattr(self.tracer1, "m_bias", np.zeros(n_bin1)))
         m2 = 1.0 + np.asarray(getattr(self.tracer2, "m_bias", np.zeros(n_bin2)))
-        return C_ell_calc * m1[None, :, None] * m2[None, None, :]
+        return C_ell * m1[None, :, None] * m2[None, None, :]
+
+    def _nonlimber_cl(self, bank, cache=None):
+        """Linear beyond-Limber Cl of the two tracers, on the T-tilde nodes.
+
+        `beyond_limber.nonlimber_cl` of the beyond-Limber contributions of
+        the two tracers (`nonlimber_contributions`: with RSD for a
+        `PositionsTracer(include_rsd=True)`, as the Limber window), with the kernels on `tracer1.z` (the grid of the Limber windows) and
+        the multiplicative shear bias applied (`_apply_multiplicative_bias`):
+        the beyond-Limber counterpart of `_limber_linear_cl`, with the same
+        calibration.
+
+        Parameters:
+            bank (SpectraBank): linear bank with `t_tildes` (`_linear_bank`).
+
+        Returns:
+            (jax.numpy.ndarray): Cl at `bank.t_tildes.grid.ells`, shape
+            `(n_ell, n_bins1, n_bins2)`.
+        """
+        C_ell = nonlimber_cl(
+            nonlimber_contributions(self.tracer1),
+            nonlimber_contributions(self.tracer2),
+            self.tracer1.z,
+            bank,
+            raw_kernel=None if cache is None else cache.kernel,
+        )
+        return self._apply_multiplicative_bias(C_ell)
+
+    def _nonlimber_correction(self, ells, ks, bank, ell_max, cache=None):
+        """Beyond-Limber correction to the Limber Cl, at `ells`.
+
+        `Delta C = C_nonLimber^lin - C_Limber^lin`, both linear and with the
+        same windows and calibration: `_nonlimber_cl` on the T-tilde nodes,
+        interpolated to `ells` (`beyond_limber.interpolate_from_nodes`),
+        minus `_limber_linear_cl` at `ells`. Zero above `ell_max` and below
+        the first node. Interpolating the beyond-Limber Cl, not Delta C,
+        keeps the Limber approximation of RSD (poor at low ell) out of the
+        interpolated quantity; on the nodes the two coincide.
+
+        Parameters:
+            ells (jax.numpy.ndarray): Multipoles of the Cl.
+            ks (jax.numpy.ndarray): Wavenumber grid of the spectra.
+            bank (SpectraBank): linear bank with `t_tildes` (`_linear_bank`).
+            ell_max (float): largest multipole the correction is applied at.
+
+        Returns:
+            (jax.numpy.ndarray): shape `(len(ells), n_bins1, n_bins2)`.
+        """
+        nodes = bank.t_tildes.grid.ells
+        ells = np.asarray(ells)
+        beyond = interpolate_from_nodes(
+            self._nonlimber_cl(bank, cache), nodes, ells, ell_max
+        )
+        # The linear Limber Cl only where the correction applies; elsewhere
+        # it is evaluated at a valid multipole and masked, so that it cannot
+        # spoil the values or the gradients (e.g. at ell = 0).
+        inside = nodes_range_mask(ells, nodes, ell_max)
+        clipped = np.clip(ells, float(_numpy.asarray(nodes)[0]), ell_max)
+        limber = self._limber_linear_cl(clipped, ks, bank, cache)
+        return beyond - np.where(inside[:, None, None], limber, 0.0)
 
     def _package_cl(self, C_ell_calc, ells) -> dict:
         """Slice/reshape `C_ell_calc` into the cosmolib-format output dict.

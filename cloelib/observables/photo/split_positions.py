@@ -551,8 +551,8 @@ class NonLinearGalaxyBiasContribution:
         cached = self._growth4_cache
         if cached is not None and cached[0] is zs:
             return cached[1]
-#        ks: Any = getattr(self._tracer.perturbations, "k", None)
-#        d_raw = self._tracer.perturbations.growth_factor(zs, ks)
+        #        ks: Any = getattr(self._tracer.perturbations, "k", None)
+        #        d_raw = self._tracer.perturbations.growth_factor(zs, ks)
         d_raw = self._tracer.perturbations.growth_factor(zs)
         d = d_raw[:, 1] if getattr(d_raw, "ndim", 1) == 2 else d_raw
         result = d**4

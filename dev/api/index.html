@@ -35036,14 +35036,15 @@ code that doesn't need the packaged <code>dict</code>.</p>
 
 
 <a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_cosebis</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis(ells)">ells</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis(nl)">nl</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis(w_ell)">w_ell</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis(ns)">ns</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_cosebis</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis(ells)">ells</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis(nl)">nl</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis(w_ell)">w_ell</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis(ns)">ns</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.AngularTwoPoint.get_cosebis(ells_interpolation)">ells_interpolation</span></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Compute EE and BB COSEBIs from angular power spectra.</p>
 <p>Delegates to the module-level :func:<code>get_cosebis_from_cl</code>. See that
-function for full parameter documentation.</p>
+function for full parameter documentation. If <code>ells_interpolation</code> is
+given, the C_ell are computed there and interpolated onto <code>ells</code>.</p>
 
           
 
@@ -35460,6 +35461,30 @@ factors.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="cloelib.summary_statistics.angular_two_point.interp_cl_log_ell" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">interp_cl_log_ell</span>
+
+
+<a href="#cloelib.summary_statistics.angular_two_point.interp_cl_log_ell" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">interp_cl_log_ell</span><span class="p">(</span><span class="n"><span title="cloelib.summary_statistics.angular_two_point.interp_cl_log_ell(ells)">ells</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.interp_cl_log_ell(ell_nodes)">ell_nodes</span></span><span class="p">,</span> <span class="n"><span title="cloelib.summary_statistics.angular_two_point.interp_cl_log_ell(cl_nodes)">cl_nodes</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Interpolate C_ell from <code>ell_nodes</code> to <code>ells</code> along the last axis.</p>
+<p>C^2 cubic spline in log(ell) (interpax "cubic2", not-a-knot ends), linear in
+C_ell so that sign changes (e.g. from intrinsic alignments) are fine. Raises a
+ValueError if <code>ell_nodes</code> is not increasing or does not cover <code>ells</code>.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="cloelib.summary_statistics.angular_two_point.get_cosebis_from_cl" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">get_cosebis_from_cl</span>
 
@@ -35480,7 +35505,8 @@ if angular power spectra are already available.</p>
 ells : jax.numpy.ndarray
     Multipoles at which the integration is performed. Any strictly
     increasing grid is accepted (see <code>quadrature_weights</code>); it must be
-    fine enough to resolve the oscillations of the kernels.
+    fine enough to resolve the oscillations of the kernels. Spectra in
+    <code>cells</code> on another grid are interpolated with :func:<code>interp_cl_log_ell</code>.
 w_ell : dict
     Harmonic-space COSEBIs kernels.  Two layouts are accepted:</p>
 <div class="highlight"><pre><span></span><code>* **Global** — a single dict ``{n: array, ..., "metadata": {...}}``

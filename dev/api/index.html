@@ -34329,7 +34329,7 @@ such as angular power spectra or Legendre multipoles.</p>
 
 
 <a href="#cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">AngularCorrelationFunctionWigner</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(angular_two_point)">angular_two_point</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(ells)">ells</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(ks)">ks</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">AngularCorrelationFunctionWigner</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(angular_two_point)">angular_two_point</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(ells)">ells</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(ks)">ks</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(n_ell_interp)">n_ell_interp</a></span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(ell_taper_start)">ell_taper_start</a></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -34395,6 +34395,38 @@ AngularTwoPoint object.</p>
           –
           <div class="doc-md-description">
             <p>Wavenumber grid (only needed for computing Cl via angular_two_point).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(n_ell_interp)" class="doc doc-heading doc-heading-parameter">              <b><code>n_ell_interp</code></b>
+<a href="#cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(n_ell_interp)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="int">int</span></code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>If given, Cl is computed only at this many
+log-spaced multipoles between <code>min(ells)</code> and <code>max(ells)</code> and
+interpolated onto <code>ells</code> (cubic spline of ell^2 Cl in log ell).
+This makes <code>get_xi</code> much faster for dense <code>ells</code>
+(e.g. <code>arange(2, 60000)</code>) at a small accuracy cost; check the
+number of nodes for your setup. Defaults to None, which computes
+Cl at every multipole in <code>ells</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(ell_taper_start)" class="doc doc-heading doc-heading-parameter">              <b><code>ell_taper_start</code></b>
+<a href="#cloelib.summary_statistics.angular_correlation_function_wigner.AngularCorrelationFunctionWigner(ell_taper_start)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>If given, Cl is multiplied by a
+cosine window that is 1 below <code>ell_taper_start</code> and goes smoothly
+to 0 at <code>max(ells)</code>. This removes the ringing caused by sharply
+truncating the sum over multipoles and greatly improves the
+convergence of xi(theta) with <code>max(ells)</code>, e.g.
+<code>ells = arange(2, 60001)</code> with <code>ell_taper_start=30000</code>.
+Must be smaller than <code>max(ells)</code>. Defaults to None (no taper).</p>
           </div>
         </li>
     </ul>

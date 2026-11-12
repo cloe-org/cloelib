@@ -177,7 +177,8 @@ def godmax_reference(halomodel):
         ("POS", "Y"): shear_run.Cl_gal_y_tot_mat[:, 0],
         # Halo-model part only: limber() below integrates over Z, without GODMAX's
         # halofit tail from zmax_for_Cls to the CMB.
-        ("CMBL", "CMBL"): shear_run.Cl_kcmb_kcmb_tot_mat - shear_run.Cl_kcmb_kcmb_tail_mat,
+        ("CMBL", "CMBL"): shear_run.Cl_kcmb_kcmb_tot_mat
+        - shear_run.Cl_kcmb_kcmb_tail_mat,
         ("CMBL", "Y"): shear_run.Cl_kcmb_y_tot_mat,
         ("Y", "Y"): shear_run.Cl_y_y_signal_mat,
     }

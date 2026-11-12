@@ -18,7 +18,7 @@ authors = [
 ]
 
 dependencies = [
-    "interpax",
+    "interpax==0.3.12",
     "jax",
     "numpy>2.0",
     "quadax",

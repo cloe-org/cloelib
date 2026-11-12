@@ -553,13 +553,20 @@ def _cl_gs(H0, *ell_maxes):
     )
 
 
-def test_beyond_limber_jit_matches_eager(fake_default_store):
+def test_beyond_limber_jit_matches_eager(monkeypatch, store):
     """The beyond-Limber Cl, cosmology and tracers included, traces under
     `jax.jit` and gives the eager numbers (as the Limber 3x2pt in
-    `test_get_cl_tensor.py`)."""
+    `test_get_cl_tensor.py`).
+
+    The store starts empty and the jitted call comes first, so the T-tilde
+    matrices are first read while tracing; the eager call after it must
+    find concrete data in the cache, not tracers of that trace.
+    """
+    fresh = TTildeStore(store.path, grid=store.grid)
+    monkeypatch.setattr(angular_two_point, "default_t_tildes", lambda: fresh)
     ell_max = float(FAKE_ELLS[1])
-    eager = _cl_gs(67.7, ell_max)
     jitted = jax.jit(lambda H0: _cl_gs(H0, ell_max))(67.7)
+    eager = _cl_gs(67.7, ell_max)
     assert np.all(np.isfinite(jitted))
     # XLA reorders the floating-point operations: ~2e-10 on single elements.
     np.testing.assert_allclose(jitted, eager, rtol=1e-9, atol=0.0)

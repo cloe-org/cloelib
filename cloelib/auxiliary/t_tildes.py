@@ -297,7 +297,12 @@ class TTildeStore:
                     f"{files[match[0]]}: shape {block.shape}, expected {expected}."
                 )
             blocks.append(block[0])
-        return jnp.asarray(np.stack(blocks))
+        # The result is cached for the whole life of the store: build it as
+        # a concrete array also when the first `get` happens while `jax.jit`
+        # is tracing, or the cache would keep a tracer of that trace, unusable
+        # by any later computation (`UnexpectedTracerError`).
+        with jax.ensure_compile_time_eval():
+            return jnp.asarray(np.stack(blocks))
 
 
 @lru_cache(maxsize=None)

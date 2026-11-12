@@ -9,6 +9,7 @@ present, is only used for a few cheap consistency checks.
 import hashlib
 import tarfile
 
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -247,6 +248,33 @@ def test_store_is_lazy_and_memoized(fake_dataset, small_grid, monkeypatch):
     store.get("T_minus2_00")  # only now is the second matrix touched
     assert len(loads) == 2 * N_ELL
     assert not any("T_tilde_0_20" in f for f in loads)
+
+
+def test_store_first_access_under_jit_caches_concrete_data(fake_dataset, small_grid):
+    """A matrix first asked for while `jax.jit` is tracing is cached as
+    concrete data, not as a tracer of that trace: it is then usable eagerly
+    and by an independently compiled function.
+
+    Starts from an empty store (an eager first access, as the other tests
+    do, would warm the cache with a concrete array and hide the problem).
+    """
+    root, matrices = fake_dataset
+    store = TTildeStore(root, grid=small_grid)
+    expected = matrices["T_2_00"].sum()
+
+    with jax.checking_leaks():
+        first = jax.jit(lambda x: x * jnp.sum(store.get("T_2_00")))(2.0)
+        cached = store._cache["T_2_00"]
+        assert not isinstance(cached, jax.core.Tracer)
+        assert isinstance(cached, jax.Array)
+
+        eager = jnp.sum(store.get("T_2_00"))
+        second = jax.jit(lambda x: x + jnp.sum(store.get("T_2_00")))(1.0)
+
+    np.testing.assert_allclose(first, 2.0 * expected, rtol=1e-12)
+    np.testing.assert_allclose(eager, expected, rtol=1e-12)
+    np.testing.assert_allclose(second, 1.0 + expected, rtol=1e-12)
+    assert store.get("T_2_00") is cached  # still read from disk only once
 
 
 def test_store_missing_directory(fake_dataset, small_grid):

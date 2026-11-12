@@ -13,7 +13,6 @@ not interpolate its spectra or distances in redshift, and the k grid is fine
 enough for the two codes' different k interpolations to agree.
 """
 
-import copy
 import importlib.util
 
 import jax.numpy as jnp
@@ -169,18 +168,17 @@ def godmax_reference(halomodel):
     from godmax.get_Cls import get_Cl
 
     shear_run = get_Cl({}, {}, {}, {}, Pkz_obj=halomodel.godmax)
-    cmb_setup = copy.copy(halomodel.godmax)
-    cmb_setup.is_cmb_lensing = True
-    cmb_run = get_Cl({}, {}, {}, {}, Pkz_obj=cmb_setup)
     return {
         ("SHE", "SHE"): shear_run.Cl_kappa_kappa_tot_mat[:, 0, 0],
         ("SHE", "POS"): shear_run.Cl_gal_kappa_tot_mat[:, 0, 0],
         ("SHE", "Y"): shear_run.Cl_kappa_y_tot_mat[:, 0],
         ("POS", "POS"): shear_run.Cl_gal_gal_tot_mat[:, 0, 0],
-        ("POS", "CMBL"): cmb_run.Cl_gal_kappa_tot_mat[:, 0, 0],
+        ("POS", "CMBL"): shear_run.Cl_gal_kcmb_tot_mat[:, 0],
         ("POS", "Y"): shear_run.Cl_gal_y_tot_mat[:, 0],
-        ("CMBL", "CMBL"): cmb_run.Cl_kappa_kappa_tot_mat[:, 0, 0],
-        ("CMBL", "Y"): cmb_run.Cl_kappa_y_tot_mat[:, 0],
+        # Halo-model part only: limber() below integrates over Z, without GODMAX's
+        # halofit tail from zmax_for_Cls to the CMB.
+        ("CMBL", "CMBL"): shear_run.Cl_kcmb_kcmb_tot_mat - shear_run.Cl_kcmb_kcmb_tail_mat,
+        ("CMBL", "Y"): shear_run.Cl_kcmb_y_tot_mat,
         ("Y", "Y"): shear_run.Cl_y_y_signal_mat,
     }
 

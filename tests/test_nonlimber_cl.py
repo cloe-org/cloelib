@@ -606,30 +606,32 @@ def _cl_with_amplitude(perturbations, kind, amplitude):
 
 
 @pytest.mark.parametrize("kind", ["ss", "gg"])
-def test_gradient_wrt_vanishing_amplitude_is_finite(
-    kind, tracer_perturbations, fake_default_store
+@pytest.mark.parametrize("amplitude", [0.0, 1e-8, -1e-8, 1e-3, 1.0])
+def test_gradient_wrt_amplitude_matches_finite_differences(
+    kind, amplitude, tracer_perturbations, fake_default_store
 ):
-    """At zero IA or magnification amplitude the kernel resampled to
-    (chi, R chi) vanishes, where the Akima weights are 0/0: the gradient
-    with respect to the amplitude must stay finite (it was NaN), and away
-    from zero it matches central finite differences."""
+    """The derivative with respect to the IA ("ss") or magnification ("gg")
+    amplitude matches central finite differences of two step sizes, also at
+    and around zero amplitude, where the kernel resampled to (chi, R chi)
+    vanishes. With an Akima resampling it was NaN there (0/0 weights), and
+    after the safe denominator still off by up to ~4e-4."""
     # Every element in units of its size at amplitude 1, with random signs.
     scale = np.abs(np.asarray(_cl_with_amplitude(tracer_perturbations, kind, 1.0)))
     signs = np.random.default_rng(0).choice([-1.0, 1.0], size=scale.shape)
     weights = jnp.asarray(signs / scale)
 
-    def loss(amplitude):
-        cl = _cl_with_amplitude(tracer_perturbations, kind, amplitude)
-        return jnp.sum(weights * cl)
+    def loss(A):
+        return jnp.sum(weights * _cl_with_amplitude(tracer_perturbations, kind, A))
 
-    assert np.isfinite(loss(0.0))
-    assert np.isfinite(jax.grad(loss)(0.0))
-
-    eps = 1e-4
-    grad = jax.grad(loss)(1.0)
-    finite_diff = (loss(1.0 + eps) - loss(1.0 - eps)) / (2 * eps)
+    grad = jax.grad(loss)(amplitude)
     assert np.isfinite(grad) and grad != 0.0
-    np.testing.assert_allclose(grad, finite_diff, rtol=1e-6)
+    # The loss is quadratic in the amplitude up to the Akima interpolation
+    # of the correction in ell, so large steps are accurate, while smaller
+    # ones amplify the rounding of the loss (~1e-10 for "ss", whose weights
+    # blow up a few nearly vanishing elements): AD - FD ~6e-8 at both steps.
+    for step in (1e-2, 1e-3):
+        finite_diff = (loss(amplitude + step) - loss(amplitude - step)) / (2 * step)
+        np.testing.assert_allclose(grad, finite_diff, rtol=1e-6)
 
 
 @pytest.mark.parametrize("ell_max", [1.0, 211.7, 1000.0])

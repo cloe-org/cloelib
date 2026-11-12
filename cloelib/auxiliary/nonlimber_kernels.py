@@ -28,6 +28,7 @@ Pipeline, one function per step:
 
 from functools import partial
 
+import interpax
 import jax
 import jax.numpy as jnp
 from jax import Array
@@ -85,6 +86,12 @@ def projected_density(cheb_coeffs: Array, T_tilde: Array) -> Array:
     return jnp.sum(T_tilde * jnp.moveaxis(cheb_coeffs, 0, -1)[None], axis=-1)
 
 
+def _spline(values: Array, x: Array, xq: Array) -> Array:
+    """C2 cubic spline of `values` (`(n_bins, len(x))`) at `xq`, extrapolated
+    beyond `x` by the end polynomials; shape `(n_bins, len(xq))`."""
+    return interpax.interp1d(xq, x, values.T, method="cubic2", extrap=True).T
+
+
 @partial(jax.jit, static_argnames=("divide_by_chi2",))
 def kernel_on_chi_R(
     W_z: Array,
@@ -97,10 +104,20 @@ def kernel_on_chi_R(
     r"""Resample a kernel from the redshift grid to the $\chi$ and $R\chi$ grids.
 
     The kernel is first interpolated to `z_of_chi` (and set to zero outside
-    `[z[0], z[-1]]`), then interpolated to $R\chi$. When `divide_by_chi2`
-    (kernels defined per unit $\chi^2$, e.g. lensing; positions are not),
-    both are divided by the square of the distance they are evaluated at,
-    $\chi^2$ and $(R\chi)^2$, *after* the interpolation, as in Blast.jl.
+    `[z[0], z[-1]]`), then interpolated to $R\chi$ (extrapolated below
+    `chi[0]`). When `divide_by_chi2` (kernels defined per unit $\chi^2$,
+    e.g. lensing; positions are not), both are divided by the square of the
+    distance they are evaluated at, $\chi^2$ and $(R\chi)^2$, *after* the
+    interpolation, as in Blast.jl.
+
+    Both interpolations are cubic splines, which are linear in the kernel
+    values: the resampling is a fixed linear map, so the $C_\ell$ stay
+    bilinear in the kernels and their derivatives with respect to kernel
+    amplitudes (A_IA, magnification bias) are exact, also at a vanishing
+    amplitude. An Akima interpolation is not linear in the data (its
+    weights depend on it) and has no derivative at a kernel that vanishes:
+    there reverse-mode AD returns the derivative of its fallback branch,
+    off by up to ~4e-4 on the C_ell.
 
     Parameters:
       W_z (Array): Kernel on the redshift grid, shape `(n_bins, len(z))`.
@@ -115,14 +132,14 @@ def kernel_on_chi_R(
       tuple[Array, Array]: $K(\chi)$ with shape `(n_bins, n_chi)` and
         $K(R\chi)$ with shape `(n_bins, n_chi, n_R)`.
     """
-    W_chi = akima_interpolation(W_z, z, z_of_chi, axis=-1)
+    W_chi = _spline(W_z, z, z_of_chi)
     # Beyond the redshift range the kernel was built on there is no signal:
-    # an Akima extrapolation there would be arbitrary, not physical.
+    # an extrapolation there would be arbitrary, not physical.
     inside = (z_of_chi >= z[0]) & (z_of_chi <= z[-1])
     W_chi = jnp.where(inside, W_chi, 0.0)
 
     chi_R = jnp.outer(chi, R)
-    W_chi_R = akima_interpolation(W_chi, chi, chi_R.flatten(), axis=-1)
+    W_chi_R = _spline(W_chi, chi, chi_R.flatten())
     W_chi_R = W_chi_R.reshape(W_chi.shape[0], len(chi), len(R))
     if divide_by_chi2:
         W_chi = W_chi / chi**2

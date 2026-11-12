@@ -132,7 +132,7 @@ def test_chebyshev_coeffs_pipeline_shapes():
 def linear_kernel_setup():
     """Kernels linear in z, W(z) = a z + b, with z(chi) = chi / 250.
 
-    Akima interpolation is exact on linear data, even when extrapolating, so
+    A cubic spline is exact on linear data, even when extrapolating, so
     the expected values of the tests below are known in closed form.
     """
     z = jnp.linspace(0.0, 2.0, 60)
@@ -209,7 +209,7 @@ def test_kernel_on_chi_R_divides_by_chi2_after_interpolating():
 def test_kernel_on_chi_R_zero_outside_redshift_range(linear_kernel_setup):
     """There is no signal beyond the redshift range the kernel was built on.
 
-    Where z(chi) exceeds z[-1], an Akima extrapolation would give arbitrary
+    Where z(chi) exceeds z[-1], an extrapolation would give arbitrary
     values; the kernel is set to zero there instead, and left untouched inside.
     """
     z, _, _, a, b, W_z = linear_kernel_setup
@@ -223,6 +223,70 @@ def test_kernel_on_chi_R_zero_outside_redshift_range(linear_kernel_setup):
     assert outside.any() and (~outside).any()
     np.testing.assert_array_equal(np.asarray(W_chi)[:, outside], 0.0)
     assert np.all(np.abs(np.asarray(W_chi)[:, ~outside]) > 0.0)
+
+
+@pytest.fixture
+def bump_kernels():
+    """Two realistic-looking kernels: bumps in z, exactly zero beyond them
+    (as a kernel past the support of its redshift distribution)."""
+    z = jnp.linspace(0.0, 2.0, 120)
+    chi = jnp.linspace(26.0, 700.0, 40)
+    z_of_chi = chi / 300.0
+    R = jnp.linspace(0.05, 1.0, 7)
+
+    def bump(mean, width):
+        shape = jnp.exp(-0.5 * ((z - mean) / width) ** 2) * (1.0 + 0.3 * z)
+        return jnp.where(jnp.abs(z - mean) < 3 * width, shape, 0.0)
+
+    W1 = jnp.stack([bump(0.5, 0.1), bump(1.0, 0.2)])
+    W2 = jnp.stack([bump(0.7, 0.05), bump(0.3, 0.1)])
+    return z, chi, z_of_chi, R, W1, W2
+
+
+@pytest.mark.parametrize("divide_by_chi2", [False, True])
+def test_kernel_on_chi_R_is_linear_in_the_kernel(bump_kernels, divide_by_chi2):
+    """The resampling is a linear map of the kernel values.
+
+    So is the C_ell (bilinear in the kernels): sums of contributions and
+    amplitudes such as A_IA or the magnification bias go through the
+    resampling unchanged, and the derivatives with respect to them are
+    exact also where the kernel vanishes (an Akima interpolation, whose
+    weights depend on the data, is not linear and has no derivative at a
+    vanishing kernel).
+    """
+    z, chi, z_of_chi, R, W1, W2 = bump_kernels
+
+    def resample(W):
+        return kernel_on_chi_R(W, z, z_of_chi, chi, R, divide_by_chi2)
+
+    a, b = 2.5, -0.7
+    for combined, parts in zip(
+        resample(a * W1 + b * W2), zip(resample(W1), resample(W2))
+    ):
+        np.testing.assert_allclose(
+            combined,
+            a * parts[0] + b * parts[1],
+            rtol=1e-12,
+            atol=1e-12 * float(jnp.max(jnp.abs(combined))),
+        )
+
+
+def test_kernel_on_chi_R_derivative_at_zero_amplitude(bump_kernels):
+    """d K(A W) / dA = K(W) for every A, also at A = 0 (a kernel that
+    vanishes everywhere), in both modes of differentiation."""
+    z, chi, z_of_chi, R, W1, _ = bump_kernels
+
+    def resample(A):
+        return kernel_on_chi_R(A * W1, z, z_of_chi, chi, R, True)
+
+    expected = resample(1.0)
+    for A in (0.0, 1e-12, -1e-12, 1.0):
+        forward = jax.jacfwd(resample)(A)
+        reverse = jax.jacrev(resample)(A)
+        for exp, fwd, rev in zip(expected, forward, reverse):
+            scale = float(jnp.max(jnp.abs(exp)))
+            np.testing.assert_allclose(fwd, exp, rtol=1e-10, atol=1e-12 * scale)
+            np.testing.assert_allclose(rev, exp, rtol=1e-10, atol=1e-12 * scale)
 
 
 # ---------------------------------------------------------------------------

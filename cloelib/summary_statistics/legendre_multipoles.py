@@ -324,9 +324,9 @@ class LegendreMultipoles:
         Pk2d_tot: np.ndarray
             Total 2D power spectrum (including RSD, systematics, and noise)
         """
-        return self.spectro_power.Pk2d_rsd(k, mu) * self._damping_function(k, mu) * (
-            1.0 - self.parameters["fout"]
-        ) ** 2 + self._Pk2d_noise(k, mu)
+        return self.spectro_power.Pk2d_rsd(k, mu) * self._damping_function(
+            k, mu
+        ) * self.parameters["fcorr"] ** 2 + self._Pk2d_noise(k, mu)
 
     def _Pk2d_term_tot(
         self, k: np.ndarray, mu: np.ndarray, term_list: list
@@ -349,7 +349,7 @@ class LegendreMultipoles:
         return (
             self.spectro_power.Pk2d_term_rsd(k, mu, term_list=term_list)
             * self._damping_function(k, mu)
-            * (1.0 - self.parameters["fout"]) ** 2
+            * self.parameters["fcorr"] ** 2
         )
 
     @format_output("PK_multipoles")

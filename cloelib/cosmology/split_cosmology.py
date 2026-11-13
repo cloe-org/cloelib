@@ -22,6 +22,7 @@ class SplitLinearPerturbations:
         self.z = redshifts
         self.kmax = 100
         self.lin_perturbations = lin_perturbations
+        self.sigma8 = float("NaN")
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -174,15 +175,26 @@ class SplitLinearPerturbations:
         """
         Calculate the split sigma8 value. This is taken from the EBS and then
         rescaled with the growth as in 2301.03694, Equation (8).
-        Only works if the matter_power_spectrum function has been called.
-        This is to avoid repeatedly calling the ODE which takes time.
 
         Returns:
         --------
         sigma8: float
             The sigma8 value.
         """
-        return self.sigma8
+
+        if np.isnan(self.sigma8):
+            Omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
+            # Compute the growth factor
+            g_z_geo = growth_function_ODE(self.background, self.z, Omega_m_geo)
+            g_z_growth = growth_function_ODE(
+                self.background, self.z, self.Omega_m_growth
+            )
+
+            # Rescale sigma_8
+            return g_z_growth[0] / g_z_geo[0] * self.lin_perturbations.sigma8_0()
+
+        else:
+            return self.sigma8
 
 
 class SplitNonLinearPerturbations:

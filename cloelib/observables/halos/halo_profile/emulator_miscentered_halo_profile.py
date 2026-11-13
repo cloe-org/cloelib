@@ -94,7 +94,7 @@ class EmulatorMiscenteredHaloProfile(HaloProfileBase):
         sigma_weights: dict | str | None = None,
         delta_sigma_weights: dict | str | None = None,
     ):
-        """
+        r"""
         Instantiate and load the two emulator networks from weight dicts,
         falling back to the weights embedded in EmuNetWeights
 

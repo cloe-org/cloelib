@@ -146,11 +146,11 @@ class Background(Protocol):
         ...
 
     def comoving_distance(self, zs: T) -> T:
-        """Calculate the comoving distance for given redshifts."""
+        """Calculate the line-of-sight comoving distance chi for given redshifts."""
         ...
 
     def transverse_comoving_distance(self, zs: T) -> T:
-        """Calculate the transverse comoving distance for given redshifts."""
+        """Calculate the transverse comoving distance f_K(chi) for given redshifts."""
         ...
 
     def angular_diameter_distance(self, zs: T) -> T:

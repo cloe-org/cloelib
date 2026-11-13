@@ -46,6 +46,7 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all follows.
 from typing import Any, Callable, Protocol
 
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.geometry import transverse_distance
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import (
     cached_stacked_simpson,
@@ -221,6 +222,8 @@ class MagnificationContribution:
     Lensing by the total matter, so it traces `MATTER` even with
     `use_Pcb=True` (the default `field`).
     """
+
+    traces_potential = True
 
     def __init__(self, tracer: "PositionsTracer") -> None:
         self._tracer = tracer
@@ -944,13 +947,14 @@ class PositionsTracer:
 
         and shifted distances defined by the ``_alpha_coeffs`` factors:
         $$
-        \chi_{-}=\frac{2\ell-3}{2\ell+1}\chi(z),\qquad
-        \chi_{+}=\frac{2\ell+5}{2\ell+1}\chi(z).
+        f_{K,-}=\frac{2\ell-3}{2\ell+1}f_K(z),\qquad
+        f_{K,+}=\frac{2\ell+5}{2\ell+1}f_K(z).
         $$
 
-        The coefficients match ``_L_coeffs``. Multipoles below 2 are set to
-        zero, and shifted-distance queries outside the tabulated ``chi`` grid
-        contribute zero.
+        The coefficients match ``_L_coeffs`` and are also used for $K \neq 0$,
+        as in the CLASS Limber RSD transfer (``transfer_limber``). Multipoles
+        below 2 are set to zero, and shifted-distance queries outside the
+        tabulated grid contribute zero.
         $$
         A_\ell=\frac{2\ell^2+2\ell-1}{(2\ell-1)(2\ell+3)},\quad
         B_\ell=-\frac{\ell(\ell-1)}{(2\ell-1)\sqrt{(2\ell-3)(2\ell+1)}},\quad
@@ -959,9 +963,8 @@ class PositionsTracer:
 
         Notes
         -----
-        - `chi` is used purely as an interpolation coordinate so `get_photo_rsd` can evaluate
+        - `f_K(chi)` is used purely as an interpolation coordinate so `get_photo_rsd` can evaluate
           the shifted arguments efficiently.
-
         Parameters
         ----------
         ells : array_like
@@ -978,7 +981,8 @@ class PositionsTracer:
         """
         # S_i(z) = H(z) f(z) n_i(z) / c
         S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted
-        return get_photo_rsd(ells, chi, S)
+        Ok, H0 = self.background.Omega_k0, self.background.H0
+        return get_photo_rsd(ells, transverse_distance(chi, Ok, H0), S)
 
     def get_magnification_efficiency(self, z):
         r"""
@@ -1001,7 +1005,11 @@ class PositionsTracer:
         """
         dz = z[1] - z[0]  # assuming equispaced!
         rz = self.background.comoving_distance(z)
-        rzrz = 1 - np.outer(rz, 1 / rz)
+        Ok, H0 = self.background.Omega_k0, self.background.H0
+        rzrz = (
+            transverse_distance(rz[None, :] - rz[:, None], Ok, H0)
+            / transverse_distance(rz, Ok, H0)[None, :]
+        )
         w_matrix = cached_stacked_simpson(len(z))
         result = np.einsum("ik, jk, jk->ij", self.dndz_shifted, rzrz, w_matrix) * dz
         return result
@@ -1011,7 +1019,8 @@ class PositionsTracer:
 
         The geometric efficiency is evaluated on the supplied redshift grid
         using the shifted source distribution and Simpson weights; its
-        distance-ratio factor is ``1 - chi(z_lens) / chi(z_source)``. The
+        distance-ratio factor is ``f_K(chi(z_source) - chi(z_lens)) /
+        f_K(chi(z_source))``. The
         resulting efficiency is multiplied by the usual matter-lensing
         prefactor and the per-bin ``magnification_bias`` value.
 
@@ -1029,7 +1038,11 @@ class PositionsTracer:
             * (self.background.H0 / c_0) ** 2
             * Omega_m0
             * (1 + z)
-            * self.background.comoving_distance(z)
+            * transverse_distance(
+                self.background.comoving_distance(z),
+                self.background.Omega_k0,
+                self.background.H0,
+            )
         )
         efficiency = self.get_magnification_efficiency(z)
         # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.

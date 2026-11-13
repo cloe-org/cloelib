@@ -6,6 +6,7 @@ holds `GWNumberCountsTracer`.
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.geometry import cos_K, transverse_distance
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import (
     cached_stacked_simpson,
@@ -25,6 +26,8 @@ c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 class GWWeakLensingContribution:
     """Weak-lensing convergence kernel term of `GWWeakLensingTracer.get_window()`."""
+
+    traces_potential = True
 
     def __init__(self, tracer: "GWWeakLensingTracer") -> None:
         self._tracer = tracer
@@ -92,14 +95,19 @@ class GWWeakLensingTracer:
         interpolator = interpax.Akima1DInterpolator(
             self.z, self.dndz_shifted[bin_idx, :]
         )
+        Ok, H0 = self.background.Omega_k0, self.background.H0
         x = np.linspace(0.0, 4, 200)
         y = self.background.comoving_distance(x)
-        rx_interp = interpax.Akima1DInterpolator(x, y)
+        rx_interp = interpax.Akima1DInterpolator(x, transverse_distance(y, Ok, H0))
+        cx_interp = interpax.Akima1DInterpolator(x, cos_K(y, Ok, H0))
         f1 = jax.jit(lambda x: interpolator(x))
-        f2 = jax.jit(lambda x: interpolator(x) / rx_interp(x))
+        f2 = jax.jit(lambda x: interpolator(x) * cx_interp(x) / rx_interp(x))
         integral_1 = simps(f1, z, 3.0)
         integral_2 = simps(f2, z, 3.0)
-        efficiency = integral_1 - integral_2 * self.background.comoving_distance(z)
+        rz = self.background.comoving_distance(z)
+        efficiency = cos_K(rz, Ok, H0) * integral_1 - integral_2 * transverse_distance(
+            rz, Ok, H0
+        )
         return efficiency
 
     def get_lensing_efficiency(self, z) -> np.ndarray:
@@ -126,7 +134,11 @@ class GWWeakLensingTracer:
         """
         dz = z[1] - z[0]  # assuming equispaced!
         rz = self.background.comoving_distance(z)
-        rzrz = 1 - np.outer(rz, 1 / rz)
+        Ok, H0 = self.background.Omega_k0, self.background.H0
+        rzrz = (
+            transverse_distance(rz[None, :] - rz[:, None], Ok, H0)
+            / transverse_distance(rz, Ok, H0)[None, :]
+        )
         w_matrix = cached_stacked_simpson(len(z))
         result = np.einsum("ik, jk, jk->ij", self.dndz_shifted, rzrz, w_matrix) * dz
         return result
@@ -144,10 +156,10 @@ class GWWeakLensingTracer:
             W_{i}^{\kappa}(z) =
             \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
             \Omega_{{\rm m},0} (1 + z)
-            \chi(z)
+            f_K[\chi(z)]
             \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm GW}(z^{\prime})
-            \frac{\chi(z^{\prime}) - \chi(z)}
-            {\chi(z^{\prime})}}\\
+            \frac{f_K[\chi(z^{\prime}) - \chi(z)]}
+            {f_K[\chi(z^{\prime})]}}\\
         $$
 
         Parameters:
@@ -163,7 +175,11 @@ class GWWeakLensingTracer:
             * (self.background.H0 / c_0) ** 2
             * Omega_m0
             * (1 + z)
-            * self.background.comoving_distance(z)
+            * transverse_distance(
+                self.background.comoving_distance(z),
+                self.background.Omega_k0,
+                self.background.H0,
+            )
         )
         efficiency = self.get_lensing_efficiency(z)
         return np.einsum("ij, j->ij", efficiency, factor)

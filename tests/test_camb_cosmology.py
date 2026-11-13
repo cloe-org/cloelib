@@ -662,3 +662,29 @@ def test_camb_linear_pk_uses_its_own_results(
         np.exp(np.interp(np.log(k_high), np.log(k_nodes), np.log(pk_nodes[i0]))),
         rtol=1e-2,
     )
+
+
+@pytest.mark.parametrize("Omega_k0", [-0.05, 0.05])
+def test_camb_transverse_comoving_distance_curved(Omega_k0):
+    """f_K(chi) matches CAMB's own D_M = (1 + z) D_A for a curved background."""
+    h = 0.677
+    background = CAMBBackground(
+        H0=100 * h,
+        Omega_b0=0.022 / h**2,
+        Omega_cdm0=0.12 / h**2,
+        Omega_k0=Omega_k0,
+        As=2e-9,
+        ns=0.96,
+        alpha_s=0.0,
+        mnu=0.0,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+        N_mnu=0,
+    )
+    zs = np.array([0.5, 1.0, 2.0, 3.0])
+    assert_allclose(
+        background.transverse_comoving_distance(zs),
+        (1 + zs) * background.angular_diameter_distance(zs),
+        rtol=1e-6,
+    )

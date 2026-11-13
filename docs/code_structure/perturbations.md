@@ -244,7 +244,7 @@ Accurate and fast emulators of the linear, non-linear, and baryonic power spectr
 
 - Fast predictions of linear power spectra, growth factors, growth rates, and amplitude of fluctuations;
 - Accurate total and cold non-linear matter power spectrum emulated from high-resolution simulations;
-- Inclusion of baryonic effects through baryonification;
+- Inclusion of baryonic effects through baryonification, with an optional redshift-dependent halo mass scale, $\log_{10} M_c(z) = \log_{10} M_c - \alpha_z z$ (`alpha_z`, default 0; clipped at $z > 0$ to the emulator range), in both `BACCOemuNonLinearPerturbations(baryonic_boost=...)` and `BACCOemuBaryonBoostMixin`;
 - Large cosmological parameter range;
 - Neural network evaluation with JAX;
 

@@ -63,6 +63,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | NA                                                            | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                                             | NA                                                                 |
 | NA                                                            | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                                           | NA                                                                 |
 | NA                                                            | [FlamingoBaryonResponseEmulator](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator) | NA                                                                 |
+| NA                                                            | [BCemu](https://github.com/sambit-giri/BCemu)                                                   | NA                                                                 |
 
 We do not provide installation support for `PBJ`.
 
@@ -77,6 +78,7 @@ Several optional dependencies enhance **cloelib** capabilities:
 - **`tensorflow`** – Needed for certain emulator backends (i.e: `HMCode2020emu`)
 - **`baccoemu`** – Required for BACCOemu nonlinear and baryonic perturbations
 - **`FlamingoBaryonResponseEmulator`** – Required for FLAMINGO baryonic suppression
+- **`BCemu`** – Required for BCemu baryonic suppression
 
 These are not included in the default installation but can be installed as shown below.
 

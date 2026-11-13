@@ -289,6 +289,12 @@ def _camb_flamingo():
     return lin, nonlin
 
 
+def _camb_bcemu():
+    from cloelib.cosmology.BCemu_cosmology import BCemuBaryonBoostMixin
+
+    return _camb_with(BCemuBaryonBoostMixin, log10Mc=13.3, thej=4.2, deta=0.14)
+
+
 # How `growth_rate` treats `ks`:
 SCALE_INDEPENDENT = "scale-independent"  # broadcast along k
 PIVOT_K = 1.0  # scale dependent, evaluated at this k [1/Mpc] if ks is None
@@ -315,6 +321,7 @@ BACKENDS = {
     ),
     "CAMB+BACCOemu": (_camb_bacco_baryons, "baccoemu", SCALE_INDEPENDENT),
     "CAMB+HMcode2020": (_camb_hmcode_baryons, "HMcode2020Emu", SCALE_INDEPENDENT),
+    "CAMB+BCemu": (_camb_bcemu, "BCemu", SCALE_INDEPENDENT),
 }
 
 

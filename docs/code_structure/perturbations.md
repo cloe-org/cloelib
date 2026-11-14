@@ -680,6 +680,19 @@ Accurate and fast emulator of the nonlinear matter power spectrum in modified gr
 - Accurate emulation of the nonlinear modified gravity boost based on N-body simulations;
 - Limited to the Hu & Sawicki model (n=1) with fR0 as free parameter;
 
+### nDGPemuPerturbations
+
+Accurate and fast emulator of the nonlinear matter power spectrum in modified gravity using [nDGPemu](https://github.com/BartolomeoF/nDGPemu).
+
+**Location**: `cloelib/cosmology/nDGPemu_cosmology.py`
+
+**When to use**: Predictions for the nonlinear matter clustering in nDGP gravity.
+
+**Features**:
+
+- Fast predictions of the nonlinear matter power spectrum in nDGP gravity;
+- Accurate emulation of the nonlinear modified gravity boost based on COLA simulations;
+
 ## Baryonic Boost Mixin Framework
 
 `cloelib` provides a composable `BaryonBoostMixin` Protocol that decouples the baryonic suppression from the underlying nonlinear solver. This makes it easy to combine any nonlinear backend with any baryonic model.

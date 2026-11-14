@@ -63,6 +63,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | NA                                                            | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                                             | NA                                                                 |
 | NA                                                            | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                                           | NA                                                                 |
 | NA                                                            | [FlamingoBaryonResponseEmulator](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator) | NA                                                                 |
+| NA                                                            | [nDGPemu](https://github.com/BartolomeoF/nDGPemu)                                               | NA                                                                 |
 
 We do not provide installation support for `PBJ`.
 
@@ -131,12 +132,13 @@ pip install .[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,tf-kera
 
 The `react` extra installs the TensorFlow support needed by the ReACT modified-gravity boost module; [`MGEmu`](https://github.com/nebblu/MGEmus.git) itself is installed in step 5.
 
-4. **Install backends not available on PyPI** – HMcode2020Emu, MGEmu (needed by the `react` module) and mochi_class are only distributed from GitHub, so they cannot be declared as extras of a package published on PyPI. Install the ones you need directly:
+4. **Install backends not available on PyPI** – HMcode2020Emu, MGEmu (needed by the `react` module), mochi_class and nDGPemu are only distributed from GitHub, so they cannot be declared as extras of a package published on PyPI. Install the ones you need directly:
 
 ```sh
 pip install "HMcode2020Emu @ git+https://github.com/MariaTsedrik/HMcode2020Emu.git"
 pip install "MGemu @ git+https://github.com/nebblu/MGEmus.git"
 pip install "mochi_classy @ git+https://github.com/mcataneo/mochi_class_public.git@mochi_classy"
+pip install "nDGPemu @ git+https://github.com/BartolomeoF/nDGPemu"
 ```
 
 You're all set! 🎉 Ready to compute cosmological observables.

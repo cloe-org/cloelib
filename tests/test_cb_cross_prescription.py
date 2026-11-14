@@ -67,6 +67,9 @@ EXPECTED = {
     "emantis_cosmology.py": {
         "EmantisFofrNonLinearPerturbations": PROPERTY,
     },
+    "nDGPemu_cosmology.py": {
+        "NDGPemuNonLinearPerturbations": PROPERTY,
+    },
     "jax_cosmology.py": {
         "JAXLinearPerturbations": "CB_CROSS_CORRELATED",
         "JAXNonLinearPerturbations": "CB_CROSS_LINEAR_NU",

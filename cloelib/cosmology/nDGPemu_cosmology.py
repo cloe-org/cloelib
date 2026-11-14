@@ -134,6 +134,16 @@ class NDGPemuNonLinearPerturbations:
         """Return the background object."""
         return self._background
 
+    @property
+    def cb_cross_prescription(self) -> str | None:
+        """cb x matter cross spectrum prescription, that of the LCDM baseline.
+
+        The same boost rescales the baseline total matter and cb spectra, so
+        the cross spectrum follows the baseline's prescription (`None` if the
+        baseline declares none).
+        """
+        return getattr(self.nonlinearpertubations_lcdm, "cb_cross_prescription", None)
+
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         """Compute the nonlinear total matter power spectrum.
 
@@ -173,8 +183,6 @@ class NDGPemuNonLinearPerturbations:
 
         # We are assuming that we can apply the same MG boost to the total matter
         # and to the CDM+baryons matter power spectra.
-        # In any case, nDGPemu has been calibrated without neutrinos, so any use of neutrinos
-        # (or other non-cold matter) with this perturbation class will require some testing.
         return self.boost_interp(
             zs, np.log(ks)
         ) * self.nonlinearpertubations_lcdm.matter_power_spectrum_cb(zs, ks)

@@ -63,7 +63,7 @@ We welcome feedback from the **Euclid community** and beyond to refine and impro
 | NA                                                            | [BACCOemu](https://bitbucket.org/rangulo/baccoemu/)                                             | NA                                                                 |
 | NA                                                            | [e-MANTIS](https://gitlab.obspm.fr/e-mantis/e-mantis)                                           | NA                                                                 |
 | NA                                                            | [FlamingoBaryonResponseEmulator](https://github.com/FLAMINGOSIM/FlamingoBaryonResponseEmulator) | NA                                                                 |
-| NA                                                            | [nDGPemu](https://github.com/BartolomeoF/nDGPemu)                             | NA                                                                 |
+| NA                                                            | [nDGPemu](https://github.com/BartolomeoF/nDGPemu)                                               | NA                                                                 |
 
 We do not provide installation support for `PBJ`.
 

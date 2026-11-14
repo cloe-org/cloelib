@@ -3,6 +3,7 @@
 import numpy as np
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.EE2_cosmology import LinearPerturbationsWithK
 from nDGPemu import BoostPredictor
 from scipy import interpolate
 
@@ -18,7 +19,7 @@ class NDGPemuNonLinearPerturbations:
     def __init__(
         self,
         background: Background,
-        linearperturbations: Perturbations,
+        linearperturbations: LinearPerturbationsWithK,
         nonlinearperturbations_lcdm: Perturbations,
         omega_rc: float,
         redshifts: np.ndarray,

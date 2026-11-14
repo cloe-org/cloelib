@@ -5,11 +5,11 @@ from cloelib.cosmology.cosmology import Background
 
 # General imports
 from typing import Sequence
-import numpy as np  # type: ignore
+import numpy as np
 
 # Cosmology imports
 try:
-    from comet import comet  # type: ignore
+    from comet import comet
 
     comet_inst = comet(model="VDG_infty", use_Mpc=True, bias_basis="AssBauGre")
 except ImportError:

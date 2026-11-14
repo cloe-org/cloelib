@@ -136,6 +136,16 @@ class EmantisFofrNonLinearPerturbations:
         """Return the background object."""
         return self._background
 
+    @property
+    def cb_cross_prescription(self) -> str | None:
+        """cb x matter cross spectrum prescription, that of the LCDM baseline.
+
+        The same boost rescales the baseline total matter and cb spectra, so
+        the cross spectrum follows the baseline's prescription (`None` if the
+        baseline declares none).
+        """
+        return getattr(self.nonlinearpertubations_lcdm, "cb_cross_prescription", None)
+
     def matter_power_spectrum(self, zs, ks) -> np.ndarray:
         """Compute the nonlinear total matter power spectrum.
 
@@ -171,15 +181,26 @@ class EmantisFofrNonLinearPerturbations:
         -------
         pk: numpy.ndarray
             Nonlinear CDM+baryons power spectrum at the input redshift and wavenumber values.
+
+        Raises
+        ------
+        ValueError
+            If the cosmology has massive neutrinos.
         """
 
-        # We are assuming that we can apply the same MG boost to the total matter
-        # and to the CDM+baryons matter power spectra.
-        # In any case, emantis has been calibrated without neutrinos, so any use of neutrinos
-        # (or other non-cold matter) with this perturbation class will require some testing.
+        # emantis has been calibrated without massive neutrinos, where the
+        # CDM+baryons and the total matter coincide and the same MG boost applies
+        # to both. With massive neutrinos the boost of the CDM+baryons spectrum
+        # is not known.
+        if np.sum(self.background.mnu) > 0:
+            raise ValueError(
+                "EmantisFofrNonLinearPerturbations does not provide the CDM+baryons "
+                "power spectrum with massive neutrinos (mnu > 0): emantis has been "
+                "calibrated without them."
+            )
         return self.boost_interp(
             zs, np.log(ks)
-        ) * self.nonlinearpertubations_lcdm.matter_power_spectrum(zs, ks)
+        ) * self.nonlinearpertubations_lcdm.matter_power_spectrum_cb(zs, ks)
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """Compute the growth factor D(z, k) normalized to D(0).
@@ -199,23 +220,23 @@ class EmantisFofrNonLinearPerturbations:
 
         return self.linearperturbations.growth_factor(zs, ks)
 
-    def growth_rate(self, zs, ks) -> np.ndarray:
+    def growth_rate(self, zs=None, ks=None) -> np.ndarray:
         """Compute the growth rate f(z, k) for given redshifts and wavenumbers.
 
         Parameters:
         -----------
-        zs : array_like
-            Redshifts at which to calculate the growth factor.
-        ks : array_like
-            Wavenumbers at which to calculate the growth factor.
+        zs : Optional[array_like]
+            Redshifts at which to calculate the growth rate. Defaults to `self.z`.
+        ks : Optional[array_like]
+            Wavenumbers at which to calculate the growth rate.
 
         Returns:
         --------
         np.ndarray
-            The growth rate as a function of redshift and wavenumber.
+            The linear growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
         """
 
-        return self.linearperturbations.growth_rate(zs, ks)
+        return self.linearperturbations.growth_rate(self.z if zs is None else zs, ks)
 
     def sigma8_0(self) -> float:
         """

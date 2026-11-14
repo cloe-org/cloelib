@@ -1,0 +1,33 @@
+name: fair-software
+
+# Assesses compliance of the public repository with the fair-software.eu
+# recommendations (https://fair-software.eu) using howfairis.
+#
+# NOTE: howfairis inspects the repository through its public GitHub URL, i.e.
+# the default branch, not the branch/PR that triggers the workflow. The README
+# badge is static and must be updated by hand if the reported result changes.
+on:
+  push:
+    branches:
+      - main
+      # TEMPORARY: remove before merging; only used to test the workflow in PR #685
+      - 528-fair-badge-for-public-repo
+  schedule:
+    # Weekly, Monday 06:00 UTC
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: fair-software
+    runs-on: ubuntu-latest
+    steps:
+      - name: Measure compliance with fair-software.eu recommendations
+        uses: fair-software/howfairis-github-action@0.2.1
+        env:
+          PYCHARM_HOSTED: "Trick colorama into displaying colored output"
+        with:
+          MY_REPO_URL: "https://github.com/${{ github.repository }}"

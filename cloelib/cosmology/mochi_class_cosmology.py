@@ -1,7 +1,12 @@
 """Implementation of Background and Perturbation cosmology using MOCHI_CLASS (https://github.com/mcataneo/mochi_class_public)."""
 
 # cloelib imports
-from cloelib.cosmology.cosmology import Background
+from cloelib.cosmology.cosmology import (
+    CB_CROSS_CORRELATED,
+    CB_CROSS_LINEAR_NU,
+    Background,
+    Perturbations,
+)
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 import sys
 
@@ -16,7 +21,7 @@ np.set_printoptions(threshold=sys.maxsize)
 # Cosmology imports (make sure it's the version of mochi_class that's being imported not the standard CLASS!)
 try:
     import mochi_classy
-    from mochi_classy import Class  # type: ignore
+    from mochi_classy import Class
 
     print(f"Loaded mochi_classy from {mochi_classy.__file__}")
 except ImportError as e:
@@ -427,7 +432,7 @@ class mochiCLASSBackground:
         """
         return np.array([self.results.angular_distance(z) for z in zs])
 
-    def Omega_m(self, zs: np.ndarray) -> np.ndarray:
+    def Omega_m(self, zs: Union[np.ndarray, float]) -> np.ndarray:
         """
         Return the matter density as a function of redshift.
 
@@ -530,12 +535,13 @@ class mochiCLASSBackground:
 class mochiCLASSLinearPerturbations:
     """Class for perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
 
+    cb_cross_prescription = CB_CROSS_CORRELATED
+
     def __init__(self, background: Background, redshifts: np.ndarray):
         """Initialize the CLASSLinearPerturbation instance."""
         self.background = background
         self.z = redshifts
         self.kmax = 100
-        self.results = None  # Store CLASS results
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)
@@ -590,7 +596,7 @@ class mochiCLASSLinearPerturbations:
         # ks /= self.background.h
         self.Pk_linear = np.array(
             [[self.results.pk_lin(ki, zi) for ki in ks] for zi in zs]
-        )  # type: ignore[union-attr]
+        )
         # To match array convention of CAMB
         return self.Pk_linear  # * (self.background.h) ** 3
 
@@ -634,7 +640,7 @@ class mochiCLASSLinearPerturbations:
             )
         else:
             self.Pk_cb_linear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_linear
@@ -669,20 +675,34 @@ class mochiCLASSLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self, k=1.0) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
-        Calculate the scale-dependent growth rate f(z).
+        Calculate the scale-dependent growth rate f(z, k).
 
         Args:
-            k (float): Wavenumber at which to evaluate the growth rate. Defaults to 1.0 (scale-independent).
+            zs (Optional[np.ndarray]): Redshifts at which to evaluate the growth rate.
+                Defaults to `self.z`.
+            ks (Optional[np.ndarray]): Wavenumbers at which to evaluate the growth rate.
 
         Returns:
         -------
         np.ndarray
-            Scale-dependent growth rate f(z)
+            Growth rate f(z) at k = 1 Mpc^-1 with shape (nz,) if ks is None,
+            and f(z, k) with shape (nz, nk) otherwise.
         """
-        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]  # type: ignore[union-attr]
-        return np.array(arr)
+        z = self.z if zs is None else np.atleast_1d(zs)
+        if ks is None:
+            return np.array(
+                [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in z]
+            )
+        return np.array(
+            [
+                [self.results.scale_dependent_growth_factor_f(ki, zi) for ki in ks]
+                for zi in z
+            ]
+        )
 
     def sigma8_0(self) -> float:
         """
@@ -705,10 +725,16 @@ class mochiCLASSLinearPerturbations:
 class mochiCLASSNonLinearPerturbations:
     """Class for non-linear perturbations cosmology using MOCHI_CLASS, inheriting from Perturbations parent class."""
 
+    # CLASS runs its nonlinear model (halofit/HMcode) on P_cb separately from
+    # P_mm, so the cb x matter cross spectrum follows neither prescription
+    # exactly: they differ by ~1% at mnu = 0.15 eV with HMcode2020.
+    # CB_CROSS_LINEAR_NU only uses CLASS's own nonlinear P_cb and linear spectra.
+    cb_cross_prescription = CB_CROSS_LINEAR_NU
+
     def __init__(
         self,
-        background: Background,
-        linearperturbations: Optional[object],
+        background: mochiCLASSBackground,
+        linearperturbations: Optional[Perturbations],
         redshifts: np.ndarray,
         nonlinear_model: Optional[str] = None,
         hmcode_version: Optional[str] = None,
@@ -718,17 +744,47 @@ class mochiCLASSNonLinearPerturbations:
 
         Args:
             background: Background cosmology object.
-            linearperturbations: Linear perturbations object (unused by CLASS, which computes
-                nonlinear corrections internally; accepted for interface compatibility with
-                emulator-based NonLinPerturbations classes).
+            linearperturbations: Linear perturbations object (CLASS computes the nonlinear
+                corrections internally). Only needed for the cb x matter cross spectrum,
+                e.g. `mochiCLASSLinearPerturbations` on the same background.
             redshifts (np.ndarray): Array of redshifts for the calculations.
-            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None (no nonlinear).
-            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None.
-            log10TAGN (Optional[float]): HMCode baryonic feedback log_10_T_AGN parameter. Defaults to None.
+            nonlinear_model (Optional[str]): The nonlinear model to use. Defaults to None
+                (no nonlinear), or "hmcode" if `log10TAGN` is given.
+            hmcode_version (Optional[str]): The HMcode version to use. Defaults to None,
+                or "2020_baryonic_feedback" if `log10TAGN` is given.
+            log10TAGN (Optional[float]): HMcode2020 baryonic feedback parameter
+                log10(T_AGN/K), passed to CLASS as `log10T_heat_hmcode`. Defaults to None
+                (no baryonic feedback, or the CLASS default for "2020_baryonic_feedback").
+
+        Raises:
+            ValueError: If `log10TAGN` is given with a nonlinear model or HMcode version
+                that ignores it, or with `background.mg_stable_basis_on`.
         """
         self.background = background
         self.z = redshifts
+        self.linearperturbations = linearperturbations
         self.kmax = 100
+
+        if log10TAGN is not None:
+            if background.mg_stable_basis_on:
+                raise ValueError(
+                    "log10TAGN is not supported with mg_stable_basis_on, for which "
+                    "mochi_class does not implement nonlinear corrections."
+                )
+            if nonlinear_model is None:
+                nonlinear_model = "hmcode"
+            if hmcode_version is None:
+                hmcode_version = "2020_baryonic_feedback"
+            if (nonlinear_model, hmcode_version) != (
+                "hmcode",
+                "2020_baryonic_feedback",
+            ):
+                raise ValueError(
+                    "log10TAGN is only used by nonlinear_model='hmcode' with "
+                    "hmcode_version='2020_baryonic_feedback', got "
+                    f"nonlinear_model={nonlinear_model!r}, "
+                    f"hmcode_version={hmcode_version!r}."
+                )
 
         if nonlinear_model is None:
             nonlinear_model = "none"
@@ -750,13 +806,8 @@ class mochiCLASSNonLinearPerturbations:
             )
         elif hmcode_version is not None:
             self.interface_args["CLASSparams"]["hmcode_version"] = hmcode_version
-            if hmcode_version == "2020_baryonic_feedback":
-                try:
-                    self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
-                except KeyError:
-                    raise KeyError(
-                        "log10TAGN is required for HMcode 2020 baryonic feedback model."
-                    )
+            if log10TAGN is not None:
+                self.interface_args["CLASSparams"]["log10T_heat_hmcode"] = log10TAGN
         self.interface_args["CLASSparams"]["z_max_pk"] = np.max(self.z)
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])
@@ -830,7 +881,7 @@ class mochiCLASSNonLinearPerturbations:
             )
         else:
             self.Pk_cb_nonlinear = np.array(
-                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]  # type: ignore[union-attr]
+                [[self.results.pk_cb(ki, zi) for ki in ks] for zi in zs]
             )
         # To match array convention of CAMB
         return self.Pk_cb_nonlinear
@@ -860,20 +911,34 @@ class mochiCLASSNonLinearPerturbations:
 
         return D_z_k
 
-    def growth_rate(self, k=1.0) -> np.ndarray:
+    def growth_rate(
+        self, zs: Optional[np.ndarray] = None, ks: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
-        Calculate the scale-dependent growth rate f(z).
+        Calculate the scale-dependent growth rate f(z, k).
 
         Args:
-            k (float): Wavenumber at which to evaluate the growth rate. Defaults to 1.0 (scale-independent).
+            zs (Optional[np.ndarray]): Redshifts at which to evaluate the growth rate.
+                Defaults to `self.z`.
+            ks (Optional[np.ndarray]): Wavenumbers at which to evaluate the growth rate.
 
         Returns:
         -------
         np.ndarray
-            Scale-dependent growth rate f(z)
+            Growth rate f(z) at k = 1 Mpc^-1 with shape (nz,) if ks is None,
+            and f(z, k) with shape (nz, nk) otherwise.
         """
-        arr = [self.results.scale_dependent_growth_factor_f(k, zi) for zi in self.z]  # type: ignore[union-attr]
-        return np.array(arr)
+        z = self.z if zs is None else np.atleast_1d(zs)
+        if ks is None:
+            return np.array(
+                [self.results.scale_dependent_growth_factor_f(1.0, zi) for zi in z]
+            )
+        return np.array(
+            [
+                [self.results.scale_dependent_growth_factor_f(ki, zi) for ki in ks]
+                for zi in z
+            ]
+        )
 
     def sigma8_0(self) -> float:
         """
@@ -885,4 +950,4 @@ class mochiCLASSNonLinearPerturbations:
             The sigma8 value.
         """
 
-        return self.results.sigma8()  # type: ignore[union-attr]
+        return self.results.sigma8()

@@ -1,14 +1,15 @@
-# Tracer Protocol (Photometric Observables)
+# Photometric Observables (Tracer Protocol)
 
-**Protocol Definition**: `cloelib.observables.tracer.Tracer`
+**Protocol Definition**: `cloelib.observables.photo.tracer.Tracer`
 
 Tracers define window functions for photometric surveys—how galaxies are distributed in redshift and how they trace the matter field.
 
-## Required Property
+## Required Properties
 
-- **`perturbations`**: Reference to a Perturbations object
-
-Tracers need perturbations to compute power spectra and growth.
+- **`perturbations`**: Reference to a Perturbations object. Tracers need perturbations to compute power spectra and growth.
+- **`n_z_bins`**: Number of tomographic redshift bins, used by `AngularTwoPoint.get_Cl` to size its output.
+- **`z`**: Redshift grid the tracer was built on, used by `AngularTwoPoint.get_Cl` as the Limber integration grid.
+- **`prefact_toggle`**: `1` if the spin-2-to-convergence Limber prefactor applies (shear), `0` otherwise (galaxy clustering, CMB lensing convergence).
 
 ## Required Methods
 
@@ -18,25 +19,13 @@ Compute the window function W(z) at given redshifts.
 
 **Returns**: Window function values, shape depends on number of redshift bins
 
-### `_window_integrand(z, zprime)`
-
-Window integrand for Limber integration.
-
-Used internally by summary statistics calculators.
-
-### `_get_prefactor(ell)`
-
-Compute prefactor for Limber approximation.
-
-Handles different tracer types (shear has extra factors, galaxy clustering doesn't).
-
 ## Existing Tracer Implementations
 
 ### ShearTracer
 
 For weak gravitational lensing (cosmic shear) measurements.
 
-**Location**: `cloelib/observables/photo.py`
+**Location**: `cloelib/observables/photo/shear.py`
 
 **What it does**:
 
@@ -48,16 +37,16 @@ For weak gravitational lensing (cosmic shear) measurements.
 **Example**:
 
 ```python
-from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBPerturbations
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.photo import ShearTracer
 import numpy as np
 
 # Set up cosmology
 bg = CAMBBackground(H0=67.5, Omega_b0=0.0492, ...)
-pert = CAMBPerturbations(background=bg)
 
 # Define redshift distribution (normalized.)
 z = np.linspace(0.01, 3.0, 100)
+pert = CAMBLinearPerturbations(background=bg, redshifts=z)
 dndz = np.exp(-((z - 0.7) / 0.3)**2)  # Gaussian n(z)
 dndz = dndz / np.trapz(dndz, z)  # Normalize
 
@@ -98,11 +87,82 @@ window = tracer.get_window(z)  # Shape: (n_bins, len(z))
 - Photo-z error handling
 - Multiplicative shear bias
 
+**Intrinsic alignment models**: `ShearTracer` accepts an `ia_model` keyword
+(default `"NLA"`, reproducing the behavior above exactly). `ia_model="TATT"`
+switches to the Tidal Alignment + Tidal Torquing model (Blazek et al. 2019;
+Navarro-Gironés et al. 2026, arXiv:2602.16448) instead, reading
+`nuisance_params["AIA"/"A2IA"/"bTA"]` (and optionally `"EtaIA"/"Eta2IA"/
+"z0IA"`) - everything downstream (`AngularTwoPoint.get_Cl`, `get_pseudo_Cl`,
+`get_cosebis`) is unchanged either way.
+
+TATT's ten one-loop perturbation-theory kernels come from a required
+`tatt_loop_computer` (no illustrative default - `ShearTracer` raises
+`ValueError` if `ia_model="TATT"` is used without one). Real kernels come
+from `PBJTATTLoopComputer` (computed via the `fast-pt` package's
+`FASTPT.IA_ta`/`.IA_tt`/`.IA_mix`, an optional dependency -
+`pip install cloelib[fastpt]`), constructed from the _same_ `perturbations`
+object passed to `ShearTracer`:
+
+```python
+from cloelib.observables.photo import ShearTracer
+from cloelib.observables.photo.shear import PBJTATTLoopComputer
+
+tracer = ShearTracer(
+    perturbations=pert,
+    dndz=dndz_bins,
+    z=z,
+    nuisance_params={**nuisance, 'A2IA': 0.4, 'bTA': -0.83},
+    ia_model="TATT",
+    tatt_loop_computer=PBJTATTLoopComputer(pert),
+)
+```
+
+`TATTContribution` and `PBJTATTLoopComputer` both live in
+`cloelib.observables.photo.shear`, alongside `ShearTracer` itself.
+
+**Per-bin IA amplitude (TATT-M)**: `ia_model="TATT-M"` switches to TATT-M
+(Herle et al. 2026, arXiv:2601.15851), a generalization of TATT where the
+IA amplitude (C1/C2/C1delta) is tied to each tomographic bin's halo mass
+and red-galaxy fraction instead of being one global value shared by every
+bin. It reads `nuisance_params["alphaM"/"betaM"]` (required, global) plus
+one `"log10_Mh_{i}"`/`"f_r_{i}"` pair per bin (1-indexed, required -
+matching `"multiplicative_bias_{i}"`'s own convention; `log10_Mh_{i}` in
+log10(Msun/h)), and optionally `"k1"/"k2"/"k3"/"log10_M0"/"CIA"` (all
+default to the values above/Herle et al. 2026's fixed choices). It needs
+the same `tatt_loop_computer` as `"TATT"`:
+
+```python
+tracer = ShearTracer(
+    perturbations=pert,
+    dndz=dndz_bins,
+    z=z,
+    nuisance_params={
+        **nuisance,
+        "alphaM": 1.0,
+        "betaM": 0.5,
+        "log10_Mh_1": 13.5,
+        "f_r_1": 1.0,
+        "log10_Mh_2": 14.0,
+        "f_r_2": 0.5,
+    },
+    ia_model="TATT-M",
+    tatt_loop_computer=PBJTATTLoopComputer(pert),
+)
+```
+
+Because its amplitudes vary per bin, `TATTMContribution` hands the Limber
+engine one `PkTerm` (a per-bin-weighted kernel pair and a power spectrum)
+per term of TATT's P_II/P_deltaI through `get_pk_terms`, the same mechanism
+`NonLinearGalaxyBiasContribution` uses for its per-bin biases. Use
+`tracer.get_ia_effective_spectra(bin_i=..., bin_j=...)` to inspect one bin
+pair's P_II/P_deltaI. Pairing a TATT-M tracer with an NLA or TATT tracer
+raises `ValueError`.
+
 ### PositionsTracer
 
 For galaxy clustering (galaxy positions) measurements.
 
-**Location**: `cloelib/observables/photo.py`
+**Location**: `cloelib/observables/photo/positions.py`
 
 **What it does**:
 
@@ -168,7 +228,7 @@ To add a new type of photometric observable, follow these steps.
 
 ```python
 # cloelib/observables/my_new_tracer.py
-from cloelib.observables.tracer import Tracer
+from cloelib.observables.photo.tracer import Tracer
 from cloelib.cosmology.cosmology import Perturbations
 import numpy as np
 import jax.numpy as jnp
@@ -179,6 +239,7 @@ class CMBLensingTracer:
     def __init__(
         self,
         perturbations: Perturbations,
+        z: np.ndarray,
         z_cmb: float = 1100.0,  # CMB redshift
     ):
         """
@@ -186,12 +247,15 @@ class CMBLensingTracer:
 
         Args:
             perturbations: Perturbations object
+            z: Redshift grid for the Limber integral
             z_cmb: Redshift of last scattering surface
         """
         self.perturbations = perturbations
         self.background = perturbations.background
+        self.z = z
         self.z_cmb = z_cmb
-        self.prefact_toggle = 1  # Include lensing prefactor
+        self.n_z_bins = 1  # A single convergence "bin"
+        self.prefact_toggle = 0  # Convergence: no spin-2 prefactor
 
     def get_window(self, z: np.ndarray) -> np.ndarray:
         """
@@ -214,17 +278,6 @@ class CMBLensingTracer:
         window = 1.5 * self.background.Omega_m(0.0) * (1 + z) * H_z * efficiency
 
         return window
-
-    def _window_integrand(self, z: np.ndarray, zprime: np.ndarray) -> np.ndarray:
-        """Window integrand for Limber integration."""
-        # This is used by AngularTwoPoint
-        # Usually just returns get_window for the z argument
-        return self.get_window(z)
-
-    def _get_prefactor(self, ell: np.ndarray) -> np.ndarray:
-        """Prefactor for Limber approximation."""
-        # CMB lensing has same prefactor as shear
-        return ell * (ell + 1)
 ```
 
 ### Step 2: Add to Package
@@ -246,17 +299,17 @@ __all__ = [
 # tests/test_my_new_tracer.py
 import pytest
 import numpy as np
-from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBPerturbations
+from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
 from cloelib.observables.my_new_tracer import CMBLensingTracer
 
 def test_cmb_lensing_tracer():
     """Test CMB lensing tracer."""
     bg = CAMBBackground(H0=67.5, ...)
-    pert = CAMBPerturbations(background=bg)
-
-    tracer = CMBLensingTracer(perturbations=pert)
-
     z = np.linspace(0.1, 2.0, 50)
+    pert = CAMBLinearPerturbations(background=bg, redshifts=z)
+
+    tracer = CMBLensingTracer(perturbations=pert, z=z)
+
     window = tracer.get_window(z)
 
     # Check shape
@@ -278,7 +331,7 @@ def test_cmb_lensing_tracer():
 Always verify your implementation:
 
 ```python
-from cloelib.observables.tracer import Tracer
+from cloelib.observables.photo.tracer import Tracer
 
 assert isinstance(my_tracer, Tracer)
 ```
@@ -339,5 +392,6 @@ Ready to compute final statistics with your observables?
 - [Perturbations](../perturbations.md) – Review structure formation
 - [Background](../background.md) – Review the foundation
 - [API Reference](../../api.md) – Full technical details
-- [Back to Observables](index.md) – Review all oobservables
+- [Gravitational-Wave Observables](gw.md) – Compute windows for GW sources
+- [Back to Observables](index.md) – Review all observables
 - [Back to Overview](../index.md) – Review the architecture

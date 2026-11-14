@@ -4,7 +4,8 @@
 from cloelib.cosmology.cosmology import Perturbations
 
 # General imports
-import numpy as np  # type: ignore
+from typing import Protocol
+import numpy as np
 
 try:
     from pbjcosmo.theory import Theory
@@ -14,6 +15,41 @@ except (ImportError, AttributeError, TypeError) as e:
     raise ImportError(f"PBJ could not be imported or initialised: {e}")
 
 
+class PBJLinearPerturbations(Perturbations, Protocol):
+    """The `Perturbations` interface plus the extras `PBJSpectroPower` uses.
+
+    `.z`, `growth_factor_cb` and the `hubble_units`/`k_hunit` keywords of
+    `matter_power_spectrum(_cb)` are not part of `Perturbations` (not every
+    backend provides them), but the Boltzmann-code backends PBJ is used
+    with (CAMB, CLASS and variants) do.
+    """
+
+    @property
+    def z(self) -> np.ndarray:
+        """Redshift grid the linear quantities were computed on."""
+        ...
+
+    def matter_power_spectrum(
+        self, zs, ks, hubble_units: bool = False, k_hunit: bool = False
+    ) -> np.ndarray:
+        """Linear total-matter power spectrum."""
+        ...
+
+    def matter_power_spectrum_cb(
+        self, zs, ks, hubble_units: bool = False, k_hunit: bool = False
+    ) -> np.ndarray:
+        """Linear cdm+baryon power spectrum."""
+        ...
+
+    def growth_factor(self, zs, ks) -> np.ndarray:
+        """Growth factor, also for a scalar redshift/wavenumber."""
+        ...
+
+    def growth_factor_cb(self, zs, ks) -> np.ndarray:
+        """Growth factor of cdm+baryons."""
+        ...
+
+
 class PBJSpectroPower:
     r"""Class to retrieve $P(k,\mu)$ with the EFT model from PBJ."""
 
@@ -21,14 +57,14 @@ class PBJSpectroPower:
 
     def __init__(
         self,
-        linear_perturbations: Perturbations,
+        linear_perturbations: PBJLinearPerturbations,
         nuisance_parameters: dict,
         redshift: float,
     ):
         r"""Class constructor.
 
         Args:
-          linear_perturbations (Perturbations): Perturbations object containing cosmology, linear power spectrum,
+          linear_perturbations (PBJLinearPerturbations): Perturbations object containing cosmology, linear power spectrum,
             and growth functions
           nuisance_parameters (dict): Dictionary containing bias and counterterm parameters
           redshift (float): single redshift in which to evaluate PBJ

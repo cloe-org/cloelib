@@ -1,11 +1,24 @@
 """Implementation of nonlinear Perturbation cosmology for nDGP gravity using the nDGPemu emulator."""
 
+from typing import Protocol
+
 import numpy as np
 from cloelib.auxiliary.extrapolator import extend_spectra
-from cloelib.cosmology.cosmology import Background, Perturbations
-from cloelib.cosmology.EE2_cosmology import LinearPerturbationsWithK
+from cloelib.cosmology.cosmology import Background, Perturbations, WithWavenumberGrid
 from nDGPemu import BoostPredictor
 from scipy import interpolate
+
+
+# Same protocol as `EE2_cosmology.LinearPerturbationsWithK`, redefined here
+# because importing `EE2_cosmology` requires euclidemu2.
+class LinearPerturbationsWithK(Perturbations, WithWavenumberGrid, Protocol):
+    """A `Perturbations` implementation that also exposes its `.k` grid.
+
+    `NDGPemuNonLinearPerturbations` needs both the `Perturbations` interface
+    (to call `growth_factor`/`growth_rate`/`sigma8_0` on its
+    `linearperturbations`) and the wavenumber grid that instance was built
+    on, which `Perturbations` deliberately omits.
+    """
 
 
 class NDGPemuNonLinearPerturbations:

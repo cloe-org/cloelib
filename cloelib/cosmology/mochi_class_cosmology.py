@@ -788,6 +788,11 @@ class mochiCLASSNonLinearPerturbations:
 
         if nonlinear_model is None:
             nonlinear_model = "none"
+        # Read by the baryonic mixins, which must not be added on top.
+        self.includes_baryons = (nonlinear_model, hmcode_version) == (
+            "hmcode",
+            "2020_baryonic_feedback",
+        )
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)

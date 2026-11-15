@@ -28,6 +28,7 @@ import numpy as np
 from cloelib.cosmology.cosmology import (
     Background,
     BaryonBoostMixin,
+    ensure_gravity_only,
     with_baryon_boost,
 )
 from cloelib.cosmology.camb_cosmology import CAMBNonLinearPerturbations
@@ -97,6 +98,7 @@ class FlamingoBaryonBoostMixin(BaryonBoostMixin):
         jet_fraction:
             AGN jet energy fraction (0 = pure thermal, 1 = pure jets).
         """
+        ensure_gravity_only(self, "FlamingoBaryonBoostMixin")
         self.fgas = fgas_sigma
         self.Mstar = Mstar_sigma
         self.jet = jet_fraction

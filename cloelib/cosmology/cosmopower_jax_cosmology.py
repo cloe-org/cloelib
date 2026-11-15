@@ -320,6 +320,9 @@ class _CosmoPowerPerturbations:
         for name, attribute in spec.params.items():
             self.params[name] = getattr(self.background, attribute)
         baryons = _SECTORS[sector][3]
+        # The HMcode2020 sector always includes baryonic feedback, which the
+        # baryonic mixins read to refuse being added on top.
+        self.includes_baryons = baryons
         if baryons:
             self.params["logT_AGN"] = log10TAGN if log10TAGN is not None else 7.6
         if self.has_neutrinos:

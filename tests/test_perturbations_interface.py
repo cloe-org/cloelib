@@ -705,3 +705,109 @@ def test_with_baryon_boost_rejects_stacked_mixins():
     Combined = with_baryon_boost(_NoBaryonsNonLinear, _UnitBoostMixin)
     with pytest.raises(TypeError, match="twice"):
         with_baryon_boost(Combined, _UnitBoostMixin)
+
+
+class _HalfBoostMixin:
+    """Baryonic mixin stand-in halving the spectrum."""
+
+    def __init__(self):
+        pass
+
+    def baryonic_suppression(self, zs, ks, k_hunit=False):
+        return np.full((np.size(zs), np.size(ks)), 0.5)
+
+
+class _CbFromTotalNonLinear:
+    """Nonlinear stand-in that, like CLASS without massive neutrinos, derives
+    the cb spectrum from `self.matter_power_spectrum`."""
+
+    includes_baryons = False
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def matter_power_spectrum(self, zs, ks, hubble_units=False, k_hunit=False):
+        return np.ones((np.size(zs), np.size(ks)))
+
+    def matter_power_spectrum_cb(self, zs, ks, hubble_units=False, k_hunit=False):
+        return self.matter_power_spectrum(
+            zs, ks, hubble_units=hubble_units, k_hunit=k_hunit
+        )
+
+
+def test_with_baryon_boost_boosts_cb_once():
+    """A cb spectrum derived from the total one is not boosted twice."""
+    from cloelib.cosmology.cosmology import with_baryon_boost
+
+    pert = with_baryon_boost(_CbFromTotalNonLinear, _HalfBoostMixin)(None, None, ZS)
+    np.testing.assert_array_equal(pert.matter_power_spectrum_cb(ZS, KS), 0.5)
+    np.testing.assert_array_equal(pert.matter_power_spectrum(ZS, KS), 0.5)
+
+
+def test_with_baryon_boost_rejects_backend_with_baryons():
+    """A nonlinear class reporting built-in baryonic feedback is refused."""
+    from cloelib.cosmology.cosmology import with_baryon_boost
+
+    class WithBaryons(_CbFromTotalNonLinear):
+        includes_baryons = True
+
+    with pytest.raises(ValueError, match="twice"):
+        with_baryon_boost(WithBaryons, _UnitBoostMixin)(None, None, ZS)
+
+
+@pytest.mark.parametrize(
+    "options, includes_baryons",
+    [
+        ({}, False),
+        (dict(nonlinear_model="mead2020"), False),
+        (dict(log10TAGN=7.8), True),
+        (dict(nonlinear_model="mead2020_feedback"), True),
+    ],
+)
+def test_camb_reports_baryons(options, includes_baryons):
+    """CAMB reports whether its nonlinear spectrum includes baryonic feedback."""
+    if importlib.util.find_spec("camb") is None:
+        pytest.skip("camb not installed")
+    from cloelib.cosmology.camb_cosmology import (
+        CAMBLinearPerturbations,
+        CAMBNonLinearPerturbations,
+    )
+
+    lin = CAMBLinearPerturbations(background=_camb_background(), redshifts=REDSHIFTS)
+    nonlin = CAMBNonLinearPerturbations(
+        background=_camb_background(),
+        linearperturbations=lin,
+        redshifts=REDSHIFTS,
+        **options,
+    )
+    assert nonlin.includes_baryons is includes_baryons
+
+
+def test_manual_composition_rejects_baryons():
+    """Composed by hand, without `with_baryon_boost`, a baryonic mixin still
+    refuses a nonlinear spectrum that already includes baryonic feedback."""
+    for name in ("camb", "FlamingoBaryonResponseEmulator"):
+        if importlib.util.find_spec(name) is None:
+            pytest.skip(f"{name} not installed")
+    from cloelib.cosmology.camb_cosmology import (
+        CAMBLinearPerturbations,
+        CAMBNonLinearPerturbations,
+    )
+    from cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology import (
+        FlamingoBaryonBoostMixin,
+    )
+
+    class Manual(FlamingoBaryonBoostMixin, CAMBNonLinearPerturbations):
+        def __init__(self, *args, **kwargs):
+            CAMBNonLinearPerturbations.__init__(self, *args, **kwargs)
+            FlamingoBaryonBoostMixin.__init__(self, 0.0, 0.0, 0.0)
+
+    lin = CAMBLinearPerturbations(background=_camb_background(), redshifts=REDSHIFTS)
+    with pytest.raises(ValueError, match="twice"):
+        Manual(
+            background=_camb_background(),
+            linearperturbations=lin,
+            redshifts=REDSHIFTS,
+            log10TAGN=7.8,
+        )
+    Manual(background=_camb_background(), linearperturbations=lin, redshifts=REDSHIFTS)

@@ -326,6 +326,27 @@ class BaryonBoostMixin(Protocol):
         ...
 
 
+def ensure_gravity_only(perturbations: Any, mixin_name: str) -> None:
+    """Refuse a baryonic mixin on a nonlinear spectrum that includes baryons.
+
+    Nonlinear perturbations whose spectrum already includes baryonic feedback
+    set ``includes_baryons = True`` (e.g. CAMB with ``log10TAGN``, CLASS and
+    mochi_class with ``hmcode_version='2020_baryonic_feedback'``, HMcode2020emu
+    with ``log10TAGN``, BACCOemu with ``baryonic_boost``, the HMcode2020 sector
+    of CosmoPower-JAX). Every baryonic mixin calls this at the start of its
+    ``__init__``, so the check holds however the mixin is composed.
+
+    Raises:
+        ValueError: If ``perturbations.includes_baryons`` is true.
+    """
+    if getattr(perturbations, "includes_baryons", False):
+        raise ValueError(
+            f"{type(perturbations).__name__} already includes baryonic feedback "
+            f"in its nonlinear spectrum. Adding {mixin_name} on top would apply "
+            "baryonic feedback twice. Use a gravity-only nonlinear prescription."
+        )
+
+
 def _native_baryon_options(kwargs: dict) -> list[str]:
     """Return the nonlinear constructor options that already switch on baryons.
 
@@ -411,7 +432,16 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
     ValueError
         At construction, if the nonlinear options passed already switch on
         the backend's own baryonic boost (e.g. ``log10TAGN`` or
-        ``baryonic_boost``), for the same reason.
+        ``baryonic_boost``), or if the constructed nonlinear perturbations
+        report ``includes_baryons = True`` (e.g. the CosmoPower-JAX HMcode2020
+        sector, which always includes baryonic feedback), for the same reason.
+
+    Notes
+    -----
+    While the nonlinear class computes ``matter_power_spectrum_cb``, any call
+    it makes to ``self.matter_power_spectrum`` returns the gravity-only
+    spectrum, so that backends deriving the cb spectrum from the total one are
+    boosted only once.
     """
     if issubclass(NonLinearClass, BaryonBoostMixin):
         raise TypeError(
@@ -421,6 +451,9 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
         )
 
     class Combined(BaryonMixinClass, NonLinearClass):
+        # True while the nonlinear class computes the cb spectrum, see below.
+        _gravity_only = False
+
         def __init__(self, *args, baryon_kwargs=None, **kwargs):
             native = _native_baryon_options(kwargs)
             if native:
@@ -432,10 +465,15 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
                     "or drop the mixin and use the base class on its own."
                 )
             NonLinearClass.__init__(self, *args, **kwargs)
+            # The mixins check this themselves; repeated here for mixins that
+            # do not.
+            ensure_gravity_only(self, BaryonMixinClass.__name__)
             BaryonMixinClass.__init__(self, **(baryon_kwargs or {}))
 
         def matter_power_spectrum(self, zs, ks, **kwargs):
             pk = NonLinearClass.matter_power_spectrum(self, zs, ks, **kwargs)
+            if self._gravity_only:
+                return pk
             return pk * self.baryonic_suppression(
                 zs, ks, k_hunit=kwargs.get("k_hunit", False)
             )
@@ -449,7 +487,14 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
             # nonlinear boost. In practice the difference is ~1e-5 even for
             # mnu = 0.4 eV, and FLAMINGO simulations show total and cold boosts
             # to be equivalent at that level, so the same boost is used for both.
-            pk = NonLinearClass.matter_power_spectrum_cb(self, zs, ks, **kwargs)
+            # Some backends build the cb spectrum from `self.matter_power_spectrum`
+            # (e.g. CLASS without massive neutrinos), which must then be
+            # gravity-only for the boost to be applied once.
+            previous, self._gravity_only = self._gravity_only, True
+            try:
+                pk = NonLinearClass.matter_power_spectrum_cb(self, zs, ks, **kwargs)
+            finally:
+                self._gravity_only = previous
             return pk * self.baryonic_suppression(
                 zs, ks, k_hunit=kwargs.get("k_hunit", False)
             )

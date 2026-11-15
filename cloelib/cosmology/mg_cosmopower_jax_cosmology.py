@@ -459,6 +459,7 @@ class MGNonLinearPerturbations:
         self._base_nl = self.baseline_nonlinear(
             background, base_lin, self.z, log10TAGN=log10TAGN
         )
+        self.includes_baryons = getattr(self._base_nl, "includes_baryons", False)
         self._base_lin = base_lin
         z_top = _z_top(self.bin_index)
         self._boost_nl = _boost_spline(

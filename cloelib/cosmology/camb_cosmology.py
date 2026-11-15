@@ -570,6 +570,8 @@ class CAMBNonLinearPerturbations:
             )
         else:
             self.background.interface_args["CAMBparams"].NonLinearModel.set_params()
+        # Read by the baryonic mixins, which must not be added on top.
+        self.includes_baryons = nonlinear_model == "mead2020_feedback"
 
         self.background.interface_args["CAMBparams"].set_matter_power(
             redshifts=self.z, kmax=self.kmax

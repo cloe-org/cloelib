@@ -6,6 +6,7 @@ from cloelib.cosmology.cosmology import (
     CB_CROSS_LINEAR_NU,
     Background,
     BaryonBoostMixin,
+    ensure_gravity_only,
     Perturbations,
     with_baryon_boost,
 )
@@ -294,6 +295,8 @@ class BACCOemuNonLinearPerturbations:
         self.z = redshifts[redshifts <= redshift_max]
         self.background = background
         self.linearperturbations = linearperturbations
+        # Read by the baryonic mixins, which must not be added on top.
+        self.includes_baryons = bool(baryonic_boost)
 
         self.params_emu = {
             "omega_cold": self.background.Omega_cdm0 + self.background.Omega_b0,
@@ -601,6 +604,7 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         theta_out, M_inn:
             Used only by ``Arico2021``; leave at ``None`` for ``Burger2025``.
         """
+        ensure_gravity_only(self, "BACCOemuBaryonBoostMixin")
         # BACCOemu was trained with the boost factor, so a single
         # `get_baryonic_boost` call is enough -- no separate DMO and baryonic
         # spectra. The emulator and its cosmological parameters are set up here

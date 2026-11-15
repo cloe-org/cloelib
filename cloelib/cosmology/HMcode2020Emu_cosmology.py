@@ -6,6 +6,7 @@ from cloelib.cosmology.cosmology import (
     Background,
     BaryonBoostMixin,
     WithLinearSpectrumGrid,
+    ensure_gravity_only,
 )
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.auxiliary.math_utils import ensure_z_zero_included
@@ -294,6 +295,8 @@ class HMemuNonLinearPerturbations:
             "wa": self.background.wa,
         }
         baryonic_boost = log10TAGN is not None
+        # Read by the baryonic mixins, which must not be added on top.
+        self.includes_baryons = baryonic_boost
 
         if baryonic_boost:
             self.params_hm_emu["log10TAGN"] = log10TAGN
@@ -616,6 +619,7 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
             log₁₀ of the AGN heating temperature in Kelvin.
             Typical range: 7.6 (weak) – 8.3 (strong feedback).
         """
+        ensure_gravity_only(self, "HMcode2020BaryonBoostMixin")
         # The emulator parameters are built here rather than taken from the
         # base class, so this mixin also works on top of a non-HMcode2020emu
         # nonlinear prescription.

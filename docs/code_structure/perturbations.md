@@ -703,7 +703,9 @@ Three ready-made mixins are provided:
 | `BACCOemuBaryonBoostMixin`   | BACCOemu          | `M_c`, `eta`, `beta`, `M1_z0_cen`, `theta_out`, `theta_inn`, `M_inn` |
 | `HMcode2020BaryonBoostMixin` | HMcode2020emu     | `log10TAGN`                                                          |
 
-Each mixin `__init__` must be called **after** the base nonlinear `__init__` (it reads `self.background` and emulator internals set by the base).
+Each mixin `__init__` must be called **after** the base nonlinear `__init__`, since it reads attributes set there (`self.background`, `self.includes_baryons` and, for BACCOemu and HMcode2020, `self.z`), and the mixin must come before the nonlinear class among the bases; `with_baryon_boost` takes care of both.
+
+A custom mixin should call `ensure_gravity_only(self, "<MixinName>")` (from `cloelib.cosmology.cosmology`) at the start of its `__init__`, so that it is never applied on top of a spectrum that already includes baryonic feedback.
 
 ### `with_baryon_boost` Factory
 
@@ -724,7 +726,7 @@ pert = BACCOemuFLAMINGO(
 
 The resulting object is fully `Perturbations`-compatible and can be passed directly to any `cloelib` tracer or likelihood.
 
-A baryonic mixin is never applied on top of a nonlinear spectrum that already includes baryonic feedback, since feedback would then be applied twice. Nonlinear backends report it through `includes_baryons`: CAMB with `log10TAGN` or `nonlinear_model="mead2020_feedback"`, CLASS and mochi_class with `log10TAGN` or `hmcode_version="2020_baryonic_feedback"`, HMcode2020emu with `log10TAGN`, BACCOemu with `baryonic_boost`, and always the HMcode2020 sector of CosmoPower-JAX. Every mixin checks this at the start of its `__init__` (through `cloelib.cosmology.cosmology.ensure_gravity_only`), so the check also holds when composing by hand; `with_baryon_boost` additionally rejects the corresponding constructor options before building the, possibly costly, nonlinear backend. Likewise, a cb spectrum that the backend derives from the total one (e.g. CLASS without massive neutrinos) receives the baryonic suppression only once.
+A baryonic mixin is never applied on top of a nonlinear spectrum that already includes baryonic feedback, since feedback would then be applied twice. Nonlinear backends report it through `includes_baryons`: CAMB with `log10TAGN` or `nonlinear_model="mead2020_feedback"`, CLASS and mochi_class with `log10TAGN` or `hmcode_version="2020_baryonic_feedback"`, HMcode2020emu with `log10TAGN`, BACCOemu with `baryonic_boost`, and always the HMcode2020 sector of CosmoPower-JAX. The `BoostedPerturbations` (ReACT) and `TabulatedBoostedPerturbations` wrappers report the value of the nonlinear perturbations they boost. Every mixin checks this at the start of its `__init__` (through `cloelib.cosmology.cosmology.ensure_gravity_only`), so the check also holds when composing by hand; `with_baryon_boost` additionally rejects the corresponding constructor options before building the, possibly costly, nonlinear backend. Likewise, a cb spectrum that the backend derives from the total one (e.g. CLASS without massive neutrinos) receives the baryonic suppression only once.
 
 !!! warning "Total vs. cold matter boost"
 The same suppression $B(k,z)$ is applied to `matter_power_spectrum` and to
@@ -870,6 +872,8 @@ class MySolverPerturbations:
         """Compute σ₈ at z=0."""
         return self._solver.get_sigma8()
 ```
+
+If your nonlinear spectrum can include baryonic feedback (e.g. through an option), set `self.includes_baryons` accordingly in `__init__`; the baryonic mixins read it to refuse being added on top. Backends without baryonic feedback need not set it.
 
 ### Step 2: Connect to Background
 

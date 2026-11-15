@@ -48,20 +48,15 @@ class FlamingoBaryonBoostMixin(BaryonBoostMixin):
     """Concrete baryonic-boost mixin for the FlamingoBaryonResponseEmulator.
 
     Implements ``baryonic_suppression`` (and the FLAMINGO-specific
-    ``baryonic_suppression_with_variance``).  Can be combined with *any*
-    nonlinear perturbations class::
+    ``baryonic_suppression_with_variance``).  Can be combined with any
+    gravity-only nonlinear perturbations class through
+    :func:`~cloelib.cosmology.cosmology.with_baryon_boost`::
 
-        class MyPert(FlamingoBaryonBoostMixin, SomeNonLinearPerturbations):
-            def __init__(self, background, ..., fgas_sigma=0, Mstar_sigma=0, jet_fraction=0):
-                SomeNonLinearPerturbations.__init__(self, background, ...)
-                FlamingoBaryonBoostMixin.__init__(self, fgas_sigma, Mstar_sigma, jet_fraction)
-
-            def matter_power_spectrum(self, zs, ks, **kwargs):
-                return SomeNonLinearPerturbations.matter_power_spectrum(self, zs, ks, **kwargs)\
-                    * self.baryonic_suppression(zs, ks, k_hunit=kwargs.get("k_hunit", False))
-
-    Or use the :func:`~cloelib.cosmology.cosmology.with_baryon_boost` factory for
-    zero-boilerplate class creation.
+        MyPert = with_baryon_boost(SomeNonLinearPerturbations, FlamingoBaryonBoostMixin)
+        pert = MyPert(
+            background, linear_pert, redshifts,
+            baryon_kwargs=dict(fgas_sigma=0.0, Mstar_sigma=0.0, jet_fraction=0.0),
+        )
     """
 
     #: Supplied by the nonlinear perturbations class this mixin is composed with.

@@ -580,16 +580,15 @@ def _set_neutrino_masses(background: Background) -> float:
 class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
     """Mixin providing baryonic suppression via an HMcode2020-computed P_baryon/P_dmo ratio.
 
-    Can be combined with *any* nonlinear perturbations class (not just HMcode2020emu)::
+    Can be combined with any gravity-only nonlinear perturbations class (not
+    just HMcode2020emu) through
+    :func:`~cloelib.cosmology.cosmology.with_baryon_boost`::
 
-        class MyPert(HMcode2020BaryonBoostMixin, HMemuNonLinearPerturbations):
-            def __init__(self, background, linearperturbations, redshifts, log10TAGN=7.8):
-                HMemuNonLinearPerturbations.__init__(
-                    self, background, linearperturbations, redshifts
-                )
-                HMcode2020BaryonBoostMixin.__init__(self, log10TAGN=log10TAGN)
-
-    Or use :func:`~cloelib.cosmology.cosmology.with_baryon_boost`.
+        MyPert = with_baryon_boost(SomeNonLinearPerturbations, HMcode2020BaryonBoostMixin)
+        pert = MyPert(
+            background, linear_pert, redshifts,
+            baryon_kwargs=dict(log10TAGN=7.8),
+        )
 
     .. note::
         ``__init__`` must be called **after** the base NonLinear ``__init__``

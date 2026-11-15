@@ -298,16 +298,17 @@ class BaryonBoostMixin(Protocol):
     instantiated directly.
 
     Concrete implementations live in backend-specific files and are composed
-    into ``Perturbations`` subclasses to override ``matter_power_spectrum``::
+    with a nonlinear perturbations class through :func:`with_baryon_boost`,
+    which multiplies ``matter_power_spectrum`` and ``matter_power_spectrum_cb``
+    by ``baryonic_suppression``::
 
-        class FlamingoBaryonBoostMixin(BaryonBoostMixin):
-            def baryonic_suppression(self, zs, ks, k_hunit=False): ...
+        CAMBNonLinearFLAMINGOPerturbations = with_baryon_boost(
+            CAMBNonLinearPerturbations, FlamingoBaryonBoostMixin
+        )
 
-        class CAMBNonLinearFLAMINGOPerturbations(
-            FlamingoBaryonBoostMixin, CAMBNonLinearPerturbations
-        ):
-            def matter_power_spectrum(self, zs, ks, ...):
-                return super().matter_power_spectrum(...) * self.baryonic_suppression(...)
+    Composing by hand instead requires overriding both spectra, and making
+    sure the cb one is boosted once also when the nonlinear class derives it
+    from the total one; `with_baryon_boost` takes care of this.
     """
 
     def baryonic_suppression(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
@@ -366,7 +367,9 @@ def perturbations_include_baryons(perturbations: Any) -> bool:
     )
 
 
-def ensure_gravity_only(perturbations: Any, mixin_name: str) -> None:
+def ensure_gravity_only(
+    perturbations: Any, mixin_name: str, perturbations_name: Optional[str] = None
+) -> None:
     """Refuse a baryonic mixin on a nonlinear spectrum that includes baryons.
 
     Nonlinear perturbations whose spectrum already includes baryonic feedback
@@ -379,12 +382,19 @@ def ensure_gravity_only(perturbations: Any, mixin_name: str) -> None:
     mixin calls this at the start of its ``__init__``, so the check holds
     however the mixin is composed.
 
+    Args:
+        perturbations: The nonlinear perturbations to check.
+        mixin_name: Name of the baryonic mixin to be added, for the message.
+        perturbations_name: Name of the nonlinear perturbations class, for the
+            message. Defaults to the class of ``perturbations``.
+
     Raises:
         ValueError: If ``perturbations.includes_baryons`` is true.
     """
     if getattr(perturbations, "includes_baryons", False):
+        name = perturbations_name or type(perturbations).__name__
         raise ValueError(
-            f"{type(perturbations).__name__} already includes baryonic feedback "
+            f"{name} already includes baryonic feedback "
             f"in its nonlinear spectrum. Adding {mixin_name} on top would apply "
             "baryonic feedback twice. Use a gravity-only nonlinear prescription."
         )
@@ -528,7 +538,9 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
             NonLinearClass.__init__(self, *args, **kwargs)
             # The mixins check this themselves; repeated here for mixins that
             # do not.
-            ensure_gravity_only(self, BaryonMixinClass.__name__)
+            ensure_gravity_only(
+                self, BaryonMixinClass.__name__, NonLinearClass.__name__
+            )
             BaryonMixinClass.__init__(self, **(baryon_kwargs or {}))
             self.includes_baryons = True
 

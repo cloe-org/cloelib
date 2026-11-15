@@ -1146,3 +1146,16 @@ def test_mochi_class_stable_basis_reports_no_baryons(
         hmcode_version="2020_baryonic_feedback",
     )
     assert nonlin.includes_baryons is expected
+
+
+def test_baryon_refusal_names_the_nonlinear_class():
+    """The refusal names the user's nonlinear class, not the composed one."""
+    from cloelib.cosmology.cosmology import with_baryon_boost
+
+    class WithBaryons(_CbFromTotalNonLinear):
+        includes_baryons = True
+
+    with pytest.raises(ValueError) as error:
+        with_baryon_boost(WithBaryons, _UnitBoostMixin)(None, None, ZS)
+    assert str(error.value).startswith("WithBaryons already includes")
+    assert "_UnitBoostMixin on top" in str(error.value)

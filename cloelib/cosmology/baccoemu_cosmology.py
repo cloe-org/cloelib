@@ -538,7 +538,9 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         MyPert = with_baryon_boost(SomeNonLinearPerturbations, BACCOemuBaryonBoostMixin)
         pert = MyPert(
             background, linear_pert, redshifts,
-            baryon_kwargs=dict(nonlinear_model_name="Arico2023",
+            baryon_kwargs=dict(M_c=13.0, eta=-0.25, beta=-0.15,
+                               M1_z0_cen=11.0, theta_inn=-1.0,
+                               nonlinear_model_name="Arico2023",
                                baryonic_model_name="Burger2025"),
         )
 

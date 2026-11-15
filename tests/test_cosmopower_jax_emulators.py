@@ -2038,3 +2038,25 @@ def test_sigma8_0_without_z_zero_in_grid(background_lcdm):
     np.testing.assert_allclose(
         without_zero.sigma8_0(), with_zero.sigma8_0(), rtol=1e-10
     )
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_nonlinear_sectors_report_baryons(background_w0wa, background_lcdm, z_array):
+    """The HMcode2020 sector always includes baryonic feedback (with a default
+    log10TAGN), the halofit sector never does; the baryonic mixins read this to
+    refuse being added on top."""
+    for log10TAGN_value in (None, log10TAGN):
+        linear = w0waCDM.Linear(background=background_w0wa, redshifts=z_array)
+        nonlinear = w0waCDM.NonLinear(
+            background=background_w0wa,
+            linearperturbations=linear,
+            redshifts=z_array,
+            log10TAGN=log10TAGN_value,
+        )
+        assert nonlinear.includes_baryons is True
+
+    linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    halofit = LCDM.NonLinearHalofit(
+        background=background_lcdm, linearperturbations=linear, redshifts=z_array
+    )
+    assert halofit.includes_baryons is False

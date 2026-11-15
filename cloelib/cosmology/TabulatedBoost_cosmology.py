@@ -300,6 +300,7 @@ class TabulatedBoostedPerturbations:
         assert self.background.Omega_k0 == 0, "Non flat geometries not supported"
 
         self.base = base_perturbations
+        self.includes_baryons = getattr(base_perturbations, "includes_baryons", False)
         self.boost_interp = boost_interp
 
         self.base_lin = base_lin_perturbations

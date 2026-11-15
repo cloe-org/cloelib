@@ -811,3 +811,99 @@ def test_manual_composition_rejects_baryons():
             log10TAGN=7.8,
         )
     Manual(background=_camb_background(), linearperturbations=lin, redshifts=REDSHIFTS)
+
+
+def _class_nonlinear(**options):
+    from cloelib.cosmology.class_cosmology import (
+        CLASSBackground,
+        CLASSNonLinearPerturbations,
+    )
+
+    return CLASSNonLinearPerturbations(
+        CLASSBackground(**COSMO), None, REDSHIFTS, **options
+    )
+
+
+def _mochi_class_nonlinear(**options):
+    from cloelib.cosmology.mochi_class_cosmology import (
+        mochiCLASSBackground,
+        mochiCLASSLinearPerturbations,
+        mochiCLASSNonLinearPerturbations,
+    )
+
+    background = mochiCLASSBackground(
+        **COSMO,
+        mg_stable_basis_on=False,
+        stable_MG_dict={},
+        mg_background_model="lcdm",
+    )
+    lin = mochiCLASSLinearPerturbations(background=background, redshifts=REDSHIFTS)
+    return mochiCLASSNonLinearPerturbations(
+        background=background, linearperturbations=lin, redshifts=REDSHIFTS, **options
+    )
+
+
+def _hmemu_nonlinear(**options):
+    from cloelib.cosmology.HMcode2020Emu_cosmology import (
+        HMemuLinearPerturbations,
+        HMemuNonLinearPerturbations,
+    )
+
+    background = _camb_background()
+    lin = HMemuLinearPerturbations(background=background, redshifts=REDSHIFTS)
+    return HMemuNonLinearPerturbations(
+        background=background, linearperturbations=lin, redshifts=REDSHIFTS, **options
+    )
+
+
+def _bacco_nonlinear(**options):
+    from cloelib.cosmology.baccoemu_cosmology import (
+        BACCOemuLinearPerturbations,
+        BACCOemuNonLinearPerturbations,
+    )
+
+    background = _camb_background()
+    lin = BACCOemuLinearPerturbations(background=background, redshifts=REDSHIFTS)
+    return BACCOemuNonLinearPerturbations(
+        background=background, linearperturbations=lin, redshifts=REDSHIFTS, **options
+    )
+
+
+@pytest.mark.parametrize(
+    "module, build, options, includes_baryons",
+    [
+        (
+            "classy",
+            _class_nonlinear,
+            dict(nonlinear_model="hmcode", hmcode_version="2020"),
+            False,
+        ),
+        ("classy", _class_nonlinear, dict(log10TAGN=7.8), True),
+        (
+            "classy",
+            _class_nonlinear,
+            dict(
+                nonlinear_model="hmcode",
+                hmcode_version="2020_baryonic_feedback",
+                log10TAGN=7.8,
+            ),
+            True,
+        ),
+        (
+            "mochi_classy",
+            _mochi_class_nonlinear,
+            dict(nonlinear_model="halofit"),
+            False,
+        ),
+        ("mochi_classy", _mochi_class_nonlinear, dict(log10TAGN=7.8), True),
+        ("HMcode2020Emu", _hmemu_nonlinear, {}, False),
+        ("HMcode2020Emu", _hmemu_nonlinear, dict(log10TAGN=7.8), True),
+        ("baccoemu", _bacco_nonlinear, {}, False),
+    ],
+)
+def test_backends_report_baryons(module, build, options, includes_baryons):
+    """Nonlinear backends report whether their spectrum includes baryonic
+    feedback, which the baryonic mixins read to refuse being added on top."""
+    if importlib.util.find_spec(module) is None:
+        pytest.skip(f"{module} not installed")
+    assert build(**options).includes_baryons is includes_baryons

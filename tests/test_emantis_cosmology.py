@@ -213,3 +213,26 @@ def test_pcb_raises_with_massive_neutrinos(mnu):
     with pytest.raises(ValueError, match="massive neutrinos"):
         emantis_cloe.matter_power_spectrum_cb(zs, ks)
     assert np.all(np.isfinite(emantis_cloe.matter_power_spectrum(zs, ks)))
+
+
+@pytest.mark.skipif(
+    not _EMANTIS_INSTALLED,
+    reason="emantis is not installed",
+)
+@pytest.mark.parametrize("log10TAGN", [None, 7.8])
+def test_reports_lcdm_baryons(
+    zs, camb_background_instance, camb_linearperturbations_instance, log10TAGN
+):
+    """The f(R) spectrum includes baryonic feedback exactly when the LCDM one it
+    boosts does, so that no baryonic mixin is added on top of it."""
+    lcdm = CAMBNonLinearPerturbations(
+        camb_background_instance, None, zs, log10TAGN=log10TAGN
+    )
+    emantis_cloe = EmantisFofrNonLinearPerturbations(
+        background=camb_background_instance,
+        linearperturbations=camb_linearperturbations_instance,
+        nonlinearperturbations_lcdm=lcdm,
+        redshifts=zs,
+        fR0=-1e-5,
+    )
+    assert emantis_cloe.includes_baryons is (log10TAGN is not None)

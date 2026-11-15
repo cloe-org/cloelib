@@ -2,7 +2,11 @@
 
 import numpy as np
 from cloelib.auxiliary.extrapolator import extend_spectra
-from cloelib.cosmology.cosmology import Background, Perturbations
+from cloelib.cosmology.cosmology import (
+    Background,
+    Perturbations,
+    perturbations_include_baryons,
+)
 from emantis.matter_power_spectrum import NonLinearMGBoostEmulator
 from scipy import interpolate
 
@@ -53,6 +57,9 @@ class EmantisFofrNonLinearPerturbations:
         self._background = background
         self.linearperturbations = linearperturbations
         self.nonlinearpertubations_lcdm = nonlinearperturbations_lcdm
+        self.includes_baryons = perturbations_include_baryons(
+            nonlinearperturbations_lcdm
+        )
 
         # Check and process emulator version.
         if emu_version == 2:

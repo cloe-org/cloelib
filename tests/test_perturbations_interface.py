@@ -907,3 +907,28 @@ def test_backends_report_baryons(module, build, options, includes_baryons):
     if importlib.util.find_spec(module) is None:
         pytest.skip(f"{module} not installed")
     assert build(**options).includes_baryons is includes_baryons
+
+
+def test_class_cb_boosted_once():
+    """On CLASS without massive neutrinos, which derives the cb spectrum from
+    the total one, the baryonic suppression is applied once, not twice."""
+    if importlib.util.find_spec("classy") is None:
+        pytest.skip("classy not installed")
+    from cloelib.cosmology.class_cosmology import (
+        CLASSBackground,
+        CLASSNonLinearPerturbations,
+    )
+    from cloelib.cosmology.cosmology import with_baryon_boost
+
+    cosmo = dict(COSMO, mnu=0.0, N_mnu=0)
+    base = CLASSNonLinearPerturbations(
+        CLASSBackground(**cosmo), None, REDSHIFTS, nonlinear_model="halofit"
+    )
+    boosted = with_baryon_boost(CLASSNonLinearPerturbations, _HalfBoostMixin)(
+        CLASSBackground(**cosmo), None, REDSHIFTS, nonlinear_model="halofit"
+    )
+    with pytest.warns(UserWarning, match="no massive neutrinos"):
+        pk_cb = boosted.matter_power_spectrum_cb(ZS, KS)
+    with pytest.warns(UserWarning, match="no massive neutrinos"):
+        pk_cb_base = base.matter_power_spectrum_cb(ZS, KS)
+    np.testing.assert_allclose(pk_cb, 0.5 * pk_cb_base, rtol=1e-12)

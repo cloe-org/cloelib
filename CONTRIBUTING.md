@@ -14,6 +14,17 @@ cloelib is open source, and **contributions from anyone are welcome**: bug repor
 2. **Open an Issue Following the Issue Template**: Tag @cloe-org/cloe-maintainers in your issue to discuss the proposed implementation. This helps ensure a smooth integration with the software architecture and overall repository maintenance. For small fixes (typos, broken links, minor bugs) you can open a pull request directly.
 3. **Open a Pull Request Following the PR Template**: Fill in all the required information in the Pull Request template to facilitate review and approval.
 
+## 🤖 Using AI Coding Assistants
+
+You may use AI coding assistants (chatbots, coding agents) when contributing to cloelib, under these rules:
+
+- **You are responsible for your PR.** Review every changed line, make sure you understand it, and explain in your own words in the PR summary what it does and why. Reviewers are not there to review code that the author has not read.
+- **Disclose AI assistance** in the dedicated section of the PR template (briefly: which tool, which parts). If none was used, write "None."
+- **Keep changes small and readable.** Avoid unrelated rewrites, overly compact code and long docstrings; reviewers and maintainers must be able to follow the code.
+- **Do not let agents commit or push for you.**
+
+The [`AGENTS.md`](AGENTS.md) file at the root of the repository gives instructions to AI coding agents about the structure, checks and conventions of cloelib. **`AGENTS.md` can only be changed by @cloe-org/cloe-maintainers**, so please do not edit it in your PRs. If you think it is outdated or wrong (for example, because your PR changes the repository layout, commands or workflow), mention it in the "Additional Notes" of your PR or open an issue and the maintainers will update it. The `PR Description` CI check reports if the AI-assistance section, the summary or the ownership checkbox are missing from the PR description.
+
 ## ✨ Contributor Recognition
 
 We use the [All Contributors bot](https://allcontributors.org/) to recognize contributions of all types — not just code!

@@ -1,5 +1,6 @@
 from cloelib.utils.redshift import ensure_z_zero_included
-
+import numpy as np
+from numpy.testing import assert_array_equal
 
 def test_ensure_z_zero_included_adds_missing_zero():
     z, order = ensure_z_zero_included(np.array([1.0, 1.2, 1.4, 1.65]))

@@ -703,7 +703,7 @@ Three ready-made mixins are provided:
 | `BACCOemuBaryonBoostMixin`   | BACCOemu          | `M_c`, `eta`, `beta`, `M1_z0_cen`, `theta_out`, `theta_inn`, `M_inn` |
 | `HMcode2020BaryonBoostMixin` | HMcode2020emu     | `log10TAGN`                                                          |
 
-Each mixin `__init__` must be called **after** the base nonlinear `__init__`, since it reads attributes set there (`self.includes_baryons` and, for BACCOemu and HMcode2020, `self.background` and `self.z`), and the mixin must come before the nonlinear class among the bases; `with_baryon_boost` takes care of both.
+The mixin must come before the nonlinear class among the bases. The `__init__` of `BACCOemuBaryonBoostMixin` and `HMcode2020BaryonBoostMixin` must be called **after** the base nonlinear `__init__`, since they read `self.background` and `self.z`, which are set there; `FlamingoBaryonBoostMixin` can be initialised in either order. Calling the mixin `__init__` second also refuses a nonlinear spectrum that already includes baryons at construction, rather than when the suppression is first evaluated. `with_baryon_boost` takes care of all this.
 
 A custom mixin should call `ensure_gravity_only(self, "<MixinName>")` at the start of its `__init__` and `ensure_gravity_only_on_first_use(self, "<MixinName>")` at the start of `baryonic_suppression` (both from `cloelib.cosmology.cosmology`), so that it is never applied on top of a spectrum that already includes baryonic feedback.
 
@@ -735,7 +735,7 @@ The resulting object is fully `Perturbations`-compatible and can be passed direc
   - BACCOemu with `baryonic_boost`;
   - always the HMcode2020 sector of CosmoPower-JAX.
 - Classes boosting another nonlinear spectrum, namely `BoostedPerturbations` (ReACT), `TabulatedBoostedPerturbations`, the modified-gravity CosmoPower-JAX classes and `EmantisFofrNonLinearPerturbations`, report baryons when that spectrum includes them, also when it carries a baryonic mixin.
-- Classes composed by `with_baryon_boost` report `includes_baryons = True`.
+- Classes composed by `with_baryon_boost` report `includes_baryons = True`. A class composed by hand should not set this flag itself: the mixin's check on first use would then refuse it. Without the flag, it is still recognised as including baryons by the classes wrapping it, since it carries a baryonic mixin.
 - Every mixin checks this at the start of its `__init__` and again when its suppression is first evaluated (through `ensure_gravity_only` and `ensure_gravity_only_on_first_use` in `cloelib.cosmology.cosmology`), so the check also holds when composing by hand, whatever the order of the `__init__` calls.
 - `with_baryon_boost` additionally rejects the corresponding constructor options before building the, possibly costly, nonlinear backend. This early check is more cautious than the flags: it also refuses e.g. `hmcode_version="2020_baryonic_feedback"` with mochi_class's `mg_stable_basis_on`, or `log10TAGN` with the CosmoPower-JAX halofit sector.
 - Through `with_baryon_boost`, a cb spectrum that the backend derives from the total one (e.g. CLASS without massive neutrinos, or the JAX backend) also receives the baryonic suppression only once; a class composed by hand has to ensure this itself.
@@ -888,6 +888,8 @@ class MySolverPerturbations:
 ```
 
 If your nonlinear spectrum can include baryonic feedback (e.g. through an option), set `self.includes_baryons` accordingly in `__init__`; the baryonic mixins read it to refuse being added on top. Backends without baryonic feedback need not set it.
+
+If your backend derives one of `matter_power_spectrum` and `matter_power_spectrum_cb` from the other, derive the cb spectrum from the total one, not the reverse. `with_baryon_boost` makes `self.matter_power_spectrum` return the gravity-only spectrum while the cb spectrum is computed, so that the baryonic suppression is applied once; it does not guard the reverse, which would apply it twice to the total spectrum (e.g. building $P_{mm}$ from `self.matter_power_spectrum_cb` and a linear neutrino contribution).
 
 ### Step 2: Connect to Background
 

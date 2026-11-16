@@ -95,3 +95,44 @@ def stretch_dndz_jax(dndz: T, z: T, width: T) -> T:
     ) * (z[1] - z[0])
     # normalization = jnp.where(normalization==0.0, 1.0, normalization)
     return stretched / (normalization[:, None])
+
+
+@jit
+def modes_dndz_jax(
+    dndz: T,
+    z: T,
+    modes: T,
+    amplitudes: T,
+) -> T:
+    """
+    Perturb redshift distributions using a linear combination of redshift modes.
+
+    Parameters
+    ----------
+    dndz : array
+        Fiducial redshift distributions, shape (N_bins, N_z).
+    z : array
+        Redshift grid, shape (N_z,).
+    modes : array
+        Redshift modes, shape (N_modes, N_bins, N_z).
+    amplitudes : array
+        Mode amplitudes, shape (N_modes,).
+
+    Returns
+    -------
+    array
+        Perturbed and normalised redshift distributions,
+        shape (N_bins, N_z).
+    """
+
+    delta_dndz = jnp.einsum("k,kiz->iz", amplitudes, modes)
+
+    dndz_out = dndz + delta_dndz
+
+    # Clip negative values
+    dndz_out = jnp.maximum(dndz_out, 0.0)
+
+    # Normalise each tomographic bin
+    normalization = jnp.trapezoid(dndz_out, z, axis=1)
+
+    return dndz_out / normalization[:, None]

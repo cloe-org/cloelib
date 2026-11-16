@@ -1,4 +1,3 @@
-
 import numpy as np
 import jax.numpy as jnp
 
@@ -7,10 +6,12 @@ from cloelib.auxiliary.systematics import modes_dndz_jax
 
 def test_modes_dndz_zero_amplitudes():
     z = jnp.linspace(0.0, 2.0, 101)
-    dndz = jnp.array([
-        jnp.exp(-0.5 * ((z - 0.5) / 0.15) ** 2),
-        jnp.exp(-0.5 * ((z - 1.2) / 0.2) ** 2),
-    ])
+    dndz = jnp.array(
+        [
+            jnp.exp(-0.5 * ((z - 0.5) / 0.15) ** 2),
+            jnp.exp(-0.5 * ((z - 1.2) / 0.2) ** 2),
+        ]
+    )
 
     modes = jnp.zeros((3, 2, 101))
     amplitudes = jnp.zeros(3)
@@ -51,6 +52,4 @@ def test_modes_dndz_clips_negative_values():
 
     assert jnp.all(result >= 0)
     assert jnp.any(result == 0)
-    np.testing.assert_allclose(
-        jnp.trapezoid(result, z, axis=1), 1.0
-    )
+    np.testing.assert_allclose(jnp.trapezoid(result, z, axis=1), 1.0)

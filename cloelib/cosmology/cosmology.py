@@ -311,7 +311,9 @@ class BaryonBoostMixin(Protocol):
     from the total one; `with_baryon_boost` takes care of this.
     """
 
-    def baryonic_suppression(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+    def baryonic_suppression(
+        self, zs: np.ndarray, ks: np.ndarray, k_hunit: bool = False
+    ) -> np.ndarray:
         """Return the multiplicative baryonic suppression factor P_hydro/P_DMO.
 
         Parameters
@@ -320,6 +322,9 @@ class BaryonBoostMixin(Protocol):
             Redshifts, shape (nz,).
         ks:
             Wavenumbers, shape (nk,).
+        k_hunit:
+            If ``True`` ks are in h/Mpc; otherwise in 1/Mpc. `with_baryon_boost`
+            always passes it.
 
         Returns
         -------
@@ -344,9 +349,10 @@ def class_hmcode_includes_baryons(
 ) -> bool:
     """Whether CLASS options select HMcode2020 with baryonic feedback.
 
-    CLASS selects HMcode for any ``non_linear`` value containing ``hmcode``,
-    whatever its capitalisation, and the baryonic version as described in
-    `hmcode_version_includes_baryons`. Shared by the CLASS-based backends.
+    CLASS selects HMcode for a ``non_linear`` value containing ``hmcode``,
+    ``HMcode``, ``Hmcode`` or ``HMCODE``, and the baryonic version as described
+    in `hmcode_version_includes_baryons`. Other capitalisations are refused by
+    CLASS, so matching them too is harmless. Shared by the CLASS-based backends.
     """
     return (
         nonlinear_model is not None
@@ -375,12 +381,15 @@ def ensure_gravity_only(
     Nonlinear perturbations whose spectrum already includes baryonic feedback
     set ``includes_baryons = True``: CAMB with ``log10TAGN`` or the
     ``mead2020_feedback`` model, CLASS and mochi_class with HMcode2020 and
-    its baryonic feedback (e.g. through ``log10TAGN``), HMcode2020emu with
-    ``log10TAGN``, BACCOemu with ``baryonic_boost``, the HMcode2020 sector of
-    CosmoPower-JAX, the classes wrapping one of those (the modified-gravity
-    boosts), and classes composed by `with_baryon_boost`. Every baryonic
-    mixin calls this at the start of its ``__init__``, so the check holds
-    however the mixin is composed.
+    its baryonic feedback (e.g. through ``log10TAGN``; not for mochi_class
+    with ``mg_stable_basis_on``, which does not use HMcode), HMcode2020emu
+    with ``log10TAGN``, BACCOemu with ``baryonic_boost``, the HMcode2020
+    sector of CosmoPower-JAX, the classes wrapping one of those (the
+    modified-gravity boosts), and classes composed by `with_baryon_boost`.
+    Every baryonic mixin calls this at the start of its ``__init__``, and
+    again through `ensure_gravity_only_on_first_use` when its suppression is
+    first evaluated, so the check also holds when a class composed by hand
+    initialises the mixin before the nonlinear perturbations.
 
     Args:
         perturbations: The nonlinear perturbations to check.
@@ -398,6 +407,28 @@ def ensure_gravity_only(
             f"in its nonlinear spectrum. Adding {mixin_name} on top would apply "
             "baryonic feedback twice. Use a gravity-only nonlinear prescription."
         )
+
+
+def ensure_gravity_only_on_first_use(perturbations: Any, mixin_name: str) -> None:
+    """Repeat `ensure_gravity_only` once, when the suppression is first evaluated.
+
+    A class composed by hand may initialise its baryonic mixin before the
+    nonlinear perturbations, i.e. before ``includes_baryons`` is set; the
+    check is then only conclusive afterwards. Called by the baryonic mixins at
+    the start of ``baryonic_suppression``. `with_baryon_boost` initialises the
+    nonlinear perturbations first and marks the check as done.
+
+    Args:
+        perturbations: The nonlinear perturbations carrying the mixin.
+        mixin_name: Name of the baryonic mixin, for the message.
+
+    Raises:
+        ValueError: If ``perturbations.includes_baryons`` is true.
+    """
+    if getattr(perturbations, "_gravity_only_checked", False):
+        return
+    ensure_gravity_only(perturbations, mixin_name)
+    perturbations._gravity_only_checked = True
 
 
 def _native_baryon_options(kwargs: dict) -> list[str]:
@@ -542,6 +573,9 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
                 self, BaryonMixinClass.__name__, NonLinearClass.__name__
             )
             BaryonMixinClass.__init__(self, **(baryon_kwargs or {}))
+            # Checked above, after the nonlinear __init__; the flag set next
+            # must not fail the check on first use.
+            self._gravity_only_checked = True
             self.includes_baryons = True
 
         def matter_power_spectrum(self, zs, ks, *args, **kwargs):

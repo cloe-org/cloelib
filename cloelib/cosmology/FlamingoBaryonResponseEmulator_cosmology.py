@@ -29,6 +29,7 @@ from cloelib.cosmology.cosmology import (
     Background,
     BaryonBoostMixin,
     ensure_gravity_only,
+    ensure_gravity_only_on_first_use,
     with_baryon_boost,
 )
 from cloelib.cosmology.camb_cosmology import CAMBNonLinearPerturbations
@@ -144,6 +145,7 @@ class FlamingoBaryonBoostMixin(BaryonBoostMixin):
         -------
         np.ndarray, shape (nz, nk)
         """
+        ensure_gravity_only_on_first_use(self, "FlamingoBaryonBoostMixin")
         zs = np.atleast_1d(np.asarray(zs, dtype=float))
         ks = np.atleast_1d(np.asarray(ks, dtype=float))
         ks_hMpc = self._k_to_hMpc(ks, k_hunit)
@@ -183,6 +185,7 @@ class FlamingoBaryonBoostMixin(BaryonBoostMixin):
         response : np.ndarray, shape (nz, nk)
         variance : np.ndarray, shape (nz, nk)
         """
+        ensure_gravity_only_on_first_use(self, "FlamingoBaryonBoostMixin")
         zs = np.atleast_1d(np.asarray(zs, dtype=float))
         ks = np.atleast_1d(np.asarray(ks, dtype=float))
         ks_hMpc = self._k_to_hMpc(ks, k_hunit)

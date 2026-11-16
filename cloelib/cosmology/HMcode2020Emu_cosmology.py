@@ -7,6 +7,7 @@ from cloelib.cosmology.cosmology import (
     BaryonBoostMixin,
     WithLinearSpectrumGrid,
     ensure_gravity_only,
+    ensure_gravity_only_on_first_use,
 )
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.auxiliary.math_utils import ensure_z_zero_included
@@ -706,6 +707,7 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
             Baryonic suppression factor, shape (nz, nk).
             Returns 1.0 for scales below the nonlinear emulator k range.
         """
+        ensure_gravity_only_on_first_use(self, "HMcode2020BaryonBoostMixin")
         zs = np.atleast_1d(zs)
         ks = np.atleast_1d(ks)
         if k_hunit:

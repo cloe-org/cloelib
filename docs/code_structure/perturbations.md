@@ -262,7 +262,7 @@ CAMB nonlinear power spectrum with a baryonic suppression correction from the [F
 - FLAMINGO emulator response $B(k,z) = P_\text{hydro}/P_\text{DMO}$ applied at evaluation time
 - Three baryonic parameters: `fgas_sigma`, `Mstar_sigma`, `jet_fraction`
 - Valid for $z \leq 3$ and $k \leq 10^{1.5}\,h/\text{Mpc}$; outside these ranges the response is automatically clamped to 1
-- Standalone `FlamingoBaryonBoostMixin` composable with any nonlinear perturbations class
+- Standalone `FlamingoBaryonBoostMixin` composable with any gravity-only nonlinear perturbations class
 
 **Example**:
 
@@ -682,7 +682,7 @@ Accurate and fast emulator of the nonlinear matter power spectrum in modified gr
 
 ## Baryonic Boost Mixin Framework
 
-`cloelib` provides a composable `BaryonBoostMixin` Protocol that decouples the baryonic suppression from the underlying nonlinear solver. This makes it easy to combine any nonlinear backend with any baryonic model.
+`cloelib` provides a composable `BaryonBoostMixin` Protocol that decouples the baryonic suppression from the underlying nonlinear solver. This makes it easy to combine any gravity-only nonlinear backend with any baryonic model.
 
 **Protocol location**: `cloelib.cosmology.cosmology.BaryonBoostMixin`
 
@@ -703,9 +703,9 @@ Three ready-made mixins are provided:
 | `BACCOemuBaryonBoostMixin`   | BACCOemu          | `M_c`, `eta`, `beta`, `M1_z0_cen`, `theta_out`, `theta_inn`, `M_inn` |
 | `HMcode2020BaryonBoostMixin` | HMcode2020emu     | `log10TAGN`                                                          |
 
-Each mixin `__init__` must be called **after** the base nonlinear `__init__`, since it reads attributes set there (`self.background`, `self.includes_baryons` and, for BACCOemu and HMcode2020, `self.z`), and the mixin must come before the nonlinear class among the bases; `with_baryon_boost` takes care of both.
+Each mixin `__init__` must be called **after** the base nonlinear `__init__`, since it reads attributes set there (`self.includes_baryons` and, for BACCOemu and HMcode2020, `self.background` and `self.z`), and the mixin must come before the nonlinear class among the bases; `with_baryon_boost` takes care of both.
 
-A custom mixin should call `ensure_gravity_only(self, "<MixinName>")` (from `cloelib.cosmology.cosmology`) at the start of its `__init__`, so that it is never applied on top of a spectrum that already includes baryonic feedback.
+A custom mixin should call `ensure_gravity_only(self, "<MixinName>")` at the start of its `__init__` and `ensure_gravity_only_on_first_use(self, "<MixinName>")` at the start of `baryonic_suppression` (both from `cloelib.cosmology.cosmology`), so that it is never applied on top of a spectrum that already includes baryonic feedback.
 
 ### `with_baryon_boost` Factory
 
@@ -726,9 +726,21 @@ pert = BACCOemuFLAMINGO(
 
 The resulting object is fully `Perturbations`-compatible and can be passed directly to any `cloelib` tracer or likelihood.
 
-`cloelib` refuses to add a baryonic mixin on top of a nonlinear spectrum that already includes baryonic feedback, since feedback would then be applied twice. Nonlinear backends report it through `includes_baryons`: CAMB with `log10TAGN` or `nonlinear_model="mead2020_feedback"`, CLASS and mochi_class with HMcode2020 and its baryonic feedback (`nonlinear_model="hmcode"` with `hmcode_version="2020_baryonic_feedback"`, which `log10TAGN` selects, or any spelling of these that CLASS recognises), HMcode2020emu with `log10TAGN`, BACCOemu with `baryonic_boost`, and always the HMcode2020 sector of CosmoPower-JAX. Classes boosting another nonlinear spectrum, namely `BoostedPerturbations` (ReACT), `TabulatedBoostedPerturbations`, the modified-gravity CosmoPower-JAX classes and `EmantisFofrNonLinearPerturbations`, report baryons when that spectrum includes them, also when it carries a baryonic mixin; classes composed by `with_baryon_boost` report `includes_baryons = True`. Every mixin checks this at the start of its `__init__` (through `cloelib.cosmology.cosmology.ensure_gravity_only`), so the check also holds when composing by hand; `with_baryon_boost` additionally rejects the corresponding constructor options before building the, possibly costly, nonlinear backend. Through `with_baryon_boost`, a cb spectrum that the backend derives from the total one (e.g. CLASS without massive neutrinos, or the JAX backend) also receives the baryonic suppression only once; a class composed by hand has to ensure this itself.
+`cloelib` refuses to add a baryonic mixin on top of a nonlinear spectrum that already includes baryonic feedback, since feedback would then be applied twice:
 
-The baryonic mixins are implemented with NumPy: composed with a JAX backend, the spectra can be evaluated but not traced by JAX (`jax.jit`, `jax.vmap`, `jax.grad`), so e.g. `JAXNonLinearPerturbations.nonlinear_matter_power_spectrum_limber_grid` is not supported.
+- Nonlinear backends report it through `includes_baryons`:
+  - CAMB with `log10TAGN` or the `mead2020_feedback` model (also when selected by its number, `nonlinear_model=10`);
+  - CLASS and mochi_class with HMcode2020 and its baryonic feedback (`nonlinear_model="hmcode"` with `hmcode_version="2020_baryonic_feedback"`, which `log10TAGN` selects, or any spelling of these that CLASS recognises), except mochi_class with `mg_stable_basis_on`, which does not use HMcode;
+  - HMcode2020emu with `log10TAGN`;
+  - BACCOemu with `baryonic_boost`;
+  - always the HMcode2020 sector of CosmoPower-JAX.
+- Classes boosting another nonlinear spectrum, namely `BoostedPerturbations` (ReACT), `TabulatedBoostedPerturbations`, the modified-gravity CosmoPower-JAX classes and `EmantisFofrNonLinearPerturbations`, report baryons when that spectrum includes them, also when it carries a baryonic mixin.
+- Classes composed by `with_baryon_boost` report `includes_baryons = True`.
+- Every mixin checks this at the start of its `__init__` and again when its suppression is first evaluated (through `ensure_gravity_only` and `ensure_gravity_only_on_first_use` in `cloelib.cosmology.cosmology`), so the check also holds when composing by hand, whatever the order of the `__init__` calls.
+- `with_baryon_boost` additionally rejects the corresponding constructor options before building the, possibly costly, nonlinear backend. This early check is more cautious than the flags: it also refuses e.g. `hmcode_version="2020_baryonic_feedback"` with mochi_class's `mg_stable_basis_on`, or `log10TAGN` with the CosmoPower-JAX halofit sector.
+- Through `with_baryon_boost`, a cb spectrum that the backend derives from the total one (e.g. CLASS without massive neutrinos, or the JAX backend) also receives the baryonic suppression only once; a class composed by hand has to ensure this itself.
+
+The baryonic mixins are implemented with NumPy. Of the three, only `FlamingoBaryonBoostMixin` can currently be composed with the JAX backend: the other two read attributes at construction that `JAXNonLinearPerturbations` does not provide in the form they expect (e.g. `self.z`), and fail. The composed spectra can be evaluated but not traced by JAX (`jax.jit`, `jax.vmap`, `jax.grad`), so e.g. `JAXNonLinearPerturbations.nonlinear_matter_power_spectrum_limber_grid` is not supported.
 
 !!! warning "Total vs. cold matter boost"
 The same suppression $B(k,z)$ is applied to `matter_power_spectrum` and to

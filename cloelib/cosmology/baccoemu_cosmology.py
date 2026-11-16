@@ -7,6 +7,7 @@ from cloelib.cosmology.cosmology import (
     Background,
     BaryonBoostMixin,
     ensure_gravity_only,
+    ensure_gravity_only_on_first_use,
     Perturbations,
     with_baryon_boost,
 )
@@ -698,6 +699,7 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         np.ndarray
             Baryonic suppression factor, shape (nz, nk).
         """
+        ensure_gravity_only_on_first_use(self, "BACCOemuBaryonBoostMixin")
         zs = np.atleast_1d(zs)
         ks = np.atleast_1d(ks)
         if k_hunit:

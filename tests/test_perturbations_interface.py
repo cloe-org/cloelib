@@ -763,6 +763,11 @@ def test_with_baryon_boost_rejects_backend_with_baryons():
         (dict(nonlinear_model="mead2020"), False),
         (dict(log10TAGN=7.8), True),
         (dict(nonlinear_model="mead2020_feedback"), True),
+        # CAMB also accepts its models by number: 9 is mead2020, 10 the
+        # feedback version.
+        (dict(nonlinear_model=9), False),
+        (dict(nonlinear_model=10), True),
+        (dict(nonlinear_model=10, log10TAGN=7.8), True),
     ],
 )
 def test_camb_reports_baryons(options, includes_baryons):
@@ -832,6 +837,100 @@ def test_manual_composition_rejects_baryons(module, mixin, baryon_args):
             log10TAGN=7.8,
         )
     Manual(background=_camb_background(), linearperturbations=lin, redshifts=REDSHIFTS)
+
+
+def test_camb_log10TAGN_refuses_numbered_gravity_only_model():
+    """`log10TAGN` with a gravity-only model given by number is refused."""
+    if importlib.util.find_spec("camb") is None:
+        pytest.skip("camb not installed")
+    from cloelib.cosmology.camb_cosmology import CAMBNonLinearPerturbations
+
+    with pytest.raises(ValueError, match="mead2020_feedback"):
+        CAMBNonLinearPerturbations(
+            background=_camb_background(),
+            linearperturbations=None,
+            redshifts=REDSHIFTS,
+            nonlinear_model=9,
+            log10TAGN=7.8,
+        )
+
+
+def test_with_baryon_boost_rejects_numbered_camb_feedback_model():
+    """The CAMB feedback model selected by number is refused by the factory."""
+    if importlib.util.find_spec("camb") is None:
+        pytest.skip("camb not installed")
+    from cloelib.cosmology.camb_cosmology import CAMBNonLinearPerturbations
+    from cloelib.cosmology.cosmology import with_baryon_boost
+
+    with pytest.raises(ValueError, match="twice"):
+        with_baryon_boost(CAMBNonLinearPerturbations, _UnitBoostMixin)(
+            background=_camb_background(),
+            linearperturbations=None,
+            redshifts=REDSHIFTS,
+            nonlinear_model=10,
+        )
+
+
+def test_manual_composition_mixin_first_rejects_baryons():
+    """Composed by hand with the mixin initialised first, before the nonlinear
+    perturbations report `includes_baryons`, a baryonic mixin refuses a
+    nonlinear spectrum with baryonic feedback when first evaluated."""
+    if importlib.util.find_spec("camb") is None:
+        pytest.skip("camb not installed")
+    try:
+        from cloelib.cosmology.FlamingoBaryonResponseEmulator_cosmology import (
+            FlamingoBaryonBoostMixin,
+        )
+    except ImportError:
+        pytest.skip("FlamingoBaryonResponseEmulator not importable")
+    from cloelib.cosmology.camb_cosmology import CAMBNonLinearPerturbations
+
+    class MixinFirst(FlamingoBaryonBoostMixin, CAMBNonLinearPerturbations):
+        def __init__(self, *args, **kwargs):
+            FlamingoBaryonBoostMixin.__init__(
+                self, fgas_sigma=0.0, Mstar_sigma=0.0, jet_fraction=0.0
+            )
+            CAMBNonLinearPerturbations.__init__(self, *args, **kwargs)
+
+    ks = np.logspace(-2, 0, 5)
+    with_feedback = MixinFirst(
+        background=_camb_background(),
+        linearperturbations=None,
+        redshifts=REDSHIFTS,
+        log10TAGN=7.8,
+    )
+    with pytest.raises(ValueError, match="twice"):
+        with_feedback.baryonic_suppression(ZS, ks)
+    gravity_only = MixinFirst(
+        background=_camb_background(), linearperturbations=None, redshifts=REDSHIFTS
+    )
+    assert gravity_only.baryonic_suppression(ZS, ks).shape == (ZS.size, ks.size)
+
+
+def test_with_baryon_boost_marks_gravity_only_check_done():
+    """A class composed by `with_baryon_boost` reports `includes_baryons`, yet
+    its mixin's check on first use does not refuse it."""
+    from cloelib.cosmology.cosmology import (
+        ensure_gravity_only_on_first_use,
+        with_baryon_boost,
+    )
+
+    pert = with_baryon_boost(_CbFromTotalNonLinear, _UnitBoostMixin)(None, None, ZS)
+    assert pert.includes_baryons is True
+    ensure_gravity_only_on_first_use(pert, "_UnitBoostMixin")
+
+
+def test_hand_composed_mixin_reports_baryons():
+    """A class composed by hand, without `with_baryon_boost` and without
+    setting `includes_baryons`, is seen as including baryons by the classes
+    wrapping another nonlinear spectrum."""
+    from cloelib.cosmology.cosmology import perturbations_include_baryons
+
+    class Manual(_UnitBoostMixin, _CbFromTotalNonLinear):
+        pass
+
+    assert Manual.includes_baryons is False
+    assert perturbations_include_baryons(Manual()) is True
 
 
 def _class_nonlinear(**options):

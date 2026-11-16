@@ -2060,3 +2060,23 @@ def test_nonlinear_sectors_report_baryons(background_w0wa, background_lcdm, z_ar
         background=background_lcdm, linearperturbations=linear, redshifts=z_array
     )
     assert halofit.includes_baryons is False
+
+
+@pytest.mark.skipif(not HAS_COSMOPOWER_JAX, reason="cosmopower_jax not installed")
+def test_with_baryon_boost_refuses_hmcode_sector(background_lcdm, z_array):
+    """`with_baryon_boost` refuses a baryonic mixin on the HMcode2020 sector,
+    which always includes baryonic feedback, even without `log10TAGN`."""
+    from cloelib.cosmology.cosmology import with_baryon_boost
+
+    class UnitBoostMixin:
+        def __init__(self):
+            pass
+
+        def baryonic_suppression(self, zs, ks, k_hunit=False):
+            return np.ones((np.size(zs), np.size(ks)))
+
+    linear = LCDM.Linear(background=background_lcdm, redshifts=z_array)
+    with pytest.raises(ValueError, match="twice"):
+        with_baryon_boost(LCDM.NonLinear, UnitBoostMixin)(
+            background=background_lcdm, linearperturbations=linear, redshifts=z_array
+        )

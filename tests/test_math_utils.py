@@ -93,3 +93,6 @@ def test_cached_stacked_simpson_survives_retrace():
     jax.clear_caches()  # forces a re-trace; used to raise UnexpectedTracerError
     np.testing.assert_allclose(f(x), expected)
     np.testing.assert_allclose(cached_stacked_simpson(7) @ x, expected)
+
+
+

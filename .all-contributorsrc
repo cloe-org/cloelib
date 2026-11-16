@@ -718,7 +718,9 @@
       "profile": "https://github.com/zuzannakr",
       "contributions": [
         "code",
-        "maintenance"
+        "maintenance",
+        "bug",
+        "doc"
       ]
     },
     {
@@ -758,6 +760,16 @@
       "profile": "https://github.com/MCostanzi",
       "contributions": [
         "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "elisachisari",
+      "name": "Elisa Chisari",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9137015?v=4",
+      "profile": "https://www.uu.nl/staff/NEChisari",
+      "contributions": [
+        "mentoring",
         "ideas"
       ]
     }

@@ -7,6 +7,7 @@ from cloelib.observables.photo import ShearTracer
 from cloelib.observables.cmb import CMBLensingTracer
 from cloelib.observables.photo.contributions import CB, MATTER, contribution_field
 from cloelib.observables.photo.spectrum_engine import (
+    PkTerm,
     SpectraBank,
     get_effective_pk,
     get_pk_terms,
@@ -190,14 +191,10 @@ Pkl_interp_signed_vmap = jax.jit(
 )
 
 # Batches `Pkl_interp_signed_vmap` over an extra leading "term" axis on
-# `Pk` - lets `_compute_cl_generalized` interpolate every `PkTerm.pk` for
-# one contribution pairing (e.g. `NonLinearGalaxyBiasContribution`'s up to
-# thirteen terms per pairing - see `spectrum_engine.PkTerm`) in one batched
-# XLA call instead of one Python-level `Pkl_interp_signed_vmap` call per
-# term. Purely a performance change - each term's own interpolation is
-# identical either way (`vmap` batches independent per-term work, it
-# doesn't combine terms' `Pk`s before interpolating), so this changes no
-# numerics, only how many dispatches it takes.
+# `Pk` - lets `_compute_cl_generalized` interpolate every distinct signed
+# grid of a `get_Cl` call in one XLA call. Each grid's interpolation is
+# identical to a separate `Pkl_interp_signed_vmap` call; only the number of
+# dispatches changes.
 Pkl_interp_signed_vmap_terms = jax.jit(
     jax.vmap(Pkl_interp_signed_vmap, in_axes=(None, None, None, None, 0))
 )
@@ -332,6 +329,34 @@ def _resolve_w_ell(w_ell, bin_key, ns):
     return kernel_array, thmin, thmax
 
 
+def _check_ell_coverage(ell_nodes, ells, rtol=1e-6):
+    if not bool(np.all(np.diff(ell_nodes) > 0)):
+        raise ValueError("The multipoles of the C_ell must be strictly increasing.")
+    lo, hi = float(ell_nodes[0]), float(ell_nodes[-1])
+    ell_min, ell_max = float(np.min(ells)), float(np.max(ells))
+    if lo > ell_min * (1 + rtol) or hi < ell_max * (1 - rtol):
+        raise ValueError(
+            f"The C_ell nodes span [{lo:.10g}, {hi:.10g}] but must cover the "
+            f"integration multipoles [{ell_min:.10g}, {ell_max:.10g}]."
+        )
+
+
+def interp_cl_log_ell(ells, ell_nodes, cl_nodes):
+    """
+    Interpolate C_ell from `ell_nodes` to `ells` along the last axis.
+
+    C^2 cubic spline in log(ell) (interpax "cubic2", not-a-knot ends), linear in
+    C_ell so that sign changes (e.g. from intrinsic alignments) are fine. Raises a
+    ValueError if `ell_nodes` is not increasing or does not cover `ells`.
+    """
+    _check_ell_coverage(ell_nodes, ells)
+    x = np.log(ell_nodes)
+    fx = interpax.approx_df(x, cl_nodes, "cubic2", -1, bc_type="not-a-knot")
+    return interpax.interp1d(
+        np.log(ells), x, cl_nodes, method="cubic2", axis=-1, extrap=True, fx=fx
+    )
+
+
 def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     """
     Compute EE and BB COSEBIs for all SHE-SHE keys in `cells`.
@@ -347,7 +372,8 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
     ells : jax.numpy.ndarray
         Multipoles at which the integration is performed. Any strictly
         increasing grid is accepted (see ``quadrature_weights``); it must be
-        fine enough to resolve the oscillations of the kernels.
+        fine enough to resolve the oscillations of the kernels. Spectra in
+        `cells` on another grid are interpolated with :func:`interp_cl_log_ell`.
     w_ell : dict
         Harmonic-space COSEBIs kernels.  Two layouts are accepted:
 
@@ -397,16 +423,25 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
 
     tomo_cosebis = {}
 
-    def _interp_cl(cl_map):
-        """Interpolate or return EE/BB slices onto `ells`."""
+    def _cl_on_ells(cl_maps):
+        """EE and BB of each map in `cl_maps` on `ells`, shape ``(len(cl_maps), 2, n_ell)``."""
+        ell_grids = [cl_map.ell for cl_map in cl_maps]
+        cl_eb = [
+            np.stack([cl_map.array[0, 0], cl_map.array[1, 1]]) for cl_map in cl_maps
+        ]
         # Fast path: skip interp when ells is literally the same array object
         # (common when called from get_cosebis which passes the same ells it
         # used to compute the Cls).
-        if cl_map.ell is ells:
-            return cl_map.array[0, 0], cl_map.array[1, 1]
-        return (
-            np.interp(ells, cl_map.ell, cl_map.array[0, 0]),
-            np.interp(ells, cl_map.ell, cl_map.array[1, 1]),
+        if all(ell is ells for ell in ell_grids):
+            return np.stack(cl_eb)
+        # One interpolation for all maps on a common grid (as returned by get_Cl)
+        if all(ell is ell_grids[0] for ell in ell_grids):
+            return interp_cl_log_ell(ells, ell_grids[0], np.stack(cl_eb))
+        return np.stack(
+            [
+                eb if ell is ells else interp_cl_log_ell(ells, ell, eb)
+                for ell, eb in zip(ell_grids, cl_eb)
+            ]
         )
 
     if is_global:
@@ -415,9 +450,7 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
         n_pairs = len(she_she)
 
         # Stack EE and BB for all pairs: (n_pairs, 2, n_ell)
-        cl_stack = np.stack(
-            [np.stack(list(_interp_cl(cl_map))) for _, cl_map in she_she]
-        )
+        cl_stack = _cl_on_ells([cl_map for _, cl_map in she_she])
 
         # Single JIT'd einsum: (n_pairs, 2, n_modes)
         vals_all = _cosebi_einsum_global(kernel_array, ell_weight, cl_stack)
@@ -443,7 +476,7 @@ def get_cosebis_from_cl(cells, ells, w_ell, ns, software=None):
             kernel_array, thmin, thmax = _resolve_w_ell(w_ell, key, ns)
 
             # Stack EE and BB: (2, n_ell)
-            cl_eb = np.stack(list(_interp_cl(cl_map)))
+            cl_eb = _cl_on_ells([cl_map])[0]
 
             # JIT'd einsum: (2, n_modes)
             vals = _cosebi_einsum_perbin(kernel_array, ell_weight, cl_eb)
@@ -839,12 +872,12 @@ class AngularTwoPoint:
         physics separation `toy_cloelib.engine.compute_angular_power_
         spectrum` uses, reusing cloelib's own existing jitted Limber
         kernels (`Pkl_interp_vmap`, `Cl_integration`) unchanged for each
-        pair's integral. A pair whose bias amplitudes vary per tomographic
-        bin (e.g. `NonLinearGalaxyBiasContribution`) instead declares
-        `get_pk_terms` - several additive `(kernel1, kernel2, pk)` triples
-        rather than one shared pair (see `spectrum_engine.PkTerm`'s
-        docstring); checked first, per `(c1, c2)`, before falling back to
-        `get_effective_pk`.
+        pair's integral. A pair whose amplitudes vary per tomographic bin
+        (e.g. `NonLinearGalaxyBiasContribution`, `TATTMContribution`)
+        instead declares `get_pk_terms` - several additive `(kernel1,
+        kernel2, pk)` triples rather than one shared pair (see
+        `spectrum_engine.PkTerm`'s docstring); checked first, per `(c1, c2)`,
+        before falling back to `get_effective_pk`.
 
         The base spectrum of a pair follows from the fields the two
         contributions trace (`SpectraBank.base`). A single `SpectraBank`
@@ -854,8 +887,8 @@ class AngularTwoPoint:
 
         Does not support RSD (`PositionsTracer(..., include_rsd=True)`)
         paired with a generalized-engine-requiring contribution - that
-        combination isn't exercised by TATT and is left as a documented gap
-        rather than guessed at.
+        combination isn't exercised by TATT or TATT-M (both reach this
+        method) and is left as a documented gap rather than guessed at.
         """
         if (
             isinstance(self.tracer1, PositionsTracer)
@@ -866,8 +899,8 @@ class AngularTwoPoint:
         ):
             raise NotImplementedError(
                 "The generalized Cl engine (contributions declaring extra "
-                "SpectrumRequests, e.g. TATTContribution) does not support "
-                "PositionsTracer(include_rsd=True) yet."
+                "SpectrumRequests, e.g. TATTContribution/TATTMContribution) "
+                "does not support PositionsTracer(include_rsd=True) yet."
             )
 
         c_0 = SPEED_OF_LIGHT / 1000
@@ -890,50 +923,67 @@ class AngularTwoPoint:
 
         n_bin1 = self.tracer1.n_z_bins
         n_bin2 = self.tracer2.n_z_bins
-        C_ell_calc = np.zeros((len(ells), n_bin1, n_bin2))
+
+        # Every pairing is reduced to `PkTerm`s (a plain `get_effective_pk`
+        # pairing is one term), then all terms are integrated in a single
+        # batched einsum. Kernels and signed-Pk interpolations are computed
+        # once per object (keyed by `id`, holding a reference so the id can't
+        # be reused): a contribution appears in many pairings, and memoized
+        # `SpectraBank` grids (e.g. TATT-M's one-loop terms) are shared
+        # between pairings. All distinct signed grids are interpolated in one
+        # batched call.
+        kernel_cache = {}
+        signed_index = {}
+        signed_pks = []
+
+        def kernel(contribution):
+            key = id(contribution)
+            if key not in kernel_cache:
+                kernel_cache[key] = (contribution, contribution.compute_kernel(zs_calc))
+            return kernel_cache[key][1]
+
+        def signed_slot(pk):
+            # Effective spectra (e.g. TATT's GI/II terms) are generically
+            # signed - see `Pkl_interp_signed`'s docstring - so they can't go
+            # through the log-log `Pkl_interp` the always-positive base
+            # spectra use.
+            key = id(pk)
+            if key not in signed_index:
+                signed_index[key] = len(signed_pks)
+                signed_pks.append(pk)
+            return signed_index[key]
+
+        W1_terms, W2_terms, Pkl_terms = [], [], []
 
         for c1 in contributions1:
             for c2 in contributions2:
                 terms = get_pk_terms(c1, c2, zs_calc, bank)
-                if terms is not None:
-                    # Per-bin-varying amplitudes (e.g.
-                    # `NonLinearGalaxyBiasContribution`): several additive
-                    # (kernel1, kernel2, pk) triples instead of one shared
-                    # pair - see `PkTerm`'s docstring. Stacked and batched
-                    # (`Pkl_interp_signed_vmap_terms`/`Cl_integration_
-                    # batched`) into one interpolation call and one summed
-                    # einsum per pairing, rather than looping
-                    # `Pkl_interp_signed_vmap`/`Cl_integration` once per
-                    # term - a pure performance change (see those
-                    # functions' docstrings), not a numerical one.
-                    kernel1_stack = np.stack([t.kernel1 for t in terms])
-                    kernel2_stack = np.stack([t.kernel2 for t in terms])
-                    pk_stack = np.stack([t.pk.T for t in terms])
-                    Pkl_stack = Pkl_interp_signed_vmap_terms(
-                        k_lz, zs_calc, ks, pert_zs, pk_stack
-                    )
-                    C_ell_calc = C_ell_calc + Cl_integration_batched(
-                        kernel1_stack, kernel2_stack, Pkl_stack, H, chi2, weights
-                    )
-                    continue
+                if terms is None:
+                    terms = (PkTerm(None, None, get_effective_pk(c1, c2, bank)),)
+                for t in terms:
+                    W1_terms.append(kernel(c1) if t.kernel1 is None else t.kernel1)
+                    W2_terms.append(kernel(c2) if t.kernel2 is None else t.kernel2)
+                    if t.pk is None:
+                        Pkl_terms.append(
+                            limber_pk(contribution_field(c1), contribution_field(c2))
+                        )
+                    else:
+                        Pkl_terms.append(signed_slot(t.pk))
 
-                pk_eff = get_effective_pk(c1, c2, bank)
-                if pk_eff is None:
-                    Pkl_pair = limber_pk(contribution_field(c1), contribution_field(c2))
-                else:
-                    # Effective spectra (e.g. TATT's GI/II terms) are
-                    # generically signed - see `Pkl_interp_signed`'s
-                    # docstring - so they can't go through the log-log
-                    # `Pkl_interp` the always-positive base spectra use above.
-                    Pkl_pair = Pkl_interp_signed_vmap(
-                        k_lz, zs_calc, ks, pert_zs, pk_eff.T
-                    )
+        if signed_pks:
+            signed_Pkl = Pkl_interp_signed_vmap_terms(
+                k_lz, zs_calc, ks, pert_zs, np.stack([pk.T for pk in signed_pks])
+            )
+            Pkl_terms = [signed_Pkl[p] if isinstance(p, int) else p for p in Pkl_terms]
 
-                W1 = c1.compute_kernel(zs_calc)
-                W2 = c2.compute_kernel(zs_calc)
-                C_ell_calc = C_ell_calc + Cl_integration(
-                    W1, W2, Pkl_pair, H, chi2, weights
-                )
+        C_ell_calc = Cl_integration_batched(
+            np.stack(W1_terms),
+            np.stack(W2_terms),
+            np.stack(Pkl_terms),
+            H,
+            chi2,
+            weights,
+        )
 
         C_ell_calc = C_ell_calc * c_0 * dz
 
@@ -1192,13 +1242,18 @@ class AngularTwoPoint:
             for key, array in C_ell_out.items()
         }
 
-    def get_cosebis(self, ells, nl, ks, w_ell, ns):
+    def get_cosebis(self, ells, nl, ks, w_ell, ns, ells_interpolation=None):
         """Compute EE and BB COSEBIs from angular power spectra.
 
         Delegates to the module-level :func:`get_cosebis_from_cl`. See that
-        function for full parameter documentation.
+        function for full parameter documentation. If `ells_interpolation` is
+        given, the C_ell are computed there and interpolated onto `ells`.
         """
-        cells = self.get_Cl(ells, nl, ks)
+        if ells_interpolation is None:
+            cells = self.get_Cl(ells, nl, ks)
+        else:
+            _check_ell_coverage(ells_interpolation, ells)
+            cells = self.get_Cl(ells_interpolation, nl, ks)
 
         return get_cosebis_from_cl(
             cells,

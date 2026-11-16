@@ -3,6 +3,7 @@
 import jax
 import numpy as np
 
+
 def ensure_z_zero_included(redshifts: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Ensure z=0 is in redshift array for sigma8(z=0) computation.

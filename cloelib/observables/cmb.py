@@ -8,7 +8,7 @@ This class is compatible with the Tracer protocol.
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import check_nonzero_redshifts
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.observables.photo.contributions import unit_sigma
+from cloelib.observables.photo.contributions import TracerBackRefMixin, unit_sigma
 
 # General imports
 from typing import Any
@@ -19,7 +19,7 @@ import jax.numpy as np
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 
-class CMBLensingContribution:
+class CMBLensingContribution(TracerBackRefMixin):
     """CMB-lensing convergence kernel term of `CMBLensingTracer.get_window()`.
 
     Lets `CMBLensingTracer` participate in the generalized

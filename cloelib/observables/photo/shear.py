@@ -63,6 +63,7 @@ from cloelib.auxiliary.math_utils import (
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
+    TracerBackRefMixin,
     Contribution,
     contribution_field,
     unit_sigma,
@@ -91,7 +92,7 @@ c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 _C_KM_S = SPEED_OF_LIGHT / 1000
 
 
-class LensingContribution:
+class LensingContribution(TracerBackRefMixin):
     """Weak-lensing shear kernel term of `ShearTracer.get_window()`."""
 
     def __init__(self, tracer: "ShearTracer") -> None:
@@ -102,7 +103,7 @@ class LensingContribution:
         return self._tracer.get_window_lensing(z)
 
 
-class NLAContribution(IntrinsicAlignmentContribution):
+class NLAContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
     """NLA (nonlinear alignment model) intrinsic-alignment kernel term of
     `ShearTracer.get_window()`.
 
@@ -400,7 +401,7 @@ def _growth_factor_1d(perturbations, z, k_pivot_hmpc: float = 0.03):
     return d_raw[:, pivot_idx]
 
 
-class TATTContribution(IntrinsicAlignmentContribution):
+class TATTContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
     r"""TATT intrinsic-alignment contribution (Eqs. 9-16 of Navarro-Gironés
     et al. 2026, arXiv:2602.16448), see module docstring.
 
@@ -678,7 +679,7 @@ def _tatt_m_term(bank, loop_computer, key):
     return bank.get(SpectrumRequest(name=f"tatt_m_{key}", compute=_compute))
 
 
-class TATTMContribution(IntrinsicAlignmentContribution):
+class TATTMContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
     r"""TATT-M intrinsic alignments (Herle et al. 2026, arXiv:2601.15851).
 
     TATT with per-bin amplitudes set by halo mass and red fraction:

@@ -55,6 +55,7 @@ from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
+    TracerBackRefMixin,
     unit_sigma,
 )
 from cloelib.observables.photo.spectrum_engine import (
@@ -192,7 +193,7 @@ def get_photo_rsd(ells, chi, S_bin_z):
     )
 
 
-class GalaxyBiasContribution:
+class GalaxyBiasContribution(TracerBackRefMixin):
     """Galaxy-bias-weighted positions kernel term of `PositionsTracer.get_window()`.
 
     One of the three linear-bias models selected by `galaxy_bias_model`
@@ -215,7 +216,7 @@ class GalaxyBiasContribution:
         return self._tracer.get_window_positions(z)
 
 
-class MagnificationContribution:
+class MagnificationContribution(TracerBackRefMixin):
     """Magnification-bias kernel term of `PositionsTracer.get_window()`.
 
     Lensing by the total matter, so it traces `MATTER` even with
@@ -402,7 +403,7 @@ class PBJNonlinearBiasLoopComputer:
         return _compute
 
 
-class NonLinearGalaxyBiasContribution:
+class NonLinearGalaxyBiasContribution(TracerBackRefMixin):
     r"""Non-linear galaxy-bias kernel term of `PositionsTracer.get_window()`,
     see module docstring for basis/citation notes.
 

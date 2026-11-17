@@ -1,3 +1,4 @@
+import weakref
 from typing import Protocol, TypeVar, Union
 
 import numpy as np
@@ -94,3 +95,36 @@ class IntrinsicAlignmentContribution:
     / `.positions` - this module holds only the generic, tracer-agnostic
     base types `spectrum_engine.py` and both submodules share.
     """
+
+
+class TracerBackRefMixin:
+    """Mixin for a Contribution that needs its owning tracer: keeps
+    `self._tracer` as a *weak* reference.
+
+    A tracer owns its contributions (e.g. `ShearTracer.lensing`), and each
+    contribution calls back into the tracer for its kernel
+    (`self._tracer.get_window_lensing(z)`). A plain attribute would make the
+    pair a reference cycle, which reference counting cannot free: every
+    discarded tracer - and, through it, its perturbations, background and
+    their P(k) grids / CAMB results - would stay in memory until Python's
+    cyclic garbage collector happens to run (cloelib#714, cloerun#18).
+
+    Use it by listing it among the bases; `self._tracer = tracer` and every
+    `self._tracer....` access then work unchanged. The tracer must outlive
+    its contributions, as it does whenever they are reached through it
+    (`tracer.get_contributions()`, `tracer.lensing`, ...).
+    """
+
+    @property
+    def _tracer(self):
+        tracer = self._tracer_ref()
+        if tracer is None:
+            raise ReferenceError(
+                f"the tracer owning this {type(self).__name__} no longer exists: "
+                "keep a reference to the tracer while using its contributions."
+            )
+        return tracer
+
+    @_tracer.setter
+    def _tracer(self, tracer):
+        self._tracer_ref = weakref.ref(tracer)

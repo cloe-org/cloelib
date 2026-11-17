@@ -13,6 +13,7 @@ from cloelib.auxiliary.math_utils import (
     simps,
 )
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.observables.photo.contributions import TracerBackRefMixin
 
 # General imports
 import jax.numpy as np
@@ -23,7 +24,7 @@ import interpax
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 
-class GWWeakLensingContribution:
+class GWWeakLensingContribution(TracerBackRefMixin):
     """Weak-lensing convergence kernel term of `GWWeakLensingTracer.get_window()`."""
 
     def __init__(self, tracer: "GWWeakLensingTracer") -> None:

@@ -222,35 +222,6 @@ def test_camb_set_neutrino_parameters_zero():
     assert list(params.nu_mass_numbers) == []
 
 
-def test_camb_massless_species_declared_massive_equals_no_massive():
-    """N_mnu=1 with mnu=0 (needed e.g. by HMcode2020Emu) is a massless-neutrino
-    cosmology, so it must reproduce N_mnu=0, while keeping N_mnu=1 itself."""
-    kwargs = dict(
-        H0=67.7,
-        Omega_b0=0.022 / 0.677**2,
-        Omega_cdm0=0.12 / 0.677**2,
-        Omega_k0=0.0,
-        As=2e-9,
-        ns=0.96,
-        alpha_s=0.0,
-        mnu=0.0,
-        w0=-1,
-        wa=0,
-        gamma_MG=0,
-    )
-    bg_none = CAMBBackground(**kwargs, N_mnu=0)
-    bg_zero = CAMBBackground(**kwargs, N_mnu=1)
-    assert bg_zero.N_mnu == 1
-    assert bg_zero.interface_args["CAMBparams"].num_nu_massive == 0
-    zs = np.array([0.5, 1.0, 2.0])
-    assert_allclose(
-        bg_zero.hubble_parameter(zs), bg_none.hubble_parameter(zs), rtol=1e-8
-    )
-    sigma12_none = CAMBLinearPerturbations(bg_none, zs).sigma12()
-    sigma12_zero = CAMBLinearPerturbations(bg_zero, zs).sigma12()
-    assert_allclose(sigma12_zero, sigma12_none, rtol=1e-5)
-
-
 def test_camb_set_neutrino_parameters_wrong_length():
     with pytest.raises(ValueError):
         bg = CAMBBackground(

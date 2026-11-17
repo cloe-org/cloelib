@@ -773,6 +773,16 @@
         "mentoring",
         "ideas"
       ]
+    },
+    {
+      "login": "wdassignies",
+      "name": "William D'Assignies Doumerg",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89606153?v=4",
+      "profile": "https://wdassignies.github.io",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
     }
   ]
 }

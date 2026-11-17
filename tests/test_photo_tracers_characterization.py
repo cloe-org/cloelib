@@ -89,6 +89,7 @@ def tracer_setup():
         "AIA": 1.0,
         "CIA": 0.0134,
         "EtaIA": -0.41,
+        "z0IA": 0.0,  # pre-pivot-change convention; baseline was generated with z0=0
     }
 
     nuisance_pos_common = {

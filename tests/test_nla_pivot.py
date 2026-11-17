@@ -76,10 +76,13 @@ def test_default_pivot_is_default(setup):
 def test_pivot_equivalent_to_amplitude_rescaling(setup, z0):
     """A pivot z0 is equivalent to rescaling AIA by (1+z0)**(-EtaIA)."""
     with_pivot = _nla_window(setup, AIA=1.0, z0IA=z0)
-    rescaled = _nla_window(setup, AIA=(1.0 + z0) ** (-ETA_IA))
+    rescaled = _nla_window(setup, AIA=(1.0 + z0) ** (-ETA_IA), z0IA=0.0)
     np.testing.assert_allclose(with_pivot, rescaled, rtol=1e-12, atol=0.0)
-    # And it actually changes the kernel when EtaIA != 0.
-    assert not np.allclose(with_pivot, _nla_window(setup))
+
+    # The pivot must matter: compare against the same AIA with no pivot (z0=0).
+    # Skip z0=0 itself, where the two are identical by construction.
+    if z0 != 0.0:
+        assert not np.allclose(with_pivot, _nla_window(setup, AIA=1.0, z0IA=0.0))
 
 
 def test_pivot_irrelevant_without_redshift_evolution(setup):

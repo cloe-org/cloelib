@@ -1205,7 +1205,9 @@ class ShearTracer:
         rz = self.background.comoving_distance(z)
         rzrz = 1 - np.outer(rz, 1 / rz)
         w_matrix = cached_stacked_simpson(len(z))
-        result = np.einsum("ik, jk, jk->ij", self.dndz_with_systematics, rzrz, w_matrix) * dz
+        result = (
+            np.einsum("ik, jk, jk->ij", self.dndz_with_systematics, rzrz, w_matrix) * dz
+        )
         return result
 
     def get_window_lensing(self, z):

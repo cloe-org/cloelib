@@ -521,7 +521,9 @@ class NonLinearGalaxyBiasContribution:
     def _bias_kernel(self, bias_array, z):
         """Per-bin bias-weighted density kernel: `bias_i * n_i(z) * H(z)/c`."""
         h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / c_0
-        return bias_array[:, None] * self._tracer.dndz_with_systematics * h_over_c[None, :]
+        return (
+            bias_array[:, None] * self._tracer.dndz_with_systematics * h_over_c[None, :]
+        )
 
     def compute_kernel(self, z):
         """The `b1` (linear-bias) part of the window only - diagnostic/
@@ -1007,7 +1009,9 @@ class PositionsTracer:
         rz = self.background.comoving_distance(z)
         rzrz = 1 - np.outer(rz, 1 / rz)
         w_matrix = cached_stacked_simpson(len(z))
-        result = np.einsum("ik, jk, jk->ij", self.dndz_with_systematics, rzrz, w_matrix) * dz
+        result = (
+            np.einsum("ik, jk, jk->ij", self.dndz_with_systematics, rzrz, w_matrix) * dz
+        )
         return result
 
     def get_window_magnification(self, z):

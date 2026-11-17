@@ -979,9 +979,7 @@ class ShearTracer:
                 nuisance_params[f"dndz_mode_{k}"] for k in range(dndz_modes.shape[0])
             ]
 
-            self.dndz_with_systematics = modes_dndz_jax(
-                dndz, z, dndz_modes, amplitudes
-            )
+            self.dndz_with_systematics = modes_dndz_jax(dndz, z, dndz_modes, amplitudes)
 
         else:
             raise ValueError(

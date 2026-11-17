@@ -801,15 +801,13 @@ class PositionsTracer:
                 nuisance_params[f"dndz_mode_{k}"] for k in range(dndz_modes.shape[0])
             ]
 
-            self.dndz_with_systematics = modes_dndz_jax(
-                dndz, z, dndz_modes, amplitudes
-            )
+            self.dndz_with_systematics = modes_dndz_jax(dndz, z, dndz_modes, amplitudes)
 
         else:
             raise ValueError(
                 f"Unknown dndz_redshift_model: {dndz_redshift_model!r}. "
                 "Expected 'shift_stretch' or 'modes'."
-                )
+            )
 
         # Backward compatibility
         self.dndz_shifted = self.dndz_with_systematics

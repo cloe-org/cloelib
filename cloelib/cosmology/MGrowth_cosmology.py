@@ -307,7 +307,7 @@ class MGrowthLinearPerturbations:
         # Full k-dependent growth for f(R)
         # MGrowth takes k in h/Mpc
         D_raw, f_raw = self.mg_cosmo.growth_parameters(
-            k_arr=self.k * self.background.h, fR0=self.mgpars["fr0"]
+            k_arr=self.k / self.background.h, fR0=self.mgpars["fr0"]
         )
         # Transpose to get the arrays in (z,k), i.e. same shape as input power spectrum
         D_raw, f_raw = D_raw.T, f_raw.T

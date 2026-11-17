@@ -60,7 +60,11 @@ from cloelib.auxiliary.math_utils import (
     check_nonzero_redshifts,
     simps,
 )
-from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.auxiliary.systematics import (
+    modes_dndz_jax,
+    shift_dndz_jax,
+    stretch_dndz_jax,
+)
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
     Contribution,
@@ -871,12 +875,16 @@ class ShearTracer:
         nuisance_params: dict,
         ia_model: "str | Contribution | None" = None,
         tatt_loop_computer: Optional[TATTLoopComputer] = None,
+        *,
+        dndz_redshift_model: str = "shift_stretch",
+        dndz_modes: np.ndarray | None = None,
     ):
         r"""Construct a tomographic cosmic-shear tracer.
 
         ``dndz`` is expected to have shape ``(n_bin, len(z))`` with
-        normalized distributions. Per-bin width transformations are applied
-        before redshift shifts. ``z`` must not contain zero.
+        normalized distributions. If `dndz_redshift_model="shift_stretch"
+        per-bin width transformations are applied before redshift shifts.
+        ``z`` must not contain zero.
 
         Args:
           perturbations: Backend supplying background and perturbation
@@ -911,11 +919,20 @@ class ShearTracer:
             (see `TATTContribution`'s docstring). Pass
             `PBJTATTLoopComputer(perturbations)` for real FAST-PT-computed
             kernels, or any other object with the same `.compute(name)`
-            interface. Passing this with any other `ia_model` raises `ValueError`.
+            interface. Passing this with any other `ia_model` raises `ValueError`
+          dndz_redshift_model: Redshift-distribution systematic model.
+            `"shift_stretch"` applies the existing per-bin shifts and widths;
+            `"modes"` applies the supplied redshift modes.
+          dndz_modes: Fixed redshift modes, required when
+            `dndz_redshift_model="modes"`. Expected shape is
+            `(n_modes, n_bin, len(z))`. Their amplitudes are read from
+            `nuisance_params["dndz_mode_0"]`, ..., `["dndz_mode_{n_modes-1}"]`.
 
         Raises:
-          ValueError: If ``z`` contains zero, ``ia_model`` is unknown, or the
-            TATT loop-computer argument is inconsistent with ``ia_model``.
+          ValueError: If ``z`` contains zero, ``ia_model`` is unknown,
+            or ``dndz_redshift_model`` is unknown, or the
+            TATT loop-computer argument is inconsistent with ``ia_model``,
+            or the modes are missing or have an invalid shape.
         """
         check_nonzero_redshifts(z)
         self.perturbations = perturbations
@@ -929,19 +946,49 @@ class ShearTracer:
             self.nuisance_params[f"multiplicative_bias_{i + 1}"]
             for i in range(dndz.shape[0])
         ]
-        self.dz_shear_i = [
-            self.nuisance_params[f"dz_shear_{i + 1}"] for i in range(dndz.shape[0])
-        ]
-        self.width_shear_i = [
-            self.nuisance_params[f"width_shear_{i + 1}"] for i in range(dndz.shape[0])
-        ]
         self.n_z_bins = dndz.shape[0]
         self.dndz = dndz
 
-        self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_shear_i)
-        self.dndz_with_systematics = shift_dndz_jax(
-            self.dndz_stretched, z, self.dz_shear_i
-        )
+        if dndz_redshift_model == "shift_stretch":
+            self.dz_shear_i = [
+                nuisance_params[f"dz_shear_{i + 1}"] for i in range(dndz.shape[0])
+            ]
+            self.width_shear_i = [
+                nuisance_params[f"width_shear_{i + 1}"] for i in range(dndz.shape[0])
+            ]
+
+            self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_shear_i)
+            self.dndz_with_systematics = shift_dndz_jax(
+                self.dndz_stretched, z, self.dz_shear_i
+            )
+
+        elif dndz_redshift_model == "modes":
+            if dndz_modes is None:
+                raise ValueError(
+                    "dndz_modes must be provided when dndz_redshift_model='modes'."
+                )
+
+            expected_shape = (dndz_modes.shape[0], dndz.shape[0], len(z))
+            if dndz_modes.shape != expected_shape:
+                raise ValueError(
+                    f"dndz_modes must have shape {expected_shape}, "
+                    f"got {dndz_modes.shape}."
+                )
+
+            amplitudes = [
+                nuisance_params[f"dndz_mode_{k}"] for k in range(dndz_modes.shape[0])
+            ]
+
+            self.dndz_with_systematics = modes_dndz_jax(
+                dndz, z, dndz_modes, amplitudes
+            )
+
+        else:
+            raise ValueError(
+                f"Unknown dndz_redshift_model: {dndz_redshift_model!r}. "
+                "Expected 'shift_stretch' or 'modes'."
+            )
+
         # Backward compatibility
         self.dndz_shifted = self.dndz_with_systematics
 

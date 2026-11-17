@@ -51,7 +51,11 @@ from cloelib.auxiliary.math_utils import (
     cached_stacked_simpson,
     check_nonzero_redshifts,
 )
-from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.auxiliary.systematics import (
+    modes_dndz_jax,
+    shift_dndz_jax,
+    stretch_dndz_jax,
+)
 from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
@@ -701,13 +705,15 @@ class PositionsTracer:
         nl_bias_loop_computer: NonlinearBiasLoopComputer | None = None,
         *,
         use_Pcb: bool = False,
+        dndz_redshift_model: str = "shift_stretch",
+        dndz_modes: np.ndarray | None = None,
     ):
         r"""Construct a tomographic photometric-position tracer.
 
-        ``dndz`` is expected to have shape ``(n_bin, len(z))``. Per-bin
-        width transformations are applied before redshift shifts. The redshift
-        grid must not contain zero; the window integrations assume a suitably
-        sampled grid.
+        ``dndz`` is expected to have shape ``(n_bin, len(z))``.
+        If `dndz_redshift_model="shift_stretch" per-bin width transformations
+        are applied before redshift shifts. The redshift grid must not contain zero;
+        the window integrations assume a suitably sampled grid.
 
         Args:
             perturbations: Backend providing the background and perturbation
@@ -738,11 +744,20 @@ class PositionsTracer:
             use_Pcb (bool): Keyword-only. A flag indicating whether to use
                 the power spectrum of cold dark matter + baryons (no neutrinos).
                 Must be a Python `bool` (raises `TypeError` otherwise).
-                Not supported with `galaxy_bias_model="nonlinear"` (raises `NotImplementedError`).
+                Not supported with `galaxy_bias_model="nonlinear"` (raises `NotImplementedError`)
+            dndz_redshift_model: Redshift-distribution systematic model.
+                `"shift_stretch"` applies the existing per-bin shifts and widths;
+                `"modes"` applies the supplied redshift modes.
+            dndz_modes: Fixed redshift modes, required when
+                `dndz_redshift_model="modes"`. Expected shape is
+                `(n_modes, n_bin, len(z))`. Their amplitudes are read from
+                `nuisance_params["dndz_mode_0"]`, ..., `["dndz_mode_{n_modes-1}"]`.
 
         Raises:
-            ValueError: If the redshift grid contains zero or the nonlinear
-                loop-computer argument is inconsistent with the bias model.
+            ValueError: If ``z`` contains zero, or
+                ``dndz_redshift_model`` is unknown, or the nonlinear
+                loop-computer argument is inconsistent with the bias model,
+                or the modes are missing or have an invalid shape.
         """
         if not isinstance(use_Pcb, bool):
             raise TypeError(f"use_Pcb must be a bool, got {type(use_Pcb).__name__}.")
@@ -754,18 +769,48 @@ class PositionsTracer:
         self.prefact_toggle = 0
 
         self.nuisance_params = nuisance_params
-        self.dz_pos_i = [
-            self.nuisance_params[f"dz_pos_{i + 1}"] for i in range(dndz.shape[0])
-        ]
-        self.width_pos_i = [
-            self.nuisance_params[f"width_pos_{i + 1}"] for i in range(dndz.shape[0])
-        ]
         self.dndz = dndz
 
-        self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_pos_i)
-        self.dndz_with_systematics = shift_dndz_jax(
-            self.dndz_stretched, z, self.dz_pos_i
-        )
+        if dndz_redshift_model == "shift_stretch":
+            self.dz_pos_i = [
+                nuisance_params[f"dz_pos_{i + 1}"] for i in range(dndz.shape[0])
+            ]
+            self.width_pos_i = [
+                nuisance_params[f"width_pos_{i + 1}"] for i in range(dndz.shape[0])
+            ]
+
+            self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_pos_i)
+            self.dndz_with_systematics = shift_dndz_jax(
+                self.dndz_stretched, z, self.dz_pos_i
+            )
+
+        elif dndz_redshift_model == "modes":
+            if dndz_modes is None:
+                raise ValueError(
+                    "dndz_modes must be provided when dndz_redshift_model='modes'."
+                )
+
+            expected_shape = (dndz_modes.shape[0], dndz.shape[0], len(z))
+            if dndz_modes.shape != expected_shape:
+                raise ValueError(
+                    f"dndz_modes must have shape {expected_shape}, "
+                    f"got {dndz_modes.shape}."
+                )
+
+            amplitudes = [
+                nuisance_params[f"dndz_mode_{k}"] for k in range(dndz_modes.shape[0])
+            ]
+
+            self.dndz_with_systematics = modes_dndz_jax(
+                dndz, z, dndz_modes, amplitudes
+            )
+
+        else:
+            raise ValueError(
+                f"Unknown dndz_redshift_model: {dndz_redshift_model!r}. "
+                "Expected 'shift_stretch' or 'modes'."
+                )
+
         # Backward compatibility
         self.dndz_shifted = self.dndz_with_systematics
 

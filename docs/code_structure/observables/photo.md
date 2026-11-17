@@ -66,6 +66,7 @@ nuisance = {
     'AIA': 1.0,         # Intrinsic alignment amplitude
     'CIA': 0.0164,      # IA normalization
     'EtaIA': -0.41,     # IA redshift evolution
+    'z0IA': 0.0,        # IA pivot redshift, ((1+z)/(1+z0IA))**EtaIA (optional, default 0.0)
 }
 
 # Create tracer

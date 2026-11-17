@@ -142,3 +142,16 @@ def test_positions_tracer_window_is_sum_of_contributions(tracers):
     np.testing.assert_array_equal(
         np.asarray(tracer.get_window(z)), np.asarray(expected)
     )
+
+
+@pytest.mark.parametrize("tracer_name", ["shear_tracer", "pos_tracer"])
+def test_dndz_shifted_backward_compatibility(tracers, tracer_name):
+    tracer = tracers[tracer_name]
+
+    # The old attribute should remain available as an alias.
+    assert tracer.dndz_shifted is tracer.dndz_with_systematics
+
+    np.testing.assert_array_equal(
+        np.asarray(tracer.dndz_shifted),
+        np.asarray(tracer.dndz_with_systematics),
+    )

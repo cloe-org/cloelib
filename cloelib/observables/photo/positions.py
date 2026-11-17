@@ -521,7 +521,7 @@ class NonLinearGalaxyBiasContribution:
     def _bias_kernel(self, bias_array, z):
         """Per-bin bias-weighted density kernel: `bias_i * n_i(z) * H(z)/c`."""
         h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / c_0
-        return bias_array[:, None] * self._tracer.dndz_shifted * h_over_c[None, :]
+        return bias_array[:, None] * self._tracer.dndz_with_systematics * h_over_c[None, :]
 
     def compute_kernel(self, z):
         """The `b1` (linear-bias) part of the window only - diagnostic/
@@ -759,10 +759,14 @@ class PositionsTracer:
             self.nuisance_params[f"width_pos_{i + 1}"] for i in range(dndz.shape[0])
         ]
         self.dndz = dndz
-        # Correct dndz for width_pos
+
         self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_pos_i)
-        # Correct dndz for dz_pos
-        self.dndz_shifted = shift_dndz_jax(self.dndz_stretched, z, self.dz_pos_i)
+        self.dndz_with_systematics = shift_dndz_jax(
+            self.dndz_stretched, z, self.dz_pos_i
+        )
+        # Backward compatibility
+        self.dndz_shifted = self.dndz_with_systematics
+
         self.flags = {"galaxy_bias_model": galaxy_bias_model}
         self.n_z_bins = dndz.shape[0]
         self.magnification_bias = [
@@ -885,7 +889,7 @@ class PositionsTracer:
     def get_window_positions(self, z) -> np.ndarray:
         r"""Return the bias-weighted positions kernel at redshifts ``z``.
 
-        For each bin the kernel is ``b_i(z) * dndz_shifted_i(z) * H(z)/c``.
+        For each bin the kernel is ``b_i(z) * dndz_with_systematics_i(z) * H(z)/c``.
         The bias is constant per bin for ``per_bin`` and redshift-dependent
         for ``per_bin_int`` and ``poly``. In nonlinear mode this window is a
         diagnostic using the linear ``b1`` component; the full spectrum is
@@ -902,7 +906,7 @@ class PositionsTracer:
         def per_bin_case():
             window = (
                 self.bias_array[: self.n_z_bins, None]
-                * self.dndz_shifted
+                * self.dndz_with_systematics
                 * self.perturbations.background.hubble_parameter(z)
                 / c_0
             )
@@ -911,7 +915,7 @@ class PositionsTracer:
         def z_func_case():
             window = (
                 self.bias_array[None, :]
-                * self.dndz_shifted
+                * self.dndz_with_systematics
                 * self.perturbations.background.hubble_parameter(z)
                 / c_0
             )
@@ -967,7 +971,7 @@ class PositionsTracer:
         ells : array_like
             Multipoles ell.
         H, f : array_like
-            H(z) and growth rate f(z), sampled on the same z-grid as `self.dndz_shifted`.
+            H(z) and growth rate f(z), sampled on the same z-grid as `self.dndz_with_systematics`.
         chi : array_like
             Comoving distance χ(z)=r(z), sampled on the same z-grid.
 
@@ -977,7 +981,7 @@ class PositionsTracer:
             The RSD window with shape ``(len(ells), n_bin, len(chi))``.
         """
         # S_i(z) = H(z) f(z) n_i(z) / c
-        S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted
+        S = (H[None, :] * f[None, :] / c_0) * self.dndz_with_systematics
         return get_photo_rsd(ells, chi, S)
 
     def get_magnification_efficiency(self, z):
@@ -996,14 +1000,14 @@ class PositionsTracer:
         -----
         - Assumes `z` is evenly spaced; spacing is inferred as `z[1] - z[0]`.
         - Uses a precomputed Simpson rule weight matrix (`cached_stacked_simpson`) for integration.
-        - `self.dndz_shifted` has shape ``(n_bin, len(z))``.
+        - `self.dndz_with_systematics` has shape ``(n_bin, len(z))``.
         - Efficiency is evaluated using `np.einsum`.
         """
         dz = z[1] - z[0]  # assuming equispaced!
         rz = self.background.comoving_distance(z)
         rzrz = 1 - np.outer(rz, 1 / rz)
         w_matrix = cached_stacked_simpson(len(z))
-        result = np.einsum("ik, jk, jk->ij", self.dndz_shifted, rzrz, w_matrix) * dz
+        result = np.einsum("ik, jk, jk->ij", self.dndz_with_systematics, rzrz, w_matrix) * dz
         return result
 
     def get_window_magnification(self, z):

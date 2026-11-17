@@ -493,7 +493,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
         normalisation detail.
         """
         h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / _C_KM_S
-        return self._tracer.dndz_shifted * h_over_c[None, :]
+        return self._tracer.dndz_with_systematics * h_over_c[None, :]
 
     def _C1(self, zs):
         omega_m0 = self._tracer.background.Omega_m(0.0)
@@ -763,7 +763,7 @@ class TATTMContribution(IntrinsicAlignmentContribution):
         The per-bin amplitudes enter through `get_pk_terms` instead.
         """
         h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / _C_KM_S
-        return self._tracer.dndz_shifted * h_over_c[None, :]
+        return self._tracer.dndz_with_systematics * h_over_c[None, :]
 
     def _weighted_kernels(self, zs, bank: SpectraBank):
         """`C * compute_kernel` for C1, C1delta, C2 on `zs`.
@@ -937,10 +937,13 @@ class ShearTracer:
         ]
         self.n_z_bins = dndz.shape[0]
         self.dndz = dndz
-        # Correct dndz for width_shear
+
         self.dndz_stretched = stretch_dndz_jax(dndz, z, self.width_shear_i)
-        # Correct dndz_stretched for dz_shear
-        self.dndz_shifted = shift_dndz_jax(self.dndz_stretched, z, self.dz_shear_i)
+        self.dndz_with_systematics = shift_dndz_jax(
+            self.dndz_stretched, z, self.dz_shear_i
+        )
+        # Backward compatibility
+        self.dndz_shifted = self.dndz_with_systematics
 
         self.lensing = LensingContribution(self)
         self.ia = self._build_ia_contribution(
@@ -1134,7 +1137,7 @@ class ShearTracer:
         r"""Return the NLA intrinsic-alignment kernel on ``z``.
 
         The per-bin kernel is ``-H(z)/c * AIA * CIA * Omega_m0 *
-        (1+z)**EtaIA / D(z) * dndz_shifted``. If the backend returns a
+        (1+z)**EtaIA / D(z) * dndz_with_systematics``. If the backend returns a
         scale-dependent growth factor, the second tabulated k column is used;
         otherwise its scale-independent result is used. TATT amplitudes are
         represented in effective spectra rather than by this NLA window.
@@ -1154,7 +1157,7 @@ class ShearTracer:
         C_IA = self.nuisance_params["CIA"]
         Eta_IA = self.nuisance_params["EtaIA"]
         factor = -Hz / c_0 * A_IA * C_IA * Omega_m0 * (1 + z) ** Eta_IA / Dz
-        return np.einsum("ij, j->ij", self.dndz_shifted, factor)
+        return np.einsum("ij, j->ij", self.dndz_with_systematics, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
         """Compute the legacy single-bin lensing efficiency.
@@ -1164,7 +1167,7 @@ class ShearTracer:
         window path uses :meth:`get_lensing_efficiency` instead.
         """
         interpolator = interpax.Akima1DInterpolator(
-            self.z, self.dndz_shifted[bin_idx, :]
+            self.z, self.dndz_with_systematics[bin_idx, :]
         )
         x = np.linspace(0.0, 4, 200)
         y = self.background.comoving_distance(x)
@@ -1180,7 +1183,7 @@ class ShearTracer:
         r"""
         Compute the discretized lensing efficiency for every bin.
 
-        The efficiency uses ``dndz_shifted`` and the grid distance-ratio
+        The efficiency uses ``dndz_with_systematics`` and the grid distance-ratio
         factor ``1 - chi(z_lens) / chi(z_source)``, contracted with cached
         stacked Simpson weights. The supplied redshift grid is used as both
         the lens and source grid; this implementation assumes uniform spacing.
@@ -1195,14 +1198,14 @@ class ShearTracer:
         -----
         - Assumes `z` is evenly spaced; spacing is inferred as `z[1] - z[0]`.
         - Uses a precomputed Simpson rule weight matrix (`cached_stacked_simpson`) for integration.
-        - `self.dndz_shifted` has shape ``(n_bin, len(z))``.
+        - `self.dndz_with_systematics` has shape ``(n_bin, len(z))``.
         - Efficiency is evaluated using `np.einsum`.
         """
         dz = z[1] - z[0]  # assuming equispaced!
         rz = self.background.comoving_distance(z)
         rzrz = 1 - np.outer(rz, 1 / rz)
         w_matrix = cached_stacked_simpson(len(z))
-        result = np.einsum("ik, jk, jk->ij", self.dndz_shifted, rzrz, w_matrix) * dz
+        result = np.einsum("ik, jk, jk->ij", self.dndz_with_systematics, rzrz, w_matrix) * dz
         return result
 
     def get_window_lensing(self, z):

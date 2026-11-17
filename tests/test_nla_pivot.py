@@ -2,8 +2,8 @@
 
 `ShearTracer.get_window_IA` scales the NLA amplitude as
 ``((1+z)/(1+z0IA))**EtaIA``, so ``AIA`` is the amplitude at the pivot
-redshift. ``z0IA`` is optional and defaults to 0.0, which reproduces the
-previous ``(1+z)**EtaIA`` behaviour exactly.
+redshift. ``z0IA`` is optional and defaults to 0.62, which aligns with
+the TATT implementation.
 """
 
 import numpy as np
@@ -67,9 +67,9 @@ def _nla_window(setup, **ia_params):
     return np.asarray(tracer.get_window_IA(z))
 
 
-def test_default_pivot_is_zero(setup):
-    """Omitting `z0IA` is identical to `z0IA=0.0` (backward compatible)."""
-    np.testing.assert_array_equal(_nla_window(setup), _nla_window(setup, z0IA=0.0))
+def test_default_pivot_is_default(setup):
+    """Omitting `z0IA` is identical to `z0IA=0.62` (backward compatible)."""
+    np.testing.assert_array_equal(_nla_window(setup), _nla_window(setup, z0IA=0.62))
 
 
 @pytest.mark.parametrize("z0", [0.3, 0.62, 1.0])
@@ -86,5 +86,5 @@ def test_pivot_irrelevant_without_redshift_evolution(setup):
     """With EtaIA = 0 the pivot has no effect."""
     np.testing.assert_array_equal(
         _nla_window(setup, EtaIA=0.0, z0IA=0.62),
-        _nla_window(setup, EtaIA=0.0),
+        _nla_window(setup, EtaIA=0.0, z0IA=0),
     )

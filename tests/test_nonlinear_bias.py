@@ -246,7 +246,7 @@ def test_requirements_pruned_for_ia_pairing(cosmo_setup):
 
 def test_pos_pos_matches_legacy_linear_bias_when_higher_order_zero(cosmo_setup):
     """Strongest available check, mirroring `test_tatt.py`'s analogous
-    `test_tatt_matches_legacy_nla_end_to_end_at_z0_zero`: with
+    `test_tatt_matches_legacy_nla_end_to_end`: with
     `b2=bs2=b3nl=bk2=0`, `galaxy_bias_model="nonlinear"` must reproduce
     `galaxy_bias_model="per_bin"`'s `get_Cl` output for the *same* per-bin
     b1 values - through the entire pipeline (legacy `_compute_cl_legacy`

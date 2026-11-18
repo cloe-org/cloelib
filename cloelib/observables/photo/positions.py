@@ -711,7 +711,7 @@ class PositionsTracer:
         r"""Construct a tomographic photometric-position tracer.
 
         ``dndz`` is expected to have shape ``(n_bin, len(z))``.
-        If `dndz_redshift_model="shift_stretch" per-bin width transformations
+        If `dndz_redshift_model="shift_stretch"` per-bin width transformations
         are applied before redshift shifts. The redshift grid must not contain zero;
         the window integrations assume a suitably sampled grid.
 

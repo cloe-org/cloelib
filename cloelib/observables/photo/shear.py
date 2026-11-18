@@ -882,7 +882,7 @@ class ShearTracer:
         r"""Construct a tomographic cosmic-shear tracer.
 
         ``dndz`` is expected to have shape ``(n_bin, len(z))`` with
-        normalized distributions. If `dndz_redshift_model="shift_stretch"
+        normalized distributions. If `dndz_redshift_model="shift_stretch"`
         per-bin width transformations are applied before redshift shifts.
         ``z`` must not contain zero.
 

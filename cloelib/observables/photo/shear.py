@@ -36,6 +36,10 @@ intrinsic-alignment options - lives in this one module:
   reports kernel values it can stand behind as real physics - passing any
   other object exposing the same `.compute(name) -> callable(matter_pk,
   ks, zs)` interface is also supported, for a different PT backend.
+- `ia_model="TATT+VS"`: TATT plus the velocity-shear term `C_t * t_ij`
+  (Eqs. 2.46-2.48 of Bakx et al. 2023, arXiv:2303.15565), with amplitude
+  `nuisance_params["AtIA"]`. Its four extra one-loop kernels come from
+  `fastpt.FASTPT.IA_ct`.
 - `TATTMContribution` (Herle et al. 2026, arXiv:2601.15851): ties TATT's
   C1/C2/C1delta amplitudes to per-tomographic-bin halo mass and
   red-galaxy fraction instead of `TATTContribution`'s single global
@@ -43,8 +47,9 @@ intrinsic-alignment options - lives in this one module:
   `get_pk_terms` (`spectrum_engine.PkTerm`).
 
 Pass `loop_computer=PBJTATTLoopComputer(perturbations)` directly to
-`ShearTracer(..., ia_model="TATT"` (or `"TATT-M"`) `, tatt_loop_computer=
-...)` - one constructor call, not build-then-replace `.ia`.
+`ShearTracer(..., ia_model="TATT"` (or `"TATT+VS"`/`"TATT-M"`)
+`, tatt_loop_computer=...)` - one constructor call, not build-then-replace
+`.ia`.
 
 See `CONTRIBUTION_ARCHITECTURE.md` for the design this all
 follows.
@@ -138,6 +143,10 @@ _BB_ONLY_KERNELS = (
 )
 _GI_KERNELS = ("tatt_A_0_0E", "tatt_C_0_0E", "tatt_A_0_E2", "tatt_B_0_E2")
 _ALL_KERNELS = _EE_ONLY_KERNELS + _SHARED_KERNELS + _BB_ONLY_KERNELS
+# TATT+VS: the four velocity-shear kernels, <X t_E> for X = delta, delta*s,
+# s^2 and t itself. Only the first enters the GI term.
+_VS_GI_KERNELS = ("tatt_0_tE",)
+_VS_KERNELS = _VS_GI_KERNELS + ("tatt_0E_tE", "tatt_E2_tE", "tatt_tE_tE")
 
 
 def _is_known_linear_perturbations(perturbations) -> bool:
@@ -181,15 +190,16 @@ class TATTLoopComputer(Protocol):
 
 
 class PBJTATTLoopComputer:
-    r"""FAST-PT-backed computer for the ten TATT one-loop kernels.
+    r"""FAST-PT-backed computer for the ten TATT one-loop kernels, plus the
+    four TATT+VS ones.
 
-    Calls `fastpt.FASTPT.IA_ta`/`.IA_tt`/`.IA_mix` on the *linear* matter
-    power spectrum at z=0, with the same extrapolation settings and
-    `C_window` production CLOE uses (see module docstring). The ten
-    outputs are pure functions of k (no z-dependence - `TATTContribution`
+    Calls `fastpt.FASTPT.IA_ta`/`.IA_tt`/`.IA_mix` (and `.IA_ct` for
+    TATT+VS) on the *linear* matter power spectrum at z=0, with the same
+    extrapolation settings and `C_window` production CLOE uses (see module
+    docstring). The outputs are pure functions of k (no z-dependence - `TATTContribution`
     supplies that separately via `D(z)**4` and its C1/C1delta/C2
     amplitudes, exactly matching Eqs. 13-15's own separation of scales), so
-    they're computed once per k-grid, cached, and reused across the ten
+    they're computed once per k-grid, cached, and reused across the
     named `SpectrumRequest`s (and across `get_Cl` calls, as long as the
     k-grid doesn't change) instead of re-running FAST-PT per kernel name.
 
@@ -251,6 +261,7 @@ class PBJTATTLoopComputer:
     def __init__(self, perturbations: Perturbations) -> None:
         try:
             import fastpt as fpt
+            from fastpt.IA.IA_ct import P_IA_13F, P_IA_13G
         except ImportError as e:
             raise ImportError(
                 "fastpt (the 'fast-pt' PyPI package - the perturbation-"
@@ -260,6 +271,10 @@ class PBJTATTLoopComputer:
                 "cloelib[fastpt]`)."
             )
         self._fpt = fpt
+        # FAST-PT's own P13 functions, used to correct its P_0tE (see
+        # `_kernels_for`).
+        self._p_ia_13f = P_IA_13F
+        self._p_ia_13g = P_IA_13G
         # See class docstring: use the nonlinear backend's own linear
         # source if it has one; else, only accept `perturbations` itself if
         # it's a recognized linear backend - fail loudly otherwise rather
@@ -334,6 +349,17 @@ class PBJTATTLoopComputer:
             p_lin_z0, P_window=None, C_window=self._C_WINDOW
         )
 
+        # TATT+VS kernels.
+        p0te, p0ete, pe2te, ptete = f_pt.IA_ct(
+            p_lin_z0, P_window=None, C_window=self._C_WINDOW
+        )
+        # FAST-PT's P_0tE is 2 <delta t_E> in its (22) part but 4 <delta t_E>
+        # in its (13) part, so rebuild <delta t_E> = P22 + P13 / 2, where
+        # P22 = P_22G - P_22F and P13 = P_13G - P_13F. The doubled (13) part is
+        # a known bug in fast-pt <= 4.1.1 (pinned in pyproject.toml); once the
+        # fix is released, use `0.5 * p0te` instead.
+        p13 = self._p_ia_13g(k_win, p_lin_z0) - self._p_ia_13f(k_win, p_lin_z0)
+
         raw_kernels = {
             "tatt_A_0_0E": a00e,
             "tatt_C_0_0E": c00e,
@@ -345,6 +371,10 @@ class PBJTATTLoopComputer:
             "tatt_B_0_E2": b0e2,
             "tatt_D_0E_E2": d0ee2,
             "tatt_D_0B_B2": d0bb2,
+            "tatt_0_tE": 0.5 * (p0te - p13),
+            "tatt_0E_tE": p0ete,
+            "tatt_E2_tE": pe2te,
+            "tatt_tE_tE": ptete,
         }
         kernels = {
             name: _scipy_interpolate.interp1d(
@@ -359,10 +389,10 @@ class PBJTATTLoopComputer:
     def compute(self, name: str):
         """Return the FAST-PT callable for one named TATT kernel.
 
-        ``name`` must be present in ``_ALL_KERNELS``. The returned
-        ``SpectrumRequest.compute(matter_pk, ks, zs)`` ignores ``matter_pk``
-        and ``zs`` because the cached kernel depends only on k, and returns
-        shape ``(len(ks),)``.
+        ``name`` must be present in ``_ALL_KERNELS`` or ``_VS_KERNELS``. The
+        returned ``SpectrumRequest.compute(matter_pk, ks, zs)`` ignores
+        ``matter_pk`` and ``zs`` because the cached kernel depends only on k,
+        and returns shape ``(len(ks),)``.
         """
 
         def _compute(matter_pk, ks, zs):
@@ -419,6 +449,17 @@ class TATTContribution(IntrinsicAlignmentContribution):
                       + C1delta(z)*D(z)**4 * [A_0_0E(k) + C_0_0E(k)]
                       + C2(z)*D(z)**4 * [A_0_E2(k) + B_0_E2(k)]
 
+    TATT+VS (`A_t` given) adds the velocity-shear term `C_t * t_ij`, with
+    `C_t` normalised like `C1`:
+
+        C_t(z)        = -A_t * C_IA * Omega_m0 * ((1+z)/(1+z0))**eta1 / D(z)
+
+        P_II^EE(z,k)  += 2*C1(z)*C_t(z)*D(z)**4 * P_0_tE(k)
+                       + 2*C1delta(z)*C_t(z)*D(z)**4 * P_0E_tE(k)
+                       + 2*C2(z)*C_t(z)*D(z)**4 * P_E2_tE(k)
+                       + C_t(z)**2 * D(z)**4 * P_tE_tE(k)
+        P_deltaI(z,k) += C_t(z)*D(z)**4 * P_0_tE(k)
+
     `C_IA` bundles the paper's `C_bar_1 * rho_crit` product (the standard
     IA literature convention; `ShearTracer.get_window_IA`'s NLA
     implementation already uses one constant this way with the same
@@ -446,6 +487,9 @@ class TATTContribution(IntrinsicAlignmentContribution):
         you), or any other object with the same interface. No default -
         `TATTContribution` only ever reports kernel values it can stand
         behind as real physics.
+      A_t: velocity-shear amplitude, normalised like `A1` (so
+        `C_t / C1 = A_t / A1`). `None` (default) leaves the term out (TATT);
+        a value turns it on (TATT+VS) and adds the four `_VS_KERNELS`.
     """
 
     def __init__(
@@ -459,6 +503,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
         eta2: float = 0.0,
         z0: float = 0.62,
         C_IA: float = 0.0134,
+        A_t: Optional[float] = None,
     ) -> None:
         self._tracer = tracer
         self.A1 = A1
@@ -468,6 +513,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
         self.eta2 = eta2
         self.z0 = z0
         self.C_IA = C_IA
+        self.A_t = A_t
         self._loop_computer = loop_computer
 
     def compute_kernel(self, z):
@@ -521,18 +567,31 @@ class TATTContribution(IntrinsicAlignmentContribution):
     def _C1delta(self, zs):
         return self.b_TA * self._C1(zs)
 
+    def _Ct(self, zs):
+        assert self.A_t is not None  # only called for TATT+VS
+        omega_m0 = self._tracer.background.Omega_m(0.0)
+        d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
+        return (
+            -self.A_t
+            * self.C_IA
+            * omega_m0
+            * ((1 + zs) / (1 + self.z0)) ** self.eta1
+            / d
+        )
+
     def _D4(self, zs):
         return _growth_factor_1d(self._loop_computer.linear_perturbations, zs) ** 4
 
     def get_spectrum_requests(self):
-        """Return requests for the ten TATT kernels.
+        """Return requests for the ten TATT kernels (plus four for TATT+VS).
 
         ``get_requirements_for_interaction`` retains only the GI kernels when
-        paired with a non-IA contribution; an IA-IA pairing needs all ten.
+        paired with a non-IA contribution; an IA-IA pairing needs all of them.
         """
+        names = _ALL_KERNELS if self.A_t is None else _ALL_KERNELS + _VS_KERNELS
         return tuple(
             SpectrumRequest(name=name, compute=self._loop_computer.compute(name))
-            for name in _ALL_KERNELS
+            for name in names
         )
 
     def get_requirements_for_interaction(self, other):
@@ -547,7 +606,8 @@ class TATTContribution(IntrinsicAlignmentContribution):
         """
         if isinstance(other, IntrinsicAlignmentContribution):
             return self.get_spectrum_requests()
-        return tuple(r for r in self.get_spectrum_requests() if r.name in _GI_KERNELS)
+        gi_kernels = _GI_KERNELS + _VS_GI_KERNELS
+        return tuple(r for r in self.get_spectrum_requests() if r.name in gi_kernels)
 
     def get_effective_pk(self, other, bank: SpectraBank):
         """P_II^EE(k,z) or P_deltaI(k,z), as appropriate.
@@ -561,7 +621,9 @@ class TATTContribution(IntrinsicAlignmentContribution):
         (NLA) has no C1delta/C2 of its own, so it's treated as
         C1delta=C2=0 - the correct NLA limit, just cross-correlated against
         this contribution's full TATT terms rather than assuming both sides
-        are identical.
+        are identical. Likewise `C_t` is 0 for a side without velocity shear
+        (`A_t=None` or NLA), and the four velocity-shear terms are only
+        added when at least one side has it.
 
         The `P_dd(z,k)` terms use the base spectrum of the fields the two
         sides trace (`bank.base`): `P_mm` against IA or lensing, the cb x
@@ -592,7 +654,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
             term_00e = _kernel("tatt_A_0_0E") + _kernel("tatt_C_0_0E")
             term_0e2 = _kernel("tatt_A_0_E2") + _kernel("tatt_B_0_E2")
 
-            return (
+            p_ii = (
                 (c1_self * c1_other)[:, None] * matter_pk
                 + (c1_self * c1d_other + c1_other * c1d_self)[:, None] * d4 * term_00e
                 + (c1d_self * c1d_other)[:, None] * d4 * _kernel("tatt_A_0E_0E")
@@ -602,17 +664,40 @@ class TATTContribution(IntrinsicAlignmentContribution):
                 * d4
                 * _kernel("tatt_D_0E_E2")
             )
+            other_vs = getattr(other, "A_t", None) is not None
+            if self.A_t is None and not other_vs:
+                return p_ii
+
+            no_vs = jnp.zeros_like(c1_self)  # C_t of a side without velocity shear
+            ct_self = self._Ct(zs) if self.A_t is not None else no_vs
+            ct_other = other._Ct(zs) if other_vs else no_vs
+            return (
+                p_ii
+                + (c1_self * ct_other + c1_other * ct_self)[:, None]
+                * d4
+                * _kernel("tatt_0_tE")
+                + (c1d_self * ct_other + c1d_other * ct_self)[:, None]
+                * d4
+                * _kernel("tatt_0E_tE")
+                + (c2_self * ct_other + c2_other * ct_self)[:, None]
+                * d4
+                * _kernel("tatt_E2_tE")
+                + (ct_self * ct_other)[:, None] * d4 * _kernel("tatt_tE_tE")
+            )
 
         # Matter/density-intrinsic cross term.
         c1d_self = self._C1delta(zs)
         c2_self = self._C2(zs)
         term_00e = _kernel("tatt_A_0_0E") + _kernel("tatt_C_0_0E")
         term_0e2 = _kernel("tatt_A_0_E2") + _kernel("tatt_B_0_E2")
-        return (
+        p_di = (
             c1_self[:, None] * matter_pk
             + c1d_self[:, None] * d4 * term_00e
             + c2_self[:, None] * d4 * term_0e2
         )
+        if self.A_t is None:
+            return p_di
+        return p_di + self._Ct(zs)[:, None] * d4 * _kernel("tatt_0_tE")
 
 
 # ---------------------------------------------------------------------------
@@ -896,6 +981,8 @@ class ShearTracer:
             `TATTContribution` from `nuisance_params["AIA"]` (=A1),
             `nuisance_params["A2IA"]`, `nuisance_params["bTA"]`, and optionally
             `nuisance_params["Eta2IA"]`/`["z0IA"]` (default 0.0/0.62).
+            `"TATT+VS"` does the same and adds the velocity-shear term with
+            amplitude `nuisance_params["AtIA"]`.
             `"TATT-M"` builds a `TATTMContribution` (Herle et al. 2026,
             arXiv:2601.15851 - per-bin IA amplitude tied to halo mass/red
             fraction) from `nuisance_params["alphaM"]`, `["betaM"]`,
@@ -906,12 +993,13 @@ class ShearTracer:
             `[f"f_r_{i+1}"]` for every tomographic bin - requires
             `tatt_loop_computer` like `"TATT"` does. Advanced use: pass a
             `Contribution` instance directly to use any other model.
-          tatt_loop_computer: required when `ia_model="TATT"` or `"TATT-M"`
-            (raises `ValueError` if omitted) - the one-loop kernel backend
-            (see `TATTContribution`'s docstring). Pass
+          tatt_loop_computer: required when `ia_model` is `"TATT"`,
+            `"TATT+VS"`, or `"TATT-M"` (raises `ValueError` if omitted) - the
+            one-loop kernel backend (see `TATTContribution`'s docstring). Pass
             `PBJTATTLoopComputer(perturbations)` for real FAST-PT-computed
             kernels, or any other object with the same `.compute(name)`
-            interface. Passing this with any other `ia_model` raises `ValueError`.
+            interface. Passing this with any other `ia_model` raises
+            `ValueError`.
 
         Raises:
           ValueError: If ``z`` contains zero, ``ia_model`` is unknown, or the
@@ -978,9 +1066,9 @@ class ShearTracer:
         `compute_kernel`, not exposed as a separate grid) - neither has
         any effective-Pk grid to return, with or without `bin_i`/`bin_j`.
 
-        For `ia_model="TATT"` (bin-independent amplitude): `bin_i`/`bin_j`
-        must be left `None` (raises otherwise - this model has one grid,
-        shared by every bin pair, so naming a pair doesn't apply).
+        For `ia_model="TATT"` or `"TATT+VS"` (bin-independent amplitude):
+        `bin_i`/`bin_j` must be left `None` (raises otherwise - this model has
+        one grid, shared by every bin pair, so naming a pair doesn't apply).
 
         For `ia_model="TATT-M"` (per-bin amplitude): `bin_i`/`bin_j`
         (1-indexed) are required (raises if either is omitted), since each
@@ -1011,8 +1099,9 @@ class ShearTracer:
             ia_name = type(self.ia).__name__ if self.ia is not None else None
             raise ValueError(
                 "get_ia_effective_spectra() needs an IA model that defines "
-                "an effective power spectrum (currently ia_model='TATT' or "
-                f"'TATT-M'); this tracer's ia is {ia_name!r}, which has "
+                "an effective power spectrum (currently ia_model='TATT', "
+                "'TATT+VS', or 'TATT-M'); this tracer's ia is "
+                f"{ia_name!r}, which has "
                 "none - either no IA contribution at all, or NLA "
                 "(amplitude applied directly inside compute_kernel, not "
                 "exposed as a separate grid)."
@@ -1068,27 +1157,28 @@ class ShearTracer:
         """Resolve the `ia_model` constructor argument into a Contribution.
 
         `None` (default) means no intrinsic-alignment contribution at all;
-        `"NLA"` builds `NLAContribution`; `"TATT"` builds a
+        `"NLA"` builds `NLAContribution`; `"TATT"` and `"TATT+VS"` build a
         `TATTContribution`, which requires `tatt_loop_computer`
         (no illustrative default - see `TATTContribution`'s docstring);
         `"TATT-M"` builds a `TATTMContribution` (also requires
         `tatt_loop_computer`); anything else must already be a
         `Contribution` instance, used as-is. `tatt_loop_computer` is only
-        meaningful for `"TATT"`/`"TATT-M"`.
+        meaningful for `"TATT"`, `"TATT+VS"`, and `"TATT-M"`.
         """
-        if ia_model not in ("TATT", "TATT-M") and tatt_loop_computer is not None:
+        tatt_models = ("TATT", "TATT+VS")
+        if ia_model not in (*tatt_models, "TATT-M") and tatt_loop_computer is not None:
             raise ValueError(
-                "tatt_loop_computer is only used when ia_model='TATT' or "
-                f"'TATT-M' (got ia_model={ia_model!r})."
+                "tatt_loop_computer is only used when ia_model is 'TATT', "
+                f"'TATT+VS', or 'TATT-M' (got ia_model={ia_model!r})."
             )
         if ia_model is None:
             return None
         if ia_model == "NLA":
             return NLAContribution(self)
-        if ia_model == "TATT":
+        if ia_model in tatt_models:
             if tatt_loop_computer is None:
                 raise ValueError(
-                    "ia_model='TATT' requires tatt_loop_computer (e.g. "
+                    f"ia_model={ia_model!r} requires tatt_loop_computer (e.g. "
                     "PBJTATTLoopComputer(perturbations), from "
                     "cloelib.observables.photo.shear) - TATTContribution "
                     "has no illustrative default."
@@ -1103,6 +1193,7 @@ class ShearTracer:
                 eta2=nuisance_params.get("Eta2IA", 0.0),
                 z0=nuisance_params.get("z0IA", 0.62),
                 C_IA=nuisance_params.get("CIA", 0.0134),
+                A_t=nuisance_params["AtIA"] if ia_model == "TATT+VS" else None,
             )
         if ia_model == "TATT-M":
             if tatt_loop_computer is None:
@@ -1126,7 +1217,7 @@ class ShearTracer:
         if isinstance(ia_model, str):
             raise ValueError(
                 f"Unknown ia_model {ia_model!r}: expected 'NLA', 'TATT', "
-                "'TATT-M', or a Contribution instance."
+                "'TATT+VS', 'TATT-M', or a Contribution instance."
             )
         return ia_model
 

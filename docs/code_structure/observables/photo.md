@@ -117,6 +117,10 @@ tracer = ShearTracer(
 )
 ```
 
+`ia_model="TATT+VS"` adds the velocity-shear term `C_t * t_ij`, with amplitude `nuisance_params["AtIA"]`,
+normalised like `AIA` (`C_t / C_1 = A_t / A_1`, with the same `EtaIA` and
+`z0IA` scaling). Its four extra kernels come from FAST-PT's `IA_ct`.
+
 `TATTContribution` and `PBJTATTLoopComputer` both live in
 `cloelib.observables.photo.shear`, alongside `ShearTracer` itself.
 

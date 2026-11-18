@@ -378,27 +378,24 @@ def ensure_gravity_only(
 ) -> None:
     """Refuse a baryonic mixin on a nonlinear spectrum that includes baryons.
 
-    Nonlinear perturbations whose spectrum already includes baryonic feedback
-    set ``includes_baryons = True``: CAMB with ``log10TAGN`` or the
-    ``mead2020_feedback`` model, CLASS and mochi_class with HMcode2020 and
-    its baryonic feedback (e.g. through ``log10TAGN``; not for mochi_class
-    with ``mg_stable_basis_on``, which does not use HMcode), HMcode2020emu
-    with ``log10TAGN``, BACCOemu with ``baryonic_boost``, the HMcode2020
-    sector of CosmoPower-JAX, the classes wrapping one of those (the
-    modified-gravity boosts), and classes composed by `with_baryon_boost`.
-    Every baryonic mixin calls this at the start of its ``__init__``, and
-    again through `ensure_gravity_only_on_first_use` when its suppression is
-    first evaluated, so the check also holds when a class composed by hand
-    initialises the mixin before the nonlinear perturbations.
+    Called by every baryonic mixin at the start of its ``__init__``. The
+    backends that set ``includes_baryons`` are listed in the "Baryonic Boost
+    Mixin Framework" section of ``docs/code_structure/perturbations.md``.
 
-    Args:
-        perturbations: The nonlinear perturbations to check.
-        mixin_name: Name of the baryonic mixin to be added, for the message.
-        perturbations_name: Name of the nonlinear perturbations class, for the
-            message. Defaults to the class of ``perturbations``.
+    Parameters
+    ----------
+    perturbations : Any
+        The nonlinear perturbations to check.
+    mixin_name : str
+        Name of the baryonic mixin to be added, for the error message.
+    perturbations_name : str, optional
+        Name of the nonlinear perturbations class, for the error message.
+        Defaults to the class name of ``perturbations``.
 
-    Raises:
-        ValueError: If ``perturbations.includes_baryons`` is true.
+    Raises
+    ------
+    ValueError
+        If ``perturbations.includes_baryons`` is true.
     """
     if getattr(perturbations, "includes_baryons", False):
         name = perturbations_name or type(perturbations).__name__
@@ -412,18 +409,21 @@ def ensure_gravity_only(
 def ensure_gravity_only_on_first_use(perturbations: Any, mixin_name: str) -> None:
     """Repeat `ensure_gravity_only` once, when the suppression is first evaluated.
 
-    A class composed by hand may initialise its baryonic mixin before the
-    nonlinear perturbations, i.e. before ``includes_baryons`` is set; the
-    check is then only conclusive afterwards. Called by the baryonic mixins at
-    the start of ``baryonic_suppression``. `with_baryon_boost` initialises the
-    nonlinear perturbations first and marks the check as done.
+    Catches a class composed by hand that initialises its baryonic mixin
+    before ``includes_baryons`` is set. `with_baryon_boost` marks the check
+    as done.
 
-    Args:
-        perturbations: The nonlinear perturbations carrying the mixin.
-        mixin_name: Name of the baryonic mixin, for the message.
+    Parameters
+    ----------
+    perturbations : Any
+        The nonlinear perturbations carrying the mixin.
+    mixin_name : str
+        Name of the baryonic mixin, for the error message.
 
-    Raises:
-        ValueError: If ``perturbations.includes_baryons`` is true.
+    Raises
+    ------
+    ValueError
+        If ``perturbations.includes_baryons`` is true.
     """
     if getattr(perturbations, "_gravity_only_checked", False):
         return

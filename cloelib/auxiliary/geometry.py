@@ -10,16 +10,25 @@ _C_KM_S = SPEED_OF_LIGHT / 1000
 def _curved(x, Omega_k0, H0, open_form, closed_form, series):
     r"""Evaluate a function of $u = \Omega_K (x H_0/c)^2$ for any sign of $\Omega_K$.
 
-    Args:
-        x (array_like): Distance(s) in Mpc.
-        Omega_k0 (float): Curvature density parameter today.
-        H0 (float): Hubble constant in km/s/Mpc.
-        open_form (callable): Exact form in $a = \sqrt{u}$ for $u > 0$.
-        closed_form (callable): Exact form in $a = \sqrt{-u}$ for $u < 0$.
-        series (callable): Taylor series in $u$ about $u = 0$.
+    Parameters
+    ----------
+    x : array_like
+        Distance(s) in Mpc.
+    Omega_k0 : float
+        Curvature density parameter today.
+    H0 : float
+        Hubble constant in km/s/Mpc.
+    open_form : callable
+        Exact form in $a = \sqrt{u}$ for $u > 0$.
+    closed_form : callable
+        Exact form in $a = \sqrt{-u}$ for $u < 0$.
+    series : callable
+        Taylor series in $u$ about $u = 0$.
 
-    Returns:
-        (jax.numpy.ndarray): Same shape as ``x``.
+    Returns
+    -------
+    jax.numpy.ndarray
+        Same shape as ``x``.
     """
     u = Omega_k0 * (jnp.asarray(x) * H0 / _C_KM_S) ** 2
     # The exact forms are 0/0 at u = 0 and sqrt(|u|) has an infinite derivative
@@ -30,15 +39,21 @@ def _curved(x, Omega_k0, H0, open_form, closed_form, series):
 
 
 def transverse_distance(chi, Omega_k0, H0):
-    r"""Return the transverse comoving distance $f_K(\chi)$ in Mpc.
+    r"""Return the transverse comoving distance $f_K(\chi)$.
 
-    Args:
-        chi (array_like): Comoving radial distance(s) in Mpc; may be negative.
-        Omega_k0 (float): Curvature density parameter today.
-        H0 (float): Hubble constant in km/s/Mpc.
+    Parameters
+    ----------
+    chi : array_like
+        Comoving radial distance(s) in Mpc; may be negative.
+    Omega_k0 : float
+        Curvature density parameter today.
+    H0 : float
+        Hubble constant in km/s/Mpc.
 
-    Returns:
-        (jax.numpy.ndarray): $f_K(\chi)$ in Mpc, same shape as ``chi``.
+    Returns
+    -------
+    jax.numpy.ndarray
+        $f_K(\chi)$ in Mpc, same shape as ``chi``.
     """
     return jnp.asarray(chi) * _curved(
         chi,
@@ -53,13 +68,19 @@ def transverse_distance(chi, Omega_k0, H0):
 def radial_distance(d_M, Omega_k0, H0):
     r"""Return the comoving radial distance $\chi$ for a transverse distance $D_M$.
 
-    Args:
-        d_M (array_like): Transverse comoving distance(s) in Mpc.
-        Omega_k0 (float): Curvature density parameter today.
-        H0 (float): Hubble constant in km/s/Mpc.
+    Parameters
+    ----------
+    d_M : array_like
+        Transverse comoving distance(s) in Mpc.
+    Omega_k0 : float
+        Curvature density parameter today.
+    H0 : float
+        Hubble constant in km/s/Mpc.
 
-    Returns:
-        (jax.numpy.ndarray): $\chi$ in Mpc, same shape as ``d_M``.
+    Returns
+    -------
+    jax.numpy.ndarray
+        $\chi$ in Mpc, same shape as ``d_M``.
     """
     return jnp.asarray(d_M) * _curved(
         d_M,
@@ -74,13 +95,19 @@ def radial_distance(d_M, Omega_k0, H0):
 def cos_K(chi, Omega_k0, H0):
     r"""Return $\mathrm{d}f_K/\mathrm{d}\chi$.
 
-    Args:
-        chi (array_like): Comoving radial distance(s) in Mpc.
-        Omega_k0 (float): Curvature density parameter today.
-        H0 (float): Hubble constant in km/s/Mpc.
+    Parameters
+    ----------
+    chi : array_like
+        Comoving radial distance(s) in Mpc.
+    Omega_k0 : float
+        Curvature density parameter today.
+    H0 : float
+        Hubble constant in km/s/Mpc.
 
-    Returns:
-        (jax.numpy.ndarray): Dimensionless, same shape as ``chi``.
+    Returns
+    -------
+    jax.numpy.ndarray
+        Dimensionless, same shape as ``chi``.
     """
     return _curved(
         chi,
@@ -93,12 +120,37 @@ def cos_K(chi, Omega_k0, H0):
 
 
 def curvature(Omega_k0, H0):
-    r"""Return the spatial curvature $K = -\Omega_K (H_0/c)^2$ in Mpc$^{-2}$."""
+    r"""Return the spatial curvature $K = -\Omega_K (H_0/c)^2$.
+
+    Parameters
+    ----------
+    Omega_k0 : float
+        Curvature density parameter today.
+    H0 : float
+        Hubble constant in km/s/Mpc.
+
+    Returns
+    -------
+    float
+        $K$ in Mpc$^{-2}$, positive for closed geometries.
+    """
     return -Omega_k0 * (H0 / _C_KM_S) ** 2
 
 
 def is_flat(Omega_k0) -> bool:
-    """Return whether ``Omega_k0`` is exactly zero; a JAX-traced value is not."""
+    """Return whether ``Omega_k0`` is exactly zero.
+
+    Parameters
+    ----------
+    Omega_k0 : float
+        Curvature density parameter today.
+
+    Returns
+    -------
+    bool
+        ``True`` for a concrete zero; ``False`` otherwise, including for a
+        JAX-traced value.
+    """
     try:
         return float(Omega_k0) == 0.0
     except TypeError:
@@ -106,15 +158,21 @@ def is_flat(Omega_k0) -> bool:
 
 
 def limber_wavenumber(ells, f_K, K):
-    r"""Return the Limber wavenumber $k = \sqrt{(\nu/f_K)^2 - K}$ in Mpc$^{-1}$.
+    r"""Return the Limber wavenumber $k = \sqrt{(\nu/f_K)^2 - K}$, $\nu = \ell + 1/2$.
 
-    Args:
-        ells (array_like): Multipoles, shape ``(n_ell,)``.
-        f_K (array_like): Transverse comoving distance in Mpc, shape ``(n_z,)``.
-        K (float): Spatial curvature in Mpc$^{-2}$.
+    Parameters
+    ----------
+    ells : array_like
+        Multipoles, shape ``(n_ell,)``.
+    f_K : array_like
+        Transverse comoving distance in Mpc, shape ``(n_z,)``.
+    K : float
+        Spatial curvature in Mpc$^{-2}$.
 
-    Returns:
-        (jax.numpy.ndarray): Shape ``(n_ell, n_z)``.
+    Returns
+    -------
+    jax.numpy.ndarray
+        $k$ in Mpc$^{-1}$, shape ``(n_ell, n_z)``.
     """
     q2 = (jnp.expand_dims(ells + 0.5, 1) / f_K) ** 2
     return jnp.sqrt(jnp.where(q2 > K, q2 - K, q2))
@@ -123,13 +181,20 @@ def limber_wavenumber(ells, f_K, K):
 def potential_response(ells, f_K, K):
     r"""Return the curved-Poisson factor $\nu^2 / (\nu^2 - 4 K f_K^2)$ of potential tracers.
 
-    Args:
-        ells (array_like): Multipoles, shape ``(n_ell,)``.
-        f_K (array_like): Transverse comoving distance in Mpc, shape ``(n_z,)``.
-        K (float): Spatial curvature in Mpc$^{-2}$.
+    Parameters
+    ----------
+    ells : array_like
+        Multipoles, shape ``(n_ell,)``.
+    f_K : array_like
+        Transverse comoving distance in Mpc, shape ``(n_z,)``.
+    K : float
+        Spatial curvature in Mpc$^{-2}$.
 
-    Returns:
-        (jax.numpy.ndarray): Shape ``(n_ell, n_z)``.
+    Returns
+    -------
+    jax.numpy.ndarray
+        Dimensionless, shape ``(n_ell, n_z)``; zero where the denominator is
+        not positive.
     """
     nu2 = jnp.expand_dims(ells + 0.5, 1) ** 2
     den = nu2 - 4 * K * f_K**2

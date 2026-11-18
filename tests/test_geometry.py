@@ -75,8 +75,14 @@ def test_is_flat():
 
 def test_limber_quantities_reduce_to_flat():
     f_K = CHI
-    assert_allclose(limber_wavenumber(ELLS, f_K, 0.0), (ELLS[:, None] + 0.5) / f_K)
-    assert_allclose(potential_response(ELLS, f_K, 0.0), np.ones((len(ELLS), len(f_K))))
+    assert_allclose(
+        limber_wavenumber(ELLS, f_K, 0.0), (ELLS[:, None] + 0.5) / f_K, rtol=1e-14
+    )
+    assert_allclose(
+        potential_response(ELLS, f_K, 0.0),
+        np.ones((len(ELLS), len(f_K))),
+        rtol=1e-14,
+    )
 
 
 @pytest.mark.parametrize("Omega_k0", [-0.3, 0.3])

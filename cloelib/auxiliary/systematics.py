@@ -124,7 +124,7 @@ def modes_dndz_jax(
         Perturbed and normalised redshift distributions,
         shape (N_bins, N_z).
     """
-
+    amplitudes = jnp.asarray(amplitudes)
     delta_dndz = jnp.einsum("k,kiz->iz", amplitudes, modes)
 
     dndz_out = dndz + delta_dndz

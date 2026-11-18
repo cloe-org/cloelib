@@ -1,4 +1,3 @@
-
 """Tests for redshift-mode systematics in photo tracers."""
 
 import numpy as np
@@ -44,8 +43,7 @@ def modes_tracers():
 
     def build_tracers(amplitudes):
         common_params = {
-            f"dndz_mode_{k}": amplitude
-            for k, amplitude in enumerate(amplitudes)
+            f"dndz_mode_{k}": amplitude for k, amplitude in enumerate(amplitudes)
         }
 
         shear_tracer = ShearTracer(
@@ -109,7 +107,7 @@ def test_zero_mode_amplitudes_reproduce_fiducial_dndz(modes_tracers, tracer_name
 
 @pytest.mark.parametrize("tracer_name", ["shear_tracer", "pos_tracer"])
 def test_mode_amplitudes_change_only_their_own_bin(modes_tracers, tracer_name):
-    tracer = modes_tracers[tracer_name]
+    modes_tracers[tracer_name]
     z = modes_tracers["z"]
     dndz = modes_tracers["dndz"]
     modes = modes_tracers["modes"]
@@ -120,7 +118,7 @@ def test_mode_amplitudes_change_only_their_own_bin(modes_tracers, tracer_name):
     expected /= np.trapezoid(expected, z, axis=1)[:, None]
 
     shear_tracer, pos_tracer = modes_tracers["build_tracers"](amplitudes)
-    tracer = {
+    {
         "shear_tracer": shear_tracer,
         "pos_tracer": pos_tracer,
     }[tracer_name]

@@ -27043,7 +27043,9 @@ of <code>dndz</code>.</p>
 contribution to use. <code>None</code> (default) means no intrinsic-alignment
 contribution at all - <code>get_window()</code>/<code>get_Cl</code> use only the lensing
 term. <code>"NLA"</code> builds <code>NLAContribution</code> (<code>get_window_IA</code>, reading
-<code>nuisance_params["AIA"/"CIA"/"EtaIA"]</code>). <code>"TATT"</code> builds a
+<code>nuisance_params["AIA"/"CIA"/"EtaIA"]</code> and optionally
+<code>nuisance_params["z0IA"]</code>, the pivot redshift of the
+<code>((1+z)/(1+z0IA))**EtaIA</code> scaling, default 0.62). <code>"TATT"</code> builds a
 <code>TATTContribution</code> from <code>nuisance_params["AIA"]</code> (=A1),
 <code>nuisance_params["A2IA"]</code>, <code>nuisance_params["bTA"]</code>, and optionally
 <code>nuisance_params["Eta2IA"]</code>/<code>["z0IA"]</code> (default 0.0/0.62).
@@ -27260,7 +27262,9 @@ be omitted otherwise.</p>
 
         <p>Return the NLA intrinsic-alignment kernel on <code>z</code>.</p>
 <p>The per-bin kernel is <code>-H(z)/c * AIA * CIA * Omega_m0 *
-(1+z)**EtaIA / D(z) * dndz_shifted</code>. If the backend returns a
+((1+z)/(1+z0IA))**EtaIA / D(z) * dndz_shifted</code>, so <code>AIA</code> is the
+amplitude at the pivot redshift <code>z0IA</code> (optional nuisance
+parameter, default 0.62, as in the case of the TATT implementation). If the backend returns a
 scale-dependent growth factor, the second tabulated k column is used;
 otherwise its scale-independent result is used. TATT amplitudes are
 represented in effective spectra rather than by this NLA window.</p>

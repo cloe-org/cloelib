@@ -35,7 +35,7 @@ class HMemuLinearPerturbations:
         """Intialize the HMemuLinearPerturbations instance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
-        self.z = ensure_z_zero_included(redshifts[redshifts <= redshift_max])
+        self.z, _ = ensure_z_zero_included(redshifts[redshifts <= redshift_max])
         self.background = background
 
         self.params_hm_emu = {
@@ -238,6 +238,22 @@ class HMemuLinearPerturbations:
         self.sigma8, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
         return self.sigma8[0]
 
+    def sigma12(self) -> np.ndarray:
+        r"""RMS linear matter fluctuation in spheres of radius R = 12 Mpc.
+
+        Returns:
+            (np.ndarray): sigma12 at each redshift in `self.z`, in that
+            order.
+        """
+        R = 12.0
+        k = self.k
+        x = k * R
+        window = 3.0 * (np.sin(x) - x * np.cos(x)) / x**3
+        variance = np.trapezoid(k**2 * self.Pk * window**2, x=k, axis=-1) / (
+            2.0 * np.pi**2
+        )
+        return np.sqrt(variance)
+
 
 class HMemuNonLinearPerturbations:
     """Class for non linear perturbations cosmology using HMemu,  compatibly with the Perturbations protocol."""
@@ -256,7 +272,7 @@ class HMemuNonLinearPerturbations:
 
         redshift_max = HM2020_emu.emulator["nonlinear"]["bounds"]["z"][1]
 
-        self.z = ensure_z_zero_included(redshifts[redshifts <= redshift_max])
+        self.z, _ = ensure_z_zero_included(redshifts[redshifts <= redshift_max])
         self.background = background
         # Retained so downstream consumers that need the *linear* Pk (e.g.
         # a perturbation-theory backend, which is only valid starting from

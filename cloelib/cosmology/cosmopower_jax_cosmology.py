@@ -309,7 +309,7 @@ class _CosmoPowerPerturbations:
         if spec.flat_only:
             assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
-        self.z = ensure_z_zero_included(redshifts[redshifts <= 5])
+        self.z, _ = ensure_z_zero_included(redshifts[redshifts <= 5])
         self.params = {
             "ombh2": self.background.Omega_b0 * self.background.h**2,
             "omch2": self.background.Omega_cdm0 * self.background.h**2,

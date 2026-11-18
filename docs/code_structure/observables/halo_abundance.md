@@ -47,7 +47,16 @@ Compute the halo bias.
 
 ### TinkerHaloAbundance
 
-Tinker et al. 2008 halo mass function and bias.
+Tinker et al. 2008 halo mass function and Tinker et al. 2010 halo bias.
+
+The parameters of the models are stored in two dictionaries defined at
+instantiation, which can be modified afterwards:
+
+- **`tab_parameters`**: parameters of the halo mass function (Table 2 of
+  Tinker et al. 2008), tabulated as a function of the overdensity with respect
+  to the mean density (`"Delta"`, `"A0"`, `"a0"`, `"b0"`, `"c0"`).
+- **`tab_bias_parameters`**: parameters of the halo bias (Tinker et al. 2010)
+  (`"A"`, `"a"`, `"B"`, `"b"`, `"C"`, `"c"`).
 
 **Location**: `cloelib/observables/clusters/halo_abundance/tinker_halo_abundance.py`
 

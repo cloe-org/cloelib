@@ -924,9 +924,8 @@ class ShearTracer:
             `"shift_stretch"` applies the existing per-bin shifts and widths;
             `"modes"` applies the supplied redshift modes.
           dndz_modes: Fixed redshift modes, required when
-            `dndz_redshift_model="modes"`. Expected shape is
-            `(n_modes, n_bin, len(z))`. Their amplitudes are read from
-            `nuisance_params["dndz_mode_0"]`, ..., `["dndz_mode_{n_modes-1}"]`.
+                `dndz_redshift_model="modes"`. Expected shape is `(n_modes, n_bin, len(z))`.
+                Their amplitudes are read from `nuisance_params`: ``dndz_mode_shear_{k+1}`.
 
         Raises:
           ValueError: If ``z`` contains zero, ``ia_model`` is unknown,
@@ -976,7 +975,8 @@ class ShearTracer:
                 )
 
             amplitudes = [
-                nuisance_params[f"dndz_mode_{k}"] for k in range(dndz_modes.shape[0])
+                nuisance_params[f"dndz_mode_shear_{k + 1}"]
+                for k in range(dndz_modes.shape[0])
             ]
 
             self.dndz_with_systematics = modes_dndz_jax(dndz, z, dndz_modes, amplitudes)

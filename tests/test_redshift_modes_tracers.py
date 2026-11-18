@@ -41,9 +41,18 @@ def modes_tracers():
     modes[0, 0] = z - z.mean()
     modes[1, 1] = z - z.mean()
 
-    def build_tracers(amplitudes):
-        common_params = {
-            f"dndz_mode_{k}": amplitude for k, amplitude in enumerate(amplitudes)
+    def build_tracers(shear_amplitudes, pos_amplitudes=None):
+        if pos_amplitudes is None:
+            pos_amplitudes = shear_amplitudes
+
+        shear_params = {
+            f"dndz_mode_shear_{k + 1}": amplitude
+            for k, amplitude in enumerate(shear_amplitudes)
+        }
+
+        pos_params = {
+            f"dndz_mode_pos_{k + 1}": amplitude
+            for k, amplitude in enumerate(pos_amplitudes)
         }
 
         shear_tracer = ShearTracer(
@@ -51,7 +60,7 @@ def modes_tracers():
             dndz=dndz,
             z=z,
             nuisance_params={
-                **common_params,
+                **shear_params,
                 **{f"multiplicative_bias_{i + 1}": 0.0 for i in range(n_z_bins)},
                 "AIA": 1.0,
                 "CIA": 0.0134,
@@ -68,7 +77,7 @@ def modes_tracers():
             z=z,
             galaxy_bias_model="per_bin",
             nuisance_params={
-                **common_params,
+                **pos_params,
                 **{f"magnification_bias_{i + 1}": 0.3 for i in range(n_z_bins)},
                 "b1_photo_bin0": 1.1,
                 "b1_photo_bin1": 1.4,
@@ -107,7 +116,6 @@ def test_zero_mode_amplitudes_reproduce_fiducial_dndz(modes_tracers, tracer_name
 
 @pytest.mark.parametrize("tracer_name", ["shear_tracer", "pos_tracer"])
 def test_mode_amplitudes_change_only_their_own_bin(modes_tracers, tracer_name):
-    modes_tracers[tracer_name]
     z = modes_tracers["z"]
     dndz = modes_tracers["dndz"]
     modes = modes_tracers["modes"]
@@ -117,8 +125,37 @@ def test_mode_amplitudes_change_only_their_own_bin(modes_tracers, tracer_name):
     expected = np.maximum(expected, 0.0)
     expected /= np.trapezoid(expected, z, axis=1)[:, None]
 
-    shear_tracer, pos_tracer = modes_tracers["build_tracers"](amplitudes)
-    {
+    shear_tracer, pos_tracer = modes_tracers["build_tracers"](amplitudes, amplitudes)
+    tracer = {
         "shear_tracer": shear_tracer,
         "pos_tracer": pos_tracer,
     }[tracer_name]
+
+    np.testing.assert_allclose(
+        np.asarray(tracer.dndz_with_systematics),
+        expected,
+        rtol=1e-12,
+        atol=1e-12,
+    )
+
+    # The second bin should remain unchanged.
+    np.testing.assert_allclose(
+        np.asarray(tracer.dndz_with_systematics)[1],
+        dndz[1],
+        rtol=1e-12,
+        atol=1e-12,
+    )
+
+
+def test_shear_and_positions_modes_are_independent(modes_tracers):
+    shear_tracer, pos_tracer = modes_tracers["build_tracers"]([0.2, 0.0], [0.0, 0.0])
+
+    np.testing.assert_allclose(
+        np.asarray(pos_tracer.dndz_with_systematics),
+        modes_tracers["dndz"],
+    )
+
+    assert not np.allclose(
+        np.asarray(shear_tracer.dndz_with_systematics),
+        modes_tracers["dndz"],
+    )

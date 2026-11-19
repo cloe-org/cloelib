@@ -156,8 +156,16 @@ engine one `PkTerm` (a per-bin-weighted kernel pair and a power spectrum)
 per term of TATT's P_II/P_deltaI through `get_pk_terms`, the same mechanism
 `NonLinearGalaxyBiasContribution` uses for its per-bin biases. Use
 `tracer.get_ia_effective_spectra(bin_i=..., bin_j=...)` to inspect one bin
-pair's P_II/P_deltaI. Pairing a TATT-M tracer with an NLA or TATT tracer
-raises `ValueError`.
+pair's P_II/P_deltaI. Pairing a TATT-M tracer with an NLA, NLA-M or TATT
+tracer raises `ValueError`.
+
+**NLA-M**: `ia_model="NLA-M"` is the `A2 = bTA = 0` limit of TATT-M: an NLA
+model whose amplitude `A1^i = alphaM * (Mh^i/M0)^betaM`, times `f_r^i`, is
+set per bin. It reads the same `"alphaM"/"betaM"` and per-bin
+`"log10_Mh_{i}"`/`"f_r_{i}"` keys as TATT-M, plus the optional
+`"log10_M0"/"CIA"`. As for NLA, the amplitude is part of the kernel and the
+engine integrates the plain matter power spectrum, so no
+`tatt_loop_computer` (and no `fast-pt`) is needed.
 
 ### PositionsTracer
 

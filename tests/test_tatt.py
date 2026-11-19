@@ -22,11 +22,6 @@ that specifically validate the real backend use `PBJTATTLoopComputer`
 import numpy as np
 import pytest
 
-from cloelib.cosmology.camb_cosmology import (
-    CAMBBackground,
-    CAMBLinearPerturbations,
-    CAMBNonLinearPerturbations,
-)
 from cloelib.observables.photo.contributions import (
     CB,
     MATTER,
@@ -50,41 +45,6 @@ import importlib.util
 _FASTPT_INSTALLED = importlib.util.find_spec("fastpt") is not None
 if _FASTPT_INSTALLED:
     from cloelib.observables.photo.shear import PBJTATTLoopComputer
-
-
-@pytest.fixture(scope="module")
-def cosmo_setup():
-    H0 = 67.7
-    h = H0 / 100.0
-    background = CAMBBackground(
-        H0=H0,
-        Omega_b0=0.022 / h**2,
-        Omega_cdm0=0.12 / h**2,
-        Omega_k0=0.0,
-        As=2e-9,
-        ns=0.96,
-        alpha_s=0.0,
-        mnu=0.06,
-        w0=-1.0,
-        wa=0.0,
-        gamma_MG=0.0,
-        N_mnu=1,
-    )
-    z_auto = np.linspace(0.01, 1100.0, 100)
-    z = np.linspace(0.2, 2.0, 15)
-    perturbations = CAMBNonLinearPerturbations(background, None, z_auto)
-    return perturbations, z
-
-
-@pytest.fixture(scope="module")
-def linear_perturbations(cosmo_setup):
-    """A *linear* Perturbations object, as `PBJTATTLoopComputer` requires
-    (FAST-PT's one-loop integrals are only valid starting from the linear
-    Pk - see its docstring) - `cosmo_setup`'s own `perturbations` is
-    nonlinear.
-    """
-    perturbations, z = cosmo_setup
-    return CAMBLinearPerturbations(perturbations.background, perturbations.z)
 
 
 class _StubTATTLoopComputer:
@@ -380,9 +340,8 @@ def test_multiplicative_shear_bias_applied_in_generalized_path(cosmo_setup):
         )
 
 
-def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
-    """Strongest available check: with A2=b_TA=0 and z0=0 (matching legacy
-    NLA's implicit z0=0 pivot, see `tatt.py`'s `compute_kernel` docstring),
+def test_tatt_matches_legacy_nla_end_to_end(cosmo_setup):
+    """Strongest available check: with A2=b_TA=0 and z0IA=0.62,
     `ia_model="TATT"` must reproduce `ia_model="NLA"`'s `get_Cl` output
     bit-for-bit - through the *entire* pipeline (two independent code
     paths: `_compute_cl_legacy` vs `_compute_cl_generalized`), not just the
@@ -423,7 +382,7 @@ def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
         perturbations=perturbations,
         dndz=dndz,
         z=z,
-        nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.0),
+        nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.62),
         ia_model="TATT",
         tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
@@ -441,9 +400,9 @@ def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
 def test_generalized_engine_uses_pcb_like_legacy(cosmo_setup):
     """`PositionsTracer(use_Pcb=True)` x TATT-shear (generalized engine) must
     reproduce `PositionsTracer(use_Pcb=True)` x NLA-shear (legacy path) in
-    the A2=b_TA=z0=0 limit, i.e. both engines must pick the same cb x matter
+    the A2=b_TA=0 limit, i.e. both engines must pick the same cb x matter
     base spectrum - and that spectrum must actually differ from P_mm.
-    Same 5e-3 tolerance as `test_tatt_matches_legacy_nla_end_to_end_at_z0_zero`.
+    Same 5e-3 tolerance as `test_tatt_matches_legacy_nla_end_to_end`.
     """
     perturbations, z = cosmo_setup
     n_z_bins = 2
@@ -466,7 +425,7 @@ def test_generalized_engine_uses_pcb_like_legacy(cosmo_setup):
                 perturbations=perturbations,
                 dndz=dndz,
                 z=z,
-                nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.0),
+                nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.62),
                 ia_model="TATT",
                 tatt_loop_computer=_StubTATTLoopComputer(perturbations),
             )

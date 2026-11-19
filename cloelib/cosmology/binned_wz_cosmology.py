@@ -11,6 +11,9 @@ from typing import Optional
 from scipy import interpolate
 import jax.numpy as jnp
 
+
+
+from cloelib.cosmology.theta_h0 import equivalent_wcdm_growth
 from cloelib.cosmology.theta_h0 import theta_to_H0 as _theta_to_H0
 
 # Gauss–Legendre nodes for the comoving-distance integral. Within one w bin the
@@ -51,11 +54,11 @@ def get_z_bin(z, zbin_edges):
         Bin index (0-indexed). Returns -1 for values below the first edge
         and len(zbin_edges)-2 for values at or above the last edge.
     """
-    # Check if input is scalar
-    is_scalar = np.isscalar(z)
-
-    # Convert to array for processing
-    z = np.asarray(z)
+    # A Python float and a 0-d array (what ``np.asarray`` makes from one)
+    # are both a single redshift. ``np.isscalar`` misses the 0-d array.
+    z_in = np.asarray(z)
+    is_scalar = z_in.ndim == 0
+    z = np.atleast_1d(z_in)
     zbin_edges = np.asarray(zbin_edges)
 
     # np.digitize returns the index of the bin (1-indexed)
@@ -66,16 +69,9 @@ def get_z_bin(z, zbin_edges):
     # - Values below first edge get -1
     # - Values at or above last edge get the last bin index
     bin_idx = np.clip(bin_idx, -1, len(zbin_edges) - 2)
+    bin_idx[z >= zbin_edges[-1]] = len(zbin_edges) - 2
 
-    # For values exactly at the last edge, put them in the last bin
-    if is_scalar:
-        if z >= zbin_edges[-1]:
-            bin_idx = len(zbin_edges) - 2
-    else:
-        bin_idx[z >= zbin_edges[-1]] = len(zbin_edges) - 2
-
-    # Return scalar if input was scalar, otherwise return array
-    return bin_idx.item() if is_scalar else bin_idx
+    return int(bin_idx.item()) if is_scalar else bin_idx
 
 
 def get_de_density(z, zbin_edges, zbin_widths, zbin_centers, w_i):
@@ -192,6 +188,8 @@ class DEBinnedEoSBackground:
         self.As = cosmology_dict["As"]
         self.ns = cosmology_dict["ns"]
         self.Omega_m0 = self.Omega_b0 + self.Omega_cdm0 + self.mnu / 93.14 / self.h**2
+        self.N_mnu = cosmology_dict["N_mnu"]
+        self.N_eff = cosmology_dict["N_eff"]
 
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
@@ -405,11 +403,11 @@ class DEBinnedEoSLinearPerturbations:
         background_mgrowth = {
             "Omega_m": self.background.Omega_m(np.array([0.0]))[0],
             "h": self.background.h,
-            "w0": -1.0,
+            "w0": -1.,
             "wa": 0.0,
             "a_arr": self.a_sorted,
         }
-        # Compute MG and LCDM growth and assign linear growth parameters
+        # Compute MG and LCDM/wCDM growth and assign linear growth parameters
         self._compute_growth(background_mgrowth)
 
     def _compute_growth(self, bg_dict):
@@ -434,6 +432,7 @@ class DEBinnedEoSLinearPerturbations:
         D_base_raw, _ = base_cosmo.growth_parameters()
         D_base = D_base_raw[::-1]
 
+
         # Interpolate D(z, k) and f(z, k)
         self.dz_interp = interpolate.RectBivariateSpline(
             self.z_sorted, self.k, D_mg, kx=1, ky=1
@@ -450,6 +449,7 @@ class DEBinnedEoSLinearPerturbations:
         self.dz_norm_lcdm_z_interp = interpolate.RectBivariateSpline(
             self.z_sorted, self.k, D_mg / D_base[:, None], kx=1, ky=1
         )
+
 
     def growth_factor(self, zs, ks) -> np.ndarray:
         """Calculate the growth factor D(z, k) normalized to D(0).
@@ -516,6 +516,24 @@ class DEBinnedEoSLinearPerturbations:
         Dz_div_Dlcdmz0 = self.dz_norm_lcdm_interp(0.0, 0.01)
         return self.base.sigma8_0() * Dz_div_Dlcdmz0
 
+    def sigma12(self) -> np.ndarray:
+        r"""RMS linear matter fluctuation in spheres of radius R = 12 Mpc.
+
+        The spectrum is the binned-w linear spectrum, ``P_LCDM(k, 0)`` times
+        ``[D_de(z) / D_LCDM(0)]^2``, on the same wavenumber grid as the LCDM
+        base. The result is aligned with ``self.z``.
+        """
+        R = 12.0
+        k = self.base.k
+        pk = np.asarray(self.matter_power_spectrum(self.z, k), dtype=float)
+        pk = np.reshape(pk, (np.size(self.z), np.size(k)))
+        x = k * R
+        window = 3.0 * (np.sin(x) - x * np.cos(x)) / x**3
+        variance = np.trapezoid(k**2 * pk * window**2, x=k, axis=-1) / (
+            2.0 * np.pi**2
+        )
+        return np.sqrt(variance)
+
 
 class DEBinnedEoSNonlinearPerturbations:
     """Class for nonlinear (pseudo) perturbations using MGrowth, inheriting from Perturbations parent class."""
@@ -526,6 +544,7 @@ class DEBinnedEoSNonlinearPerturbations:
         linearperturbations: Perturbations,
         redshifts: np.ndarray,
         log10TAGN: Optional[float] = None,
+        w_eq: Optional[bool] = True
     ):
         """Initialize the HMemuNonLinearPerturbations intance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
@@ -538,21 +557,30 @@ class DEBinnedEoSNonlinearPerturbations:
         # binned DE linear perturbations
         self.de_lin = linearperturbations
 
+        if w_eq:
+            w0, dz_wcdm = self.solve_equality_wCDM()
+            # D of the binned model over D of the matched constant-w model.
+            # dz_interp is k-independent; 0.01 only picks one column.
+            d_binned = self.de_lin.dz_interp(self.z, np.full(len(self.z), 0.01))[:, 0]
+            rescale_factor = d_binned / dz_wcdm
+
+        else: 
+            rescale_factor = self.de_lin.dz_norm_lcdm_z_interp(self.z, np.full(len(self.z), 0.01))[:, 0]
+            w0 = np.tile(-1.0, len(self.z))
+
         self.params_hm_emu = {
             "omega_cdm": self.background.Omega_cdm0,
             "omega_baryon": self.background.Omega_b0,
             # modify for pseudo-power spectrum
-            "As": self.background.As
-            * self.de_lin.dz_norm_lcdm_z_interp(self.z, np.full(len(self.z), 0.01))[
-                :, 0
-            ]
-            ** 2,
+            "As": self.background.As * rescale_factor ** 2,
             "ns": self.background.ns,
             "hubble": self.background.H0 / 100,
             "neutrino_mass": self.background.mnu,
-            "w0": -1.0,
+            "w0": w0,
             "wa": 0.0,
         }
+
+      
         baryonic_boost = log10TAGN is not None
 
         if baryonic_boost:
@@ -561,7 +589,7 @@ class DEBinnedEoSNonlinearPerturbations:
         hm_bounds = HM2020_emu.emulator["nonlinear"]["bounds"]
 
         for key in self.params_hm_emu.keys():
-            if key != "As":
+            if key not in ["As", "w0"]:
                 if np.prod(self.params_hm_emu[key] - hm_bounds[key]) > 0:
                     raise ValueError("HMcode 2020 NL emulator out of range.")
                 else:
@@ -577,6 +605,14 @@ class DEBinnedEoSNonlinearPerturbations:
                 )
                 if (check > 0).any():
                     raise ValueError("As re-scaled is out of range.")
+                check = np.array(
+                    [
+                        np.prod(w0_i - hm_bounds["w0"])
+                        for w0_i in self.params_hm_emu["w0"]
+                    ]
+                )
+                if (check > 0).any():
+                    raise ValueError("w0 equality for re-scaling is out of range.")
 
         self.params_hm_emu["z"] = self.z
 
@@ -618,6 +654,22 @@ class DEBinnedEoSNonlinearPerturbations:
         pk_interp = interpolate.RectBivariateSpline(self.z, self.k, self.Pk, kx=1, ky=1)
 
         self.Pk_interp = pk_interp
+
+    def solve_equality_wCDM(self):
+        """Constant ``w`` and its growth, matched at every sample redshift."""
+        background = self.background
+        return equivalent_wcdm_growth(
+            background,
+            self.z,
+            lambda z: get_de_density(
+                z,
+                background.zbin_edges,
+                background.zbin_widths,
+                background.zbin_centers,
+                background.w_i,
+            ),
+        )
+
 
     def matter_power_spectrum(self, zs, ks):
         r"""Compute the linear matter power spectrum.

@@ -234,6 +234,21 @@ class HMemuLinearPerturbations:
         )
         return float(sigma8_arr[0])
 
+    def sigma12(self) -> np.ndarray:
+        r"""RMS linear matter fluctuation in spheres of radius R = 12 Mpc.
+        Returns:
+            (np.ndarray): sigma12 at each redshift in `self.z`, in that
+            order.
+        """
+        R = 12.0
+        k = self.k
+        x = k * R
+        window = 3.0 * (np.sin(x) - x * np.cos(x)) / x**3
+        variance = np.trapezoid(k**2 * self.Pk * window**2, x=k, axis=-1) / (
+            2.0 * np.pi**2
+        )
+        return np.sqrt(variance)
+
 
 class HMemuNonLinearPerturbations:
     """Class for non linear perturbations cosmology using HMemu,  compatibly with the Perturbations protocol."""

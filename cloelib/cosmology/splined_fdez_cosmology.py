@@ -4,6 +4,7 @@
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.cosmology.cosmology import Perturbations
+from cloelib.cosmology.theta_h0 import equivalent_wcdm_growth
 from cloelib.cosmology.theta_h0 import theta_to_H0 as _theta_to_H0
 
 # General imports
@@ -126,6 +127,8 @@ class DESplinedDensityBackground:
         self.As = cosmology_dict["As"]
         self.ns = cosmology_dict["ns"]
         self.Omega_m0 = self.Omega_b0 + self.Omega_cdm0 + self.mnu / 93.14 / self.h**2
+        self.N_mnu = cosmology_dict["N_mnu"]
+        self.N_eff = cosmology_dict["N_eff"]
 
     def hubble_parameter(self, zs: np.ndarray, units: str = "km/s/Mpc") -> np.ndarray:
         """
@@ -413,6 +416,7 @@ class DESplinedDensityNonlinearPerturbations:
         linearperturbations: Perturbations,
         redshifts: np.ndarray,
         log10TAGN: Optional[float] = None,
+        w_eq: Optional[bool] = True,
     ):
         """Initialize the HMemuNonLinearPerturbations intance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
@@ -420,24 +424,36 @@ class DESplinedDensityNonlinearPerturbations:
         redshift_max = HM2020_emu.emulator["nonlinear"]["bounds"]["z"][1]
 
         self.z = redshifts[redshifts <= redshift_max]
-        # binned DE background
+        # splined DE background
         self.background = background
-        # binned DE linear perturbations
+        # splined DE linear perturbations
         self.de_lin = linearperturbations
+
+        if w_eq:
+            w0, dz_wcdm = equivalent_wcdm_growth(
+                self.background,
+                self.z,
+                lambda z: get_de_density(z, self.background.z_i, self.background.fde_i),
+            )
+            # D of this model over D of the matched constant-w model.
+            # dz_interp is k-independent; 0.01 only picks one column.
+            d_model = self.de_lin.dz_interp(self.z, np.full(len(self.z), 0.01))[:, 0]
+            rescale_factor = d_model / dz_wcdm
+        else:
+            rescale_factor = self.de_lin.dz_norm_lcdm_z_interp(
+                self.z, np.full(len(self.z), 0.01)
+            )[:, 0]
+            w0 = np.tile(-1.0, len(self.z))
 
         self.params_hm_emu = {
             "omega_cdm": self.background.Omega_cdm0,
             "omega_baryon": self.background.Omega_b0,
             # modify for pseudo-power spectrum
-            "As": self.background.As
-            * self.de_lin.dz_norm_lcdm_z_interp(self.z, np.full(len(self.z), 0.01))[
-                :, 0
-            ]
-            ** 2,
+            "As": self.background.As * rescale_factor ** 2,
             "ns": self.background.ns,
             "hubble": self.background.H0 / 100,
             "neutrino_mass": self.background.mnu,
-            "w0": -1.0,
+            "w0": w0,
             "wa": 0.0,
         }
         baryonic_boost = log10TAGN is not None
@@ -448,7 +464,7 @@ class DESplinedDensityNonlinearPerturbations:
         hm_bounds = HM2020_emu.emulator["nonlinear"]["bounds"]
 
         for key in self.params_hm_emu.keys():
-            if key != "As":
+            if key not in ["As", "w0"]:
                 if np.prod(self.params_hm_emu[key] - hm_bounds[key]) > 0:
                     raise ValueError("HMcode 2020 NL emulator out of range.")
                 else:
@@ -464,6 +480,14 @@ class DESplinedDensityNonlinearPerturbations:
                 )
                 if (check > 0).any():
                     raise ValueError("As re-scaled is out of range.")
+                check = np.array(
+                    [
+                        np.prod(w0_i - hm_bounds["w0"])
+                        for w0_i in self.params_hm_emu["w0"]
+                    ]
+                )
+                if (check > 0).any():
+                    raise ValueError("w0 equality for re-scaling is out of range.")
 
         self.params_hm_emu["z"] = self.z
 

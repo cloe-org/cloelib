@@ -84,34 +84,41 @@ def cumulative_integral(y, x):
     return cumsum
 
 
+_N_FDE_INTEGRAL = 128
+
+
+def _fde_integral(a, a_grid, w_vals):
+    """∫_a^1 3(1+w(a'))/a' da', sampled uniformly in ln a.
+
+    The integrand is 3(1+w) dln a. A uniform grid in a undersamples early
+    times. For w > -1 that error makes f_DE blow up and corrupts the growth.
+    The point count is a Python constant: jnp.linspace cannot take a traced
+    size inside the ODE solver.
+    """
+    ln_a = jnp.linspace(jnp.log(a), 0.0, _N_FDE_INTEGRAL)
+    w = interp1d_jax(jnp.exp(ln_a), a_grid, w_vals)
+    return trapz_jax(3.0 * (1.0 + w), ln_a)
+
+
 @jit
 def compute_cumulative_integral(a_fine, a_grid, w_vals):
-    """Pre-compute cumulative integral from a_fine to 1.0 for all a_fine values.
+    """I(a) = ∫_a^1 3(1+w)/a' da' on ``a_fine``.
 
-    Computes I(a) = integral from a to 1.0 of 3*(1+w(a'))/a' da'
+    ``a_fine`` must be spaced uniformly in ln a. The integrand is
+    3(1+w) dln a; a uniform grid in a undersamples early times and, for
+    w > -1, makes f_DE blow up.
     """
     w_fine = interp1d_jax(a_fine, a_grid, w_vals)
-    integrand = 3.0 * (1.0 + w_fine) / a_fine
+    ln_a = jnp.log(a_fine)
+    integrand = 3.0 * (1.0 + w_fine)
 
-    # Compute cumulative integral backwards from 1.0 to a_start using cumsum
-    # Reverse arrays, compute forward cumulative sum, then reverse back
-    a_rev = a_fine[::-1]
+    # Cumulative integral backwards from a=1, where I(1)=0.
+    ln_rev = ln_a[::-1]
     integrand_rev = integrand[::-1]
-
-    # Compute differences and trapezoidal rule contributions
-    da_rev = a_rev[:-1] - a_rev[1:]  # Note: reversed, so this is positive
-    # Trapezoidal contributions: 0.5 * da * (f[i] + f[i+1])
-    # In reversed order: f[i+1] is at index i+1 in reversed array
-    trapz_contrib = 0.5 * da_rev * (integrand_rev[:-1] + integrand_rev[1:])
-
-    # Cumulative sum backwards (from 1.0 to a_start)
-    # Start with 0 at a=1.0, accumulate backwards
+    dln_rev = ln_rev[:-1] - ln_rev[1:]
+    trapz_contrib = 0.5 * dln_rev * (integrand_rev[:-1] + integrand_rev[1:])
     cumsum_rev = jnp.concatenate([jnp.array([0.0]), jnp.cumsum(trapz_contrib)])
-
-    # Reverse back to get forward order (from a_start to 1.0)
-    integral = cumsum_rev[::-1]
-
-    return integral
+    return cumsum_rev[::-1]
 
 
 @jit
@@ -124,21 +131,10 @@ def Omega_m_DE_fast(a, omega0, integral_interp, a_fine):
 
 
 @jit
-def Omega_m_DE(a, omega0, a_grid, w_vals, n_points=128):
-    """Original version - kept for backward compatibility if needed.
+def Omega_m_DE(a, omega0, a_grid, w_vals):
+    """Matter fraction from a tabulated w(a). The f_DE integral is uniform in ln a."""
 
-    Args:
-        n_points: Number of integration points (default 128, reduced from 256 for speed)
-    """
-
-    def integrand(a_in):
-        w = interp1d_jax(a_in, a_grid, w_vals)
-        return 3.0 * (1.0 + w) / a_in
-
-    a_eval = jnp.linspace(a, 1.0, n_points)
-    w_integrand = integrand(a_eval)
-    integral = trapz_jax(w_integrand, a_eval)
-
+    integral = _fde_integral(a, a_grid, w_vals)
     omegaL = (1.0 - omega0) * jnp.exp(integral)
     E2 = omega0 / a**3 + omegaL
     return omega0 / a**3 / E2
@@ -187,21 +183,10 @@ def dlnH_dlna_DE_fast(a, omega0, integral_interp, a_fine, a_grid, w_vals):
 
 
 @jit
-def dlnH_dlna_DE(a, omega0, a_grid, w_vals, n_points=128):
-    """Original version - kept for backward compatibility if needed.
+def dlnH_dlna_DE(a, omega0, a_grid, w_vals):
+    """dlnH/dlna from a tabulated w(a). The f_DE integral is uniform in ln a."""
 
-    Args:
-        n_points: Number of integration points (default 128, reduced from 256 for speed)
-    """
-
-    def integrand(a_in):
-        w = interp1d_jax(a_in, a_grid, w_vals)
-        return 3.0 * (1.0 + w) / a_in
-
-    a_eval = jnp.linspace(a, 1.0, n_points)
-    w_integrand = integrand(a_eval)
-    integral = trapz_jax(w_integrand, a_eval)
-
+    integral = _fde_integral(a, a_grid, w_vals)
     omegaL = (1.0 - omega0) * jnp.exp(integral)
     E2 = omega0 / a**3 + omegaL
     w_a = interp1d_jax(a, a_grid, w_vals)
@@ -260,30 +245,47 @@ def DE_D_derivatives(D, a, a_grid, w_vals, omega0):
 
 
 @jit
-def DE_fde_D_derivatives(D, a, fde_vals, omega0, zbin_edges):
-    """Growth ODE for binned ``f_DE``, with the same ``z = 0`` ramp as the background.
+def DE_fde_D_derivatives(D, a, fde_vals, omega0, zbin_edges, fde_transition, w0_transition):
+    """Growth ODE for binned ``f_DE``, with the same ``z = 0`` cubic as the background.
 
-    Above the first bin ``f_DE`` is piecewise constant, so ``f' = 0``. Inside
-    it, ``f_DE`` is the smoothstep used by ``get_de_density`` in
-    ``binned_fdez_cosmology``: 1 at ``z = 0`` and ``fde_vals[0]`` at the top
-    of the bin. The slope enters ``dlnH/dlna``.
-
-    The steps between later bins are discontinuities in ``H``. Their matching
-    condition is applied in ``fde_a.growth_parameters``, not in this derivative.
+    The cubic runs up to the centre of the first bin. ``w0_transition`` is
+    ``w(z=0)`` of that ramp, not the cosmological ``w_0``. ``-1`` is the
+    smoothstep. Above that centre ``f_DE`` is the bin value.
+    ``fde_transition = 0`` leaves later bins piecewise constant, and the jumps
+    in ``H`` are matched in ``fde_a.growth_parameters``. A positive
+    ``fde_transition`` blends each edge between plateaus, and ``df/da`` from
+    that blend enters ``dlnH/dlna``.
     """
     D1, D2 = D
     z = 1.0 / a - 1.0
     f_step = fde_vals[get_z_bin_jax(z, zbin_edges)]
-    z1 = zbin_edges[1]
+    z1 = 0.5 * (zbin_edges[0] + zbin_edges[1])
     f_hi = fde_vals[0]
-    x = jnp.clip(z / z1, 0.0, 1.0)
-    s = x * x * (3.0 - 2.0 * x)
-    f_ramp = 1.0 + (f_hi - 1.0) * s
-    # df/da = df/dz * dz/da, with dz/da = -1/a^2 and ds/dz = 6x(1-x)/z1.
-    df_da_ramp = (f_hi - 1.0) * (6.0 * x * (1.0 - x) / z1) * (-1.0 / a**2)
+    B = 3.0 * (w0_transition + 1.0)
+    C = 3.0 * (f_hi - 1.0) / z1**2 - 2.0 * B / z1
+    Dcoef = -2.0 * (f_hi - 1.0) / z1**3 + B / z1**2
+    f_ramp = 1.0 + B * z + C * z**2 + Dcoef * z**3
+    df_dz_ramp = B + 2.0 * C * z + 3.0 * Dcoef * z**2
     in_ramp = z < z1
     fde = jnp.where(in_ramp, f_ramp, f_step)
-    df_da = jnp.where(in_ramp, df_da_ramp, 0.0)
+    dfdz = jnp.where(in_ramp, df_dz_ramp, 0.0)
+    nbin = fde_vals.shape[0]
+    for k in range(1, nbin):
+        zedge = zbin_edges[k]
+        half = 0.5 * fde_transition * jnp.minimum(
+            zbin_edges[k] - zbin_edges[k - 1],
+            zbin_edges[k + 1] - zbin_edges[k],
+        )
+        width = jnp.where(half > 0.0, 2.0 * half, 1.0)
+        inside = (fde_transition > 0.0) & (half > 0.0) & (z >= zedge - half) & (z < zedge + half)
+        xj = (z - (zedge - half)) / width
+        sj = xj * xj * (3.0 - 2.0 * xj)
+        dsdz = 6.0 * xj * (1.0 - xj) / width
+        f_left = fde_vals[k - 1]
+        f_right = fde_vals[k]
+        fde = jnp.where(inside, (1.0 - sj) * f_left + sj * f_right, fde)
+        dfdz = jnp.where(inside, (f_right - f_left) * dsdz, dfdz)
+    df_da = dfdz * (-1.0 / a**2)
     omegaL = (1.0 - omega0) * fde
     E2 = omega0 / a**3 + omegaL
     dlnH = -1.5 * (omega0 / a**3) / E2 + 0.5 * a * (1.0 - omega0) * df_da / E2
@@ -541,8 +543,10 @@ class w_a(MGrowth):
                 and the sampler waits on that one point.
         """
         if use_fast:
-            # Create fine grid for pre-computing integrals
-            a_fine = jnp.linspace(self.a_start, 1.0, n_fine)
+            # Uniform in ln a. A uniform grid in a undersamples ∫ dln a at
+            # early times and corrupts f_DE when w > -1.
+            ln_a_fine = jnp.linspace(jnp.log(self.a_start), 0.0, n_fine)
+            a_fine = jnp.exp(ln_a_fine)
             # Pre-compute cumulative integral once
             integral_interp = compute_cumulative_integral(a_fine, a_grid, w_vals)
             # Use fast version with pre-computed integrals
@@ -576,15 +580,18 @@ class fde_a(MGrowth):
     def __init__(self, CosmoDict=None):
         super().__init__(CosmoDict)
 
-    def growth_parameters(self, fde_vals, zbin_edges):
+    def growth_parameters(self, fde_vals, zbin_edges, fde_transition=0.0, w0_transition=-1.0, mxstep=100000):
         """
         Computes growth for binned f_DE(z).
 
-        ``f_DE`` is constant in each bin above the first. The first bin is a
-        smoothstep from 1 at z = 0 to ``fde_vals[0]`` at the top of that bin,
-        matching the background expansion.
+        ``f_DE`` is constant in each bin above the first when
+        ``fde_transition`` is 0. Up to the centre of the first bin it is the
+        cubic fixed by ``f_DE(0) = 1``, ``w(0) = w0_transition`` and a flat arrival at
+        ``fde_vals[0]``. ``w0_transition=-1`` is the smoothstep. A positive
+        ``fde_transition`` smooths every later edge, and the ODE is
+        integrated straight through.
 
-        Each later bin edge is a jump in ``H``. ``D`` stays continuous.
+        Each unsmoothed bin edge is a jump in ``H``. ``D`` stays continuous.
         MGCAMB also keeps the synchronous-gauge variable ``eta*k``
         continuous, and the Einstein constraint then makes
         ``d delta / d tau`` scale as ``1/H``. Combined with
@@ -593,15 +600,43 @@ class fde_a(MGrowth):
 
         Args:
             fde_vals: per-bin f_DE amplitudes, length = len(zbin_edges) - 1.
-                The first entry is the value at the top of the first bin.
+                The first entry is reached at the centre of the first bin.
             zbin_edges: redshift bin edges (ascending)
+            fde_transition: 0 for steps. In (0, 1], the join width as a
+                fraction of the narrower adjacent bin.
+            w0_transition: w(z=0) of the cubic in the first bin, not the
+                cosmological w_0. Default -1.
+            mxstep: Maximum Runge-Kutta steps between output times. The JAX
+                default is infinite, so a stiff f_DE(z) drawn from a wide
+                prior never returns and the sampler waits on that one point.
         """
+        fde_transition = float(fde_transition)
+        w0_transition = float(w0_transition)
+        if fde_transition < 0.0 or fde_transition > 1.0:
+            raise ValueError(
+                f"fde_transition must be between 0 and 1, got {fde_transition}"
+            )
         fde_vals = jnp.asarray(fde_vals)
         zbin_edges = jnp.asarray(zbin_edges)
         aa = np.asarray(self.aa, dtype=float)
         fde = np.asarray(fde_vals, dtype=float)
         edges = np.asarray(zbin_edges, dtype=float)
         omega0 = float(self.omega0)
+        if fde_transition > 0.0:
+            sol = odeint(
+                DE_fde_D_derivatives,
+                jnp.array([self.a_start, 1.0]),
+                self.aa,
+                fde_vals,
+                self.omega0,
+                zbin_edges,
+                fde_transition,
+                w0_transition,
+                mxstep=mxstep,
+            )
+            D, dDda = sol.T
+            growth_rate = self.aa * dDda / D
+            return D[1:], growth_rate[1:]
 
         # Interior edges only. The outer edges are not jumps between bins.
         a_jumps = []
@@ -631,6 +666,9 @@ class fde_a(MGrowth):
                 fde_vals,
                 self.omega0,
                 zbin_edges,
+                0.0,
+                w0_transition,
+                mxstep=mxstep,
             )
             for n, i in enumerate(sel):
                 D_out[i] = float(sol[n + 1, 0])
@@ -648,7 +686,7 @@ class fde_a(MGrowth):
             E2_after = matter + (1.0 - omega0) * f_after
             # d delta/d tau scales as 1/H, and d tau/da scales as 1/H,
             # so dD/da scales as 1/H^2 = E2_before/E2_after.
-            scale = E2_before / E2_after
+            scale = E2_before / E2_after #np.sqrt(E2_before / E2_after)
             y = jnp.array([float(y[0]), float(y[1]) * scale])
             a_now = np.nextafter(a_j, np.inf)
 
@@ -801,6 +839,7 @@ class w0waCDM(MGrowth):
             self.wa,
             rtol=rtol,
             atol=atol,
+            mxstep=100000,
         ).T
         f = self.aa * dDda / D
         return D[1:], f[1:]

@@ -68,9 +68,38 @@ def _neutrino_matter_fraction(z, mnu):
     return 1.0 / (1.0 + ((1.0 + z) / z_transition) ** _NU_MATTER_POWER)
 
 
-def _comoving_distance_to_zstar(
-    H0, z_star_array, de_density_factor, omch2, ombh2, mnu=0.06, omega_k=0.0, TCMB=2.7255, nnu=3.044
+def _zstar_at_H0(
+    H0, omch2, ombh2, omega_k=0.0, mnu=0.06, TCMB=2.7255, nnu=3.044, num_massive_neutrinos=1
 ):
+    """Last-scattering redshift at fixed H0.
+
+    Late-time dark energy barely moves recombination, so one LCDM call is enough
+    for a later root find in ``w``, just as ``theta_to_H0`` freezes ``z*``
+    before it solves for H0.
+    """
+    original_feedback_level = camb.config.FeedbackLevel
+    try:
+        camb.set_feedback_level(0)
+        parameters = camb.CAMBparams()
+        parameters.set_dark_energy(w=-1.0, wa=0.0, dark_energy_model="ppf")
+        parameters.set_cosmology(
+            ombh2=ombh2,
+            omch2=omch2,
+            omk=omega_k,
+            mnu=mnu,
+            H0=H0,
+            TCMB=TCMB,
+            nnu=nnu,
+            num_massive_neutrinos=int(num_massive_neutrinos),
+        )
+        zstar = camb.get_background(parameters).get_derived_params()["zstar"]
+    finally:
+        camb.config.FeedbackLevel = original_feedback_level
+    return float(zstar)
+
+
+def _distance_terms(H0, z_grid, omch2, ombh2, mnu=0.06, omega_k=0.0, TCMB=2.7255, nnu=3.044):
+    """Parts of ``E^2(z)`` that do not depend on the dark-energy density."""
     h = H0 / 100.0
     H0mpc = h / C_KM_S_MPC
     omnuh2 = mnu / 93.14
@@ -80,21 +109,176 @@ def _comoving_distance_to_zstar(
     omega_r = omega_r_h2(TCMB, nnu) / h**2
     # omega_k is Omega_k, the curvature density parameter, not Omega_k h^2.
     omega_de = 1.0 - omega_b - omega_c - omega_nu - omega_r - omega_k
-    nu_matter = _neutrino_matter_fraction(z_star_array, mnu)
+    nu_matter = _neutrino_matter_fraction(z_grid, mnu)
     omega_m = omega_b + omega_c + omega_nu * nu_matter
-    radicand = (
-        omega_r * (1.0 + z_star_array) ** 4
-        + omega_m * (1.0 + z_star_array) ** 3
-        + omega_k * (1.0 + z_star_array) ** 2
-        + omega_de * de_density_factor
+    matter_radiation = (
+        omega_r * (1.0 + z_grid) ** 4
+        + omega_m * (1.0 + z_grid) ** 3
+        + omega_k * (1.0 + z_grid) ** 2
     )
+    return H0mpc, omega_de, matter_radiation
+
+
+def _chi_on_grid(z_grid, de_density_factor, H0mpc, omega_de, matter_radiation):
+    """Comoving radial distance in Mpc on ``z_grid``."""
+    radicand = matter_radiation + omega_de * np.asarray(de_density_factor, dtype=float)
     # A negative or non-finite E^2 means the universe is not expanding on this
     # grid. Returning NaN here lets a root finder wander; fail instead.
     if not np.isfinite(radicand).all() or np.any(radicand <= 0.0):
         raise ValueError("expansion history is not finite and expanding")
     E_grid = np.sqrt(radicand)
-    r_dimless = cumulative_trapezoid(1.0 / E_grid, z_star_array, initial=0.0)
-    return r_dimless[-1] / H0mpc
+    r_dimless = cumulative_trapezoid(1.0 / E_grid, z_grid, initial=0.0)
+    return r_dimless / H0mpc
+
+
+def _comoving_distance_to_zstar(
+    H0, z_star_array, de_density_factor, omch2, ombh2, mnu=0.06, omega_k=0.0, TCMB=2.7255, nnu=3.044
+):
+    H0mpc, omega_de, matter_radiation = _distance_terms(
+        H0, z_star_array, omch2, ombh2, mnu, omega_k, TCMB, nnu
+    )
+    return _chi_on_grid(
+        z_star_array, de_density_factor, H0mpc, omega_de, matter_radiation
+    )[-1]
+
+
+def equivalent_constant_w(
+    H0,
+    omch2,
+    ombh2,
+    redshifts,
+    de_density,
+    omega_k=0.0,
+    mnu=0.06,
+    TCMB=2.7255,
+    nnu=3.044,
+    num_massive_neutrinos=1,
+    w_bracket=(-3.0, 0.0),
+):
+    """Constant ``w`` matching ``chi(z*) - chi(z)`` of ``de_density`` at each redshift.
+
+    This is the same distance integral as ``theta_to_H0``. There H0 is the
+    unknown and ``f_DE(z)`` is fixed. Here H0 is fixed and each sample
+    redshift gets the constant ``w`` whose comoving distance to last scattering
+    equals that of ``de_density``. ``de_density(z)`` returns ``f_DE(z)`` and
+    must not depend on ``w``. ``z*`` comes from one CAMB call.
+
+    Returns
+    -------
+    np.ndarray
+        ``w`` at each redshift.
+
+    Raises
+    ------
+    ValueError
+        If ``f_DE`` is not finite and positive, or if no root lies inside
+        ``w_bracket``.
+    """
+    redshifts = np.atleast_1d(np.asarray(redshifts, dtype=float))
+    if redshifts.size == 0:
+        return np.empty(0, dtype=float)
+    if not np.isfinite(redshifts).all() or np.any(redshifts < 0.0):
+        raise ValueError("redshift is not finite and non-negative")
+
+    zstar = _zstar_at_H0(
+        H0,
+        omch2,
+        ombh2,
+        omega_k,
+        mnu,
+        TCMB,
+        nnu,
+        num_massive_neutrinos,
+    )
+    if np.any(redshifts > zstar):
+        raise ValueError("redshift is above z*")
+    z_grid = np.unique(np.concatenate((_z_grid_to_zstar(zstar), redshifts)))
+    de_factor = np.asarray(de_density(z_grid), dtype=float)
+    if de_factor.shape != z_grid.shape or not np.isfinite(de_factor).all() or np.any(de_factor <= 0.0):
+        raise ValueError("dark-energy density is not finite and positive")
+
+    H0mpc, omega_de, matter_radiation = _distance_terms(
+        H0, z_grid, omch2, ombh2, mnu, omega_k, TCMB, nnu
+    )
+    chi_target = _chi_on_grid(z_grid, de_factor, H0mpc, omega_de, matter_radiation)
+    nodes = np.searchsorted(z_grid, redshifts)
+    distance_target = chi_target[-1] - chi_target[nodes]
+
+    def distance_of_w(w):
+        # wCDM, wa = 0: f_DE(z) = (1+z)^{3(1+w)}, equal to 1 today.
+        de_w = (1.0 + z_grid) ** (3.0 * (1.0 + w))
+        chi = _chi_on_grid(z_grid, de_w, H0mpc, omega_de, matter_radiation)
+        return chi[-1] - chi[nodes]
+
+    w_lo, w_hi = float(w_bracket[0]), float(w_bracket[1])
+    distance_lo = distance_of_w(w_lo)
+    distance_hi = distance_of_w(w_hi)
+    residual_lo = distance_lo - distance_target
+    residual_hi = distance_hi - distance_target
+
+    def residual(w, index):
+        return distance_of_w(w)[index] - distance_target[index]
+
+    w_eq = np.empty(redshifts.size)
+    for index in range(redshifts.size):
+        left = residual_lo[index]
+        right = residual_hi[index]
+        if not (np.isfinite(left) and np.isfinite(right)) or left * right > 0.0:
+            raise ValueError(
+                "no constant-w root inside "
+                f"({w_lo}, {w_hi}) at z={redshifts[index]}; residuals are {left}, {right}"
+            )
+        w_eq[index] = float(brentq(residual, w_lo, w_hi, args=(index,), maxiter=50))
+    return w_eq
+
+
+def equivalent_wcdm_growth(background, redshifts, de_density):
+    """Constant ``w`` and its linear growth, matched at every sample redshift.
+
+    ``de_density(z)`` is ``f_DE(z)`` of the model being matched. Distances use
+    :func:`equivalent_constant_w`. The growth factor is ``D(a)`` of flat
+    ``w``CDM (``wa = 0``) at ``a = 1/(1+z)``, from the same initial conditions
+    as the binned and splined growth solvers.
+
+    Returns
+    -------
+    tuple of np.ndarray
+        ``w`` and ``D`` at each redshift.
+    """
+    redshifts = np.atleast_1d(np.asarray(redshifts, dtype=float))
+    if redshifts.size == 0:
+        return np.empty(0, dtype=float), np.empty(0, dtype=float)
+
+    # Imported here so a distance-only caller does not load the growth solver.
+    import cloelib.auxiliary.jaxmgrowth_de_descrete as mgrowth
+
+    hubble_h = background.h
+    w_eq = equivalent_constant_w(
+        background.H0,
+        background.Omega_cdm0 * hubble_h**2,
+        background.Omega_b0 * hubble_h**2,
+        redshifts,
+        de_density,
+        omega_k=background.Omega_k0,
+        mnu=background.mnu,
+        nnu=background.N_eff,
+        num_massive_neutrinos=background.N_mnu,
+    )
+    omega_m = float(np.asarray(background.Omega_m(np.array([0.0]))).reshape(-1)[0])
+    dz_wcdm = np.empty(redshifts.size)
+    for index, (w_value, redshift) in enumerate(zip(w_eq, redshifts)):
+        mg_cosmo = mgrowth.w0waCDM(
+            {
+                "Omega_m": omega_m,
+                "h": hubble_h,
+                "w0": float(w_value),
+                "wa": 0.0,
+                "a_arr": [1.0 / (1.0 + float(redshift))],
+            }
+        )
+        growth, _ = mg_cosmo.growth_parameters()
+        dz_wcdm[index] = float(np.asarray(growth).reshape(-1)[0])
+    return w_eq, dz_wcdm
 
 
 def theta_to_H0(

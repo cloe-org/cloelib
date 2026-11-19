@@ -1724,6 +1724,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cloelib.auxiliary.geometry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;geometry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cloelib.auxiliary.halo_helpers" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2493,6 +2504,17 @@
     <span class="md-ellipsis">
       
         <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;fftlog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloelib.auxiliary.geometry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;geometry
       
     </span>
   </a>
@@ -3288,7 +3310,7 @@ scalar in that case.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Calculate the comoving distance for given redshifts.</p>
+        <p>Calculate the line-of-sight comoving distance chi for given redshifts.</p>
 
           
 
@@ -3309,7 +3331,7 @@ scalar in that case.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Calculate the transverse comoving distance for given redshifts.</p>
+        <p>Calculate the transverse comoving distance f_K(chi) for given redshifts.</p>
 
           
 
@@ -5077,7 +5099,7 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return the transverse comoving distance between two redshifts.</p>
+        <p>Return the transverse comoving distance f_K(chi) as a function of redshift.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -6539,7 +6561,7 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return the transverse comoving distance between two redshifts.</p>
+        <p>Return the transverse comoving distance f_K(chi) as a function of redshift.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -7900,7 +7922,7 @@ variations in N_eff.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return the transverse comoving distance between two redshifts.</p>
+        <p>Return the transverse comoving distance f_K(chi) as a function of redshift.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -18440,7 +18462,7 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return the transverse comoving distance between two redshifts.</p>
+        <p>Return the transverse comoving distance f_K(chi) as a function of redshift.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -22178,7 +22200,7 @@ N_eff = 3.044 for the standard model of cosmology.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Return the transverse comoving distance between two redshifts.</p>
+        <p>Return the transverse comoving distance f_K(chi) as a function of redshift.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -23346,7 +23368,7 @@ Args:
 
     <div class="doc doc-contents ">
 
-        <p>Return the transverse comoving distance between two redshifts.</p>
+        <p>Return the transverse comoving distance f_K(chi) as a function of redshift.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -27329,7 +27351,8 @@ window path uses :meth:<code>get_lensing_efficiency</code> instead.</p>
 
         <p>Compute the discretized lensing efficiency for every bin.</p>
 <p>The efficiency uses <code>dndz_shifted</code> and the grid distance-ratio
-factor <code>1 - chi(z_lens) / chi(z_source)</code>, contracted with cached
+factor <code>f_K(chi(z_source) - chi(z_lens)) / f_K(chi(z_source))</code>,
+contracted with cached
 stacked Simpson weights. The supplied redshift grid is used as both
 the lens and source grid; this implementation assumes uniform spacing.</p>
 
@@ -27377,7 +27400,7 @@ tomographic bin and one column per redshift.</p>
         <p>Return the radial weak-lensing kernel for the supplied redshifts.</p>
 <p>It multiplies the discretized efficiency from
 :meth:<code>get_lensing_efficiency</code> by
-<code>3/2 * (H0/c)**2 * Omega_m0 * (1+z) * chi(z)</code>. The harmonic shear
+<code>3/2 * (H0/c)**2 * Omega_m0 * (1+z) * f_K(chi(z))</code>. The harmonic shear
 response is applied by <code>AngularTwoPoint</code>.</p>
 
 
@@ -28446,12 +28469,13 @@ S_i(z)=\frac{H(z)\,f(z)}{c}\,n_i(z),
 $$</p>
 <p>and shifted distances defined by the <code>_alpha_coeffs</code> factors:
 $$
-\chi_{-}=\frac{2\ell-3}{2\ell+1}\chi(z),\qquad
-\chi_{+}=\frac{2\ell+5}{2\ell+1}\chi(z).
+f_{K,-}=\frac{2\ell-3}{2\ell+1}f_K(z),\qquad
+f_{K,+}=\frac{2\ell+5}{2\ell+1}f_K(z).
 $$</p>
-<p>The coefficients match <code>_L_coeffs</code>. Multipoles below 2 are set to
-zero, and shifted-distance queries outside the tabulated <code>chi</code> grid
-contribute zero.
+<p>The coefficients match <code>_L_coeffs</code> and are also used for <span class="arithmatex">\(K \neq 0\)</span>,
+as in the CLASS Limber RSD transfer (<code>transfer_limber</code>). Multipoles
+below 2 are set to zero, and shifted-distance queries outside the
+tabulated grid contribute zero.
 $$
 A_\ell=\frac{2\ell^2+2\ell-1}{(2\ell-1)(2\ell+3)},\quad
 B_\ell=-\frac{\ell(\ell-1)}{(2\ell-1)\sqrt{(2\ell-3)(2\ell+1)}},\quad
@@ -28459,10 +28483,11 @@ C_\ell=-\frac{(\ell+1)(\ell+2)}{(2\ell+3)\sqrt{(2\ell+1)(2\ell+5)}}.
 $$</p>
 <h6 id="cloelib.observables.photo.positions.PositionsTracer.get_window_rsd--notes">Notes<a class="headerlink" href="#cloelib.observables.photo.positions.PositionsTracer.get_window_rsd--notes" title="Permanent link">&para;</a></h6>
 <ul>
-<li><code>chi</code> is used purely as an interpolation coordinate so <code>get_photo_rsd</code> can evaluate
-  the shifted arguments efficiently.</li>
+<li><code>f_K(chi)</code> is used purely as an interpolation coordinate so <code>get_photo_rsd</code> can evaluate
+  the shifted arguments efficiently.
+Parameters</li>
 </ul>
-<h6 id="cloelib.observables.photo.positions.PositionsTracer.get_window_rsd--parameters">Parameters<a class="headerlink" href="#cloelib.observables.photo.positions.PositionsTracer.get_window_rsd--parameters" title="Permanent link">&para;</a></h6>
+<hr />
 <p>ells : array_like
     Multipoles ell.
 H, f : array_like
@@ -28550,7 +28575,8 @@ for each redshift bin over the evaluation grid.</p>
         <p>Return the magnification-bias contribution to the positions window.</p>
 <p>The geometric efficiency is evaluated on the supplied redshift grid
 using the shifted source distribution and Simpson weights; its
-distance-ratio factor is <code>1 - chi(z_lens) / chi(z_source)</code>. The
+distance-ratio factor is <code>f_K(chi(z_source) - chi(z_lens)) /
+f_K(chi(z_source))</code>. The
 resulting efficiency is multiplied by the usual matter-lensing
 prefactor and the per-bin <code>magnification_bias</code> value.</p>
 
@@ -29040,7 +29066,8 @@ rather than requiring them here, so nothing below needs to change.</p>
 <p>An optional <code>field</code> attribute (<code>MATTER</code> or <code>CB</code>, read through
 <code>contribution_field</code>) states which density field the contribution
 traces; it selects the base power spectrum of each contribution pair
-in <code>AngularTwoPoint</code> (default: <code>MATTER</code>).</p>
+in <code>AngularTwoPoint</code> (default: <code>MATTER</code>). An optional <code>traces_potential</code>
+attribute marks potential-sourced kernels (default: <code>False</code>).</p>
 
           
 
@@ -29141,6 +29168,23 @@ base types <code>spectrum_engine.py</code> and both submodules share.</p>
 
 
 
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
     </div>
 
 </div>
@@ -29188,6 +29232,27 @@ otherwise.</p>
 (e.g. <code>GalaxyBiasContribution</code> of a <code>PositionsTracer(use_Pcb=True)</code>)
 define <code>field</code>; everything else (lensing, magnification, intrinsic
 alignments, ...) traces the total matter and needs no change.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.contributions.traces_potential" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">traces_potential</span>
+
+
+<a href="#cloelib.observables.photo.contributions.traces_potential" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">traces_potential</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.contributions.traces_potential(contribution)">contribution</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p><code>contribution.traces_potential</code> if defined, else <code>False</code>.</p>
 
           
 
@@ -30645,10 +30710,10 @@ intrinsic alignment, or multiplicative shear factor in this tracer.</p>
     W_{i}^{\kappa}(z) =
     \frac{3}{2}\left ( \frac{H_0}{c}\right )^2
     \Omega_{{\rm m},0} (1 + z)
-    \chi(z)
+    f_K[\chi(z)]
     \int_{z}^{z_{\rm max}}{{\rm d}z^{\prime} n_{i}^{\rm GW}(z^{\prime})
-    \frac{\chi(z^{\prime}) - \chi(z)}
-    {\chi(z^{\prime})}}\\
+    \frac{f_K[\chi(z^{\prime}) - \chi(z)]}
+    {f_K[\chi(z^{\prime})]}}\\
 \]</div>
 
 
@@ -37664,6 +37729,262 @@ N_pad: int
 
 </div>
 
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-module">
+
+
+
+<h3 id="cloelib.auxiliary.geometry" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">geometry</span>
+
+
+<a href="#cloelib.auxiliary.geometry" class="headerlink" title="Permanent link">&para;</a></h3>
+
+    <div class="doc doc-contents first">
+
+        <p>Module for the geometry of non-flat FLRW spacetimes.</p>
+
+          
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.auxiliary.geometry.transverse_distance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">transverse_distance</span>
+
+
+<a href="#cloelib.auxiliary.geometry.transverse_distance" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">transverse_distance</span><span class="p">(</span><span class="n"><span title="cloelib.auxiliary.geometry.transverse_distance(chi)">chi</span></span><span class="p">,</span> <span class="n"><span title="cloelib.auxiliary.geometry.transverse_distance(Omega_k0)">Omega_k0</span></span><span class="p">,</span> <span class="n"><span title="cloelib.auxiliary.geometry.transverse_distance(H0)">H0</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the transverse comoving distance <span class="arithmatex">\(f_K(\chi)\)</span>.</p>
+<h6 id="cloelib.auxiliary.geometry.transverse_distance--parameters">Parameters<a class="headerlink" href="#cloelib.auxiliary.geometry.transverse_distance--parameters" title="Permanent link">&para;</a></h6>
+<p>chi : array_like
+    Comoving radial distance(s) in Mpc; may be negative.
+Omega_k0 : float
+    Curvature density parameter today.
+H0 : float
+    Hubble constant in km/s/Mpc.</p>
+<h6 id="cloelib.auxiliary.geometry.transverse_distance--returns">Returns<a class="headerlink" href="#cloelib.auxiliary.geometry.transverse_distance--returns" title="Permanent link">&para;</a></h6>
+<p>jax.numpy.ndarray
+    <span class="arithmatex">\(f_K(\chi)\)</span> in Mpc, same shape as <code>chi</code>.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.auxiliary.geometry.radial_distance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">radial_distance</span>
+
+
+<a href="#cloelib.auxiliary.geometry.radial_distance" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">radial_distance</span><span class="p">(</span><span class="n"><span title="cloelib.auxiliary.geometry.radial_distance(d_M)">d_M</span></span><span class="p">,</span> <span class="n"><span title="cloelib.auxiliary.geometry.radial_distance(Omega_k0)">Omega_k0</span></span><span class="p">,</span> <span class="n"><span title="cloelib.auxiliary.geometry.radial_distance(H0)">H0</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the comoving radial distance <span class="arithmatex">\(\chi\)</span> for a transverse distance <span class="arithmatex">\(D_M\)</span>.</p>
+<h6 id="cloelib.auxiliary.geometry.radial_distance--parameters">Parameters<a class="headerlink" href="#cloelib.auxiliary.geometry.radial_distance--parameters" title="Permanent link">&para;</a></h6>
+<p>d_M : array_like
+    Transverse comoving distance(s) in Mpc.
+Omega_k0 : float
+    Curvature density parameter today.
+H0 : float
+    Hubble constant in km/s/Mpc.</p>
+<h6 id="cloelib.auxiliary.geometry.radial_distance--returns">Returns<a class="headerlink" href="#cloelib.auxiliary.geometry.radial_distance--returns" title="Permanent link">&para;</a></h6>
+<p>jax.numpy.ndarray
+    <span class="arithmatex">\(\chi\)</span> in Mpc, same shape as <code>d_M</code>.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.auxiliary.geometry.cos_K" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">cos_K</span>
+
+
+<a href="#cloelib.auxiliary.geometry.cos_K" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">cos_K</span><span class="p">(</span><span class="n"><span title="cloelib.auxiliary.geometry.cos_K(chi)">chi</span></span><span class="p">,</span> <span class="n"><span title="cloelib.auxiliary.geometry.cos_K(Omega_k0)">Omega_k0</span></span><span class="p">,</span> <span class="n"><span title="cloelib.auxiliary.geometry.cos_K(H0)">H0</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return <span class="arithmatex">\(\mathrm{d}f_K/\mathrm{d}\chi\)</span>.</p>
+<h6 id="cloelib.auxiliary.geometry.cos_K--parameters">Parameters<a class="headerlink" href="#cloelib.auxiliary.geometry.cos_K--parameters" title="Permanent link">&para;</a></h6>
+<p>chi : array_like
+    Comoving radial distance(s) in Mpc.
+Omega_k0 : float
+    Curvature density parameter today.
+H0 : float
+    Hubble constant in km/s/Mpc.</p>
+<h6 id="cloelib.auxiliary.geometry.cos_K--returns">Returns<a class="headerlink" href="#cloelib.auxiliary.geometry.cos_K--returns" title="Permanent link">&para;</a></h6>
+<p>jax.numpy.ndarray
+    Dimensionless, same shape as <code>chi</code>.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.auxiliary.geometry.curvature" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">curvature</span>
+
+
+<a href="#cloelib.auxiliary.geometry.curvature" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">curvature</span><span class="p">(</span><span class="n"><span title="cloelib.auxiliary.geometry.curvature(Omega_k0)">Omega_k0</span></span><span class="p">,</span> <span class="n"><span title="cloelib.auxiliary.geometry.curvature(H0)">H0</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the spatial curvature <span class="arithmatex">\(K = -\Omega_K (H_0/c)^2\)</span>.</p>
+<h6 id="cloelib.auxiliary.geometry.curvature--parameters">Parameters<a class="headerlink" href="#cloelib.auxiliary.geometry.curvature--parameters" title="Permanent link">&para;</a></h6>
+<p>Omega_k0 : float
+    Curvature density parameter today.
+H0 : float
+    Hubble constant in km/s/Mpc.</p>
+<h6 id="cloelib.auxiliary.geometry.curvature--returns">Returns<a class="headerlink" href="#cloelib.auxiliary.geometry.curvature--returns" title="Permanent link">&para;</a></h6>
+<p>float
+    <span class="arithmatex">\(K\)</span> in Mpc<span class="arithmatex">\(^{-2}\)</span>, positive for closed geometries.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.auxiliary.geometry.is_flat" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">is_flat</span>
+
+
+<a href="#cloelib.auxiliary.geometry.is_flat" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">is_flat</span><span class="p">(</span><span class="n"><span title="cloelib.auxiliary.geometry.is_flat(Omega_k0)">Omega_k0</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return whether <code>Omega_k0</code> is exactly zero.</p>
+<h6 id="cloelib.auxiliary.geometry.is_flat--parameters">Parameters<a class="headerlink" href="#cloelib.auxiliary.geometry.is_flat--parameters" title="Permanent link">&para;</a></h6>
+<p>Omega_k0 : float
+    Curvature density parameter today.</p>
+<h6 id="cloelib.auxiliary.geometry.is_flat--returns">Returns<a class="headerlink" href="#cloelib.auxiliary.geometry.is_flat--returns" title="Permanent link">&para;</a></h6>
+<p>bool
+    <code>True</code> for a concrete zero; <code>False</code> otherwise, including for a
+    JAX-traced value.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.auxiliary.geometry.limber_wavenumber" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">limber_wavenumber</span>
+
+
+<a href="#cloelib.auxiliary.geometry.limber_wavenumber" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">limber_wavenumber</span><span class="p">(</span><span class="n"><span title="cloelib.auxiliary.geometry.limber_wavenumber(ells)">ells</span></span><span class="p">,</span> <span class="n"><span title="cloelib.auxiliary.geometry.limber_wavenumber(f_K)">f_K</span></span><span class="p">,</span> <span class="n"><span title="cloelib.auxiliary.geometry.limber_wavenumber(K)">K</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the Limber wavenumber <span class="arithmatex">\(k = \sqrt{(\nu/f_K)^2 - K}\)</span>, <span class="arithmatex">\(\nu = \ell + 1/2\)</span>.</p>
+<h6 id="cloelib.auxiliary.geometry.limber_wavenumber--parameters">Parameters<a class="headerlink" href="#cloelib.auxiliary.geometry.limber_wavenumber--parameters" title="Permanent link">&para;</a></h6>
+<p>ells : array_like
+    Multipoles, shape <code>(n_ell,)</code>.
+f_K : array_like
+    Transverse comoving distance in Mpc, shape <code>(n_z,)</code>.
+K : float
+    Spatial curvature in Mpc<span class="arithmatex">\(^{-2}\)</span>.</p>
+<h6 id="cloelib.auxiliary.geometry.limber_wavenumber--returns">Returns<a class="headerlink" href="#cloelib.auxiliary.geometry.limber_wavenumber--returns" title="Permanent link">&para;</a></h6>
+<p>jax.numpy.ndarray
+    <span class="arithmatex">\(k\)</span> in Mpc<span class="arithmatex">\(^{-1}\)</span>, shape <code>(n_ell, n_z)</code>.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="cloelib.auxiliary.geometry.potential_response" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">potential_response</span>
+
+
+<a href="#cloelib.auxiliary.geometry.potential_response" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">potential_response</span><span class="p">(</span><span class="n"><span title="cloelib.auxiliary.geometry.potential_response(ells)">ells</span></span><span class="p">,</span> <span class="n"><span title="cloelib.auxiliary.geometry.potential_response(f_K)">f_K</span></span><span class="p">,</span> <span class="n"><span title="cloelib.auxiliary.geometry.potential_response(K)">K</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the curved-Poisson factor <span class="arithmatex">\(\nu^2 / (\nu^2 - 4 K f_K^2)\)</span> of potential tracers.</p>
+<h6 id="cloelib.auxiliary.geometry.potential_response--parameters">Parameters<a class="headerlink" href="#cloelib.auxiliary.geometry.potential_response--parameters" title="Permanent link">&para;</a></h6>
+<p>ells : array_like
+    Multipoles, shape <code>(n_ell,)</code>.
+f_K : array_like
+    Transverse comoving distance in Mpc, shape <code>(n_z,)</code>.
+K : float
+    Spatial curvature in Mpc<span class="arithmatex">\(^{-2}\)</span>.</p>
+<h6 id="cloelib.auxiliary.geometry.potential_response--returns">Returns<a class="headerlink" href="#cloelib.auxiliary.geometry.potential_response--returns" title="Permanent link">&para;</a></h6>
+<p>jax.numpy.ndarray
+    Dimensionless, shape <code>(n_ell, n_z)</code>; zero where the denominator is
+    not positive.</p>
+
+          
+
+    </div>
+
+</div>
 
 
 

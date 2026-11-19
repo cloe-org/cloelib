@@ -4,6 +4,8 @@ Module implementing CMB lensing.
 This class is compatible with the Tracer protocol.
 """
 
+import weakref
+
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import check_nonzero_redshifts
@@ -44,7 +46,8 @@ class CMBLensingContribution:
     """
 
     def __init__(self, tracer: "CMBLensingTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: CMBLensingTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         return self._tracer.get_window(z)

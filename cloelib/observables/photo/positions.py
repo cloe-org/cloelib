@@ -43,6 +43,7 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all follows.
 """
 
 # cloelib imports
+import weakref
 from typing import Any, Callable, Protocol
 
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
@@ -203,7 +204,8 @@ class GalaxyBiasContribution:
     """
 
     def __init__(self, tracer: "PositionsTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: PositionsTracer = weakref.proxy(tracer)
 
     @property
     def field(self) -> str:
@@ -223,7 +225,8 @@ class MagnificationContribution:
     """
 
     def __init__(self, tracer: "PositionsTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: PositionsTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         """Return the raw magnification kernel, shape ``(n_bin, n_z)``."""
@@ -509,7 +512,8 @@ class NonLinearGalaxyBiasContribution:
         b3nl: np.ndarray,
         bk2: np.ndarray,
     ) -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: PositionsTracer = weakref.proxy(tracer)
         self.b1 = b1
         self.b2 = b2
         self.bs2 = bs2

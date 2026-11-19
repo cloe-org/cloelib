@@ -4,6 +4,8 @@ Compatible with the Tracer protocol. Counterpart to `gw.number_counts`, which
 holds `GWNumberCountsTracer`.
 """
 
+import weakref
+
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Perturbations
@@ -27,7 +29,8 @@ class GWWeakLensingContribution:
     """Weak-lensing convergence kernel term of `GWWeakLensingTracer.get_window()`."""
 
     def __init__(self, tracer: "GWWeakLensingTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: GWWeakLensingTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         return self._tracer.get_window_lensing(z)

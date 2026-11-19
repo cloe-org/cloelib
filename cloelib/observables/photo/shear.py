@@ -50,6 +50,7 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all
 follows.
 """
 
+import weakref
 from typing import Any, Callable, Dict, Optional, Protocol
 
 # cloelib imports
@@ -95,7 +96,8 @@ class LensingContribution:
     """Weak-lensing shear kernel term of `ShearTracer.get_window()`."""
 
     def __init__(self, tracer: "ShearTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         """Return the uncalibrated lensing kernel, shape ``(n_bin, n_z)``."""
@@ -115,7 +117,8 @@ class NLAContribution(IntrinsicAlignmentContribution):
     """
 
     def __init__(self, tracer: "ShearTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         """Return the uncalibrated NLA kernel, shape ``(n_bin, n_z)``."""
@@ -460,7 +463,8 @@ class TATTContribution(IntrinsicAlignmentContribution):
         z0: float = 0.62,
         C_IA: float = 0.0134,
     ) -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
         self.A1 = A1
         self.A2 = A2
         self.b_TA = b_TA
@@ -728,7 +732,8 @@ class TATTMContribution(IntrinsicAlignmentContribution):
         log10_M0: float = 13.5,
         C_IA: float = 0.0134,
     ) -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
         self._loop_computer = loop_computer
         self.alpha_M = alpha_M
         self.beta_M = beta_M

@@ -17,7 +17,7 @@ jobs:
     # Bot PRs (All Contributors, dependabot, ...) do not use the PR template.
     if: github.event.pull_request.user.type != 'Bot'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Read the live description instead of the event payload, so that
       # "Re-run jobs" always checks the current text of the PR.
       - name: Check required items in the PR description

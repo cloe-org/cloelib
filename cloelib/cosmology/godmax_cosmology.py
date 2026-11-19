@@ -76,8 +76,13 @@ Notes:
 - GODMAX is not on PyPI. Install it from GitHub (see the README); it needs the
   ``godmax.helpers.cloelib_cosmology`` module.
 - GODMAX is flat w0CDM without massive neutrinos.
-- `DEFAULT_HALO_PARAMS` and `DEFAULT_ANALYSIS` mirror GODMAX's
-  ``params_default.yaml``; they do not follow changes there automatically.
+- `DEFAULT_HALO_PARAMS` and `DEFAULT_ANALYSIS` are cloelib's own settings,
+  not a copy of GODMAX's ``params_default.yaml`` (the mass range and
+  `kthresh_lowpass_Pmm1h_lowk` differ from it).
+- Halo-model, HOD and `alpha_*` parameters that are not given take GODMAX's
+  code defaults (``base_class.py``), which might differ from
+  ``params_default.yaml``. No fiducial values are fixed yet; pass the
+  parameters explicitly to control the model.
 """
 
 from typing import Any, Dict, Optional, Tuple
@@ -92,7 +97,7 @@ from cloelib.cosmology.jax_cosmology import (
     JAXNonLinearPerturbations,
 )
 
-#: Halo-model grids and models (the settings of GODMAX's `params_default.yaml`).
+#: Halo-model grids and models (cloelib's settings; see the module notes).
 #: `z_array` is always set from the redshifts passed to the perturbations class.
 DEFAULT_HALO_PARAMS: Dict[str, Any] = {
     "rmin": 0.005,
@@ -110,8 +115,8 @@ DEFAULT_HALO_PARAMS: Dict[str, Any] = {
     "do_corr_2h_mm": True,
 }
 
-#: Analysis switches and accuracy settings (the settings of GODMAX's
-#: `params_default.yaml`). `model_tSZ`, `model_galaxies` and the cosmology are
+#: Analysis switches and accuracy settings (cloelib's settings; see the module
+#: notes). `model_tSZ`, `model_galaxies` and the cosmology are
 #: always set by the perturbations class.
 DEFAULT_ANALYSIS: Dict[str, Any] = {
     "backreaction": True,
@@ -484,7 +489,9 @@ class GODMAXNonLinearPerturbations:
                 (`sim_params`, `halo_params`, `analysis`, `other_params`).
             **halo_params: Halo-model parameters by GODMAX name, e.g.
                 `theta_ej_0`, `theta_co_0`, `mu_beta`, `log10_Mc0`, `alpha_nt`.
-                Parameters not given take GODMAX's defaults.
+                Parameters not given take GODMAX's code defaults, which might
+                differ from its ``params_default.yaml``. The same holds for HOD
+                parameters missing from `galaxies["hod"]`.
         """
         if not isinstance(background, JAXBackground):
             raise ValueError(

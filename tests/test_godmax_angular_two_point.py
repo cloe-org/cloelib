@@ -43,7 +43,7 @@ from cloelib.cosmology.godmax_cosmology import GODMAXNonLinearPerturbations  # n
 Z = jnp.linspace(0.05, 2.0, 79)
 ELLS = jnp.logspace(1.0, 3.3, 6)
 SHEAR_FACTOR = jnp.sqrt((ELLS + 2) * (ELLS + 1) * ELLS * (ELLS - 1)) / (ELLS + 0.5) ** 2
-# NLA in GODMAX's parametrisation; cloelib's "NLA_pivot" maps it exactly.
+# NLA in GODMAX's parametrisation; cloelib's NLA uses the same pivot form.
 A_IA, ETA_IA, Z0_IA, C_IA = 0.5, 1.0, 0.62, 0.0134
 
 NUISANCE = {

@@ -1,7 +1,6 @@
 """Tests for the kernel conventions of halo-model analyses (no GODMAX needed)."""
 
 import pytest
-from numpy.testing import assert_allclose
 
 from cloelib.observables.kernel_conventions import (
     GODMAX_BEAM_FWHM_ARCMIN,
@@ -43,11 +42,11 @@ def test_godmax_preset():
     # Kept in both codes.
     assert params["dz_shear_1"] == NUISANCE["dz_shear_1"]
     assert params["multiplicative_bias_1"] == NUISANCE["multiplicative_bias_1"]
-    # NLA with pivot: A (1+z)^eta (1+z0)^-eta, default z0 = 0.62.
-    assert_allclose(params["AIA"], 0.5 * 1.62**-1.0, rtol=1e-14)
-    assert_allclose(
-        convention.nuisance(dict(NUISANCE, z0IA=0.3))["AIA"], 0.5 / 1.3, rtol=1e-14
-    )
+    # ShearTracer applies the pivot itself: AIA is unchanged (EtaIA = 1 here,
+    # so a leftover rescaling would show) and z0IA is not added.
+    assert params["AIA"] == NUISANCE["AIA"]
+    assert "z0IA" not in params
+    assert convention.nuisance(dict(NUISANCE, z0IA=0.3))["z0IA"] == 0.3
 
 
 def test_baseline_preset_keeps_nuisances():
@@ -85,6 +84,7 @@ def test_overrides():
         ({"galaxy_bias_model": "nonlinear"}, NotImplementedError, "nonlinear"),
         ({"galaxy_bias_model": "linear"}, ValueError, "Unknown galaxy_bias_model"),
         ({"ia_model": "LA"}, ValueError, "Unknown ia_model"),
+        ({"ia_model": "NLA_pivot"}, ValueError, "Unknown ia_model"),
         ({"y_beam_fwhm_arcmin": -1.0}, ValueError, "non-negative"),
         ({"magnifcation": True}, ValueError, "Unknown kernel-convention options"),
     ],

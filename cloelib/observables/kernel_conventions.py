@@ -38,15 +38,12 @@ from typing import Any, Dict, Optional
 LINEAR_BIAS_MODELS = ("per_bin", "per_bin_int", "poly")
 #: Galaxy bias models available on the halo-model route.
 GALAXY_BIAS_MODELS = ("hod",) + LINEAR_BIAS_MODELS
-#: Intrinsic-alignment choices: none, cloelib's NLA, or NLA with GODMAX's
-#: pivot redshift, ((1+z)/(1+z0))**eta.
-IA_MODELS = (None, "NLA", "NLA_pivot")
+#: Intrinsic-alignment choices: none, or cloelib's NLA ((1+z)/(1+z0IA))**EtaIA.
+IA_MODELS = (None, "NLA")
 #: CMB lensing source redshift used by GODMAX.
 GODMAX_CMB_SOURCE_REDSHIFT = 1100.0
 #: Default FWHM of the y-map beam in GODMAX, in arcmin.
 GODMAX_BEAM_FWHM_ARCMIN = 1.4
-#: Default NLA pivot redshift in GODMAX.
-GODMAX_IA_PIVOT_REDSHIFT = 0.62
 
 
 @dataclass(frozen=True)
@@ -57,8 +54,8 @@ class KernelConvention:
         galaxy_bias_model: `"hod"` (bias from the halo model, in the spectra)
             or a linear model of `PositionsTracer` (`"per_bin"`,
             `"per_bin_int"`, `"poly"`; bias in the kernel, matter spectra).
-        ia_model: `None` (no IA), `"NLA"` (cloelib, (1+z)**EtaIA) or
-            `"NLA_pivot"` (GODMAX, ((1+z)/(1+z0IA))**EtaIA).
+        ia_model: `None` (no IA) or `"NLA"` (cloelib's ((1+z)/(1+z0IA))**EtaIA,
+            `z0IA` defaulting to 0.62 as in GODMAX).
         magnification: Whether the galaxy kernel has the magnification term.
         rsd: Whether the galaxy kernel has the photometric RSD term.
         galaxy_photoz: Whether the galaxy n(z) is shifted (`dz_pos_i`) and
@@ -112,9 +109,7 @@ class KernelConvention:
 
         Systematics that are switched off get their neutral value
         (`magnification_bias_i = 0`, `dz_pos_i = 0`, `width_pos_i = 1`,
-        `width_shear_i = 1`). With `ia_model="NLA_pivot"`, `AIA` is rescaled to
-        `AIA * (1 + z0IA)**(-EtaIA)`, which turns cloelib's NLA into GODMAX's
-        exactly; `z0IA` defaults to GODMAX's 0.62.
+        `width_shear_i = 1`). The IA parameters are passed unchanged.
 
         The shear shift is kept as given. Note the sign conventions: cloelib's
         `dz_shear_i` gives n(z + dz), GODMAX's `Delta_z_bias` n(z - dz), so a
@@ -130,15 +125,12 @@ class KernelConvention:
                 params[key] = 1.0
             if not self.shear_nz_width and key.startswith("width_shear_"):
                 params[key] = 1.0
-        if self.ia_model == "NLA_pivot":
-            z0 = params.get("z0IA", GODMAX_IA_PIVOT_REDSHIFT)
-            params["AIA"] = params["AIA"] * (1.0 + z0) ** (-params["EtaIA"])
         return params
 
     def shear_options(self) -> Dict[str, Any]:
         """Keyword arguments for `ShearTracer`."""
         return {
-            "ia_model": None if self.ia_model is None else "NLA",
+            "ia_model": self.ia_model,
             "spin2_prefactor": self.spin2_prefactor,
         }
 
@@ -158,7 +150,7 @@ class KernelConvention:
 PRESETS = {
     "godmax": KernelConvention(
         galaxy_bias_model="hod",
-        ia_model="NLA_pivot",
+        ia_model="NLA",
         magnification=False,
         rsd=False,
         galaxy_photoz=False,

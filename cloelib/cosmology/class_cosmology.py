@@ -8,6 +8,7 @@ from cloelib.cosmology.cosmology import (
     Perturbations,
 )
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.geometry import transverse_distance
 
 # General imports
 import numpy as np
@@ -218,7 +219,7 @@ class CLASSBackground:
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Return the transverse comoving distance between two redshifts.
+        Return the transverse comoving distance f_K(chi) as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -226,16 +227,9 @@ class CLASSBackground:
         Returns:
             (np.ndarray): Transverse comoving distance values.
         """
-        x = self.comoving_distance(zs)
-
-        if self.Omega_k0 == 0.0:
-            y = x
-        elif self.Omega_k0 > 0.0:
-            y = np.sinh(np.sqrt(self.Omega_k0) * x) / np.sqrt(self.Omega_k0)
-        else:
-            y = np.sin(np.sqrt(-self.Omega_k0) * x) / np.sqrt(-self.Omega_k0)
-
-        return y
+        return np.asarray(
+            transverse_distance(self.comoving_distance(zs), self.Omega_k0, self.H0)
+        )
 
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """

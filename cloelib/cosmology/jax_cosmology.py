@@ -8,6 +8,11 @@ All of the functions are completely differentiable.
 # cloelib imports
 from cloelib.cosmology.cosmology import CB_CROSS_CORRELATED, CB_CROSS_LINEAR_NU
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.geometry import (
+    curvature,
+    limber_wavenumber,
+    transverse_distance,
+)
 from cloelib.cosmology.derived_cosmology import (
     rdrag_fitting_function,
     z_star_fitting_function,
@@ -236,7 +241,7 @@ class JAXBackground:
 
     def transverse_comoving_distance(self, zs: jnp.ndarray) -> jnp.ndarray:
         """
-        Return the transverse comoving distance between two redshifts.
+        Return the transverse comoving distance f_K(chi) as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -244,24 +249,7 @@ class JAXBackground:
         Returns:
             (np.ndarray): Transverse comoving distance values.
         """
-        delta_z = self.comoving_distance(zs)
-        p = jnp.concatenate([jnp.array([self.Omega_k0]), delta_z], axis=0)
-
-        def default_case(p):
-            return p[1:]
-
-        def positive_case(p):
-            return jnp.sinh(jnp.sqrt(p[0]) * p[1:]) / jnp.sqrt(p[0])
-
-        def negative_case(p):
-            return jnp.sin(jnp.sqrt(-p[0]) * p[1:]) / jnp.sqrt(-p[0])
-
-        conditions = jnp.array(
-            [self.Omega_k0 > 0.0, self.Omega_k0 < 0.0, self.Omega_k0 == 0.0]
-        )
-        index = jnp.argwhere(conditions, size=1).squeeze()
-
-        return lx.switch(index, [positive_case, negative_case, default_case], p)
+        return transverse_distance(self.comoving_distance(zs), self.Omega_k0, self.H0)
 
     def angular_diameter_distance(self, zs: jnp.ndarray) -> jnp.ndarray:
         """
@@ -1188,8 +1176,11 @@ class JAXNonLinearPerturbations:
         ndarray: The nonlinear matter power spectrum on the Limber grid.
         """
         Pk = jax.vmap(self.matter_power_spectrum, in_axes=(0, None))(ks, zs)
-        chi = self.linearperturbations.background.comoving_distance(zs)
-        k_lz = jnp.expand_dims((ells + 0.5), 1) / chi
+        background = self.linearperturbations.background
+        f_K = background.transverse_comoving_distance(zs)
+        k_lz = limber_wavenumber(
+            ells, f_K, curvature(background.Omega_k0, background.H0)
+        )
         Pkl = Pkl_interp_vmap(k_lz, z_l, ks, zs, Pk)
         return Pkl
 

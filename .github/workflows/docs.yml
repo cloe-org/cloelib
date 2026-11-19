@@ -19,11 +19,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.10"
 
@@ -56,7 +56,7 @@ jobs:
       # Only the static site is uploaded; this step is skipped if the build failed.
       - name: Upload built docs as PR artifact
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: docs-site-pr-${{ github.event.pull_request.number }}
           path: site/

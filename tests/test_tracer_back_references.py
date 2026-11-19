@@ -8,9 +8,10 @@ discarded tracer - and with it its perturbations, background, P(k) grids and
 CAMB results - would only be freed when Python's cyclic garbage collector
 runs, so memory grows with every new cosmology in a chain (cloerun#18).
 
-`TracerBackRefMixin` keeps the back-reference weak. These tests check that a
-tracer is freed by reference counting alone (cyclic GC disabled), for every
-tracer type, and that the mixin behaves sensibly.
+Each contribution therefore stores `self._tracer = weakref.ref(tracer)` and
+resolves it with `self._tracer()`. These tests check that every tracer type
+(and every IA / galaxy-bias model) is freed by reference counting alone, with
+the cyclic GC disabled.
 """
 
 import gc
@@ -19,28 +20,15 @@ from contextlib import contextmanager
 
 import numpy as np
 import pytest
+from test_tatt import _StubTATTLoopComputer
 
 from cloelib.cosmology.camb_cosmology import (
     CAMBBackground,
     CAMBNonLinearPerturbations,
 )
-from cloelib.observables.cmb import CMBLensingContribution, CMBLensingTracer
+from cloelib.observables.cmb import CMBLensingTracer
 from cloelib.observables.gw import GWNumberCountsTracer, GWWeakLensingTracer
-from cloelib.observables.gw.number_counts import GWSourceBiasContribution
-from cloelib.observables.gw.weak_lensing import GWWeakLensingContribution
 from cloelib.observables.photo import PositionsTracer, ShearTracer
-from cloelib.observables.photo.contributions import TracerBackRefMixin
-from cloelib.observables.photo.positions import (
-    GalaxyBiasContribution,
-    MagnificationContribution,
-    NonLinearGalaxyBiasContribution,
-)
-from cloelib.observables.photo.shear import (
-    LensingContribution,
-    NLAContribution,
-    TATTContribution,
-    TATTMContribution,
-)
 
 N_BINS = 2
 
@@ -59,13 +47,13 @@ def no_cyclic_gc():
 
 
 def assert_freed_by_refcount(make_tracer):
-    """Build a tracer, touch its contributions, drop it: it must be gone at once."""
+    """Build a tracer with its contributions, drop it: it must be gone at once."""
     with no_cyclic_gc():
         tracer = make_tracer()
-        for contribution in tracer.get_contributions():
-            assert contribution._tracer is tracer
+        contributions = list(tracer.get_contributions())
+        assert contributions
         ref = weakref.ref(tracer)
-        del tracer, contribution
+        del tracer, contributions
         assert ref() is None, (
             "tracer kept alive after its last reference was dropped: "
             "it is part of a reference cycle"
@@ -125,7 +113,18 @@ class _FakePerturbations:
         return 1.0 / (1.0 + z[:, None]) ** 2 / (1.0 + k[None, :] ** 2)
 
 
-def test_shear_tracer_freed_by_refcount(perturbations, z_dndz):
+_TATT_M_NUISANCE = {
+    "alphaM": 1.0,
+    "betaM": 0.5,
+    "k1": 0.073,
+    "k2": 0.268,
+    **{f"log10_Mh_{i + 1}": 13.5 for i in range(N_BINS)},
+    **{f"f_r_{i + 1}": 1.0 for i in range(N_BINS)},
+}
+
+
+@pytest.mark.parametrize("ia_model", [None, "NLA", "TATT", "TATT-M"])
+def test_shear_tracer_freed_by_refcount(perturbations, z_dndz, ia_model):
     z, dndz = z_dndz
     nuisance = {
         **{f"multiplicative_bias_{i + 1}": 0.0 for i in range(N_BINS)},
@@ -134,33 +133,51 @@ def test_shear_tracer_freed_by_refcount(perturbations, z_dndz):
         "AIA": 1.0,
         "CIA": 0.0134,
         "EtaIA": -0.41,
+        "A2IA": 0.5,
+        "bTA": 0.3,
+        **(_TATT_M_NUISANCE if ia_model == "TATT-M" else {}),
     }
+    loop = {}
+    if ia_model in ("TATT", "TATT-M"):
+        loop["tatt_loop_computer"] = _StubTATTLoopComputer(perturbations)
     assert_freed_by_refcount(
         lambda: ShearTracer(
             perturbations=perturbations,
             dndz=dndz,
             z=z,
             nuisance_params=nuisance,
-            ia_model="NLA",
+            ia_model=ia_model,
+            **loop,
         )
     )
 
 
-def test_positions_tracer_freed_by_refcount(perturbations, z_dndz):
+class _StubNLBias:
+    def compute(self, name):
+        return lambda matter_pk, ks, zs: 1e-2 * matter_pk[0]
+
+
+@pytest.mark.parametrize("bias_model", ["per_bin", "nonlinear"])
+def test_positions_tracer_freed_by_refcount(perturbations, z_dndz, bias_model):
     z, dndz = z_dndz
     nuisance = {
         **{f"dz_pos_{i + 1}": 0.0 for i in range(N_BINS)},
         **{f"width_pos_{i + 1}": 1.0 for i in range(N_BINS)},
         **{f"magnification_bias_{i + 1}": 0.3 for i in range(N_BINS)},
         **{f"b1_photo_bin{i}": 1.0 + 0.2 * i for i in range(N_BINS)},
+        **{f"b1_photo_nl_bin{i}": 1.0 + 0.2 * i for i in range(N_BINS)},
     }
+    loop = {}
+    if bias_model == "nonlinear":
+        loop["nl_bias_loop_computer"] = _StubNLBias()
     assert_freed_by_refcount(
         lambda: PositionsTracer(
             perturbations=perturbations,
             dndz=dndz,
             z=z,
-            galaxy_bias_model="per_bin",
+            galaxy_bias_model=bias_model,
             nuisance_params=nuisance,
+            **loop,
         )
     )
 
@@ -189,44 +206,3 @@ def test_gw_tracers_freed_by_refcount(tracer_cls):
             **kwargs,
         )
     )
-
-
-@pytest.mark.parametrize(
-    "contribution_cls",
-    [
-        LensingContribution,
-        NLAContribution,
-        TATTContribution,
-        TATTMContribution,
-        GalaxyBiasContribution,
-        MagnificationContribution,
-        NonLinearGalaxyBiasContribution,
-        CMBLensingContribution,
-        GWSourceBiasContribution,
-        GWWeakLensingContribution,
-    ],
-)
-def test_contributions_hold_weak_tracer_reference(contribution_cls):
-    """Every contribution that calls back into its tracer uses the mixin
-    (also covers TATT / TATT-M / nonlinear bias, which need loop computers
-    to be built as part of a tracer)."""
-    assert issubclass(contribution_cls, TracerBackRefMixin)
-
-
-def test_mixin_weak_reference_semantics():
-    class Owner:
-        pass
-
-    class Child(TracerBackRefMixin):
-        def __init__(self, tracer):
-            self._tracer = tracer
-
-    owner = Owner()
-    child = Child(owner)
-    assert child._tracer is owner
-    assert isinstance(child.__dict__["_tracer_ref"], weakref.ref)
-    assert "_tracer" not in child.__dict__  # no strong reference stored
-
-    del owner
-    with pytest.raises(ReferenceError, match="Child"):
-        _ = child._tracer

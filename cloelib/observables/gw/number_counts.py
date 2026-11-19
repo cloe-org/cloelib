@@ -4,12 +4,13 @@ Compatible with the Tracer protocol. Counterpart to `gw.weak_lensing`, which
 holds `GWWeakLensingTracer`.
 """
 
+import weakref
+
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.math_utils import check_nonzero_redshifts
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
-from cloelib.observables.photo.contributions import TracerBackRefMixin
 
 # General imports
 import jax
@@ -21,7 +22,7 @@ import jax.lax as lx
 c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 
-class GWSourceBiasContribution(TracerBackRefMixin):
+class GWSourceBiasContribution:
     """Source-bias-weighted kernel term of `GWNumberCountsTracer.get_window()`.
 
     Currently one of the three linear-bias models selected by
@@ -29,10 +30,10 @@ class GWSourceBiasContribution(TracerBackRefMixin):
     """
 
     def __init__(self, tracer: "GWNumberCountsTracer") -> None:
-        self._tracer = tracer
+        self._tracer = weakref.ref(tracer)
 
     def compute_kernel(self, z):
-        return self._tracer.get_window_number_counts(z)
+        return self._tracer().get_window_number_counts(z)
 
 
 class GWNumberCountsTracer:

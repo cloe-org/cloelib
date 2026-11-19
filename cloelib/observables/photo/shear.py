@@ -50,6 +50,7 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all
 follows.
 """
 
+import weakref
 from typing import Any, Callable, Dict, Optional, Protocol
 
 # cloelib imports
@@ -63,7 +64,6 @@ from cloelib.auxiliary.math_utils import (
 from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
-    TracerBackRefMixin,
     Contribution,
     contribution_field,
     unit_sigma,
@@ -92,18 +92,18 @@ c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 _C_KM_S = SPEED_OF_LIGHT / 1000
 
 
-class LensingContribution(TracerBackRefMixin):
+class LensingContribution:
     """Weak-lensing shear kernel term of `ShearTracer.get_window()`."""
 
     def __init__(self, tracer: "ShearTracer") -> None:
-        self._tracer = tracer
+        self._tracer = weakref.ref(tracer)
 
     def compute_kernel(self, z):
         """Return the uncalibrated lensing kernel, shape ``(n_bin, n_z)``."""
-        return self._tracer.get_window_lensing(z)
+        return self._tracer().get_window_lensing(z)
 
 
-class NLAContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
+class NLAContribution(IntrinsicAlignmentContribution):
     """NLA (nonlinear alignment model) intrinsic-alignment kernel term of
     `ShearTracer.get_window()`.
 
@@ -116,11 +116,11 @@ class NLAContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
     """
 
     def __init__(self, tracer: "ShearTracer") -> None:
-        self._tracer = tracer
+        self._tracer = weakref.ref(tracer)
 
     def compute_kernel(self, z):
         """Return the uncalibrated NLA kernel, shape ``(n_bin, n_z)``."""
-        return self._tracer.get_window_IA(z)
+        return self._tracer().get_window_IA(z)
 
 
 # ---------------------------------------------------------------------------
@@ -401,7 +401,7 @@ def _growth_factor_1d(perturbations, z, k_pivot_hmpc: float = 0.03):
     return d_raw[:, pivot_idx]
 
 
-class TATTContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
+class TATTContribution(IntrinsicAlignmentContribution):
     r"""TATT intrinsic-alignment contribution (Eqs. 9-16 of Navarro-Gironés
     et al. 2026, arXiv:2602.16448), see module docstring.
 
@@ -461,7 +461,7 @@ class TATTContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
         z0: float = 0.62,
         C_IA: float = 0.0134,
     ) -> None:
-        self._tracer = tracer
+        self._tracer = weakref.ref(tracer)
         self.A1 = A1
         self.A2 = A2
         self.b_TA = b_TA
@@ -493,11 +493,11 @@ class TATTContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
         paper's equations exactly, unencumbered by this pipeline-specific
         normalisation detail.
         """
-        h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / _C_KM_S
-        return self._tracer.dndz_shifted * h_over_c[None, :]
+        h_over_c = self._tracer().perturbations.background.hubble_parameter(z) / _C_KM_S
+        return self._tracer().dndz_shifted * h_over_c[None, :]
 
     def _C1(self, zs):
-        omega_m0 = self._tracer.background.Omega_m(0.0)
+        omega_m0 = self._tracer().background.Omega_m(0.0)
         d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
         return (
             -self.A1
@@ -508,7 +508,7 @@ class TATTContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
         )
 
     def _C2(self, zs):
-        omega_m0 = self._tracer.background.Omega_m(0.0)
+        omega_m0 = self._tracer().background.Omega_m(0.0)
         d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
         return (
             5
@@ -679,7 +679,7 @@ def _tatt_m_term(bank, loop_computer, key):
     return bank.get(SpectrumRequest(name=f"tatt_m_{key}", compute=_compute))
 
 
-class TATTMContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
+class TATTMContribution(IntrinsicAlignmentContribution):
     r"""TATT-M intrinsic alignments (Herle et al. 2026, arXiv:2601.15851).
 
     TATT with per-bin amplitudes set by halo mass and red fraction:
@@ -729,7 +729,7 @@ class TATTMContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
         log10_M0: float = 13.5,
         C_IA: float = 0.0134,
     ) -> None:
-        self._tracer = tracer
+        self._tracer = weakref.ref(tracer)
         self._loop_computer = loop_computer
         self.alpha_M = alpha_M
         self.beta_M = beta_M
@@ -752,7 +752,7 @@ class TATTMContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
     def _C(self, zs):
         """`(C1, C1delta, C2)` per bin, each shape `(n_bins, len(zs))`."""
         d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
-        shape = -self.C_IA * self._tracer.background.Omega_m(0.0) / d
+        shape = -self.C_IA * self._tracer().background.Omega_m(0.0) / d
         c1 = self.a1[:, None] * shape[None, :]
         c1d = self.a1delta[:, None] * shape[None, :]
         c2 = -5.0 * self.a2[:, None] * shape[None, :]
@@ -763,8 +763,8 @@ class TATTMContribution(TracerBackRefMixin, IntrinsicAlignmentContribution):
 
         The per-bin amplitudes enter through `get_pk_terms` instead.
         """
-        h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / _C_KM_S
-        return self._tracer.dndz_shifted * h_over_c[None, :]
+        h_over_c = self._tracer().perturbations.background.hubble_parameter(z) / _C_KM_S
+        return self._tracer().dndz_shifted * h_over_c[None, :]
 
     def _weighted_kernels(self, zs, bank: SpectraBank):
         """`C * compute_kernel` for C1, C1delta, C2 on `zs`.

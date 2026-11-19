@@ -341,9 +341,8 @@ def test_multiplicative_shear_bias_applied_in_generalized_path(cosmo_setup):
         )
 
 
-def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
-    """Strongest available check: with A2=b_TA=0 and z0=0 (matching legacy
-    NLA's implicit z0=0 pivot, see `tatt.py`'s `compute_kernel` docstring),
+def test_tatt_matches_legacy_nla_end_to_end(cosmo_setup):
+    """Strongest available check: with A2=b_TA=0 and z0IA=0.62,
     `ia_model="TATT"` must reproduce `ia_model="NLA"`'s `get_Cl` output
     bit-for-bit - through the *entire* pipeline (two independent code
     paths: `_compute_cl_legacy` vs `_compute_cl_generalized`), not just the
@@ -384,7 +383,7 @@ def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
         perturbations=perturbations,
         dndz=dndz,
         z=z,
-        nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.0),
+        nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.62),
         ia_model="TATT",
         tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
@@ -402,9 +401,9 @@ def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
 def test_generalized_engine_uses_pcb_like_legacy(cosmo_setup):
     """`PositionsTracer(use_Pcb=True)` x TATT-shear (generalized engine) must
     reproduce `PositionsTracer(use_Pcb=True)` x NLA-shear (legacy path) in
-    the A2=b_TA=z0=0 limit, i.e. both engines must pick the same cb x matter
+    the A2=b_TA=0 limit, i.e. both engines must pick the same cb x matter
     base spectrum - and that spectrum must actually differ from P_mm.
-    Same 5e-3 tolerance as `test_tatt_matches_legacy_nla_end_to_end_at_z0_zero`.
+    Same 5e-3 tolerance as `test_tatt_matches_legacy_nla_end_to_end`.
     """
     perturbations, z = cosmo_setup
     n_z_bins = 2
@@ -427,7 +426,7 @@ def test_generalized_engine_uses_pcb_like_legacy(cosmo_setup):
                 perturbations=perturbations,
                 dndz=dndz,
                 z=z,
-                nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.0),
+                nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.62),
                 ia_model="TATT",
                 tatt_loop_computer=_StubTATTLoopComputer(perturbations),
             )

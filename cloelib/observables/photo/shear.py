@@ -877,7 +877,9 @@ class ShearTracer:
             contribution to use. `None` (default) means no intrinsic-alignment
             contribution at all - `get_window()`/`get_Cl` use only the lensing
             term. `"NLA"` builds `NLAContribution` (`get_window_IA`, reading
-            `nuisance_params["AIA"/"CIA"/"EtaIA"]`). `"TATT"` builds a
+            `nuisance_params["AIA"/"CIA"/"EtaIA"]` and optionally
+            `nuisance_params["z0IA"]`, the pivot redshift of the
+            `((1+z)/(1+z0IA))**EtaIA` scaling, default 0.62). `"TATT"` builds a
             `TATTContribution` from `nuisance_params["AIA"]` (=A1),
             `nuisance_params["A2IA"]`, `nuisance_params["bTA"]`, and optionally
             `nuisance_params["Eta2IA"]`/`["z0IA"]` (default 0.0/0.62).
@@ -1119,7 +1121,9 @@ class ShearTracer:
         r"""Return the NLA intrinsic-alignment kernel on ``z``.
 
         The per-bin kernel is ``-H(z)/c * AIA * CIA * Omega_m0 *
-        (1+z)**EtaIA / D(z) * dndz_shifted``. If the backend returns a
+        ((1+z)/(1+z0IA))**EtaIA / D(z) * dndz_shifted``, so ``AIA`` is the
+        amplitude at the pivot redshift ``z0IA`` (optional nuisance
+        parameter, default 0.62, as in the case of the TATT implementation). If the backend returns a
         scale-dependent growth factor, the second tabulated k column is used;
         otherwise its scale-independent result is used. TATT amplitudes are
         represented in effective spectra rather than by this NLA window.
@@ -1138,7 +1142,10 @@ class ShearTracer:
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]
         Eta_IA = self.nuisance_params["EtaIA"]
-        factor = -Hz / c_0 * A_IA * C_IA * Omega_m0 * (1 + z) ** Eta_IA / Dz
+        z0_IA = self.nuisance_params.get("z0IA", 0.62)
+        factor = (
+            -Hz / c_0 * A_IA * C_IA * Omega_m0 * ((1 + z) / (1 + z0_IA)) ** Eta_IA / Dz
+        )
         return np.einsum("ij, j->ij", self.dndz_shifted, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):

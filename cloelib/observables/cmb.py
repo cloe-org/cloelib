@@ -46,10 +46,11 @@ class CMBLensingContribution:
     """
 
     def __init__(self, tracer: "CMBLensingTracer") -> None:
-        self._tracer = weakref.ref(tracer)
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: CMBLensingTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
-        return self._tracer().get_window(z)
+        return self._tracer.get_window(z)
 
 
 class CMBLensingTracer:

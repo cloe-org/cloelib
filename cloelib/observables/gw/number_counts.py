@@ -30,10 +30,11 @@ class GWSourceBiasContribution:
     """
 
     def __init__(self, tracer: "GWNumberCountsTracer") -> None:
-        self._tracer = weakref.ref(tracer)
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: GWNumberCountsTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
-        return self._tracer().get_window_number_counts(z)
+        return self._tracer.get_window_number_counts(z)
 
 
 class GWNumberCountsTracer:

@@ -96,11 +96,12 @@ class LensingContribution:
     """Weak-lensing shear kernel term of `ShearTracer.get_window()`."""
 
     def __init__(self, tracer: "ShearTracer") -> None:
-        self._tracer = weakref.ref(tracer)
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         """Return the uncalibrated lensing kernel, shape ``(n_bin, n_z)``."""
-        return self._tracer().get_window_lensing(z)
+        return self._tracer.get_window_lensing(z)
 
 
 class NLAContribution(IntrinsicAlignmentContribution):
@@ -116,11 +117,12 @@ class NLAContribution(IntrinsicAlignmentContribution):
     """
 
     def __init__(self, tracer: "ShearTracer") -> None:
-        self._tracer = weakref.ref(tracer)
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         """Return the uncalibrated NLA kernel, shape ``(n_bin, n_z)``."""
-        return self._tracer().get_window_IA(z)
+        return self._tracer.get_window_IA(z)
 
 
 # ---------------------------------------------------------------------------
@@ -461,7 +463,8 @@ class TATTContribution(IntrinsicAlignmentContribution):
         z0: float = 0.62,
         C_IA: float = 0.0134,
     ) -> None:
-        self._tracer = weakref.ref(tracer)
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
         self.A1 = A1
         self.A2 = A2
         self.b_TA = b_TA
@@ -493,11 +496,11 @@ class TATTContribution(IntrinsicAlignmentContribution):
         paper's equations exactly, unencumbered by this pipeline-specific
         normalisation detail.
         """
-        h_over_c = self._tracer().perturbations.background.hubble_parameter(z) / _C_KM_S
-        return self._tracer().dndz_shifted * h_over_c[None, :]
+        h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / _C_KM_S
+        return self._tracer.dndz_shifted * h_over_c[None, :]
 
     def _C1(self, zs):
-        omega_m0 = self._tracer().background.Omega_m(0.0)
+        omega_m0 = self._tracer.background.Omega_m(0.0)
         d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
         return (
             -self.A1
@@ -508,7 +511,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
         )
 
     def _C2(self, zs):
-        omega_m0 = self._tracer().background.Omega_m(0.0)
+        omega_m0 = self._tracer.background.Omega_m(0.0)
         d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
         return (
             5
@@ -729,7 +732,8 @@ class TATTMContribution(IntrinsicAlignmentContribution):
         log10_M0: float = 13.5,
         C_IA: float = 0.0134,
     ) -> None:
-        self._tracer = weakref.ref(tracer)
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
         self._loop_computer = loop_computer
         self.alpha_M = alpha_M
         self.beta_M = beta_M
@@ -752,7 +756,7 @@ class TATTMContribution(IntrinsicAlignmentContribution):
     def _C(self, zs):
         """`(C1, C1delta, C2)` per bin, each shape `(n_bins, len(zs))`."""
         d = _growth_factor_1d(self._loop_computer.linear_perturbations, zs)
-        shape = -self.C_IA * self._tracer().background.Omega_m(0.0) / d
+        shape = -self.C_IA * self._tracer.background.Omega_m(0.0) / d
         c1 = self.a1[:, None] * shape[None, :]
         c1d = self.a1delta[:, None] * shape[None, :]
         c2 = -5.0 * self.a2[:, None] * shape[None, :]
@@ -763,8 +767,8 @@ class TATTMContribution(IntrinsicAlignmentContribution):
 
         The per-bin amplitudes enter through `get_pk_terms` instead.
         """
-        h_over_c = self._tracer().perturbations.background.hubble_parameter(z) / _C_KM_S
-        return self._tracer().dndz_shifted * h_over_c[None, :]
+        h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / _C_KM_S
+        return self._tracer.dndz_shifted * h_over_c[None, :]
 
     def _weighted_kernels(self, zs, bank: SpectraBank):
         """`C * compute_kernel` for C1, C1delta, C2 on `zs`.

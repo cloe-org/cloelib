@@ -29,10 +29,11 @@ class GWWeakLensingContribution:
     """Weak-lensing convergence kernel term of `GWWeakLensingTracer.get_window()`."""
 
     def __init__(self, tracer: "GWWeakLensingTracer") -> None:
-        self._tracer = weakref.ref(tracer)
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: GWWeakLensingTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
-        return self._tracer().get_window_lensing(z)
+        return self._tracer.get_window_lensing(z)
 
 
 class GWWeakLensingTracer:

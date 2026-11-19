@@ -8,8 +8,8 @@ discarded tracer - and with it its perturbations, background, P(k) grids and
 CAMB results - would only be freed when Python's cyclic garbage collector
 runs, so memory grows with every new cosmology in a chain (cloerun#18).
 
-Each contribution therefore stores `self._tracer = weakref.ref(tracer)` and
-resolves it with `self._tracer()`. These tests check that every tracer type
+Each contribution therefore stores `self._tracer = weakref.proxy(tracer)`, a
+weak reference used exactly like the tracer. These tests check that every tracer type
 (and every IA / galaxy-bias model) is freed by reference counting alone, with
 the cyclic GC disabled.
 """

@@ -204,16 +204,17 @@ class GalaxyBiasContribution:
     """
 
     def __init__(self, tracer: "PositionsTracer") -> None:
-        self._tracer = weakref.ref(tracer)
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: PositionsTracer = weakref.proxy(tracer)
 
     @property
     def field(self) -> str:
         """Galaxies trace cb with `use_Pcb=True`, the total matter otherwise."""
-        return CB if self._tracer().use_Pcb else MATTER
+        return CB if self._tracer.use_Pcb else MATTER
 
     def compute_kernel(self, z):
         """Return the raw galaxy-bias kernel, shape ``(n_bin, n_z)``."""
-        return self._tracer().get_window_positions(z)
+        return self._tracer.get_window_positions(z)
 
 
 class MagnificationContribution:
@@ -224,11 +225,12 @@ class MagnificationContribution:
     """
 
     def __init__(self, tracer: "PositionsTracer") -> None:
-        self._tracer = weakref.ref(tracer)
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: PositionsTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         """Return the raw magnification kernel, shape ``(n_bin, n_z)``."""
-        return self._tracer().get_window_magnification(z)
+        return self._tracer.get_window_magnification(z)
 
 
 class NonlinearBiasLoopComputer(Protocol):
@@ -510,7 +512,8 @@ class NonLinearGalaxyBiasContribution:
         b3nl: np.ndarray,
         bk2: np.ndarray,
     ) -> None:
-        self._tracer = weakref.ref(tracer)
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: PositionsTracer = weakref.proxy(tracer)
         self.b1 = b1
         self.b2 = b2
         self.bs2 = bs2
@@ -521,8 +524,8 @@ class NonLinearGalaxyBiasContribution:
 
     def _bias_kernel(self, bias_array, z):
         """Per-bin bias-weighted density kernel: `bias_i * n_i(z) * H(z)/c`."""
-        h_over_c = self._tracer().perturbations.background.hubble_parameter(z) / c_0
-        return bias_array[:, None] * self._tracer().dndz_shifted * h_over_c[None, :]
+        h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / c_0
+        return bias_array[:, None] * self._tracer.dndz_shifted * h_over_c[None, :]
 
     def compute_kernel(self, z):
         """The `b1` (linear-bias) part of the window only - diagnostic/
@@ -554,8 +557,8 @@ class NonLinearGalaxyBiasContribution:
         cached = self._growth4_cache
         if cached is not None and cached[0] is zs:
             return cached[1]
-        ks: Any = getattr(self._tracer().perturbations, "k", None)
-        d_raw = self._tracer().perturbations.growth_factor(zs, ks)
+        ks: Any = getattr(self._tracer.perturbations, "k", None)
+        d_raw = self._tracer.perturbations.growth_factor(zs, ks)
         d = d_raw[:, 1] if getattr(d_raw, "ndim", 1) == 2 else d_raw
         result = d**4
         self._growth4_cache = (zs, result)

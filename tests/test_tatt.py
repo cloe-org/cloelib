@@ -33,6 +33,8 @@ from cloelib.observables.photo.shear import (
     TATTContribution,
     _ALL_KERNELS,
     _GI_KERNELS,
+    _VS_GI_KERNELS,
+    _VS_KERNELS,
 )
 from cloelib.observables.photo.spectrum_engine import (
     SpectraBank,
@@ -219,6 +221,112 @@ def test_tatt_reduces_to_nla_form_when_a2_and_bta_zero(cosmo_setup):
         np.asarray(p_ii), np.asarray(c1**2 * matter_pk), rtol=1e-10
     )
     np.testing.assert_allclose(np.asarray(p_di), np.asarray(c1 * matter_pk), rtol=1e-10)
+
+
+def _tatt_tracer(cosmo_setup, ia_model, **extra):
+    perturbations, z = cosmo_setup
+    dndz = np.ones((1, len(z)))
+    dndz /= np.trapezoid(dndz, z, axis=1)[:, None]
+    return ShearTracer(
+        perturbations=perturbations,
+        dndz=dndz,
+        z=z,
+        nuisance_params=_shear_nuisance(1, **{"A2IA": 0.4, "bTA": -0.83, **extra}),
+        ia_model=ia_model,
+        tatt_loop_computer=_StubTATTLoopComputer(perturbations),
+    )
+
+
+def _stub_bank(cosmo_setup):
+    perturbations, _ = cosmo_setup
+    ks = np.logspace(-3, 1, 20)
+    zs = perturbations.z
+    matter_pk = perturbations.matter_power_spectrum(zs, ks)
+    return SpectraBank(matter_pk, ks, zs), matter_pk
+
+
+def test_ia_model_tatt_vs_sets_A_t(cosmo_setup):
+    assert _tatt_tracer(cosmo_setup, "TATT").ia.A_t is None
+    vs = _tatt_tracer(cosmo_setup, "TATT+VS", AtIA=0.7).ia
+    assert isinstance(vs, TATTContribution)
+    assert vs.A_t == 0.7
+
+
+def test_tatt_vs_requirements(cosmo_setup):
+    """TATT+VS adds all four velocity-shear kernels for II, only one for GI."""
+    tracer = _tatt_tracer(cosmo_setup, "TATT+VS", AtIA=0.7)
+    vs, lensing = tracer.ia, tracer.lensing
+
+    ii_names = {r.name for r in vs.get_requirements_for_interaction(vs)}
+    gi_names = {r.name for r in vs.get_requirements_for_interaction(lensing)}
+
+    assert ii_names == set(_ALL_KERNELS + _VS_KERNELS)
+    assert gi_names == set(_GI_KERNELS + _VS_GI_KERNELS)
+
+
+def test_tatt_vs_with_zero_A_t_matches_tatt(cosmo_setup):
+    tatt_tracer = _tatt_tracer(cosmo_setup, "TATT")
+    vs_tracer = _tatt_tracer(cosmo_setup, "TATT+VS", AtIA=0.0)
+    tatt, vs = tatt_tracer.ia, vs_tracer.ia
+    bank, _ = _stub_bank(cosmo_setup)
+
+    np.testing.assert_allclose(
+        np.asarray(vs.get_effective_pk(vs, bank)),
+        np.asarray(tatt.get_effective_pk(tatt, bank)),
+        rtol=1e-12,
+    )
+    np.testing.assert_allclose(
+        np.asarray(vs.get_effective_pk(vs_tracer.lensing, bank)),
+        np.asarray(tatt.get_effective_pk(tatt_tracer.lensing, bank)),
+        rtol=1e-12,
+    )
+
+
+def test_tatt_vs_terms(cosmo_setup):
+    """The stub returns the same kernel K(k) for every name, so the
+    velocity-shear terms add (2*C1*Ct + 2*C1delta*Ct + 2*C2*Ct + Ct**2)*D**4*K
+    to P_II and Ct*D**4*K to P_deltaI.
+    """
+    tatt_tracer = _tatt_tracer(cosmo_setup, "TATT")
+    vs_tracer = _tatt_tracer(cosmo_setup, "TATT+VS", AtIA=0.7)
+    tatt, vs = tatt_tracer.ia, vs_tracer.ia
+    bank, matter_pk = _stub_bank(cosmo_setup)
+    zs = bank.zs
+
+    kernel = 1e-2 * np.asarray(matter_pk[0])[None, :]
+    c1, c1d, c2, ct = vs._C1(zs), vs._C1delta(zs), vs._C2(zs), vs._Ct(zs)
+    d4 = vs._D4(zs)
+
+    vs_amplitude_ii = (2 * c1 * ct + 2 * c1d * ct + 2 * c2 * ct + ct**2) * d4
+    vs_terms_ii = vs_amplitude_ii[:, None] * kernel
+    np.testing.assert_allclose(
+        np.asarray(vs.get_effective_pk(vs, bank)),
+        np.asarray(tatt.get_effective_pk(tatt, bank) + vs_terms_ii),
+        rtol=1e-10,
+    )
+
+    vs_terms_di = (ct * d4)[:, None] * kernel
+    np.testing.assert_allclose(
+        np.asarray(vs.get_effective_pk(vs_tracer.lensing, bank)),
+        np.asarray(tatt.get_effective_pk(tatt_tracer.lensing, bank) + vs_terms_di),
+        rtol=1e-10,
+    )
+
+
+def test_tatt_vs_cross_population_symmetric(cosmo_setup):
+    """P_II between two populations must not depend on the argument order,
+    including a TATT population crossed with a TATT+VS one."""
+    a = _tatt_tracer(cosmo_setup, "TATT+VS", AtIA=0.7).ia
+    b = _tatt_tracer(cosmo_setup, "TATT+VS", AtIA=-0.3, A2IA=0.1, bTA=0.5).ia
+    c = _tatt_tracer(cosmo_setup, "TATT", A2IA=-0.2).ia
+    bank, _ = _stub_bank(cosmo_setup)
+
+    for x, y in ((a, b), (a, c)):
+        np.testing.assert_allclose(
+            np.asarray(x.get_effective_pk(y, bank)),
+            np.asarray(y.get_effective_pk(x, bank)),
+            rtol=1e-12,
+        )
 
 
 def test_generalized_cl_finite_and_correctly_shaped(cosmo_setup):
@@ -727,3 +835,50 @@ def test_pbj_tatt_rejects_camb_nonlinear_without_linear_source(cosmo_setup):
     assert not hasattr(perturbations, "linearperturbations")
     with pytest.raises(ValueError, match="linear matter-power-spectrum source"):
         PBJTATTLoopComputer(perturbations)
+
+
+@pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
+def test_pbj_tatt_vs_kernels_finite(linear_perturbations):
+    """The four velocity-shear kernels are finite and shaped like `ks`."""
+    computer = PBJTATTLoopComputer(linear_perturbations)
+    ks = np.logspace(-3, 1, 40)
+    zs = np.linspace(0.0, 2.0, 5)
+    matter_pk = np.ones((len(zs), len(ks)))
+
+    for name in _VS_KERNELS:
+        values = np.asarray(computer.compute(name)(matter_pk, ks, zs))
+        assert values.shape == ks.shape, name
+        assert np.all(np.isfinite(values)), name
+
+
+@pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
+def test_fastpt_P_0tE_normalisation(linear_perturbations):
+    """`PBJTATTLoopComputer` rebuilds <delta t_E> from FAST-PT's `P_0tE`,
+    assuming P_0tE = 2*P22 + 2*P13 while <delta t_E> = P22 + P13/2. Guard
+    that assumption: the P22 it implies must equal 2*(P_F2G2 - P_F2F2) from
+    FAST-PT's own t_ij tables, which its `P_tEtE` is built from.
+
+    The 2*P13 is a known FAST-PT <= 4.1.1 bug (see the comment in
+    `PBJTATTLoopComputer._kernels_for`). If this test fails after a
+    FAST-PT upgrade, the upstream fix (P_0tE = 2*P22 + P13) has most likely
+    landed: drop the P13 subtraction there and here, then bump the pin.
+    """
+    import fastpt
+    from fastpt.IA.IA_ct import P_IA_13F, P_IA_13G
+
+    k = np.logspace(-3, 1, 400)
+    p = np.reshape(linear_perturbations.matter_power_spectrum(np.array([0.0]), k), -1)
+    f = fastpt.FASTPT(k, low_extrap=-5, high_extrap=3, n_pad=len(k))
+    p0te = f.IA_ct(p, P_window=None, C_window=0.75)[0]
+    p22 = 0.5 * p0te - (P_IA_13G(k, p) - P_IA_13F(k, p))
+
+    def table(x):
+        return f._apply_extrapolation(
+            f.J_k_tensor(p, x, P_window=None, C_window=0.75)[0]
+        )
+
+    expected = 2 * (table(f.X_IA_tij_F2G2) - table(f.X_IA_tij_F2F2))
+    mid = (k > 1e-2) & (k < 1.0)
+    np.testing.assert_allclose(
+        p22[mid], expected[mid], rtol=0, atol=1e-3 * np.max(np.abs(expected[mid]))
+    )

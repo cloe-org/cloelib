@@ -216,6 +216,34 @@ _OWNED_KEYS = {
     },
 }
 
+
+def godmax_config_from_params(
+    params: Dict[str, Dict[str, Any]],
+) -> Dict[str, Dict[str, Any]]:
+    """Use a GODMAX parameter set (e.g. a loaded GODMAX yaml) as `godmax_config`.
+
+    Keys that cloelib sets itself (`_OWNED_KEYS`: cosmology, redshifts, backend,
+    tSZ and galaxy switches, nbar, HOD mode) are dropped; pass those as arguments
+    of `GODMAXNonLinearPerturbations`. The cosmology always comes from the cloelib
+    background. Sections other than `_CONFIG_SECTIONS` are ignored.
+
+    Args:
+        params: GODMAX parameters by section (`sim_params`, `halo_params`,
+            `analysis`, `other_params`).
+
+    Returns:
+        The parameters without the cloelib-owned keys, to pass as `godmax_config`.
+    """
+    return {
+        section: {
+            key: value
+            for key, value in params.get(section, {}).items()
+            if key not in _OWNED_KEYS.get(section, {})
+        }
+        for section in _CONFIG_SECTIONS
+    }
+
+
 #: (field1, field2) -> (GODMAX attribute, number of Compton-y legs).
 _SPECTRA = {
     ("m", "m"): ("Pmm_tot_mat", 0),
@@ -532,6 +560,8 @@ class GODMAXNonLinearPerturbations:
                 `hod["log10Mmin_Ncen"]`.
             godmax_config: Overrides of the GODMAX settings, keyed by section
                 (`sim_params`, `halo_params`, `analysis`, `other_params`).
+                A GODMAX parameter file can be passed through
+                `godmax_config_from_params`.
             **halo_params: Halo-model parameters by GODMAX name, e.g.
                 `theta_ej_0`, `theta_co_0`, `mu_beta`, `log10_Mc0`, `alpha_nt`.
                 Parameters not given take GODMAX's code defaults, which might

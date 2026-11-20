@@ -14,6 +14,7 @@ from cloelib.cosmology.godmax_cosmology import (
     GODMAXNonLinearPerturbations,
     _galaxy_config,
     build_godmax_config,
+    godmax_config_from_params,
 )
 
 Z_EDGES = [[0.2, 0.5], [0.5, 0.8], [0.8, 1.1]]
@@ -116,3 +117,35 @@ def test_owned_keys_rejected_in_godmax_config(section, key):
         build_godmax_config(
             jnp.array([0.1, 0.5]), True, None, {section: {key: None}}, {}
         )
+
+
+GODMAX_PARAMS = {
+    "sim_params": {"cosmo": {"H0": 67.2}, "theta_ej_0": 3.0},
+    "halo_params": {"z_array": [0.1, 0.5], "nk": 64},
+    "analysis": {
+        "cosmology_backend": "jax_cosmo",
+        "model_tSZ": True,
+        "nbar_gal_comoving_val": 5e-4,
+        "Zheng_HOD": False,
+    },
+    "foo": {"bar": 1},
+}
+
+
+def test_godmax_config_from_params_drops_owned_keys():
+    config = godmax_config_from_params(GODMAX_PARAMS)
+    assert config["sim_params"] == {"theta_ej_0": 3.0}
+    assert config["halo_params"] == {"nk": 64}
+    assert config["analysis"] == {"Zheng_HOD": False}
+    assert "foo" not in config
+    build_godmax_config(jnp.array([0.1, 0.5]), True, None, config, {})
+
+
+def test_godmax_config_from_params_precedence():
+    """The file replaces cloelib's defaults; explicit arguments override the file."""
+    config = godmax_config_from_params(GODMAX_PARAMS)
+    sim, halo, _, _ = build_godmax_config(
+        jnp.array([0.1, 0.5]), True, None, config, {"theta_ej_0": 4.0}
+    )
+    assert halo["nk"] == 64
+    assert sim["theta_ej_0"] == 4.0

@@ -1,6 +1,7 @@
 # import jax.numpy as np
 
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
@@ -81,6 +82,19 @@ def test_HaloModelProperties():
     print("    bias Tinker")
     _ref = [2.205833, 2.746553, 3.516339, 4.632278, 6.281516]
     assert_allclose(HS_tinker.bias(z_test, M_test)[0], _ref, rtol=5e-3)
+
+    print("    dn_dm Tinker")
+    _ref = [3.850881e-19, 9.542889e-20, 2.025830e-20, 3.414739e-21, 4.070145e-22]
+    assert_allclose(HS_tinker.dn_dm(z_test, M_test)[0], _ref, rtol=5e-3)
+
+    print("    dn_dm Tinker (Delta = 500 crit)")
+    HS_tinker_500c = TinkerHaloAbundance(HS, overdensity_type="crit", overdensity=500)
+    _ref = [1.773363e-19, 3.708512e-20, 6.156859e-21, 7.224513e-22, 5.018095e-23]
+    assert_allclose(HS_tinker_500c.dn_dm(z_test, M_test)[0], _ref, rtol=5e-3)
+
+    print("    dn_dm Tinker outside the calibrated overdensity range")
+    with pytest.raises(ValueError):
+        HS_tinker.dn_dm(np.array([1.5]), M_test)  # Delta_vir / Omega_cb < 200
 
     print("    dn_dm Castro")
     _ref = [3.887839e-19, 9.699365e-20, 2.072788e-20, 3.521802e-21, 4.244946e-22]

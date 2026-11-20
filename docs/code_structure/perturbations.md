@@ -587,6 +587,23 @@ nonlinear MG power spectrum is obtained by boosting a fast LCDM emulator
 - Scale-independent growth rate \(f(z)\) and \(\sigma_8\) from an internally-built
   linear MG \(P(k)\); the boost is applied on the baseline k-grid, so the GR limit
   is recovered up to the emulators' own residual (no regridding error);
+- Optional nonlinear screening, `MGParams.screening`. The COLA-trained boost is
+  unscreened ($\mu$ acts on all scales). `"superscreened"` keeps the linear MG
+  modification and returns to $\Lambda$CDM where the nonlinear $\Lambda$CDM
+  spectrum dominates the linear one; `"ppf"` uses the Hu & Sawicki (2007)
+  interpolation, with `c_nl=0` unscreened:
+
+  $$
+  P_\mathrm{SS} = P^{\Lambda}_\mathrm{NL} + (B_\mathrm{lin}-1)\,P^{\Lambda}_\mathrm{lin},
+  \qquad
+  B_\mathrm{PPF} = 1 + \frac{B_\mathrm{NL}-1}{1 + c_\mathrm{nl}\,(\Delta^2_\mathrm{lin})^{s}},
+  \qquad
+  \Delta^2_\mathrm{lin} = \frac{k^3 P^\mathrm{MG}_\mathrm{lin}}{2\pi^2}.
+  $$
+
+  Screening changes the matter power spectrum only; $\Sigma$, $f$, $\sigma_8$ and
+  the IA growth factor are unchanged;
+
 - Mutable `MGParams` holder for injecting sampled \(\mu, \eta\) each likelihood call;
 - Implemented in module-level `MGLinearPerturbations` / `MGNonLinearPerturbations`
   (statically checked against the `Perturbations` protocol); `mg_perturbations`
@@ -608,6 +625,11 @@ Lin, NonLin = mg_perturbations(
     mg, baseline_linear=LCDM.Linear, baseline_nonlinear=LCDM.NonLinear
 )
 # in the sampling wrapper, before each loglike:  mg.mu, mg.eta = ...
+
+# super-screened: MG on linear scales only, LCDM nonlinear clustering
+mg_ss = MGParams(mu=1.05, eta=1.0, bin_index=0, screening="superscreened")
+# PPF screening with c_nl and s free (sampled like mu/eta)
+mg_ppf = MGParams(mu=1.05, eta=1.0, bin_index=0, screening="ppf", c_nl=1.0, s=1.0)
 ```
 
 **Emulator ranges** (enforced; predictions outside raise `ValueError`):

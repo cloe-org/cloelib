@@ -11,6 +11,14 @@ matching emulators are downloaded on first use. eta has no nonlinear effect and
 enters only through the lensing parameter Sigma = mu(1 + eta)/2, which every
 lensing kernel (cosmic shear, magnification bias, CMB lensing) applies.
 
+The nonlinear boost emulators are trained on COLA simulations in which mu acts on
+all scales (no screening). ``MGParams.screening`` selects a phenomenological
+screening of the nonlinear spectrum: ``"superscreened"`` keeps the linear MG
+modification and adds no nonlinear one (Euclid Collaboration: Albuquerque et al.
+2025; Srinivasan et al. 2026, App. C), and ``"ppf"`` interpolates between the
+unscreened boost and LCDM with the Hu & Sawicki (2007) form. Screening acts on
+the matter power spectrum only; Sigma and the linear quantities are unchanged.
+
 The implementation lives in the module-level ``MGLinearPerturbations`` and
 ``MGNonLinearPerturbations`` classes, which are checked statically against the
 ``Perturbations`` protocol; ``mg_perturbations`` returns subclasses with the MG
@@ -44,6 +52,9 @@ _BIN_EDGES = [(0.00, 0.43), (0.43, 0.91), (0.91, 1.47), (1.47, 2.15), (2.15, 3.0
 N_BINS = len(_BIN_EDGES)
 
 _EMU_CACHE = {}
+
+# Nonlinear screening prescriptions; None is the unscreened COLA boost.
+SCREENING_MODES = (None, "superscreened", "ppf")
 
 # Training-box ranges of the boost emulators; inputs outside the relevant box are
 # rejected. The single-bin and multi-bin variants were trained over different ranges.
@@ -263,12 +274,26 @@ def _sigma8(k, pk0, h):
 class MGParams:
     """Mutable holder for the per-call modified-gravity parameters mu and eta."""
 
-    def __init__(self, mu=None, eta=None, bin_index=None):
+    def __init__(
+        self, mu=None, eta=None, bin_index=None, screening=None, c_nl=1.0, s=1.0
+    ):
         """Initialize the MGParams holder.
 
         Single-bin mode (``bin_index`` an int) stores scalar ``mu``/``eta`` for
         that bin; multi-bin mode (``bin_index=None``) stores length-``N_BINS``
         arrays. Unset ``mu``/``eta`` default to the GR value of one.
+
+        Args:
+            mu (Optional[array_like]): Modified-gravity parameter(s).
+            eta (Optional[array_like]): Gravitational-slip parameter(s).
+            bin_index (Optional[int]): Active bin index, or None for multi-bin.
+            screening (Optional[str]): Nonlinear screening prescription, one of
+                ``SCREENING_MODES``: None (unscreened COLA boost),
+                ``"superscreened"`` (linear MG modification only) or ``"ppf"``
+                (Hu & Sawicki interpolation, see ``MGNonLinearPerturbations``).
+            c_nl (float): PPF screening amplitude; 0 is unscreened and larger
+                values move the transition to LCDM to larger scales.
+            s (float): PPF exponent of the dimensionless linear power.
         """
         self.bin_index = None if bin_index is None else int(bin_index)
         if self.bin_index is None:
@@ -277,6 +302,9 @@ class MGParams:
         else:
             self.mu = 1.0 if mu is None else float(mu)
             self.eta = 1.0 if eta is None else float(eta)
+        self.screening = screening
+        self.c_nl = float(c_nl)
+        self.s = float(s)
 
 
 def _sigma_of_z(zs, mu, eta, bin_index):
@@ -433,6 +461,18 @@ class MGNonLinearPerturbations:
 
     Bound through the class attributes ``mg_params``, ``baseline_linear`` and
     ``baseline_nonlinear``; see ``MGLinearPerturbations``.
+
+    ``mg_params.screening`` selects the nonlinear spectrum, with B_lin and B_nl
+    the linear and nonlinear boosts and P the LCDM baseline spectra:
+
+    * None: P_nl * B_nl (unscreened; mu acts on all scales as in the COLA runs).
+    * ``"superscreened"``: P_nl + (B_lin - 1) * P_lin, i.e. the boost is
+      1 + (B_lin - 1) * P_lin / P_nl, which equals B_lin on linear scales and
+      tends to 1 where P_nl >> P_lin. The nonlinear boost emulator is not used.
+    * ``"ppf"``: P_nl * [1 + (B_nl - 1) / (1 + c_nl * Delta2^s)], with
+      Delta2 = k^3 P_lin,MG / (2 pi^2) the dimensionless linear MG power
+      (Hu & Sawicki 2007, eq. 41; Koyama, Taruya & Hiramatsu 2009). c_nl = 0
+      is unscreened.
     """
 
     #: Holder read at instantiation for the sampled mu and eta.
@@ -454,6 +494,14 @@ class MGNonLinearPerturbations:
         self.z = np.atleast_1d(np.asarray(redshifts, dtype=float))
         self.bin_index = self.mg_params.bin_index
         self.mu, self.eta = self.mg_params.mu, self.mg_params.eta
+        self.screening = self.mg_params.screening
+        self.c_nl, self.s = self.mg_params.c_nl, self.mg_params.s
+        if self.screening not in SCREENING_MODES:
+            raise ValueError(
+                f"Unknown MG screening {self.screening!r}; use one of {SCREENING_MODES}."
+            )
+        if self.screening == "ppf" and self.c_nl < 0.0:
+            raise ValueError("PPF screening amplitude c_nl must be non-negative.")
 
         base_lin = self.baseline_linear(background, self.z)
         self._base_nl = self.baseline_nonlinear(
@@ -461,14 +509,15 @@ class MGNonLinearPerturbations:
         )
         self._base_lin = base_lin
         z_top = _z_top(self.bin_index)
-        self._boost_nl = _boost_spline(
-            _load_emu("nonlinear", self.bin_index),
-            background,
-            self.mu,
-            self.eta,
-            self.z,
-            z_top=z_top,
-        )
+        if self.screening != "superscreened":
+            self._boost_nl = _boost_spline(
+                _load_emu("nonlinear", self.bin_index),
+                background,
+                self.mu,
+                self.eta,
+                self.z,
+                z_top=z_top,
+            )
         self._boost_lin = _boost_spline(
             _load_emu("linear", self.bin_index),
             background,
@@ -496,11 +545,10 @@ class MGNonLinearPerturbations:
             ks (numpy.ndarray): Wavenumbers in Mpc^-1.
 
         Returns:
-            pk (numpy.ndarray): Nonlinear matter power spectrum (boost times LCDM baseline).
+            pk (numpy.ndarray): Nonlinear matter power spectrum (boost times LCDM
+                baseline, screened according to ``mg_params.screening``).
         """
-        return self._boost_nl(zs, ks / self.h) * np.asarray(
-            self._base_nl.matter_power_spectrum(zs, ks)
-        )
+        return self._mg_spectrum(zs, ks, cb=False)
 
     def matter_power_spectrum_cb(self, zs, ks) -> np.ndarray:
         """Compute the nonlinear CDM+baryon matter power spectrum.
@@ -513,11 +561,39 @@ class MGNonLinearPerturbations:
             ks (numpy.ndarray): Wavenumbers in Mpc^-1.
 
         Returns:
-            pk (numpy.ndarray): Nonlinear CDM+baryon power spectrum (boost times LCDM baseline).
+            pk (numpy.ndarray): Nonlinear CDM+baryon power spectrum (boost times
+                LCDM baseline, screened according to ``mg_params.screening``).
         """
-        return self._boost_nl(zs, ks / self.h) * np.asarray(
-            self._base_nl.matter_power_spectrum_cb(zs, ks)
-        )
+        return self._mg_spectrum(zs, ks, cb=True)
+
+    def _mg_spectrum(self, zs, ks, cb):
+        """Apply the (optionally screened) MG modification to the LCDM spectrum.
+
+        Args:
+            zs (numpy.ndarray): Redshifts.
+            ks (numpy.ndarray): Wavenumbers in Mpc^-1.
+            cb (bool): Use the CDM+baryon baseline spectra instead of total matter.
+
+        Returns:
+            pk (numpy.ndarray): The nonlinear MG spectrum, shape (nz, nk).
+        """
+        if cb:
+            pk_nl = np.asarray(self._base_nl.matter_power_spectrum_cb(zs, ks))
+        else:
+            pk_nl = np.asarray(self._base_nl.matter_power_spectrum(zs, ks))
+
+        if self.screening == "superscreened":
+            if cb:
+                pk_lin = np.asarray(self._base_lin.matter_power_spectrum_cb(zs, ks))
+            else:
+                pk_lin = np.asarray(self._base_lin.matter_power_spectrum(zs, ks))
+            return pk_nl + (self._boost_lin(zs, ks / self.h) - 1.0) * pk_lin
+
+        boost = self._boost_nl(zs, ks / self.h)
+        if self.screening == "ppf":
+            delta2 = np.asarray(ks) ** 3 * self._pk_lin(zs, ks) / (2.0 * np.pi**2)
+            boost = 1.0 + (boost - 1.0) / (1.0 + self.c_nl * delta2**self.s)
+        return boost * pk_nl
 
     def _pk_lin(self, zs, ks):
         """Linear modified-gravity power spectrum, used for growth and sigma8.

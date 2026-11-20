@@ -401,3 +401,260 @@ def test_derived_quantities_run(monkeypatch, zs):
     assert f.shape == zs.shape and np.all(np.isfinite(f))
     D = nlp.growth_factor(zs, _KGRID)
     assert D.shape == (zs.size, _KGRID.size) and np.all(np.isfinite(D))
+
+
+# --------------------------------------------------------------------------- #
+# Nonlinear screening (MGParams.screening)
+# --------------------------------------------------------------------------- #
+_B_LIN, _B_NL = 1.2, 1.5  # distinct, so a test can tell which boost was used
+
+
+def _build_split(monkeypatch, mg_params, boost_lin=_B_LIN, boost_nl=_B_NL, calls=None):
+    """Like ``_build`` but with different constant linear and nonlinear boosts.
+
+    ``calls`` (a list), if given, records the emulator branches that are loaded.
+    """
+    fake_lin = _make_fake_load_emu(boost_lin)
+    fake_nl = _make_fake_load_emu(boost_nl)
+
+    def _fake(branch, bin_index=None):
+        if calls is not None:
+            calls.append(branch)
+        loader = fake_lin if branch == "linear" else fake_nl
+        return loader(branch, bin_index)
+
+    monkeypatch.setattr(mg, "_load_emu", _fake)
+    return mg.mg_perturbations(
+        mg_params,
+        baseline_linear=_FakeBaselineLinear,
+        baseline_nonlinear=_FakeBaselineNonLinear,
+    )
+
+
+def _baselines(zs):
+    """Fake LCDM (linear, nonlinear) baselines; their P_lin / P_nl = 1 / (1 + k)."""
+    return _FakeBaselineLinear(_bg(), zs), _FakeBaselineNonLinear(_bg(), None, zs)
+
+
+def test_mgparams_screening_defaults_and_storage():
+    default = mg.MGParams()
+    assert default.screening is None
+    assert default.c_nl == 1.0 and default.s == 1.0
+
+    ppf = mg.MGParams(bin_index=0, screening="ppf", c_nl=2, s=0.5)
+    assert ppf.screening == "ppf"
+    assert isinstance(ppf.c_nl, float) and ppf.c_nl == 2.0
+    assert isinstance(ppf.s, float) and ppf.s == 0.5
+
+
+def test_screening_modes_listed():
+    assert mg.SCREENING_MODES == (None, "superscreened", "ppf")
+
+
+def test_unscreened_uses_nonlinear_boost(monkeypatch, zs):
+    _, NonLin = _build_split(monkeypatch, mg.MGParams())
+    nlp = NonLin(_bg(), None, zs)
+    _, base_nl = _baselines(zs)
+    for method in ("matter_power_spectrum", "matter_power_spectrum_cb"):
+        assert np.allclose(
+            getattr(nlp, method)(zs, _KGRID),
+            _B_NL * getattr(base_nl, method)(zs, _KGRID),
+            rtol=1e-10,
+        )
+
+
+@pytest.mark.parametrize("boost_lin", [1.2, 0.8])
+def test_superscreened_adds_linear_mg_power(monkeypatch, zs, boost_lin):
+    """P = P_nl + (B_lin - 1) P_lin for both the total and the cb spectra, for
+    an enhancement and a suppression; the nonlinear boost plays no role."""
+    _, NonLin = _build_split(
+        monkeypatch, mg.MGParams(screening="superscreened"), boost_lin=boost_lin
+    )
+    nlp = NonLin(_bg(), None, zs)
+    base_lin, base_nl = _baselines(zs)
+    for method in ("matter_power_spectrum", "matter_power_spectrum_cb"):
+        expected = getattr(base_nl, method)(zs, _KGRID) + (boost_lin - 1.0) * getattr(
+            base_lin, method
+        )(zs, _KGRID)
+        assert np.allclose(getattr(nlp, method)(zs, _KGRID), expected, rtol=1e-10)
+
+
+def test_superscreened_boost_goes_from_linear_to_unity(monkeypatch, zs):
+    """The effective boost is 1 + (B_lin - 1) P_lin / P_nl: it starts at B_lin
+    on linear scales and decreases monotonically towards 1 as P_nl/P_lin grows."""
+    _, NonLin = _build_split(monkeypatch, mg.MGParams(screening="superscreened"))
+    nlp = NonLin(_bg(), None, zs)
+    _, base_nl = _baselines(zs)
+    ratio = nlp.matter_power_spectrum(zs, _KGRID) / base_nl.matter_power_spectrum(
+        zs, _KGRID
+    )
+    expected = 1.0 + (_B_LIN - 1.0) / (1.0 + _KGRID)[None, :]
+    assert np.allclose(ratio, expected, rtol=1e-10)
+    assert np.all(np.diff(ratio, axis=1) < 0.0)
+    assert np.all((ratio > 1.0) & (ratio < _B_LIN))
+
+
+def test_superscreened_skips_nonlinear_emulator(monkeypatch, zs):
+    """Super-screening never loads the nonlinear emulator, and B_lin = 1 gives
+    the LCDM nonlinear spectrum exactly whatever the nonlinear boost would be."""
+    calls = []
+    _, NonLin = _build_split(
+        monkeypatch,
+        mg.MGParams(screening="superscreened"),
+        boost_lin=1.0,
+        calls=calls,
+    )
+    nlp = NonLin(_bg(), None, zs)
+    assert "linear" in calls and "nonlinear" not in calls
+    _, base_nl = _baselines(zs)
+    for method in ("matter_power_spectrum", "matter_power_spectrum_cb"):
+        assert np.allclose(
+            getattr(nlp, method)(zs, _KGRID),
+            getattr(base_nl, method)(zs, _KGRID),
+            rtol=1e-12,
+        )
+
+
+@pytest.mark.parametrize("screening", [None, "ppf"])
+def test_other_modes_load_nonlinear_emulator(monkeypatch, zs, screening):
+    calls = []
+    _, NonLin = _build_split(monkeypatch, mg.MGParams(screening=screening), calls=calls)
+    NonLin(_bg(), None, zs)
+    assert "nonlinear" in calls
+
+
+def test_superscreened_redshift_clamp_single_bin(monkeypatch):
+    """Above the active bin B_lin = 1, so the super-screened spectrum is LCDM."""
+    params = mg.MGParams(mu=1.05, eta=1.0, bin_index=0, screening="superscreened")
+    _, NonLin = _build_split(monkeypatch, params)
+    nlp = NonLin(_bg(), None, _ZBUILD)
+    base_lin, base_nl = _baselines(_ZBUILD)
+    kk = np.array([0.1])
+    p_in = nlp.matter_power_spectrum(0.2, kk)  # inside bin 0
+    p_above = nlp.matter_power_spectrum(1.0, kk)  # above bin 0
+    expected_in = base_nl.matter_power_spectrum(0.2, kk) + (
+        _B_LIN - 1.0
+    ) * base_lin.matter_power_spectrum(0.2, kk)
+    assert np.allclose(p_in, expected_in, rtol=1e-6)
+    assert np.allclose(p_above, base_nl.matter_power_spectrum(1.0, kk), rtol=1e-6)
+
+
+@pytest.mark.parametrize("c_nl, s", [(1.0, 1.0), (2.0, 0.5), (0.08, 1.0 / 3.0)])
+def test_ppf_interpolation(monkeypatch, zs, c_nl, s):
+    """B = 1 + (B_nl - 1) / (1 + c_nl Delta2^s), with Delta2 = k^3 P_lin,MG / 2pi^2
+    from the linear MG spectrum; the cb spectrum gets the same factor."""
+    _, NonLin = _build_split(monkeypatch, mg.MGParams(screening="ppf", c_nl=c_nl, s=s))
+    nlp = NonLin(_bg(), None, zs)
+    base_lin, base_nl = _baselines(zs)
+    pk_lin_mg = _B_LIN * base_lin.matter_power_spectrum(zs, _KGRID)
+    delta2 = _KGRID**3 * pk_lin_mg / (2.0 * np.pi**2)
+    boost = 1.0 + (_B_NL - 1.0) / (1.0 + c_nl * delta2**s)
+    for method in ("matter_power_spectrum", "matter_power_spectrum_cb"):
+        assert np.allclose(
+            getattr(nlp, method)(zs, _KGRID),
+            boost * getattr(base_nl, method)(zs, _KGRID),
+            rtol=1e-10,
+        )
+
+
+def test_ppf_with_zero_amplitude_is_unscreened(monkeypatch, zs):
+    _, NonLin = _build_split(monkeypatch, mg.MGParams(screening="ppf", c_nl=0.0))
+    ppf = NonLin(_bg(), None, zs)
+    _, NonLinRef = _build_split(monkeypatch, mg.MGParams())
+    ref = NonLinRef(_bg(), None, zs)
+    for method in ("matter_power_spectrum", "matter_power_spectrum_cb"):
+        assert np.allclose(
+            getattr(ppf, method)(zs, _KGRID),
+            getattr(ref, method)(zs, _KGRID),
+            rtol=1e-12,
+        )
+
+
+def test_ppf_large_amplitude_tends_to_lcdm(monkeypatch, zs):
+    _, NonLin = _build_split(monkeypatch, mg.MGParams(screening="ppf", c_nl=1e12))
+    nlp = NonLin(_bg(), None, zs)
+    _, base_nl = _baselines(zs)
+    ratio = nlp.matter_power_spectrum(zs, _KGRID) / base_nl.matter_power_spectrum(
+        zs, _KGRID
+    )
+    assert np.allclose(ratio, 1.0, rtol=0.0, atol=1e-6)
+
+
+def test_ppf_screening_grows_with_k(monkeypatch, zs):
+    """Delta2 grows with k, so the PPF boost equals the unscreened boost on large
+    scales and decreases monotonically towards 1 on small scales."""
+    _, NonLin = _build_split(monkeypatch, mg.MGParams(screening="ppf"))
+    nlp = NonLin(_bg(), None, zs)
+    _, base_nl = _baselines(zs)
+    ratio = nlp.matter_power_spectrum(zs, _KGRID) / base_nl.matter_power_spectrum(
+        zs, _KGRID
+    )
+    assert np.allclose(ratio[:, 0], _B_NL, rtol=1e-4)
+    assert np.all(np.diff(ratio, axis=1) < 0.0)
+    assert np.all((ratio > 1.0) & (ratio < _B_NL))
+
+
+@pytest.mark.parametrize("screening", ["superscreened", "ppf"])
+def test_screening_leaves_linear_quantities_and_sigma(monkeypatch, zs, screening):
+    """Screening changes the nonlinear P(k) only: sigma8, f, D and Sigma match
+    the unscreened ones, and Sigma keeps its MG value."""
+    params = dict(mu=1.1, eta=0.95, bin_index=1)
+    _, NonLin = _build_split(monkeypatch, mg.MGParams(**params, screening=screening))
+    nlp = NonLin(_bg(), None, zs)
+    _, NonLinRef = _build_split(monkeypatch, mg.MGParams(**params))
+    ref = NonLinRef(_bg(), None, zs)
+    assert np.isclose(nlp.sigma8_0(), ref.sigma8_0(), rtol=1e-12)
+    assert np.allclose(nlp.growth_rate(zs), ref.growth_rate(zs), rtol=1e-12)
+    assert np.allclose(
+        nlp.growth_factor(zs, _KGRID), ref.growth_factor(zs, _KGRID), rtol=1e-12
+    )
+    assert np.allclose(nlp.Sigma(zs), ref.Sigma(zs), rtol=1e-12)
+    assert not np.allclose(nlp.Sigma(zs), 1.0)
+
+
+def test_screening_does_not_change_linear_perturbations(monkeypatch, zs):
+    Lin, _ = _build_split(monkeypatch, mg.MGParams(screening="superscreened"))
+    lp = Lin(_bg(), zs)
+    base_lin, _ = _baselines(zs)
+    assert np.allclose(
+        lp.matter_power_spectrum(zs, _KGRID),
+        _B_LIN * base_lin.matter_power_spectrum(zs, _KGRID),
+        rtol=1e-10,
+    )
+
+
+def test_screening_is_read_from_holder_at_instantiation(monkeypatch, zs):
+    """Like mu and eta, screening, c_nl and s are read when NonLinear is built,
+    so a sampler can change them through the shared MGParams holder."""
+    params = mg.MGParams()
+    _, NonLin = _build_split(monkeypatch, params)
+    unscreened = NonLin(_bg(), None, zs).matter_power_spectrum(zs, _KGRID)
+    params.screening = "superscreened"
+    superscreened = NonLin(_bg(), None, zs).matter_power_spectrum(zs, _KGRID)
+    params.screening, params.c_nl = "ppf", 0.0
+    ppf_zero = NonLin(_bg(), None, zs).matter_power_spectrum(zs, _KGRID)
+    assert not np.allclose(superscreened, unscreened)
+    assert np.allclose(ppf_zero, unscreened, rtol=1e-12)
+
+
+@pytest.mark.parametrize("screening", mg.SCREENING_MODES)
+def test_screened_spectra_shapes(monkeypatch, zs, screening):
+    _, NonLin = _build_split(monkeypatch, mg.MGParams(screening=screening))
+    nlp = NonLin(_bg(), None, zs)
+    k = np.array([0.05, 0.1, 0.2])
+    for method in ("matter_power_spectrum", "matter_power_spectrum_cb"):
+        pk = getattr(nlp, method)(zs, k)
+        assert pk.shape == (zs.size, k.size) and np.all(np.isfinite(pk))
+        assert getattr(nlp, method)(0.0, k).shape == (1, k.size)
+
+
+def test_unknown_screening_raises(monkeypatch, zs):
+    _, NonLin = _build_split(monkeypatch, mg.MGParams(screening="screened"))
+    with pytest.raises(ValueError, match="Unknown MG screening"):
+        NonLin(_bg(), None, zs)
+
+
+def test_negative_ppf_amplitude_raises(monkeypatch, zs):
+    _, NonLin = _build_split(monkeypatch, mg.MGParams(screening="ppf", c_nl=-0.1))
+    with pytest.raises(ValueError, match="c_nl"):
+        NonLin(_bg(), None, zs)

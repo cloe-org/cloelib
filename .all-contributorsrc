@@ -48,7 +48,8 @@
       "contributions": [
         "doc",
         "code",
-        "review"
+        "review",
+        "bug"
       ]
     },
     {

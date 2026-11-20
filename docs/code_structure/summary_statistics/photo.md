@@ -156,6 +156,12 @@ This converges much faster than a sharp cut, even one at a much higher $\ell_{\r
 
 **Location**: `cloelib/summary_statistics/angular_correlation_function_wigner.py`
 
+## AngularCorrelationFunctionFFTLog
+
+Flat-sky alternative to `AngularCorrelationFunctionWigner` using FFTLog, with the same interface and output. The spectra are evaluated on a log-spaced multipole grid (`ell_grid`, 120 multipoles by default) and interpolated by a cubic spline. They enter the transform at `ell - 1/2`, which matches the full-sky Wigner sum.
+
+**Location**: `cloelib/summary_statistics/angular_correlation_function_fftlog.py`
+
 ## Next Steps
 
 The pipeline is now complete.

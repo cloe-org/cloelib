@@ -320,6 +320,13 @@ heading_level: 3
       show_submodules: false
       heading_level: 3
 
+::: cloelib.summary_statistics.angular_correlation_function_fftlog
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      show_submodules: false
+      heading_level: 3
+
 ::: cloelib.summary_statistics.angular_correlation_function
     options:
       show_root_toc_entry: true

@@ -169,7 +169,9 @@ class NLABinContribution(IntrinsicAlignmentContribution):
       C_IA: IA normalisation, as for `NLAContribution`.
     """
 
-    def __init__(self, tracer: "ShearTracer", A_IA, C_IA: float = 0.0134) -> None:
+    def __init__(
+        self, tracer: "ShearTracer", A_IA: jnp.ndarray, C_IA: float = 0.0134
+    ) -> None:
         A_IA = jnp.asarray(A_IA)
         if A_IA.shape != (tracer.n_z_bins,):
             raise ValueError(

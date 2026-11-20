@@ -109,7 +109,6 @@ DEFAULT_HALO_PARAMS: Dict[str, Any] = {
     "kmin": 1e-4,
     "kmax": 150.0,
     "nk": 48,
-    "mdef_Delta": 200,
     "conc_model": "Duffy08",
     "hmf_model": "T10",
     "do_corr_2h_mm": True,
@@ -125,7 +124,6 @@ DEFAULT_ANALYSIS: Dict[str, Any] = {
     "num_points_gal_cal": 32,
     "lowpass_Pmm1h_lowk": True,
     "kthresh_lowpass_Pmm1h_lowk": 1e-3,
-    "split_cga_fftlog": True,
     "tSZ_transition_model": "poweradd",
     "gg_transition_model": "poweradd",
 }
@@ -354,8 +352,7 @@ def build_godmax_config(
         sim_gal, analysis_gal = _galaxy_config(galaxies)
         sim.update(sim_gal)
         analysis.update(analysis_gal)
-    # GODMAX needs the pressure profiles for its galaxy spectra.
-    analysis["model_tSZ"] = bool(model_tSZ) or galaxies is not None
+    analysis["model_tSZ"] = bool(model_tSZ)
     return sim, halo, analysis, other
 
 
@@ -628,7 +625,12 @@ class GODMAXNonLinearPerturbations:
             return self.matter_power_spectrum(zs, ks)
         if pair not in self.spectra:
             if set(pair) <= {"m", "g", "y"}:
-                missing = "galaxies=..." if "g" in pair else "model_tSZ=True"
+                needed = []
+                if "g" in pair and ("g", "g") not in self.spectra:
+                    needed.append("galaxies=...")
+                if "y" in pair and ("y", "y") not in self.spectra:
+                    needed.append("model_tSZ=True")
+                missing = " and ".join(needed)
                 raise ValueError(
                     f"The {field1}-{field2} spectrum was not computed; construct "
                     f"GODMAXNonLinearPerturbations with {missing}."

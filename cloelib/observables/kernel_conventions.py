@@ -16,11 +16,12 @@ include. Two presets:
 
 Any ingredient can be overridden, e.g. ``kernel_convention("godmax",
 magnification=True)``. TATT and non-linear galaxy bias are not available on
-the halo-model route.
+the halo-model route, and RSD only with a linear galaxy bias (the halo model
+has no RSD, so ``"hod"`` galaxies cannot include it).
 
 Usage::
 
-    convention = kernel_convention("godmax", rsd=True)
+    convention = kernel_convention("godmax", magnification=True)
     nuisance = convention.nuisance(nuisance_params)
     shear = ShearTracer(perturbations, nz_s, z, nuisance, **convention.shear_options())
     galaxies = PositionsTracer(
@@ -91,6 +92,12 @@ class KernelConvention:
             raise ValueError(
                 f"Unknown galaxy_bias_model {self.galaxy_bias_model!r}; expected "
                 f"one of {GALAXY_BIAS_MODELS}."
+            )
+        if self.galaxy_bias_model == "hod" and self.rsd:
+            raise NotImplementedError(
+                "rsd=True is not available with galaxy_bias_model='hod': the RSD "
+                "term is linear perturbation theory, the HOD galaxy spectra come "
+                "from the halo model. Use rsd=False or a linear galaxy bias model."
             )
         if self.ia_model == "TATT":
             raise NotImplementedError(

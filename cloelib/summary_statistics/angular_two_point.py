@@ -947,7 +947,7 @@ class AngularTwoPoint:
         spectrum (`SpectraBank.base`). Without `use_Pcb` there is a
         single total-matter window per tracer, hence a single `P_mm`
         integral. The RSD window of a `PositionsTracer` traces the same field
-        as its galaxy-bias term.
+        as its galaxy-bias term (RSD is not available with HOD galaxies).
 
         The spectra enter only through `bank`, built from
         `tracer1.perturbations` when not given: passing a bank of the linear

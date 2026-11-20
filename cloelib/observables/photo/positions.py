@@ -806,7 +806,7 @@ class PositionsTracer:
                 ``nl_bias_loop_computer``; ``"hod"`` uses the galaxy spectra
                 of a halo model instead of a bias parameter, and requires
                 ``GODMAXNonLinearPerturbations`` built with ``galaxies=...``
-                (no ``use_Pcb``). Linear bias defaults to 1.0;
+                (no ``use_Pcb``, no ``include_rsd``). Linear bias defaults to 1.0;
                 nonlinear ``b1`` defaults to 1.0 and ``b2``, ``bs2``,
                 ``b3nl``, and ``bk2`` default to 0.0. Bias nuisance bin
                 indices are zero-based.
@@ -962,6 +962,14 @@ class PositionsTracer:
                 if use_Pcb:
                     raise NotImplementedError(
                         "galaxy_bias_model='hod' does not support use_Pcb=True."
+                    )
+                if include_rsd:
+                    raise NotImplementedError(
+                        "galaxy_bias_model='hod' does not support include_rsd=True: "
+                        "the HOD galaxy spectra come from the halo model, while the "
+                        "RSD term is linear perturbation theory. A consistent "
+                        "halo-model RSD (Kaiser on the 2-halo term, Fingers of God "
+                        "on the 1-halo term) is not implemented."
                     )
                 self.bias = HODGalaxyContribution(self)
             else:

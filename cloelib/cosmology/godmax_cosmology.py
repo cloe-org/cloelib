@@ -90,7 +90,7 @@ from typing import Any, Dict, Optional, Tuple
 import jax
 import jax.numpy as jnp
 
-from cloelib.cosmology.cosmology import CB_CROSS_CORRELATED
+from cloelib.cosmology.cosmology import CB_CROSS_CORRELATED, BaryonBoostMixin
 from cloelib.cosmology.jax_cosmology import (
     JAXBackground,
     JAXLinearPerturbations,
@@ -169,6 +169,14 @@ OTHER_PARAMETERS = ("alpha_ky", "alpha_gy", "alpha_gg", "alpha_gm", "alpha_ge")
 #: HOD parameters accepted in `galaxies["hod"]`; each is a scalar or, for a
 #: per-bin HOD, an array of length n_bins + 1 (default value first). See
 #: "Per-bin HOD" in the module docstring for how the bins are assigned.
+#: Units are GODMAX's: `galaxies["nbar"]` is a comoving number density in
+#: (h/Mpc)^3, unlike the Mpc units of the rest of cloelib. The SHMR masses
+#: `log10M1_fshmr` and `log10Mstar0_fshmr` are log10 of masses in M_sun (no h);
+#: `siglogMstar_Ncen` is in dex (a scatter in log10 M_star); `Bsat_Nsat` and
+#: `Bcut_Nsat` are relative to a 1e12 M_sun pivot; the slopes, the `*_a_*`
+#: redshift terms (per unit a - 1) and `fcen` are dimensionless. With
+#: `godmax_config["analysis"]["Zheng_HOD"] = True`, the threshold is set by
+#: `log10Mmin_Ncen` (log10 of a halo mass in M_sun/h) instead of `nbar`.
 HOD_PARAMETERS = (
     "log10M1_fshmr",
     "log10M1_a_fshmr",
@@ -187,10 +195,26 @@ HOD_PARAMETERS = (
     "betacut_Nsat",
     "betasat_Nsat",
     "fcen",
+    "log10Mmin_Ncen",
 )
 
 _GALAXIES_KEYS = ("nbar", "nbar_z", "z_edges", "hod")
 _CONFIG_SECTIONS = ("sim_params", "halo_params", "analysis", "other_params")
+#: `godmax_config` keys that cloelib sets itself, by section, and the argument
+#: that sets them; giving them in `godmax_config` raises instead of being ignored.
+_OWNED_KEYS = {
+    "sim_params": {"cosmo": "background"},
+    "halo_params": {"z_array": "redshifts"},
+    "analysis": {
+        "cosmology_backend": "background",
+        "cosmology_obj": "background",
+        "model_tSZ": "model_tSZ",
+        "model_galaxies": "galaxies",
+        "nbar_gal_comoving_val": "galaxies['nbar']",
+        "nbar_gal_comoving_zarray": "galaxies['nbar_z']",
+        "hod_params_model": "galaxies['hod']",
+    },
+}
 
 #: (field1, field2) -> (GODMAX attribute, number of Compton-y legs).
 _SPECTRA = {
@@ -203,14 +227,27 @@ _SPECTRA = {
 }
 
 
-def _galaxy_config(galaxies: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-    """Translate the `galaxies` dict into GODMAX `sim_params` and `analysis` entries."""
+def _galaxy_config(
+    galaxies: Dict[str, Any], zheng_hod: bool = False
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """Translate the `galaxies` dict into GODMAX `sim_params` and `analysis` entries.
+
+    Args:
+        galaxies: Galaxy sample and HOD settings.
+        zheng_hod: Whether GODMAX uses the Zheng HOD, whose threshold is set by
+            `log10Mmin_Ncen` instead of `nbar`.
+    """
     unknown = set(galaxies) - set(_GALAXIES_KEYS)
     if unknown:
         raise ValueError(
             f"Unknown galaxies keys {sorted(unknown)}; expected {_GALAXIES_KEYS}."
         )
-    if "nbar" not in galaxies:
+    if zheng_hod and ("nbar" in galaxies or "nbar_z" in galaxies):
+        raise ValueError(
+            "galaxies['nbar'] is not used with Zheng_HOD: the threshold is set by "
+            "galaxies['hod']['log10Mmin_Ncen']."
+        )
+    if not zheng_hod and "nbar" not in galaxies:
         raise ValueError(
             "galaxies['nbar'] (comoving number density in (h/Mpc)^3) is required: "
             "GODMAX sets the stellar-mass threshold of the HOD from it."
@@ -219,17 +256,23 @@ def _galaxy_config(galaxies: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, 
     sim: Dict[str, Any] = {}
     analysis: Dict[str, Any] = {"model_galaxies": True}
 
-    nbar = jnp.asarray(galaxies["nbar"], dtype=float)
-    if nbar.ndim == 0:
-        analysis["nbar_gal_comoving_val"] = float(nbar)
-    else:
-        if galaxies.get("nbar_z") is None:
-            raise ValueError("galaxies['nbar_z'] is required when nbar is an array.")
-        nbar_z = jnp.asarray(galaxies["nbar_z"], dtype=float)
-        if nbar_z.shape != nbar.shape:
-            raise ValueError("galaxies['nbar_z'] and galaxies['nbar'] differ in shape.")
-        analysis["nbar_gal_comoving_zarray"] = nbar_z
-        analysis["nbar_gal_comoving_val"] = nbar
+    # nbar is given exactly when the HOD is not Zheng's (checked above).
+    if "nbar" in galaxies:
+        nbar = jnp.asarray(galaxies["nbar"], dtype=float)
+        if nbar.ndim == 0:
+            analysis["nbar_gal_comoving_val"] = float(nbar)
+        else:
+            if galaxies.get("nbar_z") is None:
+                raise ValueError(
+                    "galaxies['nbar_z'] is required when nbar is an array."
+                )
+            nbar_z = jnp.asarray(galaxies["nbar_z"], dtype=float)
+            if nbar_z.shape != nbar.shape:
+                raise ValueError(
+                    "galaxies['nbar_z'] and galaxies['nbar'] differ in shape."
+                )
+            analysis["nbar_gal_comoving_zarray"] = nbar_z
+            analysis["nbar_gal_comoving_val"] = nbar
 
     hod = galaxies.get("hod") or {}
     unknown = set(hod) - set(HOD_PARAMETERS)
@@ -316,11 +359,12 @@ def build_godmax_config(
             f"Unknown godmax_config sections {sorted(unknown)}; "
             f"expected {_CONFIG_SECTIONS}."
         )
-    if "cosmo" in godmax_config.get("sim_params", {}):
-        raise ValueError(
-            "The cosmology is taken from the cloelib background; "
-            "godmax_config['sim_params']['cosmo'] is not allowed."
-        )
+    for section, owned in _OWNED_KEYS.items():
+        for key in sorted(set(godmax_config.get(section, {})) & set(owned)):
+            raise ValueError(
+                f"godmax_config['{section}']['{key}'] is set by cloelib from "
+                f"`{owned[key]}`; pass it there instead."
+            )
 
     unknown = set(halo_params) - set(SIM_PARAMETERS) - set(OTHER_PARAMETERS)
     if unknown:
@@ -349,7 +393,9 @@ def build_godmax_config(
 
     analysis["model_galaxies"] = False
     if galaxies is not None:
-        sim_gal, analysis_gal = _galaxy_config(galaxies)
+        sim_gal, analysis_gal = _galaxy_config(
+            galaxies, zheng_hod=bool(analysis.get("Zheng_HOD", False))
+        )
         sim.update(sim_gal)
         analysis.update(analysis_gal)
     analysis["model_tSZ"] = bool(model_tSZ)
@@ -481,7 +527,9 @@ class GODMAXNonLinearPerturbations:
                 per-bin array of length `n_bins + 1`). A per-bin HOD varies with
                 true redshift over the `z_edges` intervals; it is not a separate
                 population per tomographic bin (see "Per-bin HOD" in the module
-                docstring).
+                docstring). With `godmax_config["analysis"]["Zheng_HOD"] = True`,
+                `nbar` and `nbar_z` are not allowed: the threshold is set by
+                `hod["log10Mmin_Ncen"]`.
             godmax_config: Overrides of the GODMAX settings, keyed by section
                 (`sim_params`, `halo_params`, `analysis`, `other_params`).
             **halo_params: Halo-model parameters by GODMAX name, e.g.
@@ -490,6 +538,11 @@ class GODMAXNonLinearPerturbations:
                 differ from its ``params_default.yaml``. The same holds for HOD
                 parameters missing from `galaxies["hod"]`.
         """
+        if isinstance(self, BaryonBoostMixin):
+            raise TypeError(
+                "GODMAXNonLinearPerturbations already includes baryons; do not "
+                "combine it with with_baryon_boost."
+            )
         if not isinstance(background, JAXBackground):
             raise ValueError(
                 "GODMAXNonLinearPerturbations requires a JAXBackground, got "

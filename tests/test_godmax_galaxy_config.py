@@ -1,13 +1,20 @@
-"""Tests for the validation of the GODMAX `galaxies` settings.
+"""Tests for the validation of the GODMAX settings that run without GODMAX.
 
-`_galaxy_config` only translates the settings, so these tests run without GODMAX.
+`_galaxy_config` and `build_godmax_config` only translate the settings, and the
+baryon-boost check runs before GODMAX is imported.
 """
 
 import jax.numpy as jnp
 import pytest
 from numpy.testing import assert_array_equal
 
-from cloelib.cosmology.godmax_cosmology import _galaxy_config
+from cloelib.cosmology.cosmology import with_baryon_boost
+from cloelib.cosmology.godmax_cosmology import (
+    _OWNED_KEYS,
+    GODMAXNonLinearPerturbations,
+    _galaxy_config,
+    build_godmax_config,
+)
 
 Z_EDGES = [[0.2, 0.5], [0.5, 0.8], [0.8, 1.1]]
 
@@ -70,3 +77,42 @@ def test_wrong_z_edges_shape_raises(z_edges):
 def test_reversed_z_edges_raise():
     with pytest.raises(ValueError, match="lower edge below the upper edge"):
         _galaxy_config({"nbar": 5e-4, "z_edges": [[0.2, 0.5], [0.8, 0.5]]})
+
+
+def test_rejects_baryon_boost():
+    """GODMAX already includes baryons, so with_baryon_boost cannot add more."""
+
+    class UnitBoost:
+        def baryonic_suppression(self, zs, ks, k_hunit=False):
+            return 1.0
+
+    Combined = with_baryon_boost(GODMAXNonLinearPerturbations, UnitBoost)
+    with pytest.raises(TypeError, match="already includes baryons"):
+        Combined(None, None, jnp.array([0.1, 0.5]))
+
+
+def test_zheng_hod_threshold_from_log10Mmin_Ncen():
+    sim, analysis = _galaxy_config(
+        {"z_edges": Z_EDGES, "hod": {"log10Mmin_Ncen": [12.0, 12.2, 12.4, 12.6]}},
+        zheng_hod=True,
+    )
+    assert_array_equal(sim["log10Mmin_Ncen_array"], [12.0, 12.2, 12.4, 12.6])
+    assert analysis["hod_params_model"] == "perbin"
+    assert "nbar_gal_comoving_val" not in analysis
+
+
+@pytest.mark.parametrize("galaxies", [{"nbar": 5e-4}, {"nbar_z": [0.5]}])
+def test_zheng_hod_rejects_nbar(galaxies):
+    with pytest.raises(ValueError, match="not used with Zheng_HOD"):
+        _galaxy_config(galaxies, zheng_hod=True)
+
+
+@pytest.mark.parametrize(
+    "section, key",
+    [(section, key) for section, owned in _OWNED_KEYS.items() for key in owned],
+)
+def test_owned_keys_rejected_in_godmax_config(section, key):
+    with pytest.raises(ValueError, match="is set by cloelib from"):
+        build_godmax_config(
+            jnp.array([0.1, 0.5]), True, None, {section: {key: None}}, {}
+        )

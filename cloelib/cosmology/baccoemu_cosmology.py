@@ -41,6 +41,26 @@ for nonlinear_model in ["Angulo2021", "Arico2023"]:
         )
 
 
+def _redshift_dependent_M_c(M_c, alpha_z, redshifts, baryon_emu):
+    r"""Redshift-dependent halo mass scale, $M_c(z) = M_c - \alpha_z z$ (log10 M_c).
+
+    With ``alpha_z == 0`` the scalar ``M_c`` is returned unchanged. Otherwise
+    one value per redshift is returned (BACCOemu takes an array of parameters,
+    one per scale factor) and, at ``z > 0``, clipped to the ``M_c`` range the
+    baryonic emulator was trained on, so that a large ``|alpha_z|`` saturates at
+    the edge of the emulator box instead of raising. ``M_c`` at ``z = 0`` is the
+    sampled parameter itself and is never clipped: if it is outside the box,
+    BACCOemu raises as it does without ``alpha_z``.
+    """
+    if not alpha_z:
+        return M_c
+    info = baryon_emu.emulator["baryon"]
+    lo, hi = info["bounds"][list(info["keys"]).index("M_c")]
+    z = np.asarray(redshifts, dtype=float)
+    M_c_z = M_c - alpha_z * z
+    return np.where(z > 0, np.clip(M_c_z, lo, hi), M_c_z)
+
+
 class BACCOemuLinearPerturbations:
     """Class for perturbations cosmology using BACCOemu, compatibly with the Perturbations protocol."""
 
@@ -284,9 +304,19 @@ class BACCOemuNonLinearPerturbations:
         theta_out: Optional[float] = None,
         theta_inn: Optional[float] = None,
         M_inn: Optional[float] = None,
+        alpha_z: float = 0.0,
     ):
-        """Initialize the BACCOemuNonLinearPerturbations instance."""
+        r"""Initialize the BACCOemuNonLinearPerturbations instance.
+
+        ``alpha_z`` makes the halo mass scale of the baryonic boost redshift
+        dependent, $\log_{10} M_c(z) = \log_{10} M_c - \alpha_z z$ (clipped at
+        $z > 0$ to the range of the baryonic emulator). The default, 0, is the
+        redshift-independent BACCOemu baryonification. Requires
+        ``baryonic_boost``.
+        """
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
+        if alpha_z and not baryonic_boost:
+            raise ValueError("alpha_z requires baryonic_boost.")
 
         self.emu = emu[nonlinear_model_name][baryonic_model_name]
         redshift_max = 1 / self.emu.emulator["nonlinear"]["bounds"][-1][0].item() - 1
@@ -294,6 +324,7 @@ class BACCOemuNonLinearPerturbations:
         self.z = redshifts[redshifts <= redshift_max]
         self.background = background
         self.linearperturbations = linearperturbations
+        self.alpha_z = alpha_z
 
         self.params_emu = {
             "omega_cold": self.background.Omega_cdm0 + self.background.Omega_b0,
@@ -307,7 +338,9 @@ class BACCOemuNonLinearPerturbations:
         }
 
         if baryonic_boost:
-            self.params_emu["M_c"] = M_c
+            self.params_emu["M_c"] = _redshift_dependent_M_c(
+                M_c, alpha_z, self.z, self.emu
+            )
             self.params_emu["eta"] = eta
             self.params_emu["beta"] = beta
             self.params_emu["M1_z0_cen"] = M1_z0_cen
@@ -569,6 +602,7 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         baryonic_model_name: str = "Burger2025",
         theta_out: Optional[float] = None,
         M_inn: Optional[float] = None,
+        alpha_z: float = 0.0,
     ) -> None:
         """Initialise the BACCOemu baryon-ratio spline.
 
@@ -600,6 +634,10 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
             BACCOemu baryonic model, e.g. ``"Burger2025"`` or ``"Arico2021"``.
         theta_out, M_inn:
             Used only by ``Arico2021``; leave at ``None`` for ``Burger2025``.
+        alpha_z:
+            Redshift dependence of the halo mass scale,
+            ``log10 M_c(z) = log10 M_c - alpha_z * z``, clipped at ``z > 0`` to the
+            range of the baryonic emulator. Default 0: redshift independent.
         """
         # BACCOemu was trained with the boost factor, so a single
         # `get_baryonic_boost` call is enough -- no separate DMO and baryonic
@@ -627,7 +665,7 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         baryonic_params = {
             k: v
             for k, v in {
-                "M_c": M_c,
+                "M_c": _redshift_dependent_M_c(M_c, alpha_z, z_emu, baryon_emu),
                 "eta": eta,
                 "beta": beta,
                 "M1_z0_cen": M1_z0_cen,

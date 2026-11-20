@@ -89,6 +89,7 @@ from typing import Any, Dict, Optional, Tuple
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from cloelib.cosmology.cosmology import CB_CROSS_CORRELATED, BaryonBoostMixin
 from cloelib.cosmology.jax_cosmology import (
@@ -430,6 +431,23 @@ def build_godmax_config(
     return sim, halo, analysis, other
 
 
+def _check_flat_w0cdm(background) -> None:
+    """Raise unless the background is flat w0CDM without massive neutrinos.
+
+    The check runs in NumPy, so it also works inside `jax.jit`; a traced value
+    (e.g. `mnu`, which `JAXBackground` stores as a JAX array) is not checked.
+    """
+    for name in ("Omega_k0", "wa", "mnu"):
+        value = getattr(background, name)
+        if isinstance(value, jax.core.Tracer):
+            continue
+        if np.any(np.asarray(value) != 0.0):
+            raise ValueError(
+                f"GODMAX is flat w0CDM without massive neutrinos; {name} must be "
+                f"0, got {value}."
+            )
+
+
 def _run_godmax(background, linearperturbations, nonlinearperturbations, config):
     """Run GODMAX up to its 3D power spectra (no C_ell) on a cloelib cosmology.
 
@@ -578,12 +596,7 @@ class GODMAXNonLinearPerturbations:
                 "GODMAXNonLinearPerturbations requires a JAXBackground, got "
                 f"{type(background).__name__}."
             )
-        for name in ("Omega_k0", "wa", "mnu"):
-            if float(getattr(background, name)) != 0.0:
-                raise ValueError(
-                    f"GODMAX is flat w0CDM without massive neutrinos; {name} must be "
-                    f"0, got {getattr(background, name)}."
-                )
+        _check_flat_w0cdm(background)
 
         redshifts = jnp.atleast_1d(jnp.asarray(redshifts, dtype=float))
         if redshifts.ndim != 1 or redshifts.shape[0] < 2:
@@ -608,6 +621,9 @@ class GODMAXNonLinearPerturbations:
         self.godmax = _run_godmax(background, linearperturbations, self.halofit, config)
 
         self.z = redshifts
+        # Plain floats, so that check_redshift_coverage works under jax.jit.
+        self._z_min = float(redshifts[0])
+        self._z_max = float(redshifts[-1])
         self.k, self.spectra = _spectra_in_cloelib_units(self.godmax, background.h)
         self.Pk = self.spectra[("m", "m")]
         # P_DMB / P_NFW (1 when GODMAX runs with `model_matter='halofit'`).
@@ -619,18 +635,18 @@ class GODMAXNonLinearPerturbations:
         """Raise if `z` extends outside the halo-model redshift nodes.
 
         The spectra are tabulated on the nodes; outside them they would be
-        extrapolated. Called by `AngularTwoPoint` on the Limber grid.
+        extrapolated. Called by `AngularTwoPoint` on the Limber grid. The check
+        runs in NumPy, so it also works inside `jax.jit`; a traced `z` is not
+        checked (as in `check_nonzero_redshifts`).
         """
-        z = jnp.atleast_1d(jnp.asarray(z))
-        z_min, z_max = float(self.z[0]), float(self.z[-1])
-        tolerance = 1e-8 * max(1.0, z_max)
-        if (
-            float(jnp.min(z)) < z_min - tolerance
-            or float(jnp.max(z)) > z_max + tolerance
-        ):
+        if isinstance(z, jax.core.Tracer):
+            return
+        z = np.atleast_1d(np.asarray(z))
+        tolerance = 1e-8 * max(1.0, self._z_max)
+        if z.min() < self._z_min - tolerance or z.max() > self._z_max + tolerance:
             raise ValueError(
-                f"The redshift grid [{float(jnp.min(z))}, {float(jnp.max(z))}] "
-                f"extends outside the halo-model nodes [{z_min}, {z_max}]; build "
+                f"The redshift grid [{z.min()}, {z.max()}] extends outside the "
+                f"halo-model nodes [{self._z_min}, {self._z_max}]; build "
                 "GODMAXNonLinearPerturbations with redshifts covering it."
             )
 

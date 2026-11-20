@@ -915,7 +915,8 @@ class NLAMContribution(IntrinsicAlignmentContribution):
         log10_M0: float = 13.5,
         C_IA: float = 0.0134,
     ) -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
         self.alpha_M = alpha_M
         self.beta_M = beta_M
         self.log10_M0 = log10_M0

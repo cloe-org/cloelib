@@ -121,6 +121,32 @@ tracer = ShearTracer(
 `TATTContribution` and `PBJTATTLoopComputer` both live in
 `cloelib.observables.photo.shear`, alongside `ShearTracer` itself.
 
+**Per-bin IA amplitude (NLA-M)**: `ia_model="NLA-M"` is the `A2 = bTA = 0`
+limit of TATT-M (see below): an NLA model whose amplitude
+`A1^i = alphaM * (Mh^i/M0)^betaM`, times `f_r^i`, is set per bin. It reads
+the same `"alphaM"/"betaM"` and per-bin `"log10_Mh_{i}"`/`"f_r_{i}"` keys as
+TATT-M, plus the optional `"log10_M0"/"CIA"`. As for NLA, the amplitude is
+part of the kernel and the engine integrates the plain matter power
+spectrum, so no `tatt_loop_computer` (and no `fast-pt`) is needed:
+
+```python
+tracer = ShearTracer(
+    perturbations=pert,
+    dndz=dndz_bins,
+    z=z,
+    nuisance_params={
+        **nuisance,
+        "alphaM": 1.0,
+        "betaM": 0.5,
+        "log10_Mh_1": 13.5,
+        "f_r_1": 1.0,
+        "log10_Mh_2": 14.0,
+        "f_r_2": 0.5,
+    },
+    ia_model="NLA-M",
+)
+```
+
 **Per-bin IA amplitude (TATT-M)**: `ia_model="TATT-M"` switches to TATT-M
 (Herle et al. 2026, arXiv:2601.15851), a generalization of TATT where the
 IA amplitude (C1/C2/C1delta) is tied to each tomographic bin's halo mass
@@ -158,14 +184,6 @@ per term of TATT's P_II/P_deltaI through `get_pk_terms`, the same mechanism
 `tracer.get_ia_effective_spectra(bin_i=..., bin_j=...)` to inspect one bin
 pair's P_II/P_deltaI. Pairing a TATT-M tracer with an NLA, NLA-M or TATT
 tracer raises `ValueError`.
-
-**NLA-M**: `ia_model="NLA-M"` is the `A2 = bTA = 0` limit of TATT-M: an NLA
-model whose amplitude `A1^i = alphaM * (Mh^i/M0)^betaM`, times `f_r^i`, is
-set per bin. It reads the same `"alphaM"/"betaM"` and per-bin
-`"log10_Mh_{i}"`/`"f_r_{i}"` keys as TATT-M, plus the optional
-`"log10_M0"/"CIA"`. As for NLA, the amplitude is part of the kernel and the
-engine integrates the plain matter power spectrum, so no
-`tatt_loop_computer` (and no `fast-pt`) is needed.
 
 ### PositionsTracer
 

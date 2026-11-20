@@ -222,6 +222,25 @@ def test_camb_set_neutrino_parameters_zero():
     assert list(params.nu_mass_numbers) == []
 
 
+def test_camb_massive_species_with_zero_mass_raises():
+    """Test that the case with N_mnu>0 with mnu=0 is rejected."""
+    with pytest.raises(ValueError, match="mnu must be greater than 0"):
+        CAMBBackground(
+            H0=67.7,
+            Omega_b0=0.022 / 0.677**2,
+            Omega_cdm0=0.12 / 0.677**2,
+            Omega_k0=0.0,
+            As=2e-9,
+            ns=0.96,
+            alpha_s=0.0,
+            mnu=0.0,
+            w0=-1,
+            wa=0,
+            gamma_MG=0,
+            N_mnu=1,
+        )
+
+
 def test_camb_set_neutrino_parameters_wrong_length():
     with pytest.raises(ValueError):
         bg = CAMBBackground(

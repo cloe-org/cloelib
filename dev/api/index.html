@@ -4560,6 +4560,87 @@ rate. Defaults to <code>z_grid</code>, returning <code>f_grid</code> unchanged.<
 <div class="doc doc-object doc-function">
 
 
+<h4 id="cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">redshift_of_comoving_distance</span>
+
+
+<a href="#cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">redshift_of_comoving_distance</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(background)">background</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(chi)">chi</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(n_intervals)">n_intervals</a></span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(z_max)">z_max</a></span><span class="o">=</span><span class="mf">20.0</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the redshift at which the comoving distance equals <code>chi</code>.</p>
+<p>Tabulates <span class="arithmatex">\(\chi(z) = \int_0^z dz'/H(z')\)</span> (<span class="arithmatex">\(H\)</span> in 1/Mpc) by a cumulative
+Simpson rule in <span class="arithmatex">\(x = \ln(1 + z)\)</span> on <span class="arithmatex">\([0, \ln(1 + z_{\max})]\)</span>, from a single
+vectorized call of <code>background.hubble_parameter</code>, and inverts it by Akima
+interpolation. Unlike one <code>background.comoving_distance</code> integral per
+redshift, the cost and, under <code>jax.jit</code>, the size of the program do not
+grow with the number of tabulated redshifts. With the defaults, <span class="arithmatex">\(z(\chi)\)</span>
+agrees with the inversion of <code>comoving_distance</code> to ~1e-8 (relative).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(background)" class="doc doc-heading doc-heading-parameter">              <b><code>background</code></b>
+<a href="#cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(background)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="Background">Background</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Background class containing cosmology.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(chi)" class="doc doc-heading doc-heading-parameter">              <b><code>chi</code></b>
+<a href="#cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(chi)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Comoving distances, in Mpc, below <span class="arithmatex">\(\chi(z_{\max})\)</span>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(n_intervals)" class="doc doc-heading doc-heading-parameter">              <b><code>n_intervals</code></b>
+<a href="#cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(n_intervals)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="int">int</span></code>, default:
+                  <code>2048</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Number of Simpson intervals of the table.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(z_max)" class="doc doc-heading doc-heading-parameter">              <b><code>z_max</code></b>
+<a href="#cloelib.cosmology.derived_cosmology.redshift_of_comoving_distance(z_max)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>, default:
+                  <code>20.0</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Largest tabulated redshift.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="numpy.ndarray">ndarray</span></code>
+          –
+          <div class="doc-md-description">
+            <p>Redshifts, same shape as <code>chi</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="cloelib.cosmology.derived_cosmology.dV_dzdO" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">dV_dzdO</span>
 
@@ -5748,9 +5829,12 @@ rate, interpolated on the CAMB redshift grid. Defaults to <code>self.z</code>.</
 <a href="#cloelib.cosmology.camb_cosmology.CAMBNonLinearPerturbations(linearperturbations)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a>]</code>)
           –
           <div class="doc-md-description">
-            <p>Linear perturbations object (unused by CAMB, which computes
-nonlinear corrections internally; accepted for interface compatibility with
-emulator-based NonLinPerturbations classes).</p>
+            <p>Linear perturbations exposed as
+<code>self.linearperturbations</code> (used by the observables that need the linear
+spectra: linear Limber and beyond-Limber Cl, TATT and nonlinear-bias
+loops). CAMB computes its nonlinear spectra by itself, so it is not used
+here. If None, the linear spectra of this same CAMB run are exposed
+instead (<code>CAMBLinearPerturbations._from_results</code>).</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -26317,24 +26401,19 @@ linearperturbations</code> if that attribute exists (every nonlinear backend
 that's built <em>from</em> a separate linear one sets it -
 <code>HMemuNonLinearPerturbations</code>, <code>EE2NonLinearPerturbations</code>,
 <code>BACCOemuNonLinearPerturbations</code>, <code>EmantisFofrNonLinearPerturbations</code>,
-<code>JAXNonLinearPerturbations</code>), else <code>perturbations</code> itself <em>if and only
+<code>JAXNonLinearPerturbations</code>; <code>CAMBNonLinearPerturbations</code> sets the
+given one, or the linear spectra of its own CAMB run when given None),
+else <code>perturbations</code> itself <em>if and only
 if</em> it's itself a recognized <code>*LinearPerturbations</code> backend (see
-<code>_is_known_linear_perturbations</code>) - raises <code>ValueError</code> otherwise (PR</p>
+<code>spectrum_engine.linear_source</code>) - raises <code>ValueError</code> otherwise (PR</p>
 <h6 id="cloelib.observables.photo.shear.PBJTATTLoopComputer--569-review-the-absence-of-a-linearperturbations-attribute-does">569 review): the absence of a <code>.linearperturbations</code> attribute does<a class="headerlink" href="#cloelib.observables.photo.shear.PBJTATTLoopComputer--569-review-the-absence-of-a-linearperturbations-attribute-does" title="Permanent link">&para;</a></h6>
 <p>not by itself mean the object passed in <em>is</em> linear, and silently
 treating an unrecognized nonlinear backend as linear would be a
 physical error, not a numerical one (FAST-PT would still return
 finite-looking, wrong spectra) - the kind that shouldn't fail silently.
-<code>CAMBNonLinearPerturbations</code> is the concrete case this currently
-excludes: it does not set <code>.linearperturbations</code> (its own
-<code>matter_power_spectrum</code> is always nonlinear), so it now raises here
-instead of being misused - pass <code>CAMBLinearPerturbations</code> directly
-instead.</p>
-<p>TODO (PR #569 review): standardize access to the corresponding linear
-perturbations object across nonlinear cosmology backends (e.g. also
-wiring it up for <code>CAMBNonLinearPerturbations</code>), so PT-based observables
-can retrieve a linear P(k,z) through one common interface instead of
-this getattr-plus-name-check fallback.</p>
+Every cloelib nonlinear backend sets <code>.linearperturbations</code> (PR #569
+review: <code>CAMBNonLinearPerturbations</code> was the last one); the name check
+remains for backends defined outside cloelib.</p>
 <p>FAST-PT requires its input k-grid to be evenly log-spaced (an FFTLog
 requirement); <code>TATTContribution</code>'s own <code>ks</code> (whatever grid the calling
 <code>AngularTwoPoint.get_Cl</code> was invoked with, e.g. <code>perturbations.k</code> from
@@ -27848,9 +27927,7 @@ just <code>len(ks)</code> points, since <code>sig3nl</code> in particular needs 
 <p>Takes the <em>same</em> <code>perturbations</code> object you'd pass to <code>PositionsTracer</code> -
 typically nonlinear, so this class resolves the actual linear source
 itself: <code>perturbations.linearperturbations</code> if that attribute exists,
-else <code>perturbations</code> itself (assumed already linear). Same known gap as
-<code>PBJTATTLoopComputer</code>: <code>CAMBNonLinearPerturbations</code> does not (yet) set
-<code>.linearperturbations</code>.</p>
+else <code>perturbations</code> itself (assumed already linear).</p>
 <p><code>sig4</code> (FAST-PT's <code>_get_sig4</code>) is a single k-independent normalisation
 constant (a UV-sensitive loop integral, not itself a function of k),
 broadcast to a constant array shaped like the requested <code>ks</code> so it fits
@@ -28212,6 +28289,90 @@ docstring for why these must be two different z-grids).</p>
 
 
 
+<h5 id="cloelib.observables.photo.positions.RSDContribution" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">RSDContribution</span>
+
+
+<a href="#cloelib.observables.photo.positions.RSDContribution" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">RSDContribution</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.positions.RSDContribution(tracer)">tracer</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.positions.PositionsTracer">PositionsTracer</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Redshift-space-distortion kernel term, beyond Limber only.</p>
+<div class="arithmatex">\[
+    W_i^{\rm RSD}(z) = n_i(z)\,\frac{H(z)\,f(z)}{c}
+\]</div>
+<p>with <span class="arithmatex">\(n_i\)</span> the shifted/stretched redshift distribution. Not part of
+<code>PositionsTracer.get_contributions()</code> (hence of <code>get_window()</code> and the
+Limber computation, which treat RSD through the <code>ell</code>-dependent
+<code>get_window_rsd</code> instead): it enters the beyond-Limber integral via
+<code>PositionsTracer.get_nonlimber_contributions()</code>, only when the tracer
+was built with <code>include_rsd=True</code>.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="cloelib.observables.photo.positions.RSDContribution.field" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">field</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#cloelib.observables.photo.positions.RSDContribution.field" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">field</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The same field as the galaxy-bias term, as in the Limber RSD window.</p>
+<p>With <code>use_Pcb=True</code> the growth rate is still that of the total
+matter, not the (scale-dependent) one of cb.</p>
+
+          
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h5 id="cloelib.observables.photo.positions.PositionsTracer" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">PositionsTracer</span>
 
@@ -28388,6 +28549,44 @@ loop-computer argument is inconsistent with the bias model.</p>
 <code>self.bias</code> is a <code>GalaxyBiasContribution</code> for the three linear
 <code>galaxy_bias_model</code>s, or a <code>NonLinearGalaxyBiasContribution</code> for
 <code>galaxy_bias_model="nonlinear"</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.positions.PositionsTracer.get_nonlimber_contributions" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_nonlimber_contributions</span>
+
+
+<a href="#cloelib.observables.photo.positions.PositionsTracer.get_nonlimber_contributions" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_nonlimber_contributions</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the contributions entering the beyond-Limber integral.</p>
+<p>Same as <code>get_contributions()</code>, plus <code>self.rsd</code> when the tracer was
+built with <code>include_rsd=True</code>. Kept separate from
+<code>get_contributions()</code> so <code>get_window()</code> and the Limber computation
+are untouched.</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>contributions</code></b> (              <code><span title="tuple">tuple</span></code>
+)          –
+          <div class="doc-md-description">
+            <p><code>(bias, magnification)</code> or
+<code>(bias, magnification, rsd)</code>.</p>
           </div>
         </li>
     </ul>
@@ -29068,6 +29267,10 @@ rather than requiring them here, so nothing below needs to change.</p>
 traces; it selects the base power spectrum of each contribution pair
 in <code>AngularTwoPoint</code> (default: <code>MATTER</code>). An optional <code>traces_potential</code>
 attribute marks potential-sourced kernels (default: <code>False</code>).</p>
+<p>Likewise optional, and read the same way, is the class attribute
+<code>nonlimber_spec: NonLimberSpec</code>: what the beyond-Limber engine needs to
+know about this contribution (see <code>NonLimberSpec</code>). A contribution
+without it simply isn't supported beyond Limber.</p>
 
           
 
@@ -29189,6 +29392,103 @@ base types <code>spectrum_engine.py</code> and both submodules share.</p>
 
 </div>
 
+<div class="doc doc-object doc-class">
+
+
+
+<h5 id="cloelib.observables.photo.contributions.NonLimberSpec" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">NonLimberSpec</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#cloelib.observables.photo.contributions.NonLimberSpec" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">NonLimberSpec</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.contributions.NonLimberSpec(power)">power</span></span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.contributions.NonLimberSpec(derivative)">derivative</span></span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.contributions.NonLimberSpec(ell_prefactor)">ell_prefactor</span></span><span class="p">:</span> <span class="n"><span title="typing.Callable">Callable</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.contributions.NonLimberSpec(divide_by_chi2)">divide_by_chi2</span></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>What the beyond-Limber engine needs to know about one <code>Contribution</code>.</p>
+<p>Purely static (no arrays), so it is hashable and safe to read while
+tracing under <code>jax.jit</code>.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><span title="cloelib.observables.photo.contributions.NonLimberSpec.power">power</span></code></b>
+              (<code><span title="int">int</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>the <span class="arithmatex">\(p\)</span> in the name of the T-tilde matrix a pair needs
+(<code>T_{p_a + p_b}_..</code>, see <code>t_tilde_names</code>): <span class="arithmatex">\(+1\)</span> for galaxy clustering
+and RSD, <span class="arithmatex">\(-1\)</span> for lensing, magnification and IA.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="cloelib.observables.photo.contributions.NonLimberSpec.derivative">derivative</span></code></b>
+              (<code><span title="int">int</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>order of the Bessel-function derivative the kernel
+multiplies (<span class="arithmatex">\(0\)</span> for all but RSD, which has <span class="arithmatex">\(2\)</span>).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="cloelib.observables.photo.contributions.NonLimberSpec.ell_prefactor">ell_prefactor</span></code></b>
+              (<code><span title="typing.Callable">Callable</span></code>)
+          –
+          <div class="doc-md-description">
+            <p><code>ell_prefactor(ells) -&gt; Array</code>, the kernel's own
+<span class="arithmatex">\(\ell\)</span>-dependent factor.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="cloelib.observables.photo.contributions.NonLimberSpec.divide_by_chi2">divide_by_chi2</span></code></b>
+              (<code><span title="bool">bool</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>whether the kernel is divided by the squared comoving
+distance it is evaluated at, <span class="arithmatex">\(\chi^2\)</span> or <span class="arithmatex">\((R\chi)^2\)</span>
+(<code>nonlimber_kernels.kernel_on_chi_R</code>).</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
 
 <div class="doc doc-object doc-function">
 
@@ -29260,6 +29560,173 @@ alignments, ...) traces the total matter and needs no change.</p>
 
 </div>
 
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.contributions.ell_prefactor_one" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">ell_prefactor_one</span>
+
+
+<a href="#cloelib.observables.photo.contributions.ell_prefactor_one" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ell_prefactor_one</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.contributions.ell_prefactor_one(ells)">ells</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>No multipole dependence (galaxy clustering).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.contributions.ell_prefactor_magnification" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">ell_prefactor_magnification</span>
+
+
+<a href="#cloelib.observables.photo.contributions.ell_prefactor_magnification" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ell_prefactor_magnification</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.contributions.ell_prefactor_magnification(ells)">ells</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>ell (ell + 1): from the two angular derivatives of the lensing potential.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.contributions.ell_prefactor_spin2" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">ell_prefactor_spin2</span>
+
+
+<a href="#cloelib.observables.photo.contributions.ell_prefactor_spin2" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ell_prefactor_spin2</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.contributions.ell_prefactor_spin2(ells)">ells</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>sqrt((ell + 2)! / (ell - 2)!): shear from the lensing potential (spin 2).</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.contributions.ell_prefactor_rsd" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">ell_prefactor_rsd</span>
+
+
+<a href="#cloelib.observables.photo.contributions.ell_prefactor_rsd" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ell_prefactor_rsd</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.contributions.ell_prefactor_rsd(ells)">ells</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>-1, kept here (not in the integrand) to avoid a subtraction there.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.contributions.t_tilde_names" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">t_tilde_names</span>
+
+
+<a href="#cloelib.observables.photo.contributions.t_tilde_names" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">t_tilde_names</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.contributions.t_tilde_names(spec_a)">spec_a</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.contributions.NonLimberSpec">NonLimberSpec</a></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.contributions.t_tilde_names(spec_b)">spec_b</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.contributions.NonLimberSpec">NonLimberSpec</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Tuple">Tuple</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Names of the two T-tilde matrices a pair of contributions needs.</p>
+<p>The name is <code>T_{p_a + p_b}_{d_a d_b}</code>, with a negative power written
+<code>minusN</code> (e.g. <code>T_minus2_00</code>, <code>T_2_02</code>). The first element is for
+the ordering (A at <span class="arithmatex">\(\chi\)</span>, B at <span class="arithmatex">\(R\chi\)</span>), the second for the swapped
+one (derivative digits exchanged); they only differ when the two
+derivative orders do (i.e. for pairs involving RSD).</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="typing.Tuple">Tuple</span>[<span title="str">str</span>, <span title="str">str</span>]</code>
+          –
+          <div class="doc-md-description">
+            <p>tuple[str, str]: <code>(name_12, name_21)</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.contributions.nonlimber_spec_of" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">nonlimber_spec_of</span>
+
+
+<a href="#cloelib.observables.photo.contributions.nonlimber_spec_of" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">nonlimber_spec_of</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.contributions.nonlimber_spec_of(contribution)">contribution</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.contributions.NonLimberSpec">NonLimberSpec</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p><code>contribution.nonlimber_spec</code>, or a clear error if it has none.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.contributions.nonlimber_contributions" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">nonlimber_contributions</span>
+
+
+<a href="#cloelib.observables.photo.contributions.nonlimber_contributions" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">nonlimber_contributions</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.contributions.nonlimber_contributions(tracer)">tracer</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The contributions a tracer enters the beyond-Limber integral with.</p>
+<p><code>tracer.get_nonlimber_contributions()</code> if it defines one (e.g.
+<code>PositionsTracer</code>, which adds RSD there but not to the Limber window),
+otherwise the same <code>get_contributions()</code> as the Limber computation.</p>
+
+          
+
+    </div>
+
+</div>
+
 
 
   </div>
@@ -29296,6 +29763,14 @@ principle <code>toy_cloelib</code> demonstrates (see its <code>engine.py</code> 
 dependencies (no <code>equinox</code>/<code>plum</code>): plain dataclasses and a
 <code>getattr(..., default)</code> lookup, matching how <code>AngularTwoPoint</code> already
 dispatches on tracer type (<code>tracer_rules</code>, <code>angular_two_point.py</code>).</p>
+<p>The same bank also holds what the beyond-Limber computation shares between
+tracer pairs: the linear transfer function of each traced field, the
+Chebyshev coefficients of the unequal-time <em>linear</em> power spectrum of each
+pair of fields and, per pair of fields and T-tilde matrix, the projected
+density (<code>SpectraBank.nonlimber_transfer</code>, <code>SpectraBank.nonlimber_cheb</code>,
+<code>SpectraBank.projected_density</code>). They are cosmology
+dependent but tracer independent, so a bank shared by the pairs of a 3x2pt
+computation evaluates each of them once.</p>
 <p>Nothing here changes behavior for any <code>Contribution</code> that doesn't declare
 extra requests: <code>needs_generalized_engine</code> returns <code>False</code> for them, and
 <code>AngularTwoPoint.get_Cl</code> keeps using its original, untouched fast path in
@@ -29411,7 +29886,7 @@ different <code>compute</code> callable, not touching the Contribution.</p>
 
 
 <a href="#cloelib.observables.photo.spectrum_engine.SpectraBank" class="headerlink" title="Permanent link">&para;</a></h5>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">SpectraBank</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank(matter_pk)">matter_pk</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank(ks)">ks</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank(zs)">zs</span></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank(perturbations)">perturbations</span></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">SpectraBank</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank(matter_pk)">matter_pk</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank(ks)">ks</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank(zs)">zs</a></span><span class="p">:</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank(perturbations)">perturbations</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank(linear_perturbations)">linear_perturbations</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank(t_tildes)">t_tildes</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.auxiliary.t_tildes.TTildeStore">TTildeStore</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -29432,6 +29907,80 @@ once and only when first asked for:</p>
 <code>from_perturbations</code>. Built directly from an already evaluated
 <code>matter_pk</code> instead (<code>SpectraBank(matter_pk, ks, zs)</code>), only the total
 matter is available: <code>base</code> raises for any pair involving cb.</p>
+<p>When configured for it (<code>t_tildes</code>, and a linear spectrum: see
+<code>linear_perturbations</code> below), it also holds the grids of the beyond-Limber integration
+(<code>nonlimber_transfer</code>, <code>nonlimber_cheb</code>, <code>projected_density</code>, built from the
+<em>linear</em> spectra and the T-tilde matrices),
+computed lazily as well. These depend on the cosmology only, not on the
+tracers: one bank can serve every tracer pair of a 3x2pt computation,
+so that what pairs have in common (the transfer functions, the
+Chebyshev coefficients, each projected density) is computed once.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank(matter_pk)" class="doc doc-heading doc-heading-parameter">              <b><code>matter_pk</code></b>
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank(matter_pk)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span> | None</code>)
+          –
+          <div class="doc-md-description">
+            <p>matter power spectrum on <code>(zs, ks)</code>, shape
+<code>(len(zs), len(ks))</code>, or <code>None</code> to evaluate it from <code>perturbations</code>.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank(ks)" class="doc doc-heading doc-heading-parameter">              <b><code>ks</code></b>
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank(ks)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>wavenumber grid of every spectrum.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank(zs)" class="doc doc-heading doc-heading-parameter">              <b><code>zs</code></b>
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="jax.numpy.ndarray">ndarray</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>redshift grid of every spectrum.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank(perturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>perturbations</code></b>
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank(perturbations)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>backend the base spectra are evaluated from.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank(linear_perturbations)" class="doc doc-heading doc-heading-parameter">              <b><code>linear_perturbations</code></b>
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank(linear_perturbations)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>optional override of the linear <code>Perturbations</code>
+the beyond-Limber spectra (and the background that maps comoving
+distance to redshift) come from. By default they are resolved from
+<code>perturbations</code> (<code>linear_source</code>): its <code>linearperturbations</code>, or
+itself if it is a linear backend. Needed only for backends that do
+not expose their linear spectrum (every cloelib backend does).</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank(t_tildes)" class="doc doc-heading doc-heading-parameter">              <b><code>t_tildes</code></b>
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank(t_tildes)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="typing.Optional">Optional</span>[<span title="cloelib.auxiliary.t_tildes.TTildeStore">TTildeStore</span>]</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>the T-tilde matrices, and the grids they were computed on.
+Needed for <code>nonlimber_cheb</code>/<code>projected_density</code> only.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -29492,7 +30041,7 @@ matter is available: <code>base</code> raises for any pair involving cb.</p>
   </span>
 
 <a href="#cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_perturbations</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations(perturbations)">perturbations</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations(zs)">zs</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank">SpectraBank</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_perturbations</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations(perturbations)">perturbations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations(ks)">ks</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations(zs)">zs</span></span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations(linear_perturbations)">linear_perturbations</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.from_perturbations(t_tildes)">t_tildes</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="cloelib.auxiliary.t_tildes.TTildeStore">TTildeStore</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.spectrum_engine.SpectraBank">SpectraBank</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -29557,6 +30106,144 @@ strings, so the choice is resolved at trace time and is safe under
     <div class="doc doc-contents ">
 
         <p>Return the named derived grid, computing and caching it on first use.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank.z_of_chi" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">z_of_chi</span>
+
+
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank.z_of_chi" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">z_of_chi</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Redshift of every comoving distance of the T-tilde grid, shape <code>(n_chi,)</code>.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank.nonlimber_transfer" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">nonlimber_transfer</span>
+
+
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank.nonlimber_transfer" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">nonlimber_transfer</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.nonlimber_transfer(field)">field</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Linear transfer function of a traced field on the T-tilde grid.</p>
+<p><span class="arithmatex">\(T_X(k, \chi) = \sqrt{P^{\rm lin}_{XX}(k, z(\chi))}\)</span>, at the
+redshifts <span class="arithmatex">\(z(\chi)\)</span> and at the Chebyshev nodes in <span class="arithmatex">\(k\)</span>; the primordial
+spectrum is absorbed into <span class="arithmatex">\(T\)</span> (Eqs. 14-15 of arXiv:2609.01855).
+<code>P_mm</code> for <code>MATTER</code>, <code>P_cb</code> for <code>CB</code>.</p>
+<p>The spectrum is evaluated at increasing <span class="arithmatex">\(k\)</span> and reordered to the
+Chebyshev order of the nodes (from <span class="arithmatex">\(k_{\max}\)</span> to <span class="arithmatex">\(k_{\min}\)</span>): the
+backends interpolating a tabulated <span class="arithmatex">\(P(k, z)\)</span> with scipy's
+<code>RectBivariateSpline</code> (CAMB, the emulators) reject non-increasing <span class="arithmatex">\(k\)</span>.</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Array</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>shape <code>(n_chi, n_cheb)</code>.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank.nonlimber_cheb" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">nonlimber_cheb</span>
+
+
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank.nonlimber_cheb" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">nonlimber_cheb</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.nonlimber_cheb(field_A)">field_A</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="n"><span title="cloelib.observables.photo.contributions.MATTER">MATTER</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.nonlimber_cheb(field_B)">field_B</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="n"><span title="cloelib.observables.photo.contributions.MATTER">MATTER</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Chebyshev coefficients, in <span class="arithmatex">\(\log k\)</span>, of the unequal-time <em>linear</em> Pk.</p>
+<p>The spectrum is <span class="arithmatex">\(P_{AB}(k, \chi, R\chi) = T_A(k, \chi)\,T_B(k, R\chi)\)</span>
+(<code>unequal_time_pk</code>), with field A at <span class="arithmatex">\(\chi\)</span> and field B at <span class="arithmatex">\(R\chi\)</span>,
+expanded along <span class="arithmatex">\(k\)</span>. For <span class="arithmatex">\(A \neq B\)</span> the two orderings differ, and
+each is computed (and memoized) on its own. Shared by every pair of
+kernels tracing these fields: this is the cosmology-dependent part
+of the beyond-Limber computation that the pairs have in common.</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Array</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>shape <code>(n_cheb, n_chi, n_R)</code>, the layout <code>projected_density</code> expects.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="cloelib.observables.photo.spectrum_engine.SpectraBank.projected_density" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">projected_density</span>
+
+
+<a href="#cloelib.observables.photo.spectrum_engine.SpectraBank.projected_density" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">projected_density</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.projected_density(t_name)">t_name</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.projected_density(field_A)">field_A</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="n"><span title="cloelib.observables.photo.contributions.MATTER">MATTER</span></span><span class="p">,</span> <span class="n"><span title="cloelib.observables.photo.spectrum_engine.SpectraBank.projected_density(field_B)">field_B</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="n"><span title="cloelib.observables.photo.contributions.MATTER">MATTER</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="jax.numpy.ndarray">ndarray</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Projected (matter) density <span class="arithmatex">\(w_\ell(\chi, R)\)</span> for the T-tilde matrix <code>t_name</code>.</p>
+<p>Contracts <code>nonlimber_cheb(field_A, field_B)</code> with the matrix (e.g.
+<code>"T_minus2_00"</code>); computed once per <code>(field_A, field_B, t_name)</code>, and
+the matrix is only read from disk when a name is first asked for.
+Field A is the one at <span class="arithmatex">\(\chi\)</span>, field B the one at <span class="arithmatex">\(R\chi\)</span>.</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<b><code>Array</code></b> (              <code><span title="jax.numpy.ndarray">ndarray</span></code>
+)          –
+          <div class="doc-md-description">
+            <p>shape <code>(n_ell, n_chi, n_R)</code>.</p>
+          </div>
+        </li>
+    </ul>
 
           
 
@@ -29671,6 +30358,30 @@ engine reuse kernels and interpolations it already has.</p>
 
 </div>
 
+
+<div class="doc doc-object doc-function">
+
+
+<h5 id="cloelib.observables.photo.spectrum_engine.linear_source" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">linear_source</span>
+
+
+<a href="#cloelib.observables.photo.spectrum_engine.linear_source" class="headerlink" title="Permanent link">&para;</a></h5>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">linear_source</span><span class="p">(</span><span class="n"><span title="cloelib.observables.photo.spectrum_engine.linear_source(perturbations)">perturbations</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.cosmology.cosmology.Perturbations">Perturbations</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The linear perturbations behind <code>perturbations</code>, or <code>None</code>.</p>
+<p><code>perturbations.linearperturbations</code> when the backend exposes one;
+otherwise <code>perturbations</code> itself if it is one of cloelib's linear
+backends (<code>_is_known_linear_perturbations</code>); otherwise <code>None</code>.</p>
+
+          
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
@@ -34817,7 +35528,7 @@ wavenumber grids (ks), and angular power spectra (Cl).</p>
 
 
 <a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">AngularTwoPoint</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)">tracer1</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.tracer.Tracer">Tracer</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)">tracer2</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.tracer.Tracer">Tracer</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">AngularTwoPoint</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer1)">tracer1</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.tracer.Tracer">Tracer</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(tracer2)">tracer2</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.observables.photo.tracer.Tracer">Tracer</a></span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(ell_nonlimber_max)">ell_nonlimber_max</a></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -34850,6 +35561,43 @@ as instance attributes.</p>
           –
           <div class="doc-md-description">
             <p>The second tracer for the two-point function. Defaults to None.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+<h5 id="cloelib.summary_statistics.angular_two_point.AngularTwoPoint(ell_nonlimber_max)" class="doc doc-heading doc-heading-parameter">              <b><code>ell_nonlimber_max</code></b>
+<a href="#cloelib.summary_statistics.angular_two_point.AngularTwoPoint(ell_nonlimber_max)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="float">float</span></code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>Largest multipole at which the
+Limber Cl is corrected beyond Limber, with the linear
+correction <code>C_nonLimber^lin - C_Limber^lin</code> computed on the
+multipole nodes of the T-tilde dataset and interpolated (see
+<code>get_Cl_tensor</code>). Must lie within the nodes, <code>[2, 211.6]</code> for the
+standard dataset, which is downloaded on the first <code>get_Cl</code> if
+missing. <code>None</code> (default): Limber only.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="ValueError">ValueError</span></code>
+            –
+          <div class="doc-md-description">
+            <p>if <code>ell_nonlimber_max</code> lies outside the T-tilde nodes.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+              <code><span title="NotImplementedError">NotImplementedError</span></code>
+            –
+          <div class="doc-md-description">
+            <p>if <code>ell_nonlimber_max</code> is set and a
+contribution of the tracers has no <code>nonlimber_spec</code> (e.g. TATT,
+non-linear galaxy bias, CMB lensing, GW).</p>
           </div>
         </li>
     </ul>
@@ -34910,6 +35658,14 @@ cosmology backend - the growth-factor ODE solve and halofit) was
 always fully differentiable; confirmed against finite differences
 in <code>playground/tutorials/observables/photo_autodiff.ipynb</code> and
 <code>validation/photo_autodiff.ipynb</code>.</p>
+<p>With <code>ell_nonlimber_max</code> set, the linear beyond-Limber correction
+<code>C_nonLimber^lin - C_Limber^lin</code> (<code>_nonlimber_correction</code>) is added
+for <code>2 &lt;= ell &lt;= ell_nonlimber_max</code>: <code>C_nonLimber^lin</code> computed on
+the T-tilde nodes and interpolated (cubic spline in log ell),
+<code>C_Limber^lin</code> at <code>ells</code>, with the same windows and multiplicative
+shear bias as the Limber Cl. Outside that range the Cl is the Limber
+one. The beyond-Limber correction assumes a flat geometry: a JAX-traced
+<code>Omega_k0</code> is taken to be zero.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -34990,6 +35746,19 @@ in <code>playground/tutorials/observables/photo_autodiff.ipynb</code> and
           –
           <div class="doc-md-description">
             <p>equals <code>get_Cl_tensor(...)[:, i-1, j-1]</code> exactly.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="NotImplementedError">NotImplementedError</span></code>
+            –
+          <div class="doc-md-description">
+            <p>if <code>ell_nonlimber_max</code> is set and <code>Omega_k0</code>
+is a concrete non-zero value.</p>
           </div>
         </li>
     </ul>

@@ -121,6 +121,23 @@ tracer = ShearTracer(
 `TATTContribution` and `PBJTATTLoopComputer` both live in
 `cloelib.observables.photo.shear`, alongside `ShearTracer` itself.
 
+**Per-bin IA amplitude (NLA-bin)**: `ia_model="NLA-bin"` is NLA with a free
+amplitude per tomographic bin, `C1^i(z) = -A_IA^i * CIA * Omega_m0 / D(z)`,
+with no redshift evolution. It reads one `"AIA_{i}"` per bin (1-indexed) and
+optionally `"CIA"` (default 0.0134). As for NLA, the amplitude is part of
+the kernel and the engine integrates the plain matter power spectrum, so no
+`tatt_loop_computer` is needed:
+
+```python
+tracer = ShearTracer(
+    perturbations=pert,
+    dndz=dndz_bins,
+    z=z,
+    nuisance_params={**nuisance, "AIA_1": 0.8, "AIA_2": 1.3},
+    ia_model="NLA-bin",
+)
+```
+
 **Per-bin IA amplitude (TATT-M)**: `ia_model="TATT-M"` switches to TATT-M
 (Herle et al. 2026, arXiv:2601.15851), a generalization of TATT where the
 IA amplitude (C1/C2/C1delta) is tied to each tomographic bin's halo mass
@@ -156,8 +173,8 @@ engine one `PkTerm` (a per-bin-weighted kernel pair and a power spectrum)
 per term of TATT's P_II/P_deltaI through `get_pk_terms`, the same mechanism
 `NonLinearGalaxyBiasContribution` uses for its per-bin biases. Use
 `tracer.get_ia_effective_spectra(bin_i=..., bin_j=...)` to inspect one bin
-pair's P_II/P_deltaI. Pairing a TATT-M tracer with an NLA or TATT tracer
-raises `ValueError`.
+pair's P_II/P_deltaI. Pairing a TATT-M tracer with an NLA, NLA-bin or TATT
+tracer raises `ValueError`.
 
 ### PositionsTracer
 

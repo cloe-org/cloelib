@@ -434,6 +434,29 @@ def test_constructor_does_not_read_the_dataset(tracer_perturbations, no_default_
     AngularTwoPoint(g, g, ell_nonlimber_max=100.0)
 
 
+class _CurvatureBackground:
+    def __init__(self, Omega_k0):
+        self.Omega_k0 = Omega_k0
+
+
+def test_nonlimber_rejects_curved_geometry():
+    """Beyond Limber is flat-only: a concrete Omega_k0 != 0 raises."""
+    angular_two_point._check_nonlimber_flat(_CurvatureBackground(0.0))
+    with pytest.raises(NotImplementedError, match="flat geometry"):
+        angular_two_point._check_nonlimber_flat(_CurvatureBackground(0.05))
+
+
+def test_nonlimber_assumes_traced_curvature_is_flat():
+    """A JAX-traced Omega_k0 cannot be checked and does not raise."""
+
+    @jax.jit
+    def check(Omega_k0):
+        angular_two_point._check_nonlimber_flat(_CurvatureBackground(Omega_k0))
+        return Omega_k0
+
+    check(0.05)
+
+
 @pytest.mark.parametrize("kind", ["gg", "gs", "ss"])
 def test_get_cl_tensor_adds_the_correction(
     kind, tracer_perturbations, fake_default_store

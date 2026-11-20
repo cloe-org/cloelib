@@ -157,7 +157,7 @@ def test_missing_spec_gives_a_clear_error():
     # TATT has no beyond-Limber support (its spectra are signed and cannot
     # be combined at unequal times): it must not inherit one from NLA.
     assert not hasattr(TATTContribution, "nonlimber_spec")
-    assert nonlimber_spec_of(LensingContribution(None)) is SPECS["she"]
+    assert nonlimber_spec_of(LensingContribution) is SPECS["she"]
 
 
 # ---------------------------------------------------------------------------

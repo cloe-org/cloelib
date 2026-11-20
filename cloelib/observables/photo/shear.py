@@ -50,10 +50,12 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all
 follows.
 """
 
+import weakref
 from typing import Any, Callable, Dict, Optional, Protocol
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.geometry import cos_K, transverse_distance
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import (
     cached_stacked_simpson,
@@ -103,9 +105,11 @@ class LensingContribution:
         ell_prefactor=ell_prefactor_spin2,
         divide_by_chi2=True,
     )
+    traces_potential = True
 
     def __init__(self, tracer: "ShearTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         """Return the uncalibrated lensing kernel, shape ``(n_bin, n_z)``."""
@@ -132,7 +136,8 @@ class NLAContribution(IntrinsicAlignmentContribution):
     )
 
     def __init__(self, tracer: "ShearTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         """Return the uncalibrated NLA kernel, shape ``(n_bin, n_z)``."""
@@ -445,7 +450,8 @@ class TATTContribution(IntrinsicAlignmentContribution):
         z0: float = 0.62,
         C_IA: float = 0.0134,
     ) -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
         self.A1 = A1
         self.A2 = A2
         self.b_TA = b_TA
@@ -713,7 +719,8 @@ class TATTMContribution(IntrinsicAlignmentContribution):
         log10_M0: float = 13.5,
         C_IA: float = 0.0134,
     ) -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
         self._loop_computer = loop_computer
         self.alpha_M = alpha_M
         self.beta_M = beta_M
@@ -1158,14 +1165,19 @@ class ShearTracer:
         interpolator = interpax.Akima1DInterpolator(
             self.z, self.dndz_shifted[bin_idx, :]
         )
+        Ok, H0 = self.background.Omega_k0, self.background.H0
         x = np.linspace(0.0, 4, 200)
         y = self.background.comoving_distance(x)
-        rx_interp = interpax.Akima1DInterpolator(x, y)
+        rx_interp = interpax.Akima1DInterpolator(x, transverse_distance(y, Ok, H0))
+        cx_interp = interpax.Akima1DInterpolator(x, cos_K(y, Ok, H0))
         f1 = jax.jit(lambda x: interpolator(x))
-        f2 = jax.jit(lambda x: interpolator(x) / rx_interp(x))
+        f2 = jax.jit(lambda x: interpolator(x) * cx_interp(x) / rx_interp(x))
         integral_1 = simps(f1, z, 3.0)
         integral_2 = simps(f2, z, 3.0)
-        efficiency = integral_1 - integral_2 * self.background.comoving_distance(z)
+        rz = self.background.comoving_distance(z)
+        efficiency = cos_K(rz, Ok, H0) * integral_1 - integral_2 * transverse_distance(
+            rz, Ok, H0
+        )
         return efficiency
 
     def get_lensing_efficiency(self, z):
@@ -1173,7 +1185,8 @@ class ShearTracer:
         Compute the discretized lensing efficiency for every bin.
 
         The efficiency uses ``dndz_shifted`` and the grid distance-ratio
-        factor ``1 - chi(z_lens) / chi(z_source)``, contracted with cached
+        factor ``f_K(chi(z_source) - chi(z_lens)) / f_K(chi(z_source))``,
+        contracted with cached
         stacked Simpson weights. The supplied redshift grid is used as both
         the lens and source grid; this implementation assumes uniform spacing.
 
@@ -1192,7 +1205,11 @@ class ShearTracer:
         """
         dz = z[1] - z[0]  # assuming equispaced!
         rz = self.background.comoving_distance(z)
-        rzrz = 1 - np.outer(rz, 1 / rz)
+        Ok, H0 = self.background.Omega_k0, self.background.H0
+        rzrz = (
+            transverse_distance(rz[None, :] - rz[:, None], Ok, H0)
+            / transverse_distance(rz, Ok, H0)[None, :]
+        )
         w_matrix = cached_stacked_simpson(len(z))
         result = np.einsum("ik, jk, jk->ij", self.dndz_shifted, rzrz, w_matrix) * dz
         return result
@@ -1202,7 +1219,7 @@ class ShearTracer:
 
         It multiplies the discretized efficiency from
         :meth:`get_lensing_efficiency` by
-        ``3/2 * (H0/c)**2 * Omega_m0 * (1+z) * chi(z)``. The harmonic shear
+        ``3/2 * (H0/c)**2 * Omega_m0 * (1+z) * f_K(chi(z))``. The harmonic shear
         response is applied by ``AngularTwoPoint``.
 
         Args:
@@ -1218,7 +1235,11 @@ class ShearTracer:
             * (self.background.H0 / c_0) ** 2
             * Omega_m0
             * (1 + z)
-            * self.background.comoving_distance(z)
+            * transverse_distance(
+                self.background.comoving_distance(z),
+                self.background.Omega_k0,
+                self.background.H0,
+            )
         )
         efficiency = self.get_lensing_efficiency(z)
         # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.

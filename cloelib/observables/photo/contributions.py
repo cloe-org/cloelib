@@ -35,6 +35,11 @@ def contribution_field(contribution) -> str:
     return getattr(contribution, "field", MATTER)
 
 
+def traces_potential(contribution) -> bool:
+    """`contribution.traces_potential` if defined, else `False`."""
+    return getattr(contribution, "traces_potential", False)
+
+
 class Contribution(Protocol):
     """A single additive term of a tracer's window function.
 
@@ -60,7 +65,8 @@ class Contribution(Protocol):
     An optional `field` attribute (`MATTER` or `CB`, read through
     `contribution_field`) states which density field the contribution
     traces; it selects the base power spectrum of each contribution pair
-    in `AngularTwoPoint` (default: `MATTER`).
+    in `AngularTwoPoint` (default: `MATTER`). An optional `traces_potential`
+    attribute marks potential-sourced kernels (default: `False`).
 
     Likewise optional, and read the same way, is the class attribute
     `nonlimber_spec: NonLimberSpec`: what the beyond-Limber engine needs to
@@ -100,6 +106,10 @@ class IntrinsicAlignmentContribution:
     / `.positions` - this module holds only the generic, tracer-agnostic
     base types `spectrum_engine.py` and both submodules share.
     """
+
+    # Exact for NLA (linear in the tidal field). For TATT the quadratic tidal
+    # terms get the same linear curved-Poisson factor, an approximation.
+    traces_potential = True
 
 
 # ---------------------------------------------------------------------------

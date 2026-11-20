@@ -1,0 +1,202 @@
+"""Module for the geometry of non-flat FLRW spacetimes."""
+
+import jax.numpy as jnp
+
+from cloelib.auxiliary.units import SPEED_OF_LIGHT
+
+_C_KM_S = SPEED_OF_LIGHT / 1000
+
+
+def _curved(x, Omega_k0, H0, open_form, closed_form, series):
+    r"""Evaluate a function of $u = \Omega_K (x H_0/c)^2$ for any sign of $\Omega_K$.
+
+    Parameters
+    ----------
+    x : array_like
+        Distance(s) in Mpc.
+    Omega_k0 : float
+        Curvature density parameter today.
+    H0 : float
+        Hubble constant in km/s/Mpc.
+    open_form : callable
+        Exact form in $a = \sqrt{u}$ for $u > 0$.
+    closed_form : callable
+        Exact form in $a = \sqrt{-u}$ for $u < 0$.
+    series : callable
+        Taylor series in $u$ about $u = 0$.
+
+    Returns
+    -------
+    jax.numpy.ndarray
+        Same shape as ``x``.
+    """
+    u = Omega_k0 * (jnp.asarray(x) * H0 / _C_KM_S) ** 2
+    # The exact forms are 0/0 at u = 0 and sqrt(|u|) has an infinite derivative
+    # there, so the series is used for |u| < 1e-4 (truncation error < 1e-13).
+    small = jnp.abs(u) < 1e-4
+    a = jnp.sqrt(jnp.where(small, 1.0, jnp.abs(u)))
+    return jnp.where(small, series(u), jnp.where(u > 0, open_form(a), closed_form(a)))
+
+
+def transverse_distance(chi, Omega_k0, H0):
+    r"""Return the transverse comoving distance $f_K(\chi)$.
+
+    Parameters
+    ----------
+    chi : array_like
+        Comoving radial distance(s) in Mpc; may be negative.
+    Omega_k0 : float
+        Curvature density parameter today.
+    H0 : float
+        Hubble constant in km/s/Mpc.
+
+    Returns
+    -------
+    jax.numpy.ndarray
+        $f_K(\chi)$ in Mpc, same shape as ``chi``.
+    """
+    return jnp.asarray(chi) * _curved(
+        chi,
+        Omega_k0,
+        H0,
+        lambda a: jnp.sinh(a) / a,
+        lambda a: jnp.sin(a) / a,
+        lambda u: 1 + u / 6 + u**2 / 120,
+    )
+
+
+def radial_distance(d_M, Omega_k0, H0):
+    r"""Return the comoving radial distance $\chi$ for a transverse distance $D_M$.
+
+    Parameters
+    ----------
+    d_M : array_like
+        Transverse comoving distance(s) in Mpc.
+    Omega_k0 : float
+        Curvature density parameter today.
+    H0 : float
+        Hubble constant in km/s/Mpc.
+
+    Returns
+    -------
+    jax.numpy.ndarray
+        $\chi$ in Mpc, same shape as ``d_M``.
+    """
+    return jnp.asarray(d_M) * _curved(
+        d_M,
+        Omega_k0,
+        H0,
+        lambda a: jnp.arcsinh(a) / a,
+        lambda a: jnp.arcsin(a) / a,
+        lambda u: 1 - u / 6 + 3 * u**2 / 40,
+    )
+
+
+def cos_K(chi, Omega_k0, H0):
+    r"""Return $\mathrm{d}f_K/\mathrm{d}\chi$.
+
+    Parameters
+    ----------
+    chi : array_like
+        Comoving radial distance(s) in Mpc.
+    Omega_k0 : float
+        Curvature density parameter today.
+    H0 : float
+        Hubble constant in km/s/Mpc.
+
+    Returns
+    -------
+    jax.numpy.ndarray
+        Dimensionless, same shape as ``chi``.
+    """
+    return _curved(
+        chi,
+        Omega_k0,
+        H0,
+        jnp.cosh,
+        jnp.cos,
+        lambda u: 1 + u / 2 + u**2 / 24,
+    )
+
+
+def curvature(Omega_k0, H0):
+    r"""Return the spatial curvature $K = -\Omega_K (H_0/c)^2$.
+
+    Parameters
+    ----------
+    Omega_k0 : float
+        Curvature density parameter today.
+    H0 : float
+        Hubble constant in km/s/Mpc.
+
+    Returns
+    -------
+    float
+        $K$ in Mpc$^{-2}$, positive for closed geometries.
+    """
+    return -Omega_k0 * (H0 / _C_KM_S) ** 2
+
+
+def is_flat(Omega_k0) -> bool:
+    """Return whether ``Omega_k0`` is exactly zero.
+
+    Parameters
+    ----------
+    Omega_k0 : float
+        Curvature density parameter today.
+
+    Returns
+    -------
+    bool
+        ``True`` for a concrete zero; ``False`` otherwise, including for a
+        JAX-traced value.
+    """
+    try:
+        return float(Omega_k0) == 0.0
+    except TypeError:
+        return False
+
+
+def limber_wavenumber(ells, f_K, K):
+    r"""Return the Limber wavenumber $k = \sqrt{(\nu/f_K)^2 - K}$, $\nu = \ell + 1/2$.
+
+    Parameters
+    ----------
+    ells : array_like
+        Multipoles, shape ``(n_ell,)``.
+    f_K : array_like
+        Transverse comoving distance in Mpc, shape ``(n_z,)``.
+    K : float
+        Spatial curvature in Mpc$^{-2}$.
+
+    Returns
+    -------
+    jax.numpy.ndarray
+        $k$ in Mpc$^{-1}$, shape ``(n_ell, n_z)``.
+    """
+    q2 = (jnp.expand_dims(ells + 0.5, 1) / f_K) ** 2
+    return jnp.sqrt(jnp.where(q2 > K, q2 - K, q2))
+
+
+def potential_response(ells, f_K, K):
+    r"""Return the curved-Poisson factor $\nu^2 / (\nu^2 - 4 K f_K^2)$ of potential tracers.
+
+    Parameters
+    ----------
+    ells : array_like
+        Multipoles, shape ``(n_ell,)``.
+    f_K : array_like
+        Transverse comoving distance in Mpc, shape ``(n_z,)``.
+    K : float
+        Spatial curvature in Mpc$^{-2}$.
+
+    Returns
+    -------
+    jax.numpy.ndarray
+        Dimensionless, shape ``(n_ell, n_z)``; zero where the denominator is
+        not positive.
+    """
+    nu2 = jnp.expand_dims(ells + 0.5, 1) ** 2
+    den = nu2 - 4 * K * f_K**2
+    valid = den > 0
+    return jnp.where(valid, nu2 / jnp.where(valid, den, 1.0), 0.0)

@@ -35,12 +35,16 @@ Usage::
 from dataclasses import dataclass, fields, replace
 from typing import Any, Dict, Optional
 
+from cloelib.cosmology.godmax_cosmology import GODMAXNonLinearPerturbations
+
+#: Galaxy bias models available on the halo-model route (those the GODMAX
+#: backend supports).
+GALAXY_BIAS_MODELS = GODMAXNonLinearPerturbations.supported_galaxy_bias_models
 #: Linear galaxy bias models of `PositionsTracer`.
-LINEAR_BIAS_MODELS = ("per_bin", "per_bin_int", "poly")
-#: Galaxy bias models available on the halo-model route.
-GALAXY_BIAS_MODELS = ("hod",) + LINEAR_BIAS_MODELS
-#: Intrinsic-alignment choices: none, or cloelib's NLA ((1+z)/(1+z0IA))**EtaIA.
-IA_MODELS = (None, "NLA")
+LINEAR_BIAS_MODELS = tuple(model for model in GALAXY_BIAS_MODELS if model != "hod")
+#: Intrinsic-alignment choices: none, or cloelib's NLA ((1+z)/(1+z0IA))**EtaIA
+#: (those the GODMAX backend supports).
+IA_MODELS = GODMAXNonLinearPerturbations.supported_ia_models
 #: CMB lensing source redshift used by GODMAX.
 GODMAX_CMB_SOURCE_REDSHIFT = 1100.0
 #: Default FWHM of the y-map beam in GODMAX, in arcmin.

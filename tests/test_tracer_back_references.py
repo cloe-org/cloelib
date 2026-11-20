@@ -157,8 +157,11 @@ class _StubNLBias:
         return lambda matter_pk, ks, zs: 1e-2 * matter_pk[0]
 
 
+@pytest.mark.parametrize("include_rsd", [False, True])
 @pytest.mark.parametrize("bias_model", ["per_bin", "nonlinear"])
-def test_positions_tracer_freed_by_refcount(perturbations, z_dndz, bias_model):
+def test_positions_tracer_freed_by_refcount(
+    perturbations, z_dndz, bias_model, include_rsd
+):
     z, dndz = z_dndz
     nuisance = {
         **{f"dz_pos_{i + 1}": 0.0 for i in range(N_BINS)},
@@ -177,6 +180,7 @@ def test_positions_tracer_freed_by_refcount(perturbations, z_dndz, bias_model):
             z=z,
             galaxy_bias_model=bias_model,
             nuisance_params=nuisance,
+            include_rsd=include_rsd,
             **loop,
         )
     )

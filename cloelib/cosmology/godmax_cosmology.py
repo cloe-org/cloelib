@@ -718,6 +718,8 @@ class GODMAXNonLinearPerturbations:
             The spectrum, shape `(len(zs), len(ks))`, in Mpc^3 (times 1/Mpc per y
             leg). Matter-matter is `matter_power_spectrum`; the others are
             interpolated in (z, ln k) and held at the edge value outside the grid.
+            Check that the k grid (`self.k`, set by the halo-model `kmax` in
+            h/Mpc) covers (ell + 1/2) / chi(z_min) for the largest ell.
         """
         pair = tuple(sorted((field1, field2)))
         if pair == ("m", "m"):

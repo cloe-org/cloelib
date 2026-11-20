@@ -289,6 +289,34 @@ def _camb_flamingo():
     return lin, nonlin
 
 
+def _ee3():
+    from cloelib.cosmology.EE3_cosmology import (
+        EE3LinearPerturbations,
+        EE3NonLinearPerturbations,
+    )
+
+    background = _camb_background()
+    lin = EE3LinearPerturbations(background=background, redshifts=REDSHIFTS)
+    nonlin = EE3NonLinearPerturbations(
+        background=background, linearperturbations=lin, redshifts=REDSHIFTS
+    )
+    return lin, nonlin
+
+
+def _ee3_hmcode():
+    from cloelib.cosmology.EE3_cosmology import (
+        EE3HMcodePerturbations,
+        EE3LinearPerturbations,
+    )
+
+    background = _camb_background()
+    lin = EE3LinearPerturbations(background=background, redshifts=REDSHIFTS)
+    nonlin = EE3HMcodePerturbations(
+        background=background, linearperturbations=lin, redshifts=REDSHIFTS
+    )
+    return lin, nonlin
+
+
 # How `growth_rate` treats `ks`:
 SCALE_INDEPENDENT = "scale-independent"  # broadcast along k
 PIVOT_K = 1.0  # scale dependent, evaluated at this k [1/Mpc] if ks is None
@@ -304,6 +332,8 @@ BACKENDS = {
     "HMcode2020Emu": (_hmemu, "HMcode2020Emu", SCALE_INDEPENDENT),
     "BACCOemu": (_bacco, "baccoemu", KS_REQUIRED),
     "EE2": (_ee2, "euclidemu2", SCALE_INDEPENDENT),
+    "EE3": (_ee3, "euclidemulator3", KS_REQUIRED),
+    "EE3+HMcode": (_ee3_hmcode, "euclidemulator3", KS_REQUIRED),
     "JAX": (_jax, "jax", SCALE_INDEPENDENT),
     # Nonlinear perturbations with a baryonic boost (`with_baryon_boost`).
     "HMcode2020Emu+HMcode2020": (_hmemu_baryons, "HMcode2020Emu", SCALE_INDEPENDENT),

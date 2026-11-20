@@ -48,6 +48,8 @@ emantis = ["emantis>=1.2.1"]
 pbjcosmo = ["pbjcosmo"]
 fastpt = ["fast-pt"]
 FlamingoBaryonResponseEmulator = ["FlamingoBaryonResponseEmulator"]
+# EuclidEmulator3 is not on PyPI yet: pip install git+ssh://git@github.com/garico92/euclidemulator3.git
+euclidemulator3 = ["euclidemulator3"]
 
 mgclassy = ["mgclassy==2.9.4.5"]
 

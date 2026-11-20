@@ -497,7 +497,8 @@
         "projectManagement",
         "mentoring",
         "promotion",
-        "ideas"
+        "ideas",
+        "bug"
       ]
     },
     {
@@ -771,6 +772,25 @@
       "contributions": [
         "mentoring",
         "ideas"
+      ]
+    },
+    {
+      "login": "wdassignies",
+      "name": "William D'Assignies Doumerg",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89606153?v=4",
+      "profile": "https://wdassignies.github.io",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "marioballardini",
+      "name": "marioballardini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/188600397?v=4",
+      "profile": "https://github.com/marioballardini",
+      "contributions": [
+        "mentoring"
       ]
     }
   ]

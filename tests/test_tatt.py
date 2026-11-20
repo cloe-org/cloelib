@@ -22,6 +22,7 @@ that specifically validate the real backend use `PBJTATTLoopComputer`
 import numpy as np
 import pytest
 
+from cloelib.cosmology.camb_cosmology import CAMBLinearPerturbations
 from cloelib.observables.photo.contributions import (
     CB,
     MATTER,
@@ -340,9 +341,8 @@ def test_multiplicative_shear_bias_applied_in_generalized_path(cosmo_setup):
         )
 
 
-def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
-    """Strongest available check: with A2=b_TA=0 and z0=0 (matching legacy
-    NLA's implicit z0=0 pivot, see `tatt.py`'s `compute_kernel` docstring),
+def test_tatt_matches_legacy_nla_end_to_end(cosmo_setup):
+    """Strongest available check: with A2=b_TA=0 and z0IA=0.62,
     `ia_model="TATT"` must reproduce `ia_model="NLA"`'s `get_Cl` output
     bit-for-bit - through the *entire* pipeline (two independent code
     paths: `_compute_cl_legacy` vs `_compute_cl_generalized`), not just the
@@ -383,7 +383,7 @@ def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
         perturbations=perturbations,
         dndz=dndz,
         z=z,
-        nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.0),
+        nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.62),
         ia_model="TATT",
         tatt_loop_computer=_StubTATTLoopComputer(perturbations),
     )
@@ -401,9 +401,9 @@ def test_tatt_matches_legacy_nla_end_to_end_at_z0_zero(cosmo_setup):
 def test_generalized_engine_uses_pcb_like_legacy(cosmo_setup):
     """`PositionsTracer(use_Pcb=True)` x TATT-shear (generalized engine) must
     reproduce `PositionsTracer(use_Pcb=True)` x NLA-shear (legacy path) in
-    the A2=b_TA=z0=0 limit, i.e. both engines must pick the same cb x matter
+    the A2=b_TA=0 limit, i.e. both engines must pick the same cb x matter
     base spectrum - and that spectrum must actually differ from P_mm.
-    Same 5e-3 tolerance as `test_tatt_matches_legacy_nla_end_to_end_at_z0_zero`.
+    Same 5e-3 tolerance as `test_tatt_matches_legacy_nla_end_to_end`.
     """
     perturbations, z = cosmo_setup
     n_z_bins = 2
@@ -426,7 +426,7 @@ def test_generalized_engine_uses_pcb_like_legacy(cosmo_setup):
                 perturbations=perturbations,
                 dndz=dndz,
                 z=z,
-                nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.0),
+                nuisance_params=_shear_nuisance(n_z_bins, A2IA=0.0, bTA=0.0, z0IA=0.62),
                 ia_model="TATT",
                 tatt_loop_computer=_StubTATTLoopComputer(perturbations),
             )
@@ -703,9 +703,8 @@ def test_pbj_tatt_resolves_linear_source_from_nonlinear_perturbations(
 
     class _FakeUnrecognizedNonLinear:
         """No `.linearperturbations` and a name that doesn't end in
-        `LinearPerturbations` - e.g. `CAMBNonLinearPerturbations`, which
-        genuinely never sets `.linearperturbations` (see shear.py's
-        `_is_known_linear_perturbations` docstring)."""
+        `LinearPerturbations`: an unrecognized (e.g. user-defined) nonlinear
+        backend (see `spectrum_engine._is_known_linear_perturbations`)."""
 
     computer_with_nonlinear = PBJTATTLoopComputer(_FakeNonLinear(linear_perturbations))
     assert computer_with_nonlinear.linear_perturbations is linear_perturbations
@@ -718,13 +717,12 @@ def test_pbj_tatt_resolves_linear_source_from_nonlinear_perturbations(
 
 
 @pytest.mark.skipif(not _FASTPT_INSTALLED, reason="fast-pt not installed")
-def test_pbj_tatt_rejects_camb_nonlinear_without_linear_source(cosmo_setup):
-    """The concrete case PR #569's review flagged: `CAMBNonLinearPerturbations`
-    never sets `.linearperturbations` (its own `matter_power_spectrum` is
-    always nonlinear - see camb_cosmology.py), so passing one here must
-    raise rather than silently feed FAST-PT the nonlinear Pk.
+def test_pbj_tatt_uses_camb_nonlinear_linear_source(cosmo_setup):
+    """The case PR #569's review flagged: `CAMBNonLinearPerturbations` built
+    with `linearperturbations=None` exposes the linear spectra of its own CAMB
+    run, which FAST-PT then uses (not the nonlinear Pk).
     """
     perturbations, _ = cosmo_setup  # cosmo_setup's own CAMBNonLinearPerturbations
-    assert not hasattr(perturbations, "linearperturbations")
-    with pytest.raises(ValueError, match="linear matter-power-spectrum source"):
-        PBJTATTLoopComputer(perturbations)
+    assert isinstance(perturbations.linearperturbations, CAMBLinearPerturbations)
+    computer = PBJTATTLoopComputer(perturbations)
+    assert computer.linear_perturbations is perturbations.linearperturbations

@@ -1,0 +1,30 @@
+name: PR Description
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+      - ready_for_review
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  check-description:
+    name: Check PR description
+    runs-on: ubuntu-latest
+    # Bot PRs (All Contributors, dependabot, ...) do not use the PR template.
+    if: github.event.pull_request.user.type != 'Bot'
+    steps:
+      - uses: actions/checkout@v7
+      # Read the live description instead of the event payload, so that
+      # "Re-run jobs" always checks the current text of the PR.
+      - name: Check required items in the PR description
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.url }}
+        run: |
+          PR_BODY="$(gh api "$PR_URL" --jq '.body // ""')"
+          export PR_BODY
+          python3 .github/scripts/check_pr_description.py

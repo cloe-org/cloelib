@@ -43,9 +43,11 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all follows.
 """
 
 # cloelib imports
+import weakref
 from typing import Any, Callable, Protocol
 
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.geometry import transverse_distance
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import (
     cached_stacked_simpson,
@@ -55,6 +57,10 @@ from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
+    NonLimberSpec,
+    ell_prefactor_magnification,
+    ell_prefactor_one,
+    ell_prefactor_rsd,
     unit_sigma,
 )
 from cloelib.observables.photo.spectrum_engine import (
@@ -202,8 +208,16 @@ class GalaxyBiasContribution:
     `AngularTwoPoint` don't need to change either way.
     """
 
+    nonlimber_spec = NonLimberSpec(
+        power=1,
+        derivative=0,
+        ell_prefactor=ell_prefactor_one,
+        divide_by_chi2=False,
+    )
+
     def __init__(self, tracer: "PositionsTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: PositionsTracer = weakref.proxy(tracer)
 
     @property
     def field(self) -> str:
@@ -222,8 +236,17 @@ class MagnificationContribution:
     `use_Pcb=True` (the default `field`).
     """
 
+    nonlimber_spec = NonLimberSpec(
+        power=-1,
+        derivative=0,
+        ell_prefactor=ell_prefactor_magnification,
+        divide_by_chi2=True,
+    )
+    traces_potential = True
+
     def __init__(self, tracer: "PositionsTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: PositionsTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         """Return the raw magnification kernel, shape ``(n_bin, n_z)``."""
@@ -266,9 +289,7 @@ class PBJNonlinearBiasLoopComputer:
     Takes the *same* `perturbations` object you'd pass to `PositionsTracer` -
     typically nonlinear, so this class resolves the actual linear source
     itself: `perturbations.linearperturbations` if that attribute exists,
-    else `perturbations` itself (assumed already linear). Same known gap as
-    `PBJTATTLoopComputer`: `CAMBNonLinearPerturbations` does not (yet) set
-    `.linearperturbations`.
+    else `perturbations` itself (assumed already linear).
 
     `sig4` (FAST-PT's `_get_sig4`) is a single k-independent normalisation
     constant (a UV-sensitive loop integral, not itself a function of k),
@@ -509,7 +530,8 @@ class NonLinearGalaxyBiasContribution:
         b3nl: np.ndarray,
         bk2: np.ndarray,
     ) -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: PositionsTracer = weakref.proxy(tracer)
         self.b1 = b1
         self.b2 = b2
         self.bs2 = bs2
@@ -683,6 +705,47 @@ class NonLinearGalaxyBiasContribution:
             PkTerm(k_b3nl, other_kernel, 0.5 * sig3nl),
             PkTerm(k_bk2, other_kernel, 0.5 * pd1k2),
         )
+
+
+class RSDContribution:
+    """Redshift-space-distortion kernel term, beyond Limber only.
+
+    $$
+        W_i^{\\rm RSD}(z) = n_i(z)\\,\\frac{H(z)\\,f(z)}{c}
+    $$
+
+    with $n_i$ the shifted/stretched redshift distribution. Not part of
+    `PositionsTracer.get_contributions()` (hence of `get_window()` and the
+    Limber computation, which treat RSD through the `ell`-dependent
+    `get_window_rsd` instead): it enters the beyond-Limber integral via
+    `PositionsTracer.get_nonlimber_contributions()`, only when the tracer
+    was built with `include_rsd=True`.
+    """
+
+    nonlimber_spec = NonLimberSpec(
+        power=1,
+        derivative=2,
+        ell_prefactor=ell_prefactor_rsd,
+        divide_by_chi2=False,
+    )
+
+    def __init__(self, tracer: "PositionsTracer") -> None:
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: PositionsTracer = weakref.proxy(tracer)
+
+    @property
+    def field(self) -> str:
+        """The same field as the galaxy-bias term, as in the Limber RSD window.
+
+        With `use_Pcb=True` the growth rate is still that of the total
+        matter, not the (scale-dependent) one of cb.
+        """
+        return CB if self._tracer.use_Pcb else MATTER
+
+    def compute_kernel(self, z):
+        H = self._tracer.background.hubble_parameter(z, units="km/s/Mpc")
+        f = self._tracer.perturbations.growth_rate(z)
+        return self._tracer.dndz_shifted * (H * f / c_0)[None, :]
 
 
 class PositionsTracer:
@@ -870,6 +933,7 @@ class PositionsTracer:
             self.bias = GalaxyBiasContribution(self)
 
         self.magnification = MagnificationContribution(self)
+        self.rsd = RSDContribution(self) if include_rsd else None
 
     def get_contributions(self):
         """Return this tracer's window as its separable Contribution terms.
@@ -881,6 +945,22 @@ class PositionsTracer:
             `galaxy_bias_model="nonlinear"`.
         """
         return (self.bias, self.magnification)
+
+    def get_nonlimber_contributions(self):
+        """Return the contributions entering the beyond-Limber integral.
+
+        Same as `get_contributions()`, plus `self.rsd` when the tracer was
+        built with `include_rsd=True`. Kept separate from
+        `get_contributions()` so `get_window()` and the Limber computation
+        are untouched.
+
+        Returns:
+          contributions (tuple): `(bias, magnification)` or
+            `(bias, magnification, rsd)`.
+        """
+        if self.rsd is None:
+            return self.get_contributions()
+        return (*self.get_contributions(), self.rsd)
 
     def get_window_positions(self, z) -> np.ndarray:
         r"""Return the bias-weighted positions kernel at redshifts ``z``.
@@ -944,13 +1024,14 @@ class PositionsTracer:
 
         and shifted distances defined by the ``_alpha_coeffs`` factors:
         $$
-        \chi_{-}=\frac{2\ell-3}{2\ell+1}\chi(z),\qquad
-        \chi_{+}=\frac{2\ell+5}{2\ell+1}\chi(z).
+        f_{K,-}=\frac{2\ell-3}{2\ell+1}f_K(z),\qquad
+        f_{K,+}=\frac{2\ell+5}{2\ell+1}f_K(z).
         $$
 
-        The coefficients match ``_L_coeffs``. Multipoles below 2 are set to
-        zero, and shifted-distance queries outside the tabulated ``chi`` grid
-        contribute zero.
+        The coefficients match ``_L_coeffs`` and are also used for $K \neq 0$,
+        as in the CLASS Limber RSD transfer (``transfer_limber``). Multipoles
+        below 2 are set to zero, and shifted-distance queries outside the
+        tabulated grid contribute zero.
         $$
         A_\ell=\frac{2\ell^2+2\ell-1}{(2\ell-1)(2\ell+3)},\quad
         B_\ell=-\frac{\ell(\ell-1)}{(2\ell-1)\sqrt{(2\ell-3)(2\ell+1)}},\quad
@@ -959,9 +1040,8 @@ class PositionsTracer:
 
         Notes
         -----
-        - `chi` is used purely as an interpolation coordinate so `get_photo_rsd` can evaluate
+        - `f_K(chi)` is used purely as an interpolation coordinate so `get_photo_rsd` can evaluate
           the shifted arguments efficiently.
-
         Parameters
         ----------
         ells : array_like
@@ -978,7 +1058,8 @@ class PositionsTracer:
         """
         # S_i(z) = H(z) f(z) n_i(z) / c
         S = (H[None, :] * f[None, :] / c_0) * self.dndz_shifted
-        return get_photo_rsd(ells, chi, S)
+        Ok, H0 = self.background.Omega_k0, self.background.H0
+        return get_photo_rsd(ells, transverse_distance(chi, Ok, H0), S)
 
     def get_magnification_efficiency(self, z):
         r"""
@@ -1001,7 +1082,11 @@ class PositionsTracer:
         """
         dz = z[1] - z[0]  # assuming equispaced!
         rz = self.background.comoving_distance(z)
-        rzrz = 1 - np.outer(rz, 1 / rz)
+        Ok, H0 = self.background.Omega_k0, self.background.H0
+        rzrz = (
+            transverse_distance(rz[None, :] - rz[:, None], Ok, H0)
+            / transverse_distance(rz, Ok, H0)[None, :]
+        )
         w_matrix = cached_stacked_simpson(len(z))
         result = np.einsum("ik, jk, jk->ij", self.dndz_shifted, rzrz, w_matrix) * dz
         return result
@@ -1011,7 +1096,8 @@ class PositionsTracer:
 
         The geometric efficiency is evaluated on the supplied redshift grid
         using the shifted source distribution and Simpson weights; its
-        distance-ratio factor is ``1 - chi(z_lens) / chi(z_source)``. The
+        distance-ratio factor is ``f_K(chi(z_source) - chi(z_lens)) /
+        f_K(chi(z_source))``. The
         resulting efficiency is multiplied by the usual matter-lensing
         prefactor and the per-bin ``magnification_bias`` value.
 
@@ -1029,7 +1115,11 @@ class PositionsTracer:
             * (self.background.H0 / c_0) ** 2
             * Omega_m0
             * (1 + z)
-            * self.background.comoving_distance(z)
+            * transverse_distance(
+                self.background.comoving_distance(z),
+                self.background.Omega_k0,
+                self.background.H0,
+            )
         )
         efficiency = self.get_magnification_efficiency(z)
         # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.

@@ -180,7 +180,7 @@ PRESETS = {
 }
 
 
-def kernel_convention(preset: str = "godmax", **overrides: Any) -> KernelConvention:
+def kernel_convention(preset: str, **overrides: Any) -> KernelConvention:
     """Return the kernel convention of a preset, with optional overrides.
 
     Args:

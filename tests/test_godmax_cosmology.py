@@ -197,7 +197,7 @@ def test_invalid_inputs_raise(background):
         GODMAXNonLinearPerturbations(background, None, REDSHIFTS[::-1])
     with pytest.raises(ValueError, match="Unknown halo-model parameters"):
         GODMAXNonLinearPerturbations(background, None, REDSHIFTS, theta_ej=4.0)
-    with pytest.raises(ValueError, match="cosmology is taken from"):
+    with pytest.raises(ValueError, match="set by cloelib from `background`"):
         GODMAXNonLinearPerturbations(
             background, None, REDSHIFTS, godmax_config={"sim_params": {"cosmo": {}}}
         )

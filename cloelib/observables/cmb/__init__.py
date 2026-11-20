@@ -6,10 +6,11 @@ in `cmb.tsz`. Both implement the tracer interface consumed by
 """
 
 from cloelib.observables.cmb import lensing, tsz
-from cloelib.observables.cmb.lensing import CMBLensingTracer
+from cloelib.observables.cmb.lensing import CMBLensingContribution, CMBLensingTracer
 from cloelib.observables.cmb.tsz import tSZTracer
 
 __all__ = [
+    "CMBLensingContribution",
     "CMBLensingTracer",
     "tSZTracer",
     "lensing",

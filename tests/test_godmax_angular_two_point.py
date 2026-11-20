@@ -305,10 +305,22 @@ def test_magnification_term_uses_matter_spectra(
     assert_allclose(difference, expected, rtol=5e-3)
 
 
-def test_rsd_with_hod_and_tsz(halomodel, godmax_tracers):
-    """RSD is available with HOD galaxies and against tSZ. The RSD term traces
-    matter, so its pairing with tSZ is the same with HOD or with linear bias."""
-    rsd = make_tracers(halomodel, kernel_convention("godmax", rsd=True))
+def test_rsd_with_hod_raises(halomodel):
+    """The RSD term is perturbation theory, so HOD galaxies cannot include it."""
+    convention = kernel_convention("godmax")
+    with pytest.raises(NotImplementedError, match="include_rsd"):
+        PositionsTracer(
+            halomodel,
+            NZ_GALAXIES[None],
+            Z,
+            galaxy_bias_model="hod",
+            nuisance_params=convention.nuisance(NUISANCE),
+            include_rsd=True,
+        )
+
+
+def test_rsd_with_linear_bias_and_tsz(halomodel):
+    """RSD with linear bias on the halo-model matter spectra, also against tSZ."""
     linear = make_tracers(
         halomodel, kernel_convention("godmax", galaxy_bias_model="per_bin")
     )
@@ -322,21 +334,19 @@ def test_rsd_with_hod_and_tsz(halomodel, godmax_tracers):
             ELLS, 0, halomodel.k
         )[:, 0, 0]
 
-    hod_rsd_term = cl(rsd, "Y") - cl(godmax_tracers, "Y")
-    linear_rsd_term = cl(linear_rsd, "Y") - cl(linear, "Y")
-    assert bool(jnp.all(jnp.isfinite(hod_rsd_term)))
-    assert bool(jnp.all(hod_rsd_term != 0))
-    assert_allclose(hod_rsd_term, linear_rsd_term, rtol=1e-6)
+    rsd_term = cl(linear_rsd, "Y") - cl(linear, "Y")
+    assert bool(jnp.all(jnp.isfinite(rsd_term)))
+    assert bool(jnp.all(rsd_term != 0))
     for other in ("POS", "SHE", "CMBL"):
         assert not np.allclose(
-            cl(rsd, other), cl(godmax_tracers, other), rtol=1e-6, atol=0
+            cl(linear_rsd, other), cl(linear, other), rtol=1e-6, atol=0
         )
     # RSD only touches the galaxy kernel.
     assert_allclose(
-        AngularTwoPoint(rsd["SHE"], rsd["Y"]).get_Cl_tensor(ELLS, 0, halomodel.k),
-        AngularTwoPoint(godmax_tracers["SHE"], godmax_tracers["Y"]).get_Cl_tensor(
+        AngularTwoPoint(linear_rsd["SHE"], linear_rsd["Y"]).get_Cl_tensor(
             ELLS, 0, halomodel.k
         ),
+        AngularTwoPoint(linear["SHE"], linear["Y"]).get_Cl_tensor(ELLS, 0, halomodel.k),
         rtol=1e-12,
     )
 

@@ -789,7 +789,7 @@ class AngularTwoPoint:
         spectrum (`SpectraBank.base`). Without `use_Pcb` there is a
         single total-matter window per tracer, hence a single `P_mm`
         integral. The RSD window of a `PositionsTracer` traces the same field
-        as its galaxy-bias term.
+        as its galaxy-bias term (RSD is not available with HOD galaxies).
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z

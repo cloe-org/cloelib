@@ -235,6 +235,28 @@ def test_missing_sectors_raise(halomodel, halomodel_matter):
         halomodel.power_spectrum("m", "x", zs, ks)
 
 
+def test_galaxies_without_tsz(halomodel_galaxies, background):
+    """Galaxies do not switch tSZ on, and their spectra do not depend on it."""
+    no_tsz = GODMAXNonLinearPerturbations(
+        background,
+        None,
+        REDSHIFTS,
+        model_tSZ=False,
+        galaxies={"nbar": 5e-4},
+        godmax_config=GODMAX_CONFIG,
+    )
+    zs, ks = no_tsz.z, no_tsz.k
+    for pair in (("m", "m"), ("g", "m"), ("g", "g")):
+        assert_allclose(
+            no_tsz.power_spectrum(*pair, zs, ks),
+            halomodel_galaxies.power_spectrum(*pair, zs, ks),
+            rtol=1e-10,
+        )
+    for pair in (("y", "y"), ("g", "y")):
+        with pytest.raises(ValueError, match="model_tSZ=True"):
+            no_tsz.power_spectrum(*pair, zs, ks)
+
+
 def test_tsz_units_against_godmax_cls(halomodel, background):
     """Limber integrals in cloelib units reproduce GODMAX's own C_ell.
 

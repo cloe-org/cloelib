@@ -59,6 +59,9 @@ def test_baseline_preset_keeps_nuisances():
     }
     assert convention.cmb_options() == {"z_source": None}
     assert convention.tsz_options() == {"beam_fwhm_arcmin": 0.0}
+    # The baseline has RSD, so it cannot switch to HOD galaxies alone.
+    with pytest.raises(NotImplementedError, match="rsd=True is not available"):
+        kernel_convention("baseline", galaxy_bias_model="hod")
 
 
 def test_overrides():
@@ -83,6 +86,7 @@ def test_overrides():
         ({"ia_model": "TATT"}, NotImplementedError, "TATT"),
         ({"galaxy_bias_model": "nonlinear"}, NotImplementedError, "nonlinear"),
         ({"galaxy_bias_model": "linear"}, ValueError, "Unknown galaxy_bias_model"),
+        ({"rsd": True}, NotImplementedError, "rsd=True is not available"),
         ({"ia_model": "LA"}, ValueError, "Unknown ia_model"),
         ({"ia_model": "NLA_pivot"}, ValueError, "Unknown ia_model"),
         ({"y_beam_fwhm_arcmin": -1.0}, ValueError, "non-negative"),

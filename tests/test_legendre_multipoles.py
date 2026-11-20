@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground
-from cloelib.observables.spectro.CometEFT_spectro import CometEFT_SpectroPower
 from cloelib.summary_statistics.legendre_multipoles import LegendreMultipoles
 
 H0 = 67.7
@@ -25,21 +24,32 @@ BACKGROUND_KWARGS = dict(
     N_mnu=0,
 )
 
-# EFT bias and counterterms of the spectroscopic power spectrum
-RSD_PARAMETERS = dict(b1=1.8, b2=0.0, bG2=0.0, bGam3=0.0, c0=0.0, c2=0.0, c4=0.0)
-
 # Shot noise and observational systematics of the multipoles
 NUISANCE_PARAMETERS = dict(NP0=1.0, NP20=0.0, NP22=0.0, sigmaz=0.0, fcorr=1.0)
 
 
+class _AnalyticSpectroPower:
+    """Minimal SpectroPower place holder.
+
+    The analytical form used here is only needed for testing the fcorr rescaling.
+    More accurate unit tests of the Legendre multipoles should be added in a future PR.
+    """
+
+    def __init__(self, background, redshift):
+        self.background = background
+        self.redshift = redshift
+
+    def Pk2d_rsd(self, k, mu):
+        return k**2 * mu**4
+
+    def Pk2d_term_rsd(self, k, mu, term_list):
+        return np.array([self.Pk2d_rsd(k, mu) for _ in term_list])
+
+
 @pytest.fixture(scope="module")
 def spectro_power():
-    """Fixture to create an instance of CometEFT_SpectroPower."""
-    return CometEFT_SpectroPower(
-        background=CAMBBackground(**BACKGROUND_KWARGS),
-        RSD_parameters=RSD_PARAMETERS,
-        redshift=1.0,
-    )
+    """Fixture to create an instance of the analytic SpectroPower."""
+    return _AnalyticSpectroPower(CAMBBackground(**BACKGROUND_KWARGS), redshift=1.0)
 
 
 def _multipoles(spectro_power, fcorr):

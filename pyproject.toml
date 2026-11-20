@@ -48,6 +48,7 @@ emantis = ["emantis>=1.2.1"]
 pbjcosmo = ["pbjcosmo"]
 fastpt = ["fast-pt"]
 FlamingoBaryonResponseEmulator = ["FlamingoBaryonResponseEmulator"]
+BCemu = ["BCemu"]
 
 mgclassy = ["mgclassy==2.9.4.5"]
 

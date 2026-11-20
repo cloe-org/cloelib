@@ -123,7 +123,7 @@ _TATT_M_NUISANCE = {
 }
 
 
-@pytest.mark.parametrize("ia_model", [None, "NLA", "TATT", "TATT-M"])
+@pytest.mark.parametrize("ia_model", [None, "NLA", "NLA-bin", "TATT", "TATT-M"])
 def test_shear_tracer_freed_by_refcount(perturbations, z_dndz, ia_model):
     z, dndz = z_dndz
     nuisance = {
@@ -133,6 +133,7 @@ def test_shear_tracer_freed_by_refcount(perturbations, z_dndz, ia_model):
         "AIA": 1.0,
         "CIA": 0.0134,
         "EtaIA": -0.41,
+        **{f"AIA_{i + 1}": 1.0 for i in range(N_BINS)},
         "A2IA": 0.5,
         "bTA": 0.3,
         **(_TATT_M_NUISANCE if ia_model == "TATT-M" else {}),

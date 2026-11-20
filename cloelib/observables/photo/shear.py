@@ -10,10 +10,13 @@ intrinsic-alignment options - lives in this one module:
 - `ShearTracer` itself. By default (`ia_model=None`) it has no
   intrinsic-alignment contribution at all - only `LensingContribution`.
   Pass `ia_model="NLA"` explicitly for `NLAContribution` (the nonlinear
-  alignment model), `ia_model="TATT"` for `TATTContribution`, or
-  `ia_model="TATT-M"` for `TATTMContribution`.
+  alignment model), `ia_model="NLA-bin"` for `NLABinContribution`,
+  `ia_model="TATT"` for `TATTContribution`, or `ia_model="TATT-M"` for
+  `TATTMContribution`.
 - `LensingContribution`, `NLAContribution`: two of the `Contribution`s a
   `ShearTracer` can be built from.
+- `NLABinContribution` (`ia_model="NLA-bin"`): NLA with a free amplitude
+  per tomographic bin.
 - `TATTContribution` (Eqs. 9-16 of Navarro-Gironés et al. 2026,
   arXiv:2602.16448, "Euclid preparation. CIV. Impact of galaxy intrinsic
   alignment modelling choices on Euclid 3x2pt cosmology"): an alternative
@@ -126,6 +129,54 @@ class NLAContribution(IntrinsicAlignmentContribution):
     def compute_kernel(self, z):
         """Return the uncalibrated NLA kernel, shape ``(n_bin, n_z)``."""
         return self._tracer.get_window_IA(z)
+
+
+def _nla_bin_amplitudes(nuisance_params, n_bins):
+    """Per-bin NLA amplitudes `A_IA^i`, shape `(n_bins,)`, read from the
+    1-indexed `AIA_{i}` keys of `nuisance_params`."""
+    return jnp.asarray([nuisance_params[f"AIA_{i + 1}"] for i in range(n_bins)])
+
+
+class NLABinContribution(IntrinsicAlignmentContribution):
+    r"""NLA with a free intrinsic-alignment amplitude per tomographic bin.
+
+        C1^i(z) = -A_IA^i * C_IA * Omega_m0 / D(z)
+
+    There is no `(1+z)^eta` evolution: the per-bin amplitudes absorb the
+    redshift dependence. As for `NLAContribution`, the amplitude is part of
+    `compute_kernel` and the engine uses the plain matter spectrum. `D(z)` follows
+    NLA's convention (`ShearTracer.get_window_IA`).
+
+    Args:
+      tracer: the owning `ShearTracer`.
+      A_IA: per-bin amplitudes, shape `(n_bins,)`.
+      C_IA: IA normalisation, as for `NLAContribution`.
+    """
+
+    def __init__(self, tracer: "ShearTracer", A_IA, C_IA: float = 0.0134) -> None:
+        A_IA = jnp.asarray(A_IA)
+        if A_IA.shape != (tracer.n_z_bins,):
+            raise ValueError(
+                f"NLABinContribution needs one amplitude per bin: expected "
+                f"shape ({tracer.n_z_bins},), got {A_IA.shape}."
+            )
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
+        self.A_IA = A_IA
+        self.C_IA = C_IA
+
+    def compute_kernel(self, z):
+        """Per-bin kernel `C1^i(z) * n_i(z) * H(z)/c`, shape `(n_bins, len(z))`."""
+        # Same as `ShearTracer.get_window_IA` (NLA), with a per-bin amplitude
+        # and no redshift evolution.
+        tracer = self._tracer
+        Omega_m0 = tracer.background.Omega_m(0.0)
+        Hz = tracer.perturbations.background.hubble_parameter(z)
+        ks: Any = getattr(tracer.perturbations, "k", None)
+        Dz_raw = tracer.perturbations.growth_factor(z, ks)
+        Dz = Dz_raw[:, 1] if getattr(Dz_raw, "ndim", 1) == 2 else Dz_raw
+        factor = -Hz / c_0 * self.C_IA * Omega_m0 / Dz
+        return np.einsum("i, ij, j->ij", self.A_IA, tracer.dndz_shifted, factor)
 
 
 # ---------------------------------------------------------------------------
@@ -709,7 +760,7 @@ class TATTMContribution(IntrinsicAlignmentContribution):
     weighted kernel pair per term, as `NonLinearGalaxyBiasContribution`
     does for its per-bin biases.
 
-    Pairing with a different IA model (NLA, TATT) raises `ValueError`.
+    Pairing with a different IA model (NLA, NLA-bin, TATT) raises `ValueError`.
 
     Args:
       tracer: the owning `ShearTracer`.
@@ -902,7 +953,10 @@ class ShearTracer:
             term. `"NLA"` builds `NLAContribution` (`get_window_IA`, reading
             `nuisance_params["AIA"/"CIA"/"EtaIA"]` and optionally
             `nuisance_params["z0IA"]`, the pivot redshift of the
-            `((1+z)/(1+z0IA))**EtaIA` scaling, default 0.62). `"TATT"` builds a
+            `((1+z)/(1+z0IA))**EtaIA` scaling, default 0.62). `"NLA-bin"`
+            builds `NLABinContribution` from per-bin
+            `nuisance_params[f"AIA_{i+1}"]` and optionally
+            `.get("CIA", 0.0134)`, with no redshift evolution. `"TATT"` builds a
             `TATTContribution` from `nuisance_params["AIA"]` (=A1),
             `nuisance_params["A2IA"]`, `nuisance_params["bTA"]`, and optionally
             `nuisance_params["Eta2IA"]`/`["z0IA"]` (default 0.0/0.62).
@@ -983,7 +1037,7 @@ class ShearTracer:
         tabulated TATT spectra) without building a `SpectraBank` by hand.
 
         Raises `ValueError` for `ia_model=None` (no IA contribution) or
-        `ia_model="NLA"` (whose P_II/P_deltaI share the matter Pk's
+        `ia_model="NLA"`/`"NLA-bin"` (whose P_II/P_deltaI share the matter Pk's
         k-shape by construction: the amplitude is applied directly inside
         `compute_kernel`, not exposed as a separate grid) - neither has
         any effective-Pk grid to return, with or without `bin_i`/`bin_j`.
@@ -1023,7 +1077,7 @@ class ShearTracer:
                 "get_ia_effective_spectra() needs an IA model that defines "
                 "an effective power spectrum (currently ia_model='TATT' or "
                 f"'TATT-M'); this tracer's ia is {ia_name!r}, which has "
-                "none - either no IA contribution at all, or NLA "
+                "none - either no IA contribution at all, or NLA/NLA-bin "
                 "(amplitude applied directly inside compute_kernel, not "
                 "exposed as a separate grid)."
             )
@@ -1078,7 +1132,8 @@ class ShearTracer:
         """Resolve the `ia_model` constructor argument into a Contribution.
 
         `None` (default) means no intrinsic-alignment contribution at all;
-        `"NLA"` builds `NLAContribution`; `"TATT"` builds a
+        `"NLA"` builds `NLAContribution`; `"NLA-bin"` builds
+        `NLABinContribution`; `"TATT"` builds a
         `TATTContribution`, which requires `tatt_loop_computer`
         (no illustrative default - see `TATTContribution`'s docstring);
         `"TATT-M"` builds a `TATTMContribution` (also requires
@@ -1095,6 +1150,12 @@ class ShearTracer:
             return None
         if ia_model == "NLA":
             return NLAContribution(self)
+        if ia_model == "NLA-bin":
+            return NLABinContribution(
+                self,
+                A_IA=_nla_bin_amplitudes(nuisance_params, self.n_z_bins),
+                C_IA=nuisance_params.get("CIA", 0.0134),
+            )
         if ia_model == "TATT":
             if tatt_loop_computer is None:
                 raise ValueError(
@@ -1135,8 +1196,8 @@ class ShearTracer:
             )
         if isinstance(ia_model, str):
             raise ValueError(
-                f"Unknown ia_model {ia_model!r}: expected 'NLA', 'TATT', "
-                "'TATT-M', or a Contribution instance."
+                f"Unknown ia_model {ia_model!r}: expected 'NLA', 'NLA-bin', "
+                "'TATT', 'TATT-M', or a Contribution instance."
             )
         return ia_model
 

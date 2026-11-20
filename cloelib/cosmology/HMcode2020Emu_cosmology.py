@@ -6,6 +6,8 @@ from cloelib.cosmology.cosmology import (
     Background,
     BaryonBoostMixin,
     WithLinearSpectrumGrid,
+    ensure_gravity_only,
+    ensure_gravity_only_on_first_use,
 )
 from cloelib.auxiliary.extrapolator import extend_spectra
 from cloelib.auxiliary.math_utils import ensure_z_zero_included
@@ -294,6 +296,8 @@ class HMemuNonLinearPerturbations:
             "wa": self.background.wa,
         }
         baryonic_boost = log10TAGN is not None
+        # Read by the baryonic mixins, which must not be added on top.
+        self.includes_baryons = baryonic_boost
 
         if baryonic_boost:
             self.params_hm_emu["log10TAGN"] = log10TAGN
@@ -577,16 +581,15 @@ def _set_neutrino_masses(background: Background) -> float:
 class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
     """Mixin providing baryonic suppression via an HMcode2020-computed P_baryon/P_dmo ratio.
 
-    Can be combined with *any* nonlinear perturbations class (not just HMcode2020emu)::
+    Can be combined with any gravity-only nonlinear perturbations class (not
+    just HMcode2020emu) through
+    :func:`~cloelib.cosmology.cosmology.with_baryon_boost`::
 
-        class MyPert(HMcode2020BaryonBoostMixin, HMemuNonLinearPerturbations):
-            def __init__(self, background, linearperturbations, redshifts, log10TAGN=7.8):
-                HMemuNonLinearPerturbations.__init__(
-                    self, background, linearperturbations, redshifts
-                )
-                HMcode2020BaryonBoostMixin.__init__(self, log10TAGN=log10TAGN)
-
-    Or use :func:`~cloelib.cosmology.cosmology.with_baryon_boost`.
+        MyPert = with_baryon_boost(SomeNonLinearPerturbations, HMcode2020BaryonBoostMixin)
+        pert = MyPert(
+            background, linear_pert, redshifts,
+            baryon_kwargs=dict(log10TAGN=7.8),
+        )
 
     .. note::
         ``__init__`` must be called **after** the base NonLinear ``__init__``
@@ -616,6 +619,7 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
             log₁₀ of the AGN heating temperature in Kelvin.
             Typical range: 7.6 (weak) – 8.3 (strong feedback).
         """
+        ensure_gravity_only(self, "HMcode2020BaryonBoostMixin")
         # The emulator parameters are built here rather than taken from the
         # base class, so this mixin also works on top of a non-HMcode2020emu
         # nonlinear prescription.
@@ -703,6 +707,7 @@ class HMcode2020BaryonBoostMixin(BaryonBoostMixin):
             Baryonic suppression factor, shape (nz, nk).
             Returns 1.0 for scales below the nonlinear emulator k range.
         """
+        ensure_gravity_only_on_first_use(self, "HMcode2020BaryonBoostMixin")
         zs = np.atleast_1d(zs)
         ks = np.atleast_1d(ks)
         if k_hunit:

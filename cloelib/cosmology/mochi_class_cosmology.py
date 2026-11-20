@@ -6,6 +6,7 @@ from cloelib.cosmology.cosmology import (
     CB_CROSS_LINEAR_NU,
     Background,
     Perturbations,
+    class_hmcode_includes_baryons,
 )
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.auxiliary.geometry import transverse_distance
@@ -769,10 +770,7 @@ class mochiCLASSNonLinearPerturbations:
                 nonlinear_model = "hmcode"
             if hmcode_version is None:
                 hmcode_version = "2020_baryonic_feedback"
-            if (nonlinear_model, hmcode_version) != (
-                "hmcode",
-                "2020_baryonic_feedback",
-            ):
+            if not class_hmcode_includes_baryons(nonlinear_model, hmcode_version):
                 raise ValueError(
                     "log10TAGN is only used by nonlinear_model='hmcode' with "
                     "hmcode_version='2020_baryonic_feedback', got "
@@ -782,6 +780,12 @@ class mochiCLASSNonLinearPerturbations:
 
         if nonlinear_model is None:
             nonlinear_model = "none"
+        # Read by the baryonic mixins, which must not be added on top. With
+        # mg_stable_basis_on, mochi_class applies no nonlinear correction.
+        self.includes_baryons = (
+            class_hmcode_includes_baryons(nonlinear_model, hmcode_version)
+            and not background.mg_stable_basis_on
+        )
 
         # Ensure CLASS is initialized with necessary parameters
         self.interface_args = copy.deepcopy(self.background.interface_args)

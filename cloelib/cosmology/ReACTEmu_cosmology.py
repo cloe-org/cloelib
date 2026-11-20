@@ -1,5 +1,9 @@
 # cloelib imports
-from cloelib.cosmology.cosmology import Background, WithWavenumberGrid
+from cloelib.cosmology.cosmology import (
+    Background,
+    WithWavenumberGrid,
+    perturbations_include_baryons,
+)
 from cloelib.auxiliary.extrapolator import extend_spectra
 
 
@@ -469,6 +473,7 @@ class BoostedPerturbations:
         assert self.background.Omega_k0 == 0, "Non flat geometries not supported"
 
         self.base = base_perturbations
+        self.includes_baryons = perturbations_include_baryons(base_perturbations)
         self.boost_interp = boost_interp
 
         self.base_lin = base_lin_perturbations

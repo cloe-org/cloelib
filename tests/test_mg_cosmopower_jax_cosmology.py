@@ -401,3 +401,21 @@ def test_derived_quantities_run(monkeypatch, zs):
     assert f.shape == zs.shape and np.all(np.isfinite(f))
     D = nlp.growth_factor(zs, _KGRID)
     assert D.shape == (zs.size, _KGRID.size) and np.all(np.isfinite(D))
+
+
+@pytest.mark.parametrize("includes_baryons", [False, True])
+def test_nonlinear_reports_baseline_baryons(monkeypatch, zs, includes_baryons):
+    """The modified-gravity spectrum includes baryonic feedback exactly when its
+    baseline does, so that no baryonic mixin is added on top of it."""
+
+    class Baseline(_FakeBaselineNonLinear):
+        pass
+
+    Baseline.includes_baryons = includes_baryons
+    monkeypatch.setattr(mg, "_load_emu", _make_fake_load_emu(1.0))
+    _, NonLin = mg.mg_perturbations(
+        mg.MGParams(),
+        baseline_linear=_FakeBaselineLinear,
+        baseline_nonlinear=Baseline,
+    )
+    assert NonLin(_bg(), None, zs).includes_baryons is includes_baryons

@@ -10,6 +10,7 @@
 """
 
 # General imports
+import inspect
 from typing import Any, Protocol, Union, Sequence, TypeVar, Optional, runtime_checkable
 
 import numpy as np
@@ -297,19 +298,22 @@ class BaryonBoostMixin(Protocol):
     instantiated directly.
 
     Concrete implementations live in backend-specific files and are composed
-    into ``Perturbations`` subclasses to override ``matter_power_spectrum``::
+    with a nonlinear perturbations class through :func:`with_baryon_boost`,
+    which multiplies ``matter_power_spectrum`` and ``matter_power_spectrum_cb``
+    by ``baryonic_suppression``::
 
-        class FlamingoBaryonBoostMixin(BaryonBoostMixin):
-            def baryonic_suppression(self, zs, ks, k_hunit=False): ...
+        CAMBNonLinearFLAMINGOPerturbations = with_baryon_boost(
+            CAMBNonLinearPerturbations, FlamingoBaryonBoostMixin
+        )
 
-        class CAMBNonLinearFLAMINGOPerturbations(
-            FlamingoBaryonBoostMixin, CAMBNonLinearPerturbations
-        ):
-            def matter_power_spectrum(self, zs, ks, ...):
-                return super().matter_power_spectrum(...) * self.baryonic_suppression(...)
+    Composing by hand instead requires overriding both spectra, and making
+    sure the cb one is boosted once also when the nonlinear class derives it
+    from the total one; `with_baryon_boost` takes care of this.
     """
 
-    def baryonic_suppression(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
+    def baryonic_suppression(
+        self, zs: np.ndarray, ks: np.ndarray, k_hunit: bool = False
+    ) -> np.ndarray:
         """Return the multiplicative baryonic suppression factor P_hydro/P_DMO.
 
         Parameters
@@ -318,12 +322,113 @@ class BaryonBoostMixin(Protocol):
             Redshifts, shape (nz,).
         ks:
             Wavenumbers, shape (nk,).
+        k_hunit:
+            If ``True`` ks are in h/Mpc; otherwise in 1/Mpc. `with_baryon_boost`
+            always passes it.
 
         Returns
         -------
         np.ndarray, shape (nz, nk)
         """
         ...
+
+
+def hmcode_version_includes_baryons(hmcode_version: Optional[str]) -> bool:
+    """Whether a CLASS ``hmcode_version`` selects HMcode2020 with baryonic feedback.
+
+    CLASS selects the baryonic version for any value containing ``20baryon``
+    or ``20_baryon`` (e.g. ``"2020_baryonic_feedback"`` or ``"2020_baryonic"``).
+    """
+    return hmcode_version is not None and (
+        "20baryon" in hmcode_version or "20_baryon" in hmcode_version
+    )
+
+
+def class_hmcode_includes_baryons(
+    nonlinear_model: Optional[str], hmcode_version: Optional[str]
+) -> bool:
+    """Whether CLASS options select HMcode2020 with baryonic feedback.
+
+    CLASS selects HMcode for a ``non_linear`` value containing ``hmcode``,
+    ``HMcode``, ``Hmcode`` or ``HMCODE``, and the baryonic version as described
+    in `hmcode_version_includes_baryons`. Other capitalisations are refused by
+    CLASS, so matching them too is harmless. Shared by the CLASS-based backends.
+    """
+    return (
+        nonlinear_model is not None
+        and "hmcode" in nonlinear_model.lower()
+        and hmcode_version_includes_baryons(hmcode_version)
+    )
+
+
+def perturbations_include_baryons(perturbations: Any) -> bool:
+    """Whether the nonlinear spectrum of ``perturbations`` includes baryonic feedback.
+
+    True if it reports ``includes_baryons`` (see `ensure_gravity_only`) or
+    carries a baryonic mixin, however composed. Used by the classes that wrap
+    another nonlinear spectrum, e.g. to apply a modified-gravity boost.
+    """
+    return bool(getattr(perturbations, "includes_baryons", False)) or isinstance(
+        perturbations, BaryonBoostMixin
+    )
+
+
+def ensure_gravity_only(
+    perturbations: Any, mixin_name: str, perturbations_name: Optional[str] = None
+) -> None:
+    """Refuse a baryonic mixin on a nonlinear spectrum that includes baryons.
+
+    Called by every baryonic mixin at the start of its ``__init__``. The
+    backends that set ``includes_baryons`` are listed in the "Baryonic Boost
+    Mixin Framework" section of ``docs/code_structure/perturbations.md``.
+
+    Parameters
+    ----------
+    perturbations : Any
+        The nonlinear perturbations to check.
+    mixin_name : str
+        Name of the baryonic mixin to be added, for the error message.
+    perturbations_name : str, optional
+        Name of the nonlinear perturbations class, for the error message.
+        Defaults to the class name of ``perturbations``.
+
+    Raises
+    ------
+    ValueError
+        If ``perturbations.includes_baryons`` is true.
+    """
+    if getattr(perturbations, "includes_baryons", False):
+        name = perturbations_name or type(perturbations).__name__
+        raise ValueError(
+            f"{name} already includes baryonic feedback "
+            f"in its nonlinear spectrum. Adding {mixin_name} on top would apply "
+            "baryonic feedback twice. Use a gravity-only nonlinear prescription."
+        )
+
+
+def ensure_gravity_only_on_first_use(perturbations: Any, mixin_name: str) -> None:
+    """Repeat `ensure_gravity_only` once, when the suppression is first evaluated.
+
+    Catches a class composed by hand that initialises its baryonic mixin
+    before ``includes_baryons`` is set. `with_baryon_boost` marks the check
+    as done.
+
+    Parameters
+    ----------
+    perturbations : Any
+        The nonlinear perturbations carrying the mixin.
+    mixin_name : str
+        Name of the baryonic mixin, for the error message.
+
+    Raises
+    ------
+    ValueError
+        If ``perturbations.includes_baryons`` is true.
+    """
+    if getattr(perturbations, "_gravity_only_checked", False):
+        return
+    ensure_gravity_only(perturbations, mixin_name)
+    perturbations._gravity_only_checked = True
 
 
 def _native_baryon_options(kwargs: dict) -> list[str]:
@@ -334,16 +439,32 @@ def _native_baryon_options(kwargs: dict) -> list[str]:
     `log10TAGN` or their HMcode2020 feedback model). Composing a baryonic
     mixin on top of one of them would apply baryonic feedback twice.
     """
-    options = [
-        f"{name}={kwargs[name]!r}"
-        for name in ("baryonic_boost", "log10TAGN")
-        if kwargs.get(name) is not None
-    ]
+    options = []
+    if kwargs.get("baryonic_boost"):
+        options.append(f"baryonic_boost={kwargs['baryonic_boost']!r}")
+    if kwargs.get("log10TAGN") is not None:
+        options.append(f"log10TAGN={kwargs['log10TAGN']!r}")
     if kwargs.get("nonlinear_model") == "mead2020_feedback":
         options.append("nonlinear_model='mead2020_feedback'")
-    if kwargs.get("hmcode_version") == "2020_baryonic_feedback":
-        options.append("hmcode_version='2020_baryonic_feedback'")
+    if hmcode_version_includes_baryons(kwargs.get("hmcode_version")):
+        options.append(f"hmcode_version={kwargs['hmcode_version']!r}")
     return options
+
+
+def _k_hunit_argument(method: Any, *args: Any, **kwargs: Any) -> bool:
+    """Return the ``k_hunit`` argument of a call to ``method``, however passed.
+
+    Backends pass it by keyword or by position, or accept it through
+    ``**kwargs``; it defaults to ``False`` (wavenumbers in 1/Mpc).
+    """
+    signature = inspect.signature(method)
+    arguments = signature.bind(*args, **kwargs).arguments
+    if "k_hunit" in arguments:
+        return bool(arguments["k_hunit"])
+    for parameter in signature.parameters.values():
+        if parameter.kind is inspect.Parameter.VAR_KEYWORD:
+            return bool(arguments.get(parameter.name, {}).get("k_hunit", False))
+    return False
 
 
 def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
@@ -411,7 +532,18 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
     ValueError
         At construction, if the nonlinear options passed already switch on
         the backend's own baryonic boost (e.g. ``log10TAGN`` or
-        ``baryonic_boost``), for the same reason.
+        ``baryonic_boost``), or if the constructed nonlinear perturbations
+        report ``includes_baryons = True`` (e.g. the CosmoPower-JAX HMcode2020
+        sector, which always includes baryonic feedback), for the same reason.
+
+    Notes
+    -----
+    While the nonlinear class computes ``matter_power_spectrum_cb``, any call
+    it makes to ``self.matter_power_spectrum`` returns the gravity-only
+    spectrum, so that backends deriving the cb spectrum from the total one are
+    boosted only once. The composed instances report ``includes_baryons =
+    True``, so that no further baryonic mixin is added on top of them, e.g.
+    through a class wrapping them.
     """
     if issubclass(NonLinearClass, BaryonBoostMixin):
         raise TypeError(
@@ -421,6 +553,9 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
         )
 
     class Combined(BaryonMixinClass, NonLinearClass):
+        # True while the nonlinear class computes the cb spectrum, see below.
+        _gravity_only = False
+
         def __init__(self, *args, baryon_kwargs=None, **kwargs):
             native = _native_baryon_options(kwargs)
             if native:
@@ -432,15 +567,27 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
                     "or drop the mixin and use the base class on its own."
                 )
             NonLinearClass.__init__(self, *args, **kwargs)
-            BaryonMixinClass.__init__(self, **(baryon_kwargs or {}))
-
-        def matter_power_spectrum(self, zs, ks, **kwargs):
-            pk = NonLinearClass.matter_power_spectrum(self, zs, ks, **kwargs)
-            return pk * self.baryonic_suppression(
-                zs, ks, k_hunit=kwargs.get("k_hunit", False)
+            # The mixins check this themselves; repeated here for mixins that
+            # do not.
+            ensure_gravity_only(
+                self, BaryonMixinClass.__name__, NonLinearClass.__name__
             )
+            BaryonMixinClass.__init__(self, **(baryon_kwargs or {}))
+            # Checked above, after the nonlinear __init__; the flag set next
+            # must not fail the check on first use.
+            self._gravity_only_checked = True
+            self.includes_baryons = True
 
-        def matter_power_spectrum_cb(self, zs, ks, **kwargs):
+        def matter_power_spectrum(self, zs, ks, *args, **kwargs):
+            pk = NonLinearClass.matter_power_spectrum(self, zs, ks, *args, **kwargs)
+            if self._gravity_only:
+                return pk
+            k_hunit = _k_hunit_argument(
+                NonLinearClass.matter_power_spectrum, self, zs, ks, *args, **kwargs
+            )
+            return pk * self.baryonic_suppression(zs, ks, k_hunit=k_hunit)
+
+        def matter_power_spectrum_cb(self, zs, ks, *args, **kwargs):
             # The cdm+baryon spectrum is given the *same* boost as total matter.
             # The backends differ slightly in what they predict -- FLAMINGO's
             # response is (b + cdm + nu) / (cdm + nu), BACCOemu's is the cold
@@ -449,10 +596,20 @@ def with_baryon_boost(NonLinearClass: Any, BaryonMixinClass: Any) -> type:
             # nonlinear boost. In practice the difference is ~1e-5 even for
             # mnu = 0.4 eV, and FLAMINGO simulations show total and cold boosts
             # to be equivalent at that level, so the same boost is used for both.
-            pk = NonLinearClass.matter_power_spectrum_cb(self, zs, ks, **kwargs)
-            return pk * self.baryonic_suppression(
-                zs, ks, k_hunit=kwargs.get("k_hunit", False)
+            # Some backends build the cb spectrum from `self.matter_power_spectrum`
+            # (e.g. CLASS without massive neutrinos, or JAX), which must then be
+            # gravity-only for the boost to be applied once.
+            previous, self._gravity_only = self._gravity_only, True
+            try:
+                pk = NonLinearClass.matter_power_spectrum_cb(
+                    self, zs, ks, *args, **kwargs
+                )
+            finally:
+                self._gravity_only = previous
+            k_hunit = _k_hunit_argument(
+                NonLinearClass.matter_power_spectrum_cb, self, zs, ks, *args, **kwargs
             )
+            return pk * self.baryonic_suppression(zs, ks, k_hunit=k_hunit)
 
     Combined.__name__ = f"{NonLinearClass.__name__}With{BaryonMixinClass.__name__}"
     Combined.__qualname__ = Combined.__name__

@@ -220,3 +220,29 @@ def test_mg_boost_matches_validation(
         assert max_err < 0.005, (
             f"{model_name} boost error > 0.5% at z={z} (max rel error = {max_err:.5f})"
         )
+
+
+@pytest.mark.parametrize("includes_baryons", [False, True])
+def test_boosted_perturbations_report_baryons(includes_baryons):
+    """The boosted spectrum includes baryonic feedback exactly when its base
+    does, so that no baryonic mixin is added on top of a base that has it."""
+    from cloelib.cosmology.cosmology import ensure_gravity_only
+
+    class DummyBackground:
+        Omega_k0 = 0.0
+        w0 = -1.0
+        wa = 0.0
+
+    class DummyLin:
+        background = DummyBackground()
+
+    class DummyBase:
+        background = DummyBackground()
+
+    base = DummyBase()
+    base.includes_baryons = includes_baryons
+    boosted = BoostedPerturbations(DummyLin(), base, lambda z, k, grid=False: 1.0)
+    assert boosted.includes_baryons is includes_baryons
+    if includes_baryons:
+        with pytest.raises(ValueError, match="twice"):
+            ensure_gravity_only(boosted, "SomeBaryonBoostMixin")

@@ -794,6 +794,15 @@
       "contributions": [
         "mentoring"
       ]
+    },
+    {
+      "login": "sachaguer",
+      "name": "Sacha Guerrini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85949041?v=4",
+      "profile": "https://sachaguer.github.io",
+      "contributions": [
+        "bug"
+      ]
     }
   ]
 }

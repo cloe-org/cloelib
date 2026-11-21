@@ -246,6 +246,24 @@ def test_hmemu_multiple_massive_neutrinos_raises(zs):
         HMemuLinearPerturbations(background=background, redshifts=zs)
 
 
+def test_hmemu_massless_neutrinos(zs, ks):
+    """Test that massless neutrinos (N_mnu=0, mnu=0, N_ur=3.044) are supported."""
+    background = CAMBBackground(**{**BACKGROUND_KWARGS, "mnu": 0.0, "N_mnu": 0})
+    lin = HMemuLinearPerturbations(background=background, redshifts=zs)
+    camb_lin = CAMBLinearPerturbations(background=background, redshifts=zs)
+    z = np.linspace(0, 2, 5)
+    np.testing.assert_allclose(
+        lin.matter_power_spectrum(z, ks),
+        camb_lin.matter_power_spectrum(z, ks),
+        rtol=1e-2,
+    )
+    np.testing.assert_allclose(
+        lin.matter_power_spectrum_cb(z, ks),
+        lin.matter_power_spectrum(z, ks),
+        rtol=1e-2,
+    )
+
+
 def test_hmemu_non_flat_raises(zs):
     """Test that non-flat geometries are rejected."""
     background = CAMBBackground(**{**BACKGROUND_KWARGS, "Omega_k0": 0.01})

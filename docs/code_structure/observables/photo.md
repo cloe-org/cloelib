@@ -203,7 +203,7 @@ window = tracer.get_window(z)
 
 For CMB weak gravitational lensing (convergence) measurements.
 
-**Location**: `cloelib/observables/cmb.py`
+**Location**: `cloelib/observables/cmb/lensing.py`
 
 **What it does**:
 

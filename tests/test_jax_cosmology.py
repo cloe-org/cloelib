@@ -543,3 +543,15 @@ def test_matter_power_spectrum_cb_gradient(parameter, mnu, N_mnu):
     eps = 1e-5 * max(abs(x0), 1.0)
     fd = (loss(x0 + eps) - loss(x0 - eps)) / (2 * eps)
     assert_allclose(grad, fd, rtol=1e-4)
+
+
+def test_jax_comoving_distance_accepts_scalar(jax_background_instance):
+    """A single redshift gives a single distance, equal to the array result.
+
+    `CMBLensingTracer.get_window` evaluates the distance at the scalar `z_star`.
+    """
+    distance = jax_background_instance.comoving_distance(1.0)
+    assert jnp.ndim(distance) == 0
+    assert_allclose(
+        distance, jax_background_instance.comoving_distance(jnp.array([1.0]))[0]
+    )

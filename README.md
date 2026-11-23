@@ -119,6 +119,14 @@ pip install .
 
 3. **Add optional superpowers** – Enhance with external dependencies and tools:
 
+- **If `cloelib` installed with PyPI**:
+
+```sh
+pip install camb classy comet-emu euclidemu2 pylevin mpmath tensorflow tf-keras cosmopower-jax baccoemu hiclassy emantis pbjcosmo fastpt react mgclassy FlamingoBaryonResponseEmulator
+```
+
+- **If `cloelib` installed from the local clone**:
+
 ```sh
 pip install .[camb,classy,comet-emu,euclidemu2,pylevin,mpmath,tensorflow,tf-keras,cosmopower-jax,baccoemu,hiclassy,emantis,pbjcosmo,fastpt,react,mgclassy,FlamingoBaryonResponseEmulator]
 ```

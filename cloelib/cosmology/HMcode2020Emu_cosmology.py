@@ -530,8 +530,9 @@ def _set_neutrino_masses(background: Background) -> float:
 
     This method adds neutrino masses to the provided dictionary.
     It also ensures consistency with the background cosmology.
-    HMcode2020Emu only supports a single species massive of neutrinos, so this method
-    throws an error if multiple massive neutrino species are provided.
+    HMcode2020Emu supports at most a single species of massive neutrinos
+    (N_mnu=1, or N_mnu=0 with mnu=0), so this method throws an error if
+    multiple massive neutrino species are provided.
 
     Parameters
     ----------
@@ -545,13 +546,15 @@ def _set_neutrino_masses(background: Background) -> float:
     """
     if background.N_mnu > 1:
         raise ValueError(
-            "HMcode2020Emu only supports a single species of neutrinos. "
-            "Set N_mnu=1 in the Background class."
+            "HMcode2020Emu supports at most a single species of massive neutrinos. "
+            "Set N_mnu=1 (or N_mnu=0 with mnu=0) in the Background class."
         )
-    if not np.isclose(background.N_ur, 2.0308, rtol=1e-4):
+    N_ur = 2.0308 if background.N_mnu == 1 else 3.044
+    if not np.isclose(background.N_ur, N_ur, rtol=1e-4):
         raise ValueError(
-            "HMcode2020Emu only supports a fixed number of relativistic species (N_ur=2.0308). "
-            "Set N_ur=2.0308 in the Background class."
+            "HMcode2020Emu only supports a fixed number of relativistic species "
+            "(N_ur=2.0308 with N_mnu=1, N_ur=3.044 with N_mnu=0). "
+            f"Set N_ur={N_ur} in the Background class."
             "[Note that HMcode2020Emu actually sets N_ur=2.0328,"
             "this will be fixed in a future release.]"
         )
@@ -565,8 +568,8 @@ def _set_neutrino_masses(background: Background) -> float:
         )
     if isinstance(background.mnu, Sequence) or isinstance(background.mnu, np.ndarray):
         raise ValueError(
-            "HMcode2020Emu only supports a single species of neutrinos. "
-            "Set N_mnu=1 in the Background class."
+            "HMcode2020Emu supports at most a single species of massive neutrinos. "
+            "Set N_mnu=1 (or N_mnu=0 with mnu=0) in the Background class."
         )
     else:
         mnu_arg = float(background.mnu)

@@ -85,11 +85,8 @@ class CAMBBackground:
 
         if mnu_arg > 0 and self.N_mnu == 0:
             raise ValueError("If mnu is provided, N_mnu must be greater than 0.")
-        # N_mnu > 0 with mnu = 0 is allowed and equivalent to N_mnu = 0: camb
-        # gets no massive species and N_eff massless ones. It is needed by
-        # codes that require a fixed number of massive species (e.g.
-        # HMcode2020Emu, N_mnu = 1) to describe a massless-neutrino cosmology.
-        camb_N_mnu = self.N_mnu if mnu_arg > 0 else 0
+        if self.N_mnu > 0 and np.sum(self.mnu) == 0:
+            raise ValueError("If N_mnu is provided, mnu must be greater than 0.")
 
         # Initialize CAMB parameters
         self.interface_args: dict = {"CAMBparams": camb.CAMBparams()}
@@ -100,14 +97,13 @@ class CAMBBackground:
             omch2=self.Omega_cdm0 * (self.h) ** 2,
             omk=self.Omega_k0,
             mnu=mnu_arg,
-            num_massive_neutrinos=camb_N_mnu,
+            num_massive_neutrinos=self.N_mnu,
         )
 
         # setting the neutrino parameters
         self.interface_args["CAMBparams"].share_delta_neff = True
-        if camb_N_mnu > 0:
-            self._set_neutrino_parameters()
-        self.interface_args["CAMBparams"].num_nu_massless = self.N_eff - camb_N_mnu
+        self._set_neutrino_parameters()
+        self.interface_args["CAMBparams"].num_nu_massless = self.N_eff - self.N_mnu
 
         # Set initial conditions and dark energy
         self.interface_args["CAMBparams"].set_dark_energy(

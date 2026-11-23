@@ -1,5 +1,8 @@
 """Unit tests for the HMcode2020Emu perturbations backend."""
 
+import multiprocessing
+import sys
+
 import numpy as np
 import pytest
 
@@ -9,6 +12,7 @@ from cloelib.cosmology.camb_cosmology import (  # noqa: E402
     CAMBLinearPerturbations,
 )
 from cloelib.cosmology.HMcode2020Emu_cosmology import (  # noqa: E402
+    HM2020_emu,
     HMemuLinearPerturbations,
     HMemuNonLinearPerturbations,
 )
@@ -269,3 +273,32 @@ def test_hmemu_non_flat_raises(zs):
     background = CAMBBackground(**{**BACKGROUND_KWARGS, "Omega_k0": 0.01})
     with pytest.raises(AssertionError, match="Non flat"):
         HMemuLinearPerturbations(background=background, redshifts=zs)
+
+
+def test_hmemu_bounds_loaded_in_memory():
+    """Test that the emulator bounds are in-memory dicts, not open .npz files (gh-742)."""
+    for sub_emulator in HM2020_emu.emulator.values():
+        bounds = sub_emulator["bounds"]
+        assert isinstance(bounds, dict)
+        assert "z" in bounds
+        assert bounds["z"][0] < bounds["z"][1]
+
+
+def _read_bounds_repeatedly(_):
+    """Read every emulator bound many times, as likelihood calls do in a worker."""
+    for _ in range(500):
+        for sub_emulator in HM2020_emu.emulator.values():
+            _ = sub_emulator["bounds"]["z"][1]
+    return True
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="fork start method not available")
+def test_hmemu_bounds_safe_in_forked_pool():
+    """Test that forked workers can read the bounds concurrently (gh-742).
+
+    With the bounds kept as an open ``NpzFile``, the workers share one file
+    handle and this fails with ``zipfile.BadZipFile: Truncated file header``.
+    """
+    context = multiprocessing.get_context("fork")
+    with context.Pool(16) as pool:
+        assert all(pool.map(_read_bounds_repeatedly, range(64)))

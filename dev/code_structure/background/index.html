@@ -1855,6 +1855,7 @@
 <p>Pure JAX implementation for automatic differentiation.</p>
 <p><strong>Location</strong>: <code>cloelib/cosmology/jax_cosmology.py</code></p>
 <p><strong>When to use</strong>: When you need gradients, GPU acceleration, or JIT compilation</p>
+<p><strong>Comoving distance</strong>: <code>comoving_distance</code> integrates c/H(z) cumulatively on a hardcoded grid of 4096 points uniform in ln(1 + z), from z = 0 to the largest requested redshift (trapezoid rule), then interpolates it (cubic) at the requested redshifts. The relative accuracy is ~1e-7 or better for 0.01 &lt;= z &lt;= 1090.</p>
 <p><strong>Example</strong>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">cloelib.cosmology.jax_cosmology</span><span class="w"> </span><span class="kn">import</span> <span class="n">JAXBackground</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>

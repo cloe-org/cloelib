@@ -7960,7 +7960,19 @@ variations in N_eff.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Calculate the comoving distance for given redshifts.</p>
+        <p>Calculate the comoving distance for given redshifts, in Mpc.</p>
+<p>The integral c * int_0^z dz' / H(z') is computed on a fixed grid, then
+interpolated at <code>zs</code>. The grid choices are hardcoded:</p>
+<ul>
+<li>4096 points uniform in ln(1 + z), from z = 0 to <code>max(zs)</code>;</li>
+<li>cumulative trapezoid rule on that grid;</li>
+<li>cubic interpolation (<code>interpax</code>) at <code>zs</code>.</li>
+</ul>
+<p>The relative accuracy is ~1e-7 or better for 0.01 &lt;= z &lt;= 1090. The
+grid spacing is set by the largest redshift of the call, so redshifts
+within its first step are less accurate: e.g. ~1e-4 at z = 0.001 when
+the same call includes z_star ~ 1090. Compute such low redshifts in a
+separate call.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -7970,7 +7982,8 @@ variations in N_eff.</p>
 <a href="#cloelib.cosmology.jax_cosmology.JAXBackground.comoving_distance(zs)" class="headerlink" title="Permanent link">&para;</a></h6>              (<code><span title="array_like">array_like</span></code>)
           –
           <div class="doc-md-description">
-            <p>Redshifts at which to calculate the comoving distance.</p>
+            <p>Redshifts at which to calculate the comoving distance
+(an array or a single value, z &gt;= 0).</p>
           </div>
         </li>
     </ul>
@@ -7979,10 +7992,10 @@ variations in N_eff.</p>
 <p><span class="doc-section-title">Returns:</span></p>
     <ul>
         <li class="doc-section-item field-body">
-              <code><span title="numpy.ndarray">ndarray</span></code>
+              <code><span title="jax.numpy.ndarray">ndarray</span></code>
           –
           <div class="doc-md-description">
-            <p>The comoving distance as a function of redshift.</p>
+            <p>The comoving distance in Mpc, with the shape of <code>zs</code>.</p>
           </div>
         </li>
     </ul>

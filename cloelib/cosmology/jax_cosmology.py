@@ -218,13 +218,27 @@ class JAXBackground:
 
     def comoving_distance(self, zs: jnp.ndarray) -> jnp.ndarray:
         """
-        Calculate the comoving distance for given redshifts.
+        Calculate the comoving distance for given redshifts, in Mpc.
+
+        The integral c * int_0^z dz' / H(z') is computed on a fixed grid, then
+        interpolated at ``zs``. The grid choices are hardcoded:
+
+        - 4096 points uniform in ln(1 + z), from z = 0 to ``max(zs)``;
+        - cumulative trapezoid rule on that grid;
+        - cubic interpolation (``interpax``) at ``zs``.
+
+        The relative accuracy is ~1e-7 or better for 0.01 <= z <= 1090. The
+        grid spacing is set by the largest redshift of the call, so redshifts
+        within its first step are less accurate: e.g. ~1e-4 at z = 0.001 when
+        the same call includes z_star ~ 1090. Compute such low redshifts in a
+        separate call.
 
         Args:
-          zs (array_like): Redshifts at which to calculate the comoving distance.
+          zs (array_like): Redshifts at which to calculate the comoving distance
+            (an array or a single value, z >= 0).
 
         Returns:
-          (np.ndarray): The comoving distance as a function of redshift.
+          (jnp.ndarray): The comoving distance in Mpc, with the shape of ``zs``.
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 

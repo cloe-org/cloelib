@@ -2,6 +2,10 @@
 
 Thank you for your interest in contributing to **cloelib**! We are committed to an open science approach.
 
+**Everyone is welcome to contribute.** You do not need to be a member of the Euclid Consortium, or of any other collaboration, to open an issue or a pull request.
+
+> **A note for Euclid Consortium members:** to avoid duplicated effort with ongoing Consortium work, please coordinate your proposal with the KP-JC-1 coordinators before starting. This is an internal coordination step only; it does not apply to external contributors.
+
 ## Ways to Contribute
 
 Check out [open issues](https://github.com/cloe-org/cloelib/issues) to see if development is already planned. We welcome community support on issues tagged with [`help wanted`](https://github.com/cloe-org/cloelib/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22).
@@ -51,6 +55,16 @@ Submit a pull request to the main repository. Please use the PR template and ens
 - Tests demonstrating the fix or feature
 
 Our maintainers will review your contribution, and we'll work together to get it merged!
+
+### Previewing the documentation of a pull request
+
+For every pull request, the `Docs` workflow builds the documentation with `mkdocs build --strict` and uploads the resulting static site as a workflow artifact named `docs-site-pr-<PR number>`. Reviewers (and authors) can inspect the rendered pages without building them locally:
+
+1. Open the pull request's **Checks** tab and click **Docs** (the name, not the expand arrow) to open the workflow run summary.
+2. Scroll to the **Artifacts** section of the run summary and download `docs-site-pr-<PR number>`.
+3. Unzip it and serve it locally, for example with `python -m http.server --directory <unzipped folder> 8000`, then open <http://localhost:8000>.
+
+The artifact is kept for 14 days and is only a preview: the published documentation is still deployed only when changes are merged into `main` or a release tag is pushed. Opening `index.html` directly with `file://` can break search and some links, so use the local server.
 
 ---
 

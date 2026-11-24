@@ -2,12 +2,28 @@
 
 Please **read [the overall contribution guidelines applicable to cloe-org](https://github.com/cloe-org/.github/tree/main/colprac) before proceeding**.
 
+## 🌍 Everyone Is Welcome
+
+cloelib is open source, and **contributions from anyone are welcome**: bug reports, documentation fixes, new features, tests, or ideas. You do not need to be a member of the Euclid Consortium, or of any other collaboration, to open an issue or a pull request.
+
+> **A note for Euclid Consortium members:** to avoid duplicated effort with ongoing Consortium work, please coordinate your proposal with the KP-JC-1 coordinators before starting. This is an internal coordination step only; it does not apply to external contributors.
+
 ## Specific Guidelines for cloelib
 
-1. **For Euclid Consortium Members**: Before contributing, discuss your proposal with the KP-JC-1 coordinators to ensure smooth coordination with all involved parties.
-2. **Check Ongoing Tasks in the Issue Board**: Verify that your contribution does not overlap with existing tasks in the cloelib repository.
-3. **Open an Issue Following the Issue Template**: Tag @cloe-org/cloe-maintainers in your issue to discuss the proposed implementation. This helps ensure a smooth integration with the software architecture and overall repository maintenance.
-4. **Open a Pull Request Following the PR Template**: Fill in all the required information in the Pull Request template to facilitate review and approval.
+1. **Check Ongoing Tasks in the Issue Board**: Verify that your contribution does not overlap with existing tasks in the cloelib repository.
+2. **Open an Issue Following the Issue Template**: Tag @cloe-org/cloe-maintainers in your issue to discuss the proposed implementation. This helps ensure a smooth integration with the software architecture and overall repository maintenance. For small fixes (typos, broken links, minor bugs) you can open a pull request directly.
+3. **Open a Pull Request Following the PR Template**: Fill in all the required information in the Pull Request template to facilitate review and approval.
+
+## 🤖 Using AI Coding Assistants
+
+You may use AI coding assistants (chatbots, coding agents) when contributing to cloelib, under these rules:
+
+- **You are responsible for your PR.** Review every changed line, make sure you understand it, and explain in your own words in the PR summary what it does and why. Reviewers are not there to review code that the author has not read.
+- **Disclose AI assistance** in the dedicated section of the PR template (briefly: which tool, which model and version, which parts). Different models make different kinds of mistakes, so this helps reviewers. Best effort: if you switched between models, list the ones you used. If none was used, write "None."
+- **Keep changes small and readable.** Avoid unrelated rewrites, overly compact code and long docstrings; reviewers and maintainers must be able to follow the code. Besides asking the agent to be brief, agent skills or plugins that reduce verbose output can help limit bloat.
+- **Do not let agents commit or push for you.**
+
+The [`AGENTS.md`](AGENTS.md) file at the root of the repository gives instructions to AI coding agents about the structure, checks and conventions of cloelib. **`AGENTS.md` can only be changed by @cloe-org/cloe-maintainers**, so please do not edit it in your PRs. If you think it is outdated or wrong (for example, because your PR changes the repository layout, commands or workflow), mention it in the "Additional Notes" of your PR or open an issue and the maintainers will update it. The `PR Description` CI check reports if the AI-assistance section, the summary or the ownership checkbox are missing from the PR description.
 
 ## ✨ Contributor Recognition
 

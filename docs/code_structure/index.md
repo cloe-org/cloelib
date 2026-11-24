@@ -68,14 +68,15 @@ The standard workflow for computing observables follows this pattern:
 background = CAMBBackground(H0=67.5, Omega_b0=0.049, ...)
 
 # 2. Initialize perturbations with background
-perturbations = CAMBPerturbations(background=background, ...)
+redshifts = [...]
+perturbations = CAMBLinearPerturbations(background=background, redshifts=redshifts)
 
 # 3. Define observables with perturbations or background
 tracer = ShearTracer(perturbations=perturbations, dndz=..., z=..., ...)
 
 # 4. Compute summary statistics
 two_point = AngularTwoPoint(tracer1=tracer, tracer2=tracer)
-C_ell = two_point.compute_Cl(ells=...)
+C_ell = two_point.get_Cl(ells=..., nl=..., ks=...)
 ```
 
 ## For Contributors

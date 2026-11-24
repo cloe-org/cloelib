@@ -1,0 +1,30 @@
+name: PR Title
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+permissions:
+  contents: read
+jobs:
+  check-title:
+    name: Check PR title format
+    runs-on: ubuntu-latest
+    # All Contributors bot PRs use their own "docs: add ..." title format.
+    if: github.event.pull_request.user.login != 'allcontributors[bot]'
+    steps:
+      - name: Check title starts with gh-<issue number>
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ "$PR_TITLE" =~ ^gh-[0-9]+:\ [^[:space:]] ]]; then
+            echo "PR title is correctly formatted: $PR_TITLE"
+          elif [[ "$PR_TITLE" =~ ^gh-#[0-9]+ ]]; then
+            echo "::error title=Invalid PR title::Do not use '#' after 'gh-'. PR title must start with 'gh-<issue number>: ' (e.g. 'gh-335: Automate PR title format check in CI'). Got: '$PR_TITLE'"
+            exit 1
+          else
+            echo "::error title=Invalid PR title::PR title must start with 'gh-<issue number>: ' (e.g. 'gh-335: Automate PR title format check in CI'). Got: '$PR_TITLE'"
+            exit 1
+          fi

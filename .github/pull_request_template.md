@@ -29,6 +29,10 @@
 
 Resolves #IssueNumber
 
+### 🤖 AI Assistance
+
+<!-- Was AI assistance (a chatbot or coding agent) used in this PR? If yes, briefly describe the tool and how it was used. If not, write "None." This section must not be left empty. -->
+
 ### 📸 Screenshots (if applicable)
 
 <!-- Upload screenshots to show scientific plots or other graphics -->
@@ -41,7 +45,7 @@ Resolves #IssueNumber
 
 ### ✅ PR Checklist for Developers
 
-- [ ] I have titled this PR before merging as "gh-#:", where "#" represents the task it closes
+- [ ] I have titled this PR as "gh-#: <short description>", where "#" represents the task it closes (enforced by the `PR Title` CI check)
 - [ ] I have run locally pre-commit using `pre-commit run --all-files`
 - [ ] I have tested my changes locally
 - [ ] No new warnings or errors introduced
@@ -49,6 +53,8 @@ Resolves #IssueNumber
 - [ ] My changes do not introduce breaking changes (i.e: the package still gets installed)
 - [ ] I have added unit tests (if applicable)
 - [ ] I have consistently updated the GitHub information for the project, including milestones, task types, and other relevant details.
+- [ ] I have reviewed and understand every change in this PR, take responsibility for it, and have explained in my own words in the Summary above what it does (required, checked by the `PR Description` CI check)
+- [ ] I have filled in the AI Assistance section above (required, checked by the `PR Description` CI check)
 
 ### ✅ PR Checklist for Reviewers
 
@@ -62,5 +68,5 @@ Resolves #IssueNumber
 - [ ] No data files have been included in the commits
 - [ ] Implementation follows the agreed task description point by point
 - [ ] Check that any added folder/file has been added to the `README.md` file
-- [ ] Check that the documentation has been updated accordantly (docstrings & instructions in `cloelib/docs/`)
+- [ ] Check that the documentation has been updated where appropriate (docstrings and instructions in `cloelib/docs/`). To preview it, go to the PR's **Checks** tab and click **Docs** (the name, not the expand arrow). Under **Artifacts**, download `docs-site-pr-<PR number>`. Unzip it, run `python -m http.server --directory <unzipped-folder> 8000`, and open http://localhost:8000.
 - [ ] Check that the corresponding branch has been deleted after merging. If not, delete it

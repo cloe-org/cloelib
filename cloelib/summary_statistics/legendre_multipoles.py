@@ -2,7 +2,7 @@
 
 # cloelib imports
 from cloelib.cosmology.cosmology import Background
-from cloelib.observables.spectro import SpectroPower
+from cloelib.observables.spectro.spectro import SpectroPower
 from cloelib.summary_statistics.APDistortion import APDistortion
 from cloelib.auxiliary.math_utils import legendre
 from cloelib.auxiliary.fftlog import fftlog
@@ -324,9 +324,9 @@ class LegendreMultipoles:
         Pk2d_tot: np.ndarray
             Total 2D power spectrum (including RSD, systematics, and noise)
         """
-        return self.spectro_power.Pk2d_rsd(k, mu) * self._damping_function(k, mu) * (
-            1.0 - self.parameters["fout"]
-        ) ** 2 + self._Pk2d_noise(k, mu)
+        return self.spectro_power.Pk2d_rsd(k, mu) * self._damping_function(
+            k, mu
+        ) * self.parameters["fcorr"] ** 2 + self._Pk2d_noise(k, mu)
 
     def _Pk2d_term_tot(
         self, k: np.ndarray, mu: np.ndarray, term_list: list
@@ -349,7 +349,7 @@ class LegendreMultipoles:
         return (
             self.spectro_power.Pk2d_term_rsd(k, mu, term_list=term_list)
             * self._damping_function(k, mu)
-            * (1.0 - self.parameters["fout"]) ** 2
+            * self.parameters["fcorr"] ** 2
         )
 
     @format_output("PK_multipoles")
@@ -574,10 +574,10 @@ class LegendreMultipoles:
         s: np.ndarray,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5.0,
+        logkmin: Optional[float] = -6.0,
         logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
-        kcut: Optional[float] = 0.4,
+        kcut: Optional[float] = 2.0,
         pow: Optional[float] = 2.0,
         format_type: Optional[str] = None,
     ) -> dict:
@@ -637,10 +637,10 @@ class LegendreMultipoles:
         s: np.ndarray,
         mu: np.ndarray,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5.0,
+        logkmin: Optional[float] = -6.0,
         logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
-        kcut: Optional[float] = 0.4,
+        kcut: Optional[float] = 2.0,
         pow: Optional[float] = 2.0,
         format_type: Optional[str] = None,
     ) -> dict:
@@ -691,10 +691,10 @@ class LegendreMultipoles:
         term_list: list,
         ells: Optional[np.ndarray] = None,
         use_AP: Optional[bool] = True,
-        logkmin: Optional[float] = -5.0,
+        logkmin: Optional[float] = -6.0,
         logkmax: Optional[float] = 2.0,
         nk: Optional[int] = 2048,
-        kcut: Optional[float] = 0.4,
+        kcut: Optional[float] = 2.0,
         pow: Optional[float] = 2.0,
     ) -> dict:
         r"""Two-point correlation function Legendre multipoles of specified terms.

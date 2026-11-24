@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import jax
 import jax.numpy as jnp
 from cloelib.auxiliary.akima import (
@@ -234,6 +235,50 @@ def test__akima_gradient_w_r_t_u():
     # Gradient should exist and have correct shape
     assert grad_u.shape == u.shape
     assert jnp.all(jnp.isfinite(grad_u))
+
+
+def _degenerate_data(kind, t):
+    """Data for which the Akima weights vanish on some or all of the nodes."""
+    if kind == "zero":
+        return jnp.zeros_like(t)
+    if kind == "constant":
+        return jnp.full_like(t, 5.0)
+    if kind == "linear":
+        return 2.0 * t + 1.0
+    # A bump followed by an exactly vanishing stretch, as a kernel beyond
+    # the support of its redshift distribution.
+    return jnp.where(t < 0.5, jnp.sin(2 * jnp.pi * t) ** 2, 0.0)
+
+
+@pytest.mark.parametrize("kind", ["zero", "constant", "linear", "zero_tail"])
+def test_akima_gradient_finite_with_vanishing_weights(kind):
+    """Where the Akima weights vanish (constant or locally linear data) the
+    average slope is used: the weighted slope, 0/0 there, must not leak NaN
+    into the gradients either."""
+    t = jnp.linspace(0.0, 1.0, 21)
+    t_new = jnp.linspace(0.02, 0.97, 13)
+    u = _degenerate_data(kind, t)
+
+    def f(u_var, tq):
+        return jnp.sum(akima_interpolation(u_var, t, tq))
+
+    assert jnp.isfinite(f(u, t_new))
+    assert jnp.all(jnp.isfinite(jax.grad(f, argnums=0)(u, t_new)))
+    assert jnp.all(jnp.isfinite(jax.grad(f, argnums=1)(u, t_new)))
+
+
+@pytest.mark.parametrize("kind", ["constant", "linear", "zero_tail"])
+def test_akima_gradient_w_r_t_amplitude_with_vanishing_weights(kind):
+    """The interpolant is homogeneous in the data, so the derivative with
+    respect to an overall amplitude is the interpolant itself."""
+    t = jnp.linspace(0.0, 1.0, 21)
+    t_new = jnp.linspace(0.02, 0.97, 13)
+    u = _degenerate_data(kind, t)
+
+    def f(amplitude):
+        return jnp.sum(akima_interpolation(amplitude * u, t, t_new))
+
+    np.testing.assert_allclose(jax.grad(f)(1.0), f(1.0), rtol=1e-12)
 
 
 def test_gradient_w_r_t_t_new():

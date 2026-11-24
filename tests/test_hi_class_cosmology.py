@@ -354,10 +354,6 @@ def test_hi_class_perturbation_implements_protocol(
 ):
     """Test that the hi_classPerturbation instances adhere to the protocol."""
     hi_class_instance = hi_class_perturbation_instances[key]
-    hi_class_instance = hi_class_perturbation_instances["Linear"]
-    print([f for f in dir(hi_class_instance) if not f.startswith("_")])
-    # print(hi_class_instance)
-    # print(key)
     assert isinstance(hi_class_instance, Perturbations)
 
 

@@ -27,7 +27,6 @@ import jax
 import jax.lax as lx
 import functools
 import interpax
-from quadax import quadgk
 from typing import Optional, Union, Sequence
 
 ArrayLike = Union[float, Sequence[float], np.ndarray, jnp.ndarray]
@@ -229,15 +228,21 @@ class JAXBackground:
         """
         c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
-        def fun(x):
-            return 1 / self.hubble_parameter(x)
+        zs = jnp.asarray(zs)
 
-        def myquad(x, fun):
-            y, _ = quadgk(fun, jnp.array([0.0, x]))
-            return y
+        # 4096 points: relative error ~1e-7 or better against quadgk.
+        ln_1pz = jnp.linspace(0.0, jnp.log1p(jnp.max(zs)), 4096)
+        z_grid = jnp.expm1(ln_1pz)
 
-        y = jnp.array([myquad(myz, fun) for myz in zs])
-        return y * c_0
+        # chi(z) = c * int_0^z dz' / H(z') = c * int (1 + z') / H(z') d ln(1 + z')
+        integrand = (1 + z_grid) / self.hubble_parameter(z_grid)
+
+        # Cumulative trapezoid rule: chi on every grid point, starting at chi(0) = 0
+        steps = 0.5 * (integrand[1:] + integrand[:-1]) * jnp.diff(ln_1pz)
+        chi_grid = jnp.concatenate([jnp.zeros(1), jnp.cumsum(steps)]) * c_0
+
+        # Cubic interpolation at the requested redshifts
+        return interpax.interp1d(jnp.log1p(zs), ln_1pz, chi_grid, method="cubic")
 
     def transverse_comoving_distance(self, zs: jnp.ndarray) -> jnp.ndarray:
         """

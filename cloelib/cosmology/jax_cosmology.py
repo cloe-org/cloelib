@@ -27,7 +27,6 @@ import jax
 import jax.lax as lx
 import functools
 import interpax
-from quadax import quadgk
 from typing import Optional, Union, Sequence
 
 ArrayLike = Union[float, Sequence[float], np.ndarray, jnp.ndarray]
@@ -218,24 +217,44 @@ class JAXBackground:
 
     def comoving_distance(self, zs: jnp.ndarray) -> jnp.ndarray:
         """
-        Calculate the comoving distance for given redshifts.
+        Calculate the comoving distance for given redshifts, in Mpc.
+
+        The integral c * int_0^z dz' / H(z') is computed on a fixed grid, then
+        interpolated at ``zs``. The grid choices are hardcoded:
+
+        - 4096 points uniform in ln(1 + z), from z = 0 to ``max(zs)``;
+        - cumulative trapezoid rule on that grid;
+        - cubic interpolation (``interpax``) at ``zs``.
+
+        The relative accuracy is ~1e-7 or better for 0.01 <= z <= 1090. The
+        grid spacing is set by the largest redshift of the call, so redshifts
+        within its first step are less accurate: e.g. ~1e-4 at z = 0.001 when
+        the same call includes z_star ~ 1090. Compute such low redshifts in a
+        separate call.
 
         Args:
-          zs (array_like): Redshifts at which to calculate the comoving distance.
+          zs (array_like): Redshifts at which to calculate the comoving distance
+            (an array or a single value, z >= 0).
 
         Returns:
-          (np.ndarray): The comoving distance as a function of redshift.
+          (jnp.ndarray): The comoving distance in Mpc, with the shape of ``zs``.
         """
 
-        def fun(x):
-            return 1 / self.hubble_parameter(x)
+        zs = jnp.asarray(zs)
 
-        def myquad(x, fun):
-            y, _ = quadgk(fun, jnp.array([0.0, x]))
-            return y
+        # 4096 points: relative error ~1e-7 or better against quadgk.
+        ln_1pz = jnp.linspace(0.0, jnp.log1p(jnp.max(zs)), 4096)
+        z_grid = jnp.expm1(ln_1pz)
 
-        y = jnp.array([myquad(myz, fun) for myz in zs])
-        return y * c_0
+        # chi(z) = c * int_0^z dz' / H(z') = c * int (1 + z') / H(z') d ln(1 + z')
+        integrand = (1 + z_grid) / self.hubble_parameter(z_grid)
+
+        # Cumulative trapezoid rule: chi on every grid point, starting at chi(0) = 0
+        steps = 0.5 * (integrand[1:] + integrand[:-1]) * jnp.diff(ln_1pz)
+        chi_grid = jnp.concatenate([jnp.zeros(1), jnp.cumsum(steps)]) * c_0
+
+        # Cubic interpolation at the requested redshifts
+        return interpax.interp1d(jnp.log1p(zs), ln_1pz, chi_grid, method="cubic")
 
     def transverse_comoving_distance(self, zs: jnp.ndarray) -> jnp.ndarray:
         """

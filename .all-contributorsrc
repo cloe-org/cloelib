@@ -803,6 +803,25 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "vilasinits",
+      "name": "Vilasini Tinnaneri",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29410673?v=4",
+      "profile": "https://github.com/vilasinits",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "alessiospuriomancini",
+      "name": "Alessio Spurio Mancini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16155457?v=4",
+      "profile": "http://www.alessiospuriomancini.org",
+      "contributions": [
+        "review"
+      ]
     }
   ]
 }

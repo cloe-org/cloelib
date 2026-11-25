@@ -16,11 +16,35 @@ from scipy import interpolate
 import numpy as np
 from typing import Optional, Sequence
 
+
+def _load_bounds_in_memory(emu) -> None:
+    """Replace the emulators' ``.npz`` parameter bounds by in-memory dicts.
+
+    HMcode2020Emu loads the bounds with ``np.load``, which returns an
+    ``NpzFile`` that keeps the file open and reads it again on every
+    ``bounds[key]`` access. Workers forked from this process (e.g. a
+    ``multiprocessing.Pool``) then share one open file and its read
+    position, and concurrent reads fail with
+    ``zipfile.BadZipFile: Truncated file header`` (cloelib gh-742).
+
+    Parameters
+    ----------
+    emu : HMcode2020Emu.Matter_powerspectrum
+        Emulator instance; its ``emulator[...]["bounds"]`` are replaced in place.
+    """
+    for sub_emulator in emu.emulator.values():
+        bounds = sub_emulator.get("bounds")
+        if isinstance(bounds, np.lib.npyio.NpzFile):
+            sub_emulator["bounds"] = {key: bounds[key] for key in bounds.files}
+            bounds.close()
+
+
 # Cosmology imports
 try:
     import HMcode2020Emu as hmcodeemu
 
     HM2020_emu = hmcodeemu.Matter_powerspectrum()
+    _load_bounds_in_memory(HM2020_emu)
     redshift_max = HM2020_emu.emulator["linear"]["bounds"]["z"][1]
 except ImportError:
     raise ImportError("HMcode2020emu could not be imported or initialised.")

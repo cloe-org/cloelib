@@ -312,6 +312,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/marioballardini"><img src="https://avatars.githubusercontent.com/u/188600397?v=4&size=100" width="100px" height="100px" alt="marioballardini"/><br /><sub><b>marioballardini</b></sub></a><br /><a href="#mentoring-marioballardini" title="Mentoring">🧑‍🏫</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://sachaguer.github.io"><img src="https://avatars.githubusercontent.com/u/85949041?v=4&size=100" width="100px" height="100px" alt="Sacha Guerrini"/><br /><sub><b>Sacha Guerrini</b></sub></a><br /><a href="#bug-sachaguer" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/vilasinits"><img src="https://avatars.githubusercontent.com/u/29410673?v=4&size=100" width="100px" height="100px" alt="Vilasini Tinnaneri"/><br /><sub><b>Vilasini Tinnaneri</b></sub></a><br /><a href="#code-vilasinits" title="Code">💻</a> <a href="#ideas-vilasinits" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.alessiospuriomancini.org"><img src="https://avatars.githubusercontent.com/u/16155457?v=4&size=100" width="100px" height="100px" alt="Alessio Spurio Mancini"/><br /><sub><b>Alessio Spurio Mancini</b></sub></a><br /><a href="#review-alessiospuriomancini" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
 </table>

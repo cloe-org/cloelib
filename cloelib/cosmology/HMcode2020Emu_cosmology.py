@@ -33,7 +33,7 @@ def _load_bounds_in_memory(emu) -> None:
         Emulator instance; its ``emulator[...]["bounds"]`` are replaced in place.
     """
     for sub_emulator in emu.emulator.values():
-        bounds = sub_emulator["bounds"]
+        bounds = sub_emulator.get("bounds")
         if isinstance(bounds, np.lib.npyio.NpzFile):
             sub_emulator["bounds"] = {key: bounds[key] for key in bounds.files}
             bounds.close()

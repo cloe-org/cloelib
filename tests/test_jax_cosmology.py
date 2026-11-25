@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import pytest
 from numpy.testing import assert_allclose
 from scipy.integrate import quad
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.utils.constants import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.cosmology.jax_cosmology import (
     JAXBackground,

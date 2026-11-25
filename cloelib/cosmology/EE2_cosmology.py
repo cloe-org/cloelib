@@ -7,7 +7,7 @@ from cloelib.cosmology.cosmology import (
     Perturbations,
     WithWavenumberGrid,
 )
-from cloelib.auxiliary.extrapolator import extend_spectra
+from cloelib.utils.extrapolator import extend_spectra
 
 from scipy import interpolate
 

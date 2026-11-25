@@ -27,16 +27,16 @@ from cloelib.summary_statistics.beyond_limber import (
     nodes_range_mask,
     nonlimber_cl,
 )
-from cloelib.auxiliary.t_tildes import NonLimberGrid, default_t_tildes
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.geometry import (
+from cloelib.utils.t_tildes import NonLimberGrid, default_t_tildes
+from cloelib.utils.constants import SPEED_OF_LIGHT_KM_S as c_0
+from cloelib.utils.geometry import (
     curvature,
     is_flat,
     limber_wavenumber,
     potential_response,
     transverse_distance,
 )
-from cloelib.auxiliary.math_utils import (
+from cloelib.utils.math import (
     quadrature_weights,
     simpsons_weights_avg,
 )
@@ -933,7 +933,6 @@ class AngularTwoPoint:
         (`_WindowCache`) the windows, H, chi and f are shared with the
         other Cl of the same beyond-Limber call.
         """
-        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
         zs_calc = self.tracer1.z
         dz = self.tracer1.z[1] - self.tracer1.z[0]
         background = self.tracer1.perturbations.background
@@ -1143,7 +1142,6 @@ class AngularTwoPoint:
                 "does not support PositionsTracer(include_rsd=True) yet."
             )
 
-        c_0 = SPEED_OF_LIGHT / 1000
         zs_calc = self.tracer1.z
         dz = self.tracer1.z[1] - self.tracer1.z[0]
         H = self.tracer1.perturbations.background.hubble_parameter(

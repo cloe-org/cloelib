@@ -5,7 +5,7 @@ Module with one class to compute the BNT matrix.
 import numpy as np
 import jax.numpy as jnp
 from cloelib.cosmology.cosmology import Background
-from cloelib.auxiliary.geometry import cos_K, transverse_distance
+from cloelib.utils.geometry import cos_K, transverse_distance
 from typing import List, TypeVar, Union
 
 T = TypeVar("T", bound=Union[jnp.ndarray, np.ndarray])

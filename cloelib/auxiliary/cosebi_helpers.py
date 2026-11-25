@@ -347,7 +347,7 @@ def get_W_ell(thetagrid, Nmax, ells, N_thread):
 
     The Levin integration dominates the run time and scales linearly with
     ``len(ells)``. Since the COSEBI integrals account for the grid spacing
-    (see ``cloelib.auxiliary.math_utils.quadrature_weights``), `ells` does not
+    (see ``cloelib.utils.math.quadrature_weights``), `ells` does not
     need to be unit-spaced: a uniform grid only has to resolve the oscillations
     of W_n(ell), whose period is roughly ``2 pi / theta_max``. For example,
     for theta in [0.5, 300] arcmin, ``np.arange(2, 60000, 5)`` reproduces the

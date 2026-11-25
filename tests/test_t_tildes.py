@@ -14,8 +14,8 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-import cloelib.auxiliary.t_tildes as t_tildes
-from cloelib.auxiliary.t_tildes import (
+import cloelib.utils.t_tildes as t_tildes
+from cloelib.utils.t_tildes import (
     BLAST_128_64_161,
     DEFAULT_DATA_DIR,
     NonLimberGrid,
@@ -172,7 +172,7 @@ def test_blast_grid_R_weights_follow_blast(blast_grid):
     The halving follows Blast.jl (a numerical correction for dropping R < 0, not
     the analytic solution); every other weight is the plain CC one.
     """
-    from cloelib.auxiliary.chebyshev import clenshaw_curtis_quadrature
+    from cloelib.utils.chebyshev import clenshaw_curtis_quadrature
 
     _, w_all = clenshaw_curtis_quadrature(129, -1.0, 1.0)
     w_positive = np.flip(np.asarray(w_all)[:64])  # increasing R

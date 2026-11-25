@@ -1,11 +1,11 @@
-"""Unit tests for cloelib.auxiliary.geometry and the curved photo-RSD kernel."""
+"""Unit tests for cloelib.utils.geometry and the curved photo-RSD kernel."""
 
 import jax
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from cloelib.auxiliary.geometry import (
+from cloelib.utils.geometry import (
     cos_K,
     curvature,
     is_flat,
@@ -14,11 +14,11 @@ from cloelib.auxiliary.geometry import (
     radial_distance,
     transverse_distance,
 )
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.utils.constants import SPEED_OF_LIGHT_KM_S
 from cloelib.observables.photo.positions import get_photo_rsd
 
 H0 = 67.0
-D_H = SPEED_OF_LIGHT / 1000 / H0
+D_H = SPEED_OF_LIGHT_KM_S / H0
 CHI = np.linspace(10.0, 9000.0, 60)
 OMEGA_K = [-0.3, -0.05, -1e-6, 0.0, 1e-6, 0.05, 0.3]
 ELLS = np.arange(2.0, 200.0, 7.0)

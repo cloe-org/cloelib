@@ -33,7 +33,7 @@ import jax
 import jax.numpy as jnp
 from jax import Array
 
-from cloelib.auxiliary.akima import akima_interpolation
+from cloelib.utils.akima import akima_interpolation
 
 
 @jax.jit

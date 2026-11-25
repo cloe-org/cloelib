@@ -1,6 +1,6 @@
 r"""Beyond-Limber angular power spectrum of two sets of contributions.
 
-Assembles the building blocks of `cloelib.auxiliary.nonlimber_kernels` into
+Assembles the building blocks of `cloelib.utils.nonlimber_kernels` into
 the *linear* beyond-Limber $C_\ell$ of two tracers, on the multipole nodes of
 the T-tilde dataset:
 $$
@@ -23,7 +23,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax import Array
 
-from cloelib.auxiliary.nonlimber_kernels import kernel_on_chi_R, pair_integral
+from cloelib.utils.nonlimber_kernels import kernel_on_chi_R, pair_integral
 from cloelib.observables.photo.contributions import (
     contribution_field,
     nonlimber_spec_of,

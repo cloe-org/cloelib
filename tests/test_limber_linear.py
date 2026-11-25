@@ -13,7 +13,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from cloelib.auxiliary.t_tildes import NonLimberGrid
+from cloelib.utils.t_tildes import NonLimberGrid
 from cloelib.cosmology.jax_cosmology import JAXBackground, JAXNonLinearPerturbations
 from cloelib.observables.photo import PositionsTracer, ShearTracer
 from cloelib.observables.photo.contributions import CB, MATTER

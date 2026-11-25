@@ -7,8 +7,8 @@ All of the functions are completely differentiable.
 
 # cloelib imports
 from cloelib.cosmology.cosmology import CB_CROSS_CORRELATED, CB_CROSS_LINEAR_NU
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.geometry import (
+from cloelib.utils.constants import SPEED_OF_LIGHT_KM_S as c_0
+from cloelib.utils.geometry import (
     curvature,
     limber_wavenumber,
     transverse_distance,
@@ -194,7 +194,6 @@ class JAXBackground:
             Hubble parameter values at specified redshift(s).
 
         """
-        c_0 = SPEED_OF_LIGHT / 1000
         Omega_m0 = (
             self.Omega_b0 + self.Omega_cdm0 + self.mnu / (93.14 * (self.H0 / 100) ** 2)
         )
@@ -227,7 +226,6 @@ class JAXBackground:
         Returns:
           (np.ndarray): The comoving distance as a function of redshift.
         """
-        c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
         def fun(x):
             return 1 / self.hubble_parameter(x)

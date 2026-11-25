@@ -20,8 +20,8 @@ from cloelib.cosmology.cosmology import (
     Perturbations,
     growth_rate_on_redshifts,
 )
-from cloelib.auxiliary.extrapolator import extend_spectra
-from cloelib.auxiliary.math_utils import ensure_z_zero_included
+from cloelib.utils.extrapolator import extend_spectra
+from cloelib.utils.redshift import ensure_z_zero_included
 
 import numpy as np
 from scipy import interpolate

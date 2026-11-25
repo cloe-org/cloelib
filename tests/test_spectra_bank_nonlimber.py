@@ -10,12 +10,12 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from cloelib.auxiliary.chebyshev import chebyshev_points_interval
-from cloelib.auxiliary.nonlimber_kernels import (
+from cloelib.utils.chebyshev import chebyshev_points_interval
+from cloelib.utils.nonlimber_kernels import (
     projected_density,
     unequal_time_pk,
 )
-from cloelib.auxiliary.t_tildes import NonLimberGrid, TTildeStore, directory_name
+from cloelib.utils.t_tildes import NonLimberGrid, TTildeStore, directory_name
 from cloelib.cosmology.jax_cosmology import JAXBackground, JAXLinearPerturbations
 from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.spectrum_engine import SpectraBank, SpectrumRequest
@@ -398,7 +398,7 @@ def test_same_field_is_the_geometric_mean(bank, cosmology, grid):
     of log10 P: the formula used before the transfer functions were
     introduced, so this pins the matter-matter result to the previous one.
     """
-    from cloelib.auxiliary.akima import akima_interpolation
+    from cloelib.utils.akima import akima_interpolation
 
     _, linear = cosmology
     Pk_chi = linear.matter_power_spectrum(bank.z_of_chi(), 10.0**grid.k_cheb)

@@ -2,9 +2,7 @@
 
 import jax.numpy as jnp
 
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
-
-_C_KM_S = SPEED_OF_LIGHT / 1000
+from cloelib.utils.constants import SPEED_OF_LIGHT_KM_S as _C_KM_S
 
 
 def _curved(x, Omega_k0, H0, open_form, closed_form, series):

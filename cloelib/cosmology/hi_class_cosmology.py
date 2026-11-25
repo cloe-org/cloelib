@@ -7,8 +7,8 @@ from cloelib.cosmology.cosmology import (
     Background,
     Perturbations,
 )
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.geometry import transverse_distance
+from cloelib.utils.constants import SPEED_OF_LIGHT_KM_S as c0
+from cloelib.utils.geometry import transverse_distance
 
 # General imports
 import numpy as np
@@ -25,8 +25,6 @@ except ImportError as e:
 
 class hi_classBackground:
     """A wrapper for hi_class background cosmological calculations."""
-
-    c0 = SPEED_OF_LIGHT / 1000
 
     def __init__(
         self,
@@ -229,7 +227,7 @@ class hi_classBackground:
             [self.results.Hubble(z) for z in zs]
         )  # hi_class returns H in 1/Mpc
         if units == "km/s/Mpc":
-            return H * hi_classBackground.c0  # Convert to km/s/Mpc
+            return H * c0  # Convert to km/s/Mpc
         elif units == "1/Mpc":
             return H
         else:

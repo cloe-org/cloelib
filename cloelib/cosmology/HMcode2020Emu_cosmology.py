@@ -7,8 +7,8 @@ from cloelib.cosmology.cosmology import (
     BaryonBoostMixin,
     WithLinearSpectrumGrid,
 )
-from cloelib.auxiliary.extrapolator import extend_spectra
-from cloelib.auxiliary.math_utils import ensure_z_zero_included
+from cloelib.utils.extrapolator import extend_spectra
+from cloelib.utils.redshift import ensure_z_zero_included
 
 from scipy import interpolate
 

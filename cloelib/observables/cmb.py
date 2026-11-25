@@ -7,19 +7,15 @@ This class is compatible with the Tracer protocol.
 import weakref
 
 # cloelib imports
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.geometry import transverse_distance
-from cloelib.auxiliary.math_utils import check_nonzero_redshifts
+from cloelib.utils.constants import SPEED_OF_LIGHT_KM_S as c_0
+from cloelib.utils.geometry import transverse_distance
+from cloelib.utils.redshift import check_nonzero_redshifts
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.observables.photo.contributions import unit_sigma
 
 # General imports
 from typing import Any
 import jax.numpy as np
-
-
-# UNITS
-c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 
 class CMBLensingContribution:

@@ -105,6 +105,11 @@ class PBJSpectroPower:
         plinear = self.linear_perturbations.matter_power_spectrum_cb(
             0.0, pbj_obj.kL, hubble_units=False, k_hunit=False
         )
+
+        # Squeeze linear P(k) here to account for the format of different cosmology backends
+        plinear = plinear.squeeze()
+        D_cb = self.linear_perturbations.growth_factor_cb(self.redshift, 0.05).squeeze()
+
         pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="1/Mpc")
 
         pkmu = pbj_obj.P_kmu_2D(
@@ -115,7 +120,7 @@ class PBJSpectroPower:
             f=self.linear_perturbations.growth_rate()[
                 self.linear_perturbations.z == self.redshift
             ],
-            D=self.linear_perturbations.growth_factor_cb(self.redshift, 0.05),
+            D=D_cb,
             cosmo=self.cosmo,
             IRres=True,
             **self.parameters,
@@ -144,9 +149,13 @@ class PBJSpectroPower:
         Pk2d: np.ndarray
             2D power spectrum of specific terms
         """
-        plinear = self.linear_perturbations.matter_power_spectrum(
+        plinear = self.linear_perturbations.matter_power_spectrum_cb(
             0.0, pbj_obj.kL, hubble_units=False, k_hunit=False
         )
+        # Squeeze linear P(k) here to account for the format of different cosmology backends
+        plinear = plinear.squeeze()
+        D_cb = self.linear_perturbations.growth_factor_cb(self.redshift, 0.05).squeeze()
+
         pbj_obj._Pgg_kmu_terms(plinear, self.cosmo, units="1/Mpc")
 
         pkmu_marg_dict = pbj_obj.P_kmu_2D_marg_dict(
@@ -157,7 +166,7 @@ class PBJSpectroPower:
             f=self.linear_perturbations.growth_rate()[
                 self.linear_perturbations.z == self.redshift
             ],
-            D=self.linear_perturbations.growth_factor(self.redshift, 0.05),
+            D=D_cb,
             cosmo=self.cosmo,
             IRres=True,
             b1=self.parameters["b1"],

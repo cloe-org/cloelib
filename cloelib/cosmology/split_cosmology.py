@@ -22,7 +22,8 @@ class SplitLinearPerturbations:
         self.z = redshifts
         self.kmax = 100
         self.lin_perturbations = lin_perturbations
-        self.sigma8 = float("NaN")
+        self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
+        self.sigma8 = None
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False
@@ -182,7 +183,7 @@ class SplitLinearPerturbations:
             The sigma8 value.
         """
 
-        if np.isnan(self.sigma8):
+        if self.sigma8 is None:
             Omega_m_geo = self.background.Omega_cdm0 + self.background.Omega_b0
             # Compute the growth factor
             g_z_geo = growth_function_ODE(self.background, self.z, Omega_m_geo)
@@ -216,6 +217,7 @@ class SplitNonLinearPerturbations:
         self.lin_perturbations_split = lin_perturbations_split
         self.lin_perturbations_growth = lin_perturbations_growth
         self.nl_perturbations_growth = nl_perturbations_growth
+        self.k = np.logspace(np.log10(1e-4), np.log10(self.kmax), 100)
 
     def matter_power_spectrum(
         self, zs, ks, hubble_units=False, k_hunit=False

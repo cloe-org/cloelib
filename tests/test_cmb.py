@@ -13,6 +13,8 @@ from cloelib.observables.cmb import CMBLensingTracer
 from cloelib.observables.photo import ShearTracer, PositionsTracer
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 
+from cosmolib.data import AngularPowerSpectrum
+
 
 @pytest.fixture
 def camb_cmb_setup():
@@ -104,16 +106,20 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
     )
 
     nl = 10
-    ells = np.logspace(1.0, np.log10(100), nl)
+    lmin = 10
+    lmax = 100
+    bins = np.linspace(lmin, lmax, nl)
+    ells = 0.5 * (bins[0:-1] + bins[1:])
+    ells_full = np.arange(lmax)
 
     twopoint_kpos = AngularTwoPoint(cmblens_cross, pos_tracer)
     twopoint_kshe = AngularTwoPoint(cmblens_cross, shear_tracer)
     twopoint_kk = AngularTwoPoint(cmblens_auto, cmblens_auto)
 
     cells = {
-        **twopoint_kpos.get_Cl(ells, 0, perturbations.k),
-        **twopoint_kshe.get_Cl(ells, 0, perturbations.k),
-        **twopoint_kk.get_Cl(ells, 0, perturbations.k),
+        **twopoint_kpos.get_Cl(ells_full, 0, perturbations.k),
+        **twopoint_kshe.get_Cl(ells_full, 0, perturbations.k),
+        **twopoint_kk.get_Cl(ells_full, 0, perturbations.k),
     }
 
     # Check that cells has the right number of elements and right keys
@@ -121,20 +127,69 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
     assert ("CMBL", "POS", 1, 1) in cells.keys()
     assert ("CMBL", "SHE", 1, 1) in cells.keys()
     assert ("CMBL", "CMBL", 1, 1) in cells.keys()
-    assert cells[("CMBL", "POS", 1, 1)].shape == (nl,)
-    assert cells[("CMBL", "SHE", 1, 1)].shape == (2, nl)
-    assert cells[("CMBL", "CMBL", 1, 1)].shape == (nl,)
+    assert cells[("CMBL", "POS", 1, 1)].shape == (lmax,)
+    assert cells[("CMBL", "SHE", 1, 1)].shape == (2, lmax)
+    assert cells[("CMBL", "CMBL", 1, 1)].shape == (lmax,)
 
     # We also check everything works well if we reverse the order of the probes
     twopoint_posk = AngularTwoPoint(pos_tracer, cmblens_cross)
     twopoint_shek = AngularTwoPoint(shear_tracer, cmblens_cross)
     cells_reverse = {
-        **twopoint_posk.get_Cl(ells, 0, perturbations.k),
-        **twopoint_shek.get_Cl(ells, 0, perturbations.k),
+        **twopoint_posk.get_Cl(ells_full, 0, perturbations.k),
+        **twopoint_shek.get_Cl(ells_full, 0, perturbations.k),
     }
 
     assert len(cells_reverse.keys()) == 2
     assert ("CMBL", "POS", 1, 1) in cells_reverse.keys()
     assert ("CMBL", "SHE", 1, 1) in cells_reverse.keys()
-    assert cells_reverse[("CMBL", "POS", 1, 1)].shape == (nl,)
-    assert cells_reverse[("CMBL", "SHE", 1, 1)].shape == (2, nl)
+    assert cells_reverse[("CMBL", "POS", 1, 1)].shape == (lmax,)
+    assert cells_reverse[("CMBL", "SHE", 1, 1)].shape == (2, lmax)
+
+    # Check pseudo-cl
+    rng = np.random.default_rng(42)
+    mixing_matrix = {
+        key: AngularPowerSpectrum(
+            array=rng.random((nl-1, lmax)),
+            ell=ells,
+            lower=bins[0:-1],
+            upper=bins[1:],
+        )
+        for key in [
+            ("CMBL", "POS", 1, 1),
+            ("CMBL", "SHE", 1, 1),
+            ("CMBL", "CMBL", 1, 1),
+        ]
+    }
+
+    pseudo_cells = {
+        **twopoint_kpos.get_pseudo_Cl(0, perturbations.k, mixing_matrix),
+        **twopoint_kshe.get_pseudo_Cl(0, perturbations.k, mixing_matrix),
+        **twopoint_kk.get_pseudo_Cl(0, perturbations.k, mixing_matrix),
+    }
+
+    # Check that pseudo_cells has the right number of elements and right keys
+    assert len(pseudo_cells.keys()) == 3
+    assert ("CMBL", "POS", 1, 1) in pseudo_cells.keys()
+    assert ("CMBL", "SHE", 1, 1) in pseudo_cells.keys()
+    assert ("CMBL", "CMBL", 1, 1) in pseudo_cells.keys()
+    assert pseudo_cells[("CMBL", "POS", 1, 1)].shape == (nl-1,)
+    assert pseudo_cells[("CMBL", "SHE", 1, 1)].shape == (2, nl-1)
+    assert pseudo_cells[("CMBL", "CMBL", 1, 1)].shape == (nl-1,)
+
+    # Check that pseudo_cells prediction agree with full cells convoluted with mixing matrix
+    for key in [("CMBL", "POS", 1, 1), ("CMBL", "CMBL", 1, 1)]:
+        np.testing.assert_allclose(
+            pseudo_cells[key].array,
+            mixing_matrix[key].array @ cells[key].array,
+            rtol=1e-10,
+        )
+        
+    key = ("CMBL", "SHE", 1, 1)
+    for idx in [0, 1]:
+        np.testing.assert_allclose(
+            pseudo_cells[key].array[idx],
+            mixing_matrix[key].array @ cells[key].array[idx],
+            rtol=1e-10,
+        )
+    
+    

@@ -165,10 +165,15 @@ def pair_integral(
     done in a single contraction.
 
     Parameters:
-      K_A, K_B (Array): $K(\chi)$ of each kernel, shape `(n_bin, n_chi)`.
-      K_A_R, K_B_R (Array): $K(R\chi)$ of each kernel, shape `(n_bin, n_chi, n_R)`.
-      dens_12, dens_21 (Array): projected densities $w_\ell(\chi, R)$ of the
-        two orderings, shape `(n_ell, n_chi, n_R)`. Equal for symmetric pairs; they differ only
+      K_A (Array): $K(\chi)$ of kernel A, shape `(n_bin, n_chi)`.
+      K_B (Array): $K(\chi)$ of kernel B, shape `(n_bin, n_chi)`
+      K_A_R (Array): $K(R\chi)$ of kernel A, shape `(n_bin, n_chi, n_R)`.
+      K_B_R (Array): $K(R\chi)$ of kernel B, shape `(n_bin, n_chi, n_R)`.
+      dens_12 (Array): projected densities $w_\ell(\chi, R)$ of the
+        two orderings 12, shape `(n_ell, n_chi, n_R)`. Equal for symmetric pairs; they differ only
+        for pairs involving RSD.
+      dens_21 (Array): projected densities $w_\ell(\chi, R)$ of the
+        two orderings 21, shape `(n_ell, n_chi, n_R)`. Equal for symmetric pairs; they differ only
         for pairs involving RSD.
       ell_prefactor (Array): Product of the two kernels' $\ell$-dependent
         prefactors, shape `(n_ell,)`.

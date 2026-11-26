@@ -149,7 +149,7 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
     rng = np.random.default_rng(42)
     mixing_matrix = {
         key: AngularPowerSpectrum(
-            array=rng.random((nl-1, lmax)),
+            array=rng.random((nl - 1, lmax)),
             ell=ells,
             lower=bins[0:-1],
             upper=bins[1:],
@@ -172,9 +172,9 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
     assert ("CMBL", "POS", 1, 1) in pseudo_cells.keys()
     assert ("CMBL", "SHE", 1, 1) in pseudo_cells.keys()
     assert ("CMBL", "CMBL", 1, 1) in pseudo_cells.keys()
-    assert pseudo_cells[("CMBL", "POS", 1, 1)].shape == (nl-1,)
-    assert pseudo_cells[("CMBL", "SHE", 1, 1)].shape == (2, nl-1)
-    assert pseudo_cells[("CMBL", "CMBL", 1, 1)].shape == (nl-1,)
+    assert pseudo_cells[("CMBL", "POS", 1, 1)].shape == (nl - 1,)
+    assert pseudo_cells[("CMBL", "SHE", 1, 1)].shape == (2, nl - 1)
+    assert pseudo_cells[("CMBL", "CMBL", 1, 1)].shape == (nl - 1,)
 
     # Check that pseudo_cells prediction agree with full cells convoluted with mixing matrix
     for key in [("CMBL", "POS", 1, 1), ("CMBL", "CMBL", 1, 1)]:
@@ -183,7 +183,7 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
             mixing_matrix[key].array @ cells[key].array,
             rtol=1e-10,
         )
-        
+
     key = ("CMBL", "SHE", 1, 1)
     for idx in [0, 1]:
         np.testing.assert_allclose(
@@ -191,5 +191,3 @@ def test_cmb_lensing_window_cl(camb_cmb_setup):
             mixing_matrix[key].array @ cells[key].array[idx],
             rtol=1e-10,
         )
-    
-    

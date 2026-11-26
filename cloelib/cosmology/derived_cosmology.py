@@ -87,8 +87,7 @@ def dV_dzdO(background, zs: np.ndarray, hubble_units=False) -> np.ndarray:
       (np.ndarray): volume element in Mpc^3 h^{-3}
     """
     _dV_dzdO = (
-        constants.SPEED_OF_LIGHT
-        / 1.0e3
+        constants.SPEED_OF_LIGHT_KM_S
         * transverse_distance(
             background.comoving_distance(zs), background.Omega_k0, background.H0
         )

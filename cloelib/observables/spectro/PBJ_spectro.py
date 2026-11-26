@@ -10,7 +10,7 @@ import numpy as np
 try:
     from pbjcosmo.theory import Theory
 
-    pbj_obj = Theory()
+    pbj_obj = Theory(kmin=1e-5, npoints=1158)
 except (ImportError, AttributeError, TypeError) as e:
     raise ImportError(f"PBJ could not be imported or initialised: {e}")
 

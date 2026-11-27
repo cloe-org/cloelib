@@ -22,9 +22,11 @@ License:
 This project is licensed under the MIT LICENSE.
 """
 
+from ._version import __version__
+
 import jax
 
 # Enable double precision in JAX
 jax.config.update("jax_enable_x64", True)
 
-__all__: list[str] = []
+__all__: list[str] = ["__version__"]

@@ -6,6 +6,8 @@ from cloelib.cosmology.cosmology import (
     CB_CROSS_LINEAR_NU,
     Background,
     BaryonBoostMixin,
+    ensure_gravity_only,
+    ensure_gravity_only_on_first_use,
     Perturbations,
     with_baryon_boost,
 )
@@ -294,6 +296,8 @@ class BACCOemuNonLinearPerturbations:
         self.z = redshifts[redshifts <= redshift_max]
         self.background = background
         self.linearperturbations = linearperturbations
+        # Read by the baryonic mixins, which must not be added on top.
+        self.includes_baryons = bool(baryonic_boost)
 
         self.params_emu = {
             "omega_cold": self.background.Omega_cdm0 + self.background.Omega_b0,
@@ -535,7 +539,9 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         MyPert = with_baryon_boost(SomeNonLinearPerturbations, BACCOemuBaryonBoostMixin)
         pert = MyPert(
             background, linear_pert, redshifts,
-            baryon_kwargs=dict(nonlinear_model_name="Arico2023",
+            baryon_kwargs=dict(M_c=13.0, eta=-0.25, beta=-0.15,
+                               M1_z0_cen=11.0, theta_inn=-1.0,
+                               nonlinear_model_name="Arico2023",
                                baryonic_model_name="Burger2025"),
         )
 
@@ -601,6 +607,7 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         theta_out, M_inn:
             Used only by ``Arico2021``; leave at ``None`` for ``Burger2025``.
         """
+        ensure_gravity_only(self, "BACCOemuBaryonBoostMixin")
         # BACCOemu was trained with the boost factor, so a single
         # `get_baryonic_boost` call is enough -- no separate DMO and baryonic
         # spectra. The emulator and its cosmological parameters are set up here
@@ -692,6 +699,7 @@ class BACCOemuBaryonBoostMixin(BaryonBoostMixin):
         np.ndarray
             Baryonic suppression factor, shape (nz, nk).
         """
+        ensure_gravity_only_on_first_use(self, "BACCOemuBaryonBoostMixin")
         zs = np.atleast_1d(zs)
         ks = np.atleast_1d(ks)
         if k_hunit:

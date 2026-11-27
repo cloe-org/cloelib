@@ -580,23 +580,26 @@ class CAMBNonLinearPerturbations:
         self.background.interface_args["CAMBparams"].Want_cl_2D_array = False
         self.background.interface_args["CAMBparams"].WantTransfer = True
 
+        nonlinear_params = self.background.interface_args["CAMBparams"].NonLinearModel
         if log10TAGN is not None:
             if nonlinear_model is None:
                 nonlinear_model = "mead2020_feedback"
-            elif nonlinear_model != "mead2020_feedback":
+            nonlinear_params.set_params(
+                halofit_version=nonlinear_model, HMCode_logT_AGN=log10TAGN
+            )
+            # Read back, since CAMB also accepts the models by number.
+            if nonlinear_params.halofit_version != "mead2020_feedback":
                 raise ValueError(
                     "log10TAGN is only used by the 'mead2020_feedback' nonlinear "
                     f"model, got nonlinear_model={nonlinear_model!r}."
                 )
-            self.background.interface_args["CAMBparams"].NonLinearModel.set_params(
-                halofit_version=nonlinear_model, HMCode_logT_AGN=log10TAGN
-            )
         elif nonlinear_model is not None:
-            self.background.interface_args["CAMBparams"].NonLinearModel.set_params(
-                halofit_version=nonlinear_model
-            )
+            nonlinear_params.set_params(halofit_version=nonlinear_model)
         else:
-            self.background.interface_args["CAMBparams"].NonLinearModel.set_params()
+            nonlinear_params.set_params()
+        # Read by the baryonic mixins, which must not be added on top. Read
+        # back from CAMB, which also accepts e.g. nonlinear_model=10.
+        self.includes_baryons = nonlinear_params.halofit_version == "mead2020_feedback"
 
         self.background.interface_args["CAMBparams"].set_matter_power(
             redshifts=self.z, kmax=self.kmax

@@ -21,6 +21,7 @@ parameters and the LCDM baseline classes bound as class attributes.
 from cloelib.cosmology.cosmology import (
     CB_CROSS_CORRELATED,
     growth_rate_on_redshifts,
+    perturbations_include_baryons,
 )
 
 # General imports
@@ -459,6 +460,7 @@ class MGNonLinearPerturbations:
         self._base_nl = self.baseline_nonlinear(
             background, base_lin, self.z, log10TAGN=log10TAGN
         )
+        self.includes_baryons = perturbations_include_baryons(self._base_nl)
         self._base_lin = base_lin
         z_top = _z_top(self.bin_index)
         self._boost_nl = _boost_spline(

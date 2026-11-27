@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from cloelib.cosmology.TabulatedBoost_cosmology import (
     TabulatedBoostedPerturbations,
@@ -88,3 +89,20 @@ def test_tabulated_boosted_perturbations_apply_boost(tmp_path):
 
     sigma8 = boosted_perturbations.sigma8_0()
     assert np.allclose(sigma8, np.array([0.8]))
+
+
+@pytest.mark.parametrize("includes_baryons", [False, True])
+def test_tabulated_boosted_perturbations_report_baryons(includes_baryons):
+    """The boosted spectrum includes baryonic feedback exactly when its base
+    does, so that no baryonic mixin is added on top of a base that has it."""
+    from cloelib.cosmology.cosmology import ensure_gravity_only
+
+    base = DummyBasePerturbations()
+    base.includes_baryons = includes_baryons
+    boosted_perturbations = TabulatedBoostedPerturbations(
+        DummyLinearPerturbations(), base, lambda z, k, grid=False: 1.0
+    )
+    assert boosted_perturbations.includes_baryons is includes_baryons
+    if includes_baryons:
+        with pytest.raises(ValueError, match="twice"):
+            ensure_gravity_only(boosted_perturbations, "SomeBaryonBoostMixin")

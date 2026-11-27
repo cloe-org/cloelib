@@ -1582,11 +1582,11 @@ class AngularTwoPoint:
             for i in range(1, n_bin + 1):
                 key = ("CMBL", "SHE", 1, i)
                 C_ell_out[key] = np.stack(
-                        [
-                            mixing_matrix[key].array @ C_ell_calc[key].array[0],
-                            mixing_matrix[key].array @ C_ell_calc[key].array[1],
-                        ]
-                    )
+                    [
+                        mixing_matrix[key].array @ C_ell_calc[key].array[0],
+                        mixing_matrix[key].array @ C_ell_calc[key].array[1],
+                    ]
+                )
 
         elif tracer_types == (CMBLensingTracer, CMBLensingTracer):
             key = ("CMBL", "CMBL", 1, 1)

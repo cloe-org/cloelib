@@ -111,6 +111,13 @@ class CLASSBackground:
         self.interface_args["CLASSparams"]["N_ncdm"] = self.N_mnu
         self.interface_args["CLASSparams"]["N_ur"] = self.N_ur
 
+        # ET: Forward extra CLASS parameters, with None removing a default option
+        for key, value in kwargs.items():
+            if value is None:
+                self.interface_args["CLASSparams"].pop(key, None)
+            else:
+                self.interface_args["CLASSparams"][key] = value
+
         # Initialize CLASS
         self.results = Class()
         self.results.set(self.interface_args["CLASSparams"])

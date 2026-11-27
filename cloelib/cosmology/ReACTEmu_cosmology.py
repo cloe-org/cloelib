@@ -294,7 +294,7 @@ class MGemuNonlinearBoost:
         # Compute only for z ≤ redshift_max
         k_emu, boost_inrange = MG_emu.get_nonlinear_boost(**params_inrange)
         # Change h/Mpc --> 1/Mpc
-        k_emu *= self.background.h
+        k_emu = k_emu * self.background.h
 
         # Create the interpolator over the original grid
         boost_inrange_interp = RectBivariateSpline(

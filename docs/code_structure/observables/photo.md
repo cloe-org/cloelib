@@ -66,6 +66,7 @@ nuisance = {
     'AIA': 1.0,         # Intrinsic alignment amplitude
     'CIA': 0.0164,      # IA normalization
     'EtaIA': -0.41,     # IA redshift evolution
+    'z0IA': 0.62,       # IA pivot redshift, ((1+z)/(1+z0IA))**EtaIA (optional, default 0.62)
 }
 
 # Create tracer
@@ -74,6 +75,7 @@ tracer = ShearTracer(
     dndz=dndz_bins,
     z=z,
     nuisance_params=nuisance,
+    ia_model="NLA",
 )
 
 # Get window function
@@ -87,8 +89,9 @@ window = tracer.get_window(z)  # Shape: (n_bins, len(z))
 - Photo-z error handling
 - Multiplicative shear bias
 
-**Intrinsic alignment models**: `ShearTracer` accepts an `ia_model` keyword
-(default `"NLA"`, reproducing the behavior above exactly). `ia_model="TATT"`
+**Intrinsic alignment models**: `ShearTracer` accepts an `ia_model` keyword.
+The default, `ia_model=None`, gives lensing only, with no intrinsic
+alignments. Pass `ia_model="NLA"` for the NLA model. `ia_model="TATT"`
 switches to the Tidal Alignment + Tidal Torquing model (Blazek et al. 2019;
 Navarro-Gironés et al. 2026, arXiv:2602.16448) instead, reading
 `nuisance_params["AIA"/"A2IA"/"bTA"]` (and optionally `"EtaIA"/"Eta2IA"/

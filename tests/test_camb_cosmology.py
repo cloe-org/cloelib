@@ -222,33 +222,23 @@ def test_camb_set_neutrino_parameters_zero():
     assert list(params.nu_mass_numbers) == []
 
 
-def test_camb_massless_species_declared_massive_equals_no_massive():
-    """N_mnu=1 with mnu=0 (needed e.g. by HMcode2020Emu) is a massless-neutrino
-    cosmology, so it must reproduce N_mnu=0, while keeping N_mnu=1 itself."""
-    kwargs = dict(
-        H0=67.7,
-        Omega_b0=0.022 / 0.677**2,
-        Omega_cdm0=0.12 / 0.677**2,
-        Omega_k0=0.0,
-        As=2e-9,
-        ns=0.96,
-        alpha_s=0.0,
-        mnu=0.0,
-        w0=-1,
-        wa=0,
-        gamma_MG=0,
-    )
-    bg_none = CAMBBackground(**kwargs, N_mnu=0)
-    bg_zero = CAMBBackground(**kwargs, N_mnu=1)
-    assert bg_zero.N_mnu == 1
-    assert bg_zero.interface_args["CAMBparams"].num_nu_massive == 0
-    zs = np.array([0.5, 1.0, 2.0])
-    assert_allclose(
-        bg_zero.hubble_parameter(zs), bg_none.hubble_parameter(zs), rtol=1e-8
-    )
-    sigma12_none = CAMBLinearPerturbations(bg_none, zs).sigma12()
-    sigma12_zero = CAMBLinearPerturbations(bg_zero, zs).sigma12()
-    assert_allclose(sigma12_zero, sigma12_none, rtol=1e-5)
+def test_camb_massive_species_with_zero_mass_raises():
+    """Test that the case with N_mnu>0 with mnu=0 is rejected."""
+    with pytest.raises(ValueError, match="mnu must be greater than 0"):
+        CAMBBackground(
+            H0=67.7,
+            Omega_b0=0.022 / 0.677**2,
+            Omega_cdm0=0.12 / 0.677**2,
+            Omega_k0=0.0,
+            As=2e-9,
+            ns=0.96,
+            alpha_s=0.0,
+            mnu=0.0,
+            w0=-1,
+            wa=0,
+            gamma_MG=0,
+            N_mnu=1,
+        )
 
 
 def test_camb_set_neutrino_parameters_wrong_length():
@@ -661,4 +651,69 @@ def test_camb_linear_pk_uses_its_own_results(
         linear_pert.matter_power_spectrum(np.array([z_nodes[i0]]), k_high)[0],
         np.exp(np.interp(np.log(k_high), np.log(k_nodes), np.log(pk_nodes[i0]))),
         rtol=1e-2,
+    )
+
+
+def test_camb_nonlinear_exposes_linear_of_same_run(camb_background_instance, zs):
+    """With `linearperturbations=None` the linear spectra of the same CAMB run
+    are exposed as `.linearperturbations` (the linear source of the linear and
+    beyond-Limber Cl, TATT and nonlinear-bias loops)."""
+    from cloelib.observables.photo.spectrum_engine import linear_source
+
+    nonlinear = CAMBNonLinearPerturbations(
+        camb_background_instance, None, zs, nonlinear_model="mead2020"
+    )
+    linear = nonlinear.linearperturbations
+    assert isinstance(linear, CAMBLinearPerturbations)
+    assert linear.results is nonlinear.results
+    assert linear_source(nonlinear) is linear
+    assert isinstance(linear, Perturbations)
+
+    ks = np.geomspace(1e-4, 5.0, 50)
+    z = np.array([0.0, 1.0])
+    separate = CAMBLinearPerturbations(camb_background_instance, zs)
+    assert_allclose(
+        linear.matter_power_spectrum(z, ks),
+        separate.matter_power_spectrum(z, ks),
+        rtol=1e-4,
+    )
+    assert_allclose(
+        linear.growth_factor(z, ks), separate.growth_factor(z, ks), rtol=1e-5
+    )
+    # It is the linear spectrum, not the nonlinear one.
+    ratio = nonlinear.matter_power_spectrum(z, ks) / linear.matter_power_spectrum(z, ks)
+    assert np.max(ratio[0, ks > 1.0]) > 2.0
+
+
+def test_camb_nonlinear_keeps_given_linear(camb_background_instance, zs):
+    linear = CAMBLinearPerturbations(camb_background_instance, zs)
+    nonlinear = CAMBNonLinearPerturbations(
+        camb_background_instance, linear, zs, nonlinear_model="mead2020"
+    )
+    assert nonlinear.linearperturbations is linear
+
+
+@pytest.mark.parametrize("Omega_k0", [-0.05, 0.05])
+def test_camb_transverse_comoving_distance_curved(Omega_k0):
+    """f_K(chi) matches CAMB's own D_M = (1 + z) D_A for a curved background."""
+    h = 0.677
+    background = CAMBBackground(
+        H0=100 * h,
+        Omega_b0=0.022 / h**2,
+        Omega_cdm0=0.12 / h**2,
+        Omega_k0=Omega_k0,
+        As=2e-9,
+        ns=0.96,
+        alpha_s=0.0,
+        mnu=0.0,
+        w0=-1.0,
+        wa=0.0,
+        gamma_MG=0.0,
+        N_mnu=0,
+    )
+    zs = np.array([0.5, 1.0, 2.0, 3.0])
+    assert_allclose(
+        background.transverse_comoving_distance(zs),
+        (1 + zs) * background.angular_diameter_distance(zs),
+        rtol=1e-6,
     )

@@ -4,8 +4,11 @@ Module implementing CMB lensing.
 This class is compatible with the Tracer protocol.
 """
 
+import weakref
+
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.geometry import transverse_distance
 from cloelib.auxiliary.math_utils import check_nonzero_redshifts
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.observables.photo.contributions import unit_sigma
@@ -43,8 +46,11 @@ class CMBLensingContribution:
     before this class existed.
     """
 
+    traces_potential = True
+
     def __init__(self, tracer: "CMBLensingTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: CMBLensingTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         return self._tracer.get_window(z)
@@ -107,20 +113,23 @@ class CMBLensingTracer:
         window: np.ndarray
         """
         Omega_m0 = self.background.Omega_m(0.0)
+        Ok, H0 = self.background.Omega_k0, self.background.H0
+        rz = self.background.comoving_distance(z)
         factor = (
             3
             / 2
             * (self.background.H0 / c_0) ** 2
             * Omega_m0
             * (1 + z)
-            * self.background.comoving_distance(z)
+            * transverse_distance(rz, Ok, H0)
         )
-        rz = self.background.comoving_distance(z)
         # `Any`: backends accept a scalar redshift here, which the
         # `Background` protocol's `comoving_distance(zs: T)` doesn't express.
         z_star: Any = self.background.z_star
         rz_star = self.background.comoving_distance(z_star)
-        efficiency = 1 - rz / rz_star
+        efficiency = transverse_distance(rz_star - rz, Ok, H0) / transverse_distance(
+            rz_star, Ok, H0
+        )
         # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.
         Sigma = getattr(self.perturbations, "Sigma", unit_sigma)(z)
         result = factor * efficiency * Sigma

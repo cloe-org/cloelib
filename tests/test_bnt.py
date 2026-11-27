@@ -5,6 +5,7 @@ import numpy as np
 import jax.numpy as jnp
 from numpy.testing import assert_allclose
 from cloelib.auxiliary.bnt import BNTMatrixCalculator
+from cloelib.auxiliary.geometry import transverse_distance
 from cloelib.cosmology.camb_cosmology import CAMBBackground
 
 # --- Shared cosmology setup ---
@@ -173,3 +174,47 @@ class TestBNTMatrixCalculator(unittest.TestCase):
             r"BNT matrix construction failed: non-invertible 2x2 system",
         ):
             bnt.get_bnt_matrix()
+
+
+class _CurvedBackground:
+    H0 = 70.0
+
+    def __init__(self, Omega_k0):
+        self.Omega_k0 = Omega_k0
+
+    def comoving_distance(self, z):
+        return 3000.0 * np.asarray(z)
+
+
+class TestBNTMatrixCalculatorCurved(unittest.TestCase):
+    def test_bnt_nulls_curved_lensing_efficiency(self):
+        """BNT row 2 nulls the curved lensing efficiency in front of the bins."""
+        z = np.linspace(0.01, 3.0, 600)
+        edges = [(0.8, 1.2), (1.3, 1.7), (1.8, 2.2)]
+        dndz_list = []
+        for lo, hi in edges:
+            nz = np.where((z > lo) & (z < hi), 1.0, 0.0)
+            dndz_list.append(nz / np.trapezoid(nz, z))
+
+        for Omega_k0 in (-0.3, 0.3):
+            with self.subTest(Omega_k0=Omega_k0):
+                bg = _CurvedBackground(Omega_k0)
+                bnt = BNTMatrixCalculator(dndz_list=dndz_list, z=z, background=bg)
+                matrix = bnt.get_bnt_matrix()
+
+                chi = bg.comoving_distance(z)
+                front = chi < 3000.0 * edges[0][0]
+                f_K = np.asarray(transverse_distance(chi, Omega_k0, bg.H0))
+                ratio = (
+                    np.asarray(
+                        transverse_distance(
+                            chi[None, :] - chi[front][:, None], Omega_k0, bg.H0
+                        )
+                    )
+                    / f_K[None, :]
+                )
+                efficiency = np.stack(
+                    [np.trapezoid(nz[None, :] * ratio, z, axis=1) for nz in dndz_list]
+                )
+                nulled = matrix[2] @ efficiency
+                self.assertLess(np.abs(nulled).max(), 1e-10 * np.abs(efficiency).max())

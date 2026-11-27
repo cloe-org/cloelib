@@ -2,7 +2,8 @@ import jax
 import jax.numpy as jnp
 import pytest
 from numpy.testing import assert_allclose
-
+from scipy.integrate import quad
+from cloelib.auxiliary.units import SPEED_OF_LIGHT
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.cosmology.jax_cosmology import (
     JAXBackground,
@@ -323,6 +324,24 @@ def test_jax_comoving_distance(jax_background_instance, zs):
     result = jax_background_instance.comoving_distance(zs)
     assert isinstance(result, jnp.ndarray)
     assert len(result) == len(zs)
+
+
+def test_jax_comoving_distance_matches_direct_integral(jax_background_instance):
+    """Regression test (gh-743): comoving_distance agrees with a direct integral of c/H(z)."""
+    background = jax_background_instance
+    c_0 = SPEED_OF_LIGHT / 1000  # km/s
+
+    def inverse_hubble(z):
+        return 1.0 / float(background.hubble_parameter(z))
+
+    zs = jnp.array([0.0, 0.01, 0.1, 0.5, 1.0, 1.6, 3.0])
+    expected = [c_0 * quad(inverse_hubble, 0.0, float(z))[0] for z in zs]
+    assert_allclose(background.comoving_distance(zs), expected, rtol=1e-6, atol=1e-8)
+
+    # A single redshift, as cmb.py passes z_star
+    chi_star = background.comoving_distance(1090.0)
+    assert jnp.shape(chi_star) == ()
+    assert_allclose(chi_star, c_0 * quad(inverse_hubble, 0.0, 1090.0)[0], rtol=1e-6)
 
 
 def test_jax_transverse_comoving_distance(jax_background_instance, zs):

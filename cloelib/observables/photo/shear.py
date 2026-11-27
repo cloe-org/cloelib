@@ -50,10 +50,12 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all
 follows.
 """
 
+import weakref
 from typing import Any, Callable, Dict, Optional, Protocol
 
 # cloelib imports
 from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.auxiliary.geometry import cos_K, transverse_distance
 from cloelib.cosmology.cosmology import Perturbations
 from cloelib.auxiliary.math_utils import (
     cached_stacked_simpson,
@@ -66,12 +68,15 @@ from cloelib.observables.photo.contributions import (
     Contribution,
     contribution_field,
     unit_sigma,
+    NonLimberSpec,
+    ell_prefactor_spin2,
 )
 from cloelib.observables.photo.spectrum_engine import (
     PkTerm,
     SpectraBank,
     SpectrumRequest,
     compute_effective_pk,
+    linear_source,
 )
 
 # General imports
@@ -94,8 +99,17 @@ _C_KM_S = SPEED_OF_LIGHT / 1000
 class LensingContribution:
     """Weak-lensing shear kernel term of `ShearTracer.get_window()`."""
 
+    nonlimber_spec = NonLimberSpec(
+        power=-1,
+        derivative=0,
+        ell_prefactor=ell_prefactor_spin2,
+        divide_by_chi2=True,
+    )
+    traces_potential = True
+
     def __init__(self, tracer: "ShearTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         """Return the uncalibrated lensing kernel, shape ``(n_bin, n_z)``."""
@@ -114,8 +128,16 @@ class NLAContribution(IntrinsicAlignmentContribution):
     change either way.
     """
 
+    nonlimber_spec = NonLimberSpec(
+        power=-1,
+        derivative=0,
+        ell_prefactor=ell_prefactor_spin2,
+        divide_by_chi2=True,
+    )
+
     def __init__(self, tracer: "ShearTracer") -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
 
     def compute_kernel(self, z):
         """Return the uncalibrated NLA kernel, shape ``(n_bin, n_z)``."""
@@ -138,29 +160,6 @@ _BB_ONLY_KERNELS = (
 )
 _GI_KERNELS = ("tatt_A_0_0E", "tatt_C_0_0E", "tatt_A_0_E2", "tatt_B_0_E2")
 _ALL_KERNELS = _EE_ONLY_KERNELS + _SHARED_KERNELS + _BB_ONLY_KERNELS
-
-
-def _is_known_linear_perturbations(perturbations) -> bool:
-    """Whether `perturbations` is itself one of cloelib's own linear-only
-    backends (`HMemuLinearPerturbations`, `CAMBLinearPerturbations`, ...).
-
-    Identified by cloelib's own `*LinearPerturbations` naming convention
-    (consistently followed across every cosmology backend module) rather
-    than an `isinstance` check against every concrete class: several
-    backends (CAMB, CLASS, BACCOemu, MGCLASS, mochi_class, hi_class, ...)
-    are optional dependencies, so importing all of them here just to check
-    would make this module require every optional extra. Used only as the
-    fallback when `perturbations` has no `.linearperturbations` attribute
-    of its own - see `PBJTATTLoopComputer.__init__`.
-
-    Deliberately not a plain `.endswith("LinearPerturbations")`: a
-    `*NonLinearPerturbations` class name (e.g. `CAMBNonLinearPerturbations`)
-    also ends with that suffix (`"NonLinearPerturbations"` itself ends with
-    `"LinearPerturbations"`) - excluding any name containing `"NonLinear"`
-    is what actually distinguishes the two conventions.
-    """
-    name = type(perturbations).__name__
-    return name.endswith("LinearPerturbations") and "NonLinear" not in name
 
 
 class TATTLoopComputer(Protocol):
@@ -203,25 +202,19 @@ class PBJTATTLoopComputer:
     that's built *from* a separate linear one sets it -
     `HMemuNonLinearPerturbations`, `EE2NonLinearPerturbations`,
     `BACCOemuNonLinearPerturbations`, `EmantisFofrNonLinearPerturbations`,
-    `JAXNonLinearPerturbations`), else `perturbations` itself *if and only
+    `JAXNonLinearPerturbations`; `CAMBNonLinearPerturbations` sets the
+    given one, or the linear spectra of its own CAMB run when given None),
+    else `perturbations` itself *if and only
     if* it's itself a recognized `*LinearPerturbations` backend (see
-    `_is_known_linear_perturbations`) - raises `ValueError` otherwise (PR
+    `spectrum_engine.linear_source`) - raises `ValueError` otherwise (PR
     #569 review): the absence of a `.linearperturbations` attribute does
     not by itself mean the object passed in *is* linear, and silently
     treating an unrecognized nonlinear backend as linear would be a
     physical error, not a numerical one (FAST-PT would still return
     finite-looking, wrong spectra) - the kind that shouldn't fail silently.
-    `CAMBNonLinearPerturbations` is the concrete case this currently
-    excludes: it does not set `.linearperturbations` (its own
-    `matter_power_spectrum` is always nonlinear), so it now raises here
-    instead of being misused - pass `CAMBLinearPerturbations` directly
-    instead.
-
-    TODO (PR #569 review): standardize access to the corresponding linear
-    perturbations object across nonlinear cosmology backends (e.g. also
-    wiring it up for `CAMBNonLinearPerturbations`), so PT-based observables
-    can retrieve a linear P(k,z) through one common interface instead of
-    this getattr-plus-name-check fallback.
+    Every cloelib nonlinear backend sets `.linearperturbations` (PR #569
+    review: `CAMBNonLinearPerturbations` was the last one); the name check
+    remains for backends defined outside cloelib.
 
     FAST-PT requires its input k-grid to be evenly log-spaced (an FFTLog
     requirement); `TATTContribution`'s own `ks` (whatever grid the calling
@@ -264,12 +257,8 @@ class PBJTATTLoopComputer:
         # source if it has one; else, only accept `perturbations` itself if
         # it's a recognized linear backend - fail loudly otherwise rather
         # than silently treating an unrecognized object as linear.
-        linear = getattr(perturbations, "linearperturbations", None)
-        if linear is not None:
-            self.linear_perturbations = linear
-        elif _is_known_linear_perturbations(perturbations):
-            self.linear_perturbations = perturbations
-        else:
+        linear = linear_source(perturbations)
+        if linear is None:
             raise ValueError(
                 "PBJTATTLoopComputer requires a linear matter-power-"
                 f"spectrum source, but {type(perturbations).__name__!r} "
@@ -280,6 +269,7 @@ class PBJTATTLoopComputer:
                 "sets `.linearperturbations` (e.g. "
                 "HMemuNonLinearPerturbations)."
             )
+        self.linear_perturbations = linear
         self._cached_ks: Optional[_numpy.ndarray] = None
         self._cached_kernels: Optional[Dict[str, _numpy.ndarray]] = None
 
@@ -460,7 +450,8 @@ class TATTContribution(IntrinsicAlignmentContribution):
         z0: float = 0.62,
         C_IA: float = 0.0134,
     ) -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
         self.A1 = A1
         self.A2 = A2
         self.b_TA = b_TA
@@ -728,7 +719,8 @@ class TATTMContribution(IntrinsicAlignmentContribution):
         log10_M0: float = 13.5,
         C_IA: float = 0.0134,
     ) -> None:
-        self._tracer = tracer
+        # weak: avoids a tracer <-> contribution reference cycle (gh-714)
+        self._tracer: ShearTracer = weakref.proxy(tracer)
         self._loop_computer = loop_computer
         self.alpha_M = alpha_M
         self.beta_M = beta_M
@@ -892,7 +884,9 @@ class ShearTracer:
             contribution to use. `None` (default) means no intrinsic-alignment
             contribution at all - `get_window()`/`get_Cl` use only the lensing
             term. `"NLA"` builds `NLAContribution` (`get_window_IA`, reading
-            `nuisance_params["AIA"/"CIA"/"EtaIA"]`). `"TATT"` builds a
+            `nuisance_params["AIA"/"CIA"/"EtaIA"]` and optionally
+            `nuisance_params["z0IA"]`, the pivot redshift of the
+            `((1+z)/(1+z0IA))**EtaIA` scaling, default 0.62). `"TATT"` builds a
             `TATTContribution` from `nuisance_params["AIA"]` (=A1),
             `nuisance_params["A2IA"]`, `nuisance_params["bTA"]`, and optionally
             `nuisance_params["Eta2IA"]`/`["z0IA"]` (default 0.0/0.62).
@@ -1134,7 +1128,9 @@ class ShearTracer:
         r"""Return the NLA intrinsic-alignment kernel on ``z``.
 
         The per-bin kernel is ``-H(z)/c * AIA * CIA * Omega_m0 *
-        (1+z)**EtaIA / D(z) * dndz_shifted``. If the backend returns a
+        ((1+z)/(1+z0IA))**EtaIA / D(z) * dndz_shifted``, so ``AIA`` is the
+        amplitude at the pivot redshift ``z0IA`` (optional nuisance
+        parameter, default 0.62, as in the case of the TATT implementation). If the backend returns a
         scale-dependent growth factor, the second tabulated k column is used;
         otherwise its scale-independent result is used. TATT amplitudes are
         represented in effective spectra rather than by this NLA window.
@@ -1153,7 +1149,10 @@ class ShearTracer:
         A_IA = self.nuisance_params["AIA"]
         C_IA = self.nuisance_params["CIA"]
         Eta_IA = self.nuisance_params["EtaIA"]
-        factor = -Hz / c_0 * A_IA * C_IA * Omega_m0 * (1 + z) ** Eta_IA / Dz
+        z0_IA = self.nuisance_params.get("z0IA", 0.62)
+        factor = (
+            -Hz / c_0 * A_IA * C_IA * Omega_m0 * ((1 + z) / (1 + z0_IA)) ** Eta_IA / Dz
+        )
         return np.einsum("ij, j->ij", self.dndz_shifted, factor)
 
     def get_lensing_efficiency_bin(self, z, bin_idx):
@@ -1166,14 +1165,19 @@ class ShearTracer:
         interpolator = interpax.Akima1DInterpolator(
             self.z, self.dndz_shifted[bin_idx, :]
         )
+        Ok, H0 = self.background.Omega_k0, self.background.H0
         x = np.linspace(0.0, 4, 200)
         y = self.background.comoving_distance(x)
-        rx_interp = interpax.Akima1DInterpolator(x, y)
+        rx_interp = interpax.Akima1DInterpolator(x, transverse_distance(y, Ok, H0))
+        cx_interp = interpax.Akima1DInterpolator(x, cos_K(y, Ok, H0))
         f1 = jax.jit(lambda x: interpolator(x))
-        f2 = jax.jit(lambda x: interpolator(x) / rx_interp(x))
+        f2 = jax.jit(lambda x: interpolator(x) * cx_interp(x) / rx_interp(x))
         integral_1 = simps(f1, z, 3.0)
         integral_2 = simps(f2, z, 3.0)
-        efficiency = integral_1 - integral_2 * self.background.comoving_distance(z)
+        rz = self.background.comoving_distance(z)
+        efficiency = cos_K(rz, Ok, H0) * integral_1 - integral_2 * transverse_distance(
+            rz, Ok, H0
+        )
         return efficiency
 
     def get_lensing_efficiency(self, z):
@@ -1181,7 +1185,8 @@ class ShearTracer:
         Compute the discretized lensing efficiency for every bin.
 
         The efficiency uses ``dndz_shifted`` and the grid distance-ratio
-        factor ``1 - chi(z_lens) / chi(z_source)``, contracted with cached
+        factor ``f_K(chi(z_source) - chi(z_lens)) / f_K(chi(z_source))``,
+        contracted with cached
         stacked Simpson weights. The supplied redshift grid is used as both
         the lens and source grid; this implementation assumes uniform spacing.
 
@@ -1200,7 +1205,11 @@ class ShearTracer:
         """
         dz = z[1] - z[0]  # assuming equispaced!
         rz = self.background.comoving_distance(z)
-        rzrz = 1 - np.outer(rz, 1 / rz)
+        Ok, H0 = self.background.Omega_k0, self.background.H0
+        rzrz = (
+            transverse_distance(rz[None, :] - rz[:, None], Ok, H0)
+            / transverse_distance(rz, Ok, H0)[None, :]
+        )
         w_matrix = cached_stacked_simpson(len(z))
         result = np.einsum("ik, jk, jk->ij", self.dndz_shifted, rzrz, w_matrix) * dz
         return result
@@ -1210,7 +1219,7 @@ class ShearTracer:
 
         It multiplies the discretized efficiency from
         :meth:`get_lensing_efficiency` by
-        ``3/2 * (H0/c)**2 * Omega_m0 * (1+z) * chi(z)``. The harmonic shear
+        ``3/2 * (H0/c)**2 * Omega_m0 * (1+z) * f_K(chi(z))``. The harmonic shear
         response is applied by ``AngularTwoPoint``.
 
         Args:
@@ -1226,7 +1235,11 @@ class ShearTracer:
             * (self.background.H0 / c_0) ** 2
             * Omega_m0
             * (1 + z)
-            * self.background.comoving_distance(z)
+            * transverse_distance(
+                self.background.comoving_distance(z),
+                self.background.Omega_k0,
+                self.background.H0,
+            )
         )
         efficiency = self.get_lensing_efficiency(z)
         # MG lensing modification Sigma(z); unity for GR / LCDM perturbations.

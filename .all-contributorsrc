@@ -47,7 +47,9 @@
       "profile": "https://github.com/DavidNavarroG",
       "contributions": [
         "doc",
-        "code"
+        "code",
+        "review",
+        "bug"
       ]
     },
     {
@@ -497,7 +499,8 @@
         "projectManagement",
         "mentoring",
         "promotion",
-        "ideas"
+        "ideas",
+        "bug"
       ]
     },
     {
@@ -771,6 +774,53 @@
       "contributions": [
         "mentoring",
         "ideas"
+      ]
+    },
+    {
+      "login": "wdassignies",
+      "name": "William D'Assignies Doumerg",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89606153?v=4",
+      "profile": "https://wdassignies.github.io",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "marioballardini",
+      "name": "marioballardini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/188600397?v=4",
+      "profile": "https://github.com/marioballardini",
+      "contributions": [
+        "mentoring"
+      ]
+    },
+    {
+      "login": "sachaguer",
+      "name": "Sacha Guerrini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85949041?v=4",
+      "profile": "https://sachaguer.github.io",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "vilasinits",
+      "name": "Vilasini Tinnaneri",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29410673?v=4",
+      "profile": "https://github.com/vilasinits",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "alessiospuriomancini",
+      "name": "Alessio Spurio Mancini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16155457?v=4",
+      "profile": "http://www.alessiospuriomancini.org",
+      "contributions": [
+        "review"
       ]
     }
   ]

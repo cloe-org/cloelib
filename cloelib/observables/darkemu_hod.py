@@ -14,6 +14,7 @@ References
 - More et al. (2015): ApJ 806, 2 - Incompleteness model
 """
 
+import dataclasses
 from dataclasses import dataclass
 from typing import Optional, Literal, Dict, Any
 import numpy as np
@@ -115,13 +116,54 @@ class DarkEmuHODParameters:
 
     With incompleteness (More et al. 2015), occupations are modified by:
         f_inc(M) = (M / M_inc)^alpha_inc / (1 + (M / M_inc)^alpha_inc)
+
+    Independent central/satellite HOD for samples whose central occupation
+    does not reach unity, e.g. emission-line galaxies (hod_type="independent").
+    Example with cen_model="asymsigmoid" and sat_model="zheng_cutoff" [default]:
+        <N_c(M)> = f_max / {1 + [C(a,b) logMmin / logM]^(1/a)}^(1/b),
+        C(a,b) = (2^b - 1)^a          (arXiv:2605.21436 Eq. 42)
+        <N_s(M)> = A_s (M / M_1)^alpha exp(-M_cut / M) exp(-M / M_max)
+
+    >>> hod = DarkEmuHODParameters(
+    ...     hod_type="independent", cen_model="asymsigmoid",
+    ...     f_max=0.36, logMmin=12.07, a=0.027, b=1e-8,
+    ...     A_s=0.60, logM1=13.46, alpha=0.98, logMcut=12.40, logMmax=14.5
+    ... )  # illustrative values
     """
 
-    # Required parameters
-    logMmin: float
-    sigma_sq: float
-    logM1: float
-    alpha: float
+    # HOD Type
+    hod_type: str = "standard"
+
+    # Required parameters for standard HOD
+    logMmin: Optional[float] = None
+    sigma_sq: Optional[float] = None
+    logM1: Optional[float] = None
+    alpha: Optional[float] = None
+
+    # Independent central/satellite HOD (hod_type="independent"): cen_model selects the central occupation form
+    # ("hmq" default, or "asymsigmoid" -- Linde et al. 2026, arXiv:2605.21436, Eq. 42).
+    cen_model: Optional[str] = None
+
+    # sat_model selects the satellite occupation form (any cen_model):
+    # "zheng_cutoff" (default): A_s (M/M_1)^alpha exp(-M_cut/M) exp(-M/M_max)
+    # "zheng2005"             : A_s (M/M_1)^alpha exp(-M_cut/M)
+    sat_model: Optional[str] = None
+
+    # Central HOD params for cen_model="hmq" (modified HMQ)
+    p_max: Optional[float] = None
+    sigma_M: Optional[float] = None
+    logMc: Optional[float] = None
+    gamma: Optional[float] = None
+
+    # Central HOD params for cen_model="asymsigmoid"
+    f_max: Optional[float] = None
+    a: Optional[float] = None
+    b: Optional[float] = None
+
+    # Satellite HOD params (logMmax only for sat_model="zheng_cutoff")
+    A_s: Optional[float] = None
+    logMcut: Optional[float] = None
+    logMmax: Optional[float] = None
 
     # Optional parameters with defaults
     kappa: float = 0.0
@@ -137,10 +179,50 @@ class DarkEmuHODParameters:
 
     def _validate(self):
         """Validate HOD parameter values."""
-        if self.sigma_sq < 0:
-            raise ValueError(f"sigma_sq must be non-negative, got {self.sigma_sq}")
-        if self.alpha < 0:
-            raise ValueError(f"alpha must be non-negative, got {self.alpha}")
+        if self.hod_type == "standard":
+            if any(
+                p is None for p in [self.logMmin, self.sigma_sq, self.logM1, self.alpha]
+            ):
+                raise ValueError(
+                    "Standard HOD requires logMmin, sigma_sq, logM1, and alpha"
+                )
+            if self.sigma_sq < 0:
+                raise ValueError(f"sigma_sq must be non-negative, got {self.sigma_sq}")
+            if self.alpha < 0:
+                raise ValueError(f"alpha must be non-negative, got {self.alpha}")
+        elif self.hod_type == "independent":
+            cen_model = self.cen_model or "hmq"
+            if cen_model == "asymsigmoid":
+                if any(p is None for p in [self.f_max, self.logMmin, self.a, self.b]):
+                    raise ValueError(
+                        "Independent HOD with cen_model='asymsigmoid' requires f_max, logMmin, a, and b"
+                    )
+            elif cen_model == "hmq":
+                if any(
+                    p is None
+                    for p in [self.p_max, self.sigma_M, self.logMc, self.gamma]
+                ):
+                    raise ValueError(
+                        "Independent HOD with cen_model='hmq' requires p_max, sigma_M, logMc, and gamma"
+                    )
+            else:
+                raise ValueError(f"Unknown cen_model: {cen_model}")
+            sat_model = self.sat_model or "zheng_cutoff"
+            if sat_model not in ("zheng_cutoff", "zheng2005"):
+                raise ValueError(f"Unknown sat_model: {sat_model}")
+            if any(p is None for p in [self.A_s, self.alpha, self.logM1, self.logMcut]):
+                raise ValueError(
+                    "Independent HOD requires A_s, alpha, logM1, and logMcut (satellite params)"
+                )
+            if sat_model == "zheng_cutoff" and self.logMmax is None:
+                raise ValueError(
+                    "Independent HOD with sat_model='zheng_cutoff' requires logMmax"
+                )
+            if self.alpha < 0:
+                raise ValueError(f"alpha must be non-negative, got {self.alpha}")
+        else:
+            raise ValueError(f"Unknown hod_type: {self.hod_type}")
+
         if self.kappa < 0:
             raise ValueError(f"kappa must be non-negative, got {self.kappa}")
         if not 0 <= self.poff <= 1:
@@ -158,13 +240,17 @@ class DarkEmuHODParameters:
             )
 
     @property
-    def Mmin(self) -> float:
+    def Mmin(self) -> Optional[float]:
         """Minimum halo mass in h^-1 M_sun."""
+        if self.logMmin is None:
+            return None
         return 10**self.logMmin
 
     @property
-    def M1(self) -> float:
+    def M1(self) -> Optional[float]:
         """Characteristic satellite mass in h^-1 M_sun."""
+        if self.logM1 is None:
+            return None
         return 10**self.logM1
 
     @property
@@ -189,10 +275,23 @@ class DarkEmuHODParameters:
         >>> hod_model.set_galaxy(gparam)
         """
         gparam = {
+            "hod_type": self.hod_type,
             "logMmin": self.logMmin,
             "sigma_sq": self.sigma_sq,
             "logM1": self.logM1,
             "alpha": self.alpha,
+            "cen_model": self.cen_model,
+            "sat_model": self.sat_model,
+            "p_max": self.p_max,
+            "sigma_M": self.sigma_M,
+            "logMc": self.logMc,
+            "gamma": self.gamma,
+            "f_max": self.f_max,
+            "a": self.a,
+            "b": self.b,
+            "A_s": self.A_s,
+            "logMcut": self.logMcut,
+            "logMmax": self.logMmax,
             "kappa": self.kappa,
             "poff": self.poff,
             "Roff": self.Roff,
@@ -202,6 +301,8 @@ class DarkEmuHODParameters:
             "alpha_inc": self.alpha_inc if self.alpha_inc is not None else 0.0,
             "logM_inc": self.logM_inc if self.logM_inc is not None else 13.0,
         }
+        # Remove None values
+        gparam = {k: v for k, v in gparam.items() if v is not None}
         return gparam
 
     @classmethod
@@ -221,10 +322,23 @@ class DarkEmuHODParameters:
         """
         # Filter to only valid parameter names
         valid_keys = {
+            "hod_type",
             "logMmin",
             "sigma_sq",
             "logM1",
             "alpha",
+            "cen_model",
+            "sat_model",
+            "p_max",
+            "sigma_M",
+            "logMc",
+            "gamma",
+            "f_max",
+            "a",
+            "b",
+            "A_s",
+            "logMcut",
+            "logMmax",
             "kappa",
             "poff",
             "Roff",
@@ -329,20 +443,7 @@ class DarkEmuHODParameters:
         >>> hod = DarkEmuHODParameters(logMmin=13.0, sigma_sq=0.3, logM1=14.0, alpha=1.0)
         >>> hod_modified = hod.copy(logMmin=13.5)
         """
-        params = {
-            "logMmin": self.logMmin,
-            "sigma_sq": self.sigma_sq,
-            "logM1": self.logM1,
-            "alpha": self.alpha,
-            "kappa": self.kappa,
-            "poff": self.poff,
-            "Roff": self.Roff,
-            "sat_dist_type": self.sat_dist_type,
-            "alpha_inc": self.alpha_inc,
-            "logM_inc": self.logM_inc,
-        }
-        params.update(kwargs)
-        return DarkEmuHODParameters.from_dict(params)
+        return dataclasses.replace(self, **kwargs)
 
 
 # Common HOD parameter priors for sampling

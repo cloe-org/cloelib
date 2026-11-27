@@ -360,6 +360,26 @@ P_mg = mg_pert.matter_power_spectrum(zs, k)
 
 Stay within these training ranges when sampling. Outside them, the implementation clips emulator inputs and applies its configured high-redshift policy, which is convenient for robustness but should not be treated as a new calibration region.
 
+### WeylPerturbations
+
+Wrapper for Weyl-potential measurements that takes existing linear and nonlinear perturbations objects and replaces the matter power spectra with those evaluated at an initial redshift `z_ini`, multiplied by the late-time nonlinear boost.
+
+**Location**: `cloelib/cosmology/Weyl_cosmology.py`
+
+**When to use**: You want a matter power spectrum at a chosen initial redshift (applying a late-time non-linear boost to it); this is required when using the tracer classes in `cloelib/observables/photo/positions_Weyl.py`.
+
+**Features**:
+
+- Single `WeylPerturbations` class wrapping both a linear and a nonlinear perturbations object
+- Requires both objects to share the same `Background` instance
+- Checks that `z_ini` does not exceed the maximum redshift available in the nonlinear perturbations object
+- Returns boosted `matter_power_spectrum` and `matter_power_spectrum_cb` values using the ratio `P_nl(z, k) / P_lin(z, k)`, multiplied by the corresponding linear power spectrum at `z_ini`
+- Delegates `growth_factor` to the nonlinear perturbations object
+- Returns `growth_rate` from the nonlinear perturbations object, restricted to the redshifts specified when constructing `WeylPerturbations`
+- Exposes `sigma8_0()` from the nonlinear perturbations object
+- Provides `sigma8_zini()`, calculated from `sigma8_0()` and the linear growth factor evaluated at `z_ini`
+- Inherits `cb_cross_prescription` from the nonlinear perturbations object
+
 ### TabulatedBoost / TabulatedBoostedPerturbations
 
 Lightweight wrapper for applying a tabulated beyond-LCDM nonlinear boost to an existing nonlinear matter power spectrum.

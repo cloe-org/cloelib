@@ -4,7 +4,7 @@ from typing import Optional, Sequence, Union
 
 import numpy as np
 
-from cloelib.cosmology.class_cosmology import CLASSBackground
+from cloelib.cosmology.class_cosmology import CLASSBackground, CLASSLinearPerturbations
 
 
 class DARKINBackground(CLASSBackground):
@@ -159,3 +159,74 @@ class DARKINBackground(CLASSBackground):
             )
         result = np.interp(z, self._cb_redshifts, self._cb_fractions)
         return float(result) if z.ndim == 0 else result
+
+
+class DARKINLinearPerturbations(CLASSLinearPerturbations):
+    """Linear DARKIN spectra with growth derived from total-matter power."""
+
+    def __init__(
+        self,
+        background: DARKINBackground,
+        redshifts: np.ndarray,
+    ) -> None:
+        """Initialise linear spectra with redshift coverage for density growth."""
+        z = np.atleast_1d(redshifts).astype(float)
+
+        if z.ndim != 1 or z.size == 0 or not np.all(np.isfinite(z) & (z >= 0)):
+            raise ValueError(
+                "redshifts must be non-empty, 1D, finite and non-negative."
+            )
+
+        z_max = float(np.max(z))
+        z_compute_max = max(1.0, z_max + 0.1 * (1.0 + z_max))
+
+        # ET: Extend coverage of the solver for the density-growth derivative
+        super().__init__(background, np.append(z, z_compute_max))
+
+        # ET: Preserve the requested grid for default queries
+        self.z = z
+
+    def growth_rate(
+        self,
+        zs: Optional[np.ndarray] = None,
+        ks: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        """Return total-matter density growth from DARKIN's linear spectra.
+
+        Wavenumbers ks are required in 1/Mpc.
+        The returned array has shape (nz, nk).
+        """
+        if ks is None:
+            raise ValueError(
+                "DARKIN growth_rate requires explicit wavenumbers ks in 1/Mpc."
+            )
+
+        z = np.atleast_1d(self.z if zs is None else zs).astype(float)
+        k = np.atleast_1d(ks).astype(float)
+
+        if z.ndim != 1 or z.size == 0 or not np.all(np.isfinite(z) & (z >= 0)):
+            raise ValueError("zs must be non-empty, 1D, finite and non-negative.")
+
+        if k.ndim != 1 or k.size == 0 or not np.all(np.isfinite(k) & (k > 0)):
+            raise ValueError("ks must be non-empty, 1D, finite and positive.")
+
+        f = np.array(
+            [
+                [
+                    self.results.scale_dependent_growth_factor_f(
+                        float(ki),
+                        float(zi),
+                        h_units=False,
+                        nonlinear=False,
+                    )
+                    for ki in k
+                ]
+                for zi in z
+            ],
+            dtype=float,
+        )
+
+        if not np.all(np.isfinite(f)):
+            raise RuntimeError("DARKIN returned a non-finite density growth rate.")
+
+        return f

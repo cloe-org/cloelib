@@ -60,6 +60,11 @@ EXPECTED = {
     "EE2_cosmology.py": {
         "EE2NonLinearPerturbations": "CB_CROSS_LINEAR_NU",
     },
+    "EE3_cosmology.py": {
+        "EE3LinearPerturbations": "CB_CROSS_CORRELATED",
+        "EE3NonLinearPerturbations": "CB_CROSS_CORRELATED",
+        "EE3HMcodePerturbations": "CB_CROSS_CORRELATED",
+    },
     "baccoemu_cosmology.py": {
         "BACCOemuLinearPerturbations": "CB_CROSS_CORRELATED",
         "BACCOemuNonLinearPerturbations": "CB_CROSS_LINEAR_NU",

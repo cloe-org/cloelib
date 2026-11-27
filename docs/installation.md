@@ -59,5 +59,6 @@ Several optional dependencies enhance **cloelib** capabilities:
 - **`react`** – Installs the TensorFlow support needed by the ReACT modified-gravity boost module; [`MGEmu`](https://github.com/nebblu/MGEmus.git) itself must be installed from GitHub (see step 5)
 - **`baccoemu`** – Required for BACCOemu nonlinear and baryonic perturbations
 - **`FlamingoBaryonResponseEmulator`** – Required for FLAMINGO baryonic suppression
+- **`euclidemulator3`** – Required for the EuclidEmulator3 linear, HMcode and nonlinear perturbations (not on PyPI yet: `pip install git+ssh://git@github.com/garico92/euclidemulator3.git`)
 
 These are not included in the default installation but can be added as shown above as other external cosmological codes.

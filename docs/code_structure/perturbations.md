@@ -232,6 +232,36 @@ Simulation-based emulator for non-linear power spectra using [euclidemu2](https:
 - Accurate DM-only non-linear boost for P_mm
 - More limited parameter range
 
+### EE3Perturbations
+
+Linear and nonlinear power spectra from [EuclidEmulator3](https://github.com/garico92/euclidemulator3), calibrated on PKDGRAV3 N-body simulations over an 8-parameter $w_0w_a$CDM + $\sum m_\nu$ space ($0 \le z \le 6$, $0.01 \le k \le 12.4\,h/\text{Mpc}$).
+
+**Location**: `cloelib/cosmology/EE3_cosmology.py`
+
+**When to use**: Fast, simulation-calibrated nonlinear predictions with no Boltzmann code, over a wide parameter range; MCMC sampling.
+
+**Features**:
+
+- `EE3LinearPerturbations`: total and cold linear spectra from the EE3 linear emulator and scale-dependent growth factors from the EE3 growth emulator ($z \le 9$; continued with the extrapolated linear spectrum above), exact top-hat $\sigma_8$
+- `EE3NonLinearPerturbations`: the EE3 cold boost $B = P_{cb}^{NL}/P_{cb}^{L}$ applied to _any_ linear perturbations (as for EE2); with `EE3LinearPerturbations` it reproduces the full EE3 prediction `emu.sim.pk_nl` to $10^{-6}$
+- Massive neutrinos through EE3's linear response, $\sqrt{P_{mm}} = (1-f_\nu)\sqrt{P_{cb}^{NL}} + f_\nu\sqrt{P_\nu^L}$ (hence `CB_CROSS_CORRELATED`)
+- `EE3HMcodePerturbations`: the HMcode-2020 emulator shipped with EE3 ($z \le 9$, $10^{-4} \le k \le 100\,h/\text{Mpc}$), cold and total HMcode boosts applied to _any_ linear perturbations; with `EE3LinearPerturbations` it reproduces `emu.hmc.pk`
+- Every EE3 call is made once per cosmology for all the requested redshifts (one network / GP pass); power-law extension outside the emulated $k$ and $z$ ranges; calibrated boost error via `boost_error`
+
+**Example**:
+
+```python
+from cloelib.cosmology.EE3_cosmology import (
+    EE3HMcodePerturbations,
+    EE3LinearPerturbations,
+    EE3NonLinearPerturbations,
+)
+
+lin = EE3LinearPerturbations(background=bg, redshifts=zs)
+nonlin = EE3NonLinearPerturbations(background=bg, linearperturbations=lin, redshifts=zs)
+hmcode = EE3HMcodePerturbations(background=bg, linearperturbations=lin, redshifts=zs)
+```
+
 ### BACCOemuPerturbations
 
 Accurate and fast emulators of the linear, non-linear, and baryonic power spectra using [BACCOemu](https://bitbucket.org/rangulo/baccoemu/src/master/).

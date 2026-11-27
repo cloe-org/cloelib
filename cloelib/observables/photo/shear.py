@@ -54,15 +54,15 @@ import weakref
 from typing import Any, Callable, Dict, Optional, Protocol
 
 # cloelib imports
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.geometry import cos_K, transverse_distance
+from cloelib.utils.constants import SPEED_OF_LIGHT_KM_S as c_0
+from cloelib.utils.geometry import cos_K, transverse_distance
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.auxiliary.math_utils import (
+from cloelib.utils.math import (
     cached_stacked_simpson,
-    check_nonzero_redshifts,
     simps,
 )
-from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.utils.redshift import check_nonzero_redshifts
+from cloelib.utils.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
     Contribution,
@@ -86,14 +86,6 @@ import jax.numpy as jnp
 import interpax
 import numpy as _numpy
 from scipy import interpolate as _scipy_interpolate
-
-
-# UNITS
-c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
-
-
-# Same convention: SPEED_OF_LIGHT is in m/s.
-_C_KM_S = SPEED_OF_LIGHT / 1000
 
 
 class LensingContribution:
@@ -483,7 +475,7 @@ class TATTContribution(IntrinsicAlignmentContribution):
         paper's equations exactly, unencumbered by this pipeline-specific
         normalisation detail.
         """
-        h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / _C_KM_S
+        h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / c_0
         return self._tracer.dndz_shifted * h_over_c[None, :]
 
     def _C1(self, zs):
@@ -754,7 +746,7 @@ class TATTMContribution(IntrinsicAlignmentContribution):
 
         The per-bin amplitudes enter through `get_pk_terms` instead.
         """
-        h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / _C_KM_S
+        h_over_c = self._tracer.perturbations.background.hubble_parameter(z) / c_0
         return self._tracer.dndz_shifted * h_over_c[None, :]
 
     def _weighted_kernels(self, zs, bank: SpectraBank):

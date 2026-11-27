@@ -40,11 +40,11 @@ import jax.numpy as jnp
 import numpy as np
 from jax import Array
 
-from cloelib.auxiliary.chebyshev import (
+from cloelib.utils.chebyshev import (
     chebyshev_points_interval,
     clenshaw_curtis_quadrature,
 )
-from cloelib.auxiliary.math_utils import simpsons_weights_jit
+from cloelib.utils.math import simpsons_weights_jit
 
 DEFAULT_DATA_DIR = Path(__file__).resolve().parent / "t-tildes-data"
 

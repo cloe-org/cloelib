@@ -1,7 +1,7 @@
 """Implementation of nonlinear Perturbation cosmology for f(R) gravity using the e-MANTIS emulator."""
 
 import numpy as np
-from cloelib.auxiliary.extrapolator import extend_spectra
+from cloelib.utils.extrapolator import extend_spectra
 from cloelib.cosmology.cosmology import Background, Perturbations
 from emantis.matter_power_spectrum import NonLinearMGBoostEmulator
 from scipy import interpolate

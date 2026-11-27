@@ -1,9 +1,8 @@
-"""Module implementing auxiliary functions"""
+"""Module implementing utils functions for halos"""
 
 import numpy as np
 from scipy.special import erf
-
-from cloelib.auxiliary import units
+from cloelib.utils.constants import SPEED_OF_LIGHT_KM_S
 
 
 def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=0.0):
@@ -59,59 +58,6 @@ def convert_to_Delta_crit(overdensity_type, overdensity=200, background=None, z=
         return 18.0 * np.pi**2 + 82.0 * x - 39.0 * x**2
 
 
-def convert_distance(distance, units_in, units_out, angular_diameter_distance=None):
-    r"""Convert distances
-
-    Parameters
-    ----------
-    distance: np.ndarray
-        Input projected distances
-    units_in: str
-        Unit for the input projected distance. Accepted values are:
-        "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
-    units_out: str
-        Unit for the output projected distance. Accepted values are:
-        "Mpc/h", "radians", "degrees", "arcmin", "arcsec".
-    angular_diameter_distance: float, np.ndarray
-        Angular diameter distance (units: Mpc/h) to be used for converting
-        between angular and physical units. If array, it
-        should be in the shape (z.size, 1).
-
-    Returns
-    -------
-    np.ndarray
-        Distance in output units. If z is array and physical to
-        angular conversion used, output shape is (z.size, distance.size).
-    """
-    ang_to_rad = {
-        "radians": 1,
-        "degrees": np.pi / 180.0,
-        "arcmin": np.pi / 180.0 / 60.0,
-        "arcsec": np.pi / 180.0 / 3600.0,
-    }
-    _valid_units = ["mpc/h", *ang_to_rad.keys()]
-    if units_in.lower() not in _valid_units:
-        raise ValueError(f"units_in (={units_in}) must be in {_valid_units}")
-    if units_out.lower() not in _valid_units:
-        raise ValueError(f"units_out (={units_out}) must be in {_valid_units}")
-
-    if units_in.lower() == units_out.lower():
-        return distance
-
-    if units_out.lower() not in ang_to_rad:
-        # converting to mpc/h
-        theta = distance * ang_to_rad[units_in]  # distance in radians
-        out = theta * angular_diameter_distance
-    elif units_in.lower() not in ang_to_rad:
-        # converting to angular units
-        theta = distance / angular_diameter_distance  # distance in radians
-        out = theta / ang_to_rad[units_out]
-    else:
-        out = distance * ang_to_rad[units_in] / ang_to_rad[units_out]
-
-    return out
-
-
 def photoz_rsd_correction(
     background,
     z: np.ndarray,
@@ -147,7 +93,7 @@ def photoz_rsd_correction(
     f_gr = (background.Omega_cb(zs) ** 0.55)[:, np.newaxis]
     ks_z = (
         ks[np.newaxis, :]
-        * (units.SPEED_OF_LIGHT * 1e-3)
+        * SPEED_OF_LIGHT_KM_S
         / background.hubble_parameter(zs)[:, np.newaxis]
         * (background.H0 / 100)
     )
@@ -186,58 +132,6 @@ def photoz_rsd_correction(
     corr2[idx] = 1 / 5.0
 
     return corr0, corr1, corr2
-
-
-def tophat_window(kr):
-    r"""compute top-hat window and its derivative.
-
-    Parameters
-    ----------
-    kr: numpy.ndarray
-           Wavenumber times radius.
-
-    Returns
-    -------
-    numpy.ndarray
-        Top-hat window function
-    """
-    return 3.0 * (np.sin(kr) - kr * np.cos(kr)) / kr**3.0
-
-
-def tophat_window_derivative(kr):
-    r"""Compute derivative of the top-hat window.
-
-    Parameters
-    ----------
-    kr: numpy.ndarray
-           Wavenumber times radius.
-
-    Returns
-    -------
-    numpy.ndarray
-        Derivative of top-hat window function
-    """
-    return 3.0 * (np.sin(kr) * (kr**2.0 - 3.0) + 3.0 * kr * np.cos(kr)) / kr**4.0
-
-
-def isotropic_volume_distance(z, da, hz):
-    """Compute isotropic volume distance
-
-    Parameters
-    ----------
-    z : np.ndarray
-        redshift
-    da : np.ndarray
-        Angular diameter distance
-    hz : np.ndarray
-        Hubble parameter as a function of redshift.
-
-    Returns
-    -------
-    np.ndarray
-        Isotropic volume distance
-    """
-    return ((1 + z) ** 2 * da**2 * units.SPEED_OF_LIGHT * z / hz) ** (1 / 3.0)
 
 
 def tabulated_return(reference_table, func, func_kwargs):

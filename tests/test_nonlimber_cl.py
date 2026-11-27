@@ -13,9 +13,9 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from cloelib.auxiliary.chebyshev import chebyshev_points_interval
-from cloelib.auxiliary.nonlimber_kernels import kernel_on_chi_R, pair_integral
-from cloelib.auxiliary.t_tildes import NonLimberGrid, TTildeStore, directory_name
+from cloelib.utils.chebyshev import chebyshev_points_interval
+from cloelib.utils.nonlimber_kernels import kernel_on_chi_R, pair_integral
+from cloelib.utils.t_tildes import NonLimberGrid, TTildeStore, directory_name
 from cloelib.cosmology.jax_cosmology import JAXBackground, JAXLinearPerturbations
 from cloelib.observables.photo.contributions import (
     CB,

@@ -46,14 +46,12 @@ See `CONTRIBUTION_ARCHITECTURE.md` for the design this all follows.
 import weakref
 from typing import Any, Callable, Protocol
 
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
-from cloelib.auxiliary.geometry import transverse_distance
+from cloelib.utils.constants import SPEED_OF_LIGHT_KM_S as c_0
+from cloelib.utils.geometry import transverse_distance
 from cloelib.cosmology.cosmology import Perturbations
-from cloelib.auxiliary.math_utils import (
-    cached_stacked_simpson,
-    check_nonzero_redshifts,
-)
-from cloelib.auxiliary.systematics import shift_dndz_jax, stretch_dndz_jax
+from cloelib.utils.math import cached_stacked_simpson
+from cloelib.utils.redshift import check_nonzero_redshifts
+from cloelib.utils.systematics import shift_dndz_jax, stretch_dndz_jax
 from cloelib.observables.photo.contributions import CB, MATTER
 from cloelib.observables.photo.contributions import (
     IntrinsicAlignmentContribution,
@@ -78,8 +76,6 @@ import jax.lax as lx
 import numpy as _numpy
 from scipy import interpolate as _scipy_interpolate
 
-# UNITS
-c_0 = SPEED_OF_LIGHT / 1000  # Convert to km/s
 
 # The seven terms `fastpt.FASTPT.one_loop_dd_bias_b3nl` returns beyond the
 # plain matter loop (`P_1loop`, `Ps` - already available as

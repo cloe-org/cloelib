@@ -1,15 +1,15 @@
 """Common cosmology derived functions."""
 
 # cloelib imports
-from cloelib.auxiliary import units
-from cloelib.auxiliary.akima import akima_interpolation
-from cloelib.auxiliary.geometry import transverse_distance
+from cloelib.utils import constants
+from cloelib.utils.akima import akima_interpolation
+from cloelib.utils.geometry import transverse_distance
 
 # General imports
 import jax.numpy as jnp
 import numpy as np
 
-_log10_GRAVITATIONAL_CONSTANT = np.log10(units.GRAVITATIONAL_CONSTANT)
+_log10_GRAVITATIONAL_CONSTANT = np.log10(constants.GRAVITATIONAL_CONSTANT)
 
 
 def rho_crit(background, zs: np.ndarray) -> np.ndarray:
@@ -25,7 +25,7 @@ def rho_crit(background, zs: np.ndarray) -> np.ndarray:
     Returns:
       (float): Critical density value at the specified redshift.
     """
-    log10_h_in_seconds = np.log10(background.hubble_parameter(zs) / units.MPC_TO_KM)
+    log10_h_in_seconds = np.log10(background.hubble_parameter(zs) / constants.MPC_TO_KM)
     return (3.0 / 8.0 / np.pi) * 10 ** (
         2.0 * log10_h_in_seconds - _log10_GRAVITATIONAL_CONSTANT
     )
@@ -87,8 +87,7 @@ def dV_dzdO(background, zs: np.ndarray, hubble_units=False) -> np.ndarray:
       (np.ndarray): volume element in Mpc^3 h^{-3}
     """
     _dV_dzdO = (
-        units.SPEED_OF_LIGHT
-        / 1.0e3
+        constants.SPEED_OF_LIGHT_KM_S
         * transverse_distance(
             background.comoving_distance(zs), background.Omega_k0, background.H0
         )

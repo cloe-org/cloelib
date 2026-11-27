@@ -37,13 +37,13 @@ from typing import Callable, Optional, Sequence
 import jax.numpy as jnp
 import numpy as np
 
-from cloelib.auxiliary.chebyshev import chebyshev_coefficients
-from cloelib.auxiliary.math_utils import safe_sqrt
-from cloelib.auxiliary.nonlimber_kernels import (
+from cloelib.utils.chebyshev import chebyshev_coefficients
+from cloelib.utils.math import safe_sqrt
+from cloelib.utils.nonlimber_kernels import (
     projected_density,
     unequal_time_pk,
 )
-from cloelib.auxiliary.t_tildes import TTildeStore
+from cloelib.utils.t_tildes import TTildeStore
 from cloelib.cosmology.cosmology import (
     CB_CROSS_CORRELATED,
     CB_CROSS_LINEAR_NU,

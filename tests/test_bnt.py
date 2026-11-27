@@ -5,7 +5,7 @@ import numpy as np
 import jax.numpy as jnp
 from numpy.testing import assert_allclose
 from cloelib.auxiliary.bnt import BNTMatrixCalculator
-from cloelib.auxiliary.geometry import transverse_distance
+from cloelib.utils.geometry import transverse_distance
 from cloelib.cosmology.camb_cosmology import CAMBBackground
 
 # --- Shared cosmology setup ---

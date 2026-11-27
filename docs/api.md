@@ -361,21 +361,7 @@ heading_level: 3
       show_root_heading: true
       members: false
 
-::: cloelib.auxiliary.akima
-    options:
-      show_root_toc_entry: true
-      show_root_heading: true
-      show_submodules: false
-      heading_level: 3
-
 ::: cloelib.auxiliary.bnt
-    options:
-      show_root_toc_entry: true
-      show_root_heading: true
-      show_submodules: false
-      heading_level: 3
-
-::: cloelib.auxiliary.cache
     options:
       show_root_toc_entry: true
       show_root_heading: true
@@ -389,49 +375,104 @@ heading_level: 3
       show_submodules: false
       heading_level: 3
 
-::: cloelib.auxiliary.extrapolator
+::: cloelib.utils
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      members: false
+
+::: cloelib.utils.akima
     options:
       show_root_toc_entry: true
       show_root_heading: true
       show_submodules: false
       heading_level: 3
 
-::: cloelib.auxiliary.fftlog
+::: cloelib.utils.cache
     options:
       show_root_toc_entry: true
       show_root_heading: true
       show_submodules: false
       heading_level: 3
 
-::: cloelib.auxiliary.geometry
+::: cloelib.utils.chebyshev
     options:
       show_root_toc_entry: true
       show_root_heading: true
       show_submodules: false
       heading_level: 3
 
-::: cloelib.auxiliary.halo_helpers
+::: cloelib.utils.constants
     options:
       show_root_toc_entry: true
       show_root_heading: true
       show_submodules: false
       heading_level: 3
 
-::: cloelib.auxiliary.math_utils
+::: cloelib.utils.distances
     options:
       show_root_toc_entry: true
       show_root_heading: true
       show_submodules: false
       heading_level: 3
 
-::: cloelib.auxiliary.systematics
+::: cloelib.utils.extrapolator
     options:
       show_root_toc_entry: true
       show_root_heading: true
       show_submodules: false
       heading_level: 3
 
-::: cloelib.auxiliary.units
+::: cloelib.utils.fftlog
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      show_submodules: false
+      heading_level: 3
+
+::: cloelib.utils.geometry
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      show_submodules: false
+      heading_level: 3
+
+::: cloelib.utils.halo_helpers
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      show_submodules: false
+      heading_level: 3
+
+::: cloelib.utils.math
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      show_submodules: false
+      heading_level: 3
+
+::: cloelib.utils.nonlimber_kernels
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      show_submodules: false
+      heading_level: 3
+
+::: cloelib.utils.redshift
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      show_submodules: false
+      heading_level: 3
+
+::: cloelib.utils.systematics
+    options:
+      show_root_toc_entry: true
+      show_root_heading: true
+      show_submodules: false
+      heading_level: 3
+
+::: cloelib.utils.t_tildes
     options:
       show_root_toc_entry: true
       show_root_heading: true

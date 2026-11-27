@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import pytest
 from numpy.testing import assert_allclose
 from scipy.integrate import quad
-from cloelib.auxiliary.units import SPEED_OF_LIGHT
+from cloelib.utils.constants import SPEED_OF_LIGHT_KM_S as c_0
 from cloelib.cosmology.cosmology import Background, Perturbations
 from cloelib.cosmology.jax_cosmology import (
     JAXBackground,
@@ -329,7 +329,6 @@ def test_jax_comoving_distance(jax_background_instance, zs):
 def test_jax_comoving_distance_matches_direct_integral(jax_background_instance):
     """Regression test (gh-743): comoving_distance agrees with a direct integral of c/H(z)."""
     background = jax_background_instance
-    c_0 = SPEED_OF_LIGHT / 1000  # km/s
 
     def inverse_hubble(z):
         return 1.0 / float(background.hubble_parameter(z))

@@ -5,7 +5,7 @@ import jax.numpy as jnp
 from scipy.special import j0, jv
 from cosmolib.data import AngularPowerSpectrum, TwoPointCorrelationFunction
 
-from cloelib.auxiliary.math_utils import quadrature_weights, simpsons_weights_jit
+from cloelib.utils.math import quadrature_weights, simpsons_weights_jit
 from cloelib.summary_statistics.angular_two_point import (
     get_cosebis_from_cl,
     get_cosebis_from_2pcf,

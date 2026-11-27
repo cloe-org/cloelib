@@ -3,12 +3,12 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from cloelib.auxiliary.chebyshev import (
+from cloelib.utils.chebyshev import (
     chebyshev_coefficients,
     chebyshev_points_interval,
 )
-from cloelib.auxiliary.math_utils import simpsons_weights_jit
-from cloelib.auxiliary.nonlimber_kernels import (
+from cloelib.utils.math import simpsons_weights_jit
+from cloelib.utils.nonlimber_kernels import (
     kernel_on_chi_R,
     pair_integral,
     unequal_time_pk,

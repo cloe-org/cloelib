@@ -82,9 +82,10 @@ squared in a GWWL auto-spectrum. The radial window retains the standard
 $3\Omega_{\mathrm{m},0}H_0^2/(2c^2)$ normalization.
 
 !!! note
-GW tracers are supported by the unmasked Limber `get_Cl` calculation. The
-current `get_pseudo_Cl` mixing-matrix path supports photometric `POS` and
-`SHE` pairs only.
+GW tracers are supported by the unmasked Limber `get_Cl` calculation. 
+The current `get_pseudo_Cl` mixing-matrix path supports supports photometric 
+`POS` and `SHE` pairs and CMB lensing (`CMBL`) pairs. `GW` tracers are not 
+supported yet.
 
 ## Next Steps
 

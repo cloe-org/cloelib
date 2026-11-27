@@ -1,6 +1,7 @@
 """Implementation of Background and Perturbation cosmology using CAMB."""
 
 # cloelib imports
+from cloelib.auxiliary.geometry import transverse_distance
 from cloelib.cosmology.cosmology import (
     CB_CROSS_CORRELATED,
     Background,
@@ -233,7 +234,7 @@ class CAMBBackground:
 
     def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
         """
-        Return the transverse comoving distance between two redshifts.
+        Return the transverse comoving distance f_K(chi) as a function of redshift.
 
         Args:
             zs (np.ndarray): Array of redshifts.
@@ -241,16 +242,9 @@ class CAMBBackground:
         Returns:
             (np.ndarray): Transverse comoving distance values.
         """
-        x = self.comoving_distance(zs)
-
-        if self.Omega_k0 == 0.0:
-            y = x
-        elif self.Omega_k0 > 0.0:
-            y = np.sinh(np.sqrt(self.Omega_k0) * x) / np.sqrt(self.Omega_k0)
-        else:
-            y = np.sin(np.sqrt(-self.Omega_k0) * x) / np.sqrt(-self.Omega_k0)
-
-        return y
+        return np.asarray(
+            transverse_distance(self.comoving_distance(zs), self.Omega_k0, self.H0)
+        )
 
     def angular_diameter_distance(self, zs: np.ndarray) -> np.ndarray:
         """
@@ -339,7 +333,7 @@ class CAMBLinearPerturbations:
         self.kmax = 300.0
 
         # Ensure z=0 is included for sigma8(z=0) computation and proper interpolation
-        self.z = ensure_z_zero_included(redshifts)
+        self.z, self._camb_z_order = ensure_z_zero_included(redshifts)
 
         self.background.interface_args["CAMBparams"].set_matter_power(
             redshifts=self.z, kmax=self.kmax
@@ -349,6 +343,40 @@ class CAMBLinearPerturbations:
             hubble_units=False, k_hunit=False
         )
         self._pk_interpolators: dict = {}
+
+    @classmethod
+    def _from_results(
+        cls,
+        background: Background,
+        redshifts: np.ndarray,
+        results: "camb.CAMBdata",
+        kmax: float,
+    ) -> "CAMBLinearPerturbations":
+        """Linear perturbations of an existing CAMB run, without running CAMB again.
+
+        Used by `CAMBNonLinearPerturbations` to expose the linear spectra of its
+        own run (a `NonLinear_both` run holds the linear ones too), so that the
+        linear and nonlinear spectra come from the same CAMB call.
+
+        Args:
+            background (Background): The CAMBBackground of the run.
+            redshifts (np.ndarray): Redshifts of the run (z = 0 included).
+            results (camb.CAMBdata): Results of the run.
+            kmax (float): `kmax` the run was configured with.
+
+        Returns:
+            CAMBLinearPerturbations: linear perturbations sharing `results`.
+        """
+        self = cls.__new__(cls)
+        self.background = background
+        self.kmax = kmax
+        self.z = redshifts
+        self.results = results
+        self.k, _, self.Pk = results.get_linear_matter_power_spectrum(
+            hubble_units=False, k_hunit=False
+        )
+        self._pk_interpolators = {}
+        return self
 
     def _linear_pk_interpolator(self, var: str, hubble_units: bool, k_hunit: bool):
         """Linear P(k, z) interpolator from the CAMB results of `__init__` (cached).
@@ -432,8 +460,8 @@ class CAMBLinearPerturbations:
             (np.ndarray): growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
         """
         f_z = self.results.get_fsigma8() / self.results.get_sigma8()
-        # Reversing array because camb re-sorts redshifts when power spectrum is computed
-        return growth_rate_on_redshifts(self.z, f_z[::-1], zs, ks)
+        # Reordering because camb re-sorts redshifts when power spectrum is computed
+        return growth_rate_on_redshifts(self.z, f_z[self._camb_z_order], zs, ks)
 
     def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         r"""
@@ -490,6 +518,15 @@ class CAMBLinearPerturbations:
 
         return self.results.get_sigma8().max()
 
+    def sigma12(self) -> np.ndarray:
+        r"""RMS linear matter fluctuation in spheres of radius R = 12 Mpc.
+
+        Returns:
+            (np.ndarray): sigma12 at each redshift in `self.z`, in that
+            order.
+        """
+        return self.results.get_sigmaR(12.0, hubble_units=False)[self._camb_z_order]
+
 
 class CAMBNonLinearPerturbations:
     """A wrapper for CAMB nonlinear perturbation calculations."""
@@ -509,9 +546,12 @@ class CAMBNonLinearPerturbations:
 
         Args:
             background (Background): A CAMBBackground instance.
-            linearperturbations: Linear perturbations object (unused by CAMB, which computes
-                nonlinear corrections internally; accepted for interface compatibility with
-                emulator-based NonLinPerturbations classes).
+            linearperturbations: Linear perturbations exposed as
+                `self.linearperturbations` (used by the observables that need the linear
+                spectra: linear Limber and beyond-Limber Cl, TATT and nonlinear-bias
+                loops). CAMB computes its nonlinear spectra by itself, so it is not used
+                here. If None, the linear spectra of this same CAMB run are exposed
+                instead (`CAMBLinearPerturbations._from_results`).
             redshifts (np.ndarray): Array of redshifts for the calculations.
             nonlinear_model (Optional[str]): The nonlinear model to use (e.g., "takahashi").
                 Defaults to None, which uses the CAMB default model, or
@@ -527,7 +567,7 @@ class CAMBNonLinearPerturbations:
         self.kmax = 500
 
         # Ensure z=0 is included for sigma8(z=0) computation and proper interpolation
-        self.z = ensure_z_zero_included(redshifts)
+        self.z, self._camb_z_order = ensure_z_zero_included(redshifts)
 
         # Configure CAMB parameters for nonlinear calculations
         self.background.interface_args["CAMBparams"].NonLinear = model.NonLinear_both
@@ -568,6 +608,14 @@ class CAMBNonLinearPerturbations:
         self.k, _, self.Pk = self.results.get_nonlinear_matter_power_spectrum(
             hubble_units=False, k_hunit=False
         )
+
+        # The linear source of the observables that need one (`linear_source`):
+        # the given one, else the linear spectra of this same run.
+        if linearperturbations is None:
+            linearperturbations = CAMBLinearPerturbations._from_results(
+                self.background, self.z, self.results, self.kmax
+            )
+        self.linearperturbations = linearperturbations
 
     def matter_power_spectrum(
         self, zs: np.ndarray, ks: np.ndarray, hubble_units=False, k_hunit=False
@@ -643,8 +691,8 @@ class CAMBNonLinearPerturbations:
             (np.ndarray): growth rate, with shape (nz,) if ks is None and (nz, nk) otherwise.
         """
         f_z = self.results.get_fsigma8() / self.results.get_sigma8()
-        # Reversing array because camb re-sorts redshifts when power spectrum is computed
-        return growth_rate_on_redshifts(self.z, f_z[::-1], zs, ks)
+        # Reordering because camb re-sorts redshifts when power spectrum is computed
+        return growth_rate_on_redshifts(self.z, f_z[self._camb_z_order], zs, ks)
 
     def growth_factor(self, zs: np.ndarray, ks: np.ndarray) -> np.ndarray:
         r"""

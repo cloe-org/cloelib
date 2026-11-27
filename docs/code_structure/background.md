@@ -140,6 +140,8 @@ Pure JAX implementation for automatic differentiation.
 
 **When to use**: When you need gradients, GPU acceleration, or JIT compilation
 
+**Comoving distance**: `comoving_distance` integrates c/H(z) cumulatively on a hardcoded grid of 4096 points uniform in ln(1 + z), from z = 0 to the largest requested redshift (trapezoid rule), then interpolates it (cubic) at the requested redshifts. The relative accuracy is ~1e-7 or better for 0.01 <= z <= 1090.
+
 **Example**:
 
 ```python

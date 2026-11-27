@@ -16,11 +16,35 @@ from scipy import interpolate
 import numpy as np
 from typing import Optional, Sequence
 
+
+def _load_bounds_in_memory(emu) -> None:
+    """Replace the emulators' ``.npz`` parameter bounds by in-memory dicts.
+
+    HMcode2020Emu loads the bounds with ``np.load``, which returns an
+    ``NpzFile`` that keeps the file open and reads it again on every
+    ``bounds[key]`` access. Workers forked from this process (e.g. a
+    ``multiprocessing.Pool``) then share one open file and its read
+    position, and concurrent reads fail with
+    ``zipfile.BadZipFile: Truncated file header`` (cloelib gh-742).
+
+    Parameters
+    ----------
+    emu : HMcode2020Emu.Matter_powerspectrum
+        Emulator instance; its ``emulator[...]["bounds"]`` are replaced in place.
+    """
+    for sub_emulator in emu.emulator.values():
+        bounds = sub_emulator.get("bounds")
+        if isinstance(bounds, np.lib.npyio.NpzFile):
+            sub_emulator["bounds"] = {key: bounds[key] for key in bounds.files}
+            bounds.close()
+
+
 # Cosmology imports
 try:
     import HMcode2020Emu as hmcodeemu
 
     HM2020_emu = hmcodeemu.Matter_powerspectrum()
+    _load_bounds_in_memory(HM2020_emu)
     redshift_max = HM2020_emu.emulator["linear"]["bounds"]["z"][1]
 except ImportError:
     raise ImportError("HMcode2020emu could not be imported or initialised.")
@@ -35,7 +59,7 @@ class HMemuLinearPerturbations:
         """Intialize the HMemuLinearPerturbations instance."""
         assert background.Omega_k0 == 0, "Non flat geometries not supported"
 
-        self.z = ensure_z_zero_included(redshifts[redshifts <= redshift_max])
+        self.z, _ = ensure_z_zero_included(redshifts[redshifts <= redshift_max])
         self.background = background
 
         self.params_hm_emu = {
@@ -238,6 +262,22 @@ class HMemuLinearPerturbations:
         self.sigma8, _ = HM2020_emu.get_sigma8(**self.params_hm_emu)
         return self.sigma8[0]
 
+    def sigma12(self) -> np.ndarray:
+        r"""RMS linear matter fluctuation in spheres of radius R = 12 Mpc.
+
+        Returns:
+            (np.ndarray): sigma12 at each redshift in `self.z`, in that
+            order.
+        """
+        R = 12.0
+        k = self.k
+        x = k * R
+        window = 3.0 * (np.sin(x) - x * np.cos(x)) / x**3
+        variance = np.trapezoid(k**2 * self.Pk * window**2, x=k, axis=-1) / (
+            2.0 * np.pi**2
+        )
+        return np.sqrt(variance)
+
 
 class HMemuNonLinearPerturbations:
     """Class for non linear perturbations cosmology using HMemu,  compatibly with the Perturbations protocol."""
@@ -256,7 +296,7 @@ class HMemuNonLinearPerturbations:
 
         redshift_max = HM2020_emu.emulator["nonlinear"]["bounds"]["z"][1]
 
-        self.z = ensure_z_zero_included(redshifts[redshifts <= redshift_max])
+        self.z, _ = ensure_z_zero_included(redshifts[redshifts <= redshift_max])
         self.background = background
         # Retained so downstream consumers that need the *linear* Pk (e.g.
         # a perturbation-theory backend, which is only valid starting from
@@ -514,8 +554,9 @@ def _set_neutrino_masses(background: Background) -> float:
 
     This method adds neutrino masses to the provided dictionary.
     It also ensures consistency with the background cosmology.
-    HMcode2020Emu only supports a single species massive of neutrinos, so this method
-    throws an error if multiple massive neutrino species are provided.
+    HMcode2020Emu supports at most a single species of massive neutrinos
+    (N_mnu=1, or N_mnu=0 with mnu=0), so this method throws an error if
+    multiple massive neutrino species are provided.
 
     Parameters
     ----------
@@ -529,13 +570,15 @@ def _set_neutrino_masses(background: Background) -> float:
     """
     if background.N_mnu > 1:
         raise ValueError(
-            "HMcode2020Emu only supports a single species of neutrinos. "
-            "Set N_mnu=1 in the Background class."
+            "HMcode2020Emu supports at most a single species of massive neutrinos. "
+            "Set N_mnu=1 (or N_mnu=0 with mnu=0) in the Background class."
         )
-    if not np.isclose(background.N_ur, 2.0308, rtol=1e-4):
+    N_ur = 2.0308 if background.N_mnu == 1 else 3.044
+    if not np.isclose(background.N_ur, N_ur, rtol=1e-4):
         raise ValueError(
-            "HMcode2020Emu only supports a fixed number of relativistic species (N_ur=2.0308). "
-            "Set N_ur=2.0308 in the Background class."
+            "HMcode2020Emu only supports a fixed number of relativistic species "
+            "(N_ur=2.0308 with N_mnu=1, N_ur=3.044 with N_mnu=0). "
+            f"Set N_ur={N_ur} in the Background class."
             "[Note that HMcode2020Emu actually sets N_ur=2.0328,"
             "this will be fixed in a future release.]"
         )
@@ -549,8 +592,8 @@ def _set_neutrino_masses(background: Background) -> float:
         )
     if isinstance(background.mnu, Sequence) or isinstance(background.mnu, np.ndarray):
         raise ValueError(
-            "HMcode2020Emu only supports a single species of neutrinos. "
-            "Set N_mnu=1 in the Background class."
+            "HMcode2020Emu supports at most a single species of massive neutrinos. "
+            "Set N_mnu=1 (or N_mnu=0 with mnu=0) in the Background class."
         )
     else:
         mnu_arg = float(background.mnu)

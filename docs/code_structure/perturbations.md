@@ -695,13 +695,14 @@ def baryonic_suppression(self, zs, ks, k_hunit=False) -> np.ndarray:
     """Return B(k,z) = P_hydro / P_DMO, shape (n_z, n_k)."""
 ```
 
-Three ready-made mixins are provided:
+Four ready-made mixins are provided:
 
-| Mixin                        | Backend           | Baryonic parameters                                                  |
-| ---------------------------- | ----------------- | -------------------------------------------------------------------- |
-| `FlamingoBaryonBoostMixin`   | FLAMINGO emulator | `fgas_sigma`, `Mstar_sigma`, `jet_fraction`                          |
-| `BACCOemuBaryonBoostMixin`   | BACCOemu          | `M_c`, `eta`, `beta`, `M1_z0_cen`, `theta_out`, `theta_inn`, `M_inn` |
-| `HMcode2020BaryonBoostMixin` | HMcode2020emu     | `log10TAGN`                                                          |
+| Mixin                        | Backend           | Baryonic parameters                                                                                           |
+| ---------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `FlamingoBaryonBoostMixin`   | FLAMINGO emulator | `fgas_sigma`, `Mstar_sigma`, `jet_fraction`                                                                   |
+| `BACCOemuBaryonBoostMixin`   | BACCOemu          | `M_c`, `eta`, `beta`, `M1_z0_cen`, `theta_out`, `theta_inn`, `M_inn`                                          |
+| `HMcode2020BaryonBoostMixin` | HMcode2020emu     | `log10TAGN`                                                                                                   |
+| `BCemuBaryonBoostMixin`      | BCemu             | `log10Mc` (1-param), `+ thej, deta` (3-param), `+ mu, gamma, delta, eta` (7-param); `nu_*` redshift evolution |
 
 Each mixin `__init__` must be called **after** the base nonlinear `__init__` (it reads `self.background` and emulator internals set by the base).
 

@@ -15,6 +15,9 @@ What `get_pseudo_Cl` should do (euclidlib internal format):
           BB_out = M_BB @ EE + M_EE @ BB
           EB_out = M_EB @ EB
           BE_out = M_EB @ BE
+    - CMBL-POS: pseudo_Cl = M @ Cl
+    - CMBL-SHE: the same matrix M multiplies the E and the B part separately.
+    - CMBL-CMBL: pseudo_Cl = M @ Cl
 
 In every test the Cls are given at 3 multipoles (ell = 0, 1, 2) and the
 mixing matrices turn them into 2 output values, so each matrix has
@@ -26,6 +29,7 @@ import pytest
 from cosmolib.data import AngularPowerSpectrum
 
 from cloelib.observables.photo import PositionsTracer, ShearTracer
+from cloelib.observables.cmb import CMBLensingTracer
 from cloelib.summary_statistics.angular_two_point import AngularTwoPoint
 
 # A simple 2x3 mixing matrix: each output is the sum of two neighbouring ells.
@@ -47,7 +51,7 @@ SUM_NEIGHBOURS = np.array(
 def make_tracer(tracer_class, n_bins=1):
     """Create an empty tracer of the given type.
 
-    `get_pseudo_Cl` only needs to know the tracer type (positions or shear)
+    `get_pseudo_Cl` only needs to know the tracer type (positions, shear or cmb lensing)
     and the number of redshift bins, so nothing else is set.
     """
     tracer = object.__new__(tracer_class)
@@ -215,6 +219,63 @@ def test_she_she_BE():
     # BE_out = M_EB @ BE = [2000, 3000]
     BE_out = she_she_pseudo_cl()[1, 0]
     np.testing.assert_allclose(BE_out, [2000.0, 3000.0])
+
+
+def test_cmbl_cmbl():
+    key = ("CMBL", "CMBL", 1, 1)
+    cl = [1.0, 2.0, 3.0]
+
+    result = compute_pseudo_cl(
+        make_tracer(CMBLensingTracer),
+        make_tracer(CMBLensingTracer),
+        fake_cls={key: cl},
+        mixing_matrices={key: SUM_NEIGHBOURS},
+    )
+
+    # [1 + 2, 2 + 3]
+    np.testing.assert_allclose(result[key].array, [3.0, 5.0])
+
+
+@pytest.mark.parametrize(
+    "tracer1, tracer2",
+    [(CMBLensingTracer, PositionsTracer), (PositionsTracer, CMBLensingTracer)],
+    ids=["CMBL-POS", "POS-CMBL"],
+)
+def test_cmbl_pos(tracer1, tracer2):
+    key = ("CMBL", "POS", 1, 1)
+    cl = [1.0, 2.0, 3.0]
+
+    result = compute_pseudo_cl(
+        make_tracer(tracer1),
+        make_tracer(tracer2),
+        fake_cls={key: cl},
+        mixing_matrices={key: SUM_NEIGHBOURS},
+    )
+
+    # [1 + 2, 2 + 3]
+    np.testing.assert_allclose(result[key].array, [3.0, 5.0])
+
+
+@pytest.mark.parametrize(
+    "tracer1, tracer2",
+    [(CMBLensingTracer, ShearTracer), (ShearTracer, CMBLensingTracer)],
+    ids=["CMBL-SHE", "SHE-CMBL"],
+)
+def test_cmbl_she(tracer1, tracer2):
+    key = ("CMBL", "SHE", 1, 1)
+    E = [1.0, 2.0, 3.0]
+    B = [10.0, 20.0, 30.0]
+
+    result = compute_pseudo_cl(
+        make_tracer(tracer1),
+        make_tracer(tracer2),
+        fake_cls={key: [E, B]},
+        mixing_matrices={key: SUM_NEIGHBOURS},
+    )
+
+    E_out, B_out = result[key].array
+    np.testing.assert_allclose(E_out, [3.0, 5.0])  # [1 + 2, 2 + 3]
+    np.testing.assert_allclose(B_out, [30.0, 50.0])  # [10 + 20, 20 + 30]
 
 
 def test_each_bin_pair_uses_its_own_mixing_matrix():

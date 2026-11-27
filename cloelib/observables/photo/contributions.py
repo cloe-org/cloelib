@@ -81,8 +81,9 @@ class Contribution(Protocol):
 
 class IntrinsicAlignmentContribution:
     """Base class for every intrinsic-alignment model - the general "this is
-    an IA contribution" type. `NLAContribution`, `TATTContribution` and
-    `TATTMContribution` (`photo/shear.py`) are its concrete models today; a
+    an IA contribution" type. `NLAContribution`, `NLABinContribution`,
+    `TATTContribution` and `TATTMContribution` (`photo/shear.py`) are its
+    concrete models today; a
     future IA model would be another subclass here, not an unrelated name.
 
     Lets a contribution ask "is the other side of this pairing also IA?" -

@@ -119,6 +119,11 @@ class DARKINBackground(CLASSBackground):
             scf_phi_prime_ini=scf_phi_prime_ini,
         )
 
+    def transverse_comoving_distance(self, zs: np.ndarray) -> np.ndarray:
+        """Return the transverse comoving distance in Mpc."""
+        # ET: Use the solver distance, including its curvature dependence.
+        return (1.0 + np.asarray(zs)) * self.angular_diameter_distance(zs)
+
     def Omega_cb(self, zs):
         """Return baryon + ordinary-CDM + QCDM density fractions, without neutrinos.
 

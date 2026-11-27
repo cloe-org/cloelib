@@ -30,17 +30,12 @@ class CastroHaloAbundance(HaloAbundanceBase):
         at the requested redshift and mass points. Valid only for
         virial overdensities.
 
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points.
-        M: numpy.ndarray
-            Mass points in h^{-1} Msun.
+        Parameters:
+            z(numpy.ndarray): Redshift points.
+            M(numpy.ndarray): Mass points in h^{-1} Msun.
 
-        Returns
-        -------
-        f_sigma_nu: numpy.ndarray
-            f_sigma_nu[i,j], where i is the redshift axis and j the mass axis
+        Returns:
+            f_sigma_nu(numpy.ndarray): f_sigma_nu[i,j], where i is the redshift axis and j the mass axis
         """
         # compute inputs
         Omega_m = self.halo_model_properties.background.Omega_cb(z)
@@ -90,21 +85,15 @@ class CastroHaloAbundance(HaloAbundanceBase):
         at the requested redshift and mass points. Valid only
         for virial overdensities.
 
-        Parameters
-        ----------
-        z: numpy.ndarray
-            Redshift points
-        M: numpy.ndarray
-            Mass points in h^{-1} Msun
+        Parameters:
+            z(numpy.ndarray): Redshift points
+            M(numpy.ndarray): Mass points in h^{-1} Msun
 
-        Returns
-        -------
-        bias: numpy.ndarray
-            bias[i,j], where i is the redshift axis and j the mass axis
+        Returns:
+            bias(numpy.ndarray): bias[i,j], where i is the redshift axis and j the mass axis
 
-        Notes
-        -------
-        If the mass array has less than 4 entries, this causes problem with the derivative
+        Notes:
+            If the mass array has less than 4 entries, this causes problem with the derivative
         """
         # Format mass shape
         if not hasattr(M, "__len__"):

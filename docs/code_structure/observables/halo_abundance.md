@@ -1,12 +1,12 @@
 # HaloAbundance Protocol (Cluster Observables)
 
-**Protocol Definition**: `cloelib.observables.cluster.halo_abundance.halo_abundance.HaloAbundance`
+**Protocol Definition**: `cloelib.observables.halos.halo_abundance.halo_abundance.HaloAbundance`
 
 HaloAbundance handles the halo mass and the halo bias.
 
 ## Required Attribute
 
-- **`common_halo_properties`**: Reference to common dark matter halo properties object
+- **`halo_model_properties`**: Reference to common dark matter halo properties object
 
 ## Required Methods
 
@@ -49,21 +49,21 @@ Compute the halo bias.
 
 Tinker et al. 2008 halo mass function and bias.
 
-**Location**: `cloelib/observables/clusters/halo_abundance/tinker_halo_abundance.py`
+**Location**: `cloelib/observables/halos/halo_abundance/tinker_halo_abundance.py`
 
 **Example**:
 
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
-from cloelib.observables.clusters.halo_abundance import TinkerHaloAbundance
-from cloelib.observables.clusters.common_halo_properties import CommonHaloProperties
+from cloelib.observables.halos.halo_abundance import TinkerHaloAbundance
+from cloelib.observables.halos.halo_model_properties import HaloModelProperties
 
 
 bg = CAMBBackground(H0=67.5, ...)
 pert = CAMBLinearPerturbations(bg, np.linspace(0.0, 2.0, 100))
 
-common_prop = CommonHaloProperties(perturbations)
-halo_abundance = TinkerHaloAbundance(common_prop)
+halo_prop = HaloModelProperties(perturbations)
+halo_abundance = TinkerHaloAbundance(halo_prop)
 
 z = np.linspace(0.01, 1.0, 10)
 M = np.logspace(14, 15, 5) # in Msun
@@ -76,21 +76,21 @@ bias_tinker = halo_abundance.dn_dm(z, M) # Shape: (10, 5)
 
 Castro et al. 2021 halo mass function and bias.
 
-**Location**: `cloelib/observables/clusters/halo_abundance/castro_halo_abundance.py`
+**Location**: `cloelib/observables/halos/halo_abundance/castro_halo_abundance.py`
 
 **Example**:
 
 ```python
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
-from cloelib.observables.clusters.halo_abundance import CastroHaloAbundance
-from cloelib.observables.clusters.common_halo_properties import CommonHaloProperties
+from cloelib.observables.halos.halo_abundance import CastroHaloAbundance
+from cloelib.observables.halos.halo_model_properties import HaloModelProperties
 
 
 bg = CAMBBackground(H0=67.5, ...)
 pert = CAMBLinearPerturbations(bg, np.linspace(0.0, 2.0, 100))
 
-common_prop = CommonHaloProperties(perturbations)
-halo_abundance = CastroHaloAbundance(common_prop)
+halo_prop = HaloModelProperties(perturbations)
+halo_abundance = CastroHaloAbundance(halo_prop)
 
 z = np.linspace(0.01, 1.0, 10)
 M = np.logspace(14, 15, 5) # in Msun
@@ -106,15 +106,15 @@ To add a new HaloAbundance implementation, follow these steps.
 ### Step 1: Create Your Class
 
 ```python
-# cloelib/observables/clusters/halo_abundance/my_halo_abundance.py
+# cloelib/observables/halos/halo_abundance/my_halo_abundance.py
 from .halo_abundance_base import HaloAbundanceBase
 import numpy as np
 
 
 class MyHaloAbundance(HaloAbundanceBase):
     """My implementation for halo mass abundance models."""
-    def __init__(self, common_halo_properties: CommonHaloProperties):
-        HaloAbundanceBase.__init__(self, common_halo_properties)
+    def __init__(self, halo_model_properties: HaloModelProperties):
+        HaloAbundanceBase.__init__(self, halo_model_properties)
 
     def f_sigma_nu(self, z, M):
         r"""
@@ -160,12 +160,12 @@ class MyHaloAbundance(HaloAbundanceBase):
 ### Step 2: Handle Different Initialization Styles
 
 As HaloAbundance is an child class of HaloAbundanceBase,
-is also needs `CommonHaloProperties` for initialization,
+is also needs `HaloModelProperties` for initialization,
 but it can also have extra arguments:
 
 ```python
-def __init__(self, common_halo_properties: CommonHaloProperties, args):
-    HaloAbundanceBase.__init__(self, common_halo_properties)
+def __init__(self, halo_model_properties: HaloModelProperties, args):
+    HaloAbundanceBase.__init__(self, halo_model_properties)
     # do something with args
     ...
 ```
@@ -177,7 +177,7 @@ Just make sure it runs `HaloAbundanceBase.__init__` internally.
 
 ### Step 3: Add to Package
 
-Update `cloelib/observables/clusters/halo_abundance/__init__.py`:
+Update `cloelib/observables/halos/halo_abundance/__init__.py`:
 
 ```python
 from cloelib.observables.cluster.halo_abundance.my_halo_abundance import MyHaloAbundance
@@ -196,15 +196,15 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from cloelib.cosmology.camb_cosmology import CAMBBackground, CAMBLinearPerturbations
-from cloelib.observables.clusters.halo_abundance import MyHaloAbundance
-from cloelib.observables.clusters.common_halo_properties import CommonHaloProperties
+from cloelib.observables.halos.halo_abundance import MyHaloAbundance
+from cloelib.observables.halos.halo_model_properties import HaloModelProperties
 
 def test_my_halo_abundance():
     bg = CAMBBackground(H0=67.5, ...)
     pert = CAMBLinearPerturbations(bg, np.linspace(0.0, 2.0, 100))
 
-    common_prop = CommonHaloProperties(perturbations)
-    halo_abundance = MyHaloAbundance(common_prop)
+    halo_prop = HaloModelProperties(perturbations)
+    halo_abundance = MyHaloAbundance(halo_prop)
 
     z = np.linspace(0.01, 1.0, 10)
     M = np.logspace(14, 15, 5) # in Msun
